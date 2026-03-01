@@ -10,6 +10,7 @@ import { provideEditorStore } from './stores/editor'
 import EditorCanvas from './components/EditorCanvas.vue'
 import LayersPanel from './components/LayersPanel.vue'
 import PropertiesPanel from './components/PropertiesPanel.vue'
+import SafariBanner from './components/SafariBanner.vue'
 import Toolbar from './components/Toolbar.vue'
 
 const store = provideEditorStore()
@@ -35,6 +36,7 @@ if (!('test' in params)) {
 
 <template>
   <div class="flex h-screen w-screen flex-col">
+    <SafariBanner />
     <SplitterGroup
       v-if="showChrome"
       direction="horizontal"

@@ -84,6 +84,7 @@ declare module 'vue' {
     PagesPanel: typeof import('./src/components/PagesPanel.vue')['default']
     PositionSection: typeof import('./src/components/properties/PositionSection.vue')['default']
     PropertiesPanel: typeof import('./src/components/PropertiesPanel.vue')['default']
+    SafariBanner: typeof import('./src/components/SafariBanner.vue')['default']
     ScrubInput: typeof import('./src/components/ScrubInput.vue')['default']
     StrokeSection: typeof import('./src/components/properties/StrokeSection.vue')['default']
     Toolbar: typeof import('./src/components/Toolbar.vue')['default']

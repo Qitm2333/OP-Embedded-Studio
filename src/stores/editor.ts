@@ -117,6 +117,7 @@ export function createEditorStore() {
   const pageViewports = new Map<string, PageViewport>()
   let fileHandle: FileSystemFileHandle | null = null
   let filePath: string | null = null
+  let downloadName: string | null = null
   let savedVersion = 0
   let autosaveTimer: ReturnType<typeof setTimeout> | undefined
   let _ck: import('canvaskit-wasm').CanvasKit | null = null
@@ -586,6 +587,8 @@ export function createEditorStore() {
   async function saveFigFile() {
     if (filePath || fileHandle) {
       await writeFile(await buildFigFile())
+    } else if (downloadName) {
+      downloadBlob(new Uint8Array(await buildFigFile()), downloadName, 'application/octet-stream')
     } else {
       await saveFigFileAs()
     }
@@ -627,7 +630,10 @@ export function createEditorStore() {
       }
     }
 
-    downloadBlob(new Uint8Array(data), 'Untitled.fig', 'application/octet-stream')
+    const filename = prompt('Save as:', downloadName ?? 'Untitled.fig')
+    if (!filename) return
+    downloadName = filename
+    downloadBlob(new Uint8Array(data), filename, 'application/octet-stream')
   }
 
   async function writeFile(data: Uint8Array) {
