@@ -1,10 +1,28 @@
 # OpenPencil
 
-Open-source, AI-native design editor. Figma alternative built from scratch with full .fig file compatibility.
+Open-source, AI-native design editor. Figma-compatible, AI-first, fully local.
 
 > **Status:** Active development. Not ready for production use.
 
 ![OpenPencil](screenshot.png)
+
+## Why
+
+Figma is a closed platform that actively fights programmatic access. In February 2026, [Figma 126.1.2 started stripping `--remote-debugging-port`](https://forum.figma.com/report-a-problem-6/remote-debugging-port-not-working-in-figma-desktop-126-1-2-50858) on startup — killing CDP-based automation tools like [figma-use](https://github.com/dannote/figma-use) that filled gaps Figma refused to address. Their own MCP server, launched months after figma-use proved the demand, still can't create or modify designs — it's read-only.
+
+This is a supply chain problem. Designers and developers build workflows on top of their design tool. When that tool is closed-source, the vendor controls what's possible. They can break your tooling overnight with a point release. Your design files are in a proprietary binary format that only their software can fully read.
+
+Coding tools went through the same shift. VS Code opened the editor. LLMs opened code generation. Projects like [pi](https://github.com/mariozechner/pi-coding-agent) opened the AI coding agent. Design tools are next.
+
+OpenPencil is:
+
+- **Open source** — MIT license, read and modify everything
+- **Figma-compatible** — opens .fig files natively, copy/paste between apps
+- **AI-native** — built-in chat with tool use, JSX rendering, no API restrictions
+- **Fully local** — no account, no server, no internet required, ~5 MB install
+- **Programmable** — headless CLI, every operation is scriptable
+
+Your design files are yours. Your tools should be too.
 
 ## Features
 
