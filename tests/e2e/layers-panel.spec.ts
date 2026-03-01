@@ -61,26 +61,27 @@ async function getSelectedCount(): Promise<number> {
 
 test('demo layers visible in panel', async () => {
   const names = await getLayerNames()
-  expect(names).toContain('Design System')
+  expect(names).toContain('Components')
+  expect(names).toContain('App Preview')
 })
 
 test('clicking a node inside a frame does not reparent it', async () => {
-  // Hero card is inside Desktop frame — clicking it should select it, not reparent
   const beforeTree = await getSceneTree()
-  const section = beforeTree.children.find((c: any) => c.name === 'Design System')
-  const desktop = section.children.find((c: any) => c.name === 'Desktop')
-  const heroCard = desktop.children.find((c: any) => c.name === 'Hero card')
-  expect(heroCard).toBeTruthy()
+  const section = beforeTree.children.find((c: any) => c.name === 'App Preview')
+  const dashboard = section.children.find((c: any) => c.name === 'Dashboard')
+  expect(dashboard).toBeTruthy()
+  const sidebarBefore = dashboard.children.find((c: any) => c.name === 'Sidebar')
+  expect(sidebarBefore).toBeTruthy()
 
-  // Click on Hero card area (section at 60,60 + desktop at 20,40 + hero at 24,80 + center offset)
+  // Click inside the App Preview section area
   await canvas.click(350, 310)
   await canvas.waitForRender()
 
-  // Hero card should still be a child of Desktop
+  // Sidebar should still be a child of Dashboard
   const afterTree = await getSceneTree()
-  const afterSection = afterTree.children.find((c: any) => c.name === 'Design System')
-  const afterDesktop = afterSection.children.find((c: any) => c.name === 'Desktop')
-  expect(afterDesktop.children.find((c: any) => c.name === 'Hero card')).toBeTruthy()
+  const afterSection = afterTree.children.find((c: any) => c.name === 'App Preview')
+  const afterDashboard = afterSection.children.find((c: any) => c.name === 'Dashboard')
+  expect(afterDashboard.children.find((c: any) => c.name === 'Sidebar')).toBeTruthy()
 
   canvas.assertNoErrors()
 })
