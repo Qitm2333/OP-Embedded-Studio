@@ -1,3 +1,4 @@
+import { DEFAULT_STROKE_MITER_LIMIT } from '../constants'
 import { SceneGraph } from '../scene-graph'
 import { styleToWeight } from '../fonts'
 import { decodeVectorNetworkBlob } from '../vector'
@@ -489,7 +490,7 @@ export function importNodeChanges(
       borderBottomWeight: (ext(nc).borderBottomWeight as number) ?? 0,
       borderLeftWeight: (ext(nc).borderLeftWeight as number) ?? 0,
       independentStrokeWeights: (ext(nc).borderStrokeWeightsIndependent as boolean) ?? false,
-      strokeMiterLimit: 4,
+      strokeMiterLimit: DEFAULT_STROKE_MITER_LIMIT,
       minWidth: (ext(nc).minWidth as number) ?? null,
       maxWidth: (ext(nc).maxWidth as number) ?? null,
       minHeight: (ext(nc).minHeight as number) ?? null,
