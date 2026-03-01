@@ -263,3 +263,14 @@ SceneNode SHALL support a `styleRuns` array of `{start, length, style}` where st
 #### Scenario: Render JSX string
 - **WHEN** renderJsx('<Frame w={100}><Text>Hi</Text></Frame>') is called
 - **THEN** a scene graph with a FRAME parent and TEXT child is produced
+
+### Requirement: Scene node to JSX export
+@open-pencil/core SHALL export a sceneNodeToJsx() function that converts a SceneNode subtree into JSX string using builder function syntax (Frame, Text, Rectangle, etc.) with Tailwind-like shorthand props. The output is valid JSX consumable by renderJsx().
+
+#### Scenario: Export frame with children
+- **WHEN** sceneNodeToJsx is called on a frame with a rectangle and text child
+- **THEN** a JSX string with Frame wrapping Rectangle and Text is returned
+
+#### Scenario: Export with effects
+- **WHEN** sceneNodeToJsx is called on a node with drop shadow
+- **THEN** the JSX includes shadow props in the output

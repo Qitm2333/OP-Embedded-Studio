@@ -6,7 +6,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 ✅ Supported — feature works end-to-end · 🟡 Partial — core behavior exists, some sub-features missing · 🔲 Not yet implemented
 :::
 
-**Coverage:** 80 of 150 Figma feature items addressed — 64 ✅ fully supported, 16 🟡 partial, 70 🔲 not yet. Last updated: 2026-03-01.
+**Coverage:** 83 of 150 Figma feature items addressed — 64 ✅ fully supported, 19 🟡 partial, 67 🔲 not yet. Last updated: 2026-03-01.
 
 ## Interface & Navigation
 
@@ -27,7 +27,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Layer outlines view | 🔲 | Wireframe view of all layers |
 | Custom file thumbnails | 🔲 | Thumbnail generated on export, but no custom thumbnail picker |
 | Nudge value settings | 🔲 | Default 1px/10px; Figma allows custom small/big nudge values |
-| AI tools | 🔲 | Figma AI features (rename, search, generate); Open Pencil plans MCP-based AI in Phase 5 |
+| AI tools | 🟡 | 10 AI tools via OpenRouter (create/modify/delete shapes, fills/strokes, layout); no AI-generated images or AI-powered search yet |
 
 ## Layers & Shapes
 
@@ -204,9 +204,9 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Real-time multiplayer | 🔲 | Planned (Yjs-based) |
 | Cursor chat | 🔲 | Inline chat bubbles at cursor |
 | Branching & merging | 🔲 | Version branches for design files |
-| Dev Mode (inspect) | 🔲 | CSS/code generation from designs |
+| Dev Mode (inspect) | 🟡 | Code tab shows JSX representation of selection; no CSS properties or handoff specs |
 | Code Connect | 🔲 | Link design components to code |
-| Code snippets | 🔲 | Auto-generated code from layers |
+| Code snippets | 🟡 | JSX export with syntax highlighting and copy; no CSS/Swift/Kotlin snippets |
 | Figma for VS Code | 🔲 | Editor plugin integration |
 | MCP server | 🔲 | Planned for Phase 5; 117-tool MCP server from figma-use |
 | CLI tools | 🟡 | Headless CLI: info, tree, find, export, analyze (colors/typography/spacing/clusters), node, pages, variables; MCP server not yet |

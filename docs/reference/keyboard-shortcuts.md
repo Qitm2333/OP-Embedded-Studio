@@ -68,6 +68,7 @@ Full Figma-compatible shortcut map. ✅ = implemented.
 | <kbd>⌘</kbd><kbd>0</kbd> | Zoom to 100% | ✅ |
 | <kbd>⌘</kbd><kbd>1</kbd> | Zoom to Fit | 🔲 |
 | <kbd>⌘</kbd><kbd>2</kbd> | Zoom to Selection | 🔲 |
+| <kbd>⌘</kbd><kbd>J</kbd> | Toggle AI Chat | ✅ |
 
 ## Object
 
@@ -96,9 +97,9 @@ Full Figma-compatible shortcut map. ✅ = implemented.
 
 | Shortcut | Action | Status |
 |----------|--------|--------|
-| <kbd>⌘</kbd><kbd>B</kbd> | Bold | 🔲 |
-| <kbd>⌘</kbd><kbd>I</kbd> | Italic | 🔲 |
-| <kbd>⌘</kbd><kbd>U</kbd> | Underline | 🔲 |
+| <kbd>⌘</kbd><kbd>B</kbd> | Bold | ✅ |
+| <kbd>⌘</kbd><kbd>I</kbd> | Italic | ✅ |
+| <kbd>⌘</kbd><kbd>U</kbd> | Underline | ✅ |
 | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>X</kbd> | Strikethrough | 🔲 |
 
 ## Canvas Interaction

@@ -69,17 +69,21 @@ Both the layers panel and properties panel are resizable — drag the edge betwe
 
 ## Properties Panel
 
-Context-sensitive panel with sections:
+Tabbed interface with **Design** | **Code** | **AI** tabs (reka-ui Tabs).
+
+The **Design** tab is context-sensitive with sections:
 
 - **Appearance** — opacity, corner radius (uniform or per-corner with independent toggle), visibility
 - **Fill** — solid/gradient/image type picker, gradient stop editor, hex input, opacity
 - **Stroke** — color, weight, opacity, cap, join, dash pattern
 - **Effects** — add/remove effects, type picker (drop shadow, inner shadow, layer blur, background blur, foreground blur), inline expanded controls (offset, blur, spread, color for shadows; blur radius for blurs), per-effect visibility toggle
-- **Typography** — font family (FontPicker with virtual scroll and search), weight, size, alignment
+- **Typography** — font family (FontPicker with virtual scroll and search), weight, size, alignment, B/I/U/S buttons
 - **Layout** — auto-layout controls when enabled
 - **Position** — alignment buttons, rotation, flip
 - **Export** — scale, format (PNG/JPG/WEBP), live preview, multi-export
 - **Page** — canvas background color (shown when no nodes selected)
+
+The **Code** tab shows JSX export of the selection (see [Code Panel](#code-panel)). The **AI** tab provides an AI chat interface (see [AI Chat](#ai-chat)).
 
 ## Group/Ungroup
 
@@ -189,7 +193,23 @@ Two rendering paths:
 - `renderTreeNode()` — tree → scene graph (any runtime, no external deps)
 - `renderJsx()` — JSX string → esbuild → tree → scene graph (CLI/headless)
 
-Covered by 27 tests for all node types, layout props, effects, and nesting.
+
+
+## AI Chat
+
+Built-in AI assistant accessible via the AI tab in the properties panel or <kbd>⌘</kbd><kbd>J</kbd>. Communicates directly with OpenRouter from the browser — no backend server required. API key stored securely in Tauri Stronghold (localStorage fallback in browser).
+
+**Model selector** with curated models: Claude, Gemini, GPT, DeepSeek, Qwen, Kimi, Llama — stored in `@open-pencil/core` constants with benchmark-ranked tags. Responses stream as markdown (vue-stream-markdown).
+
+**10 AI tools** wired to the editor store with valibot schemas: `create_shape`, `set_fill`, `set_stroke`, `update_node`, `set_layout`, `delete_node`, `select_nodes`, `get_page_tree`, `get_selection`, `rename_node`. The ToolLoopAgent executes tools automatically in a loop. Tool calls display as collapsible timeline entries in the chat (reka-ui Collapsible).
+
+Tested with Playwright using mock transport for CI.
+
+## Code Panel
+
+The Code tab in the properties panel shows the JSX representation of the current selection. Uses `sceneNodeToJsx()` from `@open-pencil/core` to convert the SceneNode subtree into JSX with Tailwind-like shorthand props. Prism.js syntax highlighting with line numbers and a copy-to-clipboard button. Multi-selection shows each node's JSX. The exported JSX is compatible with `renderJsx()` for round-trip creation.
+
+
 
 ## Code Quality
 
