@@ -30,6 +30,8 @@ async function injectMockTransport(page: Page) {
     const setTransport = window.__OPEN_PENCIL_SET_TRANSPORT__
     if (!setTransport) throw new Error('Transport override not available')
 
+    let msgCounter = 0
+
     setTransport(() => ({
       async sendMessages({
         messages,
@@ -38,12 +40,43 @@ async function injectMockTransport(page: Page) {
       }) {
         const lastUser = [...messages].reverse().find((m) => m.role === 'user')
         const text = lastUser?.parts?.find((p) => p.type === 'text')?.text ?? ''
-
-        const words = `I'll help you with: "${text}". Here's a mock response.`.split(' ')
+        const msgId = `mock-msg-${++msgCounter}`
+        const wantsTool = text.toLowerCase().includes('frame') || text.toLowerCase().includes('rectangle')
 
         return new ReadableStream({
           start(controller) {
-            controller.enqueue({ type: 'start', messageId: 'mock-msg-1' })
+            controller.enqueue({ type: 'start', messageId: msgId })
+
+            if (wantsTool) {
+              const toolCallId = `call-${msgId}`
+              controller.enqueue({
+                type: 'tool-input-start',
+                toolCallId,
+                toolName: 'create_shape',
+              })
+              controller.enqueue({
+                type: 'tool-input-delta',
+                toolCallId,
+                inputTextDelta: '{"type":"FRAME","x":100,"y":100,"width":200,"height":150,"name":"Card"}',
+              })
+              controller.enqueue({
+                type: 'tool-input-available',
+                toolCallId,
+                toolName: 'create_shape',
+                input: { type: 'FRAME', x: 100, y: 100, width: 200, height: 150, name: 'Card' },
+              })
+              controller.enqueue({
+                type: 'tool-output-available',
+                toolCallId,
+                toolName: 'create_shape',
+                output: { id: '0:99', type: 'FRAME', x: 100, y: 100, width: 200, height: 150, name: 'Card' },
+              })
+            }
+
+            const words = wantsTool
+              ? ['Created', 'a', 'frame', 'called', '"Card".']
+              : `I'll help you with: "${text}". Here's a mock response.`.split(' ')
+
             controller.enqueue({ type: 'text-start', id: 'text-1' })
             for (const word of words) {
               controller.enqueue({ type: 'text-delta', id: 'text-1', delta: word + ' ' })
@@ -115,10 +148,10 @@ test('typing enables send button', async () => {
 })
 
 test('Enter submits message and clears input', async () => {
-  await chatInput().fill('Make a red rectangle')
+  await chatInput().fill('Hello there')
   await chatInput().press('Enter')
 
-  await expect(page.getByText('Make a red rectangle', { exact: true })).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Hello there', { exact: true })).toBeVisible({ timeout: 5000 })
   await expect(chatInput()).toHaveValue('')
 })
 
@@ -144,10 +177,25 @@ test('model selector is visible and clickable', async () => {
   await page.keyboard.press('Escape')
 })
 
+test('tool calls render in assistant message', async () => {
+  await chatInput().fill('Create a frame')
+  await chatInput().press('Enter')
+
+  if (USE_REAL_LLM) {
+    await expect(
+      page.locator('.chat-markdown, [class*="rounded-tl-md"]').first(),
+    ).toBeVisible({ timeout: 30000 })
+  } else {
+    await expect(page.getByText('Create Shape')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText('Done')).toBeVisible()
+    await expect(page.getByText('Created a frame', { exact: false })).toBeVisible()
+  }
+})
+
 test('switching tabs preserves chat', async () => {
   await designTab().click()
   await expect(designTab()).toHaveAttribute('data-state', 'active')
 
   await chatTab().click()
-  await expect(page.getByText('Make a red rectangle', { exact: true })).toBeVisible()
+  await expect(page.getByText('Hello there', { exact: true })).toBeVisible()
 })

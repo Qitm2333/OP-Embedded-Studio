@@ -17,7 +17,6 @@ function getTextContent(msg: UIMessage): string {
 interface ToolPart {
   type: string
   toolCallId: string
-  toolName: string
   state: string
   input?: unknown
   output?: unknown
@@ -38,8 +37,14 @@ function getToolParts(msg: UIMessage): ToolPart[] {
   return msg.parts.filter(isToolPart)
 }
 
-function toolDisplayName(name: string): string {
-  return name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+function toolName(part: ToolPart): string {
+  return part.type.replace(/^tool-/, '')
+}
+
+function toolDisplayName(part: ToolPart): string {
+  return toolName(part)
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function toolState(part: ToolPart): 'pending' | 'done' | 'error' {
@@ -86,7 +91,7 @@ function toolState(part: ToolPart): 'pending' | 'done' | 'error' {
               <icon-lucide-triangle-alert v-else class="size-3" />
             </div>
             <span class="text-[11px] text-surface">
-              {{ toolDisplayName(tool.toolName) }}
+              {{ toolDisplayName(tool) }}
             </span>
             <span class="text-[10px] text-muted">
               {{
