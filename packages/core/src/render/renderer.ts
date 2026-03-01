@@ -1,8 +1,8 @@
 import { parseColor, colorToFill } from '../color'
+import { isTreeNode } from './tree'
 
 import type { SceneGraph, SceneNode, NodeType, LayoutMode, Stroke } from '../scene-graph'
 import type { TreeNode } from './tree'
-import { isTreeNode } from './tree'
 
 const TYPE_MAP: Record<string, NodeType> = {
   frame: 'FRAME',
@@ -105,9 +105,7 @@ function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): SceneN
   const overrides = propsToOverrides(tree.props, isText)
 
   if (isText) {
-    const textContent = tree.children
-      .filter((c): c is string => typeof c === 'string')
-      .join('')
+    const textContent = tree.children.filter((c): c is string => typeof c === 'string').join('')
     if (textContent) overrides.text = textContent
   }
 
@@ -158,8 +156,12 @@ function propsToOverrides(props: Record<string, unknown>, isText: boolean): Part
   if (typeof rounded === 'number') {
     o.cornerRadius = rounded
   }
-  if (props.roundedTL !== undefined || props.roundedTR !== undefined ||
-      props.roundedBL !== undefined || props.roundedBR !== undefined) {
+  if (
+    props.roundedTL !== undefined ||
+    props.roundedTR !== undefined ||
+    props.roundedBL !== undefined ||
+    props.roundedBR !== undefined
+  ) {
     o.independentCorners = true
     if (props.roundedTL !== undefined) o.topLeftRadius = props.roundedTL as number
     if (props.roundedTR !== undefined) o.topRightRadius = props.roundedTR as number
@@ -211,8 +213,14 @@ function propsToOverrides(props: Record<string, unknown>, isText: boolean): Part
   }
   const px = props.px as number | undefined
   const py = props.py as number | undefined
-  if (px !== undefined) { o.paddingLeft = px; o.paddingRight = px }
-  if (py !== undefined) { o.paddingTop = py; o.paddingBottom = py }
+  if (px !== undefined) {
+    o.paddingLeft = px
+    o.paddingRight = px
+  }
+  if (py !== undefined) {
+    o.paddingTop = py
+    o.paddingBottom = py
+  }
   if (props.pt !== undefined) o.paddingTop = props.pt as number
   if (props.pr !== undefined) o.paddingRight = props.pr as number
   if (props.pb !== undefined) o.paddingBottom = props.pb as number
@@ -246,7 +254,7 @@ function propsToOverrides(props: Record<string, unknown>, isText: boolean): Part
     }
 
     o.textAutoResize = props.textAutoResize
-      ? TEXT_AUTO_RESIZE_MAP[props.textAutoResize as string] ?? 'NONE'
+      ? (TEXT_AUTO_RESIZE_MAP[props.textAutoResize as string] ?? 'NONE')
       : 'HEIGHT'
   }
 

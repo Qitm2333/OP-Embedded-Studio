@@ -57,13 +57,12 @@ import {
   TEXT_CARET_COLOR,
   TEXT_CARET_WIDTH
 } from './constants'
-
 import { vectorNetworkToPath } from './vector'
 
 import type { SceneNode, SceneGraph, Fill, Stroke } from './scene-graph'
-import type { Color } from './types'
 import type { SnapGuide } from './snap'
 import type { TextEditor } from './text-editor'
+import type { Color } from './types'
 import type { Rect } from './types'
 import type { EmbindEnumEntity, Image as CKImage, Path } from 'canvaskit-wasm'
 import type {
@@ -1558,10 +1557,7 @@ export class SkiaRenderer {
     }
   }
 
-  buildParagraph(
-    node: SceneNode,
-    color?: Float32Array
-  ): import('canvaskit-wasm').Paragraph {
+  buildParagraph(node: SceneNode, color?: Float32Array): import('canvaskit-wasm').Paragraph {
     const ck = this.ck
     const baseColor = color ?? ck.BLACK
     const baseFontSize = node.fontSize || DEFAULT_FONT_SIZE
@@ -1602,15 +1598,13 @@ export class SkiaRenderer {
             fontSize: s.fontSize ?? baseFontSize,
             fontStyle: {
               weight: { value: (s.fontWeight ?? node.fontWeight) || 400 } as FontWeight,
-              slant: (s.italic ?? node.italic)
-                ? ck.FontSlant.Italic
-                : ck.FontSlant.Upright
+              slant: (s.italic ?? node.italic) ? ck.FontSlant.Italic : ck.FontSlant.Upright
             },
             letterSpacing: s.letterSpacing ?? (node.letterSpacing || 0),
             decoration: this.textDecorationValue(s.textDecoration ?? node.textDecoration),
             heightMultiplier: (s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)
-              ? ((s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)! /
-                (s.fontSize ?? baseFontSize))
+              ? (s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)! /
+                (s.fontSize ?? baseFontSize)
               : undefined
           })
         )
@@ -1703,7 +1697,12 @@ export class SkiaRenderer {
     return fill.color
   }
 
-  resolveStrokeColor(stroke: Stroke, strokeIndex: number, node: SceneNode, graph: SceneGraph): Color {
+  resolveStrokeColor(
+    stroke: Stroke,
+    strokeIndex: number,
+    node: SceneNode,
+    graph: SceneGraph
+  ): Color {
     const varId = node.boundVariables[`strokes/${strokeIndex}/color`]
     if (varId) {
       const resolved = graph.resolveColorVariable(varId)
@@ -1991,12 +1990,12 @@ export class SkiaRenderer {
   ): void {
     if (!cursors || cursors.length === 0) return
 
-    const CURSOR_SIZE = 16
-    const LABEL_PADDING_X = 6
-    const LABEL_PADDING_Y = 3
-    const LABEL_FONT_SIZE = 11
+    const CURSOR_SIZE = 9
+    const LABEL_PADDING_X = 4
+    const LABEL_PADDING_Y = 2
+    const LABEL_FONT_SIZE = 10
     const LABEL_OFFSET_X = 12
-    const LABEL_OFFSET_Y = 18
+    const LABEL_OFFSET_Y = 20
 
     for (const cursor of cursors) {
       const screenX = cursor.x * this.zoom + this.panX
@@ -2020,20 +2019,27 @@ export class SkiaRenderer {
         }
       }
 
-      // Draw cursor arrow (triangle pointing top-left)
-      this.auxFill.setColor(this.ck.Color4f(r, g, b, 1))
+      // Figma-style cursor arrow
+      const S = CURSOR_SIZE
       const path = new this.ck.Path()
       path.moveTo(screenX, screenY)
-      path.lineTo(screenX, screenY + CURSOR_SIZE)
-      path.lineTo(screenX + CURSOR_SIZE * 0.4, screenY + CURSOR_SIZE * 0.7)
+      path.lineTo(screenX, screenY + S * 1.35)
+      path.lineTo(screenX + S * 0.38, screenY + S * 1.0)
+      path.lineTo(screenX + S * 0.72, screenY + S * 1.5)
+      path.lineTo(screenX + S * 0.92, screenY + S * 1.38)
+      path.lineTo(screenX + S * 0.58, screenY + S * 0.88)
+      path.lineTo(screenX + S * 1.0, screenY + S * 0.82)
       path.close()
-      canvas.drawPath(path, this.auxFill)
 
-      // White outline for contrast
-      this.auxStroke.setColor(this.ck.Color4f(1, 1, 1, 0.9))
-      this.auxStroke.setStrokeWidth(1)
+      // White border for contrast
+      this.auxStroke.setColor(this.ck.Color4f(1, 1, 1, 1))
+      this.auxStroke.setStrokeWidth(2)
       this.auxStroke.setPathEffect(null)
       canvas.drawPath(path, this.auxStroke)
+
+      // Filled arrow in peer color
+      this.auxFill.setColor(this.ck.Color4f(r, g, b, 1))
+      canvas.drawPath(path, this.auxFill)
       path.delete()
 
       // Draw name label
@@ -2057,7 +2063,8 @@ export class SkiaRenderer {
               textWidth + LABEL_PADDING_X * 2,
               LABEL_FONT_SIZE + LABEL_PADDING_Y * 2
             ),
-            4, 4
+            4,
+            4
           )
           canvas.drawRRect(bgRect, this.auxFill)
 

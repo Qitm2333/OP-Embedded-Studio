@@ -17,7 +17,15 @@ export {
   INTRINSIC_ELEMENTS
 } from './components'
 
-export { type TreeNode, type BaseProps, type TextProps, type StyleProps, isTreeNode, node, resolveToTree } from './tree'
+export {
+  type TreeNode,
+  type BaseProps,
+  type TextProps,
+  type StyleProps,
+  isTreeNode,
+  node,
+  resolveToTree
+} from './tree'
 
 export { renderTree, type RenderResult } from './renderer'
 

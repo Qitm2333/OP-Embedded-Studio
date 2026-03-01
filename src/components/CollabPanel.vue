@@ -19,6 +19,7 @@ const props = defineProps<{
   state: CollabState
   peers: RemotePeer[]
   pendingRoomId?: string | null
+  followingPeer?: number | null
 }>()
 
 const emit = defineEmits<{
@@ -26,6 +27,7 @@ const emit = defineEmits<{
   join: [roomId: string]
   disconnect: []
   'update:name': [name: string]
+  follow: [clientId: number | null]
 }>()
 
 const joinInput = ref('')
@@ -107,8 +109,14 @@ function initials(name: string): string {
         <TooltipRoot v-for="peer in peers" :key="peer.clientId">
           <TooltipTrigger as-child>
             <div
-              class="flex size-6 items-center justify-center rounded-full border-2 border-panel text-[10px] font-semibold text-white"
+              class="flex size-6 cursor-pointer items-center justify-center rounded-full border-2 text-[10px] font-semibold text-white transition-all"
+              :class="
+                followingPeer === peer.clientId
+                  ? 'border-white ring-2 ring-white/40'
+                  : 'border-panel'
+              "
               :style="{ background: colorToCSS(peer.color) }"
+              @click="emit('follow', followingPeer === peer.clientId ? null : peer.clientId)"
             >
               {{ initials(peer.name) }}
             </div>
@@ -118,7 +126,11 @@ function initials(name: string): string {
               class="rounded bg-neutral-800 px-2 py-1 text-xs text-white shadow-lg"
               :side-offset="4"
             >
-              {{ peer.name }}
+              {{
+                followingPeer === peer.clientId
+                  ? `Following ${peer.name} (click to stop)`
+                  : `Click to follow ${peer.name}`
+              }}
             </TooltipContent>
           </TooltipPortal>
         </TooltipRoot>

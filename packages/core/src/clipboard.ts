@@ -1,16 +1,16 @@
 import { inflateSync, deflateSync } from 'fflate'
 
-import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
-import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
 import {
   sceneNodeToKiwi,
   buildFigKiwi,
   parseFigKiwiChunks,
   decompressFigKiwiDataAsync
 } from './kiwi-serialize'
-
+import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
+import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
 import { decodeVectorNetworkBlob } from './vector'
 
+import type { NodeChange as KiwiNodeChange } from './kiwi/codec'
 import type {
   SceneGraph,
   SceneNode,
@@ -22,7 +22,6 @@ import type {
   LayoutCounterAlign,
   VectorNetwork
 } from './scene-graph'
-import type { NodeChange as KiwiNodeChange } from './kiwi/codec'
 
 interface FigmaClipboardMeta {
   fileKey: string
@@ -33,8 +32,6 @@ interface FigmaClipboardMeta {
 export async function prefetchFigmaSchema(): Promise<void> {
   await initCodec()
 }
-
-
 
 function binaryToBase64(bytes: Uint8Array): string {
   let binary = ''
@@ -349,7 +346,7 @@ export function buildFigmaClipboardHTML(nodes: SceneNode[], graph: SceneGraph): 
     type: 'NODE_CHANGES',
     sessionID: 0,
     ackID: 0,
-    pasteID: Math.floor(Math.random() * 2147483647),
+    pasteID: crypto.getRandomValues(new Uint32Array(1))[0],
     pasteFileKey: 'openpencil',
     nodeChanges
   }

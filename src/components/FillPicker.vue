@@ -405,11 +405,7 @@ function stopSwatchColor(stop: GradientStop) {
         </div>
 
         <!-- HSV color area (solid mode, or editing active gradient stop) -->
-        <HsvColorArea
-          v-if="fill.type !== 'IMAGE'"
-          :color="activeColor"
-          @update="onColorUpdate"
-        />
+        <HsvColorArea v-if="fill.type !== 'IMAGE'" :color="activeColor" @update="onColorUpdate" />
       </PopoverContent>
     </PopoverPortal>
   </PopoverRoot>

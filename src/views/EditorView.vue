@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { provide } from 'vue'
 import { useEventListener, useUrlSearchParams } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 
 import { useKeyboard } from '@/composables/use-keyboard'
 import { useMenu } from '@/composables/use-menu'
-import { useCollab } from '@/composables/use-collab'
+import { useCollab, COLLAB_KEY } from '@/composables/use-collab'
 import { createDemoShapes } from '@/demo'
 import { provideEditorStore } from '@/stores/editor'
 
@@ -23,6 +24,7 @@ const store = provideEditorStore()
 useKeyboard(store)
 useMenu(store)
 const collab = useCollab(store)
+provide(COLLAB_KEY, collab)
 ;(window as Window & { __OPEN_PENCIL_STORE__?: typeof store }).__OPEN_PENCIL_STORE__ = store
 
 useEventListener(
@@ -90,10 +92,12 @@ function onDisconnect() {
             :state="collab.state.value"
             :peers="collab.remotePeers.value"
             :pending-room-id="pendingRoomId"
+            :following-peer="collab.followingPeer.value"
             @share="onShare"
             @join="onJoin"
             @disconnect="onDisconnect"
             @update:name="collab.setLocalName"
+            @follow="collab.followPeer"
           />
         </div>
         <PropertiesPanel />

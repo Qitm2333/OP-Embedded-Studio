@@ -92,11 +92,21 @@ export function renderNodesToImage(
   if (pixelW <= 0 || pixelH <= 0) return null
 
   const quality = options.quality ?? (options.format === 'PNG' ? 100 : 90)
-  return renderToSurface(ck, renderer, graph, pageId, pixelW, pixelH, options.format, quality, (canvas) => {
-    canvas.clear(ck.TRANSPARENT)
-    canvas.scale(options.scale, options.scale)
-    canvas.translate(-bounds.minX, -bounds.minY)
-  })
+  return renderToSurface(
+    ck,
+    renderer,
+    graph,
+    pageId,
+    pixelW,
+    pixelH,
+    options.format,
+    quality,
+    (canvas) => {
+      canvas.clear(ck.TRANSPARENT)
+      canvas.scale(options.scale, options.scale)
+      canvas.translate(-bounds.minX, -bounds.minY)
+    }
+  )
 }
 
 export function renderThumbnail(

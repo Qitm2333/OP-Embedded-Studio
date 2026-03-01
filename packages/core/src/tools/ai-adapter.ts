@@ -5,8 +5,8 @@
  * functions with FigmaAPI instantiation.
  */
 
-import type { ToolDef, ParamDef, ParamType } from './schema'
 import type { FigmaAPI } from '../figma-api'
+import type { ToolDef, ParamDef, ParamType } from './schema'
 
 export interface AIAdapterOptions {
   getFigma: () => FigmaAPI

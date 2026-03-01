@@ -1,26 +1,21 @@
-import { ref, onUnmounted, computed } from 'vue'
-import * as awarenessProtocol from 'y-protocols/awareness'
+import { joinRoom as joinTrysteroRoom } from 'trystero/mqtt'
+import { ref, watch, onUnmounted, computed, type InjectionKey, inject } from 'vue'
 import { IndexeddbPersistence } from 'y-indexeddb'
-import { joinRoom as joinTrysteroRoom } from 'trystero'
-import type { Room } from 'trystero'
+import * as awarenessProtocol from 'y-protocols/awareness'
 import * as Y from 'yjs'
+
+import {
+  TRYSTERO_APP_ID,
+  PEER_COLORS,
+  ROOM_ID_LENGTH,
+  ROOM_ID_CHARS,
+  YJS_JSON_FIELDS
+} from '@/constants'
 
 import type { SceneNode } from '@/engine/scene-graph'
 import type { EditorStore } from '@/stores/editor'
 import type { Color } from '@/types'
-
-const TRYSTERO_APP_ID = 'openpencil'
-
-const PEER_COLORS: Color[] = [
-  { r: 0.96, g: 0.26, b: 0.21, a: 1 },
-  { r: 0.13, g: 0.59, b: 0.95, a: 1 },
-  { r: 0.3, g: 0.69, b: 0.31, a: 1 },
-  { r: 1.0, g: 0.76, b: 0.03, a: 1 },
-  { r: 0.61, g: 0.15, b: 0.69, a: 1 },
-  { r: 1.0, g: 0.34, b: 0.13, a: 1 },
-  { r: 0.0, g: 0.74, b: 0.83, a: 1 },
-  { r: 0.91, g: 0.12, b: 0.39, a: 1 },
-]
+import type { Room } from 'trystero'
 
 export interface RemotePeer {
   clientId: number
@@ -44,7 +39,7 @@ export function useCollab(store: EditorStore) {
     roomId: null,
     peers: [],
     localName: localStorage.getItem('op-collab-name') || '',
-    localColor: PEER_COLORS[Math.floor(Math.random() * PEER_COLORS.length)],
+    localColor: PEER_COLORS[crypto.getRandomValues(new Uint8Array(1))[0] % PEER_COLORS.length]
   })
 
   let ydoc: Y.Doc | null = null
@@ -72,6 +67,7 @@ export function useCollab(store: EditorStore) {
 
     awareness.on('change', () => {
       updatePeersList()
+      tickFollow()
     })
 
     ynodes.observeDeep((events) => {
@@ -85,19 +81,37 @@ export function useCollab(store: EditorStore) {
       store.requestRender()
     })
 
-    room = joinTrysteroRoom({ appId: TRYSTERO_APP_ID }, roomId)
+    room = joinTrysteroRoom(
+      {
+        appId: TRYSTERO_APP_ID,
+        rtcConfig: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun.cloudflare.com:3478' },
+            {
+              urls: 'turn:openrelay.metered.ca:443',
+              username: 'openrelayproject',
+              credential: 'openrelayproject'
+            },
+            {
+              urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+              username: 'openrelayproject',
+              credential: 'openrelayproject'
+            }
+          ]
+        }
+      },
+      roomId
+    )
 
     const [sendUpdate, getUpdate] = room.makeAction<Uint8Array>('yjs-update')
     const [sendAw, getAw] = room.makeAction<Uint8Array>('awareness')
     const [sendSync, getSync] = room.makeAction<Uint8Array>('sync-step1')
     const [sendSyncReply, getSyncReply] = room.makeAction<Uint8Array>('sync-reply')
 
-    sendYjsUpdate = (data, peerId) =>
-      peerId ? sendUpdate(data, peerId) : sendUpdate(data)
-    sendAwareness = (data, peerId) =>
-      peerId ? sendAw(data, peerId) : sendAw(data)
-    sendSyncStep1 = (data, peerId) =>
-      peerId ? sendSync(data, peerId) : sendSync(data)
+    sendYjsUpdate = (data, peerId) => (peerId ? sendUpdate(data, peerId) : sendUpdate(data))
+    sendAwareness = (data, peerId) => (peerId ? sendAw(data, peerId) : sendAw(data))
+    sendSyncStep1 = (data, peerId) => (peerId ? sendSync(data, peerId) : sendSync(data))
 
     getUpdate((data) => {
       if (!ydoc) return
@@ -126,15 +140,14 @@ export function useCollab(store: EditorStore) {
       sendYjsUpdate?.(update)
     })
 
-    awareness.on('update', ({ added, updated, removed }: {
-      added: number[]
-      updated: number[]
-      removed: number[]
-    }) => {
-      const changedClients = [...added, ...updated, ...removed]
-      const encodedUpdate = awarenessProtocol.encodeAwarenessUpdate(awareness!, changedClients)
-      sendAwareness?.(encodedUpdate)
-    })
+    awareness.on(
+      'update',
+      ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }) => {
+        const changedClients = [...added, ...updated, ...removed]
+        const encodedUpdate = awarenessProtocol.encodeAwarenessUpdate(awareness!, changedClients)
+        sendAwareness?.(encodedUpdate)
+      }
+    )
 
     room.onPeerJoin((peerId) => {
       state.value.connected = true
@@ -142,20 +155,36 @@ export function useCollab(store: EditorStore) {
       sendSyncStep1?.(sv, peerId)
 
       if (awareness) {
-        const encodedUpdate = awarenessProtocol.encodeAwarenessUpdate(
-          awareness,
-          [awareness.clientID]
-        )
+        const encodedUpdate = awarenessProtocol.encodeAwarenessUpdate(awareness, [
+          awareness.clientID
+        ])
         sendAwareness?.(encodedUpdate, peerId)
       }
     })
 
     room.onPeerLeave(() => {
+      if (awareness) {
+        const remoteClients = [...awareness.getStates().keys()].filter(
+          (id) => id !== awareness!.clientID
+        )
+        awarenessProtocol.removeAwarenessStates(awareness, remoteClients, 'peer-left')
+      }
       updatePeersList()
     })
 
     state.value.connected = true
     broadcastAwareness()
+
+    watch(
+      () => store.state.zoom,
+      (zoom) => {
+        if (!awareness) return
+        const prev = awareness.getLocalState()?.cursor as Record<string, unknown> | undefined
+        if (prev) {
+          awareness.setLocalStateField('cursor', { ...prev, zoom })
+        }
+      }
+    )
 
     const origUpdateNode = store.graph.updateNode.bind(store.graph)
     store.graph.updateNode = (id: string, changes: Partial<SceneNode>) => {
@@ -266,15 +295,11 @@ export function useCollab(store: EditorStore) {
   }
 
   function applyYnodeToGraph(nodeId: string, ynode: Y.Map<unknown>) {
-    const JSON_FIELDS = new Set([
-      'childIds', 'fills', 'strokes', 'effects',
-      'vectorNetwork', 'boundVariables', 'styleRuns',
-    ])
     const existing = store.graph.getNode(nodeId)
     const props: Record<string, unknown> = {}
 
     for (const [key, value] of ynode.entries()) {
-      if (JSON_FIELDS.has(key)) {
+      if (YJS_JSON_FIELDS.has(key)) {
         try {
           props[key] = typeof value === 'string' ? JSON.parse(value) : value
         } catch {
@@ -303,13 +328,13 @@ export function useCollab(store: EditorStore) {
     if (!awareness) return
     awareness.setLocalStateField('user', {
       name: state.value.localName,
-      color: state.value.localColor,
+      color: state.value.localColor
     })
   }
 
   function updateCursor(x: number, y: number, pageId: string) {
     if (!awareness) return
-    awareness.setLocalStateField('cursor', { x, y, pageId })
+    awareness.setLocalStateField('cursor', { x, y, pageId, zoom: store.state.zoom })
   }
 
   function updateSelection(ids: string[]) {
@@ -333,7 +358,7 @@ export function useCollab(store: EditorStore) {
         name: user.name || 'Anonymous',
         color: user.color || PEER_COLORS[clientId % PEER_COLORS.length],
         cursor: peerState.cursor as RemotePeer['cursor'],
-        selection: peerState.selection as string[],
+        selection: peerState.selection as string[]
       })
     })
 
@@ -345,7 +370,7 @@ export function useCollab(store: EditorStore) {
         color: p.color,
         x: p.cursor!.x,
         y: p.cursor!.y,
-        selection: p.selection,
+        selection: p.selection
       }))
     store.requestRender()
   }
@@ -357,10 +382,10 @@ export function useCollab(store: EditorStore) {
   }
 
   function generateRoomId(): string {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+    const bytes = crypto.getRandomValues(new Uint8Array(ROOM_ID_LENGTH))
     let result = ''
-    for (let i = 0; i < 8; i++) {
-      result += chars[Math.floor(Math.random() * chars.length)]
+    for (let i = 0; i < ROOM_ID_LENGTH; i++) {
+      result += ROOM_ID_CHARS[bytes[i] % ROOM_ID_CHARS.length]
     }
     return result
   }
@@ -376,6 +401,33 @@ export function useCollab(store: EditorStore) {
     connect(roomId)
   }
 
+  const followingPeer = ref<number | null>(null)
+
+  function followPeer(clientId: number | null) {
+    followingPeer.value = clientId
+  }
+
+  function tickFollow() {
+    if (!followingPeer.value || !awareness) return
+    const peerState = awareness.getStates().get(followingPeer.value)
+    if (!peerState?.cursor) {
+      followingPeer.value = null
+      return
+    }
+    const cursor = peerState.cursor as { x: number; y: number; pageId: string; zoom?: number }
+    if (cursor.pageId !== store.state.currentPageId) {
+      store.switchPage(cursor.pageId)
+    }
+    const canvas = document.querySelector('canvas')
+    if (!canvas) return
+    if (cursor.zoom) store.state.zoom = cursor.zoom
+    const cw = canvas.width / devicePixelRatio
+    const ch = canvas.height / devicePixelRatio
+    store.state.panX = cw / 2 - cursor.x * store.state.zoom
+    store.state.panY = ch / 2 - cursor.y * store.state.zoom
+    store.requestRender()
+  }
+
   onUnmounted(() => {
     disconnect()
   })
@@ -383,11 +435,20 @@ export function useCollab(store: EditorStore) {
   return {
     state,
     remotePeers,
+    followingPeer,
     connect: joinRoom,
     disconnect,
     shareCurrentDoc,
     updateCursor,
     updateSelection,
     setLocalName,
+    followPeer,
+    tickFollow
   }
+}
+
+export type CollabReturn = ReturnType<typeof useCollab>
+export const COLLAB_KEY = Symbol('collab') as InjectionKey<CollabReturn>
+export function useCollabInjected() {
+  return inject(COLLAB_KEY)
 }
