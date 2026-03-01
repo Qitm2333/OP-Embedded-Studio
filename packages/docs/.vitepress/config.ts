@@ -100,7 +100,7 @@ export default defineConfig({
     ],
 
     editLink: {
-      pattern: 'https://github.com/dannote/open-pencil/edit/main/docs/:path',
+      pattern: 'https://github.com/dannote/open-pencil/edit/main/packages/docs/:path',
     },
 
     footer: {

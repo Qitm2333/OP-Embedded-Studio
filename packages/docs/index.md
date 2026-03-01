@@ -7,8 +7,8 @@ hero:
   text: AI-Native Design Editor
   tagline: Open-source Figma alternative. Fully local, AI-native, programmable.
   image:
-    src: /favicon.svg
-    alt: OpenPencil
+    src: /screenshot.png
+    alt: OpenPencil editor with a Material 3 design file open
   actions:
     - theme: brand
       text: Get Started

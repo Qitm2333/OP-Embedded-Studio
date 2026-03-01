@@ -23,9 +23,9 @@
     "test:coverage": "bun test --coverage ./tests/engine",
     "test:dupes": "jscpd packages/core/src packages/cli/src src --min-lines 5 --min-tokens 50 --format typescript",
     "open-pencil": "bun packages/cli/src/index.ts",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:dev": "bun --filter @open-pencil/docs dev",
+    "docs:build": "bun --filter @open-pencil/docs build",
+    "docs:preview": "bun --filter @open-pencil/docs preview"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.37",
@@ -72,7 +72,6 @@
     "typescript": "~5.8.3",
     "unplugin-icons": "^23.0.1",
     "unplugin-vue-components": "^31.0.0",
-    "vite": "^7.0.4",
-    "vitepress": "^1.6.4"
+    "vite": "^7.0.4"
   }
 }

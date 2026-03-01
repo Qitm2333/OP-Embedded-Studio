@@ -29,4 +29,5 @@ test-results/
 # Git worktrees for parallel agent work
 .worktrees/
 .env
-docs/.vitepress/cache/
+packages/docs/.vitepress/cache/
+packages/docs/.vitepress/dist/
