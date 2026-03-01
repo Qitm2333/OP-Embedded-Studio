@@ -144,7 +144,7 @@ function toolState(part: ToolPart): 'pending' | 'done' | 'error' {
     <!-- Chat messages -->
     <template v-else>
       <ScrollAreaRoot class="min-h-0 flex-1">
-        <ScrollAreaViewport class="h-full px-3 py-3">
+        <ScrollAreaViewport class="h-full px-3 py-3 [&>div]:h-full">
           <!-- Empty state -->
           <div
             v-if="messages.length === 0"
