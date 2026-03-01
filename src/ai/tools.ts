@@ -15,28 +15,35 @@ const nodeTypeSchema = v.picklist([
   'SECTION'
 ])
 
-const colorSchema = v.object({
+const rgbaSchema = v.object({
   r: v.pipe(v.number(), v.minValue(0), v.maxValue(1)),
   g: v.pipe(v.number(), v.minValue(0), v.maxValue(1)),
   b: v.pipe(v.number(), v.minValue(0), v.maxValue(1)),
   a: v.optional(v.pipe(v.number(), v.minValue(0), v.maxValue(1)), 1)
 })
 
-const hexColorSchema = v.pipe(
+const hexSchema = v.pipe(
   v.string(),
   v.regex(/^#?[0-9a-fA-F]{6,8}$/),
-  v.transform((hex) => {
-    const h = hex.replace('#', '')
+  v.description('Hex color like #ff0000 or #ff000080')
+)
+
+const colorInputSchema = v.union([rgbaSchema, hexSchema])
+
+type ColorInput = v.InferOutput<typeof colorInputSchema>
+
+function resolveColor(input: ColorInput) {
+  if (typeof input === 'string') {
+    const h = input.replace('#', '')
     return {
       r: parseInt(h.slice(0, 2), 16) / 255,
       g: parseInt(h.slice(2, 4), 16) / 255,
       b: parseInt(h.slice(4, 6), 16) / 255,
       a: h.length === 8 ? parseInt(h.slice(6, 8), 16) / 255 : 1
     }
-  })
-)
-
-const fillColorSchema = v.union([colorSchema, hexColorSchema])
+  }
+  return { ...input, a: input.a ?? 1 }
+}
 
 export function createAITools(store: EditorStore) {
   return {
@@ -67,16 +74,17 @@ export function createAITools(store: EditorStore) {
       inputSchema: valibotSchema(
         v.object({
           id: v.pipe(v.string(), v.description('Node ID')),
-          color: fillColorSchema
+          color: colorInputSchema
         })
       ),
       execute: async ({ id, color }) => {
+        const c = resolveColor(color)
         store.updateNodeWithUndo(
           id,
-          { fills: [{ type: 'SOLID', color, opacity: 1, visible: true }] },
+          { fills: [{ type: 'SOLID', color: c, opacity: 1, visible: true }] },
           'Set fill'
         )
-        return { id, color }
+        return { id, color: c }
       }
     }),
 
@@ -85,18 +93,19 @@ export function createAITools(store: EditorStore) {
       inputSchema: valibotSchema(
         v.object({
           id: v.pipe(v.string(), v.description('Node ID')),
-          color: fillColorSchema,
+          color: colorInputSchema,
           weight: v.optional(v.pipe(v.number(), v.minValue(0.1)), 1),
           align: v.optional(v.picklist(['INSIDE', 'CENTER', 'OUTSIDE']), 'INSIDE')
         })
       ),
       execute: async ({ id, color, weight, align }) => {
+        const c = resolveColor(color)
         store.updateNodeWithUndo(
           id,
-          { strokes: [{ color, weight, opacity: 1, visible: true, align }] },
+          { strokes: [{ color: c, weight, opacity: 1, visible: true, align }] },
           'Set stroke'
         )
-        return { id, color, weight }
+        return { id, color: c, weight }
       }
     }),
 
