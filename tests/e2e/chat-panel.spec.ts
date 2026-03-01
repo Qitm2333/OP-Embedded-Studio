@@ -138,7 +138,7 @@ test('model selector is visible and clickable', async () => {
   await trigger.click()
 
   await expect(page.getByRole('option', { name: /Claude Sonnet 4\.6/ })).toBeVisible()
-  await expect(page.getByText('Recommended')).toBeVisible()
+  await expect(page.getByText('Best for design')).toBeVisible()
   await expect(page.getByText('Free').first()).toBeVisible()
 
   await page.keyboard.press('Escape')

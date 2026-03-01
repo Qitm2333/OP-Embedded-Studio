@@ -1,4 +1,5 @@
 import { Chat } from '@ai-sdk/vue'
+import { DEFAULT_AI_MODEL } from '@open-pencil/core'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { DirectChatTransport, ToolLoopAgent } from 'ai'
 import dedent from 'dedent'
@@ -6,49 +7,11 @@ import { computed, ref, watch } from 'vue'
 
 import type { UIMessage } from 'ai'
 
+export { AI_MODELS as MODELS } from '@open-pencil/core'
+export type { ModelOption } from '@open-pencil/core'
+
 const API_KEY_STORAGE = 'open-pencil:openrouter-api-key'
 const MODEL_STORAGE = 'open-pencil:model'
-
-export interface ModelOption {
-  id: string
-  name: string
-  provider: string
-  tag?: string
-}
-
-export const MODELS: ModelOption[] = [
-  // Frontier
-  {
-    id: 'anthropic/claude-sonnet-4.6',
-    name: 'Claude Sonnet 4.6',
-    provider: 'Anthropic',
-    tag: 'Recommended'
-  },
-  {
-    id: 'anthropic/claude-opus-4.6',
-    name: 'Claude Opus 4.6',
-    provider: 'Anthropic',
-    tag: 'Smartest'
-  },
-  {
-    id: 'google/gemini-3.1-pro-preview',
-    name: 'Gemini 3.1 Pro',
-    provider: 'Google',
-    tag: '1M context'
-  },
-  { id: 'openai/gpt-5.3-codex', name: 'GPT-5.3 Codex', provider: 'OpenAI' },
-
-  // Fast & cheap
-  { id: 'google/gemini-3-flash-preview', name: 'Gemini 3 Flash', provider: 'Google', tag: 'Fast' },
-  { id: 'qwen/qwen3.5-flash-02-23', name: 'Qwen 3.5 Flash', provider: 'Qwen', tag: 'Cheap' },
-  { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', provider: 'DeepSeek', tag: 'Cheap' },
-
-  // Free
-  { id: 'qwen/qwen3-coder:free', name: 'Qwen3 Coder', provider: 'Qwen', tag: 'Free' },
-  { id: 'openai/gpt-oss-120b:free', name: 'GPT-OSS 120B', provider: 'OpenAI', tag: 'Free' }
-]
-
-export const DEFAULT_MODEL = MODELS[0].id
 
 const SYSTEM_PROMPT = dedent`
   You are a design assistant inside OpenPencil, a Figma-like design editor.
@@ -57,7 +20,7 @@ const SYSTEM_PROMPT = dedent`
 `
 
 const apiKey = ref(localStorage.getItem(API_KEY_STORAGE) ?? '')
-const modelId = ref(localStorage.getItem(MODEL_STORAGE) ?? DEFAULT_MODEL)
+const modelId = ref(localStorage.getItem(MODEL_STORAGE) ?? DEFAULT_AI_MODEL)
 const activeTab = ref<'design' | 'ai'>('design')
 
 watch(apiKey, (key) => {
