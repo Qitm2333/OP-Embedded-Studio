@@ -15,6 +15,7 @@ import IconSection from '~icons/lucide/layout-grid'
 import IconSquare from '~icons/lucide/square'
 import IconType from '~icons/lucide/type'
 
+import AppMenu from './AppMenu.vue'
 import PagesPanel from './PagesPanel.vue'
 import { useEditorStore } from '@/stores/editor'
 
@@ -225,6 +226,7 @@ function updateDropTarget(ev: PointerEvent) {
     class="flex min-w-0 flex-1 flex-col overflow-y-auto border-r border-border bg-panel"
     style="contain: paint layout style"
   >
+    <AppMenu />
     <PagesPanel />
     <header class="shrink-0 px-3 py-2 text-[11px] uppercase tracking-wider text-muted">
       Layers

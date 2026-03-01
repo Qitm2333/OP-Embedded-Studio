@@ -14,6 +14,7 @@ declare module 'vue' {
     ApiKeySetup: typeof import('./src/components/chat/ApiKeySetup.vue')['default']
     APIKeySetup: typeof import('./src/components/chat/APIKeySetup.vue')['default']
     AppearanceSection: typeof import('./src/components/properties/AppearanceSection.vue')['default']
+    AppMenu: typeof import('./src/components/AppMenu.vue')['default']
     CanvasContextMenu: typeof import('./src/components/CanvasContextMenu.vue')['default']
     ChatInput: typeof import('./src/components/chat/ChatInput.vue')['default']
     ChatMessage: typeof import('./src/components/chat/ChatMessage.vue')['default']
