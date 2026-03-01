@@ -25,8 +25,8 @@ function createAgent() {
     apiKey: apiKey.value,
     headers: {
       'X-OpenRouter-Title': 'OpenPencil',
-      'HTTP-Referer': 'https://github.com/dannote/open-pencil',
-    },
+      'HTTP-Referer': 'https://github.com/dannote/open-pencil'
+    }
   })
 
   return new ToolLoopAgent({
