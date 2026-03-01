@@ -41,7 +41,12 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
     canvas.width = w * dpr
     canvas.height = h * dpr
 
-    const surface = ck.MakeWebGLCanvasSurface(canvas, undefined, { preserveDrawingBuffer: 1 })
+    const isTest = new URLSearchParams(window.location.search).has('test')
+    const surface = ck.MakeWebGLCanvasSurface(
+      canvas,
+      undefined,
+      isTest ? { preserveDrawingBuffer: 1 } : undefined
+    )
     if (!surface) {
       console.error('Failed to create WebGL surface')
       return
@@ -54,6 +59,9 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
     canvas.dataset.ready = '1'
   }
 
+  const params = new URLSearchParams(window.location.search)
+  const showRulers = !params.has('no-rulers')
+
   let rafId = 0
 
   function renderNow() {
@@ -64,7 +72,7 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
     renderer.zoom = store.state.zoom
     renderer.viewportWidth = canvasRef.value?.clientWidth ?? 0
     renderer.viewportHeight = canvasRef.value?.clientHeight ?? 0
-    renderer.showRulers = !new URLSearchParams(window.location.search).has('no-rulers')
+    renderer.showRulers = showRulers
     renderer.pageColor = store.state.pageColor
     renderer.pageId = store.state.currentPageId
     renderer.render(store.graph, store.state.selectedIds, {

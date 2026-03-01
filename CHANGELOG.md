@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.2.2 (2026-03-01)
+## Unreleased
+
+### Performance
+
+- Cache ruler paints instead of allocating per frame
+- Only enable `preserveDrawingBuffer` in test mode
 
 ### Bug Fixes
 

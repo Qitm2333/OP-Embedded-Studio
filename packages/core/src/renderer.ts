@@ -132,6 +132,12 @@ export class SkiaRenderer {
   private fontProvider: TypefaceFontProvider | null = null
   private fontsLoaded = false
   private imageCache = new Map<string, CKImage>()
+  private rulerBgPaint: Paint
+  private rulerTickPaint: Paint
+  private rulerTextPaint: Paint
+  private rulerHlPaint: Paint
+  private rulerBadgePaint: Paint
+  private rulerLabelPaint: Paint
 
   panX = 0
   panY = 0
@@ -201,6 +207,32 @@ export class SkiaRenderer {
     this.opacityPaint = new ck.Paint()
 
     this.textFont = new ck.Font(null, DEFAULT_FONT_SIZE)
+
+    const bg = RULER_BG_COLOR
+    this.rulerBgPaint = new ck.Paint()
+    this.rulerBgPaint.setColor(ck.Color4f(bg.r, bg.g, bg.b, 1))
+
+    this.rulerTickPaint = new ck.Paint()
+    this.rulerTickPaint.setColor(
+      ck.Color4f(RULER_TICK_COLOR.r, RULER_TICK_COLOR.g, RULER_TICK_COLOR.b, 1)
+    )
+    this.rulerTickPaint.setStrokeWidth(1)
+    this.rulerTickPaint.setAntiAlias(true)
+
+    const tc = RULER_TEXT_COLOR
+    this.rulerTextPaint = new ck.Paint()
+    this.rulerTextPaint.setColor(ck.Color4f(tc.r, tc.g, tc.b, 1))
+    this.rulerTextPaint.setAntiAlias(true)
+
+    this.rulerHlPaint = new ck.Paint()
+    this.rulerHlPaint.setAntiAlias(true)
+
+    this.rulerBadgePaint = new ck.Paint()
+    this.rulerBadgePaint.setAntiAlias(true)
+
+    this.rulerLabelPaint = new ck.Paint()
+    this.rulerLabelPaint.setColor(ck.Color4f(1, 1, 1, 1))
+    this.rulerLabelPaint.setAntiAlias(true)
   }
 
   getFontProvider(): TypefaceFontProvider | null {
@@ -2084,9 +2116,9 @@ export class SkiaRenderer {
     const vh = this.viewportHeight
     if (vw === 0 || vh === 0) return
 
-    const bg = RULER_BG_COLOR
-    const bgPaint = new this.ck.Paint()
-    bgPaint.setColor(this.ck.Color4f(bg.r, bg.g, bg.b, 1))
+    const bgPaint = this.rulerBgPaint
+    const tickPaint = this.rulerTickPaint
+    const textPaint = this.rulerTextPaint
 
     canvas.drawRect(this.ck.LTRBRect(0, 0, vw, R), bgPaint)
     canvas.drawRect(this.ck.LTRBRect(0, R, R, vh), bgPaint)
@@ -2094,25 +2126,8 @@ export class SkiaRenderer {
     // Corner square
     canvas.drawRect(this.ck.LTRBRect(0, 0, R, R), bgPaint)
 
-    const tickPaint = new this.ck.Paint()
-    tickPaint.setColor(
-      this.ck.Color4f(RULER_TICK_COLOR.r, RULER_TICK_COLOR.g, RULER_TICK_COLOR.b, 1)
-    )
-    tickPaint.setStrokeWidth(1)
-    tickPaint.setAntiAlias(true)
-
-    const textColor = RULER_TEXT_COLOR
-    const textPaint = new this.ck.Paint()
-    textPaint.setColor(this.ck.Color4f(textColor.r, textColor.g, textColor.b, 1))
-    textPaint.setAntiAlias(true)
-
     const font = this.sizeFont ?? this.textFont
-    if (!font) {
-      bgPaint.delete()
-      tickPaint.delete()
-      textPaint.delete()
-      return
-    }
+    if (!font) return
 
     const step = this.rulerStep()
     const minorStep = step / 5
@@ -2205,11 +2220,10 @@ export class SkiaRenderer {
 
     // Selection highlight + badges
     if (selNodes.length > 0) {
-      const hlPaint = new this.ck.Paint()
-      hlPaint.setColor(this.selColor(RULER_HIGHLIGHT_ALPHA))
+      this.rulerHlPaint.setColor(this.selColor(RULER_HIGHLIGHT_ALPHA))
 
-      canvas.drawRect(this.ck.LTRBRect(Math.max(R, sx1), 0, sx2, R), hlPaint)
-      canvas.drawRect(this.ck.LTRBRect(0, Math.max(R, sy1), R, sy2), hlPaint)
+      canvas.drawRect(this.ck.LTRBRect(Math.max(R, sx1), 0, sx2, R), this.rulerHlPaint)
+      canvas.drawRect(this.ck.LTRBRect(0, Math.max(R, sy1), R, sy2), this.rulerHlPaint)
 
       this.drawRulerBadge(
         canvas,
@@ -2244,12 +2258,7 @@ export class SkiaRenderer {
         'vertical'
       )
 
-      hlPaint.delete()
     }
-
-    bgPaint.delete()
-    tickPaint.delete()
-    textPaint.delete()
   }
 
   private drawRulerBadge(
@@ -2267,11 +2276,7 @@ export class SkiaRenderer {
     const pad = RULER_BADGE_PADDING
     const h = RULER_BADGE_HEIGHT
 
-    const badgePaint = new this.ck.Paint()
-    badgePaint.setColor(this.selColor())
-    const labelPaint = new this.ck.Paint()
-    labelPaint.setColor(this.ck.Color4f(1, 1, 1, 1))
-    labelPaint.setAntiAlias(true)
+    this.rulerBadgePaint.setColor(this.selColor())
 
     if (axis === 'horizontal') {
       const bx = x - (textW + pad * 2) / 2
@@ -2282,9 +2287,9 @@ export class SkiaRenderer {
           RULER_BADGE_RADIUS,
           RULER_BADGE_RADIUS
         ),
-        badgePaint
+        this.rulerBadgePaint
       )
-      canvas.drawText(label, bx + pad, R * RULER_TEXT_BASELINE, labelPaint, font)
+      canvas.drawText(label, bx + pad, R * RULER_TEXT_BASELINE, this.rulerLabelPaint, font)
     } else {
       const bw = textW + pad * 2
       const bx = (R - h) / 2
@@ -2298,14 +2303,11 @@ export class SkiaRenderer {
           RULER_BADGE_RADIUS,
           RULER_BADGE_RADIUS
         ),
-        badgePaint
+        this.rulerBadgePaint
       )
-      canvas.drawText(label, -bw / 2 + pad, h / 2 - 3, labelPaint, font)
+      canvas.drawText(label, -bw / 2 + pad, h / 2 - 3, this.rulerLabelPaint, font)
       canvas.restore()
     }
-
-    badgePaint.delete()
-    labelPaint.delete()
   }
 
   private rulerStep(): number {
@@ -2339,6 +2341,12 @@ export class SkiaRenderer {
     this.sizeFont?.delete()
     this.fontMgr?.delete()
     this.fontProvider?.delete()
+    this.rulerBgPaint.delete()
+    this.rulerTickPaint.delete()
+    this.rulerTextPaint.delete()
+    this.rulerHlPaint.delete()
+    this.rulerBadgePaint.delete()
+    this.rulerLabelPaint.delete()
     this.surface.delete()
   }
 }
