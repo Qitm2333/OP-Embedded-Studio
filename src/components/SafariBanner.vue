@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { useLocalStorage } from '@vueuse/core'
+
 import { IS_TAURI } from '@/constants'
 
-const dismissed = ref(false)
+const dismissed = useLocalStorage('safari-banner-dismissed', false)
 const show = !IS_TAURI && typeof window !== 'undefined' && !window.showSaveFilePicker
 </script>
 
