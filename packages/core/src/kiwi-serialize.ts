@@ -92,9 +92,9 @@ export function mapToFigmaType(type: SceneNode['type']): string {
     case 'SECTION':
       return 'SECTION'
     case 'COMPONENT':
-      return 'COMPONENT'
+      return 'SYMBOL'
     case 'COMPONENT_SET':
-      return 'COMPONENT_SET'
+      return 'SYMBOL'
     case 'INSTANCE':
       return 'INSTANCE'
     case 'CONNECTOR':
