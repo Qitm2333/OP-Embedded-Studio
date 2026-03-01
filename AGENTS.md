@@ -10,6 +10,7 @@ Bun workspace with two packages:
 
 - `packages/core` — `@open-pencil/core`: scene graph, renderer, layout, codec, kiwi, clipboard, vector, snap, undo. Zero DOM deps, runs headless in Bun.
 - `packages/cli` — `@open-pencil/cli`: headless CLI for .fig inspection, export, linting. Uses `citty` + `agentfmt`.
+- `packages/docs` — `@open-pencil/docs`: VitePress documentation site. Run with `cd packages/docs && bun run dev`.
 
 The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files are thin re-export shims from `@open-pencil/core`.
 
@@ -117,6 +118,7 @@ The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files 
 - `NodeChange` is the central type for Kiwi encode/decode
 - Vector data uses reverse-engineered `vectorNetworkBlob` binary format — encoder/decoder in `packages/core/src/vector.ts`
 - showOpenFilePicker/showSaveFilePicker are File System Access API (Chrome/Edge), not Tauri-only — code has fallbacks
+- Safari save: no File System Access API → uses `<a>` download link with deferred `revokeObjectURL`. SafariBanner warns users about limitations.
 - Tauri detection: `IS_TAURI` constant from `packages/core/src/constants.ts` — don't use `'__TAURI_INTERNALS__' in window` inline
 - .fig export: compression with fflate (browser) or Tauri Rust commands
 - Test .fig round-trip by exporting and reimporting in Figma

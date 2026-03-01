@@ -188,8 +188,8 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Feature | Status | Notes |
 |---------|--------|-------|
 | .fig file import | ✅ | Full Kiwi codec: 194 definitions, ~390 fields per NodeChange |
-| .fig file export | ✅ | Kiwi encoding + Zstd compression + thumbnail generation |
-| Save / Save As | ✅ | ⌘S / ⇧⌘S with native OS dialogs (Tauri) |
+| .fig file export | ✅ | Kiwi encoding + Zstd compression + thumbnail generation; COMPONENT/COMPONENT_SET correctly mapped to SYMBOL for Figma round-trip |
+| Save / Save As | ✅ | ⌘S / ⇧⌘S; native dialogs (Tauri), File System Access API (Chrome/Edge), download fallback (Safari) |
 | Figma clipboard (paste) | ✅ | Decode fig-kiwi binary from Figma clipboard |
 | Figma clipboard (copy) | ✅ | Encode fig-kiwi binary that Figma can read |
 | Sketch file import | 🔲 | .sketch file parsing |

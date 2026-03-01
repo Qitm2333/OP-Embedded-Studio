@@ -4,22 +4,22 @@
 Build and development tooling. Vite 7 build system, oxlint linting, oxfmt formatting, typescript-go type checking, and Tailwind CSS 4 integration.
 ## Requirements
 ### Requirement: Vite 7 build system
-The project SHALL use Vite 7 as the build tool with dev server at port 1420 and HMR support. VitePress SHALL be installed as a devDependency for the documentation site. The `docs:dev`, `docs:build`, and `docs:preview` scripts SHALL be added to package.json.
+The project SHALL use Vite 7 as the build tool with dev server at port 1420 and HMR support. Documentation lives in `packages/docs/` as `@open-pencil/docs` workspace package with its own dev/build/preview scripts.
 
 #### Scenario: Dev server
 - **WHEN** `bun run dev` is executed
 - **THEN** Vite dev server starts at http://localhost:1420 with hot module replacement
 
-#### Scenario: Docs scripts available
-- **WHEN** `bun run docs:dev` is executed
+#### Scenario: Docs dev
+- **WHEN** `cd packages/docs && bun run dev` is executed
 - **THEN** VitePress dev server starts for the documentation site
 
 #### Scenario: Docs build
-- **WHEN** `bun run docs:build` is executed
-- **THEN** VitePress builds the documentation site to `docs/.vitepress/dist/`
+- **WHEN** `cd packages/docs && bun run build` is executed
+- **THEN** VitePress builds the documentation site to `packages/docs/.vitepress/dist/`
 
 #### Scenario: Docs preview
-- **WHEN** `bun run docs:preview` is executed
+- **WHEN** `cd packages/docs && bun run preview` is executed
 - **THEN** a static server previews the built documentation site
 
 ### Requirement: oxlint linting
@@ -79,7 +79,7 @@ The codebase SHALL maintain 0 oxlint warnings and 0 tsgo type errors. `bun run c
 - **THEN** both lint and typecheck pass with zero issues
 
 ### Requirement: Bun workspace monorepo
-The project SHALL use Bun workspaces with packages: root (app), packages/core (@open-pencil/core), packages/cli (@open-pencil/cli). The workspace is configured in the root package.json. CLI is runnable via `bun open-pencil` in the workspace.
+The project SHALL use Bun workspaces with packages: root (app), packages/core (@open-pencil/core), packages/cli (@open-pencil/cli), packages/docs (@open-pencil/docs). The workspace is configured in the root package.json. CLI is runnable via `bun open-pencil` in the workspace.
 
 #### Scenario: Workspace packages resolve
 - **WHEN** the app imports from @open-pencil/core
@@ -198,3 +198,24 @@ Each tool in schema.ts SHALL have clear description and parameter documentation 
 - **WHEN** AI reads parameter schema
 - **THEN** each parameter has type and description (e.g., `width: { type: 'number', description: 'Rectangle width in pixels' }`)
 
+
+### Requirement: CHANGELOG
+The project SHALL maintain a CHANGELOG.md in the root following Keep a Changelog conventions.
+
+#### Scenario: Changelog exists
+- **WHEN** user reads CHANGELOG.md
+- **THEN** version history with categorized changes (Editor, CLI, File Format, etc.) is listed
+
+### Requirement: npm trusted publishing
+Package configs SHALL include `repository` field and `provenance: true` for npm trusted publishing via GitHub Actions.
+
+#### Scenario: Publish with provenance
+- **WHEN** GitHub Actions release workflow runs
+- **THEN** packages are published to npm with provenance attestation
+
+### Requirement: CI app deployment
+The project SHALL have a GitHub Actions workflow (`app.yml`) for deploying the web app to app.openpencil.dev.
+
+#### Scenario: App deploys on push
+- **WHEN** code is pushed to main branch
+- **THEN** GitHub Actions builds and deploys the app

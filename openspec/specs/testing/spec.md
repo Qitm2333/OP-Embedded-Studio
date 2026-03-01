@@ -60,11 +60,11 @@ Unit tests SHALL verify Yoga auto-layout computation: direction, gap, padding, j
 - **THEN** all layout computation tests pass
 
 ### Requirement: Layers panel E2E tests
-E2E tests SHALL verify the layers panel: node visibility in tree, expand/collapse frames, selection sync between canvas and layers panel.
+E2E tests SHALL verify the layers panel: node visibility in tree, expand/collapse frames, selection sync between canvas and layers panel. Test fixtures match current demo shapes (Components, App Preview).
 
 #### Scenario: Run layers panel E2E
 - **WHEN** the layers panel E2E tests run
-- **THEN** all tests pass verifying tree structure, visibility toggles, and selection sync
+- **THEN** all tests pass verifying tree structure, visibility toggles, and selection sync with updated demo shape names
 
 ### Requirement: Component-instance sync unit tests
 Unit tests SHALL cover the component-instance sync lifecycle: instance creation with `componentId` mapping on children, sync propagation of property changes, override preservation during sync, new child addition to instances, and detach breaking the link.

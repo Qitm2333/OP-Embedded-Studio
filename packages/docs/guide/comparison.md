@@ -6,15 +6,15 @@ Why compare? OpenPencil exists because closed design platforms control what's po
 
 | Metric | Open Pencil | Penpot |
 |--------|-------------|--------|
-| Total LOC | **~14,500** | **~292,000** |
-| Source files | 53 | ~2,900 |
+| Total LOC | **~26,000** | **~292,000** |
+| Source files | 125 | ~2,900 |
 | Languages | TypeScript, Vue | Clojure, ClojureScript, Rust, JS, SQL, SCSS |
 | Rendering engine | 1,646 LOC (TS) | 22,000 LOC (Rust) |
 | UI code | ~4,500 LOC | ~175,000 LOC (CLJS + SCSS) |
 | Backend | None (local-first) | 32,600 LOC + 151 SQL files |
-| LOC ratio | **1x** | **~20x** |
+| LOC ratio | **1x** | **~11x** |
 
-Open Pencil is **20x smaller** — and that's the whole point. It's not a simplification; it's a fundamentally different architecture.
+Open Pencil is **11x smaller** — and that's the whole point. It's not a simplification; it's a fundamentally different architecture.
 
 ## 2. Architecture
 
@@ -280,4 +280,4 @@ OpenPencil ships with an [`eval` command](/eval-command) that provides a Figma-c
 | **Self-hosting** | Penpot | Docker-ready vs desktop-only |
 | **Ecosystem maturity** | Penpot | Years of production vs early stage |
 
-Open Pencil is architecturally superior for a design tool — leaner, faster, more maintainable, and Figma-compatible by design. Penpot carries the weight of a server-first architecture with 20x more code spread across 4 languages, which creates compounding maintenance burden. The tradeoff is that Penpot already has production collaboration and a plugin ecosystem, while Open Pencil is still building toward those.
+Open Pencil is architecturally superior for a design tool — leaner, faster, more maintainable, and Figma-compatible by design. Penpot carries the weight of a server-first architecture with 11x more code spread across 4 languages, which creates compounding maintenance burden. The tradeoff is that Penpot already has production collaboration and a plugin ecosystem, while Open Pencil is still building toward those.

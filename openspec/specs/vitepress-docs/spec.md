@@ -1,21 +1,21 @@
 # vitepress-docs Specification
 
 ## Purpose
-VitePress documentation site at `docs/` with content derived from PLAN.md, README, and openspec specs. Includes guide pages (getting started, architecture, tech stack), reference pages (keyboard shortcuts, node types, MCP tools), and development pages (contributing, testing, openspec workflow, roadmap).
+VitePress documentation site at `packages/docs/` as `@open-pencil/docs` workspace package. Content derived from PLAN.md, README, and openspec specs. Includes guide pages (getting started, architecture, tech stack), reference pages (keyboard shortcuts, node types, MCP tools), and development pages (contributing, testing, openspec workflow, roadmap).
 ## Requirements
 ### Requirement: VitePress documentation site
-The project SHALL have a VitePress documentation site in the `docs/` directory with its own `.vitepress/config.ts` configuration, independent from the app's Vite config.
+The project SHALL have a VitePress documentation site in the `packages/docs/` directory as `@open-pencil/docs` workspace package, with its own `.vitepress/config.ts` configuration and `package.json`.
 
 #### Scenario: Docs dev server starts
-- **WHEN** `bun run docs:dev` is executed
+- **WHEN** `cd packages/docs && bun run dev` is executed
 - **THEN** VitePress dev server starts and serves the documentation site
 
 #### Scenario: Docs build succeeds
-- **WHEN** `bun run docs:build` is executed
-- **THEN** VitePress produces a static site in `docs/.vitepress/dist/`
+- **WHEN** `cd packages/docs && bun run build` is executed
+- **THEN** VitePress produces a static site in `packages/docs/.vitepress/dist/`
 
 ### Requirement: Landing page
-The docs site SHALL have an index.md landing page with project name, tagline "Open-source Figma alternative. Fully local, AI-native, programmable.", and quick navigation to guide and reference sections. The feature cards SHALL reflect the five pillars: open source, Figma-compatible, AI-native, fully local, programmable.
+The docs site SHALL have an index.md landing page with project name, tagline "Open-source Figma alternative. Fully local, AI-native, programmable.", quick navigation to guide and reference sections, download links (GitHub Releases, app.openpencil.dev), and "no subscription, bring your own API key" messaging. The feature cards SHALL reflect the five pillars: open source, Figma-compatible, AI-native, fully local, programmable.
 
 #### Scenario: Landing page loads
 - **WHEN** user opens the docs site root URL
@@ -81,10 +81,10 @@ The docs site SHALL use dark appearance to match the editor's dark aesthetic.
 - **THEN** the site renders with VitePress dark theme
 
 ### Requirement: Build artifacts excluded from git
-`docs/.vitepress/dist` and `docs/.vitepress/cache` SHALL be listed in `.gitignore`.
+`packages/docs/.vitepress/dist` and `packages/docs/.vitepress/cache` SHALL be listed in `.gitignore`.
 
 #### Scenario: Gitignore entries
-- **WHEN** `bun run docs:build` creates output in `docs/.vitepress/dist/`
+- **WHEN** `bun run docs:build` creates output in `packages/docs/.vitepress/dist/`
 - **THEN** the output directory is not tracked by git
 
 ### Requirement: Docs reflect sections feature
@@ -153,7 +153,7 @@ The VitePress sidebar SHALL include a "Comparison" link in the Guide section aft
 
 ### Requirement: Eval command documentation
 
-The docs site SHALL include comprehensive documentation for the eval command in `docs/eval-command.md`.
+The docs site SHALL include comprehensive documentation for the eval command in `packages/docs/eval-command.md`.
 
 #### Scenario: Eval command page exists
 - **WHEN** user navigates to `/eval-command`
@@ -196,7 +196,7 @@ The docs site SHALL include comprehensive documentation for the eval command in 
 The docs site SHALL update comparison matrices to reflect new features (app menu, eval command, Figma Plugin API).
 
 #### Scenario: Figma comparison update
-- **WHEN** user reads `docs/guide/figma-comparison.md`
+- **WHEN** user reads `packages/docs/guide/figma-comparison.md`
 - **THEN** Interface & Navigation section includes app menu status
 
 #### Scenario: Plugin API row
@@ -208,7 +208,7 @@ The docs site SHALL update comparison matrices to reflect new features (app menu
 - **THEN** AI tools row is updated to reflect unified tool definitions and eval integration
 
 #### Scenario: Penpot comparison update
-- **WHEN** user reads `docs/guide/comparison.md`
+- **WHEN** user reads `packages/docs/guide/comparison.md`
 - **THEN** Architecture section highlights headless scripting advantage (eval command with Plugin API that Penpot lacks)
 
 ### Requirement: App menu documentation
