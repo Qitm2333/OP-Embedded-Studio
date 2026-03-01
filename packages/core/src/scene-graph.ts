@@ -1,3 +1,5 @@
+import { DEFAULT_STROKE_MITER_LIMIT } from './constants'
+
 export type { GUID, Color } from './types'
 
 export type HandleMirroring = 'NONE' | 'ANGLE' | 'ANGLE_AND_LENGTH'
@@ -365,7 +367,7 @@ function createDefaultNode(type: NodeType, overrides: Partial<SceneNode> = {}): 
     borderBottomWeight: 0,
     borderLeftWeight: 0,
     independentStrokeWeights: false,
-    strokeMiterLimit: 4,
+    strokeMiterLimit: DEFAULT_STROKE_MITER_LIMIT,
     minWidth: null,
     maxWidth: null,
     minHeight: null,
