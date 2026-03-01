@@ -1,18 +1,15 @@
-import * as decoding from 'lib0/decoding'
-import * as encoding from 'lib0/encoding'
 import { ref, onUnmounted, computed } from 'vue'
 import * as awarenessProtocol from 'y-protocols/awareness'
-import * as syncProtocol from 'y-protocols/sync'
+import { IndexeddbPersistence } from 'y-indexeddb'
+import { joinRoom as joinTrysteroRoom } from 'trystero'
+import type { Room } from 'trystero'
 import * as Y from 'yjs'
 
 import type { SceneNode } from '@/engine/scene-graph'
 import type { EditorStore } from '@/stores/editor'
 import type { Color } from '@/types'
 
-const MSG_SYNC = 0
-const MSG_AWARENESS = 1
-
-const COLLAB_URL = import.meta.env.VITE_COLLAB_URL || 'wss://collab.openpencil.dev'
+const TRYSTERO_APP_ID = 'openpencil'
 
 const PEER_COLORS: Color[] = [
   { r: 0.96, g: 0.26, b: 0.21, a: 1 },
@@ -22,7 +19,7 @@ const PEER_COLORS: Color[] = [
   { r: 0.61, g: 0.15, b: 0.69, a: 1 },
   { r: 1.0, g: 0.34, b: 0.13, a: 1 },
   { r: 0.0, g: 0.74, b: 0.83, a: 1 },
-  { r: 0.91, g: 0.12, b: 0.39, a: 1 }
+  { r: 0.91, g: 0.12, b: 0.39, a: 1 },
 ]
 
 export interface RemotePeer {
@@ -47,34 +44,36 @@ export function useCollab(store: EditorStore) {
     roomId: null,
     peers: [],
     localName: localStorage.getItem('op-collab-name') || '',
-    localColor: PEER_COLORS[Math.floor(Math.random() * PEER_COLORS.length)]
+    localColor: PEER_COLORS[Math.floor(Math.random() * PEER_COLORS.length)],
   })
 
-  let ws: WebSocket | null = null
   let ydoc: Y.Doc | null = null
   let awareness: awarenessProtocol.Awareness | null = null
   let ynodes: Y.Map<Y.Map<unknown>> | null = null
-  let ymeta: Y.Map<unknown> | null = null
+  let room: Room | null = null
+  let persistence: IndexeddbPersistence | null = null
   let suppressGraphEvents = false
   let suppressYjsEvents = false
+  let sendYjsUpdate: ((data: Uint8Array, peerId?: string) => void) | null = null
+  let sendAwareness: ((data: Uint8Array, peerId?: string) => void) | null = null
+  let sendSyncStep1: ((data: Uint8Array, peerId?: string) => void) | null = null
 
   const remotePeers = computed(() => state.value.peers)
 
   function connect(roomId: string) {
-    if (ws) disconnect()
+    if (room) disconnect()
 
     state.value.roomId = roomId
     ydoc = new Y.Doc()
     awareness = new awarenessProtocol.Awareness(ydoc)
     ynodes = ydoc.getMap('nodes')
-    ymeta = ydoc.getMap('meta')
 
-    // Listen for awareness changes → update peers list
+    persistence = new IndexeddbPersistence(`op-room-${roomId}`, ydoc)
+
     awareness.on('change', () => {
       updatePeersList()
     })
 
-    // Listen for remote Yjs changes → apply to SceneGraph
     ynodes.observeDeep((events) => {
       if (suppressYjsEvents) return
       suppressGraphEvents = true
@@ -86,41 +85,78 @@ export function useCollab(store: EditorStore) {
       store.requestRender()
     })
 
-    // Register doc update listener before opening WebSocket
-    ydoc.on('update', (update: Uint8Array, origin: unknown) => {
-      if (origin === 'remote') return
-      const encoder = encoding.createEncoder()
-      encoding.writeVarUint(encoder, MSG_SYNC)
-      syncProtocol.writeUpdate(encoder, update)
-      sendBinary(encoding.toUint8Array(encoder))
+    room = joinTrysteroRoom({ appId: TRYSTERO_APP_ID }, roomId)
+
+    const [sendUpdate, getUpdate] = room.makeAction<Uint8Array>('yjs-update')
+    const [sendAw, getAw] = room.makeAction<Uint8Array>('awareness')
+    const [sendSync, getSync] = room.makeAction<Uint8Array>('sync-step1')
+    const [sendSyncReply, getSyncReply] = room.makeAction<Uint8Array>('sync-reply')
+
+    sendYjsUpdate = (data, peerId) =>
+      peerId ? sendUpdate(data, peerId) : sendUpdate(data)
+    sendAwareness = (data, peerId) =>
+      peerId ? sendAw(data, peerId) : sendAw(data)
+    sendSyncStep1 = (data, peerId) =>
+      peerId ? sendSync(data, peerId) : sendSync(data)
+
+    getUpdate((data) => {
+      if (!ydoc) return
+      Y.applyUpdate(ydoc, new Uint8Array(data), 'remote')
     })
 
-    // WebSocket connection
-    const url = `${COLLAB_URL}/room/${roomId}`
-    ws = new WebSocket(url)
-    ws.binaryType = 'arraybuffer'
+    getAw((data) => {
+      if (!awareness) return
+      awarenessProtocol.applyAwarenessUpdate(awareness, new Uint8Array(data), null)
+    })
 
-    ws.onopen = () => {
+    getSync((data, peerId) => {
+      if (!ydoc) return
+      const sv = new Uint8Array(data)
+      const update = Y.encodeStateAsUpdate(ydoc, sv)
+      sendSyncReply(update, peerId)
+    })
+
+    getSyncReply((data) => {
+      if (!ydoc) return
+      Y.applyUpdate(ydoc, new Uint8Array(data), 'remote')
+    })
+
+    ydoc.on('update', (update: Uint8Array, origin: unknown) => {
+      if (origin === 'remote') return
+      sendYjsUpdate?.(update)
+    })
+
+    awareness.on('update', ({ added, updated, removed }: {
+      added: number[]
+      updated: number[]
+      removed: number[]
+    }) => {
+      const changedClients = [...added, ...updated, ...removed]
+      const encodedUpdate = awarenessProtocol.encodeAwarenessUpdate(awareness!, changedClients)
+      sendAwareness?.(encodedUpdate)
+    })
+
+    room.onPeerJoin((peerId) => {
       state.value.connected = true
-      broadcastAwareness()
-      if (ymeta) ymeta.set('roomId', roomId)
-    }
+      const sv = Y.encodeStateVector(ydoc!)
+      sendSyncStep1?.(sv, peerId)
 
-    ws.onmessage = (event) => {
-      if (!(event.data instanceof ArrayBuffer)) return
-      handleMessage(new Uint8Array(event.data))
-    }
+      if (awareness) {
+        const encodedUpdate = awarenessProtocol.encodeAwarenessUpdate(
+          awareness,
+          [awareness.clientID]
+        )
+        sendAwareness?.(encodedUpdate, peerId)
+      }
+    })
 
-    ws.onclose = () => {
-      state.value.connected = false
-      // TODO: reconnect logic
-    }
+    room.onPeerLeave(() => {
+      updatePeersList()
+    })
 
-    ws.onerror = () => {
-      state.value.connected = false
-    }
+    state.value.connected = true
+    broadcastAwareness()
 
-    // Sync local SceneGraph → Yjs on graph mutations
     const origUpdateNode = store.graph.updateNode.bind(store.graph)
     store.graph.updateNode = (id: string, changes: Partial<SceneNode>) => {
       origUpdateNode(id, changes)
@@ -131,58 +167,31 @@ export function useCollab(store: EditorStore) {
   }
 
   function disconnect() {
-    if (ws) {
-      ws.close()
-      ws = null
-    }
+    room?.leave()
+    room = null
+    sendYjsUpdate = null
+    sendAwareness = null
+    sendSyncStep1 = null
+
     if (awareness) {
       awareness.destroy()
       awareness = null
+    }
+    if (persistence) {
+      persistence.destroy()
+      persistence = null
     }
     if (ydoc) {
       ydoc.destroy()
       ydoc = null
     }
     ynodes = null
-    ymeta = null
     state.value.connected = false
     state.value.roomId = null
     state.value.peers = []
+    store.state.remoteCursors = []
+    store.requestRender()
   }
-
-  function handleMessage(data: Uint8Array) {
-    if (!ydoc || !awareness) return
-
-    const decoder = decoding.createDecoder(data)
-    const msgType = decoding.readVarUint(decoder)
-
-    switch (msgType) {
-      case MSG_SYNC: {
-        const encoder = encoding.createEncoder()
-        encoding.writeVarUint(encoder, MSG_SYNC)
-        syncProtocol.readSyncMessage(decoder, encoder, ydoc, null)
-
-        if (encoding.length(encoder) > 1) {
-          sendBinary(encoding.toUint8Array(encoder))
-        }
-        break
-      }
-
-      case MSG_AWARENESS: {
-        const update = decoding.readVarUint8Array(decoder)
-        awarenessProtocol.applyAwarenessUpdate(awareness, update, null)
-        break
-      }
-    }
-  }
-
-  function sendBinary(data: Uint8Array) {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(data)
-    }
-  }
-
-  // Sync doc updates to server
 
   function syncNodeToYjs(nodeId: string) {
     if (!ydoc || !ynodes) return
@@ -230,7 +239,6 @@ export function useCollab(store: EditorStore) {
   function applyYjsToGraph(events: Y.YEvent<Y.Map<unknown>>[]) {
     for (const event of events) {
       if (event.target === ynodes) {
-        // Top-level additions/deletions of nodes
         for (const [key, change] of event.changes.keys) {
           if (change.action === 'add') {
             const ynode = ynodes!.get(key)
@@ -240,7 +248,6 @@ export function useCollab(store: EditorStore) {
           }
         }
       } else if (event.target.parent === ynodes) {
-        // Property changes within a node's Y.Map
         const nodeId = findNodeIdForYMap(event.target as Y.Map<unknown>)
         if (nodeId) {
           const ynode = ynodes!.get(nodeId)
@@ -259,19 +266,15 @@ export function useCollab(store: EditorStore) {
   }
 
   function applyYnodeToGraph(nodeId: string, ynode: Y.Map<unknown>) {
+    const JSON_FIELDS = new Set([
+      'childIds', 'fills', 'strokes', 'effects',
+      'vectorNetwork', 'boundVariables', 'styleRuns',
+    ])
     const existing = store.graph.getNode(nodeId)
     const props: Record<string, unknown> = {}
 
     for (const [key, value] of ynode.entries()) {
-      if (
-        key === 'childIds' ||
-        key === 'fills' ||
-        key === 'strokes' ||
-        key === 'effects' ||
-        key === 'vectorNetwork' ||
-        key === 'boundVariables' ||
-        key === 'styleRuns'
-      ) {
+      if (JSON_FIELDS.has(key)) {
         try {
           props[key] = typeof value === 'string' ? JSON.parse(value) : value
         } catch {
@@ -285,12 +288,10 @@ export function useCollab(store: EditorStore) {
     if (existing) {
       store.graph.updateNode(nodeId, props as Partial<SceneNode>)
     } else {
-      // New node from remote — create it
       const parentId = props.parentId as string
       if (parentId && store.graph.getNode(parentId)) {
         const type = props.type as SceneNode['type']
         const node = store.graph.createNode(type, parentId, props as Partial<SceneNode>)
-        // Override the auto-generated id with the actual id
         store.graph.nodes.delete(node.id)
         node.id = nodeId
         store.graph.nodes.set(nodeId, node)
@@ -298,12 +299,11 @@ export function useCollab(store: EditorStore) {
     }
   }
 
-  // Awareness: broadcast local cursor/selection
   function broadcastAwareness() {
     if (!awareness) return
     awareness.setLocalStateField('user', {
       name: state.value.localName,
-      color: state.value.localColor
+      color: state.value.localColor,
     })
   }
 
@@ -333,13 +333,11 @@ export function useCollab(store: EditorStore) {
         name: user.name || 'Anonymous',
         color: user.color || PEER_COLORS[clientId % PEER_COLORS.length],
         cursor: peerState.cursor as RemotePeer['cursor'],
-        selection: peerState.selection as string[]
+        selection: peerState.selection as string[],
       })
     })
 
     state.value.peers = peers
-
-    // Update store's remoteCursors for renderer
     store.state.remoteCursors = peers
       .filter((p) => p.cursor && p.cursor.pageId === currentPageId)
       .map((p) => ({
@@ -347,7 +345,7 @@ export function useCollab(store: EditorStore) {
         color: p.color,
         x: p.cursor!.x,
         y: p.cursor!.y,
-        selection: p.selection
+        selection: p.selection,
       }))
     store.requestRender()
   }
@@ -390,6 +388,6 @@ export function useCollab(store: EditorStore) {
     shareCurrentDoc,
     updateCursor,
     updateSelection,
-    setLocalName
+    setLocalName,
   }
 }
