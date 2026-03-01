@@ -29,3 +29,4 @@ test-results/
 # Git worktrees for parallel agent work
 .worktrees/
 .env
+docs/.vitepress/cache/

@@ -24,7 +24,7 @@ Double-clicking a text node SHALL enter canvas-native inline editing mode. A hid
 - **THEN** the phantom textarea handles compositionstart/compositionend events and the composed text is inserted into the TextEditor
 
 ### Requirement: TextEditor class in core
-A TextEditor class SHALL live in packages/core/src/text-editor.ts providing cursor positioning, text selection, word boundary detection, and line navigation using CanvasKit Paragraph API (getGlyphPositionAtCoordinate, getRectsForRange, getLineMetrics). It SHALL support: insert, backspace, delete, select all, select word, move left/right/up/down, move to line start/end, move word left/right, and extend selection with Shift.
+A TextEditor class SHALL live in packages/core/src/text-editor.ts providing cursor positioning, text selection, word boundary detection, and line navigation using CanvasKit Paragraph API (getGlyphPositionAtCoordinate, getRectsForRange, getLineMetrics). It SHALL support: insert, backspace, delete, select all, select word, selectLine, selectLineAt, move left/right/up/down, move to line start/end, move word left/right, and extend selection with Shift.
 
 #### Scenario: Cursor positioning
 - **WHEN** user clicks inside a text node during editing
@@ -33,6 +33,10 @@ A TextEditor class SHALL live in packages/core/src/text-editor.ts providing curs
 #### Scenario: Word selection
 - **WHEN** user double-clicks a word during text editing
 - **THEN** the word is selected (from word boundary to word boundary)
+
+#### Scenario: Line selection
+- **WHEN** selectLineAt is called at a position within line 2
+- **THEN** the entire second line is selected
 
 #### Scenario: Line navigation
 - **WHEN** user presses ⌘← during text editing
@@ -50,11 +54,19 @@ The phantom textarea SHALL handle keyboard navigation with modifier support: ⌥
 - **THEN** the selected text is copied to the clipboard
 
 ### Requirement: Text selection via mouse drag
-Clicking inside a text node during editing SHALL position the cursor. Dragging SHALL extend the selection. Clicking outside the text node bounds SHALL commit the edit and exit editing mode.
+Clicking inside a text node during editing SHALL position the cursor. Dragging SHALL extend the selection. Double-click SHALL select the word at click position. Triple-click SHALL select all text. Clicking outside the text node bounds SHALL commit the edit and exit editing mode.
 
 #### Scenario: Drag to select
 - **WHEN** user clicks and drags inside a text node during editing
 - **THEN** the text between click start and current position is selected
+
+#### Scenario: Double-click selects word
+- **WHEN** user double-clicks on "world" in "Hello world" during editing
+- **THEN** "world" is selected
+
+#### Scenario: Triple-click selects all
+- **WHEN** user triple-clicks inside a text node during editing
+- **THEN** all text is selected
 
 #### Scenario: Click outside commits
 - **WHEN** user clicks outside the editing text node
@@ -110,3 +122,25 @@ A blue outline SHALL appear around a text node during editing to indicate edit m
 #### Scenario: Edit mode indicator
 - **WHEN** user is editing a text node inline
 - **THEN** a blue outline is visible around the text node bounds
+
+### Requirement: Rich text style runs
+Text nodes SHALL support per-character formatting via StyleRun arrays: `{start, length, style}` where style includes fontWeight, italic (boolean), and textDecoration (UNDERLINE, STRIKETHROUGH). ⌘B toggles bold, ⌘I toggles italic, ⌘U toggles underline on the current selection. With no selection, the shortcut toggles the whole-node style. Style runs adjust on insert/delete to preserve formatting.
+
+#### Scenario: Bold selection
+- **WHEN** user selects "world" in "Hello world" and presses ⌘B
+- **THEN** the word "world" renders bold while "Hello " stays regular
+
+#### Scenario: Toggle italic on whole node
+- **WHEN** user presses ⌘I with no text selected in a text node
+- **THEN** the entire text node toggles italic
+
+#### Scenario: Style preservation on insert
+- **WHEN** user types "X" between a bold and regular segment
+- **THEN** the inserted character inherits the style of the preceding segment and run boundaries adjust
+
+### Requirement: .fig roundtrip for style runs
+The .fig import SHALL parse characterStyleIDs and styleOverrideTable from TextData into StyleRun arrays. The .fig export SHALL write back with a deduped style table.
+
+#### Scenario: Import rich text from .fig
+- **WHEN** a .fig file with mixed bold/italic text is imported
+- **THEN** the style runs are correctly reconstructed

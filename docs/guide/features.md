@@ -33,9 +33,17 @@ Shift+A toggles auto-layout on a frame or wraps selected nodes.
 
 Canvas-native text editing — no DOM textarea overlay on screen. A `TextEditor` class in `@open-pencil/core` handles cursor positioning, text selection, word boundary detection, and line navigation using the CanvasKit Paragraph API (`getGlyphPositionAtCoordinate`, `getRectsForRange`, `getLineMetrics`). A hidden phantom textarea captures keyboard input, IME composition, and clipboard events.
 
-Double-click a text node to enter edit mode. The canvas renders a blinking caret, translucent blue selection rectangles, and a blue outline around the node. Click and drag to select text, double-click a word to select it. Keyboard navigation with modifier support: <kbd>⌥</kbd><kbd>←</kbd>/<kbd>→</kbd> for word movement, <kbd>⌘</kbd><kbd>←</kbd>/<kbd>→</kbd> for line start/end, <kbd>⌥</kbd><kbd>⌫</kbd> for word delete, <kbd>⌘</kbd><kbd>⌫</kbd> for line delete. Shift extends selection. <kbd>Esc</kbd> or clicking outside commits the edit.
+Double-click a text node to enter edit mode. The canvas renders a blinking caret, translucent blue selection rectangles, and a blue outline around the node. Click and drag to select text, double-click a word to select it, triple-click to select all. Keyboard navigation with modifier support: <kbd>⌥</kbd><kbd>←</kbd>/<kbd>→</kbd> for word movement, <kbd>⌘</kbd><kbd>←</kbd>/<kbd>→</kbd> for line start/end, <kbd>⌥</kbd><kbd>⌫</kbd> for word delete, <kbd>⌘</kbd><kbd>⌫</kbd> for line delete. Shift extends selection. <kbd>Esc</kbd> or clicking outside commits the edit.
 
 **Font picker** with virtual scroll (reka-ui ListboxVirtualizer), search filter, and CSS font preview — each font name renders in its own typeface. In Tauri, system fonts are enumerated via Rust `font-kit` crate (`list_system_fonts`/`load_system_font` commands) with OnceLock caching for instant picker access. In browser, the Local Font Access API is used when available.
+
+## Rich Text Formatting
+
+Per-character formatting within a single text node. Select text and press <kbd>⌘</kbd><kbd>B</kbd> for bold, <kbd>⌘</kbd><kbd>I</kbd> for italic, <kbd>⌘</kbd><kbd>U</kbd> for underline, or use the B/I/U/S buttons in the Typography section. With no selection, the shortcut toggles the whole-node style.
+
+Implemented via a StyleRun model — an array of `{start, length, style}` segments where style includes fontWeight, italic, and textDecoration. The renderer uses CanvasKit ParagraphBuilder.pushStyle/pop to render mixed formatting in a single paragraph. Style runs adjust automatically on insert and delete to preserve formatting boundaries.
+
+Rich text formatting is preserved during .fig import/export — `characterStyleIDs` and `styleOverrideTable` from Figma's TextData are imported as StyleRun arrays and exported back with a deduped style table.
 
 ## Undo/Redo
 
@@ -163,5 +171,26 @@ The engine is extracted to `packages/core/` (@open-pencil/core) — scene-graph,
 - `open-pencil tree <file>` — visual node tree
 - `open-pencil find <file>` — search by name/type
 - `open-pencil export <file>` — render to PNG/JPG/WEBP at any scale
+- `open-pencil analyze colors <file>` — color palette usage with clustering
+- `open-pencil analyze typography <file>` — font/size/weight distribution
+- `open-pencil analyze spacing <file>` — gap/padding values with grid check
+- `open-pencil analyze clusters <file>` — repeated patterns (potential components)
+- `open-pencil node <file> <id>` — detailed properties of a node by ID
+- `open-pencil pages <file>` — list pages with node counts
+- `open-pencil variables <file>` — list design variables and collections
 
 All commands support `--json` for machine-readable output. Runnable via `bun open-pencil` in the workspace. See [Project Structure](/development/contributing#project-structure) for the full monorepo layout.
+
+## JSX Renderer
+
+Programmatic design creation via TreeNode builder functions exported from `@open-pencil/core`: Frame, Text, Rectangle, Ellipse, and others. Supports Tailwind-like shorthand props — `w`, `h`, `bg`, `rounded`, `flex`, `gap`, `p`/`px`/`py`, `justify`, `items`, `shadow`, `blur`.
+
+Two rendering paths:
+- `renderTreeNode()` — tree → scene graph (any runtime, no external deps)
+- `renderJsx()` — JSX string → esbuild → tree → scene graph (CLI/headless)
+
+Covered by 27 tests for all node types, layout props, effects, and nesting.
+
+## Code Quality
+
+Copy-paste detection via jscpd — reduced project-wide duplication from 15.6% to 0.62%. Kiwi serialization consolidated into `kiwi-serialize.ts` (shared by clipboard, fig-export, and the CLI). The .fig import pipeline was optimized from O(n²) to O(n) by building a children index upfront — material3.fig (87K nodes) went from 37s to 535ms. ByteBuffer optimized with inline readVarUint and TextDecoder for strings.

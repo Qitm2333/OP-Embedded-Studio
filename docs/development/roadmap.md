@@ -86,6 +86,9 @@ Components, instances, overrides, variables, collections, modes, image export.
 - ColorInput component extraction, ColorPicker alpha slider checkerboard fix
 - App identity: pencil icon, Cargo crate open_pencil, macOS Dock "OpenPencil"
 - Splash loader during WASM initialization
+- Rich text style runs: per-selection ⌘B/I/U, StyleRun model, ParagraphBuilder pushStyle/pop, .fig roundtrip
+- B/I/U/S toggle buttons in TypographySection
+- Double-click (word), triple-click (select all) text selection
 
 **Remaining (deferred to Phase 6):**
 - Variant switching
@@ -98,7 +101,12 @@ Core extraction, CLI, MCP server, design guidelines, screenshot verification loo
 
 **Delivered:**
 - @open-pencil/core extracted to packages/core/ (zero DOM deps, Bun workspace)
-- @open-pencil/cli with headless .fig operations (info, tree, find, export), CanvasKit CPU rasterization, --json output
+- @open-pencil/cli with headless .fig operations (info, tree, find, export, analyze, node, pages, variables), CanvasKit CPU rasterization, --json output
+- JSX renderer: TreeNode builders (Frame, Text, Rectangle, etc.), renderTreeNode/renderJsx, Tailwind-like shorthand props, 27 tests
+- jscpd copy-paste detection (15.6% → 0.62%), kiwi-serialize.ts consolidation
+- .fig roundtrip tests with LFS fixtures (material3.fig 87K nodes, nuxtui.fig 314K nodes)
+- .fig import O(n²) → O(n) fix (37s → 535ms on 87K nodes), ByteBuffer optimization
+- test:coverage script
 - npm publishing preparation for core and cli packages
 
 **Planned:**

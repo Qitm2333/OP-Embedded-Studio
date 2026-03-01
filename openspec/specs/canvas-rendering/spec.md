@@ -206,3 +206,10 @@ During text editing, the renderer SHALL draw on the canvas: a blue outline aroun
 #### Scenario: Blue outline during editing
 - **WHEN** user is editing a text node
 - **THEN** a blue outline is drawn around the text node bounds (at selection color)
+
+### Requirement: Mixed-style text rendering
+The renderer SHALL render text nodes with per-character formatting using CanvasKit ParagraphBuilder.pushStyle/pop. Each StyleRun segment pushes its own TextStyle (weight, slant, decoration) before adding text, then pops to restore the default style.
+
+#### Scenario: Render mixed bold and regular text
+- **WHEN** a text node has "Hello " (regular) + "world" (bold)
+- **THEN** the renderer outputs a single Paragraph with two style segments, "world" visually bold

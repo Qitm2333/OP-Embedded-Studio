@@ -6,7 +6,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 ✅ Supported — feature works end-to-end · 🟡 Partial — core behavior exists, some sub-features missing · 🔲 Not yet implemented
 :::
 
-**Coverage:** 79 of 150 Figma feature items addressed — 64 ✅ fully supported, 15 🟡 partial, 71 🔲 not yet. Last updated: 2026-03-01 (notes updated for text editing, fonts, variables).
+**Coverage:** 80 of 150 Figma feature items addressed — 64 ✅ fully supported, 16 🟡 partial, 70 🔲 not yet. Last updated: 2026-03-01.
 
 ## Interface & Navigation
 
@@ -78,13 +78,13 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Text tool & inline editing | ✅ | T to create, double-click to edit, canvas-native with phantom textarea, cursor/selection/word select, drag to select |
+| Text tool & inline editing | ✅ | Canvas-native editing, phantom textarea, cursor/selection/word select, drag to select, double/triple-click, rich text style runs (⌘B/I/U, S button) |
 | Text rendering (Paragraph API) | ✅ | CanvasKit Paragraph for shaping, line-breaking, metrics |
 | Font loading (system fonts) | ✅ | Inter default, font-kit in Tauri with OnceLock cache + preloading, queryLocalFonts in browser |
 | Font family & weight | ✅ | FontPicker with virtual scroll, search, CSS preview; weight selection in properties panel |
 | Font size & line height | ✅ | Editable in typography section |
 | Text alignment | 🟡 | Basic alignment; Figma has vertical alignment and auto-width/height modes |
-| Text styles | 🔲 | Reusable named text style presets |
+| Text styles | 🟡 | Per-selection bold/italic/underline/strikethrough (⌘B/I/U, S button); not yet reusable named text style presets |
 | Text resizing modes (auto, fixed, hug) | 🔲 | Figma's auto-width, auto-height, fixed-size text modes |
 | Bulleted & numbered lists | 🔲 | List formatting in text |
 | Links in text | 🔲 | Hyperlinks within text content |
@@ -209,7 +209,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Code snippets | 🔲 | Auto-generated code from layers |
 | Figma for VS Code | 🔲 | Editor plugin integration |
 | MCP server | 🔲 | Planned for Phase 5; 117-tool MCP server from figma-use |
-| CLI tools | 🟡 | Headless CLI: info, tree, find, export commands; MCP server not yet |
+| CLI tools | 🟡 | Headless CLI: info, tree, find, export, analyze (colors/typography/spacing/clusters), node, pages, variables; MCP server not yet |
 
 ## Figma Draw
 
