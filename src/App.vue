@@ -2,11 +2,13 @@
 import { useEventListener, useUrlSearchParams } from '@vueuse/core'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 
+import { useAIChat } from './composables/use-chat'
 import { useKeyboard } from './composables/use-keyboard'
 import { useMenu } from './composables/use-menu'
 import { createDemoShapes } from './demo'
 import { provideEditorStore } from './stores/editor'
 
+import ChatPanel from './components/ChatPanel.vue'
 import EditorCanvas from './components/EditorCanvas.vue'
 import LayersPanel from './components/LayersPanel.vue'
 import PropertiesPanel from './components/PropertiesPanel.vue'
@@ -16,6 +18,8 @@ const store = provideEditorStore()
 useKeyboard(store)
 useMenu(store)
 ;(window as Window & { __OPEN_PENCIL_STORE__?: typeof store }).__OPEN_PENCIL_STORE__ = store
+
+const { chatPanelOpen } = useAIChat()
 
 useEventListener(
   document,
@@ -57,7 +61,8 @@ if (!('test' in params)) {
         <div class="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2" />
       </SplitterResizeHandle>
       <SplitterPanel :default-size="15" :min-size="10" :max-size="30" class="flex">
-        <PropertiesPanel />
+        <ChatPanel v-if="chatPanelOpen" />
+        <PropertiesPanel v-else />
       </SplitterPanel>
     </SplitterGroup>
     <div v-else class="flex flex-1 overflow-hidden">

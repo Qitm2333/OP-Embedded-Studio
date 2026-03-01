@@ -1,5 +1,6 @@
 import { useEventListener } from '@vueuse/core'
 
+import { useAIChat } from '@/composables/use-chat'
 import { TOOL_SHORTCUTS } from '@/stores/editor'
 
 import { openFileDialog } from './use-menu'
@@ -11,6 +12,7 @@ function isEditing(e: Event) {
 }
 
 export function useKeyboard(store: EditorStore) {
+  const { chatPanelOpen } = useAIChat()
   useEventListener(window, 'copy', (e: ClipboardEvent) => {
     if (isEditing(e)) return
     e.preventDefault()
@@ -79,6 +81,11 @@ export function useKeyboard(store: EditorStore) {
     }
 
     if (e.metaKey || e.ctrlKey) {
+      if (e.code === 'KeyJ') {
+        e.preventDefault()
+        chatPanelOpen.value = !chatPanelOpen.value
+        return
+      }
       if (e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
         store.undoAction()
