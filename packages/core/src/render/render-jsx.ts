@@ -1,51 +1,8 @@
 import * as React from './mini-react'
-import { isTreeNode, type TreeNode } from './tree'
+import { resolveToTree, type TreeNode } from './tree'
 import { renderTree, type RenderResult } from './renderer'
 
 import type { SceneGraph } from '../scene-graph'
-
-interface ReactElement {
-  type: unknown
-  props: Record<string, unknown>
-}
-
-function isReactElement(x: unknown): x is ReactElement {
-  return x !== null && typeof x === 'object' && 'type' in x && 'props' in x
-}
-
-function resolveToTree(element: unknown, depth = 0): TreeNode | null {
-  if (depth > 100) throw new Error('Component resolution depth exceeded')
-  if (isTreeNode(element)) return element
-
-  if (isReactElement(element)) {
-    if (typeof element.type === 'function') {
-      return resolveToTree(
-        (element.type as (p: Record<string, unknown>) => unknown)(element.props),
-        depth + 1
-      )
-    }
-    if (typeof element.type === 'string') {
-      const children: (TreeNode | string)[] = []
-      const elChildren = element.props.children
-      if (elChildren != null) {
-        const childArray = Array.isArray(elChildren) ? elChildren : [elChildren]
-        for (const child of childArray.flat()) {
-          if (child == null) continue
-          if (typeof child === 'string' || typeof child === 'number') {
-            children.push(String(child))
-          } else {
-            const resolved = resolveToTree(child, depth + 1)
-            if (resolved) children.push(resolved)
-          }
-        }
-      }
-      const { children: _, ...props } = element.props
-      return { type: element.type, props, children }
-    }
-  }
-
-  return null
-}
 
 /**
  * Build a component function from a JSX string using esbuild.
