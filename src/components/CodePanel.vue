@@ -20,9 +20,7 @@ const jsxCode = computed(() => {
 const highlightedLines = computed(() => {
   if (!jsxCode.value) return []
   const grammar = Prism.languages.jsx ?? Prism.languages.javascript
-  return jsxCode.value
-    .split('\n')
-    .map((line) => Prism.highlight(line, grammar, 'jsx'))
+  return jsxCode.value.split('\n').map((line) => Prism.highlight(line, grammar, 'jsx'))
 })
 
 let copyTimeout: ReturnType<typeof setTimeout> | undefined
@@ -60,16 +58,15 @@ watch(jsxCode, () => {
     <ScrollAreaRoot class="min-h-0 flex-1">
       <ScrollAreaViewport class="size-full">
         <div class="p-3">
-          <div
-            v-for="(html, i) in highlightedLines"
-            :key="i"
-            class="flex text-xs leading-5"
-          >
+          <div v-for="(html, i) in highlightedLines" :key="i" class="flex text-xs leading-5">
             <span
               class="mr-3 shrink-0 select-none text-right text-muted/40"
               style="min-width: 1.5em"
-            >{{ i + 1 }}</span>
-            <pre class="m-0 min-w-0 flex-1 whitespace-pre-wrap break-words"><code v-html="html" /></pre>
+              >{{ i + 1 }}</span
+            >
+            <pre
+              class="m-0 min-w-0 flex-1 whitespace-pre-wrap break-words"
+            ><code v-html="html" /></pre>
           </div>
         </div>
       </ScrollAreaViewport>
