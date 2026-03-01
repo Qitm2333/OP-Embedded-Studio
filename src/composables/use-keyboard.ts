@@ -12,7 +12,7 @@ function isEditing(e: Event) {
 }
 
 export function useKeyboard(store: EditorStore) {
-  const { chatPanelOpen } = useAIChat()
+  const { activeTab } = useAIChat()
   useEventListener(window, 'copy', (e: ClipboardEvent) => {
     if (isEditing(e)) return
     e.preventDefault()
@@ -83,7 +83,7 @@ export function useKeyboard(store: EditorStore) {
     if (e.metaKey || e.ctrlKey) {
       if (e.code === 'KeyJ') {
         e.preventDefault()
-        chatPanelOpen.value = !chatPanelOpen.value
+        activeTab.value = activeTab.value === 'ai' ? 'design' : 'ai'
         return
       }
       if (e.key === 'z' && !e.shiftKey) {

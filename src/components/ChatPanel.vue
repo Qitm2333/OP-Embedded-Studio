@@ -96,17 +96,7 @@ function toolState(part: ToolPart): 'pending' | 'done' | 'error' {
 </script>
 
 <template>
-  <aside
-    class="flex min-w-0 flex-1 flex-col overflow-hidden border-l border-border bg-panel"
-    style="contain: paint layout style"
-  >
-    <!-- Header -->
-    <div class="flex h-10 shrink-0 items-center gap-2 border-b border-border px-3">
-      <icon-lucide-sparkles class="size-4 text-accent" />
-      <span class="text-xs font-semibold">AI Chat</span>
-      <span v-if="isStreaming" class="ml-auto text-[10px] text-muted"> streaming… </span>
-    </div>
-
+  <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
     <!-- API key setup -->
     <div v-if="!isConfigured" class="flex flex-1 flex-col items-center justify-center gap-4 px-4">
       <icon-lucide-key-round class="size-8 text-muted" />
@@ -276,5 +266,5 @@ function toolState(part: ToolPart): 'pending' | 'done' | 'error' {
         </form>
       </div>
     </template>
-  </aside>
+  </div>
 </template>

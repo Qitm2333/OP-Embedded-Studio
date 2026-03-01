@@ -8,7 +8,7 @@ import type { InferAgentUIMessage } from 'ai'
 const API_KEY_STORAGE = 'open-pencil:openrouter-api-key'
 
 const apiKey = ref(localStorage.getItem(API_KEY_STORAGE) ?? '')
-const chatPanelOpen = ref(false)
+const activeTab = ref<'design' | 'ai'>('design')
 
 watch(apiKey, (key) => {
   if (key) {
@@ -47,7 +47,7 @@ function createChat() {
 export function useAIChat() {
   return {
     apiKey,
-    chatPanelOpen,
+    activeTab,
     isConfigured,
     createChat
   }
