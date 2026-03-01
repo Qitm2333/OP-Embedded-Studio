@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { FigmaAPI, SceneGraph } from '@open-pencil/core'
+import { FigmaAPI, SceneGraph, type Fill } from '@open-pencil/core'
 
 function createAPI(): FigmaAPI {
   return new FigmaAPI(new SceneGraph())
@@ -476,6 +476,74 @@ describe('FigmaAPI', () => {
       frame.name = 'Card'
       expect(frame.toString()).toContain('FRAME')
       expect(frame.toString()).toContain('Card')
+    })
+  })
+
+  describe('layout sizing', () => {
+    test('child in horizontal parent: h=primary, v=counter', () => {
+      const api = createAPI()
+      const parent = api.createFrame()
+      parent.layoutMode = 'HORIZONTAL'
+      const child = api.createFrame()
+      parent.appendChild(child)
+      child.layoutSizingHorizontal = 'FILL'
+      child.layoutSizingVertical = 'HUG'
+      expect(child.layoutSizingHorizontal).toBe('FILL')
+      expect(child.layoutSizingVertical).toBe('HUG')
+    })
+
+    test('child in vertical parent: h=counter, v=primary', () => {
+      const api = createAPI()
+      const parent = api.createFrame()
+      parent.layoutMode = 'VERTICAL'
+      const child = api.createFrame()
+      parent.appendChild(child)
+      child.layoutSizingHorizontal = 'FILL'
+      child.layoutSizingVertical = 'HUG'
+      expect(child.layoutSizingHorizontal).toBe('FILL')
+      expect(child.layoutSizingVertical).toBe('HUG')
+    })
+
+    test('auto-layout frame that is also a child of auto-layout', () => {
+      const api = createAPI()
+      const outer = api.createFrame()
+      outer.layoutMode = 'HORIZONTAL'
+      const inner = api.createFrame()
+      inner.layoutMode = 'VERTICAL'
+      outer.appendChild(inner)
+      inner.layoutSizingHorizontal = 'FILL'
+      expect(inner.layoutSizingHorizontal).toBe('FILL')
+      expect(inner.layoutMode).toBe('VERTICAL')
+    })
+  })
+
+  describe('frozen arrays', () => {
+    test('fills returns frozen clone', () => {
+      const api = createAPI()
+      const rect = api.createRectangle()
+      rect.fills = [{ type: 'SOLID', color: { r: 1, g: 0, b: 0, a: 1 }, opacity: 1, visible: true }]
+      const fills = rect.fills
+      expect(Object.isFrozen(fills)).toBe(true)
+      expect(() => { (fills as Fill[]).push({} as Fill) }).toThrow()
+    })
+
+    test('mutating returned fills does not affect node', () => {
+      const api = createAPI()
+      const rect = api.createRectangle()
+      rect.fills = [{ type: 'SOLID', color: { r: 1, g: 0, b: 0, a: 1 }, opacity: 1, visible: true }]
+      const fills = rect.fills as Fill[]
+      try { fills[0].color.r = 0 } catch {}
+      expect(rect.fills[0].color.r).toBe(1)
+    })
+  })
+
+  describe('internals not exposed', () => {
+    test('node has no _id, _graph, _api properties', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      expect('_id' in frame).toBe(false)
+      expect('_graph' in frame).toBe(false)
+      expect('_api' in frame).toBe(false)
     })
   })
 

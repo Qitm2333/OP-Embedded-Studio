@@ -52,25 +52,29 @@ function styleNameToWeight(style: string): { weight: number; italic: boolean } {
   return { weight: map[clean] ?? 400, italic }
 }
 
+const INTERNAL_ID = Symbol('id')
+const INTERNAL_GRAPH = Symbol('graph')
+const INTERNAL_API = Symbol('api')
+
 class FigmaNodeProxy {
-  readonly _id: string
-  readonly _graph: SceneGraph
-  readonly _api: FigmaAPI
+  [INTERNAL_ID]: string;
+  [INTERNAL_GRAPH]: SceneGraph;
+  [INTERNAL_API]: FigmaAPI
 
   constructor(id: string, graph: SceneGraph, api: FigmaAPI) {
-    this._id = id
-    this._graph = graph
-    this._api = api
+    this[INTERNAL_ID] = id
+    this[INTERNAL_GRAPH] = graph
+    this[INTERNAL_API] = api
   }
 
   private _raw(): SceneNode {
-    const n = this._graph.getNode(this._id)
-    if (!n) throw new Error(`Node ${this._id} has been removed`)
+    const n = this[INTERNAL_GRAPH].getNode(this[INTERNAL_ID])
+    if (!n) throw new Error(`Node ${this[INTERNAL_ID]} has been removed`)
     return n
   }
 
   get id(): string {
-    return this._id
+    return this[INTERNAL_ID]
   }
 
   get type(): NodeType {
@@ -82,11 +86,11 @@ class FigmaNodeProxy {
   }
 
   set name(v: string) {
-    this._graph.updateNode(this._id, { name: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { name: v })
   }
 
   get removed(): boolean {
-    return !this._graph.getNode(this._id)
+    return !this[INTERNAL_GRAPH].getNode(this[INTERNAL_ID])
   }
 
   // --- Geometry ---
@@ -96,7 +100,7 @@ class FigmaNodeProxy {
   }
 
   set x(v: number) {
-    this._graph.updateNode(this._id, { x: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { x: v })
   }
 
   get y(): number {
@@ -104,7 +108,7 @@ class FigmaNodeProxy {
   }
 
   set y(v: number) {
-    this._graph.updateNode(this._id, { y: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { y: v })
   }
 
   get width(): number {
@@ -120,11 +124,11 @@ class FigmaNodeProxy {
   }
 
   set rotation(v: number) {
-    this._graph.updateNode(this._id, { rotation: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { rotation: v })
   }
 
   resize(width: number, height: number): void {
-    this._graph.updateNode(this._id, { width, height })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { width, height })
   }
 
   resizeWithoutConstraints(width: number, height: number): void {
@@ -132,7 +136,7 @@ class FigmaNodeProxy {
   }
 
   get absoluteTransform(): [[number, number, number], [number, number, number]] {
-    const pos = this._graph.getAbsolutePosition(this._id)
+    const pos = this[INTERNAL_GRAPH].getAbsolutePosition(this[INTERNAL_ID])
     return [
       [1, 0, pos.x],
       [0, 1, pos.y],
@@ -140,7 +144,7 @@ class FigmaNodeProxy {
   }
 
   get absoluteBoundingBox(): Rect {
-    return this._graph.getAbsoluteBounds(this._id)
+    return this[INTERNAL_GRAPH].getAbsoluteBounds(this[INTERNAL_ID])
   }
 
   get absoluteRenderBounds(): Rect {
@@ -149,28 +153,28 @@ class FigmaNodeProxy {
 
   // --- Visual ---
 
-  get fills(): Fill[] {
-    return this._raw().fills
+  get fills(): readonly Fill[] {
+    return Object.freeze(structuredClone(this._raw().fills))
   }
 
-  set fills(v: Fill[]) {
-    this._graph.updateNode(this._id, { fills: v })
+  set fills(v: readonly Fill[]) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { fills: [...v] })
   }
 
-  get strokes(): Stroke[] {
-    return this._raw().strokes
+  get strokes(): readonly Stroke[] {
+    return Object.freeze(structuredClone(this._raw().strokes))
   }
 
-  set strokes(v: Stroke[]) {
-    this._graph.updateNode(this._id, { strokes: v })
+  set strokes(v: readonly Stroke[]) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { strokes: [...v] })
   }
 
-  get effects(): Effect[] {
-    return this._raw().effects
+  get effects(): readonly Effect[] {
+    return Object.freeze(structuredClone(this._raw().effects))
   }
 
-  set effects(v: Effect[]) {
-    this._graph.updateNode(this._id, { effects: v })
+  set effects(v: readonly Effect[]) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { effects: [...v] })
   }
 
   get opacity(): number {
@@ -178,7 +182,7 @@ class FigmaNodeProxy {
   }
 
   set opacity(v: number) {
-    this._graph.updateNode(this._id, { opacity: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { opacity: v })
   }
 
   get visible(): boolean {
@@ -186,7 +190,7 @@ class FigmaNodeProxy {
   }
 
   set visible(v: boolean) {
-    this._graph.updateNode(this._id, { visible: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { visible: v })
   }
 
   get locked(): boolean {
@@ -194,7 +198,7 @@ class FigmaNodeProxy {
   }
 
   set locked(v: boolean) {
-    this._graph.updateNode(this._id, { locked: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { locked: v })
   }
 
   get blendMode(): string {
@@ -202,7 +206,7 @@ class FigmaNodeProxy {
   }
 
   set blendMode(v: string) {
-    this._graph.updateNode(this._id, { blendMode: v as SceneNode['blendMode'] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { blendMode: v as SceneNode['blendMode'] })
   }
 
   get clipsContent(): boolean {
@@ -210,7 +214,7 @@ class FigmaNodeProxy {
   }
 
   set clipsContent(v: boolean) {
-    this._graph.updateNode(this._id, { clipsContent: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { clipsContent: v })
   }
 
   // --- Corner Radius ---
@@ -223,7 +227,7 @@ class FigmaNodeProxy {
 
   set cornerRadius(v: number | typeof MIXED) {
     if (v === MIXED) return
-    this._graph.updateNode(this._id, {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], {
       cornerRadius: v as number,
       topLeftRadius: v as number,
       topRightRadius: v as number,
@@ -238,7 +242,7 @@ class FigmaNodeProxy {
   }
 
   set topLeftRadius(v: number) {
-    this._graph.updateNode(this._id, { topLeftRadius: v, independentCorners: true })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { topLeftRadius: v, independentCorners: true })
   }
 
   get topRightRadius(): number {
@@ -246,7 +250,7 @@ class FigmaNodeProxy {
   }
 
   set topRightRadius(v: number) {
-    this._graph.updateNode(this._id, { topRightRadius: v, independentCorners: true })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { topRightRadius: v, independentCorners: true })
   }
 
   get bottomLeftRadius(): number {
@@ -254,7 +258,7 @@ class FigmaNodeProxy {
   }
 
   set bottomLeftRadius(v: number) {
-    this._graph.updateNode(this._id, { bottomLeftRadius: v, independentCorners: true })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { bottomLeftRadius: v, independentCorners: true })
   }
 
   get bottomRightRadius(): number {
@@ -262,7 +266,7 @@ class FigmaNodeProxy {
   }
 
   set bottomRightRadius(v: number) {
-    this._graph.updateNode(this._id, { bottomRightRadius: v, independentCorners: true })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { bottomRightRadius: v, independentCorners: true })
   }
 
   get cornerSmoothing(): number {
@@ -270,7 +274,7 @@ class FigmaNodeProxy {
   }
 
   set cornerSmoothing(v: number) {
-    this._graph.updateNode(this._id, { cornerSmoothing: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { cornerSmoothing: v })
   }
 
   // --- Stroke details ---
@@ -285,7 +289,7 @@ class FigmaNodeProxy {
     if (n.strokes.length > 0) {
       const strokes = structuredClone(n.strokes)
       strokes[0].weight = v
-      this._graph.updateNode(this._id, { strokes })
+      this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { strokes })
     }
   }
 
@@ -299,7 +303,7 @@ class FigmaNodeProxy {
     if (n.strokes.length > 0) {
       const strokes = structuredClone(n.strokes)
       strokes[0].align = v as Stroke['align']
-      this._graph.updateNode(this._id, { strokes })
+      this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { strokes })
     }
   }
 
@@ -308,7 +312,7 @@ class FigmaNodeProxy {
   }
 
   set dashPattern(v: number[]) {
-    this._graph.updateNode(this._id, { dashPattern: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { dashPattern: v })
   }
 
   // --- Text ---
@@ -318,7 +322,7 @@ class FigmaNodeProxy {
   }
 
   set characters(v: string) {
-    this._graph.updateNode(this._id, { text: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { text: v })
   }
 
   get fontSize(): number {
@@ -326,7 +330,7 @@ class FigmaNodeProxy {
   }
 
   set fontSize(v: number) {
-    this._graph.updateNode(this._id, { fontSize: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { fontSize: v })
   }
 
   get fontName(): FigmaFontName {
@@ -336,7 +340,7 @@ class FigmaNodeProxy {
 
   set fontName(v: FigmaFontName) {
     const { weight, italic } = styleNameToWeight(v.style)
-    this._graph.updateNode(this._id, { fontFamily: v.family, fontWeight: weight, italic })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { fontFamily: v.family, fontWeight: weight, italic })
   }
 
   get fontWeight(): number {
@@ -344,7 +348,7 @@ class FigmaNodeProxy {
   }
 
   set fontWeight(v: number) {
-    this._graph.updateNode(this._id, { fontWeight: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { fontWeight: v })
   }
 
   get textAlignHorizontal(): string {
@@ -352,7 +356,7 @@ class FigmaNodeProxy {
   }
 
   set textAlignHorizontal(v: string) {
-    this._graph.updateNode(this._id, { textAlignHorizontal: v as SceneNode['textAlignHorizontal'] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { textAlignHorizontal: v as SceneNode['textAlignHorizontal'] })
   }
 
   get textAlignVertical(): string {
@@ -360,7 +364,7 @@ class FigmaNodeProxy {
   }
 
   set textAlignVertical(v: string) {
-    this._graph.updateNode(this._id, { textAlignVertical: v as SceneNode['textAlignVertical'] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { textAlignVertical: v as SceneNode['textAlignVertical'] })
   }
 
   get textAutoResize(): string {
@@ -368,7 +372,7 @@ class FigmaNodeProxy {
   }
 
   set textAutoResize(v: string) {
-    this._graph.updateNode(this._id, { textAutoResize: v as SceneNode['textAutoResize'] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { textAutoResize: v as SceneNode['textAutoResize'] })
   }
 
   get letterSpacing(): number {
@@ -376,7 +380,7 @@ class FigmaNodeProxy {
   }
 
   set letterSpacing(v: number) {
-    this._graph.updateNode(this._id, { letterSpacing: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { letterSpacing: v })
   }
 
   get lineHeight(): number | null {
@@ -384,7 +388,7 @@ class FigmaNodeProxy {
   }
 
   set lineHeight(v: number | null) {
-    this._graph.updateNode(this._id, { lineHeight: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { lineHeight: v })
   }
 
   get textCase(): string {
@@ -392,7 +396,7 @@ class FigmaNodeProxy {
   }
 
   set textCase(v: string) {
-    this._graph.updateNode(this._id, { textCase: v as SceneNode['textCase'] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { textCase: v as SceneNode['textCase'] })
   }
 
   get textDecoration(): string {
@@ -400,7 +404,7 @@ class FigmaNodeProxy {
   }
 
   set textDecoration(v: string) {
-    this._graph.updateNode(this._id, { textDecoration: v as SceneNode['textDecoration'] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { textDecoration: v as SceneNode['textDecoration'] })
   }
 
   get maxLines(): number | null {
@@ -408,7 +412,7 @@ class FigmaNodeProxy {
   }
 
   set maxLines(v: number | null) {
-    this._graph.updateNode(this._id, { maxLines: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { maxLines: v })
   }
 
   // --- Auto-layout ---
@@ -418,7 +422,7 @@ class FigmaNodeProxy {
   }
 
   set layoutMode(v: LayoutMode) {
-    this._graph.updateNode(this._id, { layoutMode: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { layoutMode: v })
   }
 
   get primaryAxisAlignItems(): string {
@@ -426,7 +430,7 @@ class FigmaNodeProxy {
   }
 
   set primaryAxisAlignItems(v: string) {
-    this._graph.updateNode(this._id, { primaryAxisAlign: v as SceneNode['primaryAxisAlign'] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { primaryAxisAlign: v as SceneNode['primaryAxisAlign'] })
   }
 
   get counterAxisAlignItems(): string {
@@ -434,7 +438,7 @@ class FigmaNodeProxy {
   }
 
   set counterAxisAlignItems(v: string) {
-    this._graph.updateNode(this._id, { counterAxisAlign: v as SceneNode['counterAxisAlign'] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { counterAxisAlign: v as SceneNode['counterAxisAlign'] })
   }
 
   get itemSpacing(): number {
@@ -442,7 +446,7 @@ class FigmaNodeProxy {
   }
 
   set itemSpacing(v: number) {
-    this._graph.updateNode(this._id, { itemSpacing: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { itemSpacing: v })
   }
 
   get counterAxisSpacing(): number {
@@ -450,7 +454,7 @@ class FigmaNodeProxy {
   }
 
   set counterAxisSpacing(v: number) {
-    this._graph.updateNode(this._id, { counterAxisSpacing: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { counterAxisSpacing: v })
   }
 
   get paddingTop(): number {
@@ -458,7 +462,7 @@ class FigmaNodeProxy {
   }
 
   set paddingTop(v: number) {
-    this._graph.updateNode(this._id, { paddingTop: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { paddingTop: v })
   }
 
   get paddingRight(): number {
@@ -466,7 +470,7 @@ class FigmaNodeProxy {
   }
 
   set paddingRight(v: number) {
-    this._graph.updateNode(this._id, { paddingRight: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { paddingRight: v })
   }
 
   get paddingBottom(): number {
@@ -474,7 +478,7 @@ class FigmaNodeProxy {
   }
 
   set paddingBottom(v: number) {
-    this._graph.updateNode(this._id, { paddingBottom: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { paddingBottom: v })
   }
 
   get paddingLeft(): number {
@@ -482,7 +486,7 @@ class FigmaNodeProxy {
   }
 
   set paddingLeft(v: number) {
-    this._graph.updateNode(this._id, { paddingLeft: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { paddingLeft: v })
   }
 
   get layoutWrap(): string {
@@ -490,7 +494,7 @@ class FigmaNodeProxy {
   }
 
   set layoutWrap(v: string) {
-    this._graph.updateNode(this._id, { layoutWrap: v as SceneNode['layoutWrap'] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { layoutWrap: v as SceneNode['layoutWrap'] })
   }
 
   // --- Layout child props ---
@@ -500,7 +504,7 @@ class FigmaNodeProxy {
   }
 
   set layoutPositioning(v: string) {
-    this._graph.updateNode(this._id, { layoutPositioning: v as SceneNode['layoutPositioning'] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { layoutPositioning: v as SceneNode['layoutPositioning'] })
   }
 
   get layoutGrow(): number {
@@ -508,42 +512,40 @@ class FigmaNodeProxy {
   }
 
   set layoutGrow(v: number) {
-    this._graph.updateNode(this._id, { layoutGrow: v })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { layoutGrow: v })
   }
 
   get layoutSizingHorizontal(): string {
     const n = this._raw()
-    if (n.layoutMode !== 'NONE') return n.primaryAxisSizing
-    const parent = n.parentId ? this._graph.getNode(n.parentId) : undefined
-    if (!parent || parent.layoutMode === 'NONE') return 'FIXED'
+    const parent = n.parentId ? this[INTERNAL_GRAPH].getNode(n.parentId) : undefined
+    if (!parent || parent.layoutMode === 'NONE') return n.primaryAxisSizing
     return parent.layoutMode === 'HORIZONTAL' ? n.primaryAxisSizing : n.counterAxisSizing
   }
 
   set layoutSizingHorizontal(v: string) {
     const n = this._raw()
-    const parent = n.parentId ? this._graph.getNode(n.parentId) : undefined
+    const parent = n.parentId ? this[INTERNAL_GRAPH].getNode(n.parentId) : undefined
     if (parent && parent.layoutMode === 'VERTICAL') {
-      this._graph.updateNode(this._id, { counterAxisSizing: v as SceneNode['counterAxisSizing'] })
+      this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { counterAxisSizing: v as SceneNode['counterAxisSizing'] })
     } else {
-      this._graph.updateNode(this._id, { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] })
+      this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] })
     }
   }
 
   get layoutSizingVertical(): string {
     const n = this._raw()
-    if (n.layoutMode !== 'NONE') return n.counterAxisSizing
-    const parent = n.parentId ? this._graph.getNode(n.parentId) : undefined
-    if (!parent || parent.layoutMode === 'NONE') return 'FIXED'
+    const parent = n.parentId ? this[INTERNAL_GRAPH].getNode(n.parentId) : undefined
+    if (!parent || parent.layoutMode === 'NONE') return n.counterAxisSizing
     return parent.layoutMode === 'VERTICAL' ? n.primaryAxisSizing : n.counterAxisSizing
   }
 
   set layoutSizingVertical(v: string) {
     const n = this._raw()
-    const parent = n.parentId ? this._graph.getNode(n.parentId) : undefined
+    const parent = n.parentId ? this[INTERNAL_GRAPH].getNode(n.parentId) : undefined
     if (parent && parent.layoutMode === 'HORIZONTAL') {
-      this._graph.updateNode(this._id, { counterAxisSizing: v as SceneNode['counterAxisSizing'] })
+      this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { counterAxisSizing: v as SceneNode['counterAxisSizing'] })
     } else {
-      this._graph.updateNode(this._id, { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] })
+      this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] })
     }
   }
 
@@ -555,7 +557,7 @@ class FigmaNodeProxy {
   }
 
   set constraints(v: { horizontal: string; vertical: string }) {
-    this._graph.updateNode(this._id, {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], {
       horizontalConstraint: v.horizontal as SceneNode['horizontalConstraint'],
       verticalConstraint: v.vertical as SceneNode['verticalConstraint'],
     })
@@ -566,18 +568,18 @@ class FigmaNodeProxy {
   get mainComponent(): FigmaNodeProxy | null {
     const n = this._raw()
     if (!n.componentId) return null
-    const comp = this._graph.getNode(n.componentId)
+    const comp = this[INTERNAL_GRAPH].getNode(n.componentId)
     if (!comp) return null
-    return this._api.wrapNode(comp.id)
+    return this[INTERNAL_API].wrapNode(comp.id)
   }
 
   createInstance(): FigmaNodeProxy {
     const n = this._raw()
     if (n.type !== 'COMPONENT') throw new Error('createInstance() can only be called on components')
-    const pageId = this._api.currentPageId
-    const inst = this._graph.createInstance(n.id, pageId)
+    const pageId = this[INTERNAL_API].currentPageId
+    const inst = this[INTERNAL_GRAPH].createInstance(n.id, pageId)
     if (!inst) throw new Error('Failed to create instance')
-    return this._api.wrapNode(inst.id)
+    return this[INTERNAL_API].wrapNode(inst.id)
   }
 
   // --- Tree ---
@@ -585,66 +587,66 @@ class FigmaNodeProxy {
   get parent(): FigmaNodeProxy | null {
     const n = this._raw()
     if (!n.parentId) return null
-    return this._api.wrapNode(n.parentId)
+    return this[INTERNAL_API].wrapNode(n.parentId)
   }
 
   get children(): FigmaNodeProxy[] {
-    return this._graph
-      .getChildren(this._id)
-      .map((c) => this._api.wrapNode(c.id))
+    return this[INTERNAL_GRAPH]
+      .getChildren(this[INTERNAL_ID])
+      .map((c) => this[INTERNAL_API].wrapNode(c.id))
   }
 
   appendChild(child: FigmaNodeProxy): void {
-    this._graph.reparentNode(child._id, this._id)
+    this[INTERNAL_GRAPH].reparentNode(child[INTERNAL_ID], this[INTERNAL_ID])
   }
 
   insertChild(index: number, child: FigmaNodeProxy): void {
-    this._graph.reparentNode(child._id, this._id)
-    this._graph.reorderChild(child._id, this._id, index)
+    this[INTERNAL_GRAPH].reparentNode(child[INTERNAL_ID], this[INTERNAL_ID])
+    this[INTERNAL_GRAPH].reorderChild(child[INTERNAL_ID], this[INTERNAL_ID], index)
   }
 
   remove(): void {
-    this._graph.deleteNode(this._id)
+    this[INTERNAL_GRAPH].deleteNode(this[INTERNAL_ID])
   }
 
   findAll(callback?: (node: FigmaNodeProxy) => boolean): FigmaNodeProxy[] {
     const results: FigmaNodeProxy[] = []
     const walk = (id: string) => {
-      for (const child of this._graph.getChildren(id)) {
-        const proxy = this._api.wrapNode(child.id)
+      for (const child of this[INTERNAL_GRAPH].getChildren(id)) {
+        const proxy = this[INTERNAL_API].wrapNode(child.id)
         if (!callback || callback(proxy)) results.push(proxy)
         walk(child.id)
       }
     }
-    walk(this._id)
+    walk(this[INTERNAL_ID])
     return results
   }
 
   findOne(callback: (node: FigmaNodeProxy) => boolean): FigmaNodeProxy | null {
     const walk = (id: string): FigmaNodeProxy | null => {
-      for (const child of this._graph.getChildren(id)) {
-        const proxy = this._api.wrapNode(child.id)
+      for (const child of this[INTERNAL_GRAPH].getChildren(id)) {
+        const proxy = this[INTERNAL_API].wrapNode(child.id)
         if (callback(proxy)) return proxy
         const found = walk(child.id)
         if (found) return found
       }
       return null
     }
-    return walk(this._id)
+    return walk(this[INTERNAL_ID])
   }
 
   findChild(callback: (node: FigmaNodeProxy) => boolean): FigmaNodeProxy | null {
-    for (const child of this._graph.getChildren(this._id)) {
-      const proxy = this._api.wrapNode(child.id)
+    for (const child of this[INTERNAL_GRAPH].getChildren(this[INTERNAL_ID])) {
+      const proxy = this[INTERNAL_API].wrapNode(child.id)
       if (callback(proxy)) return proxy
     }
     return null
   }
 
   findChildren(callback?: (node: FigmaNodeProxy) => boolean): FigmaNodeProxy[] {
-    return this._graph
-      .getChildren(this._id)
-      .map((c) => this._api.wrapNode(c.id))
+    return this[INTERNAL_GRAPH]
+      .getChildren(this[INTERNAL_ID])
+      .map((c) => this[INTERNAL_API].wrapNode(c.id))
       .filter((proxy) => !callback || callback(proxy))
   }
 
@@ -672,9 +674,9 @@ class FigmaNodeProxy {
       obj.layoutMode = n.layoutMode
       obj.itemSpacing = n.itemSpacing
     }
-    const children = this._graph.getChildren(this._id)
+    const children = this[INTERNAL_GRAPH].getChildren(this[INTERNAL_ID])
     if (children.length > 0) {
-      obj.children = children.map((c) => this._api.wrapNode(c.id).toJSON())
+      obj.children = children.map((c) => this[INTERNAL_API].wrapNode(c.id).toJSON())
     }
     return obj
   }
@@ -694,6 +696,7 @@ export class FigmaAPI {
   private _currentPageId: string
   private _selection: FigmaNodeProxy[] = []
   private _nodeCache = new Map<string, FigmaNodeProxy>()
+  private _pageProxies = new WeakSet<FigmaNodeProxy>()
 
   readonly mixed = MIXED
 
@@ -716,15 +719,10 @@ export class FigmaAPI {
     return proxy
   }
 
-  get root(): FigmaNodeProxy {
-    return this.wrapNode(this.graph.rootId)
-  }
-
-  get currentPage(): FigmaNodeProxy & { selection: FigmaNodeProxy[] } {
-    const page = this.wrapNode(this._currentPageId)
-    const self = this
-    return Object.defineProperties(page, {
-      selection: {
+  private _ensurePageProxy(proxy: FigmaNodeProxy): FigmaNodeProxy & { selection: FigmaNodeProxy[] } {
+    if (!this._pageProxies.has(proxy)) {
+      const self = this
+      Object.defineProperty(proxy, 'selection', {
         get() {
           return self._selection
         },
@@ -733,12 +731,22 @@ export class FigmaAPI {
         },
         enumerable: true,
         configurable: true,
-      },
-    }) as FigmaNodeProxy & { selection: FigmaNodeProxy[] }
+      })
+      this._pageProxies.add(proxy)
+    }
+    return proxy as FigmaNodeProxy & { selection: FigmaNodeProxy[] }
+  }
+
+  get root(): FigmaNodeProxy {
+    return this.wrapNode(this.graph.rootId)
+  }
+
+  get currentPage(): FigmaNodeProxy & { selection: FigmaNodeProxy[] } {
+    return this._ensurePageProxy(this.wrapNode(this._currentPageId))
   }
 
   set currentPage(page: FigmaNodeProxy) {
-    this._currentPageId = page._id
+    this._currentPageId = page[INTERNAL_ID]
   }
 
   getNodeById(id: string): FigmaNodeProxy | null {
@@ -801,21 +809,21 @@ export class FigmaAPI {
   // --- Grouping ---
 
   group(nodes: FigmaNodeProxy[], parent: FigmaNodeProxy): FigmaNodeProxy {
-    const groupNode = this.graph.createNode('GROUP', parent._id)
+    const groupNode = this.graph.createNode('GROUP', parent[INTERNAL_ID])
     for (const n of nodes) {
-      this.graph.reparentNode(n._id, groupNode.id)
+      this.graph.reparentNode(n[INTERNAL_ID], groupNode.id)
     }
     return this.wrapNode(groupNode.id)
   }
 
   ungroup(node: FigmaNodeProxy): void {
-    const raw = this.graph.getNode(node._id)
+    const raw = this.graph.getNode(node[INTERNAL_ID])
     if (!raw || raw.type !== 'GROUP') return
     const parentId = raw.parentId ?? this._currentPageId
     for (const childId of [...raw.childIds]) {
       this.graph.reparentNode(childId, parentId)
     }
-    this.graph.deleteNode(node._id)
+    this.graph.deleteNode(node[INTERNAL_ID])
   }
 
   // --- Stubs ---
