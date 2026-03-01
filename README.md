@@ -21,27 +21,19 @@ OpenPencil is:
 - **Open source** — MIT license, read and modify everything
 - **Figma-compatible** — opens .fig files natively, copy/paste between apps
 - **AI-native** — built-in chat with tool use, bring your own API key, no vendor lock-in
-- **Free forever** — no account, no subscription, no internet required, ~5 MB install
+- **Free forever** — no account, no subscription, no internet required, ~7 MB install
 - **Programmable** — headless CLI, every operation is scriptable
 
 Your design files are yours. Your tools should be too.
 
 ## Features
 
-- **Figma .fig file import** — open native Figma files directly
-- **Figma clipboard** — copy/paste between OpenPencil and Figma
-- **Real-time collaboration** — P2P via WebRTC, no server required. Share a link, co-edit live with cursors and presence
-- **Vector networks** — complex boolean shapes and open paths, like Figma
-- **Auto-layout** — constraint-based layout matching Figma behavior
-- **Components & instances** — with live sync, overrides, component sets
-- **Pen tool** — bezier curves with tangent handles
-- **Inline text editing** — multi-line text with system fonts
-- **Image export** — PNG, JPG, WEBP at any scale
-- **Headless CLI** — inspect, search, and render .fig files without a GUI
-- **Undo/redo** — all operations are undoable
-- **Snap guides** — edge and center snapping
-- **Color picker** — HSV, hue/alpha sliders, hex input, gradients
-- **~5 MB install, works fully offline** — no account, no server, no internet required
+- **Figma .fig file import and export** — read and write native Figma files, copy/paste between apps
+- **Real-time collaboration** — P2P via WebRTC, no server required. Cursors, presence, follow mode
+- **Drawing tools** — shapes, pen tool with vector networks, rich text with system fonts, auto-layout, components with live sync, variables with modes and collections
+- **AI chat** — describe what you want, the AI builds it. Tools defined once, wired to chat, CLI, and MCP
+- **Headless CLI** — inspect, search, analyze, and render .fig files without a GUI
+- **~7 MB desktop app** — Tauri v2, macOS/Windows/Linux. Also runs in the browser
 
 ## Tech Stack
 
@@ -82,11 +74,11 @@ All sync happens peer-to-peer via [Trystero](https://github.com/dmotz/trystero).
 Headless .fig file operations — no GUI needed:
 
 ```sh
-bun open-pencil info design.fig         # Document stats, node types, fonts
-bun open-pencil tree design.fig         # Visual node tree
-bun open-pencil find design.fig --type TEXT  # Search by name or type
-bun open-pencil export design.fig       # Render to PNG
-bun open-pencil export design.fig -f jpg -s 2 -q 90  # JPG at 2x
+bunx @open-pencil/cli info design.fig         # Document stats, node types, fonts
+bunx @open-pencil/cli tree design.fig         # Visual node tree
+bunx @open-pencil/cli find design.fig --type TEXT  # Search by name or type
+bunx @open-pencil/cli export design.fig       # Render to PNG
+bunx @open-pencil/cli export design.fig -f jpg -s 2 -q 90  # JPG at 2x
 ```
 
 All commands support `--json` for machine-readable output.
@@ -151,14 +143,14 @@ For other distros, see the [Tauri v2 prerequisites](https://v2.tauri.app/start/p
 packages/
   core/           @open-pencil/core — engine (scene graph, renderer, layout, codec)
   cli/            @open-pencil/cli — headless CLI (info, tree, find, export)
+  docs/           VitePress documentation site
 src/
-  components/     Vue SFCs (canvas, panels, toolbar, color picker)
+  ai/             AI tool wiring
+  components/     Vue SFCs (canvas, panels, collaboration, color picker)
   composables/    Canvas input, keyboard shortcuts, collaboration, rendering
+  views/          Route views
   stores/         Editor state (Vue reactivity)
   engine/         Re-export shims from @open-pencil/core
-  kiwi/           Re-export shims from @open-pencil/core
-  types.ts        Shared types
-  constants.ts    App-specific constants + re-exports from core
 desktop/          Tauri v2 (Rust + config)
 tests/
   e2e/            Playwright visual regression

@@ -11,11 +11,13 @@ import pages from './commands/pages'
 import tree from './commands/tree'
 import variables from './commands/variables'
 
+const { version } = await import('../package.json')
+
 const main = defineCommand({
   meta: {
     name: 'open-pencil',
     description: 'OpenPencil CLI — inspect, export, and lint .fig design files',
-    version: '0.1.0'
+    version
   },
   subCommands: {
     analyze,
