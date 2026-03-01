@@ -4,7 +4,9 @@ Open-source, AI-native design editor. Figma-compatible, AI-first, fully local.
 
 > **Status:** Active development. Not ready for production use.
 
-![OpenPencil](screenshot.png)
+**[Try it online →](https://app.openpencil.dev)** · [Download](https://github.com/open-pencil/open-pencil/releases/latest) · [Documentation](https://openpencil.dev)
+
+![OpenPencil](packages/docs/public/screenshot.png)
 
 ## Why
 
@@ -18,8 +20,8 @@ OpenPencil is:
 
 - **Open source** — MIT license, read and modify everything
 - **Figma-compatible** — opens .fig files natively, copy/paste between apps
-- **AI-native** — built-in chat with tool use, JSX rendering, no API restrictions
-- **Fully local** — no account, no server, no internet required, ~5 MB install
+- **AI-native** — built-in chat with tool use, bring your own API key, no vendor lock-in
+- **Free forever** — no account, no subscription, no internet required, ~5 MB install
 - **Programmable** — headless CLI, every operation is scriptable
 
 Your design files are yours. Your tools should be too.

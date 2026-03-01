@@ -117,6 +117,7 @@ export function createEditorStore() {
   const pageViewports = new Map<string, PageViewport>()
   let fileHandle: FileSystemFileHandle | null = null
   let filePath: string | null = null
+  let downloadName: string | null = null
   let savedVersion = 0
   let autosaveTimer: ReturnType<typeof setTimeout> | undefined
   let _ck: import('canvaskit-wasm').CanvasKit | null = null
@@ -124,6 +125,21 @@ export function createEditorStore() {
   let _textEditor: TextEditor | null = null
 
   prefetchFigmaSchema()
+
+  function downloadBlob(data: Uint8Array, filename: string, mime: string) {
+    const blob = new Blob([data.buffer as ArrayBuffer], { type: mime })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => {
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }, 100)
+  }
 
   const state = reactive({
     activeTool: 'SELECT' as Tool,
@@ -571,6 +587,8 @@ export function createEditorStore() {
   async function saveFigFile() {
     if (filePath || fileHandle) {
       await writeFile(await buildFigFile())
+    } else if (downloadName) {
+      downloadBlob(new Uint8Array(await buildFigFile()), downloadName, 'application/octet-stream')
     } else {
       await saveFigFileAs()
     }
@@ -612,13 +630,10 @@ export function createEditorStore() {
       }
     }
 
-    const blob = new Blob([new Uint8Array(data)], { type: 'application/octet-stream' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'Untitled.fig'
-    a.click()
-    URL.revokeObjectURL(url)
+    const filename = prompt('Save as:', downloadName ?? 'Untitled.fig')
+    if (!filename) return
+    downloadName = filename
+    downloadBlob(new Uint8Array(data), filename, 'application/octet-stream')
   }
 
   async function writeFile(data: Uint8Array) {
@@ -717,13 +732,7 @@ export function createEditorStore() {
       }
     }
 
-    const blob = new Blob([new Uint8Array(data)], { type: exportImageMime(format) })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = fileName
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadBlob(new Uint8Array(data), fileName, exportImageMime(format))
   }
 
   function runLayoutForNode(id: string) {

@@ -6,16 +6,16 @@ hero:
   name: OpenPencil
   text: AI-Native Design Editor
   tagline: Open-source Figma alternative. Fully local, AI-native, programmable.
-  image:
-    src: /screenshot.png
-    alt: OpenPencil editor with a Material 3 design file open
   actions:
     - theme: brand
-      text: Get Started
-      link: /guide/getting-started
+      text: Try Online
+      link: https://app.openpencil.dev
     - theme: alt
-      text: View on GitHub
-      link: https://github.com/dannote/open-pencil
+      text: Download
+      link: https://github.com/open-pencil/open-pencil/releases/latest
+    - theme: alt
+      text: GitHub
+      link: https://github.com/open-pencil/open-pencil
 
 features:
   - icon: 📖
@@ -26,10 +26,10 @@ features:
     details: Opens .fig files natively. Copy/paste between apps. Kiwi codec with round-trip fidelity.
   - icon: 🤖
     title: AI-Native
-    details: Built-in chat with tool use. 10 design tools wired to the editor. No API restrictions.
+    details: Built-in chat with tool use. Bring your own API key — no subscription, no vendor lock-in.
   - icon: 🖥️
-    title: Fully Local
-    details: No account, no server, no internet required. ~5 MB Tauri desktop app.
+    title: No Subscription
+    details: No account, no server, no internet required. Free forever. ~5 MB desktop app.
   - icon: ⚡
     title: Programmable
     details: Headless CLI for .fig inspection and export. Every operation is scriptable. JSX renderer.

@@ -8,7 +8,7 @@ export default defineConfig({
   appearance: 'dark',
 
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+    ['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: 'OpenPencil' }],
     ['meta', { property: 'og:description', content: 'Open-source, AI-native design editor' }],
@@ -23,6 +23,7 @@ export default defineConfig({
       { text: 'User Guide', link: '/user-guide/' },
       { text: 'Reference', link: '/reference/keyboard-shortcuts' },
       { text: 'Development', link: '/development/contributing' },
+      { text: 'Open App', link: 'https://app.openpencil.dev' },
     ],
 
     sidebar: {
@@ -97,11 +98,11 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/dannote/open-pencil' },
+      { icon: 'github', link: 'https://github.com/open-pencil/open-pencil' },
     ],
 
     editLink: {
-      pattern: 'https://github.com/dannote/open-pencil/edit/main/packages/docs/:path',
+      pattern: 'https://github.com/open-pencil/open-pencil/edit/main/packages/docs/:path',
     },
 
     footer: {
