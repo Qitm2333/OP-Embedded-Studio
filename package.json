@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -20,7 +22,10 @@
     "test:unit": "bun test ./tests/engine",
     "test:coverage": "bun test --coverage ./tests/engine",
     "test:dupes": "jscpd packages/core/src packages/cli/src src --min-lines 5 --min-tokens 50 --format typescript",
-    "open-pencil": "bun packages/cli/src/index.ts"
+    "open-pencil": "bun packages/cli/src/index.ts",
+    "docs:dev": "bun --filter @open-pencil/docs dev",
+    "docs:build": "bun --filter @open-pencil/docs build",
+    "docs:preview": "bun --filter @open-pencil/docs preview"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.37",

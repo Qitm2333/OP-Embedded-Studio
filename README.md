@@ -93,13 +93,42 @@ All commands support `--json` for machine-readable output.
 Requires [Rust](https://rustup.rs/), the Tauri CLI, and platform-specific prerequisites ([Tauri v2 guide](https://v2.tauri.app/start/prerequisites/)).
 
 ```sh
-cargo install tauri-cli --version "^2"
 bun run tauri dev                      # Dev mode with hot reload
 bun run tauri build                    # Production build
 bun run tauri build --target universal-apple-darwin  # macOS universal
 ```
 
 Cross-compilation to other platforms requires their respective toolchains or CI (e.g. GitHub Actions).
+
+### Platform Prerequisites
+
+#### macOS
+
+Install Xcode Command Line Tools:
+
+```sh
+xcode-select --install
+```
+
+#### Windows
+
+1. Install [Rust](https://rustup.rs/) — make sure the default toolchain is `stable-msvc`:
+   ```sh
+   rustup default stable-msvc
+   ```
+2. Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the "Desktop development with C++" workload (MSVC compiler + Windows SDK)
+3. WebView2 is pre-installed on Windows 10 (1803+) and Windows 11. If missing, download from [Microsoft](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
+
+#### Linux
+
+Install system dependencies (Debian/Ubuntu):
+
+```sh
+sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file \
+  libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+```
+
+For other distros, see the [Tauri v2 prerequisites](https://v2.tauri.app/start/prerequisites/).
 
 ## Project Structure
 
