@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.2.0 (2026-03-01)
+
+### Collaboration
+
+- Real-time P2P collaboration via Trystero (WebRTC) + Yjs CRDT
+- Peer-to-peer sync — no server relay, zero hosting cost
+- WebRTC signaling via MQTT public brokers
+- STUN (Google, Cloudflare) + TURN (Open Relay) for NAT traversal
+- Awareness protocol: live cursors, selections, presence
+- Figma-style colored cursor arrows with name pills
+- Click peer avatar to follow their viewport, click again to stop
+- Stale cursor cleanup on peer disconnect
+- Local persistence via y-indexeddb — room survives page refresh
+- Share link at `/share/<room-id>` with vue-router
+- Secure room IDs via `crypto.getRandomValues()`
+- Removed Cloudflare Durable Object relay server (`packages/collab/`)
+
+### UI
+
+- Toast notifications via Reka UI Toast — top-center blue pill for info, red for errors
+- Global error handler (window.error + unhandledrejection) shows errors as toasts
+- Link copied toast on share and copy link actions
+- HsvColorArea extracted as shared component (ColorPicker + FillPicker)
+- Scrollable app menu without visible scrollbar
+- Selection broadcasting to remote peers
+
 ## 0.1.0-alpha (2026-03-01)
 
 First public alpha. The editor is functional but not production-ready.

@@ -225,7 +225,11 @@ export function useCanvasInput(
   canvasRef: Ref<HTMLCanvasElement | null>,
   store: EditorStore,
   hitTestSectionTitle: (cx: number, cy: number) => import('@/engine/scene-graph').SceneNode | null,
-  hitTestComponentLabel: (cx: number, cy: number) => import('@/engine/scene-graph').SceneNode | null
+  hitTestComponentLabel: (
+    cx: number,
+    cy: number
+  ) => import('@/engine/scene-graph').SceneNode | null,
+  onCursorMove?: (cx: number, cy: number) => void
 ) {
   const drag = ref<DragState | null>(null)
   const cursorOverride = ref<string | null>(null)
@@ -481,6 +485,11 @@ export function useCanvasInput(
   }
 
   function onMouseMove(e: MouseEvent) {
+    if (onCursorMove) {
+      const { cx, cy } = getCoords(e)
+      onCursorMove(cx, cy)
+    }
+
     // Pen tool: track cursor for preview line
     if (store.state.activeTool === 'PEN' && store.state.penState && !drag.value) {
       const { cx, cy } = getCoords(e)

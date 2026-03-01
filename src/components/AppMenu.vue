@@ -62,8 +62,16 @@ const editMenu: MenuItem[] = [
 
 const viewMenu: MenuItem[] = [
   { label: 'Zoom to fit', shortcut: '⇧1', action: () => store.zoomToFit() },
-  { label: 'Zoom in', shortcut: `${mod}=`, action: () => store.applyZoom(-100, window.innerWidth / 2, window.innerHeight / 2) },
-  { label: 'Zoom out', shortcut: `${mod}-`, action: () => store.applyZoom(100, window.innerWidth / 2, window.innerHeight / 2) }
+  {
+    label: 'Zoom in',
+    shortcut: `${mod}=`,
+    action: () => store.applyZoom(-100, window.innerWidth / 2, window.innerHeight / 2)
+  },
+  {
+    label: 'Zoom out',
+    shortcut: `${mod}-`,
+    action: () => store.applyZoom(100, window.innerWidth / 2, window.innerHeight / 2)
+  }
 ]
 
 const objectMenu: MenuItem[] = [
@@ -114,8 +122,11 @@ const topMenus = [
 </script>
 
 <template>
-  <div v-if="!IS_TAURI" class="border-b border-border px-1 py-1">
-    <MenubarRoot class="flex items-center gap-0.5">
+  <div
+    v-if="!IS_TAURI"
+    class="shrink-0 overflow-x-auto border-b border-border px-1 py-1 scrollbar-none"
+  >
+    <MenubarRoot class="flex w-max items-center gap-0.5">
       <MenubarMenu v-for="menu in topMenus" :key="menu.label">
         <MenubarTrigger
           class="flex cursor-pointer items-center rounded px-2 py-1 text-xs text-muted transition-colors select-none hover:bg-hover hover:text-surface data-[state=open]:bg-hover data-[state=open]:text-surface"
@@ -130,10 +141,7 @@ const topMenus = [
             class="min-w-52 rounded-lg border border-border bg-panel p-1 shadow-lg"
           >
             <template v-for="(item, i) in menu.items" :key="i">
-              <MenubarSeparator
-                v-if="item.separator"
-                class="mx-1 my-1 h-px bg-border"
-              />
+              <MenubarSeparator v-if="item.separator" class="mx-1 my-1 h-px bg-border" />
               <MenubarSub v-else-if="item.sub">
                 <MenubarSubTrigger
                   class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-surface outline-none select-none hover:bg-hover"
@@ -147,18 +155,11 @@ const topMenus = [
                     class="min-w-44 rounded-lg border border-border bg-panel p-1 shadow-lg"
                   >
                     <template v-for="(sub, j) in item.sub" :key="j">
-                      <MenubarSeparator
-                        v-if="sub.separator"
-                        class="mx-1 my-1 h-px bg-border"
-                      />
+                      <MenubarSeparator v-if="sub.separator" class="mx-1 my-1 h-px bg-border" />
                       <MenubarItem
                         v-else
                         class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none select-none"
-                        :class="
-                          sub.disabled
-                            ? 'text-muted/50'
-                            : 'text-surface hover:bg-hover'
-                        "
+                        :class="sub.disabled ? 'text-muted/50' : 'text-surface hover:bg-hover'"
                         :disabled="sub.disabled"
                         @select="sub.action?.()"
                       >
@@ -174,18 +175,12 @@ const topMenus = [
               <MenubarItem
                 v-else
                 class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none select-none"
-                :class="
-                  item.disabled
-                    ? 'text-muted/50'
-                    : 'text-surface hover:bg-hover'
-                "
+                :class="item.disabled ? 'text-muted/50' : 'text-surface hover:bg-hover'"
                 :disabled="item.disabled"
                 @select="item.action?.()"
               >
                 <span class="flex-1">{{ item.label }}</span>
-                <span v-if="item.shortcut" class="text-[11px] text-muted">{{
-                  item.shortcut
-                }}</span>
+                <span v-if="item.shortcut" class="text-[11px] text-muted">{{ item.shortcut }}</span>
               </MenubarItem>
             </template>
           </MenubarContent>

@@ -489,7 +489,11 @@ export class SceneGraph {
     this.activeMode.set(collectionId, modeId)
   }
 
-  resolveVariable(variableId: string, modeId?: string, visited?: Set<string>): VariableValue | undefined {
+  resolveVariable(
+    variableId: string,
+    modeId?: string,
+    visited?: Set<string>
+  ): VariableValue | undefined {
     if (visited?.has(variableId)) return undefined
     const variable = this.variables.get(variableId)
     if (!variable) return undefined

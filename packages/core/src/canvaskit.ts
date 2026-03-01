@@ -9,10 +9,12 @@ export interface CanvasKitOptions {
 export async function getCanvasKit(options?: CanvasKitOptions): Promise<CanvasKit> {
   if (instance) return instance
   instance = await CanvasKitInit({
-    locateFile: options?.locateFile ?? ((file) => {
-      if (typeof window !== 'undefined') return `/${file}`
-      return file
-    })
+    locateFile:
+      options?.locateFile ??
+      ((file) => {
+        if (typeof window !== 'undefined') return `/${file}`
+        return file
+      })
   })
   return instance
 }

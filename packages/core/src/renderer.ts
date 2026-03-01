@@ -57,13 +57,12 @@ import {
   TEXT_CARET_COLOR,
   TEXT_CARET_WIDTH
 } from './constants'
-
 import { vectorNetworkToPath } from './vector'
 
 import type { SceneNode, SceneGraph, Fill, Stroke } from './scene-graph'
-import type { Color } from './types'
 import type { SnapGuide } from './snap'
 import type { TextEditor } from './text-editor'
+import type { Color } from './types'
 import type { Rect } from './types'
 import type { EmbindEnumEntity, Image as CKImage, Path } from 'canvaskit-wasm'
 import type {
@@ -104,6 +103,13 @@ export interface RenderOverlays {
     cursorX?: number
     cursorY?: number
   } | null
+  remoteCursors?: Array<{
+    name: string
+    color: Color
+    x: number
+    y: number
+    selection?: string[]
+  }>
 }
 
 export class SkiaRenderer {
@@ -401,6 +407,7 @@ export class SkiaRenderer {
     this.drawMarquee(canvas, overlays.marquee)
     this.drawLayoutInsertIndicator(canvas, overlays.layoutInsertIndicator)
     this.drawPenOverlay(canvas, overlays.penState)
+    this.drawRemoteCursors(canvas, graph, overlays.remoteCursors)
     if (this.showRulers) this.drawRulers(canvas, graph, selectedIds)
 
     canvas.restore()
@@ -1550,10 +1557,7 @@ export class SkiaRenderer {
     }
   }
 
-  buildParagraph(
-    node: SceneNode,
-    color?: Float32Array
-  ): import('canvaskit-wasm').Paragraph {
+  buildParagraph(node: SceneNode, color?: Float32Array): import('canvaskit-wasm').Paragraph {
     const ck = this.ck
     const baseColor = color ?? ck.BLACK
     const baseFontSize = node.fontSize || DEFAULT_FONT_SIZE
@@ -1594,15 +1598,13 @@ export class SkiaRenderer {
             fontSize: s.fontSize ?? baseFontSize,
             fontStyle: {
               weight: { value: (s.fontWeight ?? node.fontWeight) || 400 } as FontWeight,
-              slant: (s.italic ?? node.italic)
-                ? ck.FontSlant.Italic
-                : ck.FontSlant.Upright
+              slant: (s.italic ?? node.italic) ? ck.FontSlant.Italic : ck.FontSlant.Upright
             },
             letterSpacing: s.letterSpacing ?? (node.letterSpacing || 0),
             decoration: this.textDecorationValue(s.textDecoration ?? node.textDecoration),
             heightMultiplier: (s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)
-              ? ((s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)! /
-                (s.fontSize ?? baseFontSize))
+              ? (s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)! /
+                (s.fontSize ?? baseFontSize)
               : undefined
           })
         )
@@ -1695,7 +1697,12 @@ export class SkiaRenderer {
     return fill.color
   }
 
-  resolveStrokeColor(stroke: Stroke, strokeIndex: number, node: SceneNode, graph: SceneGraph): Color {
+  resolveStrokeColor(
+    stroke: Stroke,
+    strokeIndex: number,
+    node: SceneNode,
+    graph: SceneGraph
+  ): Color {
     const varId = node.boundVariables[`strokes/${strokeIndex}/color`]
     if (varId) {
       const resolved = graph.resolveColorVariable(varId)
@@ -1972,6 +1979,101 @@ export class SkiaRenderer {
     handlePaint.delete()
     vertexFill.delete()
     vertexStroke.delete()
+  }
+
+  // --- Remote Cursors ---
+
+  private drawRemoteCursors(
+    canvas: Canvas,
+    graph: SceneGraph,
+    cursors?: RenderOverlays['remoteCursors']
+  ): void {
+    if (!cursors || cursors.length === 0) return
+
+    const CURSOR_SIZE = 9
+    const LABEL_PADDING_X = 4
+    const LABEL_PADDING_Y = 2
+    const LABEL_FONT_SIZE = 10
+    const LABEL_OFFSET_X = 12
+    const LABEL_OFFSET_Y = 20
+
+    for (const cursor of cursors) {
+      const screenX = cursor.x * this.zoom + this.panX
+      const screenY = cursor.y * this.zoom + this.panY
+      const { r, g, b } = cursor.color
+
+      // Draw remote selections
+      if (cursor.selection?.length) {
+        this.auxStroke.setColor(this.ck.Color4f(r, g, b, 0.6))
+        this.auxStroke.setStrokeWidth(1.5)
+        this.auxStroke.setPathEffect(null)
+        for (const nodeId of cursor.selection) {
+          const node = graph.getNode(nodeId)
+          if (!node) continue
+          const abs = graph.getAbsolutePosition(nodeId)
+          const sx = abs.x * this.zoom + this.panX
+          const sy = abs.y * this.zoom + this.panY
+          const sw = node.width * this.zoom
+          const sh = node.height * this.zoom
+          canvas.drawRect(this.ck.XYWHRect(sx, sy, sw, sh), this.auxStroke)
+        }
+      }
+
+      // Figma-style cursor arrow
+      const S = CURSOR_SIZE
+      const path = new this.ck.Path()
+      path.moveTo(screenX, screenY)
+      path.lineTo(screenX, screenY + S * 1.35)
+      path.lineTo(screenX + S * 0.38, screenY + S * 1.0)
+      path.lineTo(screenX + S * 0.72, screenY + S * 1.5)
+      path.lineTo(screenX + S * 0.92, screenY + S * 1.38)
+      path.lineTo(screenX + S * 0.58, screenY + S * 0.88)
+      path.lineTo(screenX + S * 1.0, screenY + S * 0.82)
+      path.close()
+
+      // White border for contrast
+      this.auxStroke.setColor(this.ck.Color4f(1, 1, 1, 1))
+      this.auxStroke.setStrokeWidth(2)
+      this.auxStroke.setPathEffect(null)
+      canvas.drawPath(path, this.auxStroke)
+
+      // Filled arrow in peer color
+      this.auxFill.setColor(this.ck.Color4f(r, g, b, 1))
+      canvas.drawPath(path, this.auxFill)
+      path.delete()
+
+      // Draw name label
+      if (cursor.name) {
+        const font = this.labelFont
+        if (font) {
+          font.setSize(LABEL_FONT_SIZE)
+          const labelX = screenX + LABEL_OFFSET_X
+          const labelY = screenY + LABEL_OFFSET_Y
+          const glyphIds = font.getGlyphIDs(cursor.name)
+          const widths = font.getGlyphWidths(glyphIds)
+          let textWidth = 0
+          for (let i = 0; i < widths.length; i++) textWidth += widths[i]
+
+          // Label background (pill)
+          this.auxFill.setColor(this.ck.Color4f(r, g, b, 1))
+          const bgRect = this.ck.RRectXY(
+            this.ck.XYWHRect(
+              labelX - LABEL_PADDING_X,
+              labelY - LABEL_FONT_SIZE - LABEL_PADDING_Y + 2,
+              textWidth + LABEL_PADDING_X * 2,
+              LABEL_FONT_SIZE + LABEL_PADDING_Y * 2
+            ),
+            4,
+            4
+          )
+          canvas.drawRRect(bgRect, this.auxFill)
+
+          // Label text
+          this.auxFill.setColor(this.ck.Color4f(1, 1, 1, 1))
+          canvas.drawText(cursor.name, labelX, labelY, this.auxFill, font)
+        }
+      }
+    }
   }
 
   // --- Rulers ---

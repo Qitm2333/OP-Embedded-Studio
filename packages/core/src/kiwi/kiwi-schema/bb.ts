@@ -52,14 +52,30 @@ export class ByteBuffer {
     let i = this._index
     let b = data[i++]
     let value = b & 127
-    if (b < 128) { this._index = i; return value }
-    b = data[i++]; value |= (b & 127) << 7
-    if (b < 128) { this._index = i; return value }
-    b = data[i++]; value |= (b & 127) << 14
-    if (b < 128) { this._index = i; return value }
-    b = data[i++]; value |= (b & 127) << 21
-    if (b < 128) { this._index = i; return value }
-    b = data[i++]; value |= (b & 127) << 28
+    if (b < 128) {
+      this._index = i
+      return value
+    }
+    b = data[i++]
+    value |= (b & 127) << 7
+    if (b < 128) {
+      this._index = i
+      return value
+    }
+    b = data[i++]
+    value |= (b & 127) << 14
+    if (b < 128) {
+      this._index = i
+      return value
+    }
+    b = data[i++]
+    value |= (b & 127) << 21
+    if (b < 128) {
+      this._index = i
+      return value
+    }
+    b = data[i++]
+    value |= (b & 127) << 28
     this._index = i
     return value >>> 0
   }

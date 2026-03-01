@@ -7,6 +7,7 @@
  */
 
 import { parseColor } from '../color'
+
 import type { FigmaAPI, FigmaNodeProxy } from '../figma-api'
 
 export type ParamType = 'string' | 'number' | 'boolean' | 'color' | 'string[]'
@@ -213,7 +214,7 @@ export const setFill = defineTool({
   execute: (figma, { id, color }) => {
     const node = figma.getNodeById(id)
     if (!node) return { error: `Node "${id}" not found` }
-    
+
     const c = parseColor(color)
     node.fills = [{ type: 'SOLID', color: c, opacity: 1, visible: true }]
     return { id, color: c }
@@ -237,10 +238,16 @@ export const setStroke = defineTool({
   execute: (figma, { id, color, weight, align }) => {
     const node = figma.getNodeById(id)
     if (!node) return { error: `Node "${id}" not found` }
-    
+
     const c = parseColor(color)
     node.strokes = [
-      { color: c, weight: weight ?? 1, opacity: 1, visible: true, align: (align ?? 'INSIDE') as 'INSIDE' | 'CENTER' | 'OUTSIDE' }
+      {
+        color: c,
+        weight: weight ?? 1,
+        opacity: 1,
+        visible: true,
+        align: (align ?? 'INSIDE') as 'INSIDE' | 'CENTER' | 'OUTSIDE'
+      }
     ]
     return { id, color: c, weight: weight ?? 1 }
   }
@@ -276,7 +283,6 @@ export const setEffects = defineTool({
     }
 
     if (!isBlur) {
-      
       effect.color = args.color ? parseColor(args.color) : { r: 0, g: 0, b: 0, a: 0.25 }
       effect.offset = { x: args.offset_x ?? 0, y: args.offset_y ?? 4 }
       effect.spread = args.spread ?? 0
@@ -309,19 +315,34 @@ export const updateNode = defineTool({
     const node = figma.getNodeById(args.id)
     if (!node) return { error: `Node "${args.id}" not found` }
     const updated: string[] = []
-    if (args.x !== undefined) { node.x = args.x; updated.push('x') }
-    if (args.y !== undefined) { node.y = args.y; updated.push('y') }
+    if (args.x !== undefined) {
+      node.x = args.x
+      updated.push('x')
+    }
+    if (args.y !== undefined) {
+      node.y = args.y
+      updated.push('y')
+    }
     if (args.width !== undefined || args.height !== undefined) {
       node.resize(args.width ?? node.width, args.height ?? node.height)
       updated.push('size')
     }
-    if (args.opacity !== undefined) { node.opacity = args.opacity; updated.push('opacity') }
+    if (args.opacity !== undefined) {
+      node.opacity = args.opacity
+      updated.push('opacity')
+    }
     if (args.corner_radius !== undefined) {
       node.cornerRadius = args.corner_radius
       updated.push('cornerRadius')
     }
-    if (args.visible !== undefined) { node.visible = args.visible; updated.push('visible') }
-    if (args.name !== undefined) { node.name = args.name; updated.push('name') }
+    if (args.visible !== undefined) {
+      node.visible = args.visible
+      updated.push('visible')
+    }
+    if (args.name !== undefined) {
+      node.name = args.name
+      updated.push('name')
+    }
     if (args.text !== undefined) {
       figma.graph.updateNode(node.id, { text: args.text })
       updated.push('text')
@@ -578,9 +599,7 @@ export const switchPage = defineTool({
     page: { type: 'string', description: 'Page name or ID', required: true }
   },
   execute: (figma, { page }) => {
-    const target =
-      figma.root.children.find((p) => p.name === page) ??
-      figma.getNodeById(page)
+    const target = figma.root.children.find((p) => p.name === page) ?? figma.getNodeById(page)
     if (!target) return { error: `Page "${page}" not found` }
     figma.currentPage = target
     return { page: target.name, id: target.id }

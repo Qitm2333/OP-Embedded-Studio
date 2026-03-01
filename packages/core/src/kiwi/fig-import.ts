@@ -1,9 +1,8 @@
 import { DEFAULT_STROKE_MITER_LIMIT } from '../constants'
-import { SceneGraph } from '../scene-graph'
 import { styleToWeight } from '../fonts'
+import { SceneGraph } from '../scene-graph'
 import { decodeVectorNetworkBlob } from '../vector'
 
-import type { NodeChange, Paint, Effect as KiwiEffect, GUID } from './codec'
 import type {
   NodeType,
   Fill,
@@ -30,6 +29,7 @@ import type {
   StyleRun,
   CharacterStyleOverride
 } from '../scene-graph'
+import type { NodeChange, Paint, Effect as KiwiEffect, GUID } from './codec'
 
 function ext(nc: NodeChange): Record<string, unknown> {
   return nc as unknown as Record<string, unknown>
@@ -240,8 +240,6 @@ function mapStackCounterAlign(align?: string): LayoutCounterAlign {
   }
 }
 
-
-
 function mapConstraint(c?: string): ConstraintType {
   switch (c) {
     case 'CENTER':
@@ -292,7 +290,7 @@ function importStyleRuns(nc: NodeChange): StyleRun[] {
     const style: CharacterStyleOverride = {}
     if (override.fontName) {
       style.fontFamily = override.fontName.family
-      style.fontWeight = styleToWeight(override.fontName.style ?? "")
+      style.fontWeight = styleToWeight(override.fontName.style ?? '')
       style.italic = override.fontName.style?.toLowerCase().includes('italic') ?? false
     }
     if (override.fontSize !== undefined) style.fontSize = override.fontSize
@@ -451,7 +449,7 @@ export function importNodeChanges(
       text: nc.textData?.characters ?? '',
       fontSize: nc.fontSize ?? 14,
       fontFamily: nc.fontName?.family ?? 'Inter',
-      fontWeight: styleToWeight(nc.fontName?.style ?? ""),
+      fontWeight: styleToWeight(nc.fontName?.style ?? ''),
       italic: nc.fontName?.style?.toLowerCase().includes('italic') ?? false,
       textAlignHorizontal:
         (nc.textAlignHorizontal as 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED') ?? 'LEFT',
@@ -497,7 +495,8 @@ export function importNodeChanges(
       maxHeight: (ext(nc).maxHeight as number) ?? null,
       isMask: (ext(nc).isMask as boolean) ?? false,
       maskType: ((ext(nc).maskType as string) ?? 'ALPHA') as 'ALPHA' | 'VECTOR' | 'LUMINANCE',
-      counterAxisAlignContent: (ext(nc).stackCounterAlignContent as string) === 'SPACE_BETWEEN' ? 'SPACE_BETWEEN' : 'AUTO',
+      counterAxisAlignContent:
+        (ext(nc).stackCounterAlignContent as string) === 'SPACE_BETWEEN' ? 'SPACE_BETWEEN' : 'AUTO',
       itemReverseZIndex: (ext(nc).stackReverseZIndex as boolean) ?? false,
       strokesIncludedInLayout: (ext(nc).strokesIncludedInLayout as boolean) ?? false,
       expanded: true,
@@ -529,7 +528,14 @@ export function importNodeChanges(
   function importVariables() {
     for (const [id, nc] of changeMap) {
       if (nc.type !== 'VARIABLE') continue
-      const varData = (ext(nc) as { variableData?: { value?: { boolValue?: boolean; textValue?: string; floatValue?: number }; dataType?: string } }).variableData
+      const varData = (
+        ext(nc) as {
+          variableData?: {
+            value?: { boolValue?: boolean; textValue?: string; floatValue?: number }
+            dataType?: string
+          }
+        }
+      ).variableData
       if (!varData) continue
 
       const parentId = parentMap.get(id) ?? ''

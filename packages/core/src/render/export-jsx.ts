@@ -21,7 +21,13 @@ const NODE_TYPE_TO_TAG: Partial<Record<NodeType, string>> = {
 
 function formatColor(color: Color, opacity = 1): string {
   const hex = colorToHex(color)
-  if (opacity < 1) return hex + Math.round(opacity * 255).toString(16).padStart(2, '0')
+  if (opacity < 1)
+    return (
+      hex +
+      Math.round(opacity * 255)
+        .toString(16)
+        .padStart(2, '0')
+    )
   return hex
 }
 
@@ -144,7 +150,12 @@ function collectProps(node: SceneNode, graph: SceneGraph): [string, unknown][] {
 
   if (node.cornerRadius > 0) {
     if (node.independentCorners) {
-      const { topLeftRadius: tl, topRightRadius: tr, bottomRightRadius: br, bottomLeftRadius: bl } = node
+      const {
+        topLeftRadius: tl,
+        topRightRadius: tr,
+        bottomRightRadius: br,
+        bottomLeftRadius: bl
+      } = node
       if (tl === tr && tr === br && br === bl) {
         props.push(['rounded', tl])
       } else {
@@ -206,11 +217,7 @@ function collectProps(node: SceneNode, graph: SceneGraph): [string, unknown][] {
   return props
 }
 
-function nodeToJsx(
-  node: SceneNode,
-  graph: SceneGraph,
-  indent: number
-): string {
+function nodeToJsx(node: SceneNode, graph: SceneGraph, indent: number): string {
   const tag = NODE_TYPE_TO_TAG[node.type]
   if (!tag) return ''
 
@@ -226,7 +233,15 @@ function nodeToJsx(
     const text = node.text
     if (!text) return `${prefix}${opening} />`
     const escaped = text.replace(/[{}<>&]/g, (c) =>
-      c === '{' ? '&#123;' : c === '}' ? '&#125;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&amp;'
+      c === '{'
+        ? '&#123;'
+        : c === '}'
+          ? '&#125;'
+          : c === '<'
+            ? '&lt;'
+            : c === '>'
+              ? '&gt;'
+              : '&amp;'
     )
     if (!escaped.includes('\n')) {
       return `${prefix}${opening}>${escaped}</${tag}>`
@@ -253,26 +268,16 @@ function nodeToJsx(
     return `${prefix}${opening} />`
   }
 
-  return [
-    `${prefix}${opening}>`,
-    ...childJsx,
-    `${prefix}</${tag}>`
-  ].join('\n')
+  return [`${prefix}${opening}>`, ...childJsx, `${prefix}</${tag}>`].join('\n')
 }
 
-export function sceneNodeToJsx(
-  nodeId: string,
-  graph: SceneGraph
-): string {
+export function sceneNodeToJsx(nodeId: string, graph: SceneGraph): string {
   const node = graph.getNode(nodeId)
   if (!node) return ''
   return nodeToJsx(node, graph, 0)
 }
 
-export function selectionToJsx(
-  nodeIds: string[],
-  graph: SceneGraph
-): string {
+export function selectionToJsx(nodeIds: string[], graph: SceneGraph): string {
   return nodeIds
     .map((id) => sceneNodeToJsx(id, graph))
     .filter(Boolean)

@@ -1,6 +1,6 @@
 import * as React from './mini-react'
-import { resolveToTree, type TreeNode } from './tree'
 import { renderTree, type RenderResult } from './renderer'
+import { resolveToTree, type TreeNode } from './tree'
 
 import type { SceneGraph } from '../scene-graph'
 
@@ -14,7 +14,9 @@ export async function buildComponent(jsxString: string): Promise<() => unknown> 
   try {
     esbuild = await import('esbuild')
   } catch {
-    throw new Error('esbuild is required for JSX string rendering. Install it or use renderTreeNode() instead.')
+    throw new Error(
+      'esbuild is required for JSX string rendering. Install it or use renderTreeNode() instead.'
+    )
   }
 
   const code = `

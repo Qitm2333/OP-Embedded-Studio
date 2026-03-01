@@ -1,13 +1,13 @@
 import { zipSync, deflateSync } from 'fflate'
 
 import { IS_TAURI } from './constants'
-import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { sceneNodeToKiwi, fractionalPosition, buildFigKiwi } from './kiwi-serialize'
+import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { renderThumbnail } from './render-image'
 
+import type { NodeChange } from './kiwi/codec'
 import type { SkiaRenderer } from './renderer'
 import type { SceneGraph } from './scene-graph'
-import type { NodeChange } from './kiwi/codec'
 import type { CanvasKit } from 'canvaskit-wasm'
 
 const THUMBNAIL_1X1 = Uint8Array.from(
@@ -126,5 +126,3 @@ export async function exportFigFile(
     'meta.json': new TextEncoder().encode(metaJson)
   })
 }
-
-

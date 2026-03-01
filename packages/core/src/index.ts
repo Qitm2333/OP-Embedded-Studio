@@ -1,10 +1,4 @@
-export type {
-  GUID,
-  Color,
-  Vector,
-  Matrix,
-  Rect
-} from './types'
+export type { GUID, Color, Vector, Matrix, Rect } from './types'
 
 export * from './constants'
 
@@ -65,7 +59,12 @@ export {
   weightToStyle
 } from './fonts'
 export { parseColor, colorToHex, colorToHexRaw, colorToRgba255 } from './color'
-export { vectorNetworkToPath, decodeVectorNetworkBlob, encodeVectorNetworkBlob, computeVectorBounds } from './vector'
+export {
+  vectorNetworkToPath,
+  decodeVectorNetworkBlob,
+  encodeVectorNetworkBlob,
+  computeVectorBounds
+} from './vector'
 export { computeSelectionBounds, computeSnap, type SnapGuide } from './snap'
 export { UndoManager } from './undo'
 export { TextEditor, type TextCaret, type TextEditorState } from './text-editor'

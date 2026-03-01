@@ -1,7 +1,7 @@
 {
   "name": "open-pencil-app",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "workspaces": [
     "packages/*"
@@ -47,12 +47,18 @@
     "dedent": "^1.7.1",
     "fflate": "^0.8.2",
     "fzstd": "^0.1.1",
+    "lib0": "^0.2.117",
     "prismjs": "^1.30.0",
     "reka-ui": "^2.8.2",
     "tailwindcss": "^4.2.1",
+    "trystero": "^0.22.0",
     "valibot": "^1.2.0",
     "vue": "^3.5.29",
+    "vue-router": "^5.0.3",
     "vue-stream-markdown": "^0.6.0",
+    "y-indexeddb": "^9.0.12",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.29",
     "yoga-layout": "^3.2.1"
   },
   "devDependencies": {

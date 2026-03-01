@@ -30,6 +30,7 @@ Your design files are yours. Your tools should be too.
 
 - **Figma .fig file import** — open native Figma files directly
 - **Figma clipboard** — copy/paste between OpenPencil and Figma
+- **Real-time collaboration** — P2P via WebRTC, no server required. Share a link, co-edit live with cursors and presence
 - **Vector networks** — complex boolean shapes and open paths, like Figma
 - **Auto-layout** — constraint-based layout matching Figma behavior
 - **Components & instances** — with live sync, overrides, component sets
@@ -52,6 +53,7 @@ Your design files are yours. Your tools should be too.
 | Layout | Yoga WASM |
 | File format | Kiwi binary (vendored) + Zstd + ZIP |
 | Color | culori |
+| Collaboration | Trystero (WebRTC P2P) + Yjs (CRDT) + y-indexeddb |
 | Desktop | Tauri v2 |
 | CLI | citty, agentfmt |
 | Testing | Playwright (visual regression), bun:test (unit) |
@@ -63,6 +65,17 @@ Your design files are yours. Your tools should be too.
 bun install
 bun run dev
 ```
+
+## Collaboration
+
+Share a link to co-edit in real time. No server, no account — peers connect directly via WebRTC.
+
+1. Click the share button in the top-right panel
+2. Share the generated link (`app.openpencil.dev/share/<room-id>`)
+3. Collaborators see your cursor, selection, and edits in real time
+4. Click a peer's avatar to follow their viewport
+
+All sync happens peer-to-peer via [Trystero](https://github.com/dmotz/trystero). Document state is persisted locally in IndexedDB — refreshing the page keeps your work.
 
 ## CLI
 
@@ -140,7 +153,7 @@ packages/
   cli/            @open-pencil/cli — headless CLI (info, tree, find, export)
 src/
   components/     Vue SFCs (canvas, panels, toolbar, color picker)
-  composables/    Canvas input, keyboard shortcuts, rendering
+  composables/    Canvas input, keyboard shortcuts, collaboration, rendering
   stores/         Editor state (Vue reactivity)
   engine/         Re-export shims from @open-pencil/core
   kiwi/           Re-export shims from @open-pencil/core
