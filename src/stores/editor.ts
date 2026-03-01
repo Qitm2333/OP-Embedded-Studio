@@ -125,6 +125,21 @@ export function createEditorStore() {
 
   prefetchFigmaSchema()
 
+  function downloadBlob(data: Uint8Array, filename: string, mime: string) {
+    const blob = new Blob([data.buffer as ArrayBuffer], { type: mime })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => {
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }, 100)
+  }
+
   const state = reactive({
     activeTool: 'SELECT' as Tool,
     currentPageId: graph.getPages()[0].id,
@@ -612,13 +627,7 @@ export function createEditorStore() {
       }
     }
 
-    const blob = new Blob([new Uint8Array(data)], { type: 'application/octet-stream' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'Untitled.fig'
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadBlob(new Uint8Array(data), 'Untitled.fig', 'application/octet-stream')
   }
 
   async function writeFile(data: Uint8Array) {
@@ -717,13 +726,7 @@ export function createEditorStore() {
       }
     }
 
-    const blob = new Blob([new Uint8Array(data)], { type: exportImageMime(format) })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = fileName
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadBlob(new Uint8Array(data), fileName, exportImageMime(format))
   }
 
   function runLayoutForNode(id: string) {
