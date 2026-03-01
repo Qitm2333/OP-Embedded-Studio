@@ -16,51 +16,38 @@ export interface ModelOption {
   tag?: string
 }
 
-export const MODEL_OPTIONS: ModelOption[] = [
+export const MODELS: ModelOption[] = [
+  // Frontier
   {
-    id: 'anthropic/claude-sonnet-4',
-    name: 'Claude Sonnet 4',
+    id: 'anthropic/claude-sonnet-4.6',
+    name: 'Claude Sonnet 4.6',
     provider: 'Anthropic',
     tag: 'Recommended'
   },
-  { id: 'anthropic/claude-opus-4', name: 'Claude Opus 4', provider: 'Anthropic', tag: 'Smartest' },
   {
-    id: 'google/gemini-2.5-pro-preview-06-05',
-    name: 'Gemini 2.5 Pro',
+    id: 'anthropic/claude-opus-4.6',
+    name: 'Claude Opus 4.6',
+    provider: 'Anthropic',
+    tag: 'Smartest'
+  },
+  {
+    id: 'google/gemini-3.1-pro-preview',
+    name: 'Gemini 3.1 Pro',
     provider: 'Google',
-    tag: 'Long context'
+    tag: '1M context'
   },
-  { id: 'openai/gpt-4.1', name: 'GPT-4.1', provider: 'OpenAI' },
-  {
-    id: 'google/gemini-2.5-flash-preview-05-20',
-    name: 'Gemini 2.5 Flash',
-    provider: 'Google',
-    tag: 'Fast'
-  },
-  { id: 'openai/gpt-4.1-mini', name: 'GPT-4.1 Mini', provider: 'OpenAI', tag: 'Cheap' },
-  {
-    id: 'deepseek/deepseek-chat-v3-0324:free',
-    name: 'DeepSeek V3',
-    provider: 'DeepSeek',
-    tag: 'Free'
-  },
-  {
-    id: 'meta-llama/llama-3.3-70b-instruct:free',
-    name: 'Llama 3.3 70B',
-    provider: 'Meta',
-    tag: 'Free'
-  }
+  { id: 'openai/gpt-5.3-codex', name: 'GPT-5.3 Codex', provider: 'OpenAI' },
+
+  // Fast & cheap
+  { id: 'google/gemini-3-flash-preview', name: 'Gemini 3 Flash', provider: 'Google', tag: 'Fast' },
+  { id: 'qwen/qwen3.5-flash-02-23', name: 'Qwen 3.5 Flash', provider: 'Qwen', tag: 'Cheap' },
+  { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', provider: 'DeepSeek', tag: 'Cheap' },
+
+  // Free
+  { id: 'qwen/qwen3-coder:free', name: 'Qwen3 Coder', provider: 'Qwen', tag: 'Free' },
+  { id: 'openai/gpt-oss-120b:free', name: 'GPT-OSS 120B', provider: 'OpenAI', tag: 'Free' }
 ]
 
-const seen = new Set<string>()
-const deduped: ModelOption[] = []
-for (const m of MODEL_OPTIONS) {
-  if (!seen.has(m.id)) {
-    seen.add(m.id)
-    deduped.push(m)
-  }
-}
-export const MODELS = deduped
 export const DEFAULT_MODEL = MODELS[0].id
 
 const SYSTEM_PROMPT = dedent`
