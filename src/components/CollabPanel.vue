@@ -13,6 +13,7 @@ import {
 } from 'reka-ui'
 
 import type { CollabState, RemotePeer } from '@/composables/use-collab'
+import { toast } from '@/composables/use-toast'
 import type { Color } from '@/types'
 
 const props = defineProps<{
@@ -45,6 +46,7 @@ const isJoining = computed(() => !!props.pendingRoomId && !props.state.connected
 function copyLink() {
   if (!shareUrl.value) return
   navigator.clipboard.writeText(shareUrl.value)
+  toast.show('Link copied to clipboard')
   copied.value = true
   setTimeout(() => {
     copied.value = false

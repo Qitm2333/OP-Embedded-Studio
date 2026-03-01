@@ -7,6 +7,7 @@ import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import { useKeyboard } from '@/composables/use-keyboard'
 import { useMenu } from '@/composables/use-menu'
 import { useCollab, COLLAB_KEY } from '@/composables/use-collab'
+import { toast } from '@/composables/use-toast'
 import { createDemoShapes } from '@/demo'
 import { provideEditorStore } from '@/stores/editor'
 
@@ -47,6 +48,8 @@ const pendingRoomId = (route.params.roomId as string) || null
 function onShare() {
   const roomId = collab.shareCurrentDoc()
   router.push(`/share/${roomId}`)
+  navigator.clipboard.writeText(`${window.location.origin}/share/${roomId}`)
+  toast.show('Link copied to clipboard')
 }
 
 function onJoin(roomId: string) {

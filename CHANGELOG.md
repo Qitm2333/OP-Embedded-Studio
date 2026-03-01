@@ -19,6 +19,9 @@
 
 ### UI
 
+- Toast notifications via Reka UI Toast — top-center blue pill for info, red for errors
+- Global error handler (window.error + unhandledrejection) shows errors as toasts
+- Link copied toast on share and copy link actions
 - HsvColorArea extracted as shared component (ColorPicker + FillPicker)
 - Scrollable app menu without visible scrollbar
 - Selection broadcasting to remote peers
