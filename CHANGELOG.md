@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-03-01)
 
 ### Performance
 
@@ -10,9 +10,11 @@
 - Only enable `preserveDrawingBuffer` in test mode
 - Hoist URL param parsing out of render loop
 
-### Bug Fixes
+### Fixes
 
-- Fix trackpad pinch-to-zoom on Safari macOS
+- Fix npm publish: use pnpm for workspace dependency resolution with provenance
+- CLI version now reads from package.json instead of hardcoded value
+- Update README: accurate app size (~7 MB), streamlined feature list, current project structure
 
 ## 0.2.1 (2026-03-01)
 
