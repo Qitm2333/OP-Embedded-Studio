@@ -1298,17 +1298,22 @@ In-app AI chat + MCP server. Two interfaces to the same tool set: chat panel for
 
 #### In-app AI chat
 
-Architecture: LLM runs server-side (OpenRouter via AI SDK `ToolLoopAgent`), but tools execute **client-side** in the browser where the editor store lives. The AI SDK's client-side tool execution pattern handles the roundtrip.
+**No backend.** Everything runs in the browser. The user provides their own OpenRouter API key. The app calls OpenRouter directly via `fetch()` — no proxy server, no sidecar, no extra process.
 
 ```
-Browser (Vue)                    Backend (Bun)
-  ChatPanel.vue                    /api/chat
-  useChat() ──stream──→          ToolLoopAgent
-  tool exec ←─call───            OpenRouter
-  result ────reply──→            Claude Sonnet
+Browser (Vue)
+  ChatPanel.vue
+  useChat() ──stream──→  OpenRouter (SSE)
+  tool exec (local)      Claude Sonnet
 ```
 
-Stack: `ai@6.0.0-beta` + `@ai-sdk/valibot` + `@openrouter/ai-sdk-provider` + `valibot`. Backend runs as separate Bun process (Vite proxies `/api/*` in dev), Tauri sidecar in production. Frontend uses `ai/vue` `useChat()` composable.
+Stack: `ai@6.0.0-beta` + `@ai-sdk/valibot` + `@openrouter/ai-sdk-provider` + `valibot`. All client-side — `ai/vue` `useChat()` composable with `fetch` transport directly to OpenRouter.
+
+**Why no backend:** All tools execute client-side (editor store, canvas). A backend would add SSE roundtrip latency on every tool call (10-20 per message), require a Tauri sidecar for production, and add failure modes — all to protect an API key that the user owns. Desktop apps (1Password, Cursor, etc.) use the same model.
+
+**API key storage:**
+- **Tauri (desktop):** `tauri-plugin-stronghold` — encrypted vault on disk, key loaded into JS memory at runtime for fetch headers. Never in source code, never in plaintext on disk.
+- **Browser mode:** `localStorage` with a clear warning. Acceptable for a local-first design tool — no worse than any SPA with user-provided keys.
 
 **Chat panel UI:** Replaces right sidebar (properties panel) when active, toggled with `⌘J`. Both share the same splitter slot. Tool calls render inline as a collapsible timeline (like beebro-chat's `ToolTimeline`) with icons, status, expandable params/results. Screenshots and visual diffs render inline as thumbnails.
 
@@ -1364,13 +1369,12 @@ interface CommentPin {
 #### Implementation order
 
 1. JSX renderer in `@open-pencil/core` (port from figma-use)
-2. Backend skeleton — `packages/ai/`, `/api/chat` endpoint, ToolLoopAgent
-3. Chat panel UI — `ChatPanel.vue`, message list, tool timeline, `⌘J` toggle
+2. Chat panel UI — `ChatPanel.vue`, `useChat()`, message list, tool timeline, `⌘J` toggle
+3. API key settings — input UI, Stronghold storage (Tauri) / localStorage (browser)
 4. Core tools — render, set_fill, set_layout, set_text, snapshot, get_selection
 5. Screenshot + diff tools
 6. Comment pin system
 7. Full tool set (remaining 118 tools)
-8. Tauri sidecar bundling
 
 #### Validation
 
