@@ -20,4 +20,6 @@ interface Window {
       blob(): Promise<Blob>
     }[]
   >
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  __OPEN_PENCIL_SET_TRANSPORT__?(factory: () => any): void
 }

@@ -1368,13 +1368,18 @@ interface CommentPin {
 
 #### Implementation order
 
-1. JSX renderer in `@open-pencil/core` (port from figma-use)
-2. Chat panel UI — `ChatPanel.vue`, `useChat()`, message list, tool timeline, `⌘J` toggle
-3. API key settings — input UI, Stronghold storage (Tauri) / localStorage (browser)
-4. Core tools — render, set_fill, set_layout, set_text, snapshot, get_selection
-5. Screenshot + diff tools
-6. Comment pin system
-7. Full tool set (remaining 118 tools)
+1. ✅ JSX renderer in `@open-pencil/core` (port from figma-use)
+2. ✅ Chat panel UI — `ChatPanel.vue`, `useChat()`, message list, tool timeline, `⌘J` toggle
+3. Code panel — "Code" tab in properties panel, JSX export with syntax highlighting
+   - `sceneNodeToJsx()` in `packages/core/src/render/export-jsx.ts` (reverse of renderer.ts)
+   - `CodePanel.vue` with Prism.js highlighting, copy button, reka-ui ScrollArea
+   - Third tab in PropertiesPanel: Design | Code | AI
+   - Subtree export: full JSX tree for selection, multi-selection separated by blank lines
+4. API key settings — input UI, Stronghold storage (Tauri) / localStorage (browser)
+5. Core tools — render, set_fill, set_layout, set_text, snapshot, get_selection
+6. Screenshot + diff tools
+7. Comment pin system
+8. Full tool set (remaining 118 tools)
 
 #### Validation
 

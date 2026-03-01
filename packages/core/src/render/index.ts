@@ -22,3 +22,5 @@ export { type TreeNode, type BaseProps, type TextProps, type StyleProps, isTreeN
 export { renderTree, type RenderResult } from './renderer'
 
 export { renderJsx, renderTreeNode, buildComponent } from './render-jsx'
+
+export { sceneNodeToJsx, selectionToJsx } from './export-jsx'
