@@ -106,6 +106,7 @@ The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files 
 - Tauri detection: `IS_TAURI` constant from `packages/core/src/constants.ts` — don't use `'__TAURI_INTERNALS__' in window` inline
 - .fig export: compression with fflate (browser) or Tauri Rust commands
 - Test .fig round-trip by exporting and reimporting in Figma
+- Test fixtures (`tests/fixtures/*.fig`) are Git LFS — `lfs.skipverify = true` is set to avoid slow push verification
 
 ## Tauri
 
