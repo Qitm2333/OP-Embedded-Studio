@@ -77,5 +77,3 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
 
   return loadFontCore(family, style)
 }
-
-

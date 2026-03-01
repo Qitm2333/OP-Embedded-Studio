@@ -48,6 +48,7 @@ export {
   type StyleRun
 } from './scene-graph'
 
+export { FigmaAPI, FigmaNodeProxy, type FigmaFontName } from './figma-api'
 export { SkiaRenderer, type RenderOverlays } from './renderer'
 export { computeLayout, computeAllLayouts } from './layout'
 export { getCanvasKit, type CanvasKitOptions } from './canvaskit'
