@@ -1,4 +1,4 @@
-import { reactive, shallowRef, computed } from 'vue'
+import { reactive, shallowRef, computed, watch } from 'vue'
 
 import {
   IS_TAURI,
@@ -117,6 +117,8 @@ export function createEditorStore() {
   const pageViewports = new Map<string, PageViewport>()
   let fileHandle: FileSystemFileHandle | null = null
   let filePath: string | null = null
+  let savedVersion = 0
+  let autosaveTimer: ReturnType<typeof setTimeout> | undefined
   let _ck: import('canvaskit-wasm').CanvasKit | null = null
   let _renderer: import('@/engine/renderer').SkiaRenderer | null = null
   let _textEditor: TextEditor | null = null
@@ -156,6 +158,25 @@ export function createEditorStore() {
     renderVersion: 0,
     sceneVersion: 0
   })
+
+  const AUTOSAVE_DELAY = 3000
+
+  watch(
+    () => state.sceneVersion,
+    (version) => {
+      if (version === savedVersion) return
+      if (!fileHandle && !filePath) return
+      clearTimeout(autosaveTimer)
+      autosaveTimer = setTimeout(async () => {
+        if (state.sceneVersion === savedVersion) return
+        try {
+          await writeFile(await buildFigFile())
+        } catch {
+          // silently fail — user can still save manually
+        }
+      }, AUTOSAVE_DELAY)
+    }
+  )
 
   const selectedNodes = computed(() => {
     void state.sceneVersion
@@ -604,12 +625,14 @@ export function createEditorStore() {
     if (filePath && IS_TAURI) {
       const { writeFile: tauriWrite } = await import('@tauri-apps/plugin-fs')
       await tauriWrite(filePath, data)
+      savedVersion = state.sceneVersion
       return
     }
     if (fileHandle) {
       const writable = await fileHandle.createWritable()
       await writable.write(new Uint8Array(data))
       await writable.close()
+      savedVersion = state.sceneVersion
     }
   }
 
