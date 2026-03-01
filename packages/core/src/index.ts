@@ -112,7 +112,9 @@ export {
   type BaseProps,
   type TextProps,
   type StyleProps,
-  type RenderResult
+  type RenderResult,
+  sceneNodeToJsx,
+  selectionToJsx
 } from './render'
 export {
   parseFigmaClipboard,

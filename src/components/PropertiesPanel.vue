@@ -5,6 +5,7 @@ import { useAIChat } from '@/composables/use-chat'
 import { useEditorStore } from '@/stores/editor'
 
 import ChatPanel from './ChatPanel.vue'
+import CodePanel from './CodePanel.vue'
 import DesignPanel from './DesignPanel.vue'
 
 const store = useEditorStore()
@@ -23,6 +24,13 @@ const { activeTab } = useAIChat(store)
           class="rounded px-2.5 py-1 text-xs text-muted hover:text-surface data-[state=active]:font-semibold data-[state=active]:text-surface"
         >
           Design
+        </TabsTrigger>
+        <TabsTrigger
+          value="code"
+          class="flex items-center gap-1 rounded px-2.5 py-1 text-xs text-muted hover:text-surface data-[state=active]:font-semibold data-[state=active]:text-surface"
+        >
+          <icon-lucide-code class="size-3" />
+          Code
         </TabsTrigger>
         <TabsTrigger
           value="ai"
@@ -46,6 +54,15 @@ const { activeTab } = useAIChat(store)
         :hidden="activeTab !== 'design'"
       >
         <DesignPanel />
+      </TabsContent>
+
+      <TabsContent
+        value="code"
+        class="flex min-h-0 flex-1 flex-col"
+        :force-mount="true"
+        :hidden="activeTab !== 'code'"
+      >
+        <CodePanel />
       </TabsContent>
 
       <TabsContent
