@@ -55,17 +55,8 @@ function toolState(part: ToolPart): 'pending' | 'done' | 'error' {
 </script>
 
 <template>
-  <div class="flex gap-2" :class="message.role === 'user' ? 'flex-row-reverse' : ''">
-    <!-- Avatar -->
-    <div
-      class="flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-      :class="message.role === 'user' ? 'bg-accent/20 text-accent' : 'bg-muted/20 text-muted'"
-    >
-      {{ message.role === 'user' ? 'U' : 'AI' }}
-    </div>
-
-    <!-- Content -->
-    <div class="min-w-0 max-w-[85%] space-y-1.5">
+  <div :class="message.role === 'user' ? 'flex justify-end' : ''">
+    <div class="min-w-0 space-y-1.5" :class="message.role === 'user' ? 'max-w-[85%]' : ''">
       <!-- Tool timeline -->
       <div
         v-if="message.role === 'assistant' && getToolParts(message).length > 0"
