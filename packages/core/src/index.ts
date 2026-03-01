@@ -66,6 +66,36 @@ export {
 } from './style-runs'
 export { renderNodesToImage, renderThumbnail, type ExportFormat } from './render-image'
 export { exportFigFile } from './fig-export'
+
+export {
+  renderTree,
+  renderJsx,
+  renderTreeNode,
+  buildComponent,
+  Frame,
+  Text,
+  Rectangle,
+  Ellipse,
+  Line,
+  Star,
+  Polygon,
+  Vector as VectorNode,
+  Group,
+  Section,
+  View,
+  Rect as RectNode,
+  Component as ComponentNode,
+  Instance as InstanceNode,
+  Page as PageNode,
+  INTRINSIC_ELEMENTS,
+  isTreeNode,
+  node,
+  type TreeNode,
+  type BaseProps,
+  type TextProps,
+  type StyleProps,
+  type RenderResult
+} from './render'
 export {
   parseFigmaClipboard,
   importClipboardNodes,

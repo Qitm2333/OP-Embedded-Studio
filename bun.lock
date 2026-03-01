@@ -31,6 +31,7 @@
         "@types/node": "^25.3.2",
         "@typescript/native-preview": "^7.0.0-dev.20260228.1",
         "@vitejs/plugin-vue": "^6.0.4",
+        "esbuild": "^0.27.3",
         "oxfmt": "^0.35.0",
         "oxlint": "^1.50.0",
         "typescript": "~5.8.3",
