@@ -63,7 +63,6 @@ declare module 'vue' {
     IconLucideLink: typeof import('~icons/lucide/link')['default']
     IconLucideLoaderCircle: typeof import('~icons/lucide/loader-circle')['default']
     IconLucideMessageCircle: typeof import('~icons/lucide/message-circle')['default']
-    IconLucidePanelLeft: typeof import('~icons/lucide/panel-left')['default']
     IconLucidePlus: typeof import('~icons/lucide/plus')['default']
     IconLucideRadius: typeof import('~icons/lucide/radius')['default']
     IconLucideRotateCcw: typeof import('~icons/lucide/rotate-ccw')['default']

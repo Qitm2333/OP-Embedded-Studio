@@ -37,10 +37,7 @@ useEventListener(
   { passive: false }
 )
 
-// Prevent Safari's native pinch-zoom gesture on the page
-useEventListener(document, 'gesturestart', (e: Event) => e.preventDefault(), { passive: false })
-useEventListener(document, 'gesturechange', (e: Event) => e.preventDefault(), { passive: false })
-useEventListener(document, 'gestureend', (e: Event) => e.preventDefault(), { passive: false })
+
 
 const params = useUrlSearchParams('history')
 const showChrome = !('no-chrome' in params)

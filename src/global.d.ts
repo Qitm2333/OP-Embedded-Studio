@@ -1,3 +1,10 @@
+interface GestureEvent extends UIEvent {
+  scale: number
+  rotation: number
+  clientX: number
+  clientY: number
+}
+
 interface FilePickerAcceptType {
   description: string
   accept: Record<string, string[]>

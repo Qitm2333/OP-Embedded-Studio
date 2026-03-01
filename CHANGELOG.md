@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2 (2026-03-01)
+
+### Bug Fixes
+
+- Fix trackpad pinch-to-zoom on Safari macOS
+
 ## 0.2.1 (2026-03-01)
 
 ### UI

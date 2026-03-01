@@ -1,6 +1,6 @@
 {
   "name": "@open-pencil/cli",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "bin": {
     "open-pencil": "./src/index.ts"
