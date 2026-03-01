@@ -81,6 +81,11 @@ export function useKeyboard(store: EditorStore) {
     }
 
     if (e.metaKey || e.ctrlKey) {
+      if (e.code === 'Backslash') {
+        e.preventDefault()
+        store.state.showUI = !store.state.showUI
+        return
+      }
       if (e.code === 'KeyJ') {
         e.preventDefault()
         activeTab.value = activeTab.value === 'ai' ? 'design' : 'ai'

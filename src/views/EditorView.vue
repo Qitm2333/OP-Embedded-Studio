@@ -72,7 +72,7 @@ function onDisconnect() {
   <div class="flex h-screen w-screen flex-col">
     <SafariBanner />
     <SplitterGroup
-      v-if="showChrome"
+      v-if="showChrome && store.state.showUI"
       direction="horizontal"
       class="flex-1 overflow-hidden"
       auto-save-id="editor-layout"
@@ -111,6 +111,25 @@ function onDisconnect() {
         <PropertiesPanel />
       </SplitterPanel>
     </SplitterGroup>
+    <div v-else-if="showChrome" class="flex flex-1 overflow-hidden">
+      <div class="relative flex min-w-0 flex-1">
+        <EditorCanvas />
+        <Toolbar />
+        <div
+          class="absolute left-7 top-7 z-10 flex items-center gap-2 rounded-lg border border-border bg-panel px-2 py-1 shadow-sm"
+        >
+          <img src="/favicon-32.png" class="size-4" alt="OpenPencil" />
+          <span class="text-xs text-surface">{{ store.state.documentName }}</span>
+          <button
+            class="ml-1 flex size-6 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
+            title="Show UI (⌘\)"
+            @click="store.state.showUI = true"
+          >
+            <icon-lucide-sidebar class="size-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
     <div v-else class="flex flex-1 overflow-hidden">
       <div class="relative flex min-w-0 flex-1">
         <EditorCanvas />

@@ -14,11 +14,32 @@ import {
 
 import IconChevronRight from '~icons/lucide/chevron-right'
 
+import { ref, nextTick } from 'vue'
+
 import { IS_TAURI } from '@/constants'
 import { openFileDialog } from '@/composables/use-menu'
 import { useEditorStore } from '@/stores/editor'
 
 const store = useEditorStore()
+
+const editingName = ref(false)
+
+function startRename() {
+  editingName.value = true
+  nextTick(() => {
+    const input = document.querySelector<HTMLInputElement>('[data-doc-name-edit]')
+    input?.focus()
+    input?.select()
+  })
+}
+
+function commitRename(input: HTMLInputElement) {
+  const value = input.value.trim()
+  if (value) {
+    store.state.documentName = value
+  }
+  editingName.value = false
+}
 
 const isMac = navigator.platform.includes('Mac')
 const mod = isMac ? '⌘' : 'Ctrl+'
@@ -122,17 +143,39 @@ const topMenus = [
 </script>
 
 <template>
-  <div
-    v-if="!IS_TAURI"
-    class="shrink-0 overflow-x-auto border-b border-border px-1 py-1 scrollbar-none"
-  >
-    <MenubarRoot class="flex w-max items-center gap-0.5">
-      <MenubarMenu v-for="menu in topMenus" :key="menu.label">
-        <MenubarTrigger
-          class="flex cursor-pointer items-center rounded px-2 py-1 text-xs text-muted transition-colors select-none hover:bg-hover hover:text-surface data-[state=open]:bg-hover data-[state=open]:text-surface"
-        >
-          {{ menu.label }}
-        </MenubarTrigger>
+  <div class="shrink-0 border-b border-border">
+    <div class="flex items-center gap-2 px-2 py-1.5">
+      <img src="/favicon-32.png" class="size-4" alt="OpenPencil" />
+      <input
+        v-if="editingName"
+        data-doc-name-edit
+        class="min-w-0 flex-1 rounded border border-accent bg-input px-1 py-0.5 text-xs text-surface outline-none"
+        :value="store.state.documentName"
+        @blur="commitRename($event.target as HTMLInputElement)"
+        @keydown.enter="($event.target as HTMLInputElement).blur()"
+        @keydown.escape="editingName = false"
+      />
+      <span
+        v-else
+        class="min-w-0 flex-1 cursor-default truncate rounded px-1 py-0.5 text-xs text-surface hover:bg-hover"
+        @dblclick="startRename"
+      >{{ store.state.documentName }}</span>
+      <button
+        class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
+        title="Toggle UI (⌘\)"
+        @click="store.state.showUI = !store.state.showUI"
+      >
+        <icon-lucide-sidebar class="size-3.5" />
+      </button>
+    </div>
+    <div v-if="!IS_TAURI" class="flex items-center px-1 pb-1">
+      <MenubarRoot class="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
+        <MenubarMenu v-for="menu in topMenus" :key="menu.label">
+          <MenubarTrigger
+            class="flex cursor-pointer items-center rounded px-2 py-1 text-xs text-muted transition-colors select-none hover:bg-hover hover:text-surface data-[state=open]:bg-hover data-[state=open]:text-surface"
+          >
+            {{ menu.label }}
+          </MenubarTrigger>
 
         <MenubarPortal>
           <MenubarContent
@@ -186,6 +229,7 @@ const topMenus = [
           </MenubarContent>
         </MenubarPortal>
       </MenubarMenu>
-    </MenubarRoot>
+      </MenubarRoot>
+    </div>
   </div>
 </template>

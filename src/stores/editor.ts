@@ -174,6 +174,8 @@ export function createEditorStore() {
       y: number
       selection?: string[]
     }>,
+    showUI: true,
+    documentName: 'Untitled' as string,
     panX: 0,
     pageColor: { ...CANVAS_BG_COLOR } as Color,
     panY: 0,
@@ -565,6 +567,8 @@ export function createEditorStore() {
       pageViewports.clear()
       fileHandle = handle ?? null
       filePath = path ?? null
+      state.documentName = file.name.replace(/\.fig$/i, '')
+      downloadName = file.name
       state.selectedIds = new Set()
       const firstPage = graph.getPages()[0]
       state.currentPageId = firstPage?.id ?? graph.rootId
@@ -613,6 +617,7 @@ export function createEditorStore() {
       if (!path) return
       filePath = path
       fileHandle = null
+      state.documentName = path.split('/').pop()?.replace(/\.fig$/i, '') ?? 'Untitled'
       await writeFile(data)
       return
     }
@@ -630,6 +635,7 @@ export function createEditorStore() {
         })
         fileHandle = handle
         filePath = null
+        state.documentName = handle.name.replace(/\.fig$/i, '')
         await writeFile(data)
         return
       } catch (e) {
@@ -640,6 +646,7 @@ export function createEditorStore() {
     const filename = prompt('Save as:', downloadName ?? 'Untitled.fig')
     if (!filename) return
     downloadName = filename
+    state.documentName = filename.replace(/\.fig$/i, '')
     downloadBlob(new Uint8Array(data), filename, 'application/octet-stream')
   }
 
