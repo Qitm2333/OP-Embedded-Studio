@@ -1046,6 +1046,101 @@ export function useCanvasInput(
     })
   }
 
+  // Touch support for iOS/mobile: single-finger pan, two-finger pinch-zoom
+  let activeTouches: Touch[] = []
+  let pinchStartDist = 0
+  let pinchStartZoom = 0
+  let pinchMidX = 0
+  let pinchMidY = 0
+
+  function touchDist(a: Touch, b: Touch) {
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+  }
+
+  function onTouchStart(e: TouchEvent) {
+    e.preventDefault()
+    activeTouches = Array.from(e.touches)
+    const canvas = canvasRef.value
+    if (!canvas) return
+
+    if (activeTouches.length === 2) {
+      drag.value = null
+      const [a, b] = activeTouches
+      pinchStartDist = touchDist(a, b)
+      pinchStartZoom = store.state.zoom
+      const rect = canvas.getBoundingClientRect()
+      pinchMidX = (a.clientX + b.clientX) / 2 - rect.left
+      pinchMidY = (a.clientY + b.clientY) / 2 - rect.top
+    } else if (activeTouches.length === 1) {
+      const t = activeTouches[0]
+      drag.value = {
+        type: 'pan',
+        startScreenX: t.clientX,
+        startScreenY: t.clientY,
+        startPanX: store.state.panX,
+        startPanY: store.state.panY
+      }
+    }
+  }
+
+  function onTouchMove(e: TouchEvent) {
+    e.preventDefault()
+    activeTouches = Array.from(e.touches)
+    const canvas = canvasRef.value
+    if (!canvas) return
+
+    if (activeTouches.length === 2) {
+      const [a, b] = activeTouches
+      const rect = canvas.getBoundingClientRect()
+      const newMidX = (a.clientX + b.clientX) / 2 - rect.left
+      const newMidY = (a.clientY + b.clientY) / 2 - rect.top
+
+      const newDist = touchDist(a, b)
+      if (pinchStartDist > 0) {
+        const scale = newDist / pinchStartDist
+        const newZoom = Math.max(0.02, Math.min(256, pinchStartZoom * scale))
+        const zoomRatio = newZoom / store.state.zoom
+
+        const panDx = newMidX - pinchMidX
+        const panDy = newMidY - pinchMidY
+
+        store.state.panX = pinchMidX - (pinchMidX - store.state.panX) * zoomRatio + panDx
+        store.state.panY = pinchMidY - (pinchMidY - store.state.panY) * zoomRatio + panDy
+        store.state.zoom = newZoom
+      }
+
+      pinchMidX = newMidX
+      pinchMidY = newMidY
+      store.requestRepaint()
+    } else if (activeTouches.length === 1 && drag.value?.type === 'pan') {
+      const t = activeTouches[0]
+      const d = drag.value
+      store.state.panX = d.startPanX + (t.clientX - d.startScreenX)
+      store.state.panY = d.startPanY + (t.clientY - d.startScreenY)
+      store.requestRepaint()
+    }
+  }
+
+  function onTouchEnd(e: TouchEvent) {
+    e.preventDefault()
+    activeTouches = Array.from(e.touches)
+
+    if (activeTouches.length === 0) {
+      drag.value = null
+      pinchStartDist = 0
+    } else if (activeTouches.length === 1) {
+      const t = activeTouches[0]
+      drag.value = {
+        type: 'pan',
+        startScreenX: t.clientX,
+        startScreenY: t.clientY,
+        startPanX: store.state.panX,
+        startPanY: store.state.panY
+      }
+      pinchStartDist = 0
+    }
+  }
+
   useEventListener(canvasRef, 'dblclick', onDblClick)
   useEventListener(canvasRef, 'mousedown', onMouseDown)
   useEventListener(canvasRef, 'mousemove', onMouseMove)
@@ -1055,6 +1150,10 @@ export function useCanvasInput(
     store.setHoveredNode(null)
   })
   useEventListener(canvasRef, 'wheel', onWheel, { passive: false })
+  useEventListener(canvasRef, 'touchstart', onTouchStart, { passive: false })
+  useEventListener(canvasRef, 'touchmove', onTouchMove, { passive: false })
+  useEventListener(canvasRef, 'touchend', onTouchEnd, { passive: false })
+  useEventListener(canvasRef, 'touchcancel', onTouchEnd, { passive: false })
 
   return {
     drag,

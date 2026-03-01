@@ -41,7 +41,7 @@ const cursor = computed(() => {
 <template>
   <CanvasContextMenu>
     <div class="canvas-area relative flex-1 min-w-0 min-h-0 overflow-hidden">
-      <canvas ref="canvasRef" :style="{ cursor }" class="block size-full" />
+      <canvas ref="canvasRef" :style="{ cursor }" class="block size-full touch-none" />
     </div>
   </CanvasContextMenu>
 </template>
