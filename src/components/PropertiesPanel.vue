@@ -48,7 +48,12 @@ const { activeTab } = useAIChat()
         <DesignPanel />
       </TabsContent>
 
-      <TabsContent value="ai" class="flex min-h-0 flex-1 flex-col">
+      <TabsContent
+        value="ai"
+        class="flex min-h-0 flex-1 flex-col"
+        :force-mount="true"
+        :hidden="activeTab !== 'ai'"
+      >
         <ChatPanel />
       </TabsContent>
     </TabsRoot>

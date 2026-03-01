@@ -3,11 +3,11 @@ import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from 'reka-ui
 import { Markdown } from 'vue-stream-markdown'
 import 'vue-stream-markdown/index.css'
 
-import type { DesignMessage } from '@/composables/use-chat'
+import type { UIMessage } from 'ai'
 
-const { message } = defineProps<{ message: DesignMessage }>()
+const { message } = defineProps<{ message: UIMessage }>()
 
-function getTextContent(msg: DesignMessage): string {
+function getTextContent(msg: UIMessage): string {
   return msg.parts
     .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
     .map((p) => p.text)
@@ -34,7 +34,7 @@ function isToolPart(part: unknown): part is ToolPart {
   )
 }
 
-function getToolParts(msg: DesignMessage): ToolPart[] {
+function getToolParts(msg: UIMessage): ToolPart[] {
   return msg.parts.filter(isToolPart)
 }
 

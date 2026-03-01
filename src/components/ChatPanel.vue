@@ -1,29 +1,22 @@
 <script setup lang="ts">
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport } from 'reka-ui'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, markRaw, nextTick, ref, watch } from 'vue'
 
 import APIKeySetup from '@/components/chat/APIKeySetup.vue'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
 import { useAIChat } from '@/composables/use-chat'
 
-import type { DesignMessage } from '@/composables/use-chat'
 import type { Chat } from '@ai-sdk/vue'
+import type { UIMessage } from 'ai'
 
-const { isConfigured, createChat } = useAIChat()
+const { isConfigured, ensureChat } = useAIChat()
 
-const chat = ref<Chat<DesignMessage> | null>(null)
+const chat = ref<Chat<UIMessage> | null>(null)
 const messagesEnd = ref<HTMLDivElement>()
 
 const messages = computed(() => chat.value?.messages ?? [])
 const status = computed(() => chat.value?.status ?? 'ready')
-
-function ensureChat() {
-  if (!chat.value && isConfigured.value) {
-    chat.value = createChat()
-  }
-  return chat.value
-}
 
 function scrollToBottom() {
   nextTick(() => {
@@ -34,9 +27,11 @@ function scrollToBottom() {
 watch(messages, scrollToBottom, { deep: true })
 
 function handleSubmit(text: string) {
-  const c = ensureChat()
-  if (!c) return
-  c.sendMessage({ text })
+  if (!chat.value) {
+    const c = ensureChat()
+    if (c) chat.value = markRaw(c)
+  }
+  chat.value?.sendMessage({ text }).catch(() => {})
 }
 
 function handleStop() {

@@ -1,9 +1,10 @@
 import { Chat } from '@ai-sdk/vue'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { DirectChatTransport, ToolLoopAgent } from 'ai'
+import dedent from 'dedent'
 import { computed, ref, watch } from 'vue'
 
-import type { InferAgentUIMessage } from 'ai'
+import type { UIMessage } from 'ai'
 
 const API_KEY_STORAGE = 'open-pencil:openrouter-api-key'
 const MODEL_STORAGE = 'open-pencil:model'
@@ -16,7 +17,6 @@ export interface ModelOption {
 }
 
 export const MODEL_OPTIONS: ModelOption[] = [
-  // Design-optimized (vision + tool calling + strong spatial reasoning)
   {
     id: 'anthropic/claude-sonnet-4',
     name: 'Claude Sonnet 4',
@@ -31,9 +31,6 @@ export const MODEL_OPTIONS: ModelOption[] = [
     tag: 'Long context'
   },
   { id: 'openai/gpt-4.1', name: 'GPT-4.1', provider: 'OpenAI' },
-
-  // Fast & cheap
-  { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', provider: 'Anthropic' },
   {
     id: 'google/gemini-2.5-flash-preview-05-20',
     name: 'Gemini 2.5 Flash',
@@ -41,8 +38,6 @@ export const MODEL_OPTIONS: ModelOption[] = [
     tag: 'Fast'
   },
   { id: 'openai/gpt-4.1-mini', name: 'GPT-4.1 Mini', provider: 'OpenAI', tag: 'Cheap' },
-
-  // Open source
   {
     id: 'deepseek/deepseek-chat-v3-0324:free',
     name: 'DeepSeek V3',
@@ -57,7 +52,6 @@ export const MODEL_OPTIONS: ModelOption[] = [
   }
 ]
 
-// Deduplicate by id, keeping first occurrence
 const seen = new Set<string>()
 const deduped: ModelOption[] = []
 for (const m of MODEL_OPTIONS) {
@@ -67,8 +61,13 @@ for (const m of MODEL_OPTIONS) {
   }
 }
 export const MODELS = deduped
-
 export const DEFAULT_MODEL = MODELS[0].id
+
+const SYSTEM_PROMPT = dedent`
+  You are a design assistant inside OpenPencil, a Figma-like design editor.
+  Help users create and modify designs. Be concise and direct.
+  When describing changes, use specific design terminology.
+`
 
 const apiKey = ref(localStorage.getItem(API_KEY_STORAGE) ?? '')
 const modelId = ref(localStorage.getItem(MODEL_STORAGE) ?? DEFAULT_MODEL)
@@ -88,7 +87,14 @@ watch(modelId, (id) => {
 
 const isConfigured = computed(() => apiKey.value.length > 0)
 
-function createAgent() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- test-only mock transports don't implement full generics
+let overrideTransport: (() => any) | null = null
+
+let chat: Chat<UIMessage> | null = null
+
+function createTransport() {
+  if (overrideTransport) return overrideTransport()
+
   const openrouter = createOpenRouter({
     apiKey: apiKey.value,
     headers: {
@@ -97,25 +103,32 @@ function createAgent() {
     }
   })
 
-  return new ToolLoopAgent({
+  const agent = new ToolLoopAgent({
     model: openrouter(modelId.value),
-    instructions:
-      'You are a design assistant inside OpenPencil, a Figma-like design editor. ' +
-      'Help users create and modify designs. Be concise and direct.'
+    instructions: SYSTEM_PROMPT
   })
+
+  return new DirectChatTransport({ agent })
 }
 
-type DesignAgent = ReturnType<typeof createAgent>
-export type DesignMessage = InferAgentUIMessage<DesignAgent>
-
-function createChat() {
+function ensureChat(): Chat<UIMessage> | null {
   if (!apiKey.value) return null
+  if (!chat) {
+    chat = new Chat<UIMessage>({
+      transport: createTransport()
+    })
+  }
+  return chat
+}
 
-  const agent = createAgent()
+function resetChat() {
+  chat = null
+}
 
-  return new Chat<DesignMessage>({
-    transport: new DirectChatTransport({ agent })
-  })
+if (typeof window !== 'undefined') {
+  window.__OPEN_PENCIL_SET_TRANSPORT__ = (factory) => {
+    overrideTransport = factory
+  }
 }
 
 export function useAIChat() {
@@ -124,6 +137,7 @@ export function useAIChat() {
     modelId,
     activeTab,
     isConfigured,
-    createChat
+    ensureChat,
+    resetChat
   }
 }
