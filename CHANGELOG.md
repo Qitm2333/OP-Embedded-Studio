@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.1 (2026-03-01)
+
+### UI
+
+- Panel header with app logo, editable document name, and sidebar toggle
+- ⌘\\ to toggle side panels for distraction-free canvas
+- Panels hidden by default on mobile (< 768px)
+- Floating bar with logo, filename, and restore button when panels hidden
+- Always show local user avatar in collab header
+- Touch support for pan and pinch-zoom on iOS
+
+### Performance
+
+- Stubbed shiki to remove 9MB of unused language grammars (20MB → 11MB bundle)
+
 ## 0.2.0 (2026-03-01)
 
 ### Collaboration
