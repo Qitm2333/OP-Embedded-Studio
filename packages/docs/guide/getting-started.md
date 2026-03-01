@@ -4,7 +4,21 @@
 
 OpenPencil runs in the browser — no installation required. Open [app.openpencil.dev](https://app.openpencil.dev) to start designing.
 
-## Prerequisites
+## Download Desktop App
+
+Pre-built binaries for macOS, Windows, and Linux are available on the [releases page](https://github.com/open-pencil/open-pencil/releases/latest).
+
+| Platform | Download |
+|----------|----------|
+| macOS (Apple Silicon) | `.dmg` (aarch64) |
+| macOS (Intel) | `.dmg` (x64) |
+| Windows (x64) | `.msi` / `.exe` |
+| Windows (ARM) | `.msi` / `.exe` |
+| Linux (x64) | `.AppImage` / `.deb` |
+
+## Building from Source
+
+### Prerequisites
 
 - [Bun](https://bun.sh/) (package manager and runtime)
 - [Rust](https://rustup.rs/) (for desktop app only)

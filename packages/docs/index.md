@@ -11,10 +11,10 @@ hero:
       text: Try Online
       link: https://app.openpencil.dev
     - theme: alt
-      text: Get Started
-      link: /guide/getting-started
+      text: Download
+      link: https://github.com/open-pencil/open-pencil/releases/latest
     - theme: alt
-      text: View on GitHub
+      text: GitHub
       link: https://github.com/open-pencil/open-pencil
 
 features:
