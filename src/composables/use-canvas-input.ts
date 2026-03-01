@@ -229,6 +229,12 @@ export function useCanvasInput(
 ) {
   const drag = ref<DragState | null>(null)
   const cursorOverride = ref<string | null>(null)
+  let lastClickTime = 0
+  let lastClickX = 0
+  let lastClickY = 0
+  let clickCount = 0
+  const MULTI_CLICK_DELAY = 500
+  const MULTI_CLICK_RADIUS = 5
 
   function getCoords(e: MouseEvent) {
     const canvas = canvasRef.value
@@ -243,6 +249,20 @@ export function useCanvasInput(
   function onMouseDown(e: MouseEvent) {
     store.setHoveredNode(null)
     const { sx, sy, cx, cy } = getCoords(e)
+
+    const now = performance.now()
+    if (
+      now - lastClickTime < MULTI_CLICK_DELAY &&
+      Math.abs(sx - lastClickX) < MULTI_CLICK_RADIUS &&
+      Math.abs(sy - lastClickY) < MULTI_CLICK_RADIUS
+    ) {
+      clickCount++
+    } else {
+      clickCount = 1
+    }
+    lastClickTime = now
+    lastClickX = sx
+    lastClickY = sy
     const tool = store.state.activeTool
 
     if (e.button === 1 || tool === 'HAND') {
@@ -276,8 +296,14 @@ export function useCanvasInput(
           const localX = cx - abs.x
           const localY = cy - abs.y
           if (localX >= 0 && localY >= 0 && localX <= editNode.width && localY <= editNode.height) {
-            editor.setCursorAt(localX, localY, e.shiftKey)
-            drag.value = { type: 'text-select', startX: cx, startY: cy } as DragState
+            if (clickCount >= 3) {
+              editor.selectAll()
+            } else if (clickCount === 2) {
+              editor.selectWordAt(localX, localY)
+            } else {
+              editor.setCursorAt(localX, localY, e.shiftKey)
+              drag.value = { type: 'text-select', startX: cx, startY: cy } as DragState
+            }
             store.requestRender()
             return
           }
@@ -900,19 +926,9 @@ export function useCanvasInput(
   }
 
   function onDblClick(e: MouseEvent) {
+    if (store.state.editingTextId) return
+
     const { cx, cy } = getCoords(e)
-
-    if (store.state.editingTextId) {
-      const editor = store.textEditor
-      const editNode = store.graph.getNode(store.state.editingTextId)
-      if (editor && editNode) {
-        const abs = store.graph.getAbsolutePosition(editNode.id)
-        editor.selectWordAt(cx - abs.x, cy - abs.y)
-        store.requestRender()
-        return
-      }
-    }
-
     const hit =
       hitTestSectionTitle(cx, cy) ??
       hitTestComponentLabel(cx, cy) ??
@@ -922,10 +938,15 @@ export function useCanvasInput(
     if (hit.type === 'TEXT') {
       store.select([hit.id])
       store.startTextEditing(hit.id)
+      const editor = store.textEditor
+      if (editor) {
+        const abs = store.graph.getAbsolutePosition(hit.id)
+        editor.selectWordAt(cx - abs.x, cy - abs.y)
+        store.requestRender()
+      }
       return
     }
 
-    // Double-click enters components/instances — select the child inside
     store.select([hit.id])
   }
 

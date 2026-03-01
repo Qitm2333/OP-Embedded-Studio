@@ -127,11 +127,29 @@ export class TextEditor {
     s.cursor = pos
   }
 
+  selectLine(pos: number): void {
+    const s = this._state
+    if (!s?.paragraph) return
+    const lineNum = s.paragraph.getLineNumberAt(pos)
+    if (lineNum < 0) return
+    const metrics = s.paragraph.getLineMetricsAt(lineNum)
+    if (!metrics) return
+    s.selectionAnchor = metrics.startIndex
+    s.cursor = metrics.endExcludingWhitespaces
+  }
+
   selectWordAt(x: number, y: number): void {
     const s = this._state
     if (!s?.paragraph) return
     const pos = s.paragraph.getGlyphPositionAtCoordinate(x, y).pos
     this.selectWord(pos)
+  }
+
+  selectLineAt(x: number, y: number): void {
+    const s = this._state
+    if (!s?.paragraph) return
+    const pos = s.paragraph.getGlyphPositionAtCoordinate(x, y).pos
+    this.selectLine(pos)
   }
 
   insert(text: string, node: SceneNode): void {
