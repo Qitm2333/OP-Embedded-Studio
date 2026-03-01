@@ -104,6 +104,13 @@ export interface RenderOverlays {
     cursorX?: number
     cursorY?: number
   } | null
+  remoteCursors?: Array<{
+    name: string
+    color: Color
+    x: number
+    y: number
+    selection?: string[]
+  }>
 }
 
 export class SkiaRenderer {
@@ -401,6 +408,7 @@ export class SkiaRenderer {
     this.drawMarquee(canvas, overlays.marquee)
     this.drawLayoutInsertIndicator(canvas, overlays.layoutInsertIndicator)
     this.drawPenOverlay(canvas, overlays.penState)
+    this.drawRemoteCursors(canvas, graph, overlays.remoteCursors)
     if (this.showRulers) this.drawRulers(canvas, graph, selectedIds)
 
     canvas.restore()
@@ -1972,6 +1980,93 @@ export class SkiaRenderer {
     handlePaint.delete()
     vertexFill.delete()
     vertexStroke.delete()
+  }
+
+  // --- Remote Cursors ---
+
+  private drawRemoteCursors(
+    canvas: Canvas,
+    graph: SceneGraph,
+    cursors?: RenderOverlays['remoteCursors']
+  ): void {
+    if (!cursors || cursors.length === 0) return
+
+    const CURSOR_SIZE = 16
+    const LABEL_PADDING_X = 6
+    const LABEL_PADDING_Y = 3
+    const LABEL_FONT_SIZE = 11
+    const LABEL_OFFSET_X = 12
+    const LABEL_OFFSET_Y = 18
+
+    for (const cursor of cursors) {
+      const screenX = cursor.x * this.zoom + this.panX
+      const screenY = cursor.y * this.zoom + this.panY
+      const { r, g, b } = cursor.color
+
+      // Draw remote selections
+      if (cursor.selection?.length) {
+        this.auxStroke.setColor(this.ck.Color4f(r, g, b, 0.6))
+        this.auxStroke.setStrokeWidth(1.5)
+        this.auxStroke.setPathEffect(null)
+        for (const nodeId of cursor.selection) {
+          const node = graph.getNode(nodeId)
+          if (!node) continue
+          const abs = graph.getAbsolutePosition(nodeId)
+          const sx = abs.x * this.zoom + this.panX
+          const sy = abs.y * this.zoom + this.panY
+          const sw = node.width * this.zoom
+          const sh = node.height * this.zoom
+          canvas.drawRect(this.ck.XYWHRect(sx, sy, sw, sh), this.auxStroke)
+        }
+      }
+
+      // Draw cursor arrow (triangle pointing top-left)
+      this.auxFill.setColor(this.ck.Color4f(r, g, b, 1))
+      const path = new this.ck.Path()
+      path.moveTo(screenX, screenY)
+      path.lineTo(screenX, screenY + CURSOR_SIZE)
+      path.lineTo(screenX + CURSOR_SIZE * 0.4, screenY + CURSOR_SIZE * 0.7)
+      path.close()
+      canvas.drawPath(path, this.auxFill)
+
+      // White outline for contrast
+      this.auxStroke.setColor(this.ck.Color4f(1, 1, 1, 0.9))
+      this.auxStroke.setStrokeWidth(1)
+      this.auxStroke.setPathEffect(null)
+      canvas.drawPath(path, this.auxStroke)
+      path.delete()
+
+      // Draw name label
+      if (cursor.name) {
+        const font = this.labelFont
+        if (font) {
+          font.setSize(LABEL_FONT_SIZE)
+          const labelX = screenX + LABEL_OFFSET_X
+          const labelY = screenY + LABEL_OFFSET_Y
+          const glyphIds = font.getGlyphIDs(cursor.name)
+          const widths = font.getGlyphWidths(glyphIds)
+          let textWidth = 0
+          for (let i = 0; i < widths.length; i++) textWidth += widths[i]
+
+          // Label background (pill)
+          this.auxFill.setColor(this.ck.Color4f(r, g, b, 1))
+          const bgRect = this.ck.RRectXY(
+            this.ck.XYWHRect(
+              labelX - LABEL_PADDING_X,
+              labelY - LABEL_FONT_SIZE - LABEL_PADDING_Y + 2,
+              textWidth + LABEL_PADDING_X * 2,
+              LABEL_FONT_SIZE + LABEL_PADDING_Y * 2
+            ),
+            4, 4
+          )
+          canvas.drawRRect(bgRect, this.auxFill)
+
+          // Label text
+          this.auxFill.setColor(this.ck.Color4f(1, 1, 1, 1))
+          canvas.drawText(cursor.name, labelX, labelY, this.auxFill, font)
+        }
+      }
+    }
   }
 
   // --- Rulers ---

@@ -167,6 +167,13 @@ export function createEditorStore() {
     } | null,
     penCursorX: null as number | null,
     penCursorY: null as number | null,
+    remoteCursors: [] as Array<{
+      name: string
+      color: Color
+      x: number
+      y: number
+      selection?: string[]
+    }>,
     panX: 0,
     pageColor: { ...CANVAS_BG_COLOR } as Color,
     panY: 0,

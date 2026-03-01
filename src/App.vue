@@ -4,9 +4,11 @@ import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 
 import { useKeyboard } from './composables/use-keyboard'
 import { useMenu } from './composables/use-menu'
+import { useCollab } from './composables/use-collab'
 import { createDemoShapes } from './demo'
 import { provideEditorStore } from './stores/editor'
 
+import CollabPanel from './components/CollabPanel.vue'
 import EditorCanvas from './components/EditorCanvas.vue'
 import LayersPanel from './components/LayersPanel.vue'
 import PropertiesPanel from './components/PropertiesPanel.vue'
@@ -16,6 +18,7 @@ import Toolbar from './components/Toolbar.vue'
 const store = provideEditorStore()
 useKeyboard(store)
 useMenu(store)
+const collab = useCollab(store)
 ;(window as Window & { __OPEN_PENCIL_STORE__?: typeof store }).__OPEN_PENCIL_STORE__ = store
 
 useEventListener(
@@ -31,6 +34,12 @@ const params = useUrlSearchParams('history')
 const showChrome = !('no-chrome' in params)
 if (!('test' in params)) {
   createDemoShapes(store)
+}
+
+// Auto-join room from /share/:roomId URL
+const shareMatch = window.location.pathname.match(/^\/share\/([a-zA-Z0-9_-]+)/)
+if (shareMatch) {
+  collab.connect(shareMatch[1])
 }
 </script>
 
@@ -53,6 +62,25 @@ if (!('test' in params)) {
         <div class="relative flex min-w-0 flex-1">
           <EditorCanvas />
           <Toolbar />
+          <div class="absolute right-3 top-3 z-10">
+            <CollabPanel
+              :state="collab.state.value"
+              :peers="collab.remotePeers.value"
+              @share="() => {
+                const roomId = collab.shareCurrentDoc()
+                window.history.pushState({}, '', `/share/${roomId}`)
+              }"
+              @join="(roomId: string) => {
+                collab.connect(roomId)
+                window.history.pushState({}, '', `/share/${roomId}`)
+              }"
+              @disconnect="() => {
+                collab.disconnect()
+                window.history.pushState({}, '', '/')
+              }"
+              @update:name="collab.setLocalName"
+            />
+          </div>
         </div>
       </SplitterPanel>
       <SplitterResizeHandle class="group relative z-10 -mx-1 w-2 cursor-col-resize">
