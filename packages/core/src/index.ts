@@ -17,6 +17,7 @@ export {
   type Stroke,
   type StrokeCap,
   type StrokeJoin,
+  type MaskType,
   type Effect,
   type BlendMode,
   type ImageScaleMode,
