@@ -2,6 +2,8 @@
 
 Vue 3 + CanvasKit (Skia WASM) + Yoga WASM design editor. Tauri v2 desktop, also runs in browser.
 
+**Roadmap:** `plan.md` — phases, tech stack, CLI architecture, test strategy, keyboard shortcuts.
+
 ## Monorepo
 
 Bun workspace with two packages:
@@ -21,7 +23,20 @@ The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files 
 - `bun open-pencil info <file>` — document stats
 - `bun open-pencil tree <file>` — node tree
 - `bun open-pencil find <file>` — search nodes
+- `bun open-pencil node <file> --id <id>` — detailed node properties
+- `bun open-pencil pages <file>` — list pages
+- `bun open-pencil variables <file>` — list design variables
 - `bun open-pencil export <file>` — headless render to PNG/JPG/WEBP
+- `bun open-pencil analyze colors <file>` — color palette usage
+- `bun open-pencil analyze typography <file>` — font/size/weight stats
+- `bun open-pencil analyze spacing <file>` — gap/padding values
+- `bun open-pencil analyze clusters <file>` — repeated patterns
+
+## CLI
+
+- All CLI output must use `agentfmt` formatters — `fmtList`, `fmtHistogram`, `fmtSummary`, `fmtNode`, `fmtTree`, `kv`, `entity`, `bold`, `dim`, etc.
+- Don't hand-roll `console.log` formatting — use the helpers from `packages/cli/src/format.ts` which re-exports agentfmt with project-specific adapters (`nodeToData`, `nodeDetails`, `nodeToTreeNode`, `nodeToListItem`)
+- Every command supports `--json` for machine-readable output
 
 ## Code conventions
 
