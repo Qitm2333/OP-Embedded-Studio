@@ -5,6 +5,9 @@ import { DirectChatTransport, ToolLoopAgent } from 'ai'
 import dedent from 'dedent'
 import { computed, ref, watch } from 'vue'
 
+import { createAITools } from '@/ai/tools'
+
+import type { EditorStore } from '@/stores/editor'
 import type { UIMessage } from 'ai'
 
 export { AI_MODELS as MODELS } from '@open-pencil/core'
@@ -17,11 +20,20 @@ const SYSTEM_PROMPT = dedent`
   You are a design assistant inside OpenPencil, a Figma-like design editor.
   Help users create and modify designs. Be concise and direct.
   When describing changes, use specific design terminology.
+
+  Available node types: FRAME (containers/cards), RECTANGLE, ELLIPSE, TEXT, LINE, STAR, POLYGON, SECTION.
+  Colors can be hex strings (#ff0000) or RGBA objects with values 0–1.
+  Coordinates use canvas space — (0, 0) is the top-left of the page.
+
+  Always use tools to make changes. After creating nodes, briefly describe what you did.
+  When the user asks to create a layout, use create_shape with FRAME, then set_layout for auto-layout.
 `
 
 const apiKey = ref(localStorage.getItem(API_KEY_STORAGE) ?? '')
 const modelId = ref(localStorage.getItem(MODEL_STORAGE) ?? DEFAULT_AI_MODEL)
 const activeTab = ref<'design' | 'ai'>('design')
+
+let editorStore: EditorStore | null = null
 
 watch(apiKey, (key) => {
   if (key) {
@@ -53,9 +65,12 @@ function createTransport() {
     }
   })
 
+  const tools = editorStore ? createAITools(editorStore) : {}
+
   const agent = new ToolLoopAgent({
     model: openrouter(modelId.value),
-    instructions: SYSTEM_PROMPT
+    instructions: SYSTEM_PROMPT,
+    tools
   })
 
   return new DirectChatTransport({ agent })
@@ -81,7 +96,10 @@ if (typeof window !== 'undefined') {
   }
 }
 
-export function useAIChat() {
+export function useAIChat(store?: EditorStore) {
+  if (store) {
+    editorStore = store
+  }
   return {
     apiKey,
     modelId,

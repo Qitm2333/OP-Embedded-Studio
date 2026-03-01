@@ -8,7 +8,7 @@ import ChatPanel from './ChatPanel.vue'
 import DesignPanel from './DesignPanel.vue'
 
 const store = useEditorStore()
-const { activeTab } = useAIChat()
+const { activeTab } = useAIChat(store)
 </script>
 
 <template>
