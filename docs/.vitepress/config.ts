@@ -20,12 +20,30 @@ export default defineConfig({
     },
 
     nav: [
+      { text: 'User Guide', link: '/user-guide/' },
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Reference', link: '/reference/keyboard-shortcuts' },
       { text: 'Development', link: '/development/contributing' },
     ],
 
     sidebar: [
+      {
+        text: 'User Guide',
+        items: [
+          { text: 'Overview', link: '/user-guide/' },
+          { text: 'Canvas Navigation', link: '/user-guide/canvas-navigation' },
+          { text: 'Selection & Manipulation', link: '/user-guide/selection-and-manipulation' },
+          { text: 'Drawing Shapes', link: '/user-guide/drawing-shapes' },
+          { text: 'Text Editing', link: '/user-guide/text-editing' },
+          { text: 'Pen Tool', link: '/user-guide/pen-tool' },
+          { text: 'Layers & Pages', link: '/user-guide/layers-and-pages' },
+          { text: 'Context Menu', link: '/user-guide/context-menu' },
+          { text: 'Exporting', link: '/user-guide/exporting' },
+          { text: 'Auto Layout', link: '/user-guide/auto-layout' },
+          { text: 'Components', link: '/user-guide/components' },
+          { text: 'Variables', link: '/user-guide/variables' },
+        ],
+      },
       {
         text: 'Guide',
         items: [
