@@ -14,7 +14,8 @@ const host = process.env.TAURI_DEV_HOST
 export default defineConfig(async () => ({
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': resolve(__dirname, 'src'),
+      shiki: resolve(__dirname, 'src/shims/shiki.ts')
     }
   },
   plugins: [
