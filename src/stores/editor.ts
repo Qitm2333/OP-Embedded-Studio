@@ -174,7 +174,7 @@ export function createEditorStore() {
       y: number
       selection?: string[]
     }>,
-    showUI: true,
+    showUI: matchMedia('(min-width: 768px)').matches,
     documentName: 'Untitled' as string,
     panX: 0,
     pageColor: { ...CANVAS_BG_COLOR } as Color,
