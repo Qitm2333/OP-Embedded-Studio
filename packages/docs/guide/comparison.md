@@ -261,6 +261,10 @@ Open Pencil's approach is simpler and lower overhead. Penpot's approach is more 
 6. **Self-hosting** — Docker-based deployment for teams
 7. **Maturity** — years of production usage, battle-tested at scale
 
+## 11. Scripting & Extensibility
+
+OpenPencil ships with an [`eval` command](/eval-command) that provides a Figma-compatible Plugin API for headless scripting — batch operations, automated testing, and AI-driven modifications all run without the GUI. Penpot has no plugin system or scripting API; extending it requires forking the Clojure backend.
+
 ## Summary
 
 | Dimension | Winner | Why |

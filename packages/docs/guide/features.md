@@ -161,6 +161,14 @@ Right-clicking a node selects it first. Right-clicking empty canvas clears selec
 
 Tauri v2 shell (~5MB vs Electron's ~100MB). Works fully offline — no account, no server, no internet required. Native menu bar with File/Edit/View/Object/Window/Help menus on all platforms. macOS gets an app-level submenu. Native Save/Open dialogs via Tauri plugin-dialog. Zstd compression offloaded to Rust for .fig export performance. Developer Tools accessible via <kbd>⌘</kbd><kbd>⌥</kbd><kbd>I</kbd>.
 
+## App Menu (Browser)
+
+In browser mode, a menu bar built with reka-ui Menubar provides access to all major editor actions. Six menus: **File** (Open, Save, Save As, Export selection), **Edit** (Undo, Redo, Copy, Paste, Duplicate, Delete, Select all), **View** (Zoom to fit, Zoom in/out, Toggle rulers), **Object** (Group, Ungroup, Frame selection, Create component, Create component set), **Text** (Font size adjustment, Bold, Italic, Underline, Strikethrough, Align submenu), **Arrange** (Bring to front, Send to back, Bring forward, Send backward). Keyboard shortcuts are displayed next to each menu item with platform-aware modifier labels (⌘ on Mac, Ctrl+ on Windows/Linux). Hidden when running in Tauri, which provides its own native menus.
+
+## Autosave
+
+Files are automatically saved 3 seconds after the last scene change. A debounced watcher monitors `sceneVersion` — multiple rapid edits only trigger a single write after activity settles. Uses the Tauri fs plugin on desktop or the File System Access API in supported browsers. Autosave is disabled for new untitled documents until the user performs an explicit Save As. Errors are handled silently — the user can always trigger a manual save with <kbd>⌘</kbd><kbd>S</kbd>.
+
 ## ScrubInput
 
 All numeric inputs in the properties panel use a drag-to-scrub interaction — drag horizontally to adjust the value, or click to type directly. Supports suffix display (°, px, %).
@@ -186,8 +194,11 @@ The engine is extracted to `packages/core/` (@open-pencil/core) — scene-graph,
 - `open-pencil node <file> <id>` — detailed properties of a node by ID
 - `open-pencil pages <file>` — list pages with node counts
 - `open-pencil variables <file>` — list design variables and collections
+- `open-pencil eval <file>` — execute JavaScript with Figma Plugin API
 
 All commands support `--json` for machine-readable output. Runnable via `bun open-pencil` in the workspace. See [Project Structure](/development/contributing#project-structure) for the full monorepo layout.
+
+The `eval` command deserves special mention: `bun open-pencil eval <file> --code '<js>'` executes JavaScript against a `.fig` file with a Figma-compatible `figma` global object. Enables headless scripting, batch operations, AI tool execution, and testing — all without the GUI. See [Eval Command](/eval-command) for the full reference.
 
 ## JSX Renderer
 
@@ -205,7 +216,7 @@ Built-in AI assistant accessible via the AI tab in the properties panel or <kbd>
 
 **Model selector** with curated models: Claude, Gemini, GPT, DeepSeek, Qwen, Kimi, Llama — stored in `@open-pencil/core` constants with benchmark-ranked tags. Responses stream as markdown (vue-stream-markdown).
 
-**10 AI tools** wired to the editor store with valibot schemas: `create_shape`, `set_fill`, `set_stroke`, `update_node`, `set_layout`, `delete_node`, `select_nodes`, `get_page_tree`, `get_selection`, `rename_node`. The ToolLoopAgent executes tools automatically in a loop. Tool calls display as collapsible timeline entries in the chat (reka-ui Collapsible).
+**10 AI tools** defined once in `packages/core/src/tools/schema.ts` as framework-agnostic `ToolDef` objects and adapted for AI via `toolsToAI()` with valibot schemas: `create_shape`, `set_fill`, `set_stroke`, `update_node`, `set_layout`, `delete_node`, `select_nodes`, `get_page_tree`, `get_selection`, `rename_node`. The same definitions power the CLI eval command via FigmaAPI. The ToolLoopAgent executes tools automatically in a loop. Tool calls display as collapsible timeline entries in the chat (reka-ui Collapsible).
 
 Tested with Playwright using mock transport for CI.
 

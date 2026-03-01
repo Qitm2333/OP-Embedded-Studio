@@ -32,6 +32,7 @@ The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files 
 - `bun open-pencil analyze typography <file>` — font/size/weight stats
 - `bun open-pencil analyze spacing <file>` — gap/padding values
 - `bun open-pencil analyze clusters <file>` — repeated patterns
+- `bun open-pencil eval <file> --code '<js>'` — execute JS with Figma Plugin API
 
 ## CLI
 
@@ -106,6 +107,7 @@ The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files 
 - Number input spinner hiding is global CSS in `app.css`, not per-component
 - ScrubInput (drag-to-change number) — cursor and pointerdown on outer container, not inner spans
 - Icons: use unplugin-icons with Iconify/Lucide (`<icon-lucide-*>`) — don't use raw SVG or Unicode symbols
+- App menu (`src/components/AppMenu.vue`) — browser-only menu bar using reka-ui Menubar components; Tauri uses native menus, so menu is hidden when `IS_TAURI` is true
 - Sections are draggable by title pill, not by the area to the right of the title
 - CSS `contain: paint layout style` on side panels to isolate repaints from WebGL canvas
 

@@ -6,7 +6,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 ✅ Supported — feature works end-to-end · 🟡 Partial — core behavior exists, some sub-features missing · 🔲 Not yet implemented
 :::
 
-**Coverage:** 83 of 150 Figma feature items addressed — 64 ✅ fully supported, 19 🟡 partial, 67 🔲 not yet. Last updated: 2026-03-01.
+**Coverage:** 85 of 152 Figma feature items addressed — 66 ✅ fully supported, 19 🟡 partial, 67 🔲 not yet. Last updated: 2026-03-01.
 
 ## Interface & Navigation
 
@@ -27,7 +27,8 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Layer outlines view | 🔲 | Wireframe view of all layers |
 | Custom file thumbnails | 🔲 | Thumbnail generated on export, but no custom thumbnail picker |
 | Nudge value settings | 🔲 | Default 1px/10px; Figma allows custom small/big nudge values |
-| AI tools | 🟡 | 10 AI tools via OpenRouter (create/modify/delete shapes, fills/strokes, layout); no AI-generated images or AI-powered search yet |
+| App menu (browser mode) | ✅ | File, Edit, View, Object, Text, Arrange menus; Tauri uses native menus |
+| AI tools | 🟡 | 10 tools via OpenRouter + unified tool definitions + eval command integration; no AI image generation yet |
 
 ## Layers & Shapes
 
@@ -195,6 +196,12 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Image/SVG export | 🟡 | PNG/JPG/WEBP with scale selector and live preview; SVG/PDF not yet |
 | Version history | 🔲 | Browse and restore previous versions |
 | Copy assets between tools | 🟡 | Figma clipboard works; no SVG/PDF clipboard |
+
+## Plugin API & Scripting
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Eval command with Figma Plugin API | ✅ | Headless JavaScript execution with figma global object matching Figma's plugin surface |
 
 ## Collaboration & Dev Mode
 

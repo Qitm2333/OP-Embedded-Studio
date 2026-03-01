@@ -22,7 +22,7 @@ export default defineConfig({
     nav: [
       { text: 'User Guide', link: '/user-guide/' },
       { text: 'Reference', link: '/reference/keyboard-shortcuts' },
-      { text: 'Development', link: '/guide/getting-started' },
+      { text: 'Development', link: '/development/contributing' },
     ],
 
     sidebar: {
@@ -68,6 +68,7 @@ export default defineConfig({
             { text: 'MCP Tools', link: '/reference/mcp-tools' },
             { text: 'Scene Graph', link: '/reference/scene-graph' },
             { text: 'File Format', link: '/reference/file-format' },
+            { text: 'Eval Command', link: '/eval-command' },
           ],
         },
       ],
