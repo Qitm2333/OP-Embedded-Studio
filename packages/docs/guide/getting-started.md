@@ -1,5 +1,9 @@
 # Getting Started
 
+## Try Online
+
+OpenPencil runs in the browser — no installation required. Open [app.openpencil.dev](https://app.openpencil.dev) to start designing.
+
 ## Prerequisites
 
 - [Bun](https://bun.sh/) (package manager and runtime)

@@ -8,6 +8,9 @@ hero:
   tagline: Open-source Figma alternative. Fully local, AI-native, programmable.
   actions:
     - theme: brand
+      text: Try Online
+      link: https://app.openpencil.dev
+    - theme: alt
       text: Get Started
       link: /guide/getting-started
     - theme: alt

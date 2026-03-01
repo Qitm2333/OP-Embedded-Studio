@@ -23,6 +23,7 @@ export default defineConfig({
       { text: 'User Guide', link: '/user-guide/' },
       { text: 'Reference', link: '/reference/keyboard-shortcuts' },
       { text: 'Development', link: '/guide/getting-started' },
+      { text: 'Open App', link: 'https://app.openpencil.dev' },
     ],
 
     sidebar: {

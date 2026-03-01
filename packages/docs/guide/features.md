@@ -157,9 +157,11 @@ Right-clicking a node selects it first. Right-clicking empty canvas clears selec
 
 <kbd>]</kbd> brings selected nodes to front, <kbd>[</kbd> sends to back within their parent. <kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd> toggles visibility — hidden nodes stay in the layers panel but don't render. <kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd> toggles lock — locked nodes can't be selected or moved from the canvas. Move nodes between pages via the context menu's "Move to page" submenu.
 
-## Desktop App
+## Web & Desktop App
 
-Tauri v2 shell (~5MB vs Electron's ~100MB). Works fully offline — no account, no server, no internet required. Native menu bar with File/Edit/View/Object/Window/Help menus on all platforms. macOS gets an app-level submenu. Native Save/Open dialogs via Tauri plugin-dialog. Zstd compression offloaded to Rust for .fig export performance. Developer Tools accessible via <kbd>⌘</kbd><kbd>⌥</kbd><kbd>I</kbd>.
+OpenPencil runs in the browser at [app.openpencil.dev](https://app.openpencil.dev) — no installation required.
+
+The desktop app uses a Tauri v2 shell (~5MB vs Electron's ~100MB). Works fully offline — no account, no server, no internet required. Native menu bar with File/Edit/View/Object/Window/Help menus on all platforms. macOS gets an app-level submenu. Native Save/Open dialogs via Tauri plugin-dialog. Zstd compression offloaded to Rust for .fig export performance. Developer Tools accessible via <kbd>⌘</kbd><kbd>⌥</kbd><kbd>I</kbd>.
 
 ## ScrubInput
 
