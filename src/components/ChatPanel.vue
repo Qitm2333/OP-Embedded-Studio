@@ -2,7 +2,7 @@
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport } from 'reka-ui'
 import { computed, nextTick, ref, watch } from 'vue'
 
-import ApiKeySetup from '@/components/chat/ApiKeySetup.vue'
+import APIKeySetup from '@/components/chat/APIKeySetup.vue'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
 import { useAIChat } from '@/composables/use-chat'
@@ -46,7 +46,7 @@ function handleStop() {
 
 <template>
   <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
-    <ApiKeySetup v-if="!isConfigured" />
+    <APIKeySetup v-if="!isConfigured" />
 
     <template v-else>
       <ScrollAreaRoot class="min-h-0 flex-1">

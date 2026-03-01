@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ApiKeySetup: typeof import('./src/components/chat/ApiKeySetup.vue')['default']
+    APIKeySetup: typeof import('./src/components/chat/APIKeySetup.vue')['default']
     AppearanceSection: typeof import('./src/components/properties/AppearanceSection.vue')['default']
     CanvasContextMenu: typeof import('./src/components/CanvasContextMenu.vue')['default']
     ChatInput: typeof import('./src/components/chat/ChatInput.vue')['default']
