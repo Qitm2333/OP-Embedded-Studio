@@ -1,4 +1,7 @@
+export const FIG_KIWI_VERSION = 106
+
 import { encodeVectorNetworkBlob } from './vector'
+import { weightToStyle } from './fonts'
 
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from './scene-graph'
 import type { NodeChange, Paint } from './kiwi/codec'
@@ -48,19 +51,7 @@ export function fractionalPosition(index: number): string {
   return String.fromCharCode('!'.charCodeAt(0) + index)
 }
 
-function fontStyleLabel(weight: number, italic: boolean): string {
-  let label = 'Regular'
-  if (weight >= 900) label = 'Black'
-  else if (weight >= 800) label = 'ExtraBold'
-  else if (weight >= 700) label = 'Bold'
-  else if (weight >= 600) label = 'SemiBold'
-  else if (weight >= 500) label = 'Medium'
-  else if (weight >= 300) label = 'Light'
-  else if (weight >= 200) label = 'ExtraLight'
-  else if (weight >= 100) label = 'Thin'
-  if (italic) label += ' Italic'
-  return label
-}
+
 
 function exportTextData(node: SceneNode): NodeChange['textData'] {
   const runs = node.styleRuns
@@ -91,7 +82,7 @@ function exportTextData(node: SceneNode): NodeChange['textData'] {
     const italic = style.italic ?? node.italic
     override.fontName = {
       family: style.fontFamily ?? node.fontFamily,
-      style: fontStyleLabel(weight, italic),
+      style: weightToStyle(weight, italic),
       postscript: ''
     }
     if (style.fontSize !== undefined) override.fontSize = style.fontSize
@@ -204,7 +195,7 @@ export function sceneNodeToKiwi(
     nc.fontSize = node.fontSize
     nc.fontName = {
       family: node.fontFamily,
-      style: fontStyleLabel(node.fontWeight, node.italic),
+      style: weightToStyle(node.fontWeight, node.italic),
       postscript: ''
     }
     nc.textData = exportTextData(node)

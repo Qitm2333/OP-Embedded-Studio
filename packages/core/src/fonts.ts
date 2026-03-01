@@ -133,14 +133,16 @@ export async function ensureNodeFont(family: string, weight: number): Promise<vo
   await loadFont(family, style)
 }
 
-function weightToStyle(weight: number): string {
-  if (weight <= 100) return 'Thin'
-  if (weight <= 200) return 'ExtraLight'
-  if (weight <= 300) return 'Light'
-  if (weight <= 400) return 'Regular'
-  if (weight <= 500) return 'Medium'
-  if (weight <= 600) return 'SemiBold'
-  if (weight <= 700) return 'Bold'
-  if (weight <= 800) return 'ExtraBold'
-  return 'Black'
+export function weightToStyle(weight: number, italic = false): string {
+  let label = 'Regular'
+  if (weight <= 100) label = 'Thin'
+  else if (weight <= 200) label = 'ExtraLight'
+  else if (weight <= 300) label = 'Light'
+  else if (weight <= 500) label = 'Medium'
+  else if (weight <= 600) label = 'SemiBold'
+  else if (weight <= 700) label = 'Bold'
+  else if (weight <= 800) label = 'ExtraBold'
+  else if (weight >= 900) label = 'Black'
+  if (italic) label += ' Italic'
+  return label
 }

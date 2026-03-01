@@ -2,7 +2,7 @@ import { inflateSync, deflateSync } from 'fflate'
 
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
-import { sceneNodeToKiwi } from './kiwi-serialize'
+import { sceneNodeToKiwi, FIG_KIWI_VERSION } from './kiwi-serialize'
 
 import { decodeVectorNetworkBlob } from './vector'
 
@@ -90,7 +90,7 @@ async function parseFigKiwiWithZstd(
 
 function buildFigKiwi(schemaDeflated: Uint8Array, dataRaw: Uint8Array): Uint8Array {
   const dataDeflated = deflateSync(dataRaw)
-  const FIG_KIWI_VERSION = 106
+  
 
   const total = 8 + 4 + 4 + schemaDeflated.length + 4 + dataDeflated.length
   const out = new Uint8Array(total)

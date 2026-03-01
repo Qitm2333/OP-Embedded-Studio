@@ -2,7 +2,7 @@ import { zipSync, deflateSync } from 'fflate'
 
 import { IS_TAURI } from './constants'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
-import { sceneNodeToKiwi, fractionalPosition } from './kiwi-serialize'
+import { sceneNodeToKiwi, fractionalPosition, FIG_KIWI_VERSION } from './kiwi-serialize'
 import { renderThumbnail } from './render-image'
 
 import type { SkiaRenderer } from './renderer'
@@ -20,7 +20,7 @@ const THUMBNAIL_1X1 = Uint8Array.from(
 type KiwiNodeChange = NodeChange & Record<string, unknown>
 
 function buildFigKiwi(schemaDeflated: Uint8Array, dataCompressed: Uint8Array): Uint8Array {
-  const FIG_KIWI_VERSION = 106
+  
   const total = 8 + 4 + 4 + schemaDeflated.length + 4 + dataCompressed.length
   const out = new Uint8Array(total)
   const view = new DataView(out.buffer)
