@@ -97,11 +97,11 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/dannote/open-pencil' },
+      { icon: 'github', link: 'https://github.com/open-pencil/open-pencil' },
     ],
 
     editLink: {
-      pattern: 'https://github.com/dannote/open-pencil/edit/main/packages/docs/:path',
+      pattern: 'https://github.com/open-pencil/open-pencil/edit/main/packages/docs/:path',
     },
 
     footer: {

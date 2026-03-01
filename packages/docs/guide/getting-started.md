@@ -12,7 +12,7 @@ OpenPencil runs in the browser — no installation required. Open [app.openpenci
 ## Installation
 
 ```sh
-git clone https://github.com/dannote/open-pencil.git
+git clone https://github.com/open-pencil/open-pencil.git
 cd open-pencil
 bun install
 ```

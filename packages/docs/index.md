@@ -15,7 +15,7 @@ hero:
       link: /guide/getting-started
     - theme: alt
       text: View on GitHub
-      link: https://github.com/dannote/open-pencil
+      link: https://github.com/open-pencil/open-pencil
 
 features:
   - icon: 📖

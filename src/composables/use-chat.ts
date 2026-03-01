@@ -61,7 +61,7 @@ function createTransport() {
     apiKey: apiKey.value,
     headers: {
       'X-OpenRouter-Title': 'OpenPencil',
-      'HTTP-Referer': 'https://github.com/dannote/open-pencil'
+      'HTTP-Referer': 'https://github.com/open-pencil/open-pencil'
     }
   })
 
