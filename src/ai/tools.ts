@@ -1,8 +1,10 @@
 import { valibotSchema } from '@ai-sdk/valibot'
+import { parseColor, FigmaAPI } from '@open-pencil/core'
 import { tool } from 'ai'
 import * as v from 'valibot'
 
 import type { EditorStore } from '@/stores/editor'
+import type { Color } from '@open-pencil/core'
 
 const nodeTypeSchema = v.picklist([
   'FRAME',
@@ -32,17 +34,9 @@ const colorInputSchema = v.union([rgbaSchema, hexSchema])
 
 type ColorInput = v.InferOutput<typeof colorInputSchema>
 
-function resolveColor(input: ColorInput) {
-  if (typeof input === 'string') {
-    const h = input.replace('#', '')
-    return {
-      r: parseInt(h.slice(0, 2), 16) / 255,
-      g: parseInt(h.slice(2, 4), 16) / 255,
-      b: parseInt(h.slice(4, 6), 16) / 255,
-      a: h.length === 8 ? parseInt(h.slice(6, 8), 16) / 255 : 1
-    }
-  }
-  return { ...input, a: input.a ?? 1 }
+function resolveColor(input: ColorInput): Color {
+  if (typeof input === 'string') return parseColor(input)
+  return { r: input.r, g: input.g, b: input.b, a: input.a ?? 1 }
 }
 
 export function createAITools(store: EditorStore) {
@@ -233,38 +227,12 @@ export function createAITools(store: EditorStore) {
         'Get the node tree of the current page. Returns all nodes with their hierarchy, types, positions, and sizes.',
       inputSchema: valibotSchema(v.object({})),
       execute: async () => {
-        const graph = store.graph
-        const pageId = store.state.currentPageId
-        const page = graph.getNode(pageId)
+        const api = new FigmaAPI(store.graph)
+        const page = api.getNodeById(store.state.currentPageId)
         if (!page) return { error: 'No current page' }
-
-        function nodeToJSON(id: string): object | null {
-          const node = graph.getNode(id)
-          if (!node) return null
-          const children = graph
-            .getChildren(id)
-            .map((c) => nodeToJSON(c.id))
-            .filter(Boolean)
-          return {
-            id: node.id,
-            type: node.type,
-            name: node.name,
-            x: node.x,
-            y: node.y,
-            width: node.width,
-            height: node.height,
-            ...(children.length > 0 ? { children } : {}),
-            ...(node.fills.length > 0 ? { fills: node.fills } : {}),
-            ...(node.text ? { text: node.text } : {})
-          }
-        }
-
         return {
           page: page.name,
-          children: graph
-            .getChildren(pageId)
-            .map((c) => nodeToJSON(c.id))
-            .filter(Boolean)
+          children: page.children.map((c) => c.toJSON())
         }
       }
     }),
@@ -275,18 +243,9 @@ export function createAITools(store: EditorStore) {
       execute: async () => {
         const nodes = store.selectedNodes.value
         if (nodes.length === 0) return { selection: [] }
+        const api = new FigmaAPI(store.graph)
         return {
-          selection: nodes.map((n) => ({
-            id: n.id,
-            type: n.type,
-            name: n.name,
-            x: n.x,
-            y: n.y,
-            width: n.width,
-            height: n.height,
-            fills: n.fills,
-            text: n.text || undefined
-          }))
+          selection: nodes.map((n) => api.wrapNode(n.id).toJSON())
         }
       }
     }),

@@ -1,3 +1,4 @@
+import { DEFAULT_STROKE_MITER_LIMIT } from '../constants'
 import { SceneGraph } from '../scene-graph'
 import { styleToWeight } from '../fonts'
 import { decodeVectorNetworkBlob } from '../vector'
@@ -478,6 +479,7 @@ export function importNodeChanges(
       counterAxisSpacing: (ext(nc).stackCounterSpacing as number) ?? 0,
       layoutPositioning: ext(nc).stackPositioning === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO',
       layoutGrow: (ext(nc).stackChildPrimaryGrow as number) ?? 0,
+      layoutAlignSelf: (ext(nc).stackChildAlignSelf as string) === 'STRETCH' ? 'STRETCH' : 'AUTO',
       vectorNetwork: resolveVectorNetwork(nc, blobs),
       arcData: mapArcData(ext(nc).arcData as Record<string, number> | undefined),
       strokeCap: (nc.strokeCap ?? 'NONE') as StrokeCap,
@@ -488,6 +490,19 @@ export function importNodeChanges(
       borderBottomWeight: (ext(nc).borderBottomWeight as number) ?? 0,
       borderLeftWeight: (ext(nc).borderLeftWeight as number) ?? 0,
       independentStrokeWeights: (ext(nc).borderStrokeWeightsIndependent as boolean) ?? false,
+      strokeMiterLimit: DEFAULT_STROKE_MITER_LIMIT,
+      minWidth: (ext(nc).minWidth as number) ?? null,
+      maxWidth: (ext(nc).maxWidth as number) ?? null,
+      minHeight: (ext(nc).minHeight as number) ?? null,
+      maxHeight: (ext(nc).maxHeight as number) ?? null,
+      isMask: (ext(nc).isMask as boolean) ?? false,
+      maskType: ((ext(nc).maskType as string) ?? 'ALPHA') as 'ALPHA' | 'VECTOR' | 'LUMINANCE',
+      counterAxisAlignContent: (ext(nc).stackCounterAlignContent as string) === 'SPACE_BETWEEN' ? 'SPACE_BETWEEN' : 'AUTO',
+      itemReverseZIndex: (ext(nc).stackReverseZIndex as boolean) ?? false,
+      strokesIncludedInLayout: (ext(nc).strokesIncludedInLayout as boolean) ?? false,
+      expanded: true,
+      textTruncation: (ext(nc).textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED',
+      autoRename: (ext(nc).autoRename as boolean) ?? true,
       boundVariables: extractBoundVariables(nc)
     })
 
