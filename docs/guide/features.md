@@ -1,5 +1,9 @@
 # Features
 
+## Why OpenPencil
+
+Design tools are a supply chain problem. When your tool is closed-source, the vendor controls what's possible — they can break your automation overnight. OpenPencil is an open-source alternative: MIT-licensed, Figma-compatible, fully local, and programmable.
+
 ## Figma .fig File Import & Export
 
 Open and save native Figma files directly. Import decodes the full 194-definition Kiwi schema including NodeChange messages with ~390 fields. Export encodes the scene graph back to Kiwi binary with Zstd compression and thumbnail generation. Save (<kbd>⌘</kbd><kbd>S</kbd>) and Save As (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>) use native OS dialogs on the desktop app. The import/export pipeline supports round-trip fidelity.

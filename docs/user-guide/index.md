@@ -6,7 +6,7 @@ description: Learn how to use OpenPencil — canvas navigation, drawing, text, c
 
 # User Guide
 
-OpenPencil is an open-source design editor with full .fig file compatibility. This guide covers everything you need to know to use the editor effectively.
+OpenPencil is an open-source, Figma-compatible design editor — fully local, AI-native, and programmable. This guide covers everything you need to know to use the editor effectively.
 
 ::: tip Cross-platform shortcuts
 Throughout this guide, keyboard shortcuts use Mac notation: **⌘** = Command (Ctrl on Windows/Linux), **⌥** = Option (Alt), **⇧** = Shift.

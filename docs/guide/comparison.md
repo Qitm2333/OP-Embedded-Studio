@@ -1,5 +1,7 @@
 # Open Pencil vs Penpot: Architecture & Performance Comparison
 
+Why compare? OpenPencil exists because closed design platforms control what's possible. Understanding architectural differences shows what an open, local-first alternative can do differently.
+
 ## 1. Scale & Codebase Size
 
 | Metric | Open Pencil | Penpot |

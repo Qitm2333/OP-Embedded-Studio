@@ -1,11 +1,11 @@
 ---
 layout: home
-description: Open-source, AI-native design editor. Figma alternative with .fig import/export, auto-layout, gradients, effects, sections, pages, and 117 MCP tools.
+description: Open-source Figma alternative. Fully local, AI-native, programmable.
 
 hero:
   name: OpenPencil
   text: AI-Native Design Editor
-  tagline: Open-source Figma alternative. Self-host it, extend it, talk to it.
+  tagline: Open-source Figma alternative. Fully local, AI-native, programmable.
   image:
     src: /favicon.svg
     alt: OpenPencil
@@ -18,22 +18,19 @@ hero:
       link: https://github.com/dannote/open-pencil
 
 features:
+  - icon: 📖
+    title: Open Source
+    details: MIT license. Read and modify everything — the editor, the engine, the file codec.
   - icon: 📂
-    title: Figma .fig Import & Export
-    details: Open and save native Figma files. Kiwi codec, Zstd compression, round-trip fidelity.
-  - icon: 🎨
-    title: Advanced Rendering
-    details: Gradients, image fills, effects (shadows, blurs), stroke styles, arcs — full tier 1 parity.
-  - icon: 📄
-    title: Pages & Sections
-    details: Multi-page documents with per-page viewport. Sections for canvas organization with auto-adopt.
-  - icon: 📐
-    title: Auto-Layout
-    details: Yoga WASM flexbox engine. Direction, gap, padding, justify, align, child sizing.
+    title: Figma-Compatible
+    details: Opens .fig files natively. Copy/paste between apps. Kiwi codec with round-trip fidelity.
   - icon: 🤖
-    title: AI-Native (MCP)
-    details: 117 MCP tools expose the entire editor API to AI agents. Design with conversation.
+    title: AI-Native
+    details: Built-in chat with tool use. 10 design tools wired to the editor. No API restrictions.
   - icon: 🖥️
-    title: Desktop App
-    details: Tauri v2 shell — ~5MB native app with native menus and file dialogs on all platforms.
+    title: Fully Local
+    details: No account, no server, no internet required. ~5 MB Tauri desktop app.
+  - icon: ⚡
+    title: Programmable
+    details: Headless CLI for .fig inspection and export. Every operation is scriptable. JSX renderer.
 ---
