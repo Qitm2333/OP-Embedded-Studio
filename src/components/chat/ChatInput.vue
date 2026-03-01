@@ -2,10 +2,10 @@
 import {
   SelectContent,
   SelectItem,
+  SelectItemText,
   SelectPortal,
   SelectRoot,
   SelectTrigger,
-  SelectValue,
   SelectViewport,
   TooltipContent,
   TooltipPortal,
@@ -31,6 +31,9 @@ const emit = defineEmits<{
 const input = ref('')
 
 const isStreaming = computed(() => props.status === 'streaming' || props.status === 'submitted')
+const selectedModelName = computed(
+  () => MODELS.find((m) => m.id === modelId.value)?.name ?? modelId.value
+)
 
 function handleSubmit(e: Event) {
   e.preventDefault()
@@ -51,7 +54,7 @@ function handleSubmit(e: Event) {
             class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
           >
             <icon-lucide-bot class="size-3" />
-            <SelectValue />
+            {{ selectedModelName }}
             <icon-lucide-chevron-down class="size-2.5" />
           </SelectTrigger>
           <SelectPortal>
@@ -68,7 +71,7 @@ function handleSubmit(e: Event) {
                   :value="model.id"
                   class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[11px] text-surface outline-none data-[highlighted]:bg-hover"
                 >
-                  <span class="flex-1">{{ model.name }}</span>
+                  <SelectItemText class="flex-1">{{ model.name }}</SelectItemText>
                   <span
                     v-if="model.tag"
                     class="rounded bg-accent/10 px-1 py-px text-[9px] text-accent"
