@@ -4,8 +4,10 @@
 
 ### Performance
 
-- Cache ruler paints instead of allocating per frame
+- Cache vector network paths — avoid rebuilding WASM paths every frame
+- Cache ruler and pen overlay paints — eliminate 10 WASM Paint allocations per frame
 - Only enable `preserveDrawingBuffer` in test mode
+- Hoist URL param parsing out of render loop
 
 ### Bug Fixes
 

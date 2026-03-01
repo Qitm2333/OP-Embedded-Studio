@@ -132,12 +132,17 @@ export class SkiaRenderer {
   private fontProvider: TypefaceFontProvider | null = null
   private fontsLoaded = false
   private imageCache = new Map<string, CKImage>()
+  private vectorPathCache = new Map<string, Path>()
   private rulerBgPaint: Paint
   private rulerTickPaint: Paint
   private rulerTextPaint: Paint
   private rulerHlPaint: Paint
   private rulerBadgePaint: Paint
   private rulerLabelPaint: Paint
+  private penPathPaint: Paint
+  private penHandlePaint: Paint
+  private penVertexFill: Paint
+  private penVertexStroke: Paint
 
   panX = 0
   panY = 0
@@ -233,6 +238,29 @@ export class SkiaRenderer {
     this.rulerLabelPaint = new ck.Paint()
     this.rulerLabelPaint.setColor(ck.Color4f(1, 1, 1, 1))
     this.rulerLabelPaint.setAntiAlias(true)
+
+    this.penPathPaint = new ck.Paint()
+    this.penPathPaint.setStyle(ck.PaintStyle.Stroke)
+    this.penPathPaint.setStrokeWidth(PEN_PATH_STROKE_WIDTH)
+    this.penPathPaint.setColor(this.selColor())
+    this.penPathPaint.setAntiAlias(true)
+
+    this.penHandlePaint = new ck.Paint()
+    this.penHandlePaint.setStyle(ck.PaintStyle.Stroke)
+    this.penHandlePaint.setStrokeWidth(1)
+    this.penHandlePaint.setColor(this.selColor(PARENT_OUTLINE_ALPHA))
+    this.penHandlePaint.setAntiAlias(true)
+
+    this.penVertexFill = new ck.Paint()
+    this.penVertexFill.setStyle(ck.PaintStyle.Fill)
+    this.penVertexFill.setColor(ck.WHITE)
+    this.penVertexFill.setAntiAlias(true)
+
+    this.penVertexStroke = new ck.Paint()
+    this.penVertexStroke.setStyle(ck.PaintStyle.Stroke)
+    this.penVertexStroke.setStrokeWidth(PEN_PATH_STROKE_WIDTH)
+    this.penVertexStroke.setColor(this.selColor())
+    this.penVertexStroke.setAntiAlias(true)
   }
 
   getFontProvider(): TypefaceFontProvider | null {
@@ -934,6 +962,23 @@ export class SkiaRenderer {
     canvas.restore()
   }
 
+  private getVectorPath(node: SceneNode): Path | null {
+    if (!node.vectorNetwork) return null
+    const cached = this.vectorPathCache.get(node.id)
+    if (cached) return cached
+    const path = vectorNetworkToPath(this.ck, node.vectorNetwork)
+    this.vectorPathCache.set(node.id, path)
+    return path
+  }
+
+  invalidateVectorPath(nodeId: string): void {
+    const old = this.vectorPathCache.get(nodeId)
+    if (old) {
+      old.delete()
+      this.vectorPathCache.delete(nodeId)
+    }
+  }
+
   private strokeNodeShape(canvas: Canvas, node: SceneNode, paint: Paint): void {
     const rect = this.ck.LTRBRect(0, 0, node.width, node.height)
 
@@ -941,13 +986,11 @@ export class SkiaRenderer {
       case 'ELLIPSE':
         canvas.drawOval(rect, paint)
         return
-      case 'VECTOR':
-        if (node.vectorNetwork) {
-          const vp = vectorNetworkToPath(this.ck, node.vectorNetwork)
-          canvas.drawPath(vp, paint)
-          vp.delete()
-        }
+      case 'VECTOR': {
+        const vp = this.getVectorPath(node)
+        if (vp) canvas.drawPath(vp, paint)
         return
+      }
       case 'LINE':
         canvas.drawLine(0, 0, node.width, node.height, paint)
         return
@@ -1316,13 +1359,11 @@ export class SkiaRenderer {
     hasRadius: boolean
   ): void {
     switch (node.type) {
-      case 'VECTOR':
-        if (node.vectorNetwork) {
-          const vp = vectorNetworkToPath(this.ck, node.vectorNetwork)
-          canvas.drawPath(vp, this.fillPaint)
-          vp.delete()
-        }
+      case 'VECTOR': {
+        const vp = this.getVectorPath(node)
+        if (vp) canvas.drawPath(vp, this.fillPaint)
         break
+      }
       case 'ELLIPSE':
         if (node.arcData) {
           this.drawArc(canvas, node, this.fillPaint)
@@ -1359,13 +1400,11 @@ export class SkiaRenderer {
     hasRadius: boolean
   ): void {
     switch (node.type) {
-      case 'VECTOR':
-        if (node.vectorNetwork) {
-          const vp = vectorNetworkToPath(this.ck, node.vectorNetwork)
-          canvas.drawPath(vp, this.strokePaint)
-          vp.delete()
-        }
+      case 'VECTOR': {
+        const vp = this.getVectorPath(node)
+        if (vp) canvas.drawPath(vp, this.strokePaint)
         break
+      }
       case 'ELLIPSE':
         if (node.arcData) {
           this.drawArc(canvas, node, this.strokePaint)
@@ -1890,28 +1929,10 @@ export class SkiaRenderer {
     if (!penState || penState.vertices.length === 0) return
 
     const { vertices, segments, dragTangent, cursorX, cursorY } = penState
-    const pathPaint = new this.ck.Paint()
-    pathPaint.setStyle(this.ck.PaintStyle.Stroke)
-    pathPaint.setStrokeWidth(PEN_PATH_STROKE_WIDTH)
-    pathPaint.setColor(this.selColor())
-    pathPaint.setAntiAlias(true)
-
-    const handlePaint = new this.ck.Paint()
-    handlePaint.setStyle(this.ck.PaintStyle.Stroke)
-    handlePaint.setStrokeWidth(1)
-    handlePaint.setColor(this.selColor(PARENT_OUTLINE_ALPHA))
-    handlePaint.setAntiAlias(true)
-
-    const vertexFill = new this.ck.Paint()
-    vertexFill.setStyle(this.ck.PaintStyle.Fill)
-    vertexFill.setColor(this.ck.WHITE)
-    vertexFill.setAntiAlias(true)
-
-    const vertexStroke = new this.ck.Paint()
-    vertexStroke.setStyle(this.ck.PaintStyle.Stroke)
-    vertexStroke.setStrokeWidth(PEN_PATH_STROKE_WIDTH)
-    vertexStroke.setColor(this.selColor())
-    vertexStroke.setAntiAlias(true)
+    const pathPaint = this.penPathPaint
+    const handlePaint = this.penHandlePaint
+    const vertexFill = this.penVertexFill
+    const vertexStroke = this.penVertexStroke
 
     const toScreen = (x: number, y: number) => ({
       x: x * this.zoom + this.panX,
@@ -2007,10 +2028,6 @@ export class SkiaRenderer {
       canvas.drawCircle(v.x, v.y, radius, vertexStroke)
     }
 
-    pathPaint.delete()
-    handlePaint.delete()
-    vertexFill.delete()
-    vertexStroke.delete()
   }
 
   // --- Remote Cursors ---
@@ -2329,6 +2346,8 @@ export class SkiaRenderer {
   destroy(): void {
     for (const img of this.imageCache.values()) img.delete()
     this.imageCache.clear()
+    for (const p of this.vectorPathCache.values()) p.delete()
+    this.vectorPathCache.clear()
     this.fillPaint.delete()
     this.strokePaint.delete()
     this.selectionPaint.delete()
@@ -2347,6 +2366,10 @@ export class SkiaRenderer {
     this.rulerHlPaint.delete()
     this.rulerBadgePaint.delete()
     this.rulerLabelPaint.delete()
+    this.penPathPaint.delete()
+    this.penHandlePaint.delete()
+    this.penVertexFill.delete()
+    this.penVertexStroke.delete()
     this.surface.delete()
   }
 }

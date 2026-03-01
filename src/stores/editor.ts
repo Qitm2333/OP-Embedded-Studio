@@ -768,6 +768,9 @@ export function createEditorStore() {
 
   function updateNode(id: string, changes: Partial<SceneNode>) {
     graph.updateNode(id, changes)
+    if ('vectorNetwork' in changes) {
+      _renderer?.invalidateVectorPath(id)
+    }
     runLayoutForNode(id)
     syncIfInsideComponent(id)
     requestRender()
