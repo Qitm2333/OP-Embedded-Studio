@@ -7,6 +7,13 @@ import {
   ScrollAreaScrollbar,
   ScrollAreaThumb,
   ScrollAreaViewport,
+  SelectContent,
+  SelectItem,
+  SelectPortal,
+  SelectRoot,
+  SelectTrigger,
+  SelectValue,
+  SelectViewport,
   TooltipContent,
   TooltipPortal,
   TooltipProvider,
@@ -17,12 +24,12 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { Markdown } from 'vue-stream-markdown'
 import 'vue-stream-markdown/index.css'
 
-import { useAIChat } from '@/composables/use-chat'
+import { MODELS, useAIChat } from '@/composables/use-chat'
 
 import type { DesignMessage } from '@/composables/use-chat'
 import type { Chat } from '@ai-sdk/vue'
 
-const { apiKey, isConfigured, createChat } = useAIChat()
+const { apiKey, modelId, isConfigured, createChat } = useAIChat()
 
 const chat = ref<Chat<DesignMessage> | null>(null)
 const input = ref('')
@@ -280,6 +287,43 @@ function toolState(part: ToolPart): 'pending' | 'done' | 'error' {
       <!-- Input -->
       <TooltipProvider>
         <div class="shrink-0 border-t border-border px-3 py-2">
+          <!-- Model selector -->
+          <div class="mb-1.5 flex items-center">
+            <SelectRoot v-model="modelId">
+              <SelectTrigger
+                class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
+              >
+                <icon-lucide-bot class="size-3" />
+                <SelectValue />
+                <icon-lucide-chevron-down class="size-2.5" />
+              </SelectTrigger>
+              <SelectPortal>
+                <SelectContent
+                  position="popper"
+                  side="top"
+                  :side-offset="4"
+                  class="z-50 max-h-60 overflow-y-auto rounded-lg border border-border bg-panel p-1 shadow-lg"
+                >
+                  <SelectViewport>
+                    <SelectItem
+                      v-for="model in MODELS"
+                      :key="model.id"
+                      :value="model.id"
+                      class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[11px] text-surface outline-none data-[highlighted]:bg-hover"
+                    >
+                      <span class="flex-1">{{ model.name }}</span>
+                      <span
+                        v-if="model.tag"
+                        class="rounded bg-accent/10 px-1 py-px text-[9px] text-accent"
+                      >
+                        {{ model.tag }}
+                      </span>
+                    </SelectItem>
+                  </SelectViewport>
+                </SelectContent>
+              </SelectPortal>
+            </SelectRoot>
+          </div>
           <form class="flex gap-1.5" @submit="handleSubmit">
             <input
               v-model="input"
