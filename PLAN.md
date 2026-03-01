@@ -1753,6 +1753,21 @@ New test categories to add:
 
 Snapshot tests for rendering: store expected PNGs in `packages/core/tests/snapshots/`. Use pixel-level comparison (allow small tolerance for anti-aliasing across platforms). CanvasKit CPU rasterizer is deterministic on the same platform, so CI snapshots only need per-platform baselines.
 
+### Kiwi decoder performance — investigated
+
+We benchmarked the Rust `kiwi-schema` crate (by Evan Wallace, 1.5M downloads) against our JS decoder:
+
+| File | JS (Bun) | Rust (native) |
+|------|----------|---------------|
+| material3 (87K nodes, 44.7 MB) | **168 ms** | 595 ms |
+| nuxtui (315K nodes, 229 MB) | **785 ms** | 4,215 ms |
+
+**JS is 3.5–5.4x faster.** The Rust crate uses dynamic `Value` enum with `HashMap<&str, Value>` per object — heap allocations for every field of every node. Our JS decoder uses `compileSchema()` which generates specialized decode functions via `new Function()` — the JIT optimizes these into near-native code with zero boxing overhead.
+
+A faster Rust/WASM decoder would require code generation (like protobuf's `prost` with derive macros) to emit typed structs instead of dynamic `Value`. Not worth the effort given our JS decoder already handles 315K nodes in under a second.
+
+**The real bottleneck was O(n²) `getChildren()` in `importNodeChanges`** (scanning all parent entries for each node). Fixed by building a `childrenMap` index upfront → **69x speedup** (37s → 535ms for material3).
+
 ### Risks — validated
 
 All three risks have been tested and eliminated:
