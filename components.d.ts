@@ -11,8 +11,11 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ApiKeySetup: typeof import('./src/components/chat/ApiKeySetup.vue')['default']
     AppearanceSection: typeof import('./src/components/properties/AppearanceSection.vue')['default']
     CanvasContextMenu: typeof import('./src/components/CanvasContextMenu.vue')['default']
+    ChatInput: typeof import('./src/components/chat/ChatInput.vue')['default']
+    ChatMessage: typeof import('./src/components/chat/ChatMessage.vue')['default']
     ChatPanel: typeof import('./src/components/ChatPanel.vue')['default']
     ColorInput: typeof import('./src/components/ColorInput.vue')['default']
     ColorPicker: typeof import('./src/components/ColorPicker.vue')['default']
