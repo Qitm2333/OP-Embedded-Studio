@@ -21,7 +21,13 @@ watch(apiKey, (key) => {
 const isConfigured = computed(() => apiKey.value.length > 0)
 
 function createAgent() {
-  const openrouter = createOpenRouter({ apiKey: apiKey.value })
+  const openrouter = createOpenRouter({
+    apiKey: apiKey.value,
+    headers: {
+      'X-OpenRouter-Title': 'OpenPencil',
+      'HTTP-Referer': 'https://github.com/dannote/open-pencil',
+    },
+  })
 
   return new ToolLoopAgent({
     model: openrouter('anthropic/claude-sonnet-4'),
