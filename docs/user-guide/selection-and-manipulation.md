@@ -6,11 +6,6 @@ description: Selecting, moving, resizing, rotating, duplicating, and organizing 
 # Selection & Manipulation
 
 Select objects to move, resize, rotate, duplicate, and organize them on the canvas.
-
-::: tip Cross-platform shortcuts
-⌘ = Ctrl, ⌥ = Alt on Windows and Linux.
-:::
-
 ## Selecting
 
 - **Click** a node to select it (deselects everything else)

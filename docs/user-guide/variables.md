@@ -6,11 +6,6 @@ description: Design variables, collections, modes, and fill bindings in OpenPenc
 # Variables
 
 Variables store reusable design tokens — colors, spacing values, and other properties — that can be bound to nodes. Change a variable's value and every node using it updates.
-
-::: tip Cross-platform shortcuts
-⌘ = Ctrl, ⌥ = Alt on Windows and Linux.
-:::
-
 ## Opening the Variables Dialog
 
 With no nodes selected, the Design tab shows page-level properties including a Variables section with collection and variable counts. Click the settings icon to open the variables dialog.
@@ -51,10 +46,6 @@ In the Fill section of the properties panel, use the variable picker to bind a c
 - **Detach** — click the detach button on the badge to remove the binding. The fill reverts to the resolved color value.
 
 When the variable's value changes (or when switching modes), all bound fills update automatically.
-
-## Keyboard Shortcuts
-
-Variables are managed through the dialog UI — there are no dedicated keyboard shortcuts. Open the dialog via the settings icon in the page-level Variables section.
 
 ## Tips
 

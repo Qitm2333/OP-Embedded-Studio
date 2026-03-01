@@ -6,11 +6,6 @@ description: Creating and editing text with rich formatting, fonts, and inline e
 # Text Editing
 
 Create text nodes and edit them directly on the canvas with full rich text support.
-
-::: tip Cross-platform shortcuts
-⌘ = Ctrl, ⌥ = Alt on Windows and Linux.
-:::
-
 ## Creating Text
 
 Press **T** to activate the text tool, then click on the canvas. An empty text node appears with a blinking cursor — start typing immediately.

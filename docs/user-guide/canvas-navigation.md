@@ -6,11 +6,6 @@ description: Panning, zooming, and the hand tool in OpenPencil.
 # Canvas Navigation
 
 The canvas is your infinite workspace. You can pan and zoom freely to navigate your design.
-
-::: tip Cross-platform shortcuts
-⌘ = Ctrl, ⌥ = Alt on Windows and Linux.
-:::
-
 ## Panning
 
 Move the visible area of the canvas without affecting any objects.

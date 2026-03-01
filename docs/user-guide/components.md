@@ -6,11 +6,6 @@ description: Creating reusable components, instances, component sets, overrides,
 # Components
 
 Components are reusable design elements. Edit the main component and all its instances update automatically.
-
-::: tip Cross-platform shortcuts
-⌘ = Ctrl, ⌥ = Alt on Windows and Linux.
-:::
-
 ## Creating a Component
 
 Select a frame or group and press **⌥ ⌘ K** (Ctrl + Alt + K). The node converts to a COMPONENT type in place.

@@ -6,11 +6,6 @@ description: Right-click context menu actions in OpenPencil — clipboard, z-ord
 # Context Menu
 
 Right-click on the canvas to open the context menu. If you right-click on a node, it is selected first. Right-clicking on empty canvas clears the selection.
-
-::: tip Cross-platform shortcuts
-⌘ = Ctrl, ⌥ = Alt on Windows and Linux.
-:::
-
 ## Clipboard Actions
 
 | Action | Shortcut (Mac) | Shortcut (Win/Linux) |

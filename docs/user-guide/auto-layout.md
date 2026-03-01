@@ -6,11 +6,6 @@ description: Flexbox-based auto layout in OpenPencil — direction, gap, padding
 # Auto Layout
 
 Auto layout uses Yoga (flexbox engine) to position children automatically within a frame. It handles direction, spacing, alignment, and responsive sizing.
-
-::: tip Cross-platform shortcuts
-⌘ = Ctrl, ⌥ = Alt on Windows and Linux.
-:::
-
 ## Enabling Auto Layout
 
 - Select a frame and press **⇧ A** (Shift + A) to toggle auto layout on or off

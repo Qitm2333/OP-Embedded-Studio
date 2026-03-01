@@ -6,11 +6,6 @@ description: Managing layers, pages, and the properties panel in OpenPencil.
 # Layers & Pages
 
 The editor interface has three main panels: layers (left), canvas (center), and properties (right). All panels are resizable by dragging the dividers.
-
-::: tip Cross-platform shortcuts
-⌘ = Ctrl, ⌥ = Alt on Windows and Linux.
-:::
-
 ## Layers Panel
 
 The layers panel on the left displays the document hierarchy as a tree.

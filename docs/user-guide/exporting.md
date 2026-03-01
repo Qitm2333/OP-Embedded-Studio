@@ -6,11 +6,6 @@ description: Exporting images (PNG, JPG, WEBP) and saving/opening .fig files in 
 # Exporting
 
 Export individual nodes as images, or save and open entire documents as .fig files.
-
-::: tip Cross-platform shortcuts
-⌘ = Ctrl, ⌥ = Alt on Windows and Linux.
-:::
-
 ## Image Export
 
 Select a node and use the Export section in the properties panel.

@@ -6,11 +6,6 @@ description: Drawing vector paths with bezier curves using the pen tool in OpenP
 # Pen Tool
 
 The pen tool creates vector paths using a vector network data model, compatible with Figma's .fig format.
-
-::: tip Cross-platform shortcuts
-⌘ = Ctrl, ⌥ = Alt on Windows and Linux.
-:::
-
 ## Activating
 
 Press **P** to activate the pen tool.
