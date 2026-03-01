@@ -28,3 +28,4 @@ public/canvaskit.wasm
 test-results/
 # Git worktrees for parallel agent work
 .worktrees/
+.env
