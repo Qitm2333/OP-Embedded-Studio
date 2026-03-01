@@ -39,6 +39,17 @@ The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files 
 - Don't hand-roll `console.log` formatting — use the helpers from `packages/cli/src/format.ts` which re-exports agentfmt with project-specific adapters (`nodeToData`, `nodeDetails`, `nodeToTreeNode`, `nodeToListItem`)
 - Every command supports `--json` for machine-readable output
 
+## Tools (AI / MCP / CLI)
+
+- Tool operations are defined once in `packages/core/src/tools/schema.ts` as framework-agnostic `ToolDef` objects
+- Each tool has: name, description, typed params, and an `execute(figma: FigmaAPI, args)` function
+- `defineTool()` gives type-safe params in the execute body; the array `ALL_TOOLS` erases the generics for adapters
+- AI adapter (`packages/core/src/tools/ai-adapter.ts`): `toolsToAI()` converts ToolDefs → valibot schemas + Vercel AI `tool()` wrappers
+- `src/ai/tools.ts` is just a thin wire: creates FigmaAPI from editor store, calls `toolsToAI()`
+- CLI commands (`packages/cli/src/commands/`) are **not** generated from ToolDefs — they have custom agentfmt formatting, tree walking, pagination. The `eval` command is the CLI's access to all ToolDef operations via FigmaAPI.
+- To add a new tool: add a `defineTool()` in `schema.ts`, add to `ALL_TOOLS` array — it's instantly available in AI chat, and via `eval` in CLI
+- `FigmaAPI` (`packages/core/src/figma-api.ts`) is the execution target for all tools — Figma Plugin API compatible, uses Symbols for hidden internals
+
 ## Code conventions
 
 - `@/` import alias for app cross-directory imports, relative imports within core
