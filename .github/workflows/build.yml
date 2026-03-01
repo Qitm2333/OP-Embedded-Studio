@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   build:
@@ -61,3 +62,24 @@ jobs:
           releaseName: 'OpenPencil ${{ github.ref_name }}'
           releaseBody: 'See [CHANGELOG.md](https://github.com/open-pencil/open-pencil/blob/${{ github.ref_name }}/CHANGELOG.md) for details.'
           releaseDraft: true
+
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org/
+
+      - run: bun install
+
+      - run: cd packages/core && npm publish --provenance --access public
+      - run: cd packages/cli && npm publish --provenance --access public
