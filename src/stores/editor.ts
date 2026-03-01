@@ -1838,6 +1838,9 @@ export function createEditorStore() {
     get graph() {
       return graph
     },
+    get renderer() {
+      return _renderer
+    },
     get textEditor() {
       return _textEditor
     },
