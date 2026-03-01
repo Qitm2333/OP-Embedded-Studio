@@ -18,6 +18,7 @@
     "test:figma": "playwright test --project=figma",
     "figma:debug": "open -a Figma --args --remote-debugging-port=9222",
     "test:unit": "bun test ./tests/engine",
+    "test:coverage": "bun test --coverage ./tests/engine",
     "open-pencil": "bun packages/cli/src/index.ts"
   },
   "dependencies": {
