@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
   TooltipPortal,
   TooltipContent,
-  TooltipProvider,
+  TooltipProvider
 } from 'reka-ui'
 
 import type { CollabState, RemotePeer } from '@/composables/use-collab'
@@ -18,6 +18,7 @@ import type { Color } from '@/types'
 const props = defineProps<{
   state: CollabState
   peers: RemotePeer[]
+  pendingRoomId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -30,30 +31,37 @@ const emit = defineEmits<{
 const joinInput = ref('')
 const nameDraft = ref(props.state.localName)
 const copied = ref(false)
+const popoverOpen = ref(!!props.pendingRoomId)
 
 const shareUrl = computed(() => {
   if (!props.state.roomId) return ''
   return `${window.location.origin}/share/${props.state.roomId}`
 })
 
+const isJoining = computed(() => !!props.pendingRoomId && !props.state.connected)
+
 function copyLink() {
   if (!shareUrl.value) return
   navigator.clipboard.writeText(shareUrl.value)
   copied.value = true
-  setTimeout(() => { copied.value = false }, 2000)
+  setTimeout(() => {
+    copied.value = false
+  }, 2000)
 }
 
 function onShare() {
   if (!nameDraft.value.trim()) return
   emit('update:name', nameDraft.value.trim())
   emit('share')
+  popoverOpen.value = false
 }
 
 function onJoin() {
-  if (!joinInput.value.trim() || !nameDraft.value.trim()) return
+  const roomId = props.pendingRoomId || joinInput.value.trim().replace(/.*\/share\//, '')
+  if (!roomId || !nameDraft.value.trim()) return
   emit('update:name', nameDraft.value.trim())
-  const roomId = joinInput.value.trim().replace(/.*\/share\//, '')
   emit('join', roomId)
+  popoverOpen.value = false
 }
 
 function colorToCSS(c: Color): string {
@@ -61,16 +69,22 @@ function colorToCSS(c: Color): string {
 }
 
 function initials(name: string): string {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?'
+  return (
+    name
+      .split(' ')
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || '?'
+  )
 }
 </script>
 
 <template>
-  <div class="flex items-center gap-1">
+  <div class="flex w-full items-center gap-2">
     <!-- Avatar stack for connected peers -->
     <TooltipProvider v-if="state.connected" :delay-duration="200">
       <div class="flex -space-x-1.5">
-        <!-- Local user -->
         <TooltipRoot>
           <TooltipTrigger as-child>
             <div
@@ -90,7 +104,6 @@ function initials(name: string): string {
           </TooltipPortal>
         </TooltipRoot>
 
-        <!-- Remote peers -->
         <TooltipRoot v-for="peer in peers" :key="peer.clientId">
           <TooltipTrigger as-child>
             <div
@@ -112,17 +125,23 @@ function initials(name: string): string {
       </div>
     </TooltipProvider>
 
+    <div class="flex-1" />
+
     <!-- Share button / popover -->
-    <PopoverRoot>
+    <PopoverRoot v-model:open="popoverOpen">
       <PopoverTrigger as-child>
         <button
           class="flex h-7 cursor-pointer items-center gap-1.5 rounded-md border-none px-3 text-xs font-medium transition-colors"
-          :class="state.connected
-            ? 'bg-green-600 text-white hover:bg-green-700'
-            : 'bg-accent text-white hover:bg-accent/90'"
+          :class="
+            state.connected
+              ? 'bg-green-600 text-white hover:bg-green-700'
+              : isJoining
+                ? 'bg-amber-600 text-white animate-pulse'
+                : 'bg-accent text-white hover:bg-accent/90'
+          "
         >
           <icon-lucide-share-2 class="size-3.5" />
-          {{ state.connected ? 'Connected' : 'Share' }}
+          {{ state.connected ? 'Connected' : isJoining ? 'Join room' : 'Share' }}
         </button>
       </PopoverTrigger>
 
@@ -162,6 +181,34 @@ function initials(name: string): string {
               @click="emit('disconnect')"
             >
               Disconnect
+            </button>
+          </template>
+
+          <!-- Joining via /share/ link -->
+          <template v-else-if="isJoining">
+            <div class="mb-1 text-xs font-medium text-surface">Join collaboration</div>
+            <div class="mb-3 text-[11px] text-muted">
+              Someone shared this file with you. Enter your name to join.
+            </div>
+
+            <div class="mb-3">
+              <label class="mb-1 block text-xs text-muted">Your name</label>
+              <input
+                v-model="nameDraft"
+                class="w-full rounded border border-border bg-input px-2 py-1 text-xs text-surface"
+                placeholder="Enter your name"
+                autofocus
+                @keydown.enter="onJoin"
+              />
+            </div>
+
+            <button
+              class="flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded border-none bg-accent text-xs font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+              :disabled="!nameDraft.trim()"
+              @click="onJoin"
+            >
+              <icon-lucide-users class="size-3.5" />
+              Join room
             </button>
           </template>
 

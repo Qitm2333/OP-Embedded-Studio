@@ -83,9 +83,7 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
             cursorY: store.state.penCursorY ?? undefined
           }
         : null,
-      remoteCursors: store.state.remoteCursors.length > 0
-        ? store.state.remoteCursors
-        : undefined
+      remoteCursors: store.state.remoteCursors.length > 0 ? store.state.remoteCursors : undefined
     })
   }
 

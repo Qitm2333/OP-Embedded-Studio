@@ -31,3 +31,4 @@ test-results/
 .env
 packages/docs/.vitepress/cache/
 packages/docs/.vitepress/dist/
+packages/collab/.wrangler/

@@ -53,6 +53,7 @@
     "tailwindcss": "^4.2.1",
     "valibot": "^1.2.0",
     "vue": "^3.5.29",
+    "vue-router": "^5.0.3",
     "vue-stream-markdown": "^0.6.0",
     "y-protocols": "^1.0.7",
     "yjs": "^13.6.29",

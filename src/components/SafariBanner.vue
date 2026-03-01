@@ -13,8 +13,10 @@ const show = !IS_TAURI && typeof window !== 'undefined' && !window.showSaveFileP
     class="flex items-center gap-2 border-b border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-200"
   >
     <span class="flex-1">
-      Your browser doesn't support the local file API. Files will be downloaded instead of saved in place.
-      <a href="https://www.google.com/chrome/" target="_blank" class="underline">Use Chrome</a> or Edge for full support.
+      Your browser doesn't support the local file API. Files will be downloaded instead of saved in
+      place.
+      <a href="https://www.google.com/chrome/" target="_blank" class="underline">Use Chrome</a> or
+      Edge for full support.
     </span>
     <button
       class="shrink-0 rounded px-1.5 py-0.5 text-amber-300 transition-colors hover:bg-amber-500/20"

@@ -1,12 +1,12 @@
-import { ref, onUnmounted, computed } from 'vue'
-import * as Y from 'yjs'
-import * as syncProtocol from 'y-protocols/sync'
-import * as awarenessProtocol from 'y-protocols/awareness'
-import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
+import * as encoding from 'lib0/encoding'
+import { ref, onUnmounted, computed } from 'vue'
+import * as awarenessProtocol from 'y-protocols/awareness'
+import * as syncProtocol from 'y-protocols/sync'
+import * as Y from 'yjs'
 
-import type { EditorStore } from '@/stores/editor'
 import type { SceneNode } from '@/engine/scene-graph'
+import type { EditorStore } from '@/stores/editor'
 import type { Color } from '@/types'
 
 const MSG_SYNC = 0
@@ -17,12 +17,12 @@ const COLLAB_URL = import.meta.env.VITE_COLLAB_URL || 'wss://collab.openpencil.d
 const PEER_COLORS: Color[] = [
   { r: 0.96, g: 0.26, b: 0.21, a: 1 },
   { r: 0.13, g: 0.59, b: 0.95, a: 1 },
-  { r: 0.30, g: 0.69, b: 0.31, a: 1 },
-  { r: 1.00, g: 0.76, b: 0.03, a: 1 },
+  { r: 0.3, g: 0.69, b: 0.31, a: 1 },
+  { r: 1.0, g: 0.76, b: 0.03, a: 1 },
   { r: 0.61, g: 0.15, b: 0.69, a: 1 },
-  { r: 1.00, g: 0.34, b: 0.13, a: 1 },
-  { r: 0.00, g: 0.74, b: 0.83, a: 1 },
-  { r: 0.91, g: 0.12, b: 0.39, a: 1 },
+  { r: 1.0, g: 0.34, b: 0.13, a: 1 },
+  { r: 0.0, g: 0.74, b: 0.83, a: 1 },
+  { r: 0.91, g: 0.12, b: 0.39, a: 1 }
 ]
 
 export interface RemotePeer {
@@ -47,7 +47,7 @@ export function useCollab(store: EditorStore) {
     roomId: null,
     peers: [],
     localName: localStorage.getItem('op-collab-name') || '',
-    localColor: PEER_COLORS[Math.floor(Math.random() * PEER_COLORS.length)],
+    localColor: PEER_COLORS[Math.floor(Math.random() * PEER_COLORS.length)]
   })
 
   let ws: WebSocket | null = null
@@ -84,6 +84,15 @@ export function useCollab(store: EditorStore) {
         suppressGraphEvents = false
       }
       store.requestRender()
+    })
+
+    // Register doc update listener before opening WebSocket
+    ydoc.on('update', (update: Uint8Array, origin: unknown) => {
+      if (origin === 'remote') return
+      const encoder = encoding.createEncoder()
+      encoding.writeVarUint(encoder, MSG_SYNC)
+      syncProtocol.writeUpdate(encoder, update)
+      sendBinary(encoding.toUint8Array(encoder))
     })
 
     // WebSocket connection
@@ -174,16 +183,6 @@ export function useCollab(store: EditorStore) {
   }
 
   // Sync doc updates to server
-  function setupDocSync() {
-    if (!ydoc) return
-    ydoc.on('update', (update: Uint8Array, origin: unknown) => {
-      if (origin === 'remote') return
-      const encoder = encoding.createEncoder()
-      encoding.writeVarUint(encoder, MSG_SYNC)
-      syncProtocol.writeUpdate(encoder, update)
-      sendBinary(encoding.toUint8Array(encoder))
-    })
-  }
 
   function syncNodeToYjs(nodeId: string) {
     if (!ydoc || !ynodes) return
@@ -197,18 +196,19 @@ export function useCollab(store: EditorStore) {
         ynode = new Y.Map()
         ynodes!.set(nodeId, ynode)
       }
-      // Sync all scalar properties
-      for (const [key, value] of Object.entries(node)) {
-        if (key === 'childIds') {
-          ynode.set(key, JSON.stringify(value))
-        } else if (typeof value === 'object' && value !== null) {
-          ynode.set(key, JSON.stringify(value))
-        } else {
-          ynode.set(key, value)
-        }
-      }
+      syncNodePropsToYMap(node, ynode)
     })
     suppressYjsEvents = false
+  }
+
+  function syncNodePropsToYMap(node: SceneNode, ynode: Y.Map<unknown>) {
+    for (const [key, value] of Object.entries(node)) {
+      if (typeof value === 'object' && value !== null) {
+        ynode.set(key, JSON.stringify(value))
+      } else {
+        ynode.set(key, value)
+      }
+    }
   }
 
   function syncAllNodesToYjs() {
@@ -221,15 +221,7 @@ export function useCollab(store: EditorStore) {
           ynode = new Y.Map()
           ynodes!.set(node.id, ynode)
         }
-        for (const [key, value] of Object.entries(node)) {
-          if (key === 'childIds') {
-            ynode.set(key, JSON.stringify(value))
-          } else if (typeof value === 'object' && value !== null) {
-            ynode.set(key, JSON.stringify(value))
-          } else {
-            ynode.set(key, value)
-          }
-        }
+        syncNodePropsToYMap(node, ynode)
       }
     })
     suppressYjsEvents = false
@@ -271,8 +263,15 @@ export function useCollab(store: EditorStore) {
     const props: Record<string, unknown> = {}
 
     for (const [key, value] of ynode.entries()) {
-      if (key === 'childIds' || key === 'fills' || key === 'strokes' || key === 'effects' ||
-          key === 'vectorNetwork' || key === 'boundVariables' || key === 'styleRuns') {
+      if (
+        key === 'childIds' ||
+        key === 'fills' ||
+        key === 'strokes' ||
+        key === 'effects' ||
+        key === 'vectorNetwork' ||
+        key === 'boundVariables' ||
+        key === 'styleRuns'
+      ) {
         try {
           props[key] = typeof value === 'string' ? JSON.parse(value) : value
         } catch {
@@ -304,7 +303,7 @@ export function useCollab(store: EditorStore) {
     if (!awareness) return
     awareness.setLocalStateField('user', {
       name: state.value.localName,
-      color: state.value.localColor,
+      color: state.value.localColor
     })
   }
 
@@ -334,7 +333,7 @@ export function useCollab(store: EditorStore) {
         name: user.name || 'Anonymous',
         color: user.color || PEER_COLORS[clientId % PEER_COLORS.length],
         cursor: peerState.cursor as RemotePeer['cursor'],
-        selection: peerState.selection as string[],
+        selection: peerState.selection as string[]
       })
     })
 
@@ -342,13 +341,13 @@ export function useCollab(store: EditorStore) {
 
     // Update store's remoteCursors for renderer
     store.state.remoteCursors = peers
-      .filter(p => p.cursor && p.cursor.pageId === currentPageId)
-      .map(p => ({
+      .filter((p) => p.cursor && p.cursor.pageId === currentPageId)
+      .map((p) => ({
         name: p.name,
         color: p.color,
         x: p.cursor!.x,
         y: p.cursor!.y,
-        selection: p.selection,
+        selection: p.selection
       }))
     store.requestRender()
   }
@@ -371,14 +370,12 @@ export function useCollab(store: EditorStore) {
   function shareCurrentDoc(): string {
     const roomId = generateRoomId()
     connect(roomId)
-    setupDocSync()
     syncAllNodesToYjs()
     return roomId
   }
 
   function joinRoom(roomId: string) {
     connect(roomId)
-    setupDocSync()
   }
 
   onUnmounted(() => {
@@ -393,6 +390,6 @@ export function useCollab(store: EditorStore) {
     shareCurrentDoc,
     updateCursor,
     updateSelection,
-    setLocalName,
+    setLocalName
   }
 }
