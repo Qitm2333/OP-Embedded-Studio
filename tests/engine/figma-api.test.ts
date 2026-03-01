@@ -588,5 +588,337 @@ describe('FigmaAPI', () => {
       rect.strokeWeight = 4
       expect(rect.strokeWeight).toBe(4)
     })
+
+    test('strokeCap and strokeJoin', () => {
+      const api = createAPI()
+      const line = api.createLine()
+      expect(line.strokeCap).toBe('NONE')
+      expect(line.strokeJoin).toBe('MITER')
+      line.strokeCap = 'ROUND'
+      line.strokeJoin = 'BEVEL'
+      expect(line.strokeCap).toBe('ROUND')
+      expect(line.strokeJoin).toBe('BEVEL')
+    })
+
+    test('strokeMiterLimit', () => {
+      const api = createAPI()
+      const rect = api.createRectangle()
+      expect(rect.strokeMiterLimit).toBe(4)
+      rect.strokeMiterLimit = 8
+      expect(rect.strokeMiterLimit).toBe(8)
+    })
+
+    test('individual stroke weights', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      frame.strokeTopWeight = 1
+      frame.strokeRightWeight = 2
+      frame.strokeBottomWeight = 3
+      frame.strokeLeftWeight = 4
+      expect(frame.strokeTopWeight).toBe(1)
+      expect(frame.strokeRightWeight).toBe(2)
+      expect(frame.strokeBottomWeight).toBe(3)
+      expect(frame.strokeLeftWeight).toBe(4)
+    })
+  })
+
+  describe('clone', () => {
+    test('clone creates a deep copy', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      frame.name = 'Original'
+      frame.fills = [{ type: 'SOLID', color: { r: 1, g: 0, b: 0, a: 1 }, opacity: 1, visible: true }]
+      const child = api.createRectangle()
+      child.name = 'Child'
+      frame.appendChild(child)
+
+      const cloned = frame.clone()
+      expect(cloned.id).not.toBe(frame.id)
+      expect(cloned.name).toBe('Original')
+      expect(cloned.fills[0].color.r).toBe(1)
+      expect(cloned.children.length).toBe(1)
+      expect(cloned.children[0].name).toBe('Child')
+      expect(cloned.children[0].id).not.toBe(child.id)
+    })
+  })
+
+  describe('min/max dimensions', () => {
+    test('defaults to null', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      expect(frame.minWidth).toBeNull()
+      expect(frame.maxWidth).toBeNull()
+      expect(frame.minHeight).toBeNull()
+      expect(frame.maxHeight).toBeNull()
+    })
+
+    test('can set and read', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      frame.minWidth = 50
+      frame.maxWidth = 400
+      frame.minHeight = 30
+      frame.maxHeight = 600
+      expect(frame.minWidth).toBe(50)
+      expect(frame.maxWidth).toBe(400)
+      expect(frame.minHeight).toBe(30)
+      expect(frame.maxHeight).toBe(600)
+    })
+
+    test('can reset to null', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      frame.minWidth = 50
+      frame.minWidth = null
+      expect(frame.minWidth).toBeNull()
+    })
+  })
+
+  describe('mask', () => {
+    test('isMask defaults to false', () => {
+      const api = createAPI()
+      const rect = api.createRectangle()
+      expect(rect.isMask).toBe(false)
+      expect(rect.maskType).toBe('ALPHA')
+    })
+
+    test('can set mask properties', () => {
+      const api = createAPI()
+      const rect = api.createRectangle()
+      rect.isMask = true
+      rect.maskType = 'LUMINANCE'
+      expect(rect.isMask).toBe(true)
+      expect(rect.maskType).toBe('LUMINANCE')
+    })
+  })
+
+  describe('auto-layout extras', () => {
+    test('primaryAxisSizingMode maps FIXED/AUTO', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      frame.layoutMode = 'VERTICAL'
+      expect(frame.primaryAxisSizingMode).toBe('FIXED')
+      frame.primaryAxisSizingMode = 'AUTO'
+      expect(frame.primaryAxisSizingMode).toBe('AUTO')
+      expect(frame.layoutSizingVertical).toBe('HUG')
+    })
+
+    test('counterAxisSizingMode maps FIXED/AUTO', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      frame.layoutMode = 'VERTICAL'
+      frame.counterAxisSizingMode = 'AUTO'
+      expect(frame.counterAxisSizingMode).toBe('AUTO')
+      expect(frame.layoutSizingHorizontal).toBe('HUG')
+    })
+
+    test('counterAxisAlignContent', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      expect(frame.counterAxisAlignContent).toBe('AUTO')
+      frame.counterAxisAlignContent = 'SPACE_BETWEEN'
+      expect(frame.counterAxisAlignContent).toBe('SPACE_BETWEEN')
+    })
+
+    test('itemReverseZIndex', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      expect(frame.itemReverseZIndex).toBe(false)
+      frame.itemReverseZIndex = true
+      expect(frame.itemReverseZIndex).toBe(true)
+    })
+
+    test('strokesIncludedInLayout', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      expect(frame.strokesIncludedInLayout).toBe(false)
+      frame.strokesIncludedInLayout = true
+      expect(frame.strokesIncludedInLayout).toBe(true)
+    })
+
+    test('layoutAlign maps to layoutAlignSelf', () => {
+      const api = createAPI()
+      const parent = api.createFrame()
+      parent.layoutMode = 'VERTICAL'
+      const child = api.createFrame()
+      parent.appendChild(child)
+      expect(child.layoutAlign).toBe('INHERIT')
+      child.layoutAlign = 'STRETCH'
+      expect(child.layoutAlign).toBe('STRETCH')
+    })
+  })
+
+  describe('text extras', () => {
+    test('textTruncation', () => {
+      const api = createAPI()
+      const text = api.createText()
+      expect(text.textTruncation).toBe('DISABLED')
+      text.textTruncation = 'ENDING'
+      expect(text.textTruncation).toBe('ENDING')
+    })
+
+    test('autoRename', () => {
+      const api = createAPI()
+      const text = api.createText()
+      expect(text.autoRename).toBe(true)
+      text.autoRename = false
+      expect(text.autoRename).toBe(false)
+    })
+
+    test('insertCharacters', () => {
+      const api = createAPI()
+      const text = api.createText()
+      text.characters = 'Hello World'
+      text.insertCharacters(5, ' Beautiful')
+      expect(text.characters).toBe('Hello Beautiful World')
+    })
+
+    test('deleteCharacters', () => {
+      const api = createAPI()
+      const text = api.createText()
+      text.characters = 'Hello Beautiful World'
+      text.deleteCharacters(5, 15)
+      expect(text.characters).toBe('Hello World')
+    })
+  })
+
+  describe('expanded', () => {
+    test('defaults to true', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      expect(frame.expanded).toBe(true)
+    })
+
+    test('can collapse', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      frame.expanded = false
+      expect(frame.expanded).toBe(false)
+    })
+  })
+
+  describe('findAllWithCriteria', () => {
+    test('filters by type', () => {
+      const api = createAPI()
+      api.createFrame()
+      api.createRectangle()
+      api.createText()
+      api.createRectangle()
+      const rects = api.currentPage.findAllWithCriteria({ types: ['RECTANGLE'] })
+      expect(rects.length).toBe(2)
+      expect(rects.every((n) => n.type === 'RECTANGLE')).toBe(true)
+    })
+
+    test('filters by multiple types', () => {
+      const api = createAPI()
+      api.createFrame()
+      api.createRectangle()
+      api.createText()
+      const result = api.currentPage.findAllWithCriteria({ types: ['FRAME', 'TEXT'] })
+      expect(result.length).toBe(2)
+    })
+  })
+
+  describe('createComponentFromNode', () => {
+    test('converts frame to component', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      frame.name = 'MyButton'
+      frame.resize(200, 50)
+      const child = api.createRectangle()
+      child.name = 'Background'
+      frame.appendChild(child)
+      const frameId = frame.id
+
+      const comp = api.createComponentFromNode(frame)
+      expect(comp.type).toBe('COMPONENT')
+      expect(comp.name).toBe('MyButton')
+      expect(comp.width).toBe(200)
+      expect(comp.height).toBe(50)
+      expect(comp.children.length).toBe(1)
+      expect(comp.children[0].name).toBe('Background')
+      expect(api.getNodeById(frameId)).toBeNull()
+    })
+  })
+
+  describe('variables', () => {
+    test('getLocalVariables returns empty by default', () => {
+      const api = createAPI()
+      expect(api.getLocalVariables()).toEqual([])
+    })
+
+    test('getLocalVariables returns added variables', () => {
+      const api = createAPI()
+      api.graph.addCollection({
+        id: 'col1',
+        name: 'Colors',
+        modes: [{ modeId: 'mode1', name: 'Default' }],
+        defaultModeId: 'mode1',
+        variableIds: [],
+      })
+      api.graph.addVariable({
+        id: 'var1',
+        name: 'primary',
+        type: 'COLOR',
+        collectionId: 'col1',
+        valuesByMode: { mode1: { r: 1, g: 0, b: 0, a: 1 } },
+        description: '',
+        hiddenFromPublishing: false,
+      })
+      expect(api.getLocalVariables().length).toBe(1)
+      expect(api.getLocalVariables('COLOR').length).toBe(1)
+      expect(api.getLocalVariables('FLOAT').length).toBe(0)
+    })
+
+    test('getVariableById', () => {
+      const api = createAPI()
+      api.graph.addCollection({
+        id: 'col1',
+        name: 'Spacing',
+        modes: [{ modeId: 'mode1', name: 'Default' }],
+        defaultModeId: 'mode1',
+        variableIds: [],
+      })
+      api.graph.addVariable({
+        id: 'var1',
+        name: 'spacing-sm',
+        type: 'FLOAT',
+        collectionId: 'col1',
+        valuesByMode: { mode1: 8 },
+        description: '',
+        hiddenFromPublishing: false,
+      })
+      const v = api.getVariableById('var1')
+      expect(v).not.toBeNull()
+      expect(v!.name).toBe('spacing-sm')
+      expect(api.getVariableById('nonexistent')).toBeNull()
+    })
+
+    test('getLocalVariableCollections', () => {
+      const api = createAPI()
+      api.graph.addCollection({
+        id: 'col1',
+        name: 'Colors',
+        modes: [{ modeId: 'mode1', name: 'Default' }],
+        defaultModeId: 'mode1',
+        variableIds: [],
+      })
+      const cols = api.getLocalVariableCollections()
+      expect(cols.length).toBe(1)
+      expect(cols[0].name).toBe('Colors')
+    })
+
+    test('getVariableCollectionById', () => {
+      const api = createAPI()
+      api.graph.addCollection({
+        id: 'col1',
+        name: 'Colors',
+        modes: [{ modeId: 'mode1', name: 'Default' }],
+        defaultModeId: 'mode1',
+        variableIds: [],
+      })
+      expect(api.getVariableCollectionById('col1')?.name).toBe('Colors')
+      expect(api.getVariableCollectionById('nonexistent')).toBeNull()
+    })
   })
 })

@@ -100,6 +100,7 @@ export interface Fill {
 
 export type StrokeCap = 'NONE' | 'ROUND' | 'SQUARE' | 'ARROW_LINES' | 'ARROW_EQUILATERAL'
 export type StrokeJoin = 'MITER' | 'BEVEL' | 'ROUND'
+export type MaskType = 'ALPHA' | 'VECTOR' | 'LUMINANCE'
 
 export interface Stroke {
   color: Color
@@ -237,6 +238,24 @@ export interface SceneNode {
   borderLeftWeight: number
   independentStrokeWeights: boolean
 
+  strokeMiterLimit: number
+
+  minWidth: number | null
+  maxWidth: number | null
+  minHeight: number | null
+  maxHeight: number | null
+
+  isMask: boolean
+  maskType: MaskType
+
+  counterAxisAlignContent: 'AUTO' | 'SPACE_BETWEEN'
+  itemReverseZIndex: boolean
+  strokesIncludedInLayout: boolean
+
+  expanded: boolean
+  textTruncation: 'DISABLED' | 'ENDING'
+  autoRename: boolean
+
   pointCount: number
   starInnerRadius: number
 
@@ -346,6 +365,19 @@ function createDefaultNode(type: NodeType, overrides: Partial<SceneNode> = {}): 
     borderBottomWeight: 0,
     borderLeftWeight: 0,
     independentStrokeWeights: false,
+    strokeMiterLimit: 4,
+    minWidth: null,
+    maxWidth: null,
+    minHeight: null,
+    maxHeight: null,
+    isMask: false,
+    maskType: 'ALPHA',
+    counterAxisAlignContent: 'AUTO',
+    itemReverseZIndex: false,
+    strokesIncludedInLayout: false,
+    expanded: true,
+    textTruncation: 'DISABLED',
+    autoRename: true,
     pointCount: 5,
     starInnerRadius: 0.38,
     componentId: null,

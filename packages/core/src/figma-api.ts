@@ -6,6 +6,8 @@ import type {
   Stroke,
   Effect,
   LayoutMode,
+  Variable,
+  VariableCollection,
 } from './scene-graph'
 import { SceneGraph } from './scene-graph'
 
@@ -307,12 +309,68 @@ class FigmaNodeProxy {
     }
   }
 
-  get dashPattern(): number[] {
-    return this._raw().dashPattern
+  get dashPattern(): readonly number[] {
+    return Object.freeze([...this._raw().dashPattern])
   }
 
-  set dashPattern(v: number[]) {
-    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { dashPattern: v })
+  set dashPattern(v: readonly number[]) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { dashPattern: [...v] })
+  }
+
+  get strokeCap(): string {
+    return this._raw().strokeCap
+  }
+
+  set strokeCap(v: string) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { strokeCap: v as SceneNode['strokeCap'] })
+  }
+
+  get strokeJoin(): string {
+    return this._raw().strokeJoin
+  }
+
+  set strokeJoin(v: string) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { strokeJoin: v as SceneNode['strokeJoin'] })
+  }
+
+  get strokeMiterLimit(): number {
+    return this._raw().strokeMiterLimit
+  }
+
+  set strokeMiterLimit(v: number) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { strokeMiterLimit: v })
+  }
+
+  get strokeTopWeight(): number {
+    return this._raw().borderTopWeight
+  }
+
+  set strokeTopWeight(v: number) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { borderTopWeight: v, independentStrokeWeights: true })
+  }
+
+  get strokeBottomWeight(): number {
+    return this._raw().borderBottomWeight
+  }
+
+  set strokeBottomWeight(v: number) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { borderBottomWeight: v, independentStrokeWeights: true })
+  }
+
+  get strokeLeftWeight(): number {
+    return this._raw().borderLeftWeight
+  }
+
+  set strokeLeftWeight(v: number) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { borderLeftWeight: v, independentStrokeWeights: true })
+  }
+
+  get strokeRightWeight(): number {
+    return this._raw().borderRightWeight
+  }
+
+  set strokeRightWeight(v: number) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { borderRightWeight: v, independentStrokeWeights: true })
   }
 
   // --- Text ---
@@ -415,6 +473,34 @@ class FigmaNodeProxy {
     this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { maxLines: v })
   }
 
+  get textTruncation(): string {
+    return this._raw().textTruncation
+  }
+
+  set textTruncation(v: string) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { textTruncation: v as SceneNode['textTruncation'] })
+  }
+
+  get autoRename(): boolean {
+    return this._raw().autoRename
+  }
+
+  set autoRename(v: boolean) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { autoRename: v })
+  }
+
+  insertCharacters(start: number, characters: string): void {
+    const n = this._raw()
+    const text = n.text.slice(0, start) + characters + n.text.slice(start)
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { text })
+  }
+
+  deleteCharacters(start: number, end: number): void {
+    const n = this._raw()
+    const text = n.text.slice(0, start) + n.text.slice(end)
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { text })
+  }
+
   // --- Auto-layout ---
 
   get layoutMode(): LayoutMode {
@@ -497,6 +583,48 @@ class FigmaNodeProxy {
     this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { layoutWrap: v as SceneNode['layoutWrap'] })
   }
 
+  get primaryAxisSizingMode(): string {
+    return this._raw().primaryAxisSizing === 'HUG' ? 'AUTO' : this._raw().primaryAxisSizing
+  }
+
+  set primaryAxisSizingMode(v: string) {
+    const mapped = v === 'AUTO' ? 'HUG' : v
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { primaryAxisSizing: mapped as SceneNode['primaryAxisSizing'] })
+  }
+
+  get counterAxisSizingMode(): string {
+    return this._raw().counterAxisSizing === 'HUG' ? 'AUTO' : this._raw().counterAxisSizing
+  }
+
+  set counterAxisSizingMode(v: string) {
+    const mapped = v === 'AUTO' ? 'HUG' : v
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { counterAxisSizing: mapped as SceneNode['counterAxisSizing'] })
+  }
+
+  get counterAxisAlignContent(): string {
+    return this._raw().counterAxisAlignContent
+  }
+
+  set counterAxisAlignContent(v: string) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { counterAxisAlignContent: v as SceneNode['counterAxisAlignContent'] })
+  }
+
+  get itemReverseZIndex(): boolean {
+    return this._raw().itemReverseZIndex
+  }
+
+  set itemReverseZIndex(v: boolean) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { itemReverseZIndex: v })
+  }
+
+  get strokesIncludedInLayout(): boolean {
+    return this._raw().strokesIncludedInLayout
+  }
+
+  set strokesIncludedInLayout(v: boolean) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { strokesIncludedInLayout: v })
+  }
+
   // --- Layout child props ---
 
   get layoutPositioning(): string {
@@ -515,17 +643,29 @@ class FigmaNodeProxy {
     this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { layoutGrow: v })
   }
 
+  get layoutAlign(): string {
+    const n = this._raw()
+    return n.layoutAlignSelf === 'STRETCH' ? 'STRETCH' : 'INHERIT'
+  }
+
+  set layoutAlign(v: string) {
+    const mapped = v === 'STRETCH' ? 'STRETCH' : 'AUTO'
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { layoutAlignSelf: mapped as SceneNode['layoutAlignSelf'] })
+  }
+
   get layoutSizingHorizontal(): string {
     const n = this._raw()
     const parent = n.parentId ? this[INTERNAL_GRAPH].getNode(n.parentId) : undefined
-    if (!parent || parent.layoutMode === 'NONE') return n.primaryAxisSizing
-    return parent.layoutMode === 'HORIZONTAL' ? n.primaryAxisSizing : n.counterAxisSizing
+    const refLayout = (parent && parent.layoutMode !== 'NONE') ? parent.layoutMode : n.layoutMode
+    if (refLayout === 'NONE') return 'FIXED'
+    return refLayout === 'HORIZONTAL' ? n.primaryAxisSizing : n.counterAxisSizing
   }
 
   set layoutSizingHorizontal(v: string) {
     const n = this._raw()
     const parent = n.parentId ? this[INTERNAL_GRAPH].getNode(n.parentId) : undefined
-    if (parent && parent.layoutMode === 'VERTICAL') {
+    const refLayout = (parent && parent.layoutMode !== 'NONE') ? parent.layoutMode : n.layoutMode
+    if (refLayout === 'VERTICAL') {
       this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { counterAxisSizing: v as SceneNode['counterAxisSizing'] })
     } else {
       this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] })
@@ -535,14 +675,16 @@ class FigmaNodeProxy {
   get layoutSizingVertical(): string {
     const n = this._raw()
     const parent = n.parentId ? this[INTERNAL_GRAPH].getNode(n.parentId) : undefined
-    if (!parent || parent.layoutMode === 'NONE') return n.counterAxisSizing
-    return parent.layoutMode === 'VERTICAL' ? n.primaryAxisSizing : n.counterAxisSizing
+    const refLayout = (parent && parent.layoutMode !== 'NONE') ? parent.layoutMode : n.layoutMode
+    if (refLayout === 'NONE') return 'FIXED'
+    return refLayout === 'VERTICAL' ? n.primaryAxisSizing : n.counterAxisSizing
   }
 
   set layoutSizingVertical(v: string) {
     const n = this._raw()
     const parent = n.parentId ? this[INTERNAL_GRAPH].getNode(n.parentId) : undefined
-    if (parent && parent.layoutMode === 'HORIZONTAL') {
+    const refLayout = (parent && parent.layoutMode !== 'NONE') ? parent.layoutMode : n.layoutMode
+    if (refLayout === 'HORIZONTAL') {
       this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { counterAxisSizing: v as SceneNode['counterAxisSizing'] })
     } else {
       this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] })
@@ -561,6 +703,68 @@ class FigmaNodeProxy {
       horizontalConstraint: v.horizontal as SceneNode['horizontalConstraint'],
       verticalConstraint: v.vertical as SceneNode['verticalConstraint'],
     })
+  }
+
+  // --- Dimension constraints ---
+
+  get minWidth(): number | null {
+    return this._raw().minWidth
+  }
+
+  set minWidth(v: number | null) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { minWidth: v })
+  }
+
+  get maxWidth(): number | null {
+    return this._raw().maxWidth
+  }
+
+  set maxWidth(v: number | null) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { maxWidth: v })
+  }
+
+  get minHeight(): number | null {
+    return this._raw().minHeight
+  }
+
+  set minHeight(v: number | null) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { minHeight: v })
+  }
+
+  get maxHeight(): number | null {
+    return this._raw().maxHeight
+  }
+
+  set maxHeight(v: number | null) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { maxHeight: v })
+  }
+
+  // --- Mask ---
+
+  get isMask(): boolean {
+    return this._raw().isMask
+  }
+
+  set isMask(v: boolean) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { isMask: v })
+  }
+
+  get maskType(): string {
+    return this._raw().maskType
+  }
+
+  set maskType(v: string) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { maskType: v as SceneNode['maskType'] })
+  }
+
+  // --- UI state ---
+
+  get expanded(): boolean {
+    return this._raw().expanded
+  }
+
+  set expanded(v: boolean) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { expanded: v })
   }
 
   // --- Components ---
@@ -603,6 +807,14 @@ class FigmaNodeProxy {
   insertChild(index: number, child: FigmaNodeProxy): void {
     this[INTERNAL_GRAPH].reparentNode(child[INTERNAL_ID], this[INTERNAL_ID])
     this[INTERNAL_GRAPH].reorderChild(child[INTERNAL_ID], this[INTERNAL_ID], index)
+  }
+
+  clone(): FigmaNodeProxy {
+    const n = this._raw()
+    const parentId = n.parentId ?? this[INTERNAL_API].currentPageId
+    const cloned = this[INTERNAL_GRAPH].cloneTree(this[INTERNAL_ID], parentId)
+    if (!cloned) throw new Error(`Failed to clone node ${this[INTERNAL_ID]}`)
+    return this[INTERNAL_API].wrapNode(cloned.id)
   }
 
   remove(): void {
@@ -648,6 +860,11 @@ class FigmaNodeProxy {
       .getChildren(this[INTERNAL_ID])
       .map((c) => this[INTERNAL_API].wrapNode(c.id))
       .filter((proxy) => !callback || callback(proxy))
+  }
+
+  findAllWithCriteria(criteria: { types?: string[] }): FigmaNodeProxy[] {
+    const types = criteria.types ? new Set(criteria.types) : null
+    return this.findAll((node) => !types || types.has(node.type))
   }
 
   // --- Serialization ---
@@ -824,6 +1041,63 @@ export class FigmaAPI {
       this.graph.reparentNode(childId, parentId)
     }
     this.graph.deleteNode(node[INTERNAL_ID])
+  }
+
+  createComponentFromNode(node: FigmaNodeProxy): FigmaNodeProxy {
+    const raw = this.graph.getNode(node[INTERNAL_ID])
+    if (!raw) throw new Error('Node not found')
+    const parentId = raw.parentId ?? this._currentPageId
+    const comp = this.graph.createNode('COMPONENT', parentId)
+    this.graph.updateNode(comp.id, {
+      name: raw.name,
+      width: raw.width,
+      height: raw.height,
+      x: raw.x,
+      y: raw.y,
+      fills: structuredClone(raw.fills),
+      strokes: structuredClone(raw.strokes),
+      effects: structuredClone(raw.effects),
+      cornerRadius: raw.cornerRadius,
+      topLeftRadius: raw.topLeftRadius,
+      topRightRadius: raw.topRightRadius,
+      bottomRightRadius: raw.bottomRightRadius,
+      bottomLeftRadius: raw.bottomLeftRadius,
+      independentCorners: raw.independentCorners,
+      opacity: raw.opacity,
+      layoutMode: raw.layoutMode,
+      primaryAxisAlign: raw.primaryAxisAlign,
+      counterAxisAlign: raw.counterAxisAlign,
+      itemSpacing: raw.itemSpacing,
+      paddingTop: raw.paddingTop,
+      paddingRight: raw.paddingRight,
+      paddingBottom: raw.paddingBottom,
+      paddingLeft: raw.paddingLeft,
+    })
+    for (const childId of raw.childIds) {
+      this.graph.cloneTree(childId, comp.id)
+    }
+    this.graph.deleteNode(node[INTERNAL_ID])
+    return this.wrapNode(comp.id)
+  }
+
+  // --- Variables ---
+
+  getVariableById(id: string): Variable | null {
+    return this.graph.variables.get(id) ?? null
+  }
+
+  getLocalVariables(type?: string): Variable[] {
+    const vars = [...this.graph.variables.values()]
+    if (type) return vars.filter((v) => v.type === type)
+    return vars
+  }
+
+  getLocalVariableCollections(): VariableCollection[] {
+    return [...this.graph.variableCollections.values()]
+  }
+
+  getVariableCollectionById(id: string): VariableCollection | null {
+    return this.graph.variableCollections.get(id) ?? null
   }
 
   // --- Stubs ---
