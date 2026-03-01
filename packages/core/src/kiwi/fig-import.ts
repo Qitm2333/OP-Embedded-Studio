@@ -374,6 +374,7 @@ export function importNodeChanges(
 
   const changeMap = new Map<string, NodeChange>()
   const parentMap = new Map<string, string>()
+  const childrenMap = new Map<string, string[]>()
 
   for (const nc of nodeChanges) {
     if (!nc.guid) continue
@@ -382,21 +383,27 @@ export function importNodeChanges(
     changeMap.set(id, nc)
 
     if (nc.parentIndex?.guid) {
-      parentMap.set(id, guidToString(nc.parentIndex.guid))
+      const pid = guidToString(nc.parentIndex.guid)
+      parentMap.set(id, pid)
+      let siblings = childrenMap.get(pid)
+      if (!siblings) {
+        siblings = []
+        childrenMap.set(pid, siblings)
+      }
+      siblings.push(id)
     }
   }
 
-  function getChildren(ncId: string): string[] {
-    const children: string[] = []
-    for (const [childId, pid] of parentMap) {
-      if (pid === ncId) children.push(childId)
-    }
+  for (const [, children] of childrenMap) {
     children.sort((a, b) => {
       const aPos = changeMap.get(a)?.parentIndex?.position ?? ''
       const bPos = changeMap.get(b)?.parentIndex?.position ?? ''
       return aPos.localeCompare(bPos)
     })
-    return children
+  }
+
+  function getChildren(ncId: string): string[] {
+    return childrenMap.get(ncId) ?? []
   }
 
   const created = new Set<string>()
