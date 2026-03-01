@@ -2,7 +2,12 @@ import { inflateSync, deflateSync } from 'fflate'
 
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
-import { sceneNodeToKiwi, FIG_KIWI_VERSION } from './kiwi-serialize'
+import {
+  sceneNodeToKiwi,
+  buildFigKiwi,
+  parseFigKiwiChunks,
+  decompressFigKiwiDataAsync
+} from './kiwi-serialize'
 
 import { decodeVectorNetworkBlob } from './vector'
 
@@ -29,89 +34,7 @@ export async function prefetchFigmaSchema(): Promise<void> {
   await initCodec()
 }
 
-function parseFigKiwi(
-  binary: Uint8Array
-): { schemaDeflated: Uint8Array; dataRaw: Uint8Array } | null {
-  const header = new TextDecoder().decode(binary.slice(0, 8))
-  if (header !== 'fig-kiwi') return null
 
-  const view = new DataView(binary.buffer, binary.byteOffset, binary.byteLength)
-  let offset = 12
-
-  const chunks: Uint8Array[] = []
-  while (offset < binary.length) {
-    const chunkLen = view.getUint32(offset, true)
-    offset += 4
-    chunks.push(binary.slice(offset, offset + chunkLen))
-    offset += chunkLen
-  }
-  if (chunks.length < 2) return null
-
-  const schemaDeflated = chunks[0]
-  let dataRaw: Uint8Array
-  try {
-    dataRaw = inflateSync(chunks[1])
-  } catch {
-    // Zstd fallback (lazy import)
-    return null
-  }
-
-  return { schemaDeflated, dataRaw }
-}
-
-async function parseFigKiwiWithZstd(
-  binary: Uint8Array
-): Promise<{ schemaDeflated: Uint8Array; dataRaw: Uint8Array } | null> {
-  const header = new TextDecoder().decode(binary.slice(0, 8))
-  if (header !== 'fig-kiwi') return null
-
-  const view = new DataView(binary.buffer, binary.byteOffset, binary.byteLength)
-  let offset = 12
-
-  const chunks: Uint8Array[] = []
-  while (offset < binary.length) {
-    const chunkLen = view.getUint32(offset, true)
-    offset += 4
-    chunks.push(binary.slice(offset, offset + chunkLen))
-    offset += chunkLen
-  }
-  if (chunks.length < 2) return null
-
-  let dataRaw: Uint8Array
-  try {
-    dataRaw = inflateSync(chunks[1])
-  } catch {
-    const fzstd = await import('fzstd')
-    dataRaw = fzstd.decompress(chunks[1])
-  }
-
-  return { schemaDeflated: chunks[0], dataRaw }
-}
-
-function buildFigKiwi(schemaDeflated: Uint8Array, dataRaw: Uint8Array): Uint8Array {
-  const dataDeflated = deflateSync(dataRaw)
-  
-
-  const total = 8 + 4 + 4 + schemaDeflated.length + 4 + dataDeflated.length
-  const out = new Uint8Array(total)
-  const view = new DataView(out.buffer)
-
-  const magic = new TextEncoder().encode('fig-kiwi')
-  out.set(magic, 0)
-  view.setUint32(8, FIG_KIWI_VERSION, true)
-
-  let offset = 12
-  view.setUint32(offset, schemaDeflated.length, true)
-  offset += 4
-  out.set(schemaDeflated, offset)
-  offset += schemaDeflated.length
-
-  view.setUint32(offset, dataDeflated.length, true)
-  offset += 4
-  out.set(dataDeflated, offset)
-
-  return out
-}
 
 function binaryToBase64(bytes: Uint8Array): string {
   let binary = ''
@@ -142,13 +65,14 @@ export async function parseFigmaClipboard(
   const meta: FigmaClipboardMeta = JSON.parse(atob(metaMatch[1]))
   const binary = base64ToBinary(bufMatch[1])
 
-  const parsed = parseFigKiwi(binary) ?? (await parseFigKiwiWithZstd(binary))
-  if (!parsed) return null
+  const chunks = parseFigKiwiChunks(binary)
+  if (!chunks) return null
 
-  const schemaBytes = inflateSync(parsed.schemaDeflated)
+  const schemaBytes = inflateSync(chunks[0])
   const schema = decodeBinarySchema(new ByteBuffer(schemaBytes))
   const compiled = compileSchema(schema)
-  const msg = compiled.decodeMessage(parsed.dataRaw) as {
+  const dataRaw = await decompressFigKiwiDataAsync(chunks[1])
+  const msg = compiled.decodeMessage(dataRaw) as {
     nodeChanges?: KiwiNodeChange[]
     blobs?: Array<{ bytes: Uint8Array | Record<string, number> }>
   }

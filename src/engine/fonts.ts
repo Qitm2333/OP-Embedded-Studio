@@ -1,6 +1,6 @@
 export { initFontService, getFontProvider, ensureNodeFont } from '@open-pencil/core'
 
-import { loadFont as loadFontCore, getFontProvider } from '@open-pencil/core'
+import { loadFont as loadFontCore, getFontProvider, styleToWeight } from '@open-pencil/core'
 
 interface TauriFontFamily {
   family: string
@@ -78,15 +78,4 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
   return loadFontCore(family, style)
 }
 
-function styleToWeight(style: string): number {
-  const s = style.toLowerCase()
-  if (s.includes('thin') || s.includes('hairline')) return 100
-  if (s.includes('extralight') || s.includes('ultralight')) return 200
-  if (s.includes('light')) return 300
-  if (s.includes('medium')) return 500
-  if (s.includes('semibold') || s.includes('demibold')) return 600
-  if (s.includes('extrabold') || s.includes('ultrabold')) return 800
-  if (s.includes('black') || s.includes('heavy')) return 900
-  if (s.includes('bold')) return 700
-  return 400
-}
+

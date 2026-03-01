@@ -9,6 +9,19 @@ export function getStyleAt(runs: StyleRun[], index: number): CharacterStyleOverr
   return {}
 }
 
+function expandRuns(
+  runs: StyleRun[],
+  textLength: number
+): (CharacterStyleOverride | null)[] {
+  const chars: (CharacterStyleOverride | null)[] = new Array(textLength).fill(null)
+  for (const run of runs) {
+    for (let i = run.start; i < run.start + run.length && i < textLength; i++) {
+      chars[i] = { ...(chars[i] ?? {}), ...run.style }
+    }
+  }
+  return chars
+}
+
 export function applyStyleToRange(
   runs: StyleRun[],
   start: number,
@@ -16,13 +29,7 @@ export function applyStyleToRange(
   patch: CharacterStyleOverride,
   textLength: number
 ): StyleRun[] {
-  const chars: (CharacterStyleOverride | null)[] = new Array(textLength).fill(null)
-
-  for (const run of runs) {
-    for (let i = run.start; i < run.start + run.length && i < textLength; i++) {
-      chars[i] = { ...(chars[i] ?? {}), ...run.style }
-    }
-  }
+  const chars = expandRuns(runs, textLength)
 
   for (let i = start; i < end && i < textLength; i++) {
     chars[i] = { ...(chars[i] ?? {}), ...patch }
@@ -38,13 +45,7 @@ export function removeStyleFromRange(
   keys: (keyof CharacterStyleOverride)[],
   textLength: number
 ): StyleRun[] {
-  const chars: (CharacterStyleOverride | null)[] = new Array(textLength).fill(null)
-
-  for (const run of runs) {
-    for (let i = run.start; i < run.start + run.length && i < textLength; i++) {
-      chars[i] = { ...(chars[i] ?? {}), ...run.style }
-    }
-  }
+  const chars = expandRuns(runs, textLength)
 
   for (let i = start; i < end && i < textLength; i++) {
     if (chars[i]) {

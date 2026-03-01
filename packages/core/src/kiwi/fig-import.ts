@@ -1,4 +1,5 @@
 import { SceneGraph } from '../scene-graph'
+import { styleToWeight } from '../fonts'
 import { decodeVectorNetworkBlob } from '../vector'
 
 import type { NodeChange, Paint, Effect as KiwiEffect, GUID } from './codec'
@@ -238,19 +239,7 @@ function mapStackCounterAlign(align?: string): LayoutCounterAlign {
   }
 }
 
-function mapFontWeight(style?: string): number {
-  if (!style) return 400
-  const s = style.toLowerCase().replace(/\s+/g, '')
-  if (s.includes('thin') || s.includes('hairline')) return 100
-  if (s.includes('extralight') || s.includes('ultralight')) return 200
-  if (s.includes('light')) return 300
-  if (s.includes('medium')) return 500
-  if (s.includes('semibold') || s.includes('demibold')) return 600
-  if (s.includes('extrabold') || s.includes('ultrabold')) return 800
-  if (s.includes('black') || s.includes('heavy')) return 900
-  if (s.includes('bold')) return 700
-  return 400
-}
+
 
 function mapConstraint(c?: string): ConstraintType {
   switch (c) {
@@ -302,7 +291,7 @@ function importStyleRuns(nc: NodeChange): StyleRun[] {
     const style: CharacterStyleOverride = {}
     if (override.fontName) {
       style.fontFamily = override.fontName.family
-      style.fontWeight = mapFontWeight(override.fontName.style)
+      style.fontWeight = styleToWeight(override.fontName.style ?? "")
       style.italic = override.fontName.style?.toLowerCase().includes('italic') ?? false
     }
     if (override.fontSize !== undefined) style.fontSize = override.fontSize
@@ -461,7 +450,7 @@ export function importNodeChanges(
       text: nc.textData?.characters ?? '',
       fontSize: nc.fontSize ?? 14,
       fontFamily: nc.fontName?.family ?? 'Inter',
-      fontWeight: mapFontWeight(nc.fontName?.style),
+      fontWeight: styleToWeight(nc.fontName?.style ?? ""),
       italic: nc.fontName?.style?.toLowerCase().includes('italic') ?? false,
       textAlignHorizontal:
         (nc.textAlignHorizontal as 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED') ?? 'LEFT',

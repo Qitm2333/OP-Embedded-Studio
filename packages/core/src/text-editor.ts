@@ -27,6 +27,14 @@ export class TextEditor {
     this.ck = ck
   }
 
+  private prepareMove(extend: boolean): TextEditorState | null {
+    const s = this._state
+    if (!s) return null
+    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
+    if (!extend) s.selectionAnchor = null
+    return s
+  }
+
   get state(): TextEditorState | null {
     return this._state
   }
@@ -179,8 +187,7 @@ export class TextEditor {
       s.selectionAnchor = null
       return
     }
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
+    this.prepareMove(extend)
     if (s.cursor > 0) s.cursor--
   }
 
@@ -193,43 +200,34 @@ export class TextEditor {
       s.selectionAnchor = null
       return
     }
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
+    this.prepareMove(extend)
     if (s.cursor < s.text.length) s.cursor++
   }
 
   moveUp(extend = false): void {
     const s = this._state
     if (!s?.paragraph) return
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
-
+    this.prepareMove(extend)
     const caret = this.getCaretRect()
     if (!caret) return
     const fontSize = s.paragraph.getLineMetrics()[0]?.height ?? 14
-    const newPos = s.paragraph.getGlyphPositionAtCoordinate(caret.x, caret.y0 - fontSize / 2).pos
-    s.cursor = newPos
+    s.cursor = s.paragraph.getGlyphPositionAtCoordinate(caret.x, caret.y0 - fontSize / 2).pos
   }
 
   moveDown(extend = false): void {
     const s = this._state
     if (!s?.paragraph) return
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
-
+    this.prepareMove(extend)
     const caret = this.getCaretRect()
     if (!caret) return
     const fontSize = s.paragraph.getLineMetrics()[0]?.height ?? 14
-    const newPos = s.paragraph.getGlyphPositionAtCoordinate(caret.x, caret.y1 + fontSize / 2).pos
-    s.cursor = newPos
+    s.cursor = s.paragraph.getGlyphPositionAtCoordinate(caret.x, caret.y1 + fontSize / 2).pos
   }
 
   moveToLineStart(extend = false): void {
     const s = this._state
     if (!s?.paragraph) return
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
-
+    this.prepareMove(extend)
     const lineNum = s.paragraph.getLineNumberAt(s.cursor)
     if (lineNum < 0) return
     const metrics = s.paragraph.getLineMetricsAt(lineNum)
@@ -239,9 +237,7 @@ export class TextEditor {
   moveToLineEnd(extend = false): void {
     const s = this._state
     if (!s?.paragraph) return
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
-
+    this.prepareMove(extend)
     const lineNum = s.paragraph.getLineNumberAt(s.cursor)
     if (lineNum < 0) return
     const metrics = s.paragraph.getLineMetricsAt(lineNum)
@@ -249,11 +245,8 @@ export class TextEditor {
   }
 
   moveWordLeft(extend = false): void {
-    const s = this._state
+    const s = this.prepareMove(extend)
     if (!s) return
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
-
     let pos = s.cursor
     while (pos > 0 && isWordBoundary(s.text[pos - 1])) pos--
     while (pos > 0 && !isWordBoundary(s.text[pos - 1])) pos--
@@ -261,11 +254,8 @@ export class TextEditor {
   }
 
   moveWordRight(extend = false): void {
-    const s = this._state
+    const s = this.prepareMove(extend)
     if (!s) return
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
-
     let pos = s.cursor
     while (pos < s.text.length && !isWordBoundary(s.text[pos])) pos++
     while (pos < s.text.length && isWordBoundary(s.text[pos])) pos++

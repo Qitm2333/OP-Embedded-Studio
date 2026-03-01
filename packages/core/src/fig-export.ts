@@ -2,7 +2,7 @@ import { zipSync, deflateSync } from 'fflate'
 
 import { IS_TAURI } from './constants'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
-import { sceneNodeToKiwi, fractionalPosition, FIG_KIWI_VERSION } from './kiwi-serialize'
+import { sceneNodeToKiwi, fractionalPosition, buildFigKiwi } from './kiwi-serialize'
 import { renderThumbnail } from './render-image'
 
 import type { SkiaRenderer } from './renderer'
@@ -18,28 +18,6 @@ const THUMBNAIL_1X1 = Uint8Array.from(
 )
 
 type KiwiNodeChange = NodeChange & Record<string, unknown>
-
-function buildFigKiwi(schemaDeflated: Uint8Array, dataCompressed: Uint8Array): Uint8Array {
-  
-  const total = 8 + 4 + 4 + schemaDeflated.length + 4 + dataCompressed.length
-  const out = new Uint8Array(total)
-  const view = new DataView(out.buffer)
-
-  out.set(new TextEncoder().encode('fig-kiwi'), 0)
-  view.setUint32(8, FIG_KIWI_VERSION, true)
-
-  let offset = 12
-  view.setUint32(offset, schemaDeflated.length, true)
-  offset += 4
-  out.set(schemaDeflated, offset)
-  offset += schemaDeflated.length
-
-  view.setUint32(offset, dataCompressed.length, true)
-  offset += 4
-  out.set(dataCompressed, offset)
-
-  return out
-}
 
 const THUMBNAIL_WIDTH = 400
 const THUMBNAIL_HEIGHT = 225
@@ -141,7 +119,7 @@ export async function exportFigFile(
     )
   }
 
-  const canvasData = buildFigKiwi(schemaDeflated, deflateSync(kiwiData))
+  const canvasData = buildFigKiwi(schemaDeflated, kiwiData)
   return zipSync({
     'canvas.fig': [canvasData, { level: 0 }],
     'thumbnail.png': [thumbnailPng, { level: 0 }],

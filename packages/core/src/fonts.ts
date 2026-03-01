@@ -115,8 +115,8 @@ function registerFontInBrowser(family: string, style: string, data: ArrayBuffer)
   face.load().then(() => document.fonts.add(face))
 }
 
-function styleToWeight(style: string): number {
-  const s = style.toLowerCase()
+export function styleToWeight(style: string): number {
+  const s = style.toLowerCase().replace(/[\s-_]/g, '')
   if (s.includes('thin') || s.includes('hairline')) return 100
   if (s.includes('extralight') || s.includes('ultralight')) return 200
   if (s.includes('light')) return 300
