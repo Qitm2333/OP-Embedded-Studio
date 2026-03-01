@@ -85,9 +85,9 @@ function initials(name: string): string {
 </script>
 
 <template>
-  <div class="flex w-full items-center gap-2">
-    <!-- Avatar stack for connected peers -->
-    <TooltipProvider v-if="state.connected" :delay-duration="200">
+  <div class="flex w-full items-center justify-end gap-2">
+    <!-- Avatar stack -->
+    <TooltipProvider :delay-duration="200">
       <div class="flex -space-x-1.5">
         <TooltipRoot>
           <TooltipTrigger as-child>
