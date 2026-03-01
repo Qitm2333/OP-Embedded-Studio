@@ -2,8 +2,14 @@ import { inflateSync, deflateSync } from 'fflate'
 
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
+import {
+  sceneNodeToKiwi,
+  buildFigKiwi,
+  parseFigKiwiChunks,
+  decompressFigKiwiDataAsync
+} from './kiwi-serialize'
 
-import { decodeVectorNetworkBlob, encodeVectorNetworkBlob } from './vector'
+import { decodeVectorNetworkBlob } from './vector'
 
 import type {
   SceneGraph,
@@ -28,89 +34,7 @@ export async function prefetchFigmaSchema(): Promise<void> {
   await initCodec()
 }
 
-function parseFigKiwi(
-  binary: Uint8Array
-): { schemaDeflated: Uint8Array; dataRaw: Uint8Array } | null {
-  const header = new TextDecoder().decode(binary.slice(0, 8))
-  if (header !== 'fig-kiwi') return null
 
-  const view = new DataView(binary.buffer, binary.byteOffset, binary.byteLength)
-  let offset = 12
-
-  const chunks: Uint8Array[] = []
-  while (offset < binary.length) {
-    const chunkLen = view.getUint32(offset, true)
-    offset += 4
-    chunks.push(binary.slice(offset, offset + chunkLen))
-    offset += chunkLen
-  }
-  if (chunks.length < 2) return null
-
-  const schemaDeflated = chunks[0]
-  let dataRaw: Uint8Array
-  try {
-    dataRaw = inflateSync(chunks[1])
-  } catch {
-    // Zstd fallback (lazy import)
-    return null
-  }
-
-  return { schemaDeflated, dataRaw }
-}
-
-async function parseFigKiwiWithZstd(
-  binary: Uint8Array
-): Promise<{ schemaDeflated: Uint8Array; dataRaw: Uint8Array } | null> {
-  const header = new TextDecoder().decode(binary.slice(0, 8))
-  if (header !== 'fig-kiwi') return null
-
-  const view = new DataView(binary.buffer, binary.byteOffset, binary.byteLength)
-  let offset = 12
-
-  const chunks: Uint8Array[] = []
-  while (offset < binary.length) {
-    const chunkLen = view.getUint32(offset, true)
-    offset += 4
-    chunks.push(binary.slice(offset, offset + chunkLen))
-    offset += chunkLen
-  }
-  if (chunks.length < 2) return null
-
-  let dataRaw: Uint8Array
-  try {
-    dataRaw = inflateSync(chunks[1])
-  } catch {
-    const fzstd = await import('fzstd')
-    dataRaw = fzstd.decompress(chunks[1])
-  }
-
-  return { schemaDeflated: chunks[0], dataRaw }
-}
-
-function buildFigKiwi(schemaDeflated: Uint8Array, dataRaw: Uint8Array): Uint8Array {
-  const dataDeflated = deflateSync(dataRaw)
-  const FIG_KIWI_VERSION = 106
-
-  const total = 8 + 4 + 4 + schemaDeflated.length + 4 + dataDeflated.length
-  const out = new Uint8Array(total)
-  const view = new DataView(out.buffer)
-
-  const magic = new TextEncoder().encode('fig-kiwi')
-  out.set(magic, 0)
-  view.setUint32(8, FIG_KIWI_VERSION, true)
-
-  let offset = 12
-  view.setUint32(offset, schemaDeflated.length, true)
-  offset += 4
-  out.set(schemaDeflated, offset)
-  offset += schemaDeflated.length
-
-  view.setUint32(offset, dataDeflated.length, true)
-  offset += 4
-  out.set(dataDeflated, offset)
-
-  return out
-}
 
 function binaryToBase64(bytes: Uint8Array): string {
   let binary = ''
@@ -141,13 +65,14 @@ export async function parseFigmaClipboard(
   const meta: FigmaClipboardMeta = JSON.parse(atob(metaMatch[1]))
   const binary = base64ToBinary(bufMatch[1])
 
-  const parsed = parseFigKiwi(binary) ?? (await parseFigKiwiWithZstd(binary))
-  if (!parsed) return null
+  const chunks = parseFigKiwiChunks(binary)
+  if (!chunks) return null
 
-  const schemaBytes = inflateSync(parsed.schemaDeflated)
+  const schemaBytes = inflateSync(chunks[0])
   const schema = decodeBinarySchema(new ByteBuffer(schemaBytes))
   const compiled = compileSchema(schema)
-  const msg = compiled.decodeMessage(parsed.dataRaw) as {
+  const dataRaw = await decompressFigKiwiDataAsync(chunks[1])
+  const msg = compiled.decodeMessage(dataRaw) as {
     nodeChanges?: KiwiNodeChange[]
     blobs?: Array<{ bytes: Uint8Array | Record<string, number> }>
   }
@@ -383,167 +308,6 @@ function mapNodeType(type?: string): SceneNode['type'] {
     default:
       return 'RECTANGLE'
   }
-}
-
-// --- Copy to Figma-compatible fig-kiwi ---
-
-function mapToFigmaType(type: SceneNode['type']): string {
-  switch (type) {
-    case 'FRAME':
-      return 'FRAME'
-    case 'RECTANGLE':
-      return 'RECTANGLE'
-    case 'ELLIPSE':
-      return 'ELLIPSE'
-    case 'TEXT':
-      return 'TEXT'
-    case 'LINE':
-      return 'LINE'
-    case 'STAR':
-      return 'STAR'
-    case 'POLYGON':
-      return 'REGULAR_POLYGON'
-    case 'VECTOR':
-      return 'VECTOR'
-    case 'GROUP':
-      return 'FRAME'
-    case 'SECTION':
-      return 'SECTION'
-    default:
-      return 'RECTANGLE'
-  }
-}
-
-function fractionalPosition(index: number): string {
-  const base = '!'
-  return String.fromCharCode(base.charCodeAt(0) + index)
-}
-
-function sceneNodeToKiwi(
-  node: SceneNode,
-  parentGuid: { sessionID: number; localID: number },
-  childIndex: number,
-  localIdCounter: { value: number },
-  graph: SceneGraph,
-  blobs: Uint8Array[]
-): KiwiNodeChange[] {
-  const localID = localIdCounter.value++
-  const guid = { sessionID: 1, localID }
-  const cos = Math.cos((node.rotation * Math.PI) / 180)
-  const sin = Math.sin((node.rotation * Math.PI) / 180)
-
-  const fillPaints = node.fills
-    .filter((f) => f.type === 'SOLID')
-    .map((f) => ({
-      type: 'SOLID' as const,
-      color: f.color,
-      opacity: f.opacity,
-      visible: f.visible,
-      blendMode: 'NORMAL' as const
-    }))
-
-  const strokePaints = node.strokes
-    .filter((s) => s.visible)
-    .map((s) => ({
-      type: 'SOLID' as const,
-      color: s.color,
-      opacity: s.opacity,
-      visible: true,
-      blendMode: 'NORMAL' as const
-    }))
-
-  const nc: KiwiNodeChange = {
-    guid,
-    parentIndex: { guid: parentGuid, position: fractionalPosition(childIndex) },
-    type: mapToFigmaType(node.type),
-    name: node.name,
-    visible: node.visible,
-    opacity: node.opacity,
-    phase: 'CREATED',
-    size: { x: node.width, y: node.height },
-    transform: { m00: cos, m01: -sin, m02: node.x, m10: sin, m11: cos, m12: node.y },
-    strokeWeight: node.strokes.length > 0 ? node.strokes[0].weight : 1,
-    strokeAlign: 'INSIDE'
-  }
-
-  if (fillPaints.length > 0) nc.fillPaints = fillPaints
-  if (strokePaints.length > 0) nc.strokePaints = strokePaints
-
-  if (node.cornerRadius > 0) {
-    nc.cornerRadius = node.cornerRadius
-    nc.rectangleTopLeftCornerRadius = node.independentCorners
-      ? node.topLeftRadius
-      : node.cornerRadius
-    nc.rectangleTopRightCornerRadius = node.independentCorners
-      ? node.topRightRadius
-      : node.cornerRadius
-    nc.rectangleBottomLeftCornerRadius = node.independentCorners
-      ? node.bottomLeftRadius
-      : node.cornerRadius
-    nc.rectangleBottomRightCornerRadius = node.independentCorners
-      ? node.bottomRightRadius
-      : node.cornerRadius
-  }
-
-  if (node.type === 'TEXT') {
-    nc.fontSize = node.fontSize
-    nc.fontName = { family: node.fontFamily, style: 'Regular', postscript: '' }
-    nc.textData = {
-      characters: node.text,
-      lines: [
-        {
-          lineType: 'PLAIN',
-          styleId: 0,
-          indentationLevel: 0,
-          sourceDirectionality: 'AUTO',
-          listStartOffset: 0,
-          isFirstLineOfList: false
-        }
-      ]
-    }
-    nc.textAutoResize = 'WIDTH_AND_HEIGHT'
-    nc.textAlignHorizontal = node.textAlignHorizontal
-  }
-
-  if (node.type === 'FRAME' || node.type === 'GROUP') {
-    nc.frameMaskDisabled = node.type === 'GROUP'
-  }
-
-  if (node.layoutMode !== 'NONE') {
-    nc.stackMode = node.layoutMode
-    nc.stackSpacing = node.itemSpacing
-    nc.stackVerticalPadding = node.paddingTop
-    nc.stackHorizontalPadding = node.paddingLeft
-    nc.stackPaddingBottom = node.paddingBottom
-    nc.stackPaddingRight = node.paddingRight
-    nc.stackPrimarySizing = node.primaryAxisSizing === 'HUG' ? 'RESIZE_TO_FIT' : 'FIXED'
-    nc.stackCounterSizing =
-      node.counterAxisSizing === 'HUG' ? 'RESIZE_TO_FIT_WITH_IMPLICIT_SIZE' : undefined
-  }
-
-  if (node.layoutPositioning === 'ABSOLUTE') {
-    nc.stackPositioning = 'ABSOLUTE'
-  }
-  if (node.layoutGrow > 0) {
-    nc.stackChildPrimaryGrow = node.layoutGrow
-  }
-
-  if (node.vectorNetwork && node.type === 'VECTOR') {
-    const blobIdx = blobs.length
-    blobs.push(encodeVectorNetworkBlob(node.vectorNetwork))
-    nc.vectorData = {
-      vectorNetworkBlob: blobIdx,
-      normalizedSize: { x: node.width, y: node.height }
-    }
-  }
-
-  const result: KiwiNodeChange[] = [nc]
-  const children = graph.getChildren(node.id)
-  for (let i = 0; i < children.length; i++) {
-    result.push(...sceneNodeToKiwi(children[i], guid, i, localIdCounter, graph, blobs))
-  }
-
-  return result
 }
 
 export function buildFigmaClipboardHTML(nodes: SceneNode[], graph: SceneGraph): string | null {

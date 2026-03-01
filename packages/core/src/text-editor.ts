@@ -1,4 +1,5 @@
-import type { CanvasKit, Paragraph, TypefaceFontProvider } from 'canvaskit-wasm'
+import type { CanvasKit, Paragraph } from 'canvaskit-wasm'
+import type { SkiaRenderer } from './renderer'
 import type { SceneNode } from './scene-graph'
 import type { Rect } from './types'
 
@@ -18,12 +19,20 @@ export interface TextEditorState {
 
 export class TextEditor {
   private ck: CanvasKit
-  private fontProvider: TypefaceFontProvider | null = null
+  private renderer: SkiaRenderer | null = null
   private _state: TextEditorState | null = null
   caretVisible = true
 
   constructor(ck: CanvasKit) {
     this.ck = ck
+  }
+
+  private prepareMove(extend: boolean): TextEditorState | null {
+    const s = this._state
+    if (!s) return null
+    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
+    if (!extend) s.selectionAnchor = null
+    return s
   }
 
   get state(): TextEditorState | null {
@@ -38,8 +47,8 @@ export class TextEditor {
     return this._state?.nodeId ?? null
   }
 
-  setFontProvider(provider: TypefaceFontProvider | null): void {
-    this.fontProvider = provider
+  setRenderer(renderer: SkiaRenderer | null): void {
+    this.renderer = renderer
   }
 
   start(node: SceneNode): void {
@@ -63,28 +72,9 @@ export class TextEditor {
 
   rebuildParagraph(node: SceneNode): void {
     const s = this._state
-    if (!s || !this.fontProvider) return
-
+    if (!s || !this.renderer) return
     s.paragraph?.delete()
-
-    const paraStyle = new this.ck.ParagraphStyle({
-      textAlign: this.getTextAlign(node.textAlignHorizontal),
-      textStyle: {
-        color: this.ck.BLACK,
-        fontFamilies: [node.fontFamily || 'Inter'],
-        fontSize: node.fontSize || 14,
-        fontStyle: { weight: { value: node.fontWeight || 400 } },
-        letterSpacing: node.letterSpacing || 0,
-        heightMultiplier: node.lineHeight
-          ? node.lineHeight / (node.fontSize || 14)
-          : undefined
-      }
-    })
-    const builder = this.ck.ParagraphBuilder.MakeFromFontProvider(paraStyle, this.fontProvider)
-    builder.addText(s.text)
-    s.paragraph = builder.build()
-    s.paragraph.layout(node.width || 1e6)
-    builder.delete()
+    s.paragraph = this.renderer.buildParagraph(node)
   }
 
   hasSelection(): boolean {
@@ -137,11 +127,29 @@ export class TextEditor {
     s.cursor = pos
   }
 
+  selectLine(pos: number): void {
+    const s = this._state
+    if (!s?.paragraph) return
+    const lineNum = s.paragraph.getLineNumberAt(pos)
+    if (lineNum < 0) return
+    const metrics = s.paragraph.getLineMetricsAt(lineNum)
+    if (!metrics) return
+    s.selectionAnchor = metrics.startIndex
+    s.cursor = metrics.endExcludingWhitespaces
+  }
+
   selectWordAt(x: number, y: number): void {
     const s = this._state
     if (!s?.paragraph) return
     const pos = s.paragraph.getGlyphPositionAtCoordinate(x, y).pos
     this.selectWord(pos)
+  }
+
+  selectLineAt(x: number, y: number): void {
+    const s = this._state
+    if (!s?.paragraph) return
+    const pos = s.paragraph.getGlyphPositionAtCoordinate(x, y).pos
+    this.selectLine(pos)
   }
 
   insert(text: string, node: SceneNode): void {
@@ -197,8 +205,7 @@ export class TextEditor {
       s.selectionAnchor = null
       return
     }
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
+    this.prepareMove(extend)
     if (s.cursor > 0) s.cursor--
   }
 
@@ -211,43 +218,34 @@ export class TextEditor {
       s.selectionAnchor = null
       return
     }
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
+    this.prepareMove(extend)
     if (s.cursor < s.text.length) s.cursor++
   }
 
   moveUp(extend = false): void {
     const s = this._state
     if (!s?.paragraph) return
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
-
+    this.prepareMove(extend)
     const caret = this.getCaretRect()
     if (!caret) return
     const fontSize = s.paragraph.getLineMetrics()[0]?.height ?? 14
-    const newPos = s.paragraph.getGlyphPositionAtCoordinate(caret.x, caret.y0 - fontSize / 2).pos
-    s.cursor = newPos
+    s.cursor = s.paragraph.getGlyphPositionAtCoordinate(caret.x, caret.y0 - fontSize / 2).pos
   }
 
   moveDown(extend = false): void {
     const s = this._state
     if (!s?.paragraph) return
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
-
+    this.prepareMove(extend)
     const caret = this.getCaretRect()
     if (!caret) return
     const fontSize = s.paragraph.getLineMetrics()[0]?.height ?? 14
-    const newPos = s.paragraph.getGlyphPositionAtCoordinate(caret.x, caret.y1 + fontSize / 2).pos
-    s.cursor = newPos
+    s.cursor = s.paragraph.getGlyphPositionAtCoordinate(caret.x, caret.y1 + fontSize / 2).pos
   }
 
   moveToLineStart(extend = false): void {
     const s = this._state
     if (!s?.paragraph) return
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
-
+    this.prepareMove(extend)
     const lineNum = s.paragraph.getLineNumberAt(s.cursor)
     if (lineNum < 0) return
     const metrics = s.paragraph.getLineMetricsAt(lineNum)
@@ -257,9 +255,7 @@ export class TextEditor {
   moveToLineEnd(extend = false): void {
     const s = this._state
     if (!s?.paragraph) return
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
-
+    this.prepareMove(extend)
     const lineNum = s.paragraph.getLineNumberAt(s.cursor)
     if (lineNum < 0) return
     const metrics = s.paragraph.getLineMetricsAt(lineNum)
@@ -267,11 +263,8 @@ export class TextEditor {
   }
 
   moveWordLeft(extend = false): void {
-    const s = this._state
+    const s = this.prepareMove(extend)
     if (!s) return
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
-
     let pos = s.cursor
     while (pos > 0 && isWordBoundary(s.text[pos - 1])) pos--
     while (pos > 0 && !isWordBoundary(s.text[pos - 1])) pos--
@@ -279,11 +272,8 @@ export class TextEditor {
   }
 
   moveWordRight(extend = false): void {
-    const s = this._state
+    const s = this.prepareMove(extend)
     if (!s) return
-    if (extend && s.selectionAnchor === null) s.selectionAnchor = s.cursor
-    if (!extend) s.selectionAnchor = null
-
     let pos = s.cursor
     while (pos < s.text.length && !isWordBoundary(s.text[pos])) pos++
     while (pos < s.text.length && isWordBoundary(s.text[pos])) pos++
@@ -353,18 +343,6 @@ export class TextEditor {
     })
   }
 
-  private getTextAlign(align: string) {
-    switch (align) {
-      case 'CENTER':
-        return this.ck.TextAlign.Center
-      case 'RIGHT':
-        return this.ck.TextAlign.Right
-      case 'JUSTIFIED':
-        return this.ck.TextAlign.Justify
-      default:
-        return this.ck.TextAlign.Left
-    }
-  }
 }
 
 function isWordBoundary(ch: string): boolean {

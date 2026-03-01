@@ -1542,28 +1542,93 @@ export class SkiaRenderer {
     if (!text) return
 
     if (this.fontsLoaded && this.fontProvider) {
-      const paraStyle = new this.ck.ParagraphStyle({
-        textAlign: this.getTextAlign(node.textAlignHorizontal),
-        textStyle: {
-          color: this.fillPaint.getColor(),
-          fontFamilies: [node.fontFamily || 'Inter'],
-          fontSize: node.fontSize || DEFAULT_FONT_SIZE,
-          fontStyle: { weight: { value: node.fontWeight || 400 } as FontWeight },
-          letterSpacing: node.letterSpacing || 0,
-          heightMultiplier: node.lineHeight
-            ? node.lineHeight / (node.fontSize || DEFAULT_FONT_SIZE)
-            : undefined
-        }
-      })
-      const builder = this.ck.ParagraphBuilder.MakeFromFontProvider(paraStyle, this.fontProvider)
-      builder.addText(text)
-      const paragraph = builder.build()
-      paragraph.layout(node.width || 1e6)
+      const paragraph = this.buildParagraph(node, this.fillPaint.getColor())
       canvas.drawParagraph(paragraph, 0, 0)
       paragraph.delete()
-      builder.delete()
     } else if (this.textFont) {
       canvas.drawText(text, 0, node.fontSize || DEFAULT_FONT_SIZE, this.fillPaint, this.textFont)
+    }
+  }
+
+  buildParagraph(
+    node: SceneNode,
+    color?: Float32Array
+  ): import('canvaskit-wasm').Paragraph {
+    const ck = this.ck
+    const baseColor = color ?? ck.BLACK
+    const baseFontSize = node.fontSize || DEFAULT_FONT_SIZE
+
+    const paraStyle = new ck.ParagraphStyle({
+      textAlign: this.getTextAlign(node.textAlignHorizontal),
+      textStyle: {
+        color: baseColor,
+        fontFamilies: [node.fontFamily || 'Inter'],
+        fontSize: baseFontSize,
+        fontStyle: {
+          weight: { value: node.fontWeight || 400 } as FontWeight,
+          slant: node.italic ? ck.FontSlant.Italic : ck.FontSlant.Upright
+        },
+        letterSpacing: node.letterSpacing || 0,
+        decoration: this.textDecorationValue(node.textDecoration),
+        heightMultiplier: node.lineHeight ? node.lineHeight / baseFontSize : undefined
+      }
+    })
+
+    const builder = ck.ParagraphBuilder.MakeFromFontProvider(paraStyle, this.fontProvider!)
+    const runs = node.styleRuns
+    const text = node.text
+
+    if (runs.length === 0) {
+      builder.addText(text)
+    } else {
+      let pos = 0
+      for (const run of runs) {
+        if (pos < run.start) {
+          builder.addText(text.slice(pos, run.start))
+        }
+        const s = run.style
+        builder.pushStyle(
+          new ck.TextStyle({
+            color: baseColor,
+            fontFamilies: [s.fontFamily ?? (node.fontFamily || 'Inter')],
+            fontSize: s.fontSize ?? baseFontSize,
+            fontStyle: {
+              weight: { value: (s.fontWeight ?? node.fontWeight) || 400 } as FontWeight,
+              slant: (s.italic ?? node.italic)
+                ? ck.FontSlant.Italic
+                : ck.FontSlant.Upright
+            },
+            letterSpacing: s.letterSpacing ?? (node.letterSpacing || 0),
+            decoration: this.textDecorationValue(s.textDecoration ?? node.textDecoration),
+            heightMultiplier: (s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)
+              ? ((s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)! /
+                (s.fontSize ?? baseFontSize))
+              : undefined
+          })
+        )
+        builder.addText(text.slice(run.start, run.start + run.length))
+        builder.pop()
+        pos = run.start + run.length
+      }
+      if (pos < text.length) {
+        builder.addText(text.slice(pos))
+      }
+    }
+
+    const paragraph = builder.build()
+    paragraph.layout(node.width || 1e6)
+    builder.delete()
+    return paragraph
+  }
+
+  private textDecorationValue(decoration: string): number {
+    switch (decoration) {
+      case 'UNDERLINE':
+        return this.ck.UnderlineDecoration
+      case 'STRIKETHROUGH':
+        return this.ck.LineThroughDecoration
+      default:
+        return this.ck.NoDecoration
     }
   }
 

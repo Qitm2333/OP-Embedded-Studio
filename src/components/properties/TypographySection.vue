@@ -44,6 +44,26 @@ function setAlign(align: TextAlign) {
   store.requestRender()
 }
 
+function toggleBold() {
+  const n = node.value
+  selectWeight(n.fontWeight >= 700 ? 400 : 700)
+}
+
+function toggleItalic() {
+  store.updateNodeWithUndo(node.value.id, { italic: !node.value.italic }, 'Toggle italic')
+  store.requestRender()
+}
+
+function toggleDecoration(deco: 'UNDERLINE' | 'STRIKETHROUGH') {
+  const current = node.value.textDecoration
+  store.updateNodeWithUndo(
+    node.value.id,
+    { textDecoration: current === deco ? 'NONE' : deco },
+    `Toggle ${deco.toLowerCase()}`
+  )
+  store.requestRender()
+}
+
 onMounted(async () => {
   await loadFont(node.value.fontFamily, currentWeightLabel.value)
 })
@@ -102,23 +122,75 @@ onMounted(async () => {
       </ScrubInput>
     </div>
 
-    <!-- Text alignment -->
-    <div class="flex gap-0.5">
-      <button
-        v-for="align in ['LEFT', 'CENTER', 'RIGHT'] as TextAlign[]"
-        :key="align"
-        class="flex cursor-pointer items-center justify-center rounded border px-2 py-1"
-        :class="
-          node.textAlignHorizontal === align
-            ? 'border-accent bg-accent text-white'
-            : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
-        "
-        @click="setAlign(align)"
-      >
-        <icon-lucide-align-left v-if="align === 'LEFT'" class="size-3.5" />
-        <icon-lucide-align-center v-else-if="align === 'CENTER'" class="size-3.5" />
-        <icon-lucide-align-right v-else class="size-3.5" />
-      </button>
+    <!-- Text alignment + formatting -->
+    <div class="flex items-center gap-3">
+      <div class="flex gap-0.5">
+        <button
+          v-for="align in ['LEFT', 'CENTER', 'RIGHT'] as TextAlign[]"
+          :key="align"
+          class="flex cursor-pointer items-center justify-center rounded border px-2 py-1"
+          :class="
+            node.textAlignHorizontal === align
+              ? 'border-accent bg-accent text-white'
+              : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
+          "
+          @click="setAlign(align)"
+        >
+          <icon-lucide-align-left v-if="align === 'LEFT'" class="size-3.5" />
+          <icon-lucide-align-center v-else-if="align === 'CENTER'" class="size-3.5" />
+          <icon-lucide-align-right v-else class="size-3.5" />
+        </button>
+      </div>
+      <div class="flex gap-0.5">
+        <button
+          class="flex cursor-pointer items-center justify-center rounded border px-2 py-1 font-bold"
+          :class="
+            node.fontWeight >= 700
+              ? 'border-accent bg-accent text-white'
+              : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
+          "
+          title="Bold (⌘B)"
+          @click="toggleBold"
+        >
+          <icon-lucide-bold class="size-3.5" />
+        </button>
+        <button
+          class="flex cursor-pointer items-center justify-center rounded border px-2 py-1"
+          :class="
+            node.italic
+              ? 'border-accent bg-accent text-white'
+              : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
+          "
+          title="Italic (⌘I)"
+          @click="toggleItalic"
+        >
+          <icon-lucide-italic class="size-3.5" />
+        </button>
+        <button
+          class="flex cursor-pointer items-center justify-center rounded border px-2 py-1"
+          :class="
+            node.textDecoration === 'UNDERLINE'
+              ? 'border-accent bg-accent text-white'
+              : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
+          "
+          title="Underline (⌘U)"
+          @click="toggleDecoration('UNDERLINE')"
+        >
+          <icon-lucide-underline class="size-3.5" />
+        </button>
+        <button
+          class="flex cursor-pointer items-center justify-center rounded border px-2 py-1"
+          :class="
+            node.textDecoration === 'STRIKETHROUGH'
+              ? 'border-accent bg-accent text-white'
+              : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
+          "
+          title="Strikethrough"
+          @click="toggleDecoration('STRIKETHROUGH')"
+        >
+          <icon-lucide-strikethrough class="size-3.5" />
+        </button>
+      </div>
     </div>
   </div>
 </template>

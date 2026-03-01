@@ -28,9 +28,4 @@ public/canvaskit.wasm
 test-results/
 # Git worktrees for parallel agent work
 .worktrees/
-
-# VitePress
-docs/.vitepress/dist
-docs/.vitepress/cache
-extensions/vscode/*.heapsnapshot
-op-vs-code/
+.env

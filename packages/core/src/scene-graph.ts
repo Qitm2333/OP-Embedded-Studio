@@ -128,6 +128,22 @@ export type TextAlignVertical = 'TOP' | 'CENTER' | 'BOTTOM'
 export type TextCase = 'ORIGINAL' | 'UPPER' | 'LOWER' | 'TITLE'
 export type TextDecoration = 'NONE' | 'UNDERLINE' | 'STRIKETHROUGH'
 
+export interface CharacterStyleOverride {
+  fontWeight?: number
+  italic?: boolean
+  textDecoration?: TextDecoration
+  fontSize?: number
+  fontFamily?: string
+  letterSpacing?: number
+  lineHeight?: number | null
+}
+
+export interface StyleRun {
+  start: number
+  length: number
+  style: CharacterStyleOverride
+}
+
 export interface ArcData {
   startingAngle: number
   endingAngle: number
@@ -176,6 +192,7 @@ export interface SceneNode {
   fontSize: number
   fontFamily: string
   fontWeight: number
+  italic: boolean
   textAlignHorizontal: 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED'
   textAlignVertical: TextAlignVertical
   textAutoResize: TextAutoResize
@@ -184,6 +201,7 @@ export interface SceneNode {
   lineHeight: number | null
   letterSpacing: number
   maxLines: number | null
+  styleRuns: StyleRun[]
 
   horizontalConstraint: ConstraintType
   verticalConstraint: ConstraintType
@@ -290,6 +308,7 @@ function createDefaultNode(type: NodeType, overrides: Partial<SceneNode> = {}): 
     fontSize: 14,
     fontFamily: 'Inter',
     fontWeight: 400,
+    italic: false,
     textAlignHorizontal: 'LEFT',
     lineHeight: null,
     letterSpacing: 0,
@@ -316,6 +335,7 @@ function createDefaultNode(type: NodeType, overrides: Partial<SceneNode> = {}): 
     textCase: 'ORIGINAL',
     textDecoration: 'NONE',
     maxLines: null,
+    styleRuns: [],
     horizontalConstraint: 'MIN',
     verticalConstraint: 'MIN',
     strokeCap: 'NONE',

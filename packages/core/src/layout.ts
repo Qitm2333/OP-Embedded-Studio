@@ -203,46 +203,7 @@ function setSizing(
   }
 }
 
-function applyYogaLayout(graph: SceneGraph, frame: SceneNode, yogaRoot: YogaNode): void {
-  if (frame.primaryAxisSizing === 'HUG' || frame.counterAxisSizing === 'HUG') {
-    const computedW = yogaRoot.getComputedWidth()
-    const computedH = yogaRoot.getComputedHeight()
-    const updates: Partial<SceneNode> = {}
-
-    if (frame.primaryAxisSizing === 'HUG') {
-      if (frame.layoutMode === 'HORIZONTAL') updates.width = computedW
-      else updates.height = computedH
-    }
-    if (frame.counterAxisSizing === 'HUG') {
-      if (frame.layoutMode === 'HORIZONTAL') updates.height = computedH
-      else updates.width = computedW
-    }
-
-    graph.updateNode(frame.id, updates)
-  }
-
-  const children = graph.getChildren(frame.id)
-  let yogaIndex = 0
-  for (const child of children) {
-    if (child.layoutPositioning === 'ABSOLUTE') continue
-
-    const yogaChild = yogaRoot.getChild(yogaIndex)
-    yogaIndex++
-
-    graph.updateNode(child.id, {
-      x: yogaChild.getComputedLeft(),
-      y: yogaChild.getComputedTop(),
-      width: yogaChild.getComputedWidth(),
-      height: yogaChild.getComputedHeight()
-    })
-
-    if (child.layoutMode !== 'NONE') {
-      applyYogaLayoutNested(graph, child, yogaChild)
-    }
-  }
-}
-
-function applyYogaLayoutNested(graph: SceneGraph, frame: SceneNode, yogaNode: YogaNode): void {
+function applyYogaLayout(graph: SceneGraph, frame: SceneNode, yogaNode: YogaNode): void {
   if (frame.primaryAxisSizing === 'HUG' || frame.counterAxisSizing === 'HUG') {
     const computedW = yogaNode.getComputedWidth()
     const computedH = yogaNode.getComputedHeight()
@@ -276,7 +237,7 @@ function applyYogaLayoutNested(graph: SceneGraph, frame: SceneNode, yogaNode: Yo
     })
 
     if (child.layoutMode !== 'NONE') {
-      applyYogaLayoutNested(graph, child, yogaChild)
+      applyYogaLayout(graph, child, yogaChild)
     }
   }
 }

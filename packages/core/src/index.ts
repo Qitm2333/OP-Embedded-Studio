@@ -43,20 +43,77 @@ export {
   type VariableValue,
   type Variable,
   type VariableCollection,
-  type VariableCollectionMode
+  type VariableCollectionMode,
+  type CharacterStyleOverride,
+  type StyleRun
 } from './scene-graph'
 
 export { SkiaRenderer, type RenderOverlays } from './renderer'
 export { computeLayout, computeAllLayouts } from './layout'
 export { getCanvasKit, type CanvasKitOptions } from './canvaskit'
-export { loadFont, listFamilies, initFontService, getFontProvider, ensureNodeFont } from './fonts'
+export {
+  loadFont,
+  listFamilies,
+  initFontService,
+  getFontProvider,
+  ensureNodeFont,
+  styleToWeight,
+  weightToStyle
+} from './fonts'
 export { parseColor, colorToHex, colorToHexRaw, colorToRgba255 } from './color'
 export { vectorNetworkToPath, decodeVectorNetworkBlob, encodeVectorNetworkBlob, computeVectorBounds } from './vector'
 export { computeSelectionBounds, computeSnap, type SnapGuide } from './snap'
 export { UndoManager } from './undo'
 export { TextEditor, type TextCaret, type TextEditorState } from './text-editor'
+export {
+  toggleBoldInRange,
+  toggleItalicInRange,
+  toggleDecorationInRange,
+  adjustRunsForInsert,
+  adjustRunsForDelete
+} from './style-runs'
 export { renderNodesToImage, renderThumbnail, type ExportFormat } from './render-image'
 export { exportFigFile } from './fig-export'
+export {
+  FIG_KIWI_VERSION,
+  buildFigKiwi,
+  parseFigKiwiChunks,
+  decompressFigKiwiData,
+  decompressFigKiwiDataAsync,
+  sceneNodeToKiwi,
+  fractionalPosition,
+  mapToFigmaType
+} from './kiwi-serialize'
+
+export {
+  renderTree,
+  renderJsx,
+  renderTreeNode,
+  buildComponent,
+  Frame,
+  Text,
+  Rectangle,
+  Ellipse,
+  Line,
+  Star,
+  Polygon,
+  Vector as VectorNode,
+  Group,
+  Section,
+  View,
+  Rect as RectNode,
+  Component as ComponentNode,
+  Instance as InstanceNode,
+  Page as PageNode,
+  INTRINSIC_ELEMENTS,
+  isTreeNode,
+  node,
+  type TreeNode,
+  type BaseProps,
+  type TextProps,
+  type StyleProps,
+  type RenderResult
+} from './render'
 export {
   parseFigmaClipboard,
   importClipboardNodes,
@@ -72,10 +129,41 @@ export {
   initCodec,
   encodeMessage,
   decodeMessage,
+  compress,
+  decompress,
   getCompiledSchema,
   getSchemaBytes,
+  createNodeChangesMessage,
+  createNodeChange,
+  parseVariableId,
+  encodePaintWithVariableBinding,
+  encodeNodeChangeWithVariables,
   type NodeChange,
+  type GUID as KiwiGUID,
+  type Color as KiwiColor,
   type Paint as KiwiPaint,
   type Effect as KiwiEffect,
+  type VariableBinding,
+  type ParentIndex,
   type FigmaMessage
 } from './kiwi/codec'
+
+export {
+  MESSAGE_TYPES,
+  NODE_TYPES,
+  NODE_PHASES,
+  BLEND_MODES,
+  PAINT_TYPES,
+  PROTOCOL_VERSION,
+  KIWI,
+  SESSION_ID,
+  ZSTD_MAGIC,
+  buildMultiplayerUrl,
+  isZstdCompressed,
+  hasFigWireHeader,
+  skipFigWireHeader,
+  isKiwiMessage,
+  getKiwiMessageType,
+  parseVarint,
+  FIG_WIRE_MAGIC
+} from './kiwi/protocol'

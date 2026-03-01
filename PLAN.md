@@ -1292,22 +1292,101 @@ Components, instances, overrides, variants, variables, collections, modes/themes
 
 ### Phase 5: AI integration (2 months)
 
-MCP server (port from figma-use), design guidelines system, screenshot verification loop, style guide system.
+In-app AI chat + MCP server. Two interfaces to the same tool set: chat panel for interactive design, MCP for external agents.
 
-**Deliverable:** AI can design full interfaces through MCP.
+**Deliverable:** AI can design full interfaces through the chat panel or MCP.
 
-**Validation:**
+#### In-app AI chat
+
+**No backend.** Everything runs in the browser. The user provides their own OpenRouter API key. The app calls OpenRouter directly via `fetch()` — no proxy server, no sidecar, no extra process.
+
+```
+Browser (Vue)
+  ChatPanel.vue
+  useChat() ──stream──→  OpenRouter (SSE)
+  tool exec (local)      Claude Sonnet
+```
+
+Stack: `ai@6.0.0-beta` + `@ai-sdk/valibot` + `@openrouter/ai-sdk-provider` + `valibot`. All client-side — `ai/vue` `useChat()` composable with `fetch` transport directly to OpenRouter.
+
+**Why no backend:** All tools execute client-side (editor store, canvas). A backend would add SSE roundtrip latency on every tool call (10-20 per message), require a Tauri sidecar for production, and add failure modes — all to protect an API key that the user owns. Desktop apps (1Password, Cursor, etc.) use the same model.
+
+**API key storage:**
+- **Tauri (desktop):** `tauri-plugin-stronghold` — encrypted vault on disk, key loaded into JS memory at runtime for fetch headers. Never in source code, never in plaintext on disk.
+- **Browser mode:** `localStorage` with a clear warning. Acceptable for a local-first design tool — no worse than any SPA with user-provided keys.
+
+**Chat panel UI:** Replaces right sidebar (properties panel) when active, toggled with `⌘J`. Both share the same splitter slot. Tool calls render inline as a collapsible timeline (like beebro-chat's `ToolTimeline`) with icons, status, expandable params/results. Screenshots and visual diffs render inline as thumbnails.
+
+#### AI workflow (from figma-use)
+
+```
+1. Read    → snapshot (compact a11y tree), get_page_tree, find_nodes
+2. Create  → render (JSX), set_* for edits
+3. Verify  → screenshot → AI inspects the image
+4. Iterate → diff_create to see what changed, fix issues
+5. Export  → export_jsx for developer handoff
+```
+
+**`render` (JSX) is the primary creation tool** — not individual `create_frame`/`create_text` calls. One JSX call creates an entire component tree:
+
+```jsx
+<Frame name="Card" w={320} h="hug" flex="col" gap={16} p={24} bg="#FFF" rounded={16}>
+  <Rectangle name="Image" w="fill" h={200} bg="#E5E7EB" rounded={12} />
+  <Text name="Title" size={18} weight="bold" color="#111">Card Title</Text>
+  <Text name="Description" size={14} color="#6B7280">Lorem ipsum</Text>
+</Frame>
+```
+
+Individual `set_*` tools are for surgical edits only. JSX renderer ported from figma-use's `packages/cli/src/render/`, lives in `@open-pencil/core` (no DOM deps, works headless too).
+
+**Guardrail/diff tools** for the self-correcting loop:
+
+| Tool | Purpose |
+|------|---------|
+| `screenshot` | Render viewport/node to PNG → AI inspects visually |
+| `snapshot` | Compact text representation of the design tree |
+| `diff_create` | Structural diff between two nodes (unified patch) |
+| `diff_visual` | Pixel-level diff → image showing differences |
+| `diff_show` | Preview property changes before applying |
+| `diff_apply` | Apply a diff patch to nodes |
+
+#### Comment pins as AI context
+
+Users pin comments on canvas — AI context annotations, not collaboration comments. When chatting, comments visible in viewport are automatically included in the system prompt with their positions and attached node IDs.
+
+```typescript
+// Stored on SceneGraph, not individual nodes (can pin to empty canvas)
+interface CommentPin {
+  id: string
+  text: string
+  x: number; y: number
+  nodeId?: string
+  resolved: boolean
+  createdAt: number
+}
+```
+
+#### Implementation order
+
+1. JSX renderer in `@open-pencil/core` (port from figma-use)
+2. Chat panel UI — `ChatPanel.vue`, `useChat()`, message list, tool timeline, `⌘J` toggle
+3. API key settings — input UI, Stronghold storage (Tauri) / localStorage (browser)
+4. Core tools — render, set_fill, set_layout, set_text, snapshot, get_selection
+5. Screenshot + diff tools
+6. Comment pin system
+7. Full tool set (remaining 118 tools)
+
+#### Validation
 
 | Test | Pass criteria |
 |------|---------------|
-| MCP tool coverage | All 118 tools callable via MCP protocol. Automated test: call each tool with valid args → no errors |
-| MCP schema test | Tool input schemas match expected JSON Schema. Validate against snapshot |
-| Create workflow E2E | AI agent (scripted): create frame → add 5 children with layout → set fills → screenshot → verify image contains expected elements |
-| Modify workflow E2E | AI agent: read existing document → find button → change text → change fill → screenshot → verify changes visible |
-| Screenshot loop | AI creates layout → screenshots → detects overlap → fixes → screenshots again → overlap resolved. 3 iterations max |
-| Batch operations | Create 100 nodes via MCP in single session → verify all present in scene graph |
-| Concurrent MCP | 2 MCP clients connected → both create nodes → no conflicts, both see all nodes |
-| Error handling | Call tools with invalid args (wrong ID, wrong type) → clean error messages, no crashes |
+| Tool coverage | All 118 tools callable via chat and MCP. Automated: call each with valid args → no errors |
+| JSX render E2E | Render 10 JSX snippets of varying complexity → all nodes created with correct properties |
+| Screenshot loop | AI creates layout → screenshots → detects overlap → fixes → screenshots again → resolved in ≤3 iterations |
+| Diff roundtrip | diff_create between two nodes → diff_apply on source → source matches target |
+| Chat UX | Send message → tool calls stream in real-time → expandable timeline → final text renders |
+| Comment context | Pin 3 comments → send chat message → system prompt includes all 3 with correct positions |
+| Error handling | Invalid tool args → clean error in chat, no crash. Network failure → retry/abort UI |
 
 ### Phase 6: Polish + Distribution (2 months)
 
@@ -1752,6 +1831,21 @@ New test categories to add:
 | Visual diff | cli | `open-pencil diff a.fig b.fig` detects pixel differences |
 
 Snapshot tests for rendering: store expected PNGs in `packages/core/tests/snapshots/`. Use pixel-level comparison (allow small tolerance for anti-aliasing across platforms). CanvasKit CPU rasterizer is deterministic on the same platform, so CI snapshots only need per-platform baselines.
+
+### Kiwi decoder performance — investigated
+
+We benchmarked the Rust `kiwi-schema` crate (by Evan Wallace, 1.5M downloads) against our JS decoder:
+
+| File | JS (Bun) | Rust (native) |
+|------|----------|---------------|
+| material3 (87K nodes, 44.7 MB) | **168 ms** | 595 ms |
+| nuxtui (315K nodes, 229 MB) | **785 ms** | 4,215 ms |
+
+**JS is 3.5–5.4x faster.** The Rust crate uses dynamic `Value` enum with `HashMap<&str, Value>` per object — heap allocations for every field of every node. Our JS decoder uses `compileSchema()` which generates specialized decode functions via `new Function()` — the JIT optimizes these into near-native code with zero boxing overhead.
+
+A faster Rust/WASM decoder would require code generation (like protobuf's `prost` with derive macros) to emit typed structs instead of dynamic `Value`. Not worth the effort given our JS decoder already handles 315K nodes in under a second.
+
+**The real bottleneck was O(n²) `getChildren()` in `importNodeChanges`** (scanning all parent entries for each node). Fixed by building a `childrenMap` index upfront → **69x speedup** (37s → 535ms for material3).
 
 ### Risks — validated
 

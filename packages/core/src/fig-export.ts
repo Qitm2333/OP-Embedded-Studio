@@ -2,13 +2,12 @@ import { zipSync, deflateSync } from 'fflate'
 
 import { IS_TAURI } from './constants'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
-
+import { sceneNodeToKiwi, fractionalPosition, buildFigKiwi } from './kiwi-serialize'
 import { renderThumbnail } from './render-image'
-import { encodeVectorNetworkBlob } from './vector'
 
 import type { SkiaRenderer } from './renderer'
-import type { SceneGraph, SceneNode } from './scene-graph'
-import type { NodeChange, Paint } from './kiwi/codec'
+import type { SceneGraph } from './scene-graph'
+import type { NodeChange } from './kiwi/codec'
 import type { CanvasKit } from 'canvaskit-wasm'
 
 const THUMBNAIL_1X1 = Uint8Array.from(
@@ -19,214 +18,6 @@ const THUMBNAIL_1X1 = Uint8Array.from(
 )
 
 type KiwiNodeChange = NodeChange & Record<string, unknown>
-
-function mapToFigmaType(type: SceneNode['type']): string {
-  switch (type) {
-    case 'FRAME':
-      return 'FRAME'
-    case 'RECTANGLE':
-      return 'RECTANGLE'
-    case 'ROUNDED_RECTANGLE':
-      return 'ROUNDED_RECTANGLE'
-    case 'ELLIPSE':
-      return 'ELLIPSE'
-    case 'TEXT':
-      return 'TEXT'
-    case 'LINE':
-      return 'LINE'
-    case 'STAR':
-      return 'STAR'
-    case 'POLYGON':
-      return 'REGULAR_POLYGON'
-    case 'VECTOR':
-      return 'VECTOR'
-    case 'GROUP':
-      return 'FRAME'
-    case 'SECTION':
-      return 'SECTION'
-    case 'COMPONENT':
-      return 'COMPONENT'
-    case 'COMPONENT_SET':
-      return 'COMPONENT_SET'
-    case 'INSTANCE':
-      return 'INSTANCE'
-    case 'CONNECTOR':
-      return 'CONNECTOR'
-    case 'SHAPE_WITH_TEXT':
-      return 'SHAPE_WITH_TEXT'
-    default:
-      return 'RECTANGLE'
-  }
-}
-
-function fractionalPosition(index: number): string {
-  return String.fromCharCode('!'.charCodeAt(0) + index)
-}
-
-function sceneNodeToKiwi(
-  node: SceneNode,
-  parentGuid: { sessionID: number; localID: number },
-  childIndex: number,
-  localIdCounter: { value: number },
-  graph: SceneGraph,
-  blobs: Uint8Array[]
-): KiwiNodeChange[] {
-  const localID = localIdCounter.value++
-  const guid = { sessionID: 1, localID }
-  const cos = Math.cos((node.rotation * Math.PI) / 180)
-  const sin = Math.sin((node.rotation * Math.PI) / 180)
-
-  const fillPaints = node.fills.map((f) => {
-    const paint: Paint = {
-      type: f.type,
-      color: f.color,
-      opacity: f.opacity,
-      visible: f.visible,
-      blendMode: f.blendMode ?? 'NORMAL'
-    }
-    if (f.gradientStops) {
-      paint.stops = f.gradientStops.map((s) => ({ color: s.color, position: s.position }))
-    }
-    if (f.gradientTransform) paint.transform = f.gradientTransform
-    if (f.imageHash) paint.image = { hash: f.imageHash }
-    if (f.imageScaleMode) paint.imageScaleMode = f.imageScaleMode
-    if (f.imageTransform) paint.transform = f.imageTransform
-    return paint
-  })
-
-  const strokePaints = node.strokes.map((s) => ({
-    type: 'SOLID' as const,
-    color: s.color,
-    opacity: s.opacity,
-    visible: s.visible,
-    blendMode: 'NORMAL' as const
-  }))
-
-  const nc: KiwiNodeChange = {
-    guid,
-    parentIndex: { guid: parentGuid, position: fractionalPosition(childIndex) },
-    type: mapToFigmaType(node.type),
-    name: node.name,
-    visible: node.visible,
-    opacity: node.opacity,
-    phase: 'CREATED',
-    size: { x: node.width, y: node.height },
-    transform: { m00: cos, m01: -sin, m02: node.x, m10: sin, m11: cos, m12: node.y },
-    strokeWeight: node.strokes.length > 0 ? node.strokes[0].weight : 1,
-    strokeAlign: 'INSIDE'
-  }
-
-  if (fillPaints.length > 0) nc.fillPaints = fillPaints
-  if (strokePaints.length > 0) nc.strokePaints = strokePaints
-
-  if (node.cornerRadius > 0 || node.independentCorners) {
-    nc.cornerRadius = node.cornerRadius
-    nc.rectangleCornerRadiiIndependent = node.independentCorners
-    nc.rectangleTopLeftCornerRadius = node.independentCorners
-      ? node.topLeftRadius
-      : node.cornerRadius
-    nc.rectangleTopRightCornerRadius = node.independentCorners
-      ? node.topRightRadius
-      : node.cornerRadius
-    nc.rectangleBottomLeftCornerRadius = node.independentCorners
-      ? node.bottomLeftRadius
-      : node.cornerRadius
-    nc.rectangleBottomRightCornerRadius = node.independentCorners
-      ? node.bottomRightRadius
-      : node.cornerRadius
-  }
-
-  if (node.cornerSmoothing > 0) {
-    nc.cornerSmoothing = node.cornerSmoothing
-  }
-
-  if (node.effects.length > 0) {
-    nc.effects = node.effects.map((e) => ({
-      type: e.type,
-      color: e.color,
-      offset: e.offset,
-      radius: e.radius,
-      spread: e.spread,
-      visible: e.visible
-    }))
-  }
-
-  if (node.type === 'TEXT') {
-    nc.fontSize = node.fontSize
-    nc.fontName = {
-      family: node.fontFamily,
-      style: node.fontWeight >= 700 ? 'Bold' : 'Regular',
-      postscript: ''
-    }
-    nc.textData = { characters: node.text }
-    nc.textAutoResize = 'WIDTH_AND_HEIGHT'
-    nc.textAlignHorizontal = node.textAlignHorizontal
-    if (node.lineHeight != null) nc.lineHeight = { value: node.lineHeight, units: 'PIXELS' }
-    if (node.letterSpacing !== 0) nc.letterSpacing = { value: node.letterSpacing, units: 'PIXELS' }
-  }
-
-  if (node.type === 'FRAME' || node.type === 'GROUP') {
-    nc.frameMaskDisabled = node.type === 'GROUP'
-    if (node.clipsContent) nc.clipsContent = true
-  }
-
-  if (node.layoutMode !== 'NONE') {
-    nc.stackMode = node.layoutMode
-    nc.stackSpacing = node.itemSpacing
-    nc.stackVerticalPadding = node.paddingTop
-    nc.stackHorizontalPadding = node.paddingLeft
-    nc.stackPaddingBottom = node.paddingBottom
-    nc.stackPaddingRight = node.paddingRight
-    nc.stackPrimarySizing = node.primaryAxisSizing === 'HUG' ? 'RESIZE_TO_FIT' : 'FIXED'
-    nc.stackCounterSizing = node.counterAxisSizing === 'HUG' ? 'RESIZE_TO_FIT' : 'FIXED'
-    nc.stackPrimaryAlignItems = node.primaryAxisAlign
-    nc.stackCounterAlignItems = node.counterAxisAlign
-    if (node.layoutWrap === 'WRAP') nc.stackWrap = 'WRAP'
-    if (node.counterAxisSpacing > 0) nc.stackCounterSpacing = node.counterAxisSpacing
-  }
-
-  if (node.layoutPositioning === 'ABSOLUTE') nc.stackPositioning = 'ABSOLUTE'
-  if (node.layoutGrow > 0) nc.stackChildPrimaryGrow = node.layoutGrow
-
-  if (node.vectorNetwork && node.type === 'VECTOR') {
-    const blobIdx = blobs.length
-    blobs.push(encodeVectorNetworkBlob(node.vectorNetwork))
-    nc.vectorData = {
-      vectorNetworkBlob: blobIdx,
-      normalizedSize: { x: node.width, y: node.height }
-    }
-  }
-
-  const result: KiwiNodeChange[] = [nc]
-  const children = graph.getChildren(node.id)
-  for (let i = 0; i < children.length; i++) {
-    result.push(...sceneNodeToKiwi(children[i], guid, i, localIdCounter, graph, blobs))
-  }
-
-  return result
-}
-
-function buildFigKiwi(schemaDeflated: Uint8Array, dataCompressed: Uint8Array): Uint8Array {
-  const FIG_KIWI_VERSION = 106
-  const total = 8 + 4 + 4 + schemaDeflated.length + 4 + dataCompressed.length
-  const out = new Uint8Array(total)
-  const view = new DataView(out.buffer)
-
-  out.set(new TextEncoder().encode('fig-kiwi'), 0)
-  view.setUint32(8, FIG_KIWI_VERSION, true)
-
-  let offset = 12
-  view.setUint32(offset, schemaDeflated.length, true)
-  offset += 4
-  out.set(schemaDeflated, offset)
-  offset += schemaDeflated.length
-
-  view.setUint32(offset, dataCompressed.length, true)
-  offset += 4
-  out.set(dataCompressed, offset)
-
-  return out
-}
 
 const THUMBNAIL_WIDTH = 400
 const THUMBNAIL_HEIGHT = 225
@@ -328,10 +119,12 @@ export async function exportFigFile(
     )
   }
 
-  const canvasData = buildFigKiwi(schemaDeflated, deflateSync(kiwiData))
+  const canvasData = buildFigKiwi(schemaDeflated, kiwiData)
   return zipSync({
     'canvas.fig': [canvasData, { level: 0 }],
     'thumbnail.png': [thumbnailPng, { level: 0 }],
     'meta.json': new TextEncoder().encode(metaJson)
   })
 }
+
+

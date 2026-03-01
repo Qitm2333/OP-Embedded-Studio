@@ -260,7 +260,12 @@ export interface NodeChange {
   textAlignHorizontal?: string
   textAlignVertical?: string
   textAutoResize?: string
-  textData?: { characters: string; lines?: unknown[] }
+  textData?: {
+    characters: string
+    lines?: unknown[]
+    characterStyleIDs?: number[]
+    styleOverrideTable?: NodeChange[]
+  }
   lineHeight?: { value: number; units: string }
   letterSpacing?: { value: number; units: string }
   // Symbol/Instance

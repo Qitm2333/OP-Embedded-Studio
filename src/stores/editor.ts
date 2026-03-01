@@ -474,7 +474,7 @@ export function createEditorStore() {
     if (!node) return
     state.editingTextId = nodeId
     if (_textEditor) {
-      _textEditor.setFontProvider(_renderer?.getFontProvider() ?? null)
+      _textEditor.setRenderer(_renderer)
       _textEditor.start(node)
     }
     requestRender()

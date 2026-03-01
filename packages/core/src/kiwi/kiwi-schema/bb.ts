@@ -1,5 +1,6 @@
 let int32 = new Int32Array(1)
 let float32 = new Float32Array(int32.buffer)
+const textDecoder = new TextDecoder()
 
 export class ByteBuffer {
   private _data: Uint8Array
@@ -20,64 +21,46 @@ export class ByteBuffer {
   }
 
   readByte(): number {
-    if (this._index + 1 > this._data.length) {
-      throw new Error('Index out of bounds')
-    }
     return this._data[this._index++]
   }
 
   readByteArray(): Uint8Array {
-    let length = this.readVarUint()
-    let start = this._index
-    let end = start + length
-    if (end > this._data.length) {
-      throw new Error('Read array out of bounds')
-    }
-    this._index = end
-    // Copy into a new array instead of just creating another view.
-    let result = new Uint8Array(length)
-    result.set(this._data.subarray(start, end))
-    return result
+    const length = this.readVarUint()
+    const start = this._index
+    this._index = start + length
+    return this._data.slice(start, start + length)
   }
 
   readVarFloat(): number {
-    let index = this._index
-    let data = this._data
-    let length = data.length
-
-    // Optimization: use a single byte to store zero
-    if (index + 1 > length) {
-      throw new Error('Index out of bounds')
-    }
-    let first = data[index]
+    const index = this._index
+    const data = this._data
+    const first = data[index]
     if (first === 0) {
       this._index = index + 1
       return 0
     }
 
-    // Endian-independent 32-bit read
-    if (index + 4 > length) {
-      throw new Error('Index out of bounds')
-    }
     let bits = first | (data[index + 1] << 8) | (data[index + 2] << 16) | (data[index + 3] << 24)
     this._index = index + 4
-
-    // Move the exponent back into place
     bits = (bits << 23) | (bits >>> 9)
-
-    // Reinterpret as a floating-point number
     int32[0] = bits
     return float32[0]
   }
 
   readVarUint(): number {
-    let value = 0
-    let shift = 0
-    do {
-      var byte = this.readByte()
-      value |= (byte & 127) << shift
-      shift += 7
-    } while (byte & 128 && shift < 35)
+    const data = this._data
+    let i = this._index
+    let b = data[i++]
+    let value = b & 127
+    if (b < 128) { this._index = i; return value }
+    b = data[i++]; value |= (b & 127) << 7
+    if (b < 128) { this._index = i; return value }
+    b = data[i++]; value |= (b & 127) << 14
+    if (b < 128) { this._index = i; return value }
+    b = data[i++]; value |= (b & 127) << 21
+    if (b < 128) { this._index = i; return value }
+    b = data[i++]; value |= (b & 127) << 28
+    this._index = i
     return value >>> 0
   }
 
@@ -108,48 +91,12 @@ export class ByteBuffer {
   }
 
   readString(): string {
-    let result = ''
-
-    while (true) {
-      let codePoint
-
-      // Decode UTF-8
-      let a = this.readByte()
-      if (a < 0xc0) {
-        codePoint = a
-      } else {
-        let b = this.readByte()
-        if (a < 0xe0) {
-          codePoint = ((a & 0x1f) << 6) | (b & 0x3f)
-        } else {
-          let c = this.readByte()
-          if (a < 0xf0) {
-            codePoint = ((a & 0x0f) << 12) | ((b & 0x3f) << 6) | (c & 0x3f)
-          } else {
-            let d = this.readByte()
-            codePoint = ((a & 0x07) << 18) | ((b & 0x3f) << 12) | ((c & 0x3f) << 6) | (d & 0x3f)
-          }
-        }
-      }
-
-      // Strings are null-terminated
-      if (codePoint === 0) {
-        break
-      }
-
-      // Encode UTF-16
-      if (codePoint < 0x10000) {
-        result += String.fromCharCode(codePoint)
-      } else {
-        codePoint -= 0x10000
-        result += String.fromCharCode(
-          (codePoint >> 10) + 0xd800,
-          (codePoint & ((1 << 10) - 1)) + 0xdc00
-        )
-      }
-    }
-
-    return result
+    const data = this._data
+    const start = this._index
+    let i = start
+    while (data[i] !== 0) i++
+    this._index = i + 1
+    return textDecoder.decode(data.subarray(start, i))
   }
 
   private _growBy(amount: number): void {
