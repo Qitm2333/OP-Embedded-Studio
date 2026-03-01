@@ -73,7 +73,8 @@ import type {
   Font,
   FontMgr,
   FontWeight,
-  TypefaceFontProvider
+  TypefaceFontProvider,
+  SkPicture
 } from 'canvaskit-wasm'
 
 export interface RenderOverlays {
@@ -133,6 +134,9 @@ export class SkiaRenderer {
   private fontsLoaded = false
   private imageCache = new Map<string, CKImage>()
   private vectorPathCache = new Map<string, Path>()
+  private scenePicture: SkPicture | null = null
+  private scenePictureVersion = -1
+  private scenePicturePageId: string | null = null
   private rulerBgPaint: Paint
   private rulerTickPaint: Paint
   private rulerTextPaint: Paint
@@ -424,7 +428,12 @@ export class SkiaRenderer {
     this.worldViewport = prevViewport
   }
 
-  render(graph: SceneGraph, selectedIds: Set<string>, overlays: RenderOverlays = {}): void {
+  render(
+    graph: SceneGraph,
+    selectedIds: Set<string>,
+    overlays: RenderOverlays = {},
+    sceneVersion = -1
+  ): void {
     const canvas = this.surface.getCanvas()
     canvas.clear(this.ck.Color4f(this.pageColor.r, this.pageColor.g, this.pageColor.b, 1))
 
@@ -436,17 +445,52 @@ export class SkiaRenderer {
       h: this.viewportHeight / this.zoom
     }
 
+    const hasVolatileOverlays =
+      overlays.hoveredNodeId != null ||
+      overlays.dropTargetId != null ||
+      overlays.rotationPreview != null ||
+      overlays.editingTextId != null
+
+    const canUsePicture =
+      !hasVolatileOverlays &&
+      this.scenePicture &&
+      sceneVersion === this.scenePictureVersion &&
+      this.pageId === this.scenePicturePageId
+
     // Scene layer (world coordinates)
     canvas.save()
     canvas.scale(this.dpr, this.dpr)
     canvas.translate(this.panX, this.panY)
     canvas.scale(this.zoom, this.zoom)
 
-    const pageNode = graph.getNode(this.pageId ?? graph.rootId)
-    if (pageNode) {
-      for (const childId of pageNode.childIds) {
-        this.renderNode(canvas, graph, childId, overlays, 0, 0)
+    if (canUsePicture) {
+      canvas.drawPicture(this.scenePicture!)
+    } else if (hasVolatileOverlays) {
+      const pageNode = graph.getNode(this.pageId ?? graph.rootId)
+      if (pageNode) {
+        for (const childId of pageNode.childIds) {
+          this.renderNode(canvas, graph, childId, overlays, 0, 0)
+        }
       }
+    } else {
+      this.scenePicture?.delete()
+      const prevViewport = this.worldViewport
+      this.worldViewport = { x: -1e6, y: -1e6, w: 2e6, h: 2e6 }
+      const recorder = new this.ck.PictureRecorder()
+      const bounds = this.ck.LTRBRect(-1e6, -1e6, 1e6, 1e6)
+      const recCanvas = recorder.beginRecording(bounds)
+      const pageNode = graph.getNode(this.pageId ?? graph.rootId)
+      if (pageNode) {
+        for (const childId of pageNode.childIds) {
+          this.renderNode(recCanvas, graph, childId, {}, 0, 0)
+        }
+      }
+      this.scenePicture = recorder.finishRecordingAsPicture()
+      recorder.delete()
+      this.worldViewport = prevViewport
+      this.scenePictureVersion = sceneVersion
+      this.scenePicturePageId = this.pageId
+      canvas.drawPicture(this.scenePicture!)
     }
 
     canvas.restore()
@@ -2370,6 +2414,7 @@ export class SkiaRenderer {
     this.penHandlePaint.delete()
     this.penVertexFill.delete()
     this.penVertexStroke.delete()
+    this.scenePicture?.delete()
     this.surface.delete()
   }
 }

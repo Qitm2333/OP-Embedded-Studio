@@ -4,6 +4,7 @@
 
 ### Performance
 
+- SkPicture scene caching — pan/zoom replays cached display list instead of re-rendering all nodes
 - Cache vector network paths — avoid rebuilding WASM paths every frame
 - Cache ruler and pen overlay paints — eliminate 10 WASM Paint allocations per frame
 - Only enable `preserveDrawingBuffer` in test mode
