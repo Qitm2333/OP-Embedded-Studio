@@ -26,7 +26,7 @@ useKeyboard(store)
 useMenu(store)
 const collab = useCollab(store)
 provide(COLLAB_KEY, collab)
-;(window as Window & { __OPEN_PENCIL_STORE__?: typeof store }).__OPEN_PENCIL_STORE__ = store
+window.__OPEN_PENCIL_STORE__ = store
 
 useEventListener(
   document,

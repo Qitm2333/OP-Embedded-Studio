@@ -78,18 +78,7 @@ test.describe('Render performance', () => {
   test('benchmark: synchronous render throughput', async () => {
     const results = await helper.page.evaluate((iterations: number) => {
       const store = window.__OPEN_PENCIL_STORE__!
-      const renderer = (store as Record<string, unknown>).renderer as {
-        render: Function
-        panX: number
-        panY: number
-        zoom: number
-        dpr: number
-        viewportWidth: number
-        viewportHeight: number
-        showRulers: boolean
-        pageColor: { r: number; g: number; b: number }
-        pageId: string | null
-      }
+      const renderer = store.renderer!
 
       function setupRenderer() {
         renderer.dpr = window.devicePixelRatio || 1
