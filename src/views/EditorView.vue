@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, provide } from 'vue'
+import { provide } from 'vue'
 import { useEventListener, useUrlSearchParams } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
@@ -24,7 +24,7 @@ const route = useRoute()
 const router = useRouter()
 
 const firstTab = createTab()
-const store = computed(() => useEditorStore())
+const store = useEditorStore()
 useKeyboard()
 useMenu()
 const collab = useCollab(firstTab.store)

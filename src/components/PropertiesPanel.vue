@@ -9,7 +9,7 @@ import CodePanel from './CodePanel.vue'
 import DesignPanel from './DesignPanel.vue'
 
 const store = useEditorStore()
-const { activeTab } = useAIChat(store)
+const { activeTab } = useAIChat()
 </script>
 
 <template>

@@ -47,9 +47,7 @@ export async function openFileDialog() {
   input.click()
 }
 
-function getStore() {
-  return useEditorStore()
-}
+const store = useEditorStore()
 
 const MENU_ACTIONS: Record<string, () => void> = {
   new: () => createTab(),
@@ -57,19 +55,18 @@ const MENU_ACTIONS: Record<string, () => void> = {
   close: () => {
     if (activeTab.value) closeTab(activeTab.value.id)
   },
-  save: () => getStore().saveFigFile(),
-  'save-as': () => getStore().saveFigFileAs(),
-  duplicate: () => getStore().duplicateSelected(),
-  delete: () => getStore().deleteSelected(),
-  group: () => getStore().groupSelected(),
-  ungroup: () => getStore().ungroupSelected(),
-  'create-component': () => getStore().createComponentFromSelection(),
-  'create-component-set': () => getStore().createComponentSetFromComponents(),
-  'detach-instance': () => getStore().detachInstance(),
-  'zoom-fit': () => getStore().zoomToFit(),
+  save: () => store.saveFigFile(),
+  'save-as': () => store.saveFigFileAs(),
+  duplicate: () => store.duplicateSelected(),
+  delete: () => store.deleteSelected(),
+  group: () => store.groupSelected(),
+  ungroup: () => store.ungroupSelected(),
+  'create-component': () => store.createComponentFromSelection(),
+  'create-component-set': () => store.createComponentSetFromComponents(),
+  'detach-instance': () => store.detachInstance(),
+  'zoom-fit': () => store.zoomToFit(),
   export: () => {
-    const s = getStore()
-    if (s.state.selectedIds.size > 0) s.exportSelection(1, 'PNG')
+    if (store.state.selectedIds.size > 0) store.exportSelection(1, 'PNG')
   }
 }
 

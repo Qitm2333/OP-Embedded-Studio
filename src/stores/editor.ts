@@ -1973,13 +1973,17 @@ export function setActiveEditorStore(store: EditorStore) {
   storeRef.value = store
 }
 
-export function provideEditorStore(): EditorStore {
-  const store = createEditorStore()
-  storeRef.value = store
-  return store
-}
-
-export function useEditorStore(): EditorStore {
+export function getActiveEditorStore(): EditorStore {
   if (!storeRef.value) throw new Error('Editor store not provided')
   return storeRef.value
+}
+
+const storeProxy = new Proxy({} as EditorStore, {
+  get(_, prop) {
+    return Reflect.get(getActiveEditorStore(), prop)
+  }
+})
+
+export function useEditorStore(): EditorStore {
+  return storeProxy
 }

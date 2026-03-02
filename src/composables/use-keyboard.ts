@@ -12,50 +12,46 @@ function isEditing(e: Event) {
 
 export function useKeyboard() {
   const { activeTab } = useAIChat()
-
-  function store() {
-    return useEditorStore()
-  }
+  const store = useEditorStore()
 
   useEventListener(window, 'copy', (e: ClipboardEvent) => {
     if (isEditing(e)) return
     e.preventDefault()
-    if (e.clipboardData) store().writeCopyData(e.clipboardData)
+    if (e.clipboardData) store.writeCopyData(e.clipboardData)
   })
 
   useEventListener(window, 'cut', (e: ClipboardEvent) => {
     if (isEditing(e)) return
     e.preventDefault()
-    if (e.clipboardData) store().writeCopyData(e.clipboardData)
-    store().deleteSelected()
+    if (e.clipboardData) store.writeCopyData(e.clipboardData)
+    store.deleteSelected()
   })
 
   useEventListener(window, 'paste', (e: ClipboardEvent) => {
     if (isEditing(e)) return
     e.preventDefault()
     const html = e.clipboardData?.getData('text/html') ?? ''
-    if (html) store().pasteFromHTML(html)
+    if (html) store.pasteFromHTML(html)
   })
 
   useEventListener(window, 'keydown', (e: KeyboardEvent) => {
     if (isEditing(e)) return
-    const s = store()
 
     const tool = TOOL_SHORTCUTS[e.key.toLowerCase()]
     if (tool) {
-      s.setTool(tool)
+      store.setTool(tool)
       return
     }
 
     if ((e.metaKey || e.ctrlKey) && e.altKey) {
       if (e.code === 'KeyK') {
         e.preventDefault()
-        s.createComponentFromSelection()
+        store.createComponentFromSelection()
         return
       }
       if (e.code === 'KeyB') {
         e.preventDefault()
-        s.detachInstance()
+        store.detachInstance()
         return
       }
     }
@@ -63,23 +59,23 @@ export function useKeyboard() {
     if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
       if (e.code === 'KeyK') {
         e.preventDefault()
-        s.createComponentSetFromComponents()
+        store.createComponentSetFromComponents()
         return
       }
       if (e.code === 'KeyH') {
         e.preventDefault()
-        s.toggleVisibility()
+        store.toggleVisibility()
         return
       }
       if (e.code === 'KeyL') {
         e.preventDefault()
-        s.toggleLock()
+        store.toggleLock()
         return
       }
       if (e.code === 'KeyE') {
         e.preventDefault()
-        if (s.state.selectedIds.size > 0) {
-          s.exportSelection(1, 'PNG')
+        if (store.state.selectedIds.size > 0) {
+          store.exportSelection(1, 'PNG')
         }
         return
       }
@@ -88,7 +84,7 @@ export function useKeyboard() {
     if (e.metaKey || e.ctrlKey) {
       if (e.code === 'Backslash') {
         e.preventDefault()
-        s.state.showUI = !s.state.showUI
+        store.state.showUI = !store.state.showUI
         return
       }
       if (e.code === 'KeyJ') {
@@ -108,76 +104,76 @@ export function useKeyboard() {
       }
       if (e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
-        s.undoAction()
+        store.undoAction()
       } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
         e.preventDefault()
-        s.redoAction()
+        store.redoAction()
       } else if (e.key === '0') {
         e.preventDefault()
-        s.zoomToFit()
+        store.zoomToFit()
       } else if (e.key === 'd') {
         e.preventDefault()
-        s.duplicateSelected()
+        store.duplicateSelected()
       } else if (e.key === 'a') {
         e.preventDefault()
-        s.selectAll()
+        store.selectAll()
       } else if (e.key === 's' && e.shiftKey) {
         e.preventDefault()
-        s.saveFigFileAs()
+        store.saveFigFileAs()
       } else if (e.key === 's') {
         e.preventDefault()
-        s.saveFigFile()
+        store.saveFigFile()
       } else if (e.key === 'o') {
         e.preventDefault()
         openFileDialog()
       } else if (e.key === 'g' && !e.shiftKey) {
         e.preventDefault()
-        s.groupSelected()
+        store.groupSelected()
       } else if (e.key === 'g' && e.shiftKey) {
         e.preventDefault()
-        s.ungroupSelected()
+        store.ungroupSelected()
       }
     }
 
     if (e.shiftKey && e.key === 'A') {
       e.preventDefault()
-      const node = s.selectedNode.value
-      if (node && node.type === 'FRAME' && s.selectedNodes.value.length === 1) {
-        s.setLayoutMode(node.id, node.layoutMode === 'NONE' ? 'VERTICAL' : 'NONE')
-      } else if (s.selectedNodes.value.length > 0) {
-        s.wrapInAutoLayout()
+      const node = store.selectedNode.value
+      if (node && node.type === 'FRAME' && store.selectedNodes.value.length === 1) {
+        store.setLayoutMode(node.id, node.layoutMode === 'NONE' ? 'VERTICAL' : 'NONE')
+      } else if (store.selectedNodes.value.length > 0) {
+        store.wrapInAutoLayout()
       }
       return
     }
 
     if (e.key === ']') {
       e.preventDefault()
-      s.bringToFront()
+      store.bringToFront()
       return
     }
     if (e.key === '[') {
       e.preventDefault()
-      s.sendToBack()
+      store.sendToBack()
       return
     }
 
     if (e.key === 'Backspace' || e.key === 'Delete') {
-      s.deleteSelected()
+      store.deleteSelected()
     }
 
-    if (e.key === 'Enter' && s.state.penState) {
+    if (e.key === 'Enter' && store.state.penState) {
       e.preventDefault()
-      s.penCommit(false)
+      store.penCommit(false)
       return
     }
 
     if (e.key === 'Escape') {
-      if (s.state.penState) {
-        s.penCancel()
+      if (store.state.penState) {
+        store.penCancel()
         return
       }
-      s.clearSelection()
-      s.setTool('SELECT')
+      store.clearSelection()
+      store.setTool('SELECT')
     }
   })
 }
