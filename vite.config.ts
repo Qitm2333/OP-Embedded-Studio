@@ -47,7 +47,17 @@ export default defineConfig(async () => ({
         }
       : undefined,
     watch: {
-      ignored: ['**/desktop/**']
+      ignored: [
+        '**/desktop/**',
+        '**/packages/cli/**',
+        '**/packages/mcp/**',
+        '**/packages/docs/**',
+        '**/tests/**',
+        '**/openspec/**',
+        '**/.worktrees/**',
+        '**/.github/**',
+        '**/.pi/**'
+      ]
     }
   }
 }))
