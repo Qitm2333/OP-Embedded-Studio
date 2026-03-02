@@ -52,7 +52,11 @@ function getStore() {
 }
 
 const MENU_ACTIONS: Record<string, () => void> = {
+  new: () => createTab(),
   open: () => openFileDialog(),
+  close: () => {
+    if (activeTab.value) closeTab(activeTab.value.id)
+  },
   save: () => getStore().saveFigFile(),
   'save-as': () => getStore().saveFigFileAs(),
   duplicate: () => getStore().duplicateSelected(),
@@ -66,10 +70,6 @@ const MENU_ACTIONS: Record<string, () => void> = {
   export: () => {
     const s = getStore()
     if (s.state.selectedIds.size > 0) s.exportSelection(1, 'PNG')
-  },
-  'new-tab': () => createTab(),
-  'close-tab': () => {
-    if (activeTab.value) closeTab(activeTab.value.id)
   }
 }
 

@@ -243,7 +243,7 @@ pub fn run() {
             #[allow(unused_mut)]
             let mut file_menu_builder = SubmenuBuilder::new(app, "File")
                 .item(
-                    &MenuItemBuilder::new("New File")
+                    &MenuItemBuilder::new("New")
                         .id("new")
                         .accelerator("CmdOrCtrl+N")
                         .build(app)?,
@@ -276,7 +276,7 @@ pub fn run() {
                 )
                 .separator()
                 .item(
-                    &MenuItemBuilder::new("Close Window")
+                    &MenuItemBuilder::new("Close Tab")
                         .id("close")
                         .accelerator("CmdOrCtrl+W")
                         .build(app)?,
