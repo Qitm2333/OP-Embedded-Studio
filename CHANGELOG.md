@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1 (2026-03-02)
+
+### Fixes
+
+- Fix text disappearing after hovering a frame (revert SkPicture scene caching)
+- Fix macOS startup hang: async font loading, show window on reopen
+
 ## 0.3.0 (2026-03-01)
 
 ### Performance
