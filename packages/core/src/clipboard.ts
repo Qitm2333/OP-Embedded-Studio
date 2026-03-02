@@ -121,7 +121,26 @@ export function importClipboardNodes(
     }
   }
 
-  const skipTypes = new Set(['DOCUMENT', 'CANVAS'])
+  const skipTypes = new Set([
+    'DOCUMENT',
+    'CANVAS',
+    'VARIABLE_SET',
+    'VARIABLE',
+    'VARIABLE_COLLECTION',
+    'STYLE',
+    'STYLE_SET',
+    'INTERNAL_ONLY_NODE',
+    'WIDGET',
+    'STAMP',
+    'STICKY',
+    'SHAPE_WITH_TEXT',
+    'CONNECTOR',
+    'CODE_BLOCK',
+    'TABLE_NODE',
+    'TABLE_CELL',
+    'SECTION_OVERLAY',
+    'SLIDE',
+  ])
   const topLevel: string[] = []
   for (const [id, nc] of guidMap) {
     if (skipTypes.has(nc.type ?? '')) continue
