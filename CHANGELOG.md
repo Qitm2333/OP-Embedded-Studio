@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- Fix Figma clipboard paste: skip non-visual node types (variables, widgets, stickies, connectors)
+- Fix text not rendering after paste — `letterSpacing` from Figma is a `{value, units}` object, was passed as-is → `NaN` broke CanvasKit paragraph layout
+- Fix undo/redo for Figma paste — no undo entry was recorded; redo duplicated `childIds`
+- Center pasted Figma content in viewport instead of using original coordinates
+- Compute auto-layouts after clipboard paste (same as .fig import and demo creation)
+
+### Improvements
+
+- Import additional properties from Figma clipboard: `layoutAlignSelf`, `clipsContent`, `fontWeight`, `italic`, `letterSpacing`, `lineHeight`
+- Convert `letterSpacing` PERCENT units to pixels based on font size
+
+### Tests
+
+- 7 new clipboard import unit tests (14 total)
+
 ## 0.4.1 (2026-03-02)
 
 ### Fixes
