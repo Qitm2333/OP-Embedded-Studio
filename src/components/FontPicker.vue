@@ -60,7 +60,7 @@ function onSelect(val: string) {
     <PopoverContent
       :side-offset="2"
       align="start"
-      class="z-50 flex w-[var(--reka-popper-anchor-width)] flex-col overflow-hidden rounded-md border border-border bg-panel shadow-lg"
+      class="z-50 flex min-w-56 w-[var(--reka-popper-anchor-width)] flex-col overflow-hidden rounded-md border border-border bg-panel shadow-lg"
       @open-auto-focus.prevent
     >
       <ListboxRoot :model-value="modelValue" @update:model-value="onSelect">
