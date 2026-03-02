@@ -1,0 +1,220 @@
+import { describe, expect, test, beforeEach, afterEach } from 'bun:test'
+import { join } from 'node:path'
+import { writeFile, unlink } from 'node:fs/promises'
+
+import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
+
+import { createServer } from '../../packages/mcp/src/server'
+import { SceneGraph, exportFigFile } from '@open-pencil/core'
+
+function parseResult(result: { content: { type: string; text: string }[] }): unknown {
+  return JSON.parse(result.content[0].text)
+}
+
+describe('MCP server', () => {
+  let client: Client
+  let cleanup: () => Promise<void>
+
+  beforeEach(async () => {
+    const server = createServer('0.0.0-test')
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+    await server.connect(serverTransport)
+    client = new Client({ name: 'test-client', version: '0.0.0' })
+    await client.connect(clientTransport)
+    cleanup = async () => {
+      await client.close()
+      await server.close()
+    }
+  })
+
+  afterEach(async () => {
+    await cleanup()
+  })
+
+  test('lists all registered tools', async () => {
+    const { tools } = await client.listTools()
+    const names = tools.map((t) => t.name)
+    expect(names).toContain('new_document')
+    expect(names).toContain('open_file')
+    expect(names).toContain('save_file')
+    expect(names).toContain('create_shape')
+    expect(names).toContain('set_fill')
+    expect(names).toContain('get_page_tree')
+    expect(tools.length).toBeGreaterThan(70)
+  })
+
+  test('tools have descriptions and input schemas', async () => {
+    const { tools } = await client.listTools()
+    for (const tool of tools) {
+      expect(tool.description).toBeTruthy()
+      expect(tool.inputSchema).toBeDefined()
+    }
+  })
+
+  test('new_document creates an empty document', async () => {
+    const result = await client.callTool({ name: 'new_document', arguments: {} })
+    const data = parseResult(result) as { page: string; id: string }
+    expect(data.page).toBe('Page 1')
+    expect(data.id).toBeTruthy()
+  })
+
+  test('tools fail without a loaded document', async () => {
+    const result = await client.callTool({ name: 'get_page_tree', arguments: {} })
+    expect(result.isError).toBe(true)
+    const data = parseResult(result) as { error: string }
+    expect(data.error).toContain('No document loaded')
+  })
+
+  test('create_shape after new_document', async () => {
+    await client.callTool({ name: 'new_document', arguments: {} })
+    const result = await client.callTool({
+      name: 'create_shape',
+      arguments: { type: 'FRAME', x: 0, y: 0, width: 200, height: 100, name: 'Test' }
+    })
+    const data = parseResult(result) as { id: string; name: string; type: string }
+    expect(data.name).toBe('Test')
+    expect(data.type).toBe('FRAME')
+    expect(data.id).toBeTruthy()
+  })
+
+  test('set_fill validates color string', async () => {
+    await client.callTool({ name: 'new_document', arguments: {} })
+    const shape = parseResult(
+      await client.callTool({
+        name: 'create_shape',
+        arguments: { type: 'RECTANGLE', x: 0, y: 0, width: 50, height: 50 }
+      })
+    ) as { id: string }
+
+    await client.callTool({
+      name: 'set_fill',
+      arguments: { id: shape.id, color: '#00ff00' }
+    })
+
+    const node = parseResult(
+      await client.callTool({ name: 'get_node', arguments: { id: shape.id } })
+    ) as { fills: { color: { r: number; g: number; b: number } }[] }
+    expect(node.fills[0].color.g).toBeCloseTo(1)
+  })
+
+  test('delete_node removes created node', async () => {
+    await client.callTool({ name: 'new_document', arguments: {} })
+    const shape = parseResult(
+      await client.callTool({
+        name: 'create_shape',
+        arguments: { type: 'RECTANGLE', x: 0, y: 0, width: 50, height: 50 }
+      })
+    ) as { id: string }
+
+    await client.callTool({ name: 'delete_node', arguments: { id: shape.id } })
+
+    const result = await client.callTool({ name: 'get_node', arguments: { id: shape.id } })
+    const data = parseResult(result) as { error?: string }
+    expect(data.error).toContain('not found')
+  })
+
+  test('get_node on nonexistent ID returns error in response', async () => {
+    await client.callTool({ name: 'new_document', arguments: {} })
+    const result = await client.callTool({ name: 'get_node', arguments: { id: 'bogus' } })
+    const data = parseResult(result) as { error: string }
+    expect(data.error).toContain('not found')
+  })
+
+  test('open_file loads a .fig file', async () => {
+    const fixturePath = join(import.meta.dir, '..', 'fixtures', 'nuxtui.fig')
+    const result = await client.callTool({ name: 'open_file', arguments: { path: fixturePath } })
+    const data = parseResult(result) as { pages: { name: string }[]; currentPage: string }
+    expect(data.pages.length).toBeGreaterThan(0)
+    expect(data.currentPage).toBeTruthy()
+  })
+
+  test('open_file with invalid path returns error', async () => {
+    const result = await client.callTool({
+      name: 'open_file',
+      arguments: { path: '/nonexistent/file.fig' }
+    })
+    expect(result.isError).toBe(true)
+  })
+
+  test('save_file roundtrips a document', async () => {
+    const tmpPath = join(import.meta.dir, '..', `_mcp_test_${Date.now()}.fig`)
+    try {
+      await client.callTool({ name: 'new_document', arguments: {} })
+      await client.callTool({
+        name: 'create_shape',
+        arguments: { type: 'FRAME', x: 0, y: 0, width: 300, height: 200, name: 'Saved' }
+      })
+
+      const saveResult = await client.callTool({
+        name: 'save_file',
+        arguments: { path: tmpPath }
+      })
+      const saved = parseResult(saveResult) as { saved: string; bytes: number }
+      expect(saved.bytes).toBeGreaterThan(0)
+
+      await client.callTool({ name: 'open_file', arguments: { path: tmpPath } })
+      const tree = parseResult(
+        await client.callTool({ name: 'get_page_tree', arguments: {} })
+      ) as { children: { name: string }[] }
+      expect(tree.children.some((c) => c.name === 'Saved')).toBe(true)
+    } finally {
+      await unlink(tmpPath).catch(() => {})
+    }
+  })
+
+  test('save_file without document returns error', async () => {
+    const result = await client.callTool({
+      name: 'save_file',
+      arguments: { path: '/tmp/_mcp_no_doc.fig' }
+    })
+    expect(result.isError).toBe(true)
+  })
+
+  test('full workflow: new → create → query → delete', async () => {
+    await client.callTool({ name: 'new_document', arguments: {} })
+
+    const frame = parseResult(
+      await client.callTool({
+        name: 'create_shape',
+        arguments: { type: 'FRAME', x: 10, y: 20, width: 400, height: 300, name: 'Container' }
+      })
+    ) as { id: string }
+
+    const child = parseResult(
+      await client.callTool({
+        name: 'create_shape',
+        arguments: {
+          type: 'TEXT',
+          x: 0,
+          y: 0,
+          width: 200,
+          height: 30,
+          name: 'Label',
+          parent_id: frame.id
+        }
+      })
+    ) as { id: string }
+
+    await client.callTool({
+      name: 'set_fill',
+      arguments: { id: frame.id, color: '#336699' }
+    })
+
+    const tree = parseResult(
+      await client.callTool({ name: 'get_page_tree', arguments: {} })
+    ) as { children: { id: string; name: string; children?: { name: string }[] }[] }
+
+    const container = tree.children.find((c) => c.name === 'Container')
+    expect(container).toBeDefined()
+    expect(container!.children?.some((c) => c.name === 'Label')).toBe(true)
+
+    await client.callTool({ name: 'delete_node', arguments: { id: child.id } })
+
+    const tree2 = parseResult(
+      await client.callTool({ name: 'get_page_tree', arguments: {} })
+    ) as { children: { id: string; children?: unknown[] }[] }
+    const container2 = tree2.children.find((c) => c.id === frame.id)
+    expect(container2!.children ?? []).toHaveLength(0)
+  })
+})

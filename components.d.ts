@@ -92,6 +92,7 @@ declare module 'vue' {
     SafariBanner: typeof import('./src/components/SafariBanner.vue')['default']
     ScrubInput: typeof import('./src/components/ScrubInput.vue')['default']
     StrokeSection: typeof import('./src/components/properties/StrokeSection.vue')['default']
+    TabBar: typeof import('./src/components/TabBar.vue')['default']
     Toolbar: typeof import('./src/components/Toolbar.vue')['default']
     TypographySection: typeof import('./src/components/properties/TypographySection.vue')['default']
     VariablesDialog: typeof import('./src/components/VariablesDialog.vue')['default']
