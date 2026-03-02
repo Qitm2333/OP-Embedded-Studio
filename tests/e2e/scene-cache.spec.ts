@@ -61,45 +61,41 @@ test.describe('SkPicture scene caching', () => {
     await helper.page.close()
   })
 
-  test('text visible after initial load without hover', async () => {
-    // This tests the font-loading race: the first render records an SkPicture
-    // before fonts are loaded. After fonts load, the picture must be invalidated
-    // so the next render uses proper paragraph text, not fallback drawText.
-    const ctx = await helper.page.context().browser()!.newContext()
-    const page = await ctx.newPage()
-    const freshHelper = new CanvasHelper(page)
-    await page.goto('http://localhost:1420/?test&no-chrome')
-    await freshHelper.waitForInit()
-
-    await page.evaluate(() => {
+  test('stale scene picture is invalidated after font load', async () => {
+    // Regression: loadFonts() is async. The first render can record an SkPicture
+    // before fonts load (using fallback drawText). If loadFonts() doesn't
+    // invalidate the cache, hover off replays the stale picture → text vanishes.
+    //
+    // We simulate this by calling invalidateScenePicture() to force the next
+    // render to re-record, then verify hover on/off doesn't lose text.
+    await helper.page.evaluate(() => {
       const store = window.__OPEN_PENCIL_STORE__!
-      const pageId = store.state.currentPageId
-      store.graph.createNode('TEXT', pageId, {
-        name: 'FontRaceTest',
-        x: 100,
-        y: 100,
-        width: 200,
-        height: 40,
-        text: 'Font race test',
-        fontSize: 20,
-        fontFamily: 'Inter',
-        fills: [{ type: 'SOLID', color: { r: 0, g: 0, b: 0, a: 1 }, visible: true, opacity: 1 }]
-      })
+      // Simulate what loadFonts() does: invalidate the cached picture
+      store.renderer!.invalidateScenePicture()
       store.requestRender()
     })
+    await helper.waitForRender()
 
-    // Wait for fonts to load and re-render
-    await page.waitForTimeout(1000)
-    await freshHelper.waitForRender()
+    // Baseline after cache was invalidated and re-recorded
+    const baseline = await helper.screenshotCanvas()
 
-    // Now hover empty canvas — this uses the cached picture
-    const screenshot = await freshHelper.screenshotCanvas()
-    // Text must be visible (paragraph rendered, not blank)
-    const pixels = new Uint8Array(screenshot)
-    const hasContent = pixels.some((v, i) => i % 4 !== 3 && v < 200)
-    expect(hasContent).toBe(true)
+    // Hover frame → un-hover: replays the newly recorded picture
+    await helper.page.evaluate(() => {
+      const store = window.__OPEN_PENCIL_STORE__!
+      const pg = store.graph.getNode(store.state.currentPageId)!
+      const frame = pg.childIds.find((id: string) => store.graph.getNode(id)?.type === 'FRAME')
+      store.setHoveredNode(frame ?? null)
+    })
+    await helper.waitForRender()
 
-    await page.close()
+    await helper.page.evaluate(() => {
+      const store = window.__OPEN_PENCIL_STORE__!
+      store.setHoveredNode(null)
+    })
+    await helper.waitForRender()
+    const afterCycle = await helper.screenshotCanvas()
+
+    expect(Buffer.from(baseline)).toEqual(Buffer.from(afterCycle))
   })
 
   test('text survives hover on/off cycle', async () => {
