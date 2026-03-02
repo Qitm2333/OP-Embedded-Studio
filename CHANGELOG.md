@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- Right-click context menu on layers panel — same actions as the canvas context menu
+- Extract shared `NodeContextMenuContent` component to avoid menu duplication
+
+### Build
+
+- Auto-populate GitHub Release notes from CHANGELOG.md via `ffurrer2/extract-release-notes@v2`
+- Skip already-published npm versions on CI re-runs instead of failing
+
 ## [0.4.2] (2026-03-02)
 
 ### Fixes
