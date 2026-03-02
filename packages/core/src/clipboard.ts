@@ -1,13 +1,13 @@
 import { inflateSync, deflateSync } from 'fflate'
 
+import { BLACK } from './constants'
+import { styleToWeight } from './fonts'
 import {
   sceneNodeToKiwi,
   buildFigKiwi,
   parseFigKiwiChunks,
   decompressFigKiwiDataAsync
 } from './kiwi-serialize'
-import { BLACK } from './constants'
-import { styleToWeight } from './fonts'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
 import { decodeVectorNetworkBlob } from './vector'
@@ -105,10 +105,24 @@ function decodeVectorData(nc: KiwiNodeChange, blobs: Uint8Array[]): VectorNetwor
 }
 
 const NON_VISUAL_TYPES = new Set([
-  'DOCUMENT', 'CANVAS', 'VARIABLE_SET', 'VARIABLE', 'VARIABLE_COLLECTION',
-  'STYLE', 'STYLE_SET', 'INTERNAL_ONLY_NODE', 'WIDGET', 'STAMP', 'STICKY',
-  'SHAPE_WITH_TEXT', 'CONNECTOR', 'CODE_BLOCK', 'TABLE_NODE', 'TABLE_CELL',
-  'SECTION_OVERLAY', 'SLIDE',
+  'DOCUMENT',
+  'CANVAS',
+  'VARIABLE_SET',
+  'VARIABLE',
+  'VARIABLE_COLLECTION',
+  'STYLE',
+  'STYLE_SET',
+  'INTERNAL_ONLY_NODE',
+  'WIDGET',
+  'STAMP',
+  'STICKY',
+  'SHAPE_WITH_TEXT',
+  'CONNECTOR',
+  'CODE_BLOCK',
+  'TABLE_NODE',
+  'TABLE_CELL',
+  'SECTION_OVERLAY',
+  'SLIDE'
 ])
 
 export function figmaNodesBounds(
@@ -171,7 +185,11 @@ export function importClipboardNodes(
   for (const [id, nc] of guidMap) {
     if (NON_VISUAL_TYPES.has(nc.type ?? '')) continue
     const parentId = parentMap.get(id)
-    if (!parentId || !guidMap.has(parentId) || NON_VISUAL_TYPES.has(guidMap.get(parentId)?.type ?? '')) {
+    if (
+      !parentId ||
+      !guidMap.has(parentId) ||
+      NON_VISUAL_TYPES.has(guidMap.get(parentId)?.type ?? '')
+    ) {
       topLevel.push(id)
     }
   }
@@ -262,9 +280,7 @@ export function importClipboardNodes(
         (nc.stackPositioning as string) === 'ABSOLUTE' ? ('ABSOLUTE' as const) : ('AUTO' as const),
       layoutGrow: (nc.stackChildPrimaryGrow as number) ?? 0,
       layoutAlignSelf:
-        (nc.stackChildAlignSelf as string) === 'STRETCH'
-          ? ('STRETCH' as const)
-          : ('AUTO' as const),
+        (nc.stackChildAlignSelf as string) === 'STRETCH' ? ('STRETCH' as const) : ('AUTO' as const),
       clipsContent: nc.frameMaskDisabled === false,
       textAutoResize: 'NONE' as const,
       fontWeight: nc.fontWeight ?? styleToWeight(nc.fontName?.style ?? ''),
@@ -330,10 +346,7 @@ function mapCounterAlign(align?: string): LayoutCounterAlign {
   return 'MIN'
 }
 
-function mapLetterSpacing(
-  ls?: { value: number; units: string },
-  fontSize?: number
-): number {
+function mapLetterSpacing(ls?: { value: number; units: string }, fontSize?: number): number {
   if (!ls) return 0
   if (ls.units === 'PIXELS') return ls.value
   if (ls.units === 'PERCENT') return (ls.value / 100) * (fontSize ?? 14)

@@ -478,13 +478,7 @@ export class SceneGraph {
     const id = generateId()
     const defaultValue =
       value ??
-      (type === 'COLOR'
-        ? { ...BLACK }
-        : type === 'FLOAT'
-          ? 0
-          : type === 'BOOLEAN'
-            ? false
-            : '')
+      (type === 'COLOR' ? { ...BLACK } : type === 'FLOAT' ? 0 : type === 'BOOLEAN' ? false : '')
     const valuesByMode: Record<string, VariableValue> = {}
     for (const mode of collection.modes) {
       valuesByMode[mode.modeId] = structuredClone(defaultValue)
