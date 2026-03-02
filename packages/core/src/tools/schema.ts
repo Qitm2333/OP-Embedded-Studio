@@ -653,6 +653,951 @@ export const evalCode = defineTool({
   }
 })
 
+// ─── Granular set tools ───────────────────────────────────────
+
+export const setRotation = defineTool({
+  name: 'set_rotation',
+  description: 'Set rotation angle of a node in degrees.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    angle: { type: 'number', description: 'Rotation angle in degrees', required: true }
+  },
+  execute: (figma, { id, angle }) => {
+    const node = figma.getNodeById(id)
+    if (!node) return { error: `Node "${id}" not found` }
+    node.rotation = angle
+    return { id, rotation: angle }
+  }
+})
+
+export const setOpacity = defineTool({
+  name: 'set_opacity',
+  description: 'Set opacity of a node (0-1).',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    value: { type: 'number', description: 'Opacity (0-1)', required: true, min: 0, max: 1 }
+  },
+  execute: (figma, { id, value }) => {
+    const node = figma.getNodeById(id)
+    if (!node) return { error: `Node "${id}" not found` }
+    node.opacity = value
+    return { id, opacity: value }
+  }
+})
+
+export const setRadius = defineTool({
+  name: 'set_radius',
+  description: 'Set corner radius. Use individual corners for independent values.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    radius: { type: 'number', description: 'Corner radius for all corners', min: 0 },
+    top_left: { type: 'number', description: 'Top-left radius', min: 0 },
+    top_right: { type: 'number', description: 'Top-right radius', min: 0 },
+    bottom_right: { type: 'number', description: 'Bottom-right radius', min: 0 },
+    bottom_left: { type: 'number', description: 'Bottom-left radius', min: 0 }
+  },
+  execute: (figma, args) => {
+    const node = figma.getNodeById(args.id)
+    if (!node) return { error: `Node "${args.id}" not found` }
+    if (args.radius !== undefined) {
+      node.cornerRadius = args.radius
+    }
+    if (args.top_left !== undefined) node.topLeftRadius = args.top_left
+    if (args.top_right !== undefined) node.topRightRadius = args.top_right
+    if (args.bottom_right !== undefined) node.bottomRightRadius = args.bottom_right
+    if (args.bottom_left !== undefined) node.bottomLeftRadius = args.bottom_left
+    return { id: args.id, cornerRadius: node.cornerRadius }
+  }
+})
+
+export const setMinMax = defineTool({
+  name: 'set_minmax',
+  description: 'Set min/max width and height constraints on a node.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    min_width: { type: 'number', description: 'Minimum width', min: 0 },
+    max_width: { type: 'number', description: 'Maximum width', min: 0 },
+    min_height: { type: 'number', description: 'Minimum height', min: 0 },
+    max_height: { type: 'number', description: 'Maximum height', min: 0 }
+  },
+  execute: (figma, args) => {
+    const node = figma.getNodeById(args.id)
+    if (!node) return { error: `Node "${args.id}" not found` }
+    if (args.min_width !== undefined) node.minWidth = args.min_width
+    if (args.max_width !== undefined) node.maxWidth = args.max_width
+    if (args.min_height !== undefined) node.minHeight = args.min_height
+    if (args.max_height !== undefined) node.maxHeight = args.max_height
+    return {
+      id: args.id,
+      minWidth: node.minWidth,
+      maxWidth: node.maxWidth,
+      minHeight: node.minHeight,
+      maxHeight: node.maxHeight
+    }
+  }
+})
+
+export const setText = defineTool({
+  name: 'set_text',
+  description: 'Set text content of a text node.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    text: { type: 'string', description: 'Text content', required: true }
+  },
+  execute: (figma, { id, text }) => {
+    const node = figma.getNodeById(id)
+    if (!node) return { error: `Node "${id}" not found` }
+    node.characters = text
+    return { id, text }
+  }
+})
+
+export const setFont = defineTool({
+  name: 'set_font',
+  description: 'Set font properties of a text node.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    family: { type: 'string', description: 'Font family name' },
+    size: { type: 'number', description: 'Font size', min: 1 },
+    style: { type: 'string', description: 'Font style (e.g. "Bold", "Regular", "Bold Italic")' }
+  },
+  execute: (figma, args) => {
+    const node = figma.getNodeById(args.id)
+    if (!node) return { error: `Node "${args.id}" not found` }
+    if (args.size !== undefined) node.fontSize = args.size
+    if (args.family || args.style) {
+      const current = node.fontName
+      node.fontName = {
+        family: args.family ?? current.family,
+        style: args.style ?? current.style
+      }
+    }
+    return { id: args.id, fontName: node.fontName, fontSize: node.fontSize }
+  }
+})
+
+export const setFontRange = defineTool({
+  name: 'set_font_range',
+  description: 'Set font properties for a text range.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    start: { type: 'number', description: 'Start character index', required: true, min: 0 },
+    end: { type: 'number', description: 'End character index', required: true, min: 0 },
+    family: { type: 'string', description: 'Font family name' },
+    size: { type: 'number', description: 'Font size', min: 1 },
+    style: { type: 'string', description: 'Font style' },
+    color: { type: 'color', description: 'Text color (hex)' }
+  },
+  execute: (figma, args) => {
+    const node = figma.getNodeById(args.id)
+    if (!node) return { error: `Node "${args.id}" not found` }
+    const run: Record<string, unknown> = { start: args.start, end: args.end }
+    if (args.family) run.fontFamily = args.family
+    if (args.size) run.fontSize = args.size
+    if (args.style) run.fontStyle = args.style
+    if (args.color) run.color = parseColor(args.color)
+    figma.graph.updateNode(node.id, {
+      styleRuns: [...(figma.graph.getNode(node.id)?.styleRuns ?? []), run as any]
+    })
+    return { id: args.id, range: { start: args.start, end: args.end } }
+  }
+})
+
+export const setTextResize = defineTool({
+  name: 'set_text_resize',
+  description: 'Set text auto-resize mode.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    mode: {
+      type: 'string',
+      description: 'Resize mode',
+      required: true,
+      enum: ['NONE', 'WIDTH_AND_HEIGHT', 'HEIGHT', 'TRUNCATE']
+    }
+  },
+  execute: (figma, { id, mode }) => {
+    const node = figma.getNodeById(id)
+    if (!node) return { error: `Node "${id}" not found` }
+    node.textAutoResize = mode
+    return { id, textAutoResize: mode }
+  }
+})
+
+export const setVisible = defineTool({
+  name: 'set_visible',
+  description: 'Set visibility of a node.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    value: { type: 'boolean', description: 'Visible (true/false)', required: true }
+  },
+  execute: (figma, { id, value }) => {
+    const node = figma.getNodeById(id)
+    if (!node) return { error: `Node "${id}" not found` }
+    node.visible = value
+    return { id, visible: value }
+  }
+})
+
+export const setBlend = defineTool({
+  name: 'set_blend',
+  description: 'Set blend mode of a node.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    mode: {
+      type: 'string',
+      description: 'Blend mode',
+      required: true,
+      enum: [
+        'NORMAL',
+        'DARKEN',
+        'MULTIPLY',
+        'COLOR_BURN',
+        'LIGHTEN',
+        'SCREEN',
+        'COLOR_DODGE',
+        'OVERLAY',
+        'SOFT_LIGHT',
+        'HARD_LIGHT',
+        'DIFFERENCE',
+        'EXCLUSION',
+        'HUE',
+        'SATURATION',
+        'COLOR',
+        'LUMINOSITY'
+      ]
+    }
+  },
+  execute: (figma, { id, mode }) => {
+    const node = figma.getNodeById(id)
+    if (!node) return { error: `Node "${id}" not found` }
+    node.blendMode = mode
+    return { id, blendMode: mode }
+  }
+})
+
+export const setLocked = defineTool({
+  name: 'set_locked',
+  description: 'Set locked state of a node.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    value: { type: 'boolean', description: 'Locked (true/false)', required: true }
+  },
+  execute: (figma, { id, value }) => {
+    const node = figma.getNodeById(id)
+    if (!node) return { error: `Node "${id}" not found` }
+    node.locked = value
+    return { id, locked: value }
+  }
+})
+
+export const setStrokeAlign = defineTool({
+  name: 'set_stroke_align',
+  description: 'Set stroke alignment of a node.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    align: {
+      type: 'string',
+      description: 'Stroke alignment',
+      required: true,
+      enum: ['INSIDE', 'CENTER', 'OUTSIDE']
+    }
+  },
+  execute: (figma, { id, align }) => {
+    const node = figma.getNodeById(id)
+    if (!node) return { error: `Node "${id}" not found` }
+    node.strokeAlign = align
+    return { id, strokeAlign: align }
+  }
+})
+
+// ─── Node operation tools ─────────────────────────────────────
+
+export const nodeBounds = defineTool({
+  name: 'node_bounds',
+  description: 'Get absolute bounding box of a node.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true }
+  },
+  execute: (figma, { id }) => {
+    const node = figma.getNodeById(id)
+    if (!node) return { error: `Node "${id}" not found` }
+    return { id, bounds: node.absoluteBoundingBox }
+  }
+})
+
+export const nodeMove = defineTool({
+  name: 'node_move',
+  description: 'Move a node to new coordinates.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    x: { type: 'number', description: 'X position', required: true },
+    y: { type: 'number', description: 'Y position', required: true }
+  },
+  execute: (figma, { id, x, y }) => {
+    const node = figma.getNodeById(id)
+    if (!node) return { error: `Node "${id}" not found` }
+    node.x = x
+    node.y = y
+    return { id, x, y }
+  }
+})
+
+export const nodeResize = defineTool({
+  name: 'node_resize',
+  description: 'Resize a node.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    width: { type: 'number', description: 'Width', required: true, min: 1 },
+    height: { type: 'number', description: 'Height', required: true, min: 1 }
+  },
+  execute: (figma, { id, width, height }) => {
+    const node = figma.getNodeById(id)
+    if (!node) return { error: `Node "${id}" not found` }
+    node.resize(width, height)
+    return { id, width, height }
+  }
+})
+
+export const nodeAncestors = defineTool({
+  name: 'node_ancestors',
+  description: 'Get the ancestor chain from a node to the page root.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    depth: { type: 'number', description: 'Max depth to traverse' }
+  },
+  execute: (figma, args) => {
+    let node = figma.getNodeById(args.id)
+    if (!node) return { error: `Node "${args.id}" not found` }
+    const ancestors: { id: string; name: string; type: string }[] = []
+    let current = node.parent
+    let d = 0
+    while (current && (!args.depth || d < args.depth)) {
+      ancestors.push({ id: current.id, name: current.name, type: current.type })
+      current = current.parent
+      d++
+    }
+    return { id: args.id, ancestors }
+  }
+})
+
+export const nodeChildren = defineTool({
+  name: 'node_children',
+  description: 'Get direct children of a node.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true }
+  },
+  execute: (figma, { id }) => {
+    const node = figma.getNodeById(id)
+    if (!node) return { error: `Node "${id}" not found` }
+    return {
+      id,
+      children: node.children.map((c) => ({ id: c.id, name: c.name, type: c.type }))
+    }
+  }
+})
+
+export const nodeTree = defineTool({
+  name: 'node_tree',
+  description: 'Get a node tree with types and hierarchy.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    depth: { type: 'number', description: 'Max depth (default: unlimited)' }
+  },
+  execute: (figma, args) => {
+    const node = figma.getNodeById(args.id)
+    if (!node) return { error: `Node "${args.id}" not found` }
+    function buildTree(n: FigmaNodeProxy, d: number): Record<string, unknown> {
+      const result: Record<string, unknown> = { id: n.id, name: n.name, type: n.type }
+      if (args.depth === undefined || d < args.depth) {
+        const kids = n.children
+        if (kids.length > 0) result.children = kids.map((c) => buildTree(c, d + 1))
+      }
+      return result
+    }
+    return buildTree(node, 0)
+  }
+})
+
+export const nodeBindings = defineTool({
+  name: 'node_bindings',
+  description: 'Get variable bindings for a node.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true }
+  },
+  execute: (figma, { id }) => {
+    const raw = figma.graph.getNode(id)
+    if (!raw) return { error: `Node "${id}" not found` }
+    return { id, bindings: raw.boundVariables }
+  }
+})
+
+export const nodeReplaceWith = defineTool({
+  name: 'node_replace_with',
+  description: 'Replace a node with JSX content.',
+  params: {
+    id: { type: 'string', description: 'Node ID to replace', required: true },
+    jsx: { type: 'string', description: 'JSX string for the replacement', required: true }
+  },
+  execute: async (figma, args) => {
+    const node = figma.getNodeById(args.id)
+    if (!node) return { error: `Node "${args.id}" not found` }
+    const parentId = node.parent?.id ?? figma.currentPageId
+    const x = node.x
+    const y = node.y
+    node.remove()
+    const { renderJsx } = await import('../render/render-jsx')
+    const result = await renderJsx(figma.graph, args.jsx, { parentId, x, y })
+    return { id: result.id, name: result.name, type: result.type }
+  }
+})
+
+// ─── Variable CRUD tools ──────────────────────────────────────
+
+export const getVariable = defineTool({
+  name: 'get_variable',
+  description: 'Get a variable by ID.',
+  params: {
+    id: { type: 'string', description: 'Variable ID', required: true }
+  },
+  execute: (figma, { id }) => {
+    const v = figma.getVariableById(id)
+    if (!v) return { error: `Variable "${id}" not found` }
+    return v
+  }
+})
+
+export const findVariables = defineTool({
+  name: 'find_variables',
+  description: 'Find variables by name pattern.',
+  params: {
+    query: { type: 'string', description: 'Name substring (case-insensitive)', required: true },
+    type: {
+      type: 'string',
+      description: 'Filter by type',
+      enum: ['COLOR', 'FLOAT', 'STRING', 'BOOLEAN']
+    }
+  },
+  execute: (figma, args) => {
+    let vars = figma.getLocalVariables(args.type)
+    vars = vars.filter((v) => v.name.toLowerCase().includes(args.query.toLowerCase()))
+    return { count: vars.length, variables: vars }
+  }
+})
+
+export const createVariable = defineTool({
+  name: 'create_variable',
+  description: 'Create a new variable in a collection.',
+  params: {
+    name: { type: 'string', description: 'Variable name', required: true },
+    type: {
+      type: 'string',
+      description: 'Variable type',
+      required: true,
+      enum: ['COLOR', 'FLOAT', 'STRING', 'BOOLEAN']
+    },
+    collection_id: { type: 'string', description: 'Collection ID', required: true },
+    value: { type: 'string', description: 'Initial value (hex for COLOR, number for FLOAT, etc.)' }
+  },
+  execute: (figma, args) => {
+    let parsedValue: unknown
+    if (args.value !== undefined) {
+      if (args.type === 'COLOR') parsedValue = parseColor(args.value)
+      else if (args.type === 'FLOAT') parsedValue = Number(args.value)
+      else if (args.type === 'BOOLEAN') parsedValue = args.value === 'true'
+      else parsedValue = args.value
+    }
+    const v = figma.createVariable(
+      args.name,
+      args.type as any,
+      args.collection_id,
+      parsedValue as any
+    )
+    return v
+  }
+})
+
+export const setVariable = defineTool({
+  name: 'set_variable',
+  description: 'Set the value of a variable for a specific mode.',
+  params: {
+    id: { type: 'string', description: 'Variable ID', required: true },
+    mode: { type: 'string', description: 'Mode ID', required: true },
+    value: {
+      type: 'string',
+      description: 'Value (hex for COLOR, number for FLOAT, etc.)',
+      required: true
+    }
+  },
+  execute: (figma, args) => {
+    const v = figma.getVariableById(args.id)
+    if (!v) return { error: `Variable "${args.id}" not found` }
+    let parsedValue: unknown
+    if (v.type === 'COLOR') parsedValue = parseColor(args.value)
+    else if (v.type === 'FLOAT') parsedValue = Number(args.value)
+    else if (v.type === 'BOOLEAN') parsedValue = args.value === 'true'
+    else parsedValue = args.value
+    figma.setVariableValue(args.id, args.mode, parsedValue as any)
+    return { id: args.id, mode: args.mode, value: parsedValue }
+  }
+})
+
+export const deleteVariable = defineTool({
+  name: 'delete_variable',
+  description: 'Delete a variable.',
+  params: {
+    id: { type: 'string', description: 'Variable ID', required: true }
+  },
+  execute: (figma, { id }) => {
+    figma.deleteVariable(id)
+    return { deleted: id }
+  }
+})
+
+export const bindVariable = defineTool({
+  name: 'bind_variable',
+  description: 'Bind a variable to a node property (fills, strokes, opacity, width, height, etc.).',
+  params: {
+    node_id: { type: 'string', description: 'Node ID', required: true },
+    field: {
+      type: 'string',
+      description: 'Property field (fills, strokes, opacity, width, height, etc.)',
+      required: true
+    },
+    variable_id: { type: 'string', description: 'Variable ID', required: true }
+  },
+  execute: (figma, args) => {
+    const node = figma.getNodeById(args.node_id)
+    if (!node) return { error: `Node "${args.node_id}" not found` }
+    const v = figma.getVariableById(args.variable_id)
+    if (!v) return { error: `Variable "${args.variable_id}" not found` }
+    figma.bindVariable(args.node_id, args.field, args.variable_id)
+    return { node_id: args.node_id, field: args.field, variable_id: args.variable_id }
+  }
+})
+
+// ─── Collection CRUD tools ────────────────────────────────────
+
+export const getCollection = defineTool({
+  name: 'get_collection',
+  description: 'Get a variable collection by ID.',
+  params: {
+    id: { type: 'string', description: 'Collection ID', required: true }
+  },
+  execute: (figma, { id }) => {
+    const c = figma.getVariableCollectionById(id)
+    if (!c) return { error: `Collection "${id}" not found` }
+    return c
+  }
+})
+
+export const createCollection = defineTool({
+  name: 'create_collection',
+  description: 'Create a new variable collection.',
+  params: {
+    name: { type: 'string', description: 'Collection name', required: true }
+  },
+  execute: (figma, { name }) => {
+    return figma.createVariableCollection(name)
+  }
+})
+
+export const deleteCollection = defineTool({
+  name: 'delete_collection',
+  description: 'Delete a variable collection and all its variables.',
+  params: {
+    id: { type: 'string', description: 'Collection ID', required: true }
+  },
+  execute: (figma, { id }) => {
+    figma.deleteVariableCollection(id)
+    return { deleted: id }
+  }
+})
+
+// ─── Boolean operation tools ──────────────────────────────────
+
+export const booleanUnion = defineTool({
+  name: 'boolean_union',
+  description: 'Union (combine) multiple nodes.',
+  params: {
+    ids: { type: 'string[]', description: 'Node IDs to union', required: true }
+  },
+  execute: (figma, { ids }) => {
+    const result = figma.booleanOperation('UNION', ids)
+    return nodeSummary(result)
+  }
+})
+
+export const booleanSubtract = defineTool({
+  name: 'boolean_subtract',
+  description: 'Subtract the second node from the first.',
+  params: {
+    ids: { type: 'string[]', description: 'Node IDs (first minus rest)', required: true }
+  },
+  execute: (figma, { ids }) => {
+    const result = figma.booleanOperation('SUBTRACT', ids)
+    return nodeSummary(result)
+  }
+})
+
+export const booleanIntersect = defineTool({
+  name: 'boolean_intersect',
+  description: 'Intersect multiple nodes.',
+  params: {
+    ids: { type: 'string[]', description: 'Node IDs to intersect', required: true }
+  },
+  execute: (figma, { ids }) => {
+    const result = figma.booleanOperation('INTERSECT', ids)
+    return nodeSummary(result)
+  }
+})
+
+export const booleanExclude = defineTool({
+  name: 'boolean_exclude',
+  description: 'Exclude (XOR) multiple nodes.',
+  params: {
+    ids: { type: 'string[]', description: 'Node IDs to exclude', required: true }
+  },
+  execute: (figma, { ids }) => {
+    const result = figma.booleanOperation('EXCLUDE', ids)
+    return nodeSummary(result)
+  }
+})
+
+// ─── Vector path tools ────────────────────────────────────────
+
+export const pathGet = defineTool({
+  name: 'path_get',
+  description: 'Get vector path data of a node.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true }
+  },
+  execute: (figma, { id }) => {
+    const raw = figma.graph.getNode(id)
+    if (!raw) return { error: `Node "${id}" not found` }
+    if (!raw.vectorNetwork) return { error: `Node "${id}" has no vector data` }
+    return { id, vectorNetwork: raw.vectorNetwork }
+  }
+})
+
+export const pathSet = defineTool({
+  name: 'path_set',
+  description: 'Set vector path data on a node. Provide a VectorNetwork JSON.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    path: { type: 'string', description: 'VectorNetwork JSON', required: true }
+  },
+  execute: (figma, args) => {
+    const raw = figma.graph.getNode(args.id)
+    if (!raw) return { error: `Node "${args.id}" not found` }
+    const network = JSON.parse(args.path)
+    figma.graph.updateNode(args.id, { vectorNetwork: network } as any)
+    return { id: args.id }
+  }
+})
+
+export const pathScale = defineTool({
+  name: 'path_scale',
+  description: 'Scale vector path from center.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    factor: { type: 'number', description: 'Scale factor (e.g. 2 for double)', required: true }
+  },
+  execute: (figma, { id, factor }) => {
+    const raw = figma.graph.getNode(id)
+    if (!raw) return { error: `Node "${id}" not found` }
+    if (!raw.vectorNetwork) return { error: `Node "${id}" has no vector data` }
+    const vn = structuredClone(raw.vectorNetwork)
+    const cx = raw.width / 2
+    const cy = raw.height / 2
+    for (const v of vn.vertices) {
+      v.x = cx + (v.x - cx) * factor
+      v.y = cy + (v.y - cy) * factor
+    }
+    for (const s of vn.segments) {
+      if (s.tangentStart) {
+        s.tangentStart.x *= factor
+        s.tangentStart.y *= factor
+      }
+      if (s.tangentEnd) {
+        s.tangentEnd.x *= factor
+        s.tangentEnd.y *= factor
+      }
+    }
+    figma.graph.updateNode(id, { vectorNetwork: vn } as any)
+    return { id, factor }
+  }
+})
+
+export const pathFlip = defineTool({
+  name: 'path_flip',
+  description: 'Flip vector path horizontally or vertically.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    axis: {
+      type: 'string',
+      description: 'Flip axis',
+      required: true,
+      enum: ['horizontal', 'vertical']
+    }
+  },
+  execute: (figma, { id, axis }) => {
+    const raw = figma.graph.getNode(id)
+    if (!raw) return { error: `Node "${id}" not found` }
+    if (!raw.vectorNetwork) return { error: `Node "${id}" has no vector data` }
+    const vn = structuredClone(raw.vectorNetwork)
+    const w = raw.width
+    const h = raw.height
+    for (const v of vn.vertices) {
+      if (axis === 'horizontal') v.x = w - v.x
+      else v.y = h - v.y
+    }
+    for (const s of vn.segments) {
+      if (s.tangentStart) {
+        if (axis === 'horizontal') s.tangentStart.x = -s.tangentStart.x
+        else s.tangentStart.y = -s.tangentStart.y
+      }
+      if (s.tangentEnd) {
+        if (axis === 'horizontal') s.tangentEnd.x = -s.tangentEnd.x
+        else s.tangentEnd.y = -s.tangentEnd.y
+      }
+    }
+    figma.graph.updateNode(id, { vectorNetwork: vn } as any)
+    return { id, axis }
+  }
+})
+
+export const pathMove = defineTool({
+  name: 'path_move',
+  description: 'Move all path points by an offset.',
+  params: {
+    id: { type: 'string', description: 'Node ID', required: true },
+    dx: { type: 'number', description: 'X offset', required: true },
+    dy: { type: 'number', description: 'Y offset', required: true }
+  },
+  execute: (figma, { id, dx, dy }) => {
+    const raw = figma.graph.getNode(id)
+    if (!raw) return { error: `Node "${id}" not found` }
+    if (!raw.vectorNetwork) return { error: `Node "${id}" has no vector data` }
+    const vn = structuredClone(raw.vectorNetwork)
+    for (const v of vn.vertices) {
+      v.x += dx
+      v.y += dy
+    }
+    figma.graph.updateNode(id, { vectorNetwork: vn } as any)
+    return { id, dx, dy }
+  }
+})
+
+// ─── Create tools (specific shapes) ──────────────────────────
+
+export const createPage = defineTool({
+  name: 'create_page',
+  description: 'Create a new page.',
+  params: {
+    name: { type: 'string', description: 'Page name', required: true }
+  },
+  execute: (figma, { name }) => {
+    const page = figma.createPage()
+    page.name = name
+    return { id: page.id, name }
+  }
+})
+
+export const createVector = defineTool({
+  name: 'create_vector',
+  description: 'Create a vector node with optional path data.',
+  params: {
+    x: { type: 'number', description: 'X position', required: true },
+    y: { type: 'number', description: 'Y position', required: true },
+    name: { type: 'string', description: 'Node name' },
+    path: { type: 'string', description: 'VectorNetwork JSON' },
+    fill: { type: 'color', description: 'Fill color (hex)' },
+    stroke: { type: 'color', description: 'Stroke color (hex)' },
+    stroke_weight: { type: 'number', description: 'Stroke weight' },
+    parent_id: { type: 'string', description: 'Parent node ID' }
+  },
+  execute: (figma, args) => {
+    const node = figma.createVector()
+    node.x = args.x
+    node.y = args.y
+    if (args.name) node.name = args.name
+    if (args.path) {
+      figma.graph.updateNode(node.id, { vectorNetwork: JSON.parse(args.path) } as any)
+    }
+    if (args.fill) {
+      node.fills = [{ type: 'SOLID', color: parseColor(args.fill), opacity: 1, visible: true }]
+    }
+    if (args.stroke) {
+      node.strokes = [
+        {
+          color: parseColor(args.stroke),
+          weight: args.stroke_weight ?? 1,
+          opacity: 1,
+          visible: true,
+          align: 'CENTER'
+        }
+      ]
+    }
+    if (args.parent_id) {
+      const parent = figma.getNodeById(args.parent_id)
+      if (parent) parent.appendChild(node)
+    }
+    return nodeSummary(node)
+  }
+})
+
+export const createSlice = defineTool({
+  name: 'create_slice',
+  description: 'Create a slice (export region) on the canvas.',
+  params: {
+    x: { type: 'number', description: 'X position', required: true },
+    y: { type: 'number', description: 'Y position', required: true },
+    width: { type: 'number', description: 'Width', required: true, min: 1 },
+    height: { type: 'number', description: 'Height', required: true, min: 1 },
+    name: { type: 'string', description: 'Slice name' },
+    parent_id: { type: 'string', description: 'Parent node ID' }
+  },
+  execute: (figma, args) => {
+    const node = figma.createFrame()
+    node.x = args.x
+    node.y = args.y
+    node.resize(args.width, args.height)
+    node.name = args.name ?? 'Slice'
+    node.fills = []
+    if (args.parent_id) {
+      const parent = figma.getNodeById(args.parent_id)
+      if (parent) parent.appendChild(node)
+    }
+    return nodeSummary(node)
+  }
+})
+
+// ─── Group tools ──────────────────────────────────────────────
+
+export const flattenNodes = defineTool({
+  name: 'flatten_nodes',
+  description: 'Flatten nodes into a single vector.',
+  params: {
+    ids: { type: 'string[]', description: 'Node IDs to flatten', required: true }
+  },
+  execute: (figma, { ids }) => {
+    const result = figma.flattenNode(ids)
+    return nodeSummary(result)
+  }
+})
+
+// ─── Viewport tools ───────────────────────────────────────────
+
+export const viewportGet = defineTool({
+  name: 'viewport_get',
+  description: 'Get current viewport position and zoom level.',
+  params: {},
+  execute: (figma) => {
+    return figma.viewport
+  }
+})
+
+export const viewportSet = defineTool({
+  name: 'viewport_set',
+  description: 'Set viewport position and zoom.',
+  params: {
+    x: { type: 'number', description: 'Center X', required: true },
+    y: { type: 'number', description: 'Center Y', required: true },
+    zoom: { type: 'number', description: 'Zoom level', required: true, min: 0.01 }
+  },
+  execute: (figma, { x, y, zoom }) => {
+    figma.viewport = { center: { x, y }, zoom }
+    return { x, y, zoom }
+  }
+})
+
+export const viewportZoomToFit = defineTool({
+  name: 'viewport_zoom_to_fit',
+  description: 'Zoom viewport to fit specified nodes.',
+  params: {
+    ids: { type: 'string[]', description: 'Node IDs to fit in view', required: true }
+  },
+  execute: (figma, { ids }) => {
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+    for (const id of ids) {
+      const node = figma.getNodeById(id)
+      if (!node) continue
+      const bounds = node.absoluteBoundingBox
+      minX = Math.min(minX, bounds.x)
+      minY = Math.min(minY, bounds.y)
+      maxX = Math.max(maxX, bounds.x + bounds.width)
+      maxY = Math.max(maxY, bounds.y + bounds.height)
+    }
+    if (minX === Infinity) return { error: 'No valid nodes found' }
+    const cx = (minX + maxX) / 2
+    const cy = (minY + maxY) / 2
+    figma.viewport = { center: { x: cx, y: cy }, zoom: 1 }
+    return {
+      center: { x: cx, y: cy },
+      bounds: { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+    }
+  }
+})
+
+export const pageBounds = defineTool({
+  name: 'page_bounds',
+  description: 'Get bounding box of all objects on the current page.',
+  params: {},
+  execute: (figma) => {
+    const page = figma.currentPage
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+    for (const child of page.children) {
+      const bounds = child.absoluteBoundingBox
+      minX = Math.min(minX, bounds.x)
+      minY = Math.min(minY, bounds.y)
+      maxX = Math.max(maxX, bounds.x + bounds.width)
+      maxY = Math.max(maxY, bounds.y + bounds.height)
+    }
+    if (minX === Infinity) return { x: 0, y: 0, width: 0, height: 0 }
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+  }
+})
+
+// ─── Font tools ───────────────────────────────────────────────
+
+export const listFonts = defineTool({
+  name: 'list_fonts',
+  description: 'List fonts used in the current page.',
+  params: {
+    family: { type: 'string', description: 'Filter by family name (substring)' }
+  },
+  execute: (figma, args) => {
+    const fonts = new Map<string, Set<number>>()
+    const page = figma.currentPage
+    page.findAll((node) => {
+      if (node.type === 'TEXT') {
+        const raw = figma.graph.getNode(node.id)
+        if (raw) {
+          const key = raw.fontFamily
+          if (!fonts.has(key)) fonts.set(key, new Set())
+          fonts.get(key)!.add(raw.fontWeight)
+        }
+      }
+      return false
+    })
+    let result = [...fonts.entries()].map(([family, weights]) => ({
+      family,
+      weights: [...weights].sort()
+    }))
+    if (args.family) {
+      const q = args.family.toLowerCase()
+      result = result.filter((f) => f.family.toLowerCase().includes(q))
+    }
+    return { count: result.length, fonts: result }
+  }
+})
+
 // ─── Registry ─────────────────────────────────────────────────
 
 export const ALL_TOOLS: ToolDef[] = [
@@ -681,5 +1626,62 @@ export const ALL_TOOLS: ToolDef[] = [
   switchPage,
   listVariables,
   listCollections,
-  evalCode
+  evalCode,
+  // Granular set tools
+  setRotation,
+  setOpacity,
+  setRadius,
+  setMinMax,
+  setText,
+  setFont,
+  setFontRange,
+  setTextResize,
+  setVisible,
+  setBlend,
+  setLocked,
+  setStrokeAlign,
+  // Node operations
+  nodeBounds,
+  nodeMove,
+  nodeResize,
+  nodeAncestors,
+  nodeChildren,
+  nodeTree,
+  nodeBindings,
+  nodeReplaceWith,
+  // Variable CRUD
+  getVariable,
+  findVariables,
+  createVariable,
+  setVariable,
+  deleteVariable,
+  bindVariable,
+  // Collection CRUD
+  getCollection,
+  createCollection,
+  deleteCollection,
+  // Boolean operations
+  booleanUnion,
+  booleanSubtract,
+  booleanIntersect,
+  booleanExclude,
+  // Vector path tools
+  pathGet,
+  pathSet,
+  pathScale,
+  pathFlip,
+  pathMove,
+  // Create tools
+  createPage,
+  createVector,
+  createSlice,
+  // Group tools
+  flattenNodes,
+  // Viewport tools
+  viewportGet,
+  viewportSet,
+  viewportZoomToFit,
+  pageBounds,
+  // Font tools
+  listFonts
 ]

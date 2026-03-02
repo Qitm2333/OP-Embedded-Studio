@@ -4,6 +4,7 @@ export * from './constants'
 
 export {
   SceneGraph,
+  generateId,
   type SceneNode,
   type NodeType,
   type Fill,
