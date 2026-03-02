@@ -1,4 +1,4 @@
-import { DEFAULT_STROKE_MITER_LIMIT } from './constants'
+import { BLACK, DEFAULT_STROKE_MITER_LIMIT } from './constants'
 
 export type { GUID, Color } from './types'
 
@@ -295,7 +295,7 @@ export interface VariableCollection {
 
 let nextLocalID = 1
 
-function generateId(): string {
+export function generateId(): string {
   return `0:${nextLocalID++}`
 }
 
@@ -465,6 +465,49 @@ export class SceneGraph {
     if (!this.activeMode.has(collection.id)) {
       this.activeMode.set(collection.id, collection.defaultModeId)
     }
+  }
+
+  createVariable(
+    name: string,
+    type: VariableType,
+    collectionId: string,
+    value?: VariableValue
+  ): Variable {
+    const collection = this.variableCollections.get(collectionId)
+    if (!collection) throw new Error(`Collection "${collectionId}" not found`)
+    const id = generateId()
+    const defaultValue =
+      value ??
+      (type === 'COLOR' ? { ...BLACK } : type === 'FLOAT' ? 0 : type === 'BOOLEAN' ? false : '')
+    const valuesByMode: Record<string, VariableValue> = {}
+    for (const mode of collection.modes) {
+      valuesByMode[mode.modeId] = structuredClone(defaultValue)
+    }
+    const variable: Variable = {
+      id,
+      name,
+      type,
+      collectionId,
+      valuesByMode,
+      description: '',
+      hiddenFromPublishing: false
+    }
+    this.addVariable(variable)
+    return variable
+  }
+
+  createCollection(name: string): VariableCollection {
+    const id = generateId()
+    const modeId = generateId()
+    const collection: VariableCollection = {
+      id,
+      name,
+      modes: [{ modeId, name: 'Mode 1' }],
+      defaultModeId: modeId,
+      variableIds: []
+    }
+    this.addCollection(collection)
+    return collection
   }
 
   removeCollection(id: string): void {

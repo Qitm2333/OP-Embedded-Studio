@@ -1,6 +1,6 @@
 import { zipSync, deflateSync } from 'fflate'
 
-import { IS_TAURI } from './constants'
+import { CANVAS_BG_COLOR, IS_TAURI } from './constants'
 import { sceneNodeToKiwi, fractionalPosition, buildFigKiwi } from './kiwi-serialize'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { renderThumbnail } from './render-image'
@@ -72,7 +72,7 @@ export async function exportFigFile(
       strokeAlign: 'CENTER',
       strokeJoin: 'MITER',
       backgroundOpacity: 1,
-      backgroundColor: { r: 0.96, g: 0.96, b: 0.96, a: 1 },
+      backgroundColor: { ...CANVAS_BG_COLOR },
       backgroundEnabled: true
     })
 

@@ -2083,7 +2083,6 @@ export class SkiaRenderer {
       canvas.drawCircle(v.x, v.y, radius, vertexFill)
       canvas.drawCircle(v.x, v.y, radius, vertexStroke)
     }
-
   }
 
   // --- Remote Cursors ---
@@ -2330,7 +2329,6 @@ export class SkiaRenderer {
         sy2,
         'vertical'
       )
-
     }
   }
 

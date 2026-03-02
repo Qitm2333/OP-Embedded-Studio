@@ -8,7 +8,9 @@ import type {
   Effect,
   LayoutMode,
   Variable,
-  VariableCollection
+  VariableCollection,
+  VariableType,
+  VariableValue
 } from './scene-graph'
 import type { Rect } from './types'
 
@@ -1161,6 +1163,100 @@ export class FigmaAPI {
 
   getVariableCollectionById(id: string): VariableCollection | null {
     return this.graph.variableCollections.get(id) ?? null
+  }
+
+  // --- Variable/Collection CRUD ---
+
+  createVariable(
+    name: string,
+    type: VariableType,
+    collectionId: string,
+    value?: VariableValue
+  ): Variable {
+    return this.graph.createVariable(name, type, collectionId, value)
+  }
+
+  setVariableValue(variableId: string, modeId: string, value: VariableValue): void {
+    const variable = this.graph.variables.get(variableId)
+    if (!variable) throw new Error(`Variable "${variableId}" not found`)
+    variable.valuesByMode[modeId] = value
+  }
+
+  deleteVariable(id: string): void {
+    this.graph.removeVariable(id)
+  }
+
+  createVariableCollection(name: string): VariableCollection {
+    return this.graph.createCollection(name)
+  }
+
+  deleteVariableCollection(id: string): void {
+    this.graph.removeCollection(id)
+  }
+
+  bindVariable(nodeId: string, field: string, variableId: string): void {
+    this.graph.bindVariable(nodeId, field, variableId)
+  }
+
+  unbindVariable(nodeId: string, field: string): void {
+    this.graph.unbindVariable(nodeId, field)
+  }
+
+  // --- Boolean Operations ---
+
+  booleanOperation(
+    operation: 'UNION' | 'SUBTRACT' | 'INTERSECT' | 'EXCLUDE',
+    nodeIds: string[]
+  ): FigmaNodeProxy {
+    if (nodeIds.length < 2) throw new Error('Need at least 2 nodes for boolean operation')
+    const nodes = nodeIds.map((id) => this.graph.getNode(id))
+    if (nodes.some((n) => !n)) throw new Error('One or more nodes not found')
+    const first = nodes[0]!
+    const parentId = first.parentId ?? this._currentPageId
+    const group = this.graph.createNode('GROUP', parentId, {
+      name: `Boolean ${operation.toLowerCase()}`,
+      x: first.x,
+      y: first.y,
+      width: first.width,
+      height: first.height
+    })
+    for (const id of nodeIds) {
+      this.graph.reparentNode(id, group.id)
+    }
+    return this.wrapNode(group.id)
+  }
+
+  // --- Flatten ---
+
+  flattenNode(nodeIds: string[]): FigmaNodeProxy {
+    if (nodeIds.length === 0) throw new Error('Need at least 1 node to flatten')
+    const first = this.graph.getNode(nodeIds[0])
+    if (!first) throw new Error('Node not found')
+    const parentId = first.parentId ?? this._currentPageId
+    const vector = this.graph.createNode('VECTOR', parentId, {
+      name: 'Flatten',
+      x: first.x,
+      y: first.y,
+      width: first.width,
+      height: first.height,
+      fills: structuredClone(first.fills)
+    })
+    for (const id of nodeIds) {
+      this.graph.deleteNode(id)
+    }
+    return this.wrapNode(vector.id)
+  }
+
+  // --- Viewport ---
+
+  private _viewport = { x: 0, y: 0, zoom: 1 }
+
+  get viewport(): { center: { x: number; y: number }; zoom: number } {
+    return { center: { x: this._viewport.x, y: this._viewport.y }, zoom: this._viewport.zoom }
+  }
+
+  set viewport(v: { center: { x: number; y: number }; zoom: number }) {
+    this._viewport = { x: v.center.x, y: v.center.y, zoom: v.zoom }
   }
 
   // --- Stubs ---
