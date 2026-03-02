@@ -1573,6 +1573,18 @@ export function createEditorStore() {
     clipboardData.setData('text/plain', names)
   }
 
+  function collectSubtrees(g: SceneGraph, rootIds: string[]): SceneNode[] {
+    const result: SceneNode[] = []
+    function walk(id: string) {
+      const node = g.getNode(id)
+      if (!node) return
+      result.push({ ...node })
+      for (const childId of node.childIds) walk(childId)
+    }
+    for (const id of rootIds) walk(id)
+    return result
+  }
+
   function pasteFromHTML(html: string) {
     const ownNodes = parseOpenPencilClipboard(html)
     if (ownNodes) {
@@ -1588,6 +1600,7 @@ export function createEditorStore() {
         const offsetX = bounds ? viewCenterX - (bounds.x + bounds.w / 2) : 0
         const offsetY = bounds ? viewCenterY - (bounds.y + bounds.h / 2) : 0
 
+        const prevSelection = new Set(state.selectedIds)
         const created = importClipboardNodes(
           figma.nodes,
           graph,
@@ -1599,6 +1612,26 @@ export function createEditorStore() {
         if (created.length > 0) {
           computeAllLayouts(graph)
           state.selectedIds = new Set(created)
+
+          const allNodes = collectSubtrees(graph, created)
+          const pageId = state.currentPageId
+          undo.push({
+            label: 'Paste',
+            forward: () => {
+              for (const snapshot of allNodes) {
+                graph.createNode(snapshot.type, snapshot.parentId ?? pageId, snapshot)
+              }
+              computeAllLayouts(graph)
+              state.selectedIds = new Set(created)
+              requestRender()
+            },
+            inverse: () => {
+              for (const id of [...created].reverse()) graph.deleteNode(id)
+              computeAllLayouts(graph)
+              state.selectedIds = prevSelection
+              requestRender()
+            }
+          })
           requestRender()
         }
       }

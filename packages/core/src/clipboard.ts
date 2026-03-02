@@ -265,11 +265,14 @@ export function importClipboardNodes(
           ? ('STRETCH' as const)
           : ('AUTO' as const),
       clipsContent: nc.frameMaskDisabled === false,
-      textAutoResize: mapTextAutoResize(nc.textAutoResize as string),
+      textAutoResize: 'NONE' as const,
       fontWeight: nc.fontWeight ?? styleToWeight(nc.fontName?.style ?? ''),
       italic: nc.fontName?.style?.toLowerCase().includes('italic') ?? false,
       lineHeight: mapLineHeight(nc.lineHeight as { value: number; units: string } | undefined),
-      letterSpacing: nc.letterSpacing ?? 0,
+      letterSpacing: mapLetterSpacing(
+        nc.letterSpacing as { value: number; units: string } | undefined,
+        nc.fontSize as number | undefined
+      ),
       vectorNetwork: decodeVectorData(nc, blobs)
     })
 
@@ -326,11 +329,14 @@ function mapCounterAlign(align?: string): LayoutCounterAlign {
   return 'MIN'
 }
 
-function mapTextAutoResize(resize?: string): 'NONE' | 'HEIGHT' | 'WIDTH_AND_HEIGHT' | 'TRUNCATE' {
-  if (resize === 'HEIGHT') return 'HEIGHT'
-  if (resize === 'WIDTH_AND_HEIGHT') return 'WIDTH_AND_HEIGHT'
-  if (resize === 'TRUNCATE') return 'TRUNCATE'
-  return 'NONE'
+function mapLetterSpacing(
+  ls?: { value: number; units: string },
+  fontSize?: number
+): number {
+  if (!ls) return 0
+  if (ls.units === 'PIXELS') return ls.value
+  if (ls.units === 'PERCENT') return (ls.value / 100) * (fontSize ?? 14)
+  return 0
 }
 
 function mapLineHeight(lh?: { value: number; units: string }): number | undefined {
