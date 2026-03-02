@@ -297,6 +297,13 @@ export class SkiaRenderer {
     }
 
     this.fontsLoaded = true
+    this.invalidateScenePicture()
+  }
+
+  invalidateScenePicture(): void {
+    this.scenePicture?.delete()
+    this.scenePicture = null
+    this.scenePictureVersion = -1
   }
 
   hitTestSectionTitle(graph: SceneGraph, canvasX: number, canvasY: number): SceneNode | null {
