@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- Multi-file tabs — open multiple documents in tabs within a single window
+- Tab bar with close buttons, middle-click to close, and new tab (+) button
+- Keyboard shortcuts: ⌘N/⌘T new tab, ⌘W close tab, ⌘O opens in new tab
+- Native Tauri menu: File → New and File → Close Tab wired to tab actions
+
+### Fixes
+
+- Fix clipboard "Outside int range" error — `pasteID` used unsigned int exceeding Kiwi's signed 32-bit field
+- Error toasts are now sticky (don't auto-dismiss), with selectable text, copy button, and close button
+
+### Tests
+
+- Clipboard roundtrip tests: encode to Figma Kiwi binary → decode → verify
+
 ## [0.4.2] (2026-03-02)
 
 ### Fixes
