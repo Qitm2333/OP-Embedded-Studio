@@ -104,6 +104,7 @@
         "openpencil-mcp-http": "./src/http.ts",
       },
       "dependencies": {
+        "@hono/node-server": "^1.19.9",
         "@modelcontextprotocol/sdk": "^1.25.2",
         "@open-pencil/core": "workspace:*",
         "canvaskit-wasm": "^0.40.0",

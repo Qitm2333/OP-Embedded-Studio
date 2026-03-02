@@ -58,7 +58,8 @@ export function createServer(version: string): McpServer {
       shape[key] = paramToZod(param)
     }
 
-    server.registerTool(def.name, { description: def.description, inputSchema: z.object(shape) }, async (args) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic schema from ToolDef params
+    server.registerTool(def.name, { description: def.description, inputSchema: z.object(shape) } as any, async (args: any) => {
       try {
         const result = await def.execute(makeFigma(), args as Record<string, unknown>)
         return ok(result)
@@ -68,13 +69,14 @@ export function createServer(version: string): McpServer {
     })
   }
 
-  server.registerTool(
+  const register = server.registerTool.bind(server) as (...args: unknown[]) => void
+  register(
     'open_file',
     {
       description: 'Open a .fig file for editing. Must be called before using other tools.',
       inputSchema: z.object({ path: z.string().describe('Absolute path to a .fig file') })
     },
-    async ({ path: filePath }) => {
+    async ({ path: filePath }: { path: string }) => {
       try {
         const buf = await readFile(filePath)
         graph = await parseFigFile(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength))
@@ -88,13 +90,13 @@ export function createServer(version: string): McpServer {
     }
   )
 
-  server.registerTool(
+  register(
     'save_file',
     {
       description: 'Save the current document to a .fig file.',
       inputSchema: z.object({ path: z.string().describe('Absolute path to save the .fig file') })
     },
-    async ({ path: filePath }) => {
+    async ({ path: filePath }: { path: string }) => {
       try {
         if (!graph) throw new Error('No document loaded')
         const { exportFigFile } = await import('@open-pencil/core')
@@ -107,7 +109,7 @@ export function createServer(version: string): McpServer {
     }
   )
 
-  server.registerTool(
+  register(
     'new_document',
     {
       description: 'Create a new empty document with a blank page.',
