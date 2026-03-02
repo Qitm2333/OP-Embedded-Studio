@@ -1,6 +1,6 @@
 {
   "name": "@open-pencil/mcp",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "license": "MIT",
   "type": "module",
   "main": "./src/server.ts",
@@ -13,8 +13,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsgo",
-    "prepublishOnly": "tsgo"
+    "build": "bunx tsgo",
+    "prepublishOnly": "bunx tsgo"
   },
   "repository": {
     "type": "git",
