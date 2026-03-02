@@ -12,6 +12,7 @@ import {
 import {
   parseFigmaClipboard,
   importClipboardNodes,
+  figmaNodesBounds,
   parseOpenPencilClipboard,
   buildFigmaClipboardHTML,
   buildOpenPencilClipboardHTML,
@@ -1581,12 +1582,18 @@ export function createEditorStore() {
 
     parseFigmaClipboard(html).then((figma) => {
       if (figma) {
+        const bounds = figmaNodesBounds(figma.nodes)
+        const viewCenterX = (-state.panX + (window.innerWidth / 2)) / state.zoom
+        const viewCenterY = (-state.panY + (window.innerHeight / 2)) / state.zoom
+        const offsetX = bounds ? viewCenterX - (bounds.x + bounds.w / 2) : 0
+        const offsetY = bounds ? viewCenterY - (bounds.y + bounds.h / 2) : 0
+
         const created = importClipboardNodes(
           figma.nodes,
           graph,
           state.currentPageId,
-          20,
-          20,
+          offsetX,
+          offsetY,
           figma.blobs
         )
         if (created.length > 0) {

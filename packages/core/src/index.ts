@@ -122,6 +122,7 @@ export {
 export {
   parseFigmaClipboard,
   importClipboardNodes,
+  figmaNodesBounds,
   parseOpenPencilClipboard,
   buildFigmaClipboardHTML,
   buildOpenPencilClipboardHTML,
