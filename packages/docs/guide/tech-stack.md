@@ -35,9 +35,9 @@
 
 ## Why Not...
 
-### Why not SVG rendering (like Penpot)?
+### Why not SVG rendering?
 
-SVG is slow for complex documents. Every node is a DOM element — 10,000 nodes means 10,000 DOM nodes with layout, paint, and compositing overhead. CanvasKit draws everything to a single GPU surface.
+SVG is slow for complex documents. Every node is a DOM element — 10,000 nodes means 10,000 DOM nodes with layout, paint, and compositing overhead. CanvasKit draws everything to a single GPU surface. (Penpot still defaults to SVG rendering but has an opt-in Rust/Skia WASM renderer in development.)
 
 ### Why not Electron (like Figma desktop)?
 
