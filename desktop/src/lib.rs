@@ -63,12 +63,19 @@ fn enumerate_system_fonts() -> Vec<FontFamily> {
 }
 
 #[tauri::command]
-fn list_system_fonts() -> Vec<FontFamily> {
-    FONT_CACHE.get_or_init(enumerate_system_fonts).clone()
+async fn list_system_fonts() -> Vec<FontFamily> {
+    if let Some(cached) = FONT_CACHE.get() {
+        return cached.clone();
+    }
+
+    let families = tauri::async_runtime::spawn_blocking(enumerate_system_fonts)
+        .await
+        .unwrap_or_default();
+    let _ = FONT_CACHE.set(families.clone());
+    families
 }
 
-#[tauri::command]
-fn load_system_font(family: String, style: String) -> Result<Vec<u8>, String> {
+fn load_system_font_blocking(family: String, style: String) -> Result<Vec<u8>, String> {
     let source = SystemSource::new();
     let family_handle = source
         .select_family_by_name(&family)
@@ -116,6 +123,13 @@ fn load_system_font(family: String, style: String) -> Result<Vec<u8>, String> {
     }
 
     Err(format!("Could not load font {family} {style}"))
+}
+
+#[tauri::command]
+async fn load_system_font(family: String, style: String) -> Result<Vec<u8>, String> {
+    tauri::async_runtime::spawn_blocking(move || load_system_font_blocking(family, style))
+        .await
+        .map_err(|e| format!("Font load task failed: {e}"))?
 }
 
 #[tauri::command]
@@ -175,10 +189,22 @@ fn build_fig_file(
     Ok(result.into_inner())
 }
 
+fn show_main_window<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![build_fig_file, list_system_fonts, load_system_font])
+        .invoke_handler(tauri::generate_handler![
+            build_fig_file,
+            list_system_fonts,
+            load_system_font
+        ])
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -440,6 +466,18 @@ pub fn run() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen {
+                has_visible_windows,
+                ..
+            } = event
+            {
+                if !has_visible_windows {
+                    show_main_window(app);
+                }
+            }
+        });
 }
