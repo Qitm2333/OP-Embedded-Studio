@@ -133,6 +133,10 @@ export async function ensureNodeFont(family: string, weight: number): Promise<vo
   await loadFont(family, style)
 }
 
+export function isFontLoaded(family: string): boolean {
+  return [...loadedFamilies.keys()].some((k) => k.startsWith(`${family}|`))
+}
+
 export function weightToStyle(weight: number, italic = false): string {
   let label = 'Regular'
   if (weight <= 100) label = 'Thin'

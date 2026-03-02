@@ -3,10 +3,12 @@ import { computed, onMounted } from 'vue'
 
 import FontPicker from '@/components/FontPicker.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
+import { useNodeFontStatus } from '@/composables/use-font-status'
 import { useNodeProps } from '@/composables/use-node-props'
 import { loadFont } from '@/engine/fonts'
 
 const { store, node, updateProp, commitProp } = useNodeProps()
+const { missingFonts, hasMissingFonts } = useNodeFontStatus(() => node.value)
 
 const WEIGHTS = [
   { value: 100, label: 'Thin' },
@@ -73,8 +75,13 @@ onMounted(async () => {
   <div v-if="node" class="border-b border-border px-3 py-2">
     <label class="mb-1.5 block text-[11px] text-muted">Typography</label>
 
-    <div class="mb-1.5">
-      <FontPicker :model-value="node.fontFamily" @select="selectFamily" />
+    <div class="mb-1.5 flex items-center gap-1.5">
+      <FontPicker class="min-w-0 flex-1" :model-value="node.fontFamily" @select="selectFamily" />
+      <icon-lucide-alert-triangle
+        v-if="hasMissingFonts"
+        class="size-3.5 shrink-0 text-amber-400"
+        :title="'Missing font' + (missingFonts.length > 1 ? 's' : '') + ': ' + missingFonts.join(', ')"
+      />
     </div>
 
     <!-- Weight + Size -->

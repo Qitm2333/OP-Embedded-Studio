@@ -58,6 +58,7 @@ import {
   TEXT_CARET_WIDTH
 } from './constants'
 import { vectorNetworkToPath } from './vector'
+import { isFontLoaded } from './fonts'
 
 import type { SceneNode, SceneGraph, Fill, Stroke } from './scene-graph'
 import type { SnapGuide } from './snap'
@@ -1676,12 +1677,52 @@ export class SkiaRenderer {
     if (!text) return
 
     if (this.fontsLoaded && this.fontProvider) {
-      const paragraph = this.buildParagraph(node, this.fillPaint.getColor())
-      canvas.drawParagraph(paragraph, 0, 0)
-      paragraph.delete()
+      if (this.isNodeFontLoaded(node)) {
+        const paragraph = this.buildParagraph(node, this.fillPaint.getColor())
+        canvas.drawParagraph(paragraph, 0, 0)
+        paragraph.delete()
+      } else if (node.textPicture) {
+        const pic = this.ck.MakePicture(node.textPicture)
+        if (pic) {
+          canvas.drawPicture(pic)
+          pic.delete()
+        }
+      } else if (this.textFont) {
+        canvas.drawText(text, 0, node.fontSize || DEFAULT_FONT_SIZE, this.fillPaint, this.textFont)
+      }
     } else if (this.textFont) {
       canvas.drawText(text, 0, node.fontSize || DEFAULT_FONT_SIZE, this.fillPaint, this.textFont)
     }
+  }
+
+  isNodeFontLoaded(node: SceneNode): boolean {
+    const families = new Set<string>()
+    families.add(node.fontFamily || 'Inter')
+    for (const run of node.styleRuns) {
+      if (run.style.fontFamily) families.add(run.style.fontFamily)
+    }
+    return [...families].every((f) => isFontLoaded(f))
+  }
+
+  buildTextPicture(node: SceneNode): Uint8Array | null {
+    if (!this.fontsLoaded || !this.fontProvider || !this.isNodeFontLoaded(node)) return null
+    if (node.type !== 'TEXT' || !node.text) return null
+
+    const ck = this.ck
+    const recorder = new ck.PictureRecorder()
+    const bounds = ck.LTRBRect(0, 0, node.width || 1e6, node.height || 1e6)
+    const recCanvas = recorder.beginRecording(bounds)
+
+    const paragraph = this.buildParagraph(node)
+    recCanvas.drawParagraph(paragraph, 0, 0)
+    paragraph.delete()
+
+    const picture = recorder.finishRecordingAsPicture()
+    recorder.delete()
+
+    const bytes = picture.serialize()
+    picture.delete()
+    return bytes ?? null
   }
 
   buildParagraph(node: SceneNode, color?: Float32Array): import('canvaskit-wasm').Paragraph {

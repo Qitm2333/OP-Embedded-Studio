@@ -458,6 +458,7 @@ export function parseOpenPencilClipboard(
   try {
     const decoded = JSON.parse(atob(match[1]))
     if (decoded.format === 'openpencil/v1' && Array.isArray(decoded.nodes)) {
+      restoreTextPictures(decoded.nodes)
       return decoded.nodes
     }
   } catch {
@@ -466,23 +467,50 @@ export function parseOpenPencilClipboard(
   return null
 }
 
-export function buildOpenPencilClipboardHTML(nodes: SceneNode[], graph: SceneGraph): string {
+function restoreTextPictures(nodes: Array<Record<string, unknown>>): void {
+  for (const node of nodes) {
+    if (typeof node.textPicture === 'string') {
+      node.textPicture = base64ToBinary(node.textPicture)
+    }
+    if (Array.isArray(node.children)) {
+      restoreTextPictures(node.children)
+    }
+  }
+}
+
+export type TextPictureBuilder = (node: SceneNode) => Uint8Array | null
+
+export function buildOpenPencilClipboardHTML(
+  nodes: SceneNode[],
+  graph: SceneGraph,
+  textPictureBuilder?: TextPictureBuilder
+): string {
   const data = {
     format: 'openpencil/v1',
-    nodes: collectNodeTree(nodes, graph)
+    nodes: collectNodeTree(nodes, graph, textPictureBuilder)
   }
   return `<!--(openpencil)${btoa(JSON.stringify(data))}(/openpencil)-->`
 }
 
 function collectNodeTree(
   nodes: SceneNode[],
-  graph: SceneGraph
-): Array<SceneNode & { children?: SceneNode[] }> {
+  graph: SceneGraph,
+  textPictureBuilder?: TextPictureBuilder
+): Array<Record<string, unknown>> {
   return nodes.map((node) => {
     const children = graph.getChildren(node.id)
-    return {
-      ...node,
-      children: children.length > 0 ? collectNodeTree(children, graph) : undefined
+    const serialized: Record<string, unknown> = { ...node }
+
+    if (node.type === 'TEXT' && node.text && textPictureBuilder) {
+      const pic = node.textPicture ?? textPictureBuilder(node)
+      if (pic) serialized.textPicture = binaryToBase64(pic)
+    } else {
+      delete serialized.textPicture
     }
+
+    if (children.length > 0) {
+      serialized.children = collectNodeTree(children, graph, textPictureBuilder)
+    }
+    return serialized
   })
 }
