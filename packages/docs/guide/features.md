@@ -12,7 +12,7 @@ Open and save native Figma files directly. Import decodes the full 194-definitio
 
 Select nodes in Figma, <kbd>⌘</kbd><kbd>C</kbd>, switch to OpenPencil, <kbd>⌘</kbd><kbd>V</kbd> — they appear with fills, strokes, auto-layout, text, corner radii, effects, and vector networks preserved. Works the other way too: copy from OpenPencil, paste into Figma.
 
-Under the hood, both directions use Figma's own fig-kiwi clipboard format — the same base64-encoded Kiwi binary that Figma puts on the clipboard. OpenPencil decodes the full schema on paste (194 definitions, ~390 fields per NodeChange) and encodes it on copy. Vector data round-trips through the `vectorNetworkBlob` binary format. Also works between OpenPencil instances via a separate native clipboard format.
+Under the hood, both directions use the same Kiwi binary format as .fig files — Figma base64-encodes it into HTML on the clipboard. OpenPencil decodes the full schema on paste (194 definitions, ~390 fields per NodeChange) and encodes it on copy. Vector data round-trips through the `vectorNetworkBlob` binary format. Also works between OpenPencil instances via a separate native clipboard format.
 
 ## Vector Networks
 

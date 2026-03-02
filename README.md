@@ -38,7 +38,7 @@ Your design files are yours. Your tools should be too.
 ## Features
 
 - **Figma .fig file import and export** — read and write native Figma files
-- **Copy & paste with Figma** — select nodes in Figma, paste into OpenPencil (and vice versa). Uses Figma's own fig-kiwi clipboard format
+- **Copy & paste with Figma** — select nodes in Figma, paste into OpenPencil (and vice versa). Uses the same Kiwi binary format as .fig files
 - **Real-time collaboration** — P2P via WebRTC, no server required. Cursors, presence, follow mode
 - **Drawing tools** — shapes, pen tool with vector networks, rich text with system fonts, auto-layout, components with live sync, variables with modes and collections
 - **AI chat** — describe what you want, the AI builds it. 29 tools wired to chat, CLI, and MCP
