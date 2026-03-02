@@ -8,11 +8,10 @@ Open-source, AI-native design editor. Figma-compatible, AI-first, fully local.
 
 > **What's next**
 >
-> - Multi-file / tabs support
+> - Live reload when .fig file changes on disk (MCP server → desktop app workflow)
 > - More AI providers (Anthropic API, Claude Code subscription, Gemini, local models via Ollama)
 > - Code signing (Apple & Azure certificates for properly signed binaries)
 > - Improving .fig compatibility across a larger set of files
-> - Porting more [figma-use](https://github.com/dannote/figma-use) tools (118 → 29 currently) for full AI agent design capabilities
 > - CI tools — design linting, code export, visual regression in pipelines
 
 ![OpenPencil](packages/docs/public/screenshot.png)
@@ -41,7 +40,7 @@ Your design files are yours. Your tools should be too.
 - **Copy & paste with Figma** — select nodes in Figma, paste into OpenPencil (and vice versa). Uses the same Kiwi binary format as .fig files
 - **Real-time collaboration** — P2P via WebRTC, no server required. Cursors, presence, follow mode
 - **Drawing tools** — shapes, pen tool with vector networks, rich text with system fonts, auto-layout, components with live sync, variables with modes and collections
-- **AI chat** — describe what you want, the AI builds it. 29 tools wired to chat, CLI, and MCP
+- **AI chat** — describe what you want, the AI builds it. 75 tools wired to chat, CLI, and MCP
 - **MCP server** — connect Claude Code, Cursor, or any MCP client to read/write .fig files headlessly
 - **Headless CLI** — inspect, search, analyze, and render .fig files without a GUI
 - **~7 MB desktop app** — Tauri v2, macOS/Windows/Linux. Also runs in the browser
@@ -121,7 +120,7 @@ bun add -g @open-pencil/mcp
 openpencil-mcp-http   # http://localhost:3100/mcp
 ```
 
-29 tools: create shapes, set fills/strokes/layout, find nodes, open/save `.fig` files, render JSX to design nodes.
+75 tools: create shapes, set fills/strokes/layout, variables, vectors, boolean ops, viewport, find nodes, open/save `.fig` files, render JSX to design nodes.
 
 ## Scripts
 
