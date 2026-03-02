@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.1 (2026-03-02)
+
+### Fixes
+
+- Fix text disappearing after hover when SkPicture cache was recorded before fonts loaded
+- Invalidate scene picture cache on font load to prevent stale fallback text
+
+### Docs
+
+- Highlight copy & paste with Figma in README and feature docs
+- Replace "fig-kiwi" format name with "Kiwi binary" — the format is shared between .fig files and clipboard
+
 ## 0.4.0 (2026-03-02)
 
 ### Features
