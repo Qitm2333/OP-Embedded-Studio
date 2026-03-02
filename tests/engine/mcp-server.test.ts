@@ -217,4 +217,48 @@ describe('MCP server', () => {
     const container2 = tree2.children.find((c) => c.id === frame.id)
     expect(container2!.children ?? []).toHaveLength(0)
   })
+
+  test('find_nodes filters by type', async () => {
+    await client.callTool({ name: 'new_document', arguments: {} })
+    await client.callTool({
+      name: 'create_shape',
+      arguments: { type: 'FRAME', x: 0, y: 0, width: 100, height: 100, name: 'F1' }
+    })
+    await client.callTool({
+      name: 'create_shape',
+      arguments: { type: 'RECTANGLE', x: 0, y: 0, width: 50, height: 50, name: 'R1' }
+    })
+    await client.callTool({
+      name: 'create_shape',
+      arguments: { type: 'FRAME', x: 0, y: 0, width: 100, height: 100, name: 'F2' }
+    })
+
+    const result = await client.callTool({ name: 'find_nodes', arguments: { type: 'FRAME' } })
+    const data = parseResult(result) as { count: number }
+    expect(data.count).toBe(2)
+  })
+
+  test('create_shape rejects invalid type enum', async () => {
+    await client.callTool({ name: 'new_document', arguments: {} })
+
+    const result = await client.callTool({
+      name: 'create_shape',
+      arguments: { type: 'INVALID_TYPE', x: 0, y: 0, width: 100, height: 100 }
+    })
+    const r = result as { content: { text: string }[]; isError?: boolean }
+    const text = r.content[0].text
+    expect(r.isError === true || text.toLowerCase().includes('invalid')).toBe(true)
+  })
+
+  test('create_shape rejects missing required param', async () => {
+    await client.callTool({ name: 'new_document', arguments: {} })
+
+    const result = await client.callTool({
+      name: 'create_shape',
+      arguments: { x: 0, y: 0, width: 100, height: 100 }
+    })
+    const r = result as { content: { text: string }[]; isError?: boolean }
+    const text = r.content[0].text
+    expect(r.isError === true || text.toLowerCase().includes('required')).toBe(true)
+  })
 })
