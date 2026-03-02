@@ -420,7 +420,7 @@ export function buildFigmaClipboardHTML(nodes: SceneNode[], graph: SceneGraph): 
     type: 'NODE_CHANGES',
     sessionID: 0,
     ackID: 0,
-    pasteID: crypto.getRandomValues(new Uint32Array(1))[0],
+    pasteID: crypto.getRandomValues(new Int32Array(1))[0],
     pasteFileKey: 'openpencil',
     nodeChanges
   }
