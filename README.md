@@ -166,6 +166,10 @@ tests/
   engine/         Unit tests
 ```
 
+## Acknowledgments
+
+Thanks to [@sld0Ant](https://github.com/sld0Ant) (Anton Soldatov) for creating and maintaining the [documentation site](https://openpencil.dev).
+
 ## License
 
 MIT
