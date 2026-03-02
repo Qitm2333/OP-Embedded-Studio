@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- 40+ new AI/MCP tools ported from figma-use:
+  - Granular set tools: `set_rotation`, `set_opacity`, `set_radius`, `set_minmax`, `set_text`, `set_font`, `set_font_range`, `set_text_resize`, `set_visible`, `set_blend`, `set_locked`, `set_stroke_align`
+  - Node operations: `node_bounds`, `node_move`, `node_resize`, `node_ancestors`, `node_children`, `node_tree`, `node_bindings`, `node_replace_with`
+  - Variable CRUD: `get_variable`, `find_variables`, `create_variable`, `set_variable`, `delete_variable`, `bind_variable`
+  - Collection CRUD: `get_collection`, `create_collection`, `delete_collection`
+  - Boolean operations: `boolean_union`, `boolean_subtract`, `boolean_intersect`, `boolean_exclude`
+  - Vector path tools: `path_get`, `path_set`, `path_scale`, `path_flip`, `path_move`
+  - Create tools: `create_page`, `create_vector`, `create_slice`
+  - Viewport: `viewport_get`, `viewport_set`, `viewport_zoom_to_fit`, `page_bounds`
+  - Misc: `flatten_nodes`, `list_fonts`
+
+### Internal
+
+- Extract shared color constants (`BLACK`, `TRANSPARENT`, `DEFAULT_SHADOW_COLOR`) — replaces 8 inline literals across core
+
 ## [0.4.2] (2026-03-02)
 
 ### Fixes
