@@ -1599,6 +1599,118 @@ export const listFonts = defineTool({
   }
 })
 
+// ─── Text properties ──────────────────────────────────────────
+
+export const setTextProperties = defineTool({
+  name: 'set_text_properties',
+  description:
+    'Set text layout properties: alignment, auto-resize, text case, decoration, truncation.',
+  params: {
+    id: { type: 'string', description: 'Text node ID', required: true },
+    align_horizontal: {
+      type: 'string',
+      description: 'Horizontal text alignment',
+      enum: ['LEFT', 'CENTER', 'RIGHT', 'JUSTIFIED']
+    },
+    align_vertical: {
+      type: 'string',
+      description: 'Vertical text alignment',
+      enum: ['TOP', 'CENTER', 'BOTTOM']
+    },
+    auto_resize: {
+      type: 'string',
+      description: 'Text auto-resize mode',
+      enum: ['NONE', 'WIDTH_AND_HEIGHT', 'HEIGHT', 'TRUNCATE']
+    },
+    text_decoration: {
+      type: 'string',
+      description: 'Text decoration',
+      enum: ['NONE', 'UNDERLINE', 'STRIKETHROUGH']
+    }
+  },
+  execute: (figma, args) => {
+    const node = figma.getNodeById(args.id)
+    if (!node) return { error: `Node "${args.id}" not found` }
+    if (node.type !== 'TEXT') return { error: `Node "${args.id}" is not a TEXT node` }
+    const updated: string[] = []
+    if (args.align_horizontal !== undefined) {
+      node.textAlignHorizontal = args.align_horizontal
+      updated.push('textAlignHorizontal')
+    }
+    if (args.align_vertical !== undefined) {
+      node.textAlignVertical = args.align_vertical
+      updated.push('textAlignVertical')
+    }
+    if (args.auto_resize !== undefined) {
+      node.textAutoResize = args.auto_resize
+      updated.push('textAutoResize')
+    }
+    if (args.text_decoration !== undefined) {
+      node.textDecoration = args.text_decoration
+      updated.push('textDecoration')
+    }
+    return { id: args.id, updated }
+  }
+})
+
+// ─── Layout child ─────────────────────────────────────────────
+
+export const setLayoutChild = defineTool({
+  name: 'set_layout_child',
+  description:
+    'Configure auto-layout child: sizing (FIXED/HUG/FILL), grow, alignment, absolute positioning.',
+  params: {
+    id: { type: 'string', description: 'Child node ID', required: true },
+    sizing_horizontal: {
+      type: 'string',
+      description: 'Horizontal sizing mode',
+      enum: ['FIXED', 'HUG', 'FILL']
+    },
+    sizing_vertical: {
+      type: 'string',
+      description: 'Vertical sizing mode',
+      enum: ['FIXED', 'HUG', 'FILL']
+    },
+    grow: { type: 'number', description: 'Flex grow factor (0 = fixed, 1 = grow)', min: 0 },
+    align_self: {
+      type: 'string',
+      description: 'Self alignment override',
+      enum: ['INHERIT', 'STRETCH']
+    },
+    positioning: {
+      type: 'string',
+      description: 'ABSOLUTE to take node out of auto-layout flow',
+      enum: ['AUTO', 'ABSOLUTE']
+    }
+  },
+  execute: (figma, args) => {
+    const node = figma.getNodeById(args.id)
+    if (!node) return { error: `Node "${args.id}" not found` }
+    const updated: string[] = []
+    if (args.sizing_horizontal !== undefined) {
+      node.layoutSizingHorizontal = args.sizing_horizontal
+      updated.push('layoutSizingHorizontal')
+    }
+    if (args.sizing_vertical !== undefined) {
+      node.layoutSizingVertical = args.sizing_vertical
+      updated.push('layoutSizingVertical')
+    }
+    if (args.grow !== undefined) {
+      node.layoutGrow = args.grow
+      updated.push('layoutGrow')
+    }
+    if (args.align_self !== undefined) {
+      node.layoutAlign = args.align_self
+      updated.push('layoutAlign')
+    }
+    if (args.positioning !== undefined) {
+      node.layoutPositioning = args.positioning
+      updated.push('layoutPositioning')
+    }
+    return { id: args.id, updated }
+  }
+})
+
 // ─── Registry ─────────────────────────────────────────────────
 
 export const ALL_TOOLS: ToolDef[] = [
@@ -1684,5 +1796,9 @@ export const ALL_TOOLS: ToolDef[] = [
   viewportZoomToFit,
   pageBounds,
   // Font tools
-  listFonts
+  listFonts,
+  // Text properties
+  setTextProperties,
+  // Layout child
+  setLayoutChild
 ]
