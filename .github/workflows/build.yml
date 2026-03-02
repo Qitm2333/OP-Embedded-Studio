@@ -50,6 +50,10 @@ jobs:
 
       - run: bun install
 
+      - name: Extract release notes
+        id: changelog
+        uses: ffurrer2/extract-release-notes@v2
+
       - name: Build Tauri
         uses: tauri-apps/tauri-action@v0
         env:
@@ -60,7 +64,7 @@ jobs:
           args: --target ${{ matrix.target }}
           tagName: ${{ github.ref_name }}
           releaseName: 'OpenPencil ${{ github.ref_name }}'
-          releaseBody: 'See [CHANGELOG.md](https://github.com/open-pencil/open-pencil/blob/${{ github.ref_name }}/CHANGELOG.md) for details.'
+          releaseBody: ${{ steps.changelog.outputs.release_notes }}
           releaseDraft: false
 
   publish-npm:

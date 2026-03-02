@@ -19,7 +19,7 @@
 
 - 7 new clipboard import unit tests (14 total)
 
-## 0.4.1 (2026-03-02)
+## [0.4.1] (2026-03-02)
 
 ### Fixes
 
@@ -31,7 +31,7 @@
 - Highlight copy & paste with Figma in README and feature docs
 - Replace "fig-kiwi" format name with "Kiwi binary" — the format is shared between .fig files and clipboard
 
-## 0.4.0 (2026-03-02)
+## [0.4.0] (2026-03-02)
 
 ### Features
 
@@ -44,7 +44,7 @@
 - Core package exports: `bun` condition → src (dev), `import` condition → dist (npm consumers)
 - `@open-pencil/mcp` added to CI publish workflow
 
-## 0.3.2 (2026-03-02)
+## [0.3.2] (2026-03-02)
 
 ### Performance
 
@@ -55,14 +55,14 @@
 - Visual regression tests for SkPicture cache: hover on/off cycle, multiple cycles, mouse hover, scene change + hover
 - Type `window.__OPEN_PENCIL_STORE__` globally, remove ad-hoc casts from tests
 
-## 0.3.1 (2026-03-02)
+## [0.3.1] (2026-03-02)
 
 ### Fixes
 
 - Fix text disappearing after hovering a frame (revert SkPicture scene caching)
 - Fix macOS startup hang: async font loading, show window on reopen
 
-## 0.3.0 (2026-03-01)
+## [0.3.0] (2026-03-01)
 
 ### Performance
 
@@ -78,7 +78,7 @@
 - CLI version now reads from package.json instead of hardcoded value
 - Update README: accurate app size (~7 MB), streamlined feature list, current project structure
 
-## 0.2.1 (2026-03-01)
+## [0.2.1] (2026-03-01)
 
 ### UI
 
@@ -93,7 +93,7 @@
 
 - Stubbed shiki to remove 9MB of unused language grammars (20MB → 11MB bundle)
 
-## 0.2.0 (2026-03-01)
+## [0.2.0] (2026-03-01)
 
 ### Collaboration
 
@@ -119,7 +119,7 @@
 - Scrollable app menu without visible scrollbar
 - Selection broadcasting to remote peers
 
-## 0.1.0-alpha (2026-03-01)
+## [0.1.0-alpha] (2026-03-01)
 
 First public alpha. The editor is functional but not production-ready.
 
