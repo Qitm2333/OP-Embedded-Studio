@@ -1,10 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 (2026-03-02)
 
 ### Features
 
-- MCP server (`@open-pencil/mcp`) — 29 tools for headless .fig editing via stdio (Claude Code, Cursor) or HTTP (Streamable HTTP with sessions)
+- MCP server (`@open-pencil/mcp`) — 29 tools for headless .fig editing via stdio (Claude Code, Cursor, Windsurf) or HTTP (Hono + Streamable HTTP with sessions)
+- `openpencil-mcp` and `openpencil-mcp-http` binaries — install globally via `bun add -g @open-pencil/mcp`
+
+### Build
+
+- All packages emit JS via tsgo + fix-esm-import-path — `@open-pencil/core` and `@open-pencil/mcp` work on Node.js without Bun
+- Core package exports: `bun` condition → src (dev), `import` condition → dist (npm consumers)
+- `@open-pencil/mcp` added to CI publish workflow
 
 ## 0.3.2 (2026-03-02)
 

@@ -1,20 +1,21 @@
 {
   "name": "@open-pencil/core",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "license": "MIT",
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js"
     }
   },
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": ["src", "dist"],
   "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "tsc"
+    "build": "bunx tsgo && bunx fix-esm-import-path dist",
+    "prepublishOnly": "bun run build"
   },
   "repository": {
     "type": "git",
