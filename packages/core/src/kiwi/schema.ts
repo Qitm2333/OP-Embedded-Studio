@@ -833,7 +833,7 @@ message Paint {
   Video video = 18;
   uint originalImageWidth = 19;
   uint originalImageHeight = 20;
-  PaintVariableBinding variableBinding = 21; // Not in fig-kiwi. Discovered via WS sniffing 2026-01
+  PaintVariableBinding variableBinding = 21; // Not in .fig files. Discovered via WS sniffing 2026-01
 }
 
 message FontMetaData {

@@ -43,7 +43,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Layer types & hierarchy | ✅ | 17 node types, flat Map + parent-child tree |
 | Select layers | ✅ | Click, shift-click, marquee selection |
 | Alignment & position | ✅ | Position, rotation, dimensions in properties panel |
-| Copy & paste objects | ✅ | Standard clipboard + Figma fig-kiwi binary format |
+| Copy & paste objects | ✅ | Standard clipboard + Figma Kiwi binary format |
 | Scale layers proportionally | 🟡 | Shift-resize constrains proportions; no dedicated Scale tool (K) |
 | Lock & unlock layers | ✅ | ⇧⌘L toggles lock; locked nodes can't be selected/moved from canvas |
 | Toggle layer visibility | ✅ | Eye icon in layers panel + ⇧⌘H keyboard shortcut |
@@ -189,8 +189,8 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | .fig file import | ✅ | Full Kiwi codec: 194 definitions, ~390 fields per NodeChange |
 | .fig file export | ✅ | Kiwi encoding + Zstd compression + thumbnail generation |
 | Save / Save As | ✅ | ⌘S / ⇧⌘S with native OS dialogs (Tauri) |
-| Figma clipboard (paste) | ✅ | Decode fig-kiwi binary from Figma clipboard |
-| Figma clipboard (copy) | ✅ | Encode fig-kiwi binary that Figma can read |
+| Figma clipboard (paste) | ✅ | Decode Kiwi binary from Figma clipboard |
+| Figma clipboard (copy) | ✅ | Encode Kiwi binary that Figma can read |
 | Sketch file import | 🔲 | .sketch file parsing |
 | Image/SVG export | 🟡 | PNG/JPG/WEBP with scale selector and live preview; SVG/PDF not yet |
 | Version history | 🔲 | Browse and restore previous versions |

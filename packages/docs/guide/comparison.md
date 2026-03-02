@@ -201,7 +201,7 @@ Open Pencil delegates to a battle-tested library (Yoga, used by React Native on 
 
 - **Native Kiwi binary format** — same serialization as Figma uses internally
 - Direct `.fig` file import via extracted Kiwi codec (2,178 LOC schema + 551 LOC codec)
-- Figma clipboard paste support (reads Figma's `fig-kiwi` binary clipboard format)
+- Figma clipboard paste support (reads Figma's Kiwi binary from the clipboard)
 - Wire-compatible with Figma's multiplayer protocol
 
 ### Penpot

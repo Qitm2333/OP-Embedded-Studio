@@ -39,7 +39,7 @@ Properties panel, layers panel, toolbar, Yoga layout integration, text editing.
 - Save (⌘S) and Save As (⇧⌘S) with native OS dialogs
 - Zstd compression via Tauri Rust command (deflate fallback in browser)
 - Vendored kiwi-schema with ESM + sparse field ID patches
-- Figma-compatible clipboard (bidirectional fig-kiwi binary)
+- Figma-compatible clipboard (bidirectional Kiwi binary)
 - Pen tool with vector network model
 - vectorNetworkBlob binary encode/decode
 - Group/ungroup (⌘G/⇧⌘G)

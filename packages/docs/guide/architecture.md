@@ -85,4 +85,4 @@ Inverse-command pattern. Before applying any change, affected fields are snapsho
 
 ### Clipboard
 
-Figma-compatible bidirectional clipboard. Encodes/decodes fig-kiwi binary using native browser copy/paste events (synchronous, not async Clipboard API).
+Figma-compatible bidirectional clipboard. Encodes/decodes Kiwi binary (same format as .fig files) using native browser copy/paste events (synchronous, not async Clipboard API).
