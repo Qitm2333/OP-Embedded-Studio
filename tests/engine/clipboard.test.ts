@@ -5,7 +5,7 @@ import {
   importClipboardNodes,
   figmaNodesBounds,
 } from '../../packages/core/src/clipboard'
-import { SceneGraph } from '../../packages/core/src/scene-graph'
+import { SceneGraph, type SceneNode } from '../../packages/core/src/scene-graph'
 
 function makeClipboardHtml(nodeChanges: unknown[], meta = { fileKey: 'test', pasteID: 1, dataType: 'scene' }) {
   // Minimal fig-kiwi clipboard: just meta + empty figma buffer
@@ -126,6 +126,177 @@ describe('importClipboardNodes', () => {
     expect(node.strokes).toHaveLength(1)
     expect(node.strokes[0].color.b).toBe(1)
     expect(node.strokes[0].weight).toBe(2)
+  })
+
+  it('imports layoutAlignSelf from stackChildAlignSelf', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page' },
+      { guid: { sessionID: 0, localID: 10 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' }, type: 'FRAME', name: 'Row', size: { x: 400, y: 100 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 }, stackMode: 'HORIZONTAL' },
+      { guid: { sessionID: 0, localID: 11 }, parentIndex: { guid: { sessionID: 0, localID: 10 }, position: '!' }, type: 'FRAME', name: 'Stretched', size: { x: 200, y: 50 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 }, stackChildAlignSelf: 'STRETCH' },
+      { guid: { sessionID: 0, localID: 12 }, parentIndex: { guid: { sessionID: 0, localID: 10 }, position: '"' }, type: 'FRAME', name: 'Auto', size: { x: 200, y: 50 }, transform: { m00: 1, m01: 0, m02: 200, m10: 0, m11: 1, m12: 0 } },
+    ] as any[]
+
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    const row = graph.getNode(created[0])!
+    const children = graph.getChildren(row.id)
+    expect(children[0].layoutAlignSelf).toBe('STRETCH')
+    expect(children[1].layoutAlignSelf).toBe('AUTO')
+  })
+
+  it('imports clipsContent from frameMaskDisabled', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page' },
+      { guid: { sessionID: 0, localID: 10 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' }, type: 'FRAME', name: 'Clipped', size: { x: 200, y: 100 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 }, frameMaskDisabled: false },
+      { guid: { sessionID: 0, localID: 11 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '"' }, type: 'FRAME', name: 'Unclipped', size: { x: 200, y: 100 }, transform: { m00: 1, m01: 0, m02: 200, m10: 0, m11: 1, m12: 0 }, frameMaskDisabled: true },
+      { guid: { sessionID: 0, localID: 12 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '#' }, type: 'FRAME', name: 'Default', size: { x: 200, y: 100 }, transform: { m00: 1, m01: 0, m02: 400, m10: 0, m11: 1, m12: 0 } },
+    ] as any[]
+
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    expect(graph.getNode(created[0])!.clipsContent).toBe(true)
+    expect(graph.getNode(created[1])!.clipsContent).toBe(false)
+    expect(graph.getNode(created[2])!.clipsContent).toBe(false)
+  })
+
+  it('imports fontWeight from fontName.style via styleToWeight', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page' },
+      { guid: { sessionID: 0, localID: 10 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' }, type: 'TEXT', name: 'Medium', size: { x: 100, y: 20 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 }, textData: { characters: 'Hello' }, fontSize: 14, fontName: { family: 'PT Root UI', style: 'Medium', postscript: 'PTRootUI-Medium' } },
+      { guid: { sessionID: 0, localID: 11 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '"' }, type: 'TEXT', name: 'Bold', size: { x: 100, y: 20 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 20 }, textData: { characters: 'World' }, fontSize: 14, fontName: { family: 'Inter', style: 'Bold', postscript: 'Inter-Bold' } },
+      { guid: { sessionID: 0, localID: 12 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '#' }, type: 'TEXT', name: 'Italic', size: { x: 100, y: 20 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 40 }, textData: { characters: 'Italic' }, fontSize: 14, fontName: { family: 'Inter', style: 'Bold Italic', postscript: 'Inter-BoldItalic' } },
+    ] as any[]
+
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    expect(graph.getNode(created[0])!.fontWeight).toBe(500)
+    expect(graph.getNode(created[1])!.fontWeight).toBe(700)
+    expect(graph.getNode(created[2])!.fontWeight).toBe(700)
+    expect(graph.getNode(created[2])!.italic).toBe(true)
+  })
+
+  it('converts letterSpacing object to pixels', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page' },
+      { guid: { sessionID: 0, localID: 10 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' }, type: 'TEXT', name: 'PixelSpacing', size: { x: 100, y: 20 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 }, textData: { characters: 'A' }, fontSize: 20, letterSpacing: { value: 2, units: 'PIXELS' } },
+      { guid: { sessionID: 0, localID: 11 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '"' }, type: 'TEXT', name: 'PercentSpacing', size: { x: 100, y: 20 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 20 }, textData: { characters: 'B' }, fontSize: 20, letterSpacing: { value: 10, units: 'PERCENT' } },
+      { guid: { sessionID: 0, localID: 12 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '#' }, type: 'TEXT', name: 'NoSpacing', size: { x: 100, y: 20 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 40 }, textData: { characters: 'C' }, fontSize: 20 },
+    ] as any[]
+
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    expect(graph.getNode(created[0])!.letterSpacing).toBe(2)
+    expect(graph.getNode(created[1])!.letterSpacing).toBe(2) // 10% of 20px
+    expect(graph.getNode(created[2])!.letterSpacing).toBe(0)
+  })
+
+  it('undo removes all imported nodes including children', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page' },
+      { guid: { sessionID: 0, localID: 10 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' }, type: 'FRAME', name: 'Parent', size: { x: 400, y: 300 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 } },
+      { guid: { sessionID: 0, localID: 11 }, parentIndex: { guid: { sessionID: 0, localID: 10 }, position: '!' }, type: 'RECTANGLE', name: 'Child1', size: { x: 100, y: 100 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 } },
+      { guid: { sessionID: 0, localID: 12 }, parentIndex: { guid: { sessionID: 0, localID: 10 }, position: '"' }, type: 'TEXT', name: 'Child2', size: { x: 200, y: 30 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 100 }, textData: { characters: 'Hello' }, fontSize: 14 },
+    ] as any[]
+
+    const nodesBefore = [...graph.getAllNodes()].length
+    const childrenBefore = graph.getChildren(pageId).length
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    expect([...graph.getAllNodes()].length).toBe(nodesBefore + 3)
+
+    for (const id of [...created].reverse()) graph.deleteNode(id)
+    expect([...graph.getAllNodes()].length).toBe(nodesBefore)
+    expect(graph.getChildren(pageId)).toHaveLength(childrenBefore)
+  })
+
+  it('redo recreates full subtree with correct parent-child relationships', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page' },
+      { guid: { sessionID: 0, localID: 10 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' }, type: 'FRAME', name: 'Parent', size: { x: 400, y: 300 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 } },
+      { guid: { sessionID: 0, localID: 11 }, parentIndex: { guid: { sessionID: 0, localID: 10 }, position: '!' }, type: 'RECTANGLE', name: 'Child1', size: { x: 100, y: 100 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 } },
+      { guid: { sessionID: 0, localID: 12 }, parentIndex: { guid: { sessionID: 0, localID: 10 }, position: '"' }, type: 'TEXT', name: 'Child2', size: { x: 200, y: 30 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 100 }, textData: { characters: 'Hello' }, fontSize: 14 },
+    ] as any[]
+
+    const childrenBefore = graph.getChildren(pageId).length
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    const parent = graph.getNode(created[0])!
+
+    const allSnapshots: SceneNode[] = []
+    function walk(id: string) {
+      const n = graph.getNode(id)!
+      allSnapshots.push({ ...n })
+      for (const cid of n.childIds) walk(cid)
+    }
+    for (const id of created) walk(id)
+
+    // Undo
+    for (const id of [...created].reverse()) graph.deleteNode(id)
+    expect(graph.getChildren(pageId)).toHaveLength(childrenBefore)
+
+    // Redo — recreate with childIds: [] to avoid duplicates from createNode's parent-append
+    for (const snapshot of allSnapshots) {
+      graph.createNode(snapshot.type, snapshot.parentId ?? pageId, {
+        ...snapshot,
+        childIds: []
+      })
+    }
+
+    const restored = graph.getNode(parent.id)!
+    expect(restored).toBeTruthy()
+    expect(restored.name).toBe('Parent')
+    expect(restored.childIds).toHaveLength(2)
+
+    const children = graph.getChildren(restored.id)
+    expect(children[0].name).toBe('Child1')
+    expect(children[1].name).toBe('Child2')
+    expect(children[1].text).toBe('Hello')
+  })
+
+  it('redo without childIds:[] causes duplicate children', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page' },
+      { guid: { sessionID: 0, localID: 10 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' }, type: 'FRAME', name: 'Parent', size: { x: 400, y: 300 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 } },
+      { guid: { sessionID: 0, localID: 11 }, parentIndex: { guid: { sessionID: 0, localID: 10 }, position: '!' }, type: 'RECTANGLE', name: 'Child', size: { x: 100, y: 100 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 } },
+    ] as any[]
+
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    const parent = graph.getNode(created[0])!
+
+    const allSnapshots: SceneNode[] = []
+    function walk(id: string) {
+      const n = graph.getNode(id)!
+      allSnapshots.push({ ...n })
+      for (const cid of n.childIds) walk(cid)
+    }
+    for (const id of created) walk(id)
+
+    for (const id of [...created].reverse()) graph.deleteNode(id)
+
+    // Recreate WITHOUT clearing childIds — demonstrates the bug
+    for (const snapshot of allSnapshots) {
+      graph.createNode(snapshot.type, snapshot.parentId ?? pageId, snapshot)
+    }
+
+    const restored = graph.getNode(parent.id)!
+    // Bug: parent has duplicated childIds because snapshot already had [childId]
+    // and createNode appends childId again
+    expect(restored.childIds.length).toBeGreaterThan(1)
   })
 })
 

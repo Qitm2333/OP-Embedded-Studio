@@ -1619,7 +1619,10 @@ export function createEditorStore() {
             label: 'Paste',
             forward: () => {
               for (const snapshot of allNodes) {
-                graph.createNode(snapshot.type, snapshot.parentId ?? pageId, snapshot)
+                graph.createNode(snapshot.type, snapshot.parentId ?? pageId, {
+                  ...snapshot,
+                  childIds: []
+                })
               }
               computeAllLayouts(graph)
               state.selectedIds = new Set(created)
