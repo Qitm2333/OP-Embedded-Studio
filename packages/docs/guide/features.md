@@ -207,9 +207,11 @@ Built-in AI assistant accessible via the AI tab in the properties panel or <kbd>
 
 **Model selector** with curated models: Claude, Gemini, GPT, DeepSeek, Qwen, Kimi, Llama — stored in `@open-pencil/core` constants with benchmark-ranked tags. Responses stream as markdown (vue-stream-markdown).
 
-**26 AI tools** defined in `packages/core/src/tools/schema.ts` with valibot schemas: read tools (`get_selection`, `get_page_tree`, `get_node`, `find_nodes`, `list_pages`, `list_variables`, `list_collections`), create tools (`create_shape`, `render`, `create_component`, `create_instance`), modify tools (`set_fill`, `set_stroke`, `set_effects`, `update_node`, `set_layout`, `set_constraints`, `rename_node`, `reparent_node`, `clone_node`, `delete_node`), organize tools (`select_nodes`, `group_nodes`, `ungroup_node`, `switch_page`), and `eval_code` escape hatch. Tool calls display as collapsible timeline entries in the chat (reka-ui Collapsible).
+**29 tools** defined in `packages/core/src/tools/schema.ts`: read tools (`get_selection`, `get_page_tree`, `get_node`, `find_nodes`, `list_pages`, `list_variables`, `list_collections`), create tools (`create_shape`, `render`, `create_component`, `create_instance`), modify tools (`set_fill`, `set_stroke`, `set_effects`, `update_node`, `set_layout`, `set_constraints`, `rename_node`, `reparent_node`, `clone_node`, `delete_node`), organize tools (`select_nodes`, `group_nodes`, `ungroup_node`, `switch_page`), and `eval` escape hatch. Tools are wired to AI chat (valibot schemas), MCP server (zod schemas), and CLI (`eval` command). Tool calls display as collapsible timeline entries in the chat (reka-ui Collapsible).
 
-Tested with Playwright using mock transport for CI.
+**MCP server** (`packages/mcp/`) exposes all tools for external AI coding tools. Two transports: stdio for Claude Code/Cursor/Windsurf (`openpencil-mcp`), HTTP with Hono + Streamable HTTP for scripts and CI (`openpencil-mcp-http`). Adds 3 file management tools (`open_file`, `save_file`, `new_document`) on top of the 26 core tools. Runs on Bun and Node.js. See [MCP Tools reference](/reference/mcp-tools).
+
+Tested with Playwright using mock transport for CI (chat), bun:test for tool execution (MCP).
 
 ## Code Panel
 

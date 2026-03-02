@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- MCP server (`@open-pencil/mcp`) — 29 tools for headless .fig editing via stdio (Claude Code, Cursor) or HTTP (Streamable HTTP with sessions)
+
 ## 0.3.2 (2026-03-02)
 
 ### Performance

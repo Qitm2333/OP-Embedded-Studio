@@ -6,10 +6,11 @@ Vue 3 + CanvasKit (Skia WASM) + Yoga WASM design editor. Tauri v2 desktop, also 
 
 ## Monorepo
 
-Bun workspace with two packages:
+Bun workspace with three packages:
 
 - `packages/core` — `@open-pencil/core`: scene graph, renderer, layout, codec, kiwi, clipboard, vector, snap, undo. Zero DOM deps, runs headless in Bun.
 - `packages/cli` — `@open-pencil/cli`: headless CLI for .fig inspection, export, linting. Uses `citty` + `agentfmt`.
+- `packages/mcp` — `@open-pencil/mcp`: MCP server for AI coding tools. Stdio + HTTP (Hono). Reuses `createServer()` factory with all core tools.
 
 The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files are thin re-export shims from `@open-pencil/core`.
 
@@ -90,7 +91,8 @@ When adding features, update `CHANGELOG.md` (Unreleased section) and `README.md`
 - AI adapter (`packages/core/src/tools/ai-adapter.ts`): `toolsToAI()` converts ToolDefs → valibot schemas + Vercel AI `tool()` wrappers
 - `src/ai/tools.ts` is just a thin wire: creates FigmaAPI from editor store, calls `toolsToAI()`
 - CLI commands (`packages/cli/src/commands/`) are **not** generated from ToolDefs — they have custom agentfmt formatting, tree walking, pagination. The `eval` command is the CLI's access to all ToolDef operations via FigmaAPI.
-- To add a new tool: add a `defineTool()` in `schema.ts`, add to `ALL_TOOLS` array — it's instantly available in AI chat, and via `eval` in CLI
+- MCP adapter (`packages/mcp/src/server.ts`): `createServer()` converts ToolDefs → zod schemas + MCP `registerTool()`. Adds `open_file`, `save_file`, `new_document` for headless file ops. Two entry points: `index.ts` (stdio), `http.ts` (Hono + Streamable HTTP with sessions).
+- To add a new tool: add a `defineTool()` in `schema.ts`, add to `ALL_TOOLS` array — it's instantly available in AI chat, MCP, and via `eval` in CLI
 - `FigmaAPI` (`packages/core/src/figma-api.ts`) is the execution target for all tools — Figma Plugin API compatible, uses Symbols for hidden internals
 
 ## Collaboration

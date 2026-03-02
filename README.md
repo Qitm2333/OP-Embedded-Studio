@@ -12,7 +12,7 @@ Open-source, AI-native design editor. Figma-compatible, AI-first, fully local.
 > - More AI providers (Anthropic API, Claude Code subscription, Gemini, local models via Ollama)
 > - Code signing (Apple & Azure certificates for properly signed binaries)
 > - Improving .fig compatibility across a larger set of files
-> - Porting all [figma-use](https://github.com/dannote/figma-use) tools (118 → 26 currently) for full AI agent design capabilities
+> - Porting more [figma-use](https://github.com/dannote/figma-use) tools (118 → 29 currently) for full AI agent design capabilities
 > - CI tools — design linting, code export, visual regression in pipelines
 
 ![OpenPencil](packages/docs/public/screenshot.png)
@@ -40,7 +40,8 @@ Your design files are yours. Your tools should be too.
 - **Figma .fig file import and export** — read and write native Figma files, copy/paste between apps
 - **Real-time collaboration** — P2P via WebRTC, no server required. Cursors, presence, follow mode
 - **Drawing tools** — shapes, pen tool with vector networks, rich text with system fonts, auto-layout, components with live sync, variables with modes and collections
-- **AI chat** — describe what you want, the AI builds it. Tools defined once, wired to chat, CLI, and MCP
+- **AI chat** — describe what you want, the AI builds it. 29 tools wired to chat, CLI, and MCP
+- **MCP server** — connect Claude Code, Cursor, or any MCP client to read/write .fig files headlessly
 - **Headless CLI** — inspect, search, analyze, and render .fig files without a GUI
 - **~7 MB desktop app** — Tauri v2, macOS/Windows/Linux. Also runs in the browser
 
@@ -57,6 +58,7 @@ Your design files are yours. Your tools should be too.
 | Collaboration | Trystero (WebRTC P2P) + Yjs (CRDT) + y-indexeddb |
 | Desktop | Tauri v2 |
 | CLI | citty, agentfmt |
+| MCP | @modelcontextprotocol/sdk, Hono |
 | Testing | Playwright (visual regression), bun:test (unit) |
 | Tooling | Vite 7, oxlint, oxfmt, typescript-go |
 
@@ -91,6 +93,31 @@ bunx @open-pencil/cli export design.fig -f jpg -s 2 -q 90  # JPG at 2x
 ```
 
 All commands support `--json` for machine-readable output.
+
+## MCP Server
+
+Connect AI coding tools to read and modify `.fig` files headlessly. [Full docs →](https://openpencil.dev/reference/mcp-tools)
+
+**Stdio** (Claude Code, Cursor, Windsurf) — add to your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "open-pencil": {
+      "command": "bun",
+      "args": ["packages/mcp/src/index.ts"]
+    }
+  }
+}
+```
+
+**HTTP** (scripts, browser extensions, CI):
+
+```sh
+bun packages/mcp/src/http.ts   # http://localhost:3100/mcp
+```
+
+29 tools: create shapes, set fills/strokes/layout, find nodes, open/save `.fig` files, render JSX to design nodes.
 
 ## Scripts
 
@@ -152,6 +179,7 @@ For other distros, see the [Tauri v2 prerequisites](https://v2.tauri.app/start/p
 packages/
   core/           @open-pencil/core — engine (scene graph, renderer, layout, codec)
   cli/            @open-pencil/cli — headless CLI (info, tree, find, export)
+  mcp/            @open-pencil/mcp — MCP server (stdio + HTTP)
   docs/           VitePress documentation site
 src/
   ai/             AI tool wiring
