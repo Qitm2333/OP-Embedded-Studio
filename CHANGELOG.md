@@ -25,6 +25,12 @@
 - `set_layout_child` tool: sizing, grow, align_self, positioning
 - 13 MCP server integration tests via `InMemoryTransport`
 
+### UI
+
+- Replace all native `<select>` dropdowns with reka-ui `AppSelect` component
+- Fix font picker dropdown truncating long font names
+- Show explanation in font picker when Local Font Access API unavailable (Safari/Firefox)
+
 ### Fixes
 
 - Fix clipboard "Outside int range" error — `pasteID` used unsigned int exceeding Kiwi's signed 32-bit field
