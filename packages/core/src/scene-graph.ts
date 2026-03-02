@@ -1,4 +1,4 @@
-import { DEFAULT_STROKE_MITER_LIMIT } from './constants'
+import { BLACK, DEFAULT_STROKE_MITER_LIMIT } from './constants'
 
 export type { GUID, Color } from './types'
 
@@ -479,7 +479,7 @@ export class SceneGraph {
     const defaultValue =
       value ??
       (type === 'COLOR'
-        ? { r: 0, g: 0, b: 0, a: 1 }
+        ? { ...BLACK }
         : type === 'FLOAT'
           ? 0
           : type === 'BOOLEAN'

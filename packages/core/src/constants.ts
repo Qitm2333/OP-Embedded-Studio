@@ -2,6 +2,9 @@ import type { Color } from './types'
 
 export const IS_TAURI = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
+export const BLACK: Color = { r: 0, g: 0, b: 0, a: 1 }
+export const TRANSPARENT: Color = { r: 0, g: 0, b: 0, a: 0 }
+export const DEFAULT_SHADOW_COLOR: Color = { r: 0, g: 0, b: 0, a: 0.25 }
 export const SELECTION_COLOR = { r: 0.23, g: 0.51, b: 0.96, a: 1 } satisfies Color
 export const COMPONENT_COLOR = { r: 0.592, g: 0.278, b: 1, a: 1 } satisfies Color
 export const SNAP_COLOR = { r: 1.0, g: 0.0, b: 0.56, a: 1 } satisfies Color
@@ -71,7 +74,7 @@ export const RULER_TARGET_PIXEL_SPACING = 100
 export const RULER_MAJOR_TOLERANCE = 0.01
 
 export const TEXT_SELECTION_COLOR = { r: 0.26, g: 0.52, b: 0.96, a: 0.3 }
-export const TEXT_CARET_COLOR = { r: 0, g: 0, b: 0, a: 1 }
+export const TEXT_CARET_COLOR = BLACK
 export const TEXT_CARET_WIDTH = 1
 
 export interface ModelOption {

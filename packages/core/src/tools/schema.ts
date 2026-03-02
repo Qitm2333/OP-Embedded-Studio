@@ -7,6 +7,7 @@
  */
 
 import { parseColor } from '../color'
+import { DEFAULT_SHADOW_COLOR } from '../constants'
 
 import type { FigmaAPI, FigmaNodeProxy } from '../figma-api'
 
@@ -283,7 +284,7 @@ export const setEffects = defineTool({
     }
 
     if (!isBlur) {
-      effect.color = args.color ? parseColor(args.color) : { r: 0, g: 0, b: 0, a: 0.25 }
+      effect.color = args.color ? parseColor(args.color) : { ...DEFAULT_SHADOW_COLOR }
       effect.offset = { x: args.offset_x ?? 0, y: args.offset_y ?? 4 }
       effect.spread = args.spread ?? 0
     }

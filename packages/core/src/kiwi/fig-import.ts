@@ -1,4 +1,4 @@
-import { DEFAULT_STROKE_MITER_LIMIT } from '../constants'
+import { BLACK, DEFAULT_STROKE_MITER_LIMIT } from '../constants'
 import { styleToWeight } from '../fonts'
 import { SceneGraph } from '../scene-graph'
 import { decodeVectorNetworkBlob } from '../vector'
@@ -40,7 +40,7 @@ function guidToString(guid: GUID): string {
 }
 
 function convertColor(color?: { r: number; g: number; b: number; a: number }): Color {
-  if (!color) return { r: 0, g: 0, b: 0, a: 1 }
+  if (!color) return { ...BLACK }
   return { r: color.r, g: color.g, b: color.b, a: color.a }
 }
 

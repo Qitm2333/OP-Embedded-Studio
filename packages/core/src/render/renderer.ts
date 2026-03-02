@@ -1,4 +1,5 @@
 import { parseColor, colorToFill } from '../color'
+import { TRANSPARENT } from '../constants'
 import { isTreeNode } from './tree'
 
 import type { SceneGraph, SceneNode, NodeType, LayoutMode, Stroke } from '../scene-graph'
@@ -287,7 +288,7 @@ function propsToOverrides(props: Record<string, unknown>, isText: boolean): Part
         type: 'LAYER_BLUR',
         radius: props.blur as number,
         visible: true,
-        color: { r: 0, g: 0, b: 0, a: 0 },
+        color: { ...TRANSPARENT },
         offset: { x: 0, y: 0 },
         spread: 0
       }
