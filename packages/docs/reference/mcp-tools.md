@@ -4,9 +4,27 @@ OpenPencil includes an MCP (Model Context Protocol) server that lets AI coding t
 
 Two transports: **stdio** for MCP clients, **HTTP** for everything else.
 
+## Install
+
+```sh
+bun add -g @open-pencil/mcp
+```
+
 ## Stdio (Claude Code, Cursor, etc.)
 
 Add to your MCP config (e.g. `~/.claude/settings.json` or `.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "open-pencil": {
+      "command": "openpencil-mcp"
+    }
+  }
+}
+```
+
+Or run from source without installing:
 
 ::: code-group
 ```json [Bun]
@@ -36,12 +54,10 @@ Add to your MCP config (e.g. `~/.claude/settings.json` or `.cursor/mcp.json`):
 For browser extensions, scripts, CI, or any HTTP client:
 
 ```sh
-# Bun
-bun packages/mcp/src/http.ts
-
-# Node.js
-npx tsx packages/mcp/src/http.ts
+openpencil-mcp-http
 ```
+
+Or from source: `bun packages/mcp/src/http.ts` / `npx tsx packages/mcp/src/http.ts`
 
 Starts on port 3100 (override with `PORT` env var). Endpoints:
 

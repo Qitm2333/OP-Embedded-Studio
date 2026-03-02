@@ -100,12 +100,15 @@ Connect AI coding tools to read and modify `.fig` files headlessly. [Full docs â
 
 **Stdio** (Claude Code, Cursor, Windsurf) â€” add to your MCP config:
 
+```sh
+bun add -g @open-pencil/mcp
+```
+
 ```json
 {
   "mcpServers": {
     "open-pencil": {
-      "command": "bun",
-      "args": ["packages/mcp/src/index.ts"]
+      "command": "openpencil-mcp"
     }
   }
 }
@@ -114,7 +117,7 @@ Connect AI coding tools to read and modify `.fig` files headlessly. [Full docs â
 **HTTP** (scripts, browser extensions, CI):
 
 ```sh
-bun packages/mcp/src/http.ts   # http://localhost:3100/mcp
+openpencil-mcp-http   # http://localhost:3100/mcp
 ```
 
 29 tools: create shapes, set fills/strokes/layout, find nodes, open/save `.fig` files, render JSX to design nodes.
