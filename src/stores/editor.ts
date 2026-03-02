@@ -1569,8 +1569,9 @@ export function createEditorStore() {
     if (nodes.length === 0) return
 
     const names = nodes.map((n) => n.name).join('\n')
-    const textPicBuilder = _renderer
-      ? (node: SceneNode) => _renderer!.buildTextPicture(node)
+    const renderer = _renderer
+    const textPicBuilder = renderer
+      ? (node: SceneNode) => renderer.buildTextPicture(node)
       : undefined
     const internalHtml = buildOpenPencilClipboardHTML(nodes, graph, textPicBuilder)
     const figmaHtml = buildFigmaClipboardHTML(nodes, graph)

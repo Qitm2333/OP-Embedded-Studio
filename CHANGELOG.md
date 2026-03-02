@@ -8,11 +8,14 @@
 - Tab bar with close buttons, middle-click to close, and new tab (+) button
 - Keyboard shortcuts: ⌘N/⌘T new tab, ⌘W close tab, ⌘O opens in new tab
 - Native Tauri menu: File → New and File → Close Tab wired to tab actions
+- Render text from SkPicture cache when fonts are missing — pixel-perfect display without the font installed
+- Missing font indicator (⚠) next to font picker in the sidebar
 
 ### Fixes
 
 - Fix clipboard "Outside int range" error — `pasteID` used unsigned int exceeding Kiwi's signed 32-bit field
 - Error toasts are now sticky (don't auto-dismiss), with selectable text, copy button, and close button
+- Truncate long node names in export button
 
 ### Tests
 
