@@ -6,6 +6,14 @@ Open-source, AI-native design editor. Figma-compatible, AI-first, fully local.
 
 **[Try it online →](https://app.openpencil.dev)** · [Download](https://github.com/open-pencil/open-pencil/releases/latest) · [Documentation](https://openpencil.dev)
 
+### What's next
+
+- Multi-file / tabs support
+- Code signing (Apple & Azure certificates for properly signed binaries)
+- Improving .fig compatibility across a larger set of files
+- Porting all [figma-use](https://github.com/dannote/figma-use) tools (118 → 26 currently) for full AI agent design capabilities
+- CI tools — design linting, code export, visual regression in pipelines
+
 ![OpenPencil](packages/docs/public/screenshot.png)
 
 ## Why
