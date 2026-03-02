@@ -21,6 +21,9 @@
   - Create tools: `create_page`, `create_vector`, `create_slice`
   - Viewport: `viewport_get`, `viewport_set`, `viewport_zoom_to_fit`, `page_bounds`
   - Misc: `flatten_nodes`, `list_fonts`
+- `set_text_properties` tool: alignment, auto-resize, decoration
+- `set_layout_child` tool: sizing, grow, align_self, positioning
+- 13 MCP server integration tests via `InMemoryTransport`
 
 ### Fixes
 
@@ -37,6 +40,7 @@
 
 - Extract shared color constants (`BLACK`, `TRANSPARENT`, `DEFAULT_SHADOW_COLOR`) — replaces 8 inline literals across core
 - Extract shared `NodeContextMenuContent` component to avoid menu duplication
+- Fix `@open-pencil/core` dep in MCP package: `workspace:*` for local dev (pnpm resolves at publish time)
 
 ### Tests
 
