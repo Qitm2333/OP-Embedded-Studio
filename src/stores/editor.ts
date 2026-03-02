@@ -1597,6 +1597,7 @@ export function createEditorStore() {
           figma.blobs
         )
         if (created.length > 0) {
+          computeAllLayouts(graph)
           state.selectedIds = new Set(created)
           requestRender()
         }
