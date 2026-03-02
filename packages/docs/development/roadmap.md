@@ -107,13 +107,13 @@ Core extraction, CLI, MCP server, design guidelines, screenshot verification loo
 - .fig roundtrip tests with LFS fixtures (material3.fig 87K nodes, nuxtui.fig 314K nodes)
 - .fig import O(n²) → O(n) fix (37s → 535ms on 87K nodes), ByteBuffer optimization
 - test:coverage script
-- AI chat: OpenRouter direct (no backend), Stronghold key storage, 10 tools (create_shape, set_fill, etc.), model selector, ⌘J toggle, streaming markdown, Playwright tests with mock transport
+- AI chat: OpenRouter direct (no backend), Stronghold key storage, 26 tools (create_shape, set_fill, set_effects, set_constraints, components, groups, pages, variables, eval_code, etc.), model selector, ⌘J toggle, streaming markdown, Playwright tests with mock transport
 - Code panel: sceneNodeToJsx() export, Prism.js highlighting, line numbers, copy button, 14 tests
 - Properties panel restructured: Design | Code | AI tabs
 - npm publishing preparation for core and cli packages
 
 **Planned:**
-- Port MCP server from figma-use (117 tools)
+- Port remaining figma-use tools (118 total, 26 currently implemented)
 - Attached mode: WebSocket to running editor for eval, create, export, screenshot
 - Design guidelines system
 - AI-driven design workflow via MCP

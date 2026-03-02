@@ -1079,6 +1079,7 @@ Tauri v2 desktop app (macOS, Windows, Linux). Web app at app.openpencil.dev. CLI
 ### What's next
 
 - **Multi-file / tabs** — open multiple documents in tabs within a single window
+- **More AI providers** — Anthropic API, Claude Code subscription, Gemini, local models via Ollama
 - **Code signing** — Apple & Azure certificates for properly signed desktop binaries
 - **.fig compatibility** — improving import/export fidelity across a larger set of real-world files
 - **Port all figma-use tools** — bring the full 118-tool set from [figma-use](https://github.com/dannote/figma-use) into the editor (currently 26/118) for complete AI agent design capabilities

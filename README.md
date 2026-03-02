@@ -9,6 +9,7 @@ Open-source, AI-native design editor. Figma-compatible, AI-first, fully local.
 > **What's next**
 >
 > - Multi-file / tabs support
+> - More AI providers (Anthropic API, Claude Code subscription, Gemini, local models via Ollama)
 > - Code signing (Apple & Azure certificates for properly signed binaries)
 > - Improving .fig compatibility across a larger set of files
 > - Porting all [figma-use](https://github.com/dannote/figma-use) tools (118 → 26 currently) for full AI agent design capabilities
@@ -18,7 +19,7 @@ Open-source, AI-native design editor. Figma-compatible, AI-first, fully local.
 
 ## Why
 
-Figma is a closed platform that actively fights programmatic access. In February 2026, [Figma 126.1.2 started stripping `--remote-debugging-port`](https://forum.figma.com/report-a-problem-6/remote-debugging-port-not-working-in-figma-desktop-126-1-2-50858) on startup — killing CDP-based automation tools like [figma-use](https://github.com/dannote/figma-use) that filled gaps Figma refused to address. Their own MCP server, launched months after figma-use proved the demand, still can't create or modify designs — it's read-only.
+Figma is a closed platform that actively fights programmatic access. Their [MCP server](https://www.figma.com/blog/introducing-figma-mcp-server/), launched in June 2025, was read-only — you could pull design context but not create or modify anything. [figma-use](https://github.com/dannote/figma-use) filled that gap in January 2026 with full read/write design automation via CDP. A month later, [Figma 126.1.2 started stripping `--remote-debugging-port`](https://forum.figma.com/report-a-problem-6/remote-debugging-port-not-working-in-figma-desktop-126-1-2-50858) on startup — killing CDP-based tools. Figma has since added UI-to-Figma capture via their MCP server, but it still can't programmatically create or modify design nodes.
 
 This is a supply chain problem. Designers and developers build workflows on top of their design tool. When that tool is closed-source, the vendor controls what's possible. They can break your tooling overnight with a point release. Your design files are in a proprietary binary format that only their software can fully read.
 

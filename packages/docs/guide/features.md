@@ -207,7 +207,7 @@ Built-in AI assistant accessible via the AI tab in the properties panel or <kbd>
 
 **Model selector** with curated models: Claude, Gemini, GPT, DeepSeek, Qwen, Kimi, Llama — stored in `@open-pencil/core` constants with benchmark-ranked tags. Responses stream as markdown (vue-stream-markdown).
 
-**10 AI tools** wired to the editor store with valibot schemas: `create_shape`, `set_fill`, `set_stroke`, `update_node`, `set_layout`, `delete_node`, `select_nodes`, `get_page_tree`, `get_selection`, `rename_node`. The ToolLoopAgent executes tools automatically in a loop. Tool calls display as collapsible timeline entries in the chat (reka-ui Collapsible).
+**26 AI tools** defined in `packages/core/src/tools/schema.ts` with valibot schemas: read tools (`get_selection`, `get_page_tree`, `get_node`, `find_nodes`, `list_pages`, `list_variables`, `list_collections`), create tools (`create_shape`, `render`, `create_component`, `create_instance`), modify tools (`set_fill`, `set_stroke`, `set_effects`, `update_node`, `set_layout`, `set_constraints`, `rename_node`, `reparent_node`, `clone_node`, `delete_node`), organize tools (`select_nodes`, `group_nodes`, `ungroup_node`, `switch_page`), and `eval_code` escape hatch. Tool calls display as collapsible timeline entries in the chat (reka-ui Collapsible).
 
 Tested with Playwright using mock transport for CI.
 

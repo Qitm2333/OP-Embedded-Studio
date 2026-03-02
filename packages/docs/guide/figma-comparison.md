@@ -27,7 +27,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Layer outlines view | 🔲 | Wireframe view of all layers |
 | Custom file thumbnails | 🔲 | Thumbnail generated on export, but no custom thumbnail picker |
 | Nudge value settings | 🔲 | Default 1px/10px; Figma allows custom small/big nudge values |
-| AI tools | 🟡 | 10 AI tools via OpenRouter (create/modify/delete shapes, fills/strokes, layout); no AI-generated images or AI-powered search yet |
+| AI tools | 🟡 | 26 AI tools via OpenRouter (create/modify/delete shapes, fills/strokes/effects, layout, constraints, components, groups, pages, variables); no AI-generated images or AI-powered search yet |
 
 ## Layers & Shapes
 
@@ -208,8 +208,8 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Code Connect | 🔲 | Link design components to code |
 | Code snippets | 🟡 | JSX export with syntax highlighting and copy; no CSS/Swift/Kotlin snippets |
 | Figma for VS Code | 🔲 | Editor plugin integration |
-| MCP server | 🔲 | Planned for Phase 5; 117-tool MCP server from figma-use |
-| CLI tools | 🟡 | Headless CLI: info, tree, find, export, analyze (colors/typography/spacing/clusters), node, pages, variables; MCP server not yet |
+| MCP server | 🔲 | Planned; porting 118 tools from figma-use (26 currently available as AI tools) |
+| CLI tools | 🟡 | Headless CLI: info, tree, find, export, analyze (colors/typography/spacing/clusters), node, pages, variables, eval; MCP server not yet |
 
 ## Figma Draw
 
