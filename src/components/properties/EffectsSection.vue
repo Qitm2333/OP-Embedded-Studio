@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import AppSelect from '@/components/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import { useNodeProps } from '@/composables/use-node-props'
@@ -21,6 +22,7 @@ const EFFECT_LABELS: Record<string, string> = {
 }
 
 const EFFECT_TYPES = Object.keys(EFFECT_LABELS) as EffectType[]
+const EFFECT_OPTIONS = EFFECT_TYPES.map((t) => ({ value: t, label: EFFECT_LABELS[t] }))
 
 function isShadow(type: string) {
   return type === 'DROP_SHADOW' || type === 'INNER_SHADOW'
@@ -131,15 +133,11 @@ function toggleExpand(index: number) {
           <icon-lucide-blend class="size-3 text-muted" />
         </button>
 
-        <select
-          class="min-w-0 flex-1 cursor-pointer appearance-none border-none bg-transparent text-xs text-surface outline-none"
-          :value="effect.type"
-          @change="updateType(i, ($event.target as HTMLSelectElement).value as EffectType)"
-        >
-          <option v-for="t in EFFECT_TYPES" :key="t" :value="t" class="bg-panel text-surface">
-            {{ EFFECT_LABELS[t] }}
-          </option>
-        </select>
+        <AppSelect
+          :model-value="effect.type"
+          :options="EFFECT_OPTIONS"
+          @update:model-value="updateType(i, $event as EffectType)"
+        />
 
         <button
           class="cursor-pointer border-none bg-transparent p-0 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-surface"

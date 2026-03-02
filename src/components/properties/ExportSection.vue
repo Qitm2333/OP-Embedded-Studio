@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue'
 
+import AppSelect from '@/components/AppSelect.vue'
 import { useEditorStore } from '@/stores/editor'
 
 import type { ExportFormat } from '@/engine/render-image'
@@ -18,7 +19,9 @@ const showPreview = ref(false)
 const exporting = ref(false)
 
 const SCALES = [0.5, 0.75, 1, 1.5, 2, 3, 4] as const
+const SCALE_OPTIONS = SCALES.map((s) => ({ value: s, label: s % 1 === 0 ? `${s}x` : `${s}x` }))
 const FORMATS: ExportFormat[] = ['PNG', 'JPG', 'WEBP']
+const FORMAT_OPTIONS = FORMATS.map((f) => ({ value: f, label: f }))
 
 const nodeName = computed(() => {
   void store.state.sceneVersion
@@ -90,9 +93,7 @@ onUnmounted(() => {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
 })
 
-function formatScale(scale: number): string {
-  return scale % 1 === 0 ? `${scale}x` : `${scale}x`
-}
+
 </script>
 
 <template>
@@ -108,25 +109,16 @@ function formatScale(scale: number): string {
     </div>
 
     <div v-for="(setting, i) in settings" :key="i" class="flex items-center gap-1.5 py-0.5">
-      <select
-        class="min-w-0 flex-1 cursor-pointer appearance-none rounded border border-border bg-input px-1.5 py-1 text-xs text-surface outline-none"
-        :value="setting.scale"
-        @change="setting.scale = Number(($event.target as HTMLSelectElement).value)"
-      >
-        <option v-for="s in SCALES" :key="s" :value="s" class="bg-panel text-surface">
-          {{ formatScale(s) }}
-        </option>
-      </select>
-
-      <select
-        class="min-w-0 flex-1 cursor-pointer appearance-none rounded border border-border bg-input px-1.5 py-1 text-xs text-surface outline-none"
-        :value="setting.format"
-        @change="setting.format = ($event.target as HTMLSelectElement).value as ExportFormat"
-      >
-        <option v-for="f in FORMATS" :key="f" :value="f" class="bg-panel text-surface">
-          {{ f }}
-        </option>
-      </select>
+      <AppSelect
+        :model-value="setting.scale"
+        :options="SCALE_OPTIONS"
+        @update:model-value="setting.scale = Number($event)"
+      />
+      <AppSelect
+        :model-value="setting.format"
+        :options="FORMAT_OPTIONS"
+        @update:model-value="setting.format = $event as ExportFormat"
+      />
 
       <button
         class="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"

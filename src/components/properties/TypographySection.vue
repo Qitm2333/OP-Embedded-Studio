@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 
+import AppSelect from '@/components/AppSelect.vue'
 import FontPicker from '@/components/FontPicker.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import { useNodeFontStatus } from '@/composables/use-font-status'
@@ -86,13 +87,11 @@ onMounted(async () => {
 
     <!-- Weight + Size -->
     <div class="mb-1.5 flex gap-1.5">
-      <select
-        class="min-w-0 flex-1 cursor-pointer rounded border border-border bg-input px-1.5 py-1 text-xs text-surface"
-        :value="node.fontWeight"
-        @change="selectWeight(+($event.target as HTMLSelectElement).value)"
-      >
-        <option v-for="w in WEIGHTS" :key="w.value" :value="w.value">{{ w.label }}</option>
-      </select>
+      <AppSelect
+        :model-value="node.fontWeight"
+        :options="WEIGHTS"
+        @update:model-value="selectWeight(+$event)"
+      />
       <ScrubInput
         class="flex-1"
         :model-value="node.fontSize"
