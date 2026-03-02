@@ -6,6 +6,7 @@ import {
   parseFigKiwiChunks,
   decompressFigKiwiDataAsync
 } from './kiwi-serialize'
+import { styleToWeight } from './fonts'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
 import { decodeVectorNetworkBlob } from './vector'
@@ -259,6 +260,16 @@ export function importClipboardNodes(
       layoutPositioning:
         (nc.stackPositioning as string) === 'ABSOLUTE' ? ('ABSOLUTE' as const) : ('AUTO' as const),
       layoutGrow: (nc.stackChildPrimaryGrow as number) ?? 0,
+      layoutAlignSelf:
+        (nc.stackChildAlignSelf as string) === 'STRETCH'
+          ? ('STRETCH' as const)
+          : ('AUTO' as const),
+      clipsContent: nc.frameMaskDisabled === false,
+      textAutoResize: mapTextAutoResize(nc.textAutoResize as string),
+      fontWeight: nc.fontWeight ?? styleToWeight(nc.fontName?.style ?? ''),
+      italic: nc.fontName?.style?.toLowerCase().includes('italic') ?? false,
+      lineHeight: mapLineHeight(nc.lineHeight as { value: number; units: string } | undefined),
+      letterSpacing: nc.letterSpacing ?? 0,
       vectorNetwork: decodeVectorData(nc, blobs)
     })
 
@@ -313,6 +324,20 @@ function mapCounterAlign(align?: string): LayoutCounterAlign {
   if (align === 'STRETCH') return 'STRETCH'
   if (align === 'BASELINE') return 'BASELINE'
   return 'MIN'
+}
+
+function mapTextAutoResize(resize?: string): 'NONE' | 'HEIGHT' | 'WIDTH_AND_HEIGHT' | 'TRUNCATE' {
+  if (resize === 'HEIGHT') return 'HEIGHT'
+  if (resize === 'WIDTH_AND_HEIGHT') return 'WIDTH_AND_HEIGHT'
+  if (resize === 'TRUNCATE') return 'TRUNCATE'
+  return 'NONE'
+}
+
+function mapLineHeight(lh?: { value: number; units: string }): number | undefined {
+  if (!lh) return undefined
+  if (lh.units === 'PIXELS') return lh.value
+  if (lh.units === 'PERCENT') return undefined
+  return undefined
 }
 
 function mapNodeType(type?: string): SceneNode['type'] {
