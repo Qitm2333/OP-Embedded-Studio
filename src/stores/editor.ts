@@ -1569,7 +1569,11 @@ export function createEditorStore() {
     if (nodes.length === 0) return
 
     const names = nodes.map((n) => n.name).join('\n')
-    const internalHtml = buildOpenPencilClipboardHTML(nodes, graph)
+    const renderer = _renderer
+    const textPicBuilder = renderer
+      ? (node: SceneNode) => renderer.buildTextPicture(node)
+      : undefined
+    const internalHtml = buildOpenPencilClipboardHTML(nodes, graph, textPicBuilder)
     const figmaHtml = buildFigmaClipboardHTML(nodes, graph)
 
     const html = figmaHtml ? figmaHtml + internalHtml : internalHtml
@@ -1969,13 +1973,21 @@ export type EditorStore = ReturnType<typeof createEditorStore>
 
 const storeRef = shallowRef<EditorStore>()
 
-export function provideEditorStore(): EditorStore {
-  const store = createEditorStore()
+export function setActiveEditorStore(store: EditorStore) {
   storeRef.value = store
-  return store
 }
 
-export function useEditorStore(): EditorStore {
+export function getActiveEditorStore(): EditorStore {
   if (!storeRef.value) throw new Error('Editor store not provided')
   return storeRef.value
+}
+
+const storeProxy = new Proxy({} as EditorStore, {
+  get(_, prop) {
+    return Reflect.get(getActiveEditorStore(), prop)
+  }
+})
+
+export function useEditorStore(): EditorStore {
+  return storeProxy
 }

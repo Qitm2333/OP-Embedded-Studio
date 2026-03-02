@@ -55,6 +55,7 @@ export {
   listFamilies,
   initFontService,
   getFontProvider,
+  isFontLoaded,
   ensureNodeFont,
   styleToWeight,
   weightToStyle
@@ -127,7 +128,8 @@ export {
   parseOpenPencilClipboard,
   buildFigmaClipboardHTML,
   buildOpenPencilClipboardHTML,
-  prefetchFigmaSchema
+  prefetchFigmaSchema,
+  type TextPictureBuilder
 } from './clipboard'
 
 export { readFigFile, parseFigFile } from './kiwi/fig-file'

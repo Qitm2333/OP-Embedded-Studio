@@ -1,0 +1,23 @@
+import { isFontLoaded } from '@open-pencil/core'
+import { computed } from 'vue'
+
+import type { SceneNode } from '@open-pencil/core'
+
+export function useNodeFontStatus(node: () => SceneNode) {
+  const missingFonts = computed(() => {
+    const n = node()
+    if (n.type !== 'TEXT') return []
+
+    const families = new Set<string>()
+    families.add(n.fontFamily || 'Inter')
+    for (const run of n.styleRuns) {
+      if (run.style.fontFamily) families.add(run.style.fontFamily)
+    }
+
+    return [...families].filter((f) => !isFontLoaded(f))
+  })
+
+  const hasMissingFonts = computed(() => missingFonts.value.length > 0)
+
+  return { missingFonts, hasMissingFonts }
+}

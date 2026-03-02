@@ -54,7 +54,12 @@ interface MenuItem {
 }
 
 const fileMenu: MenuItem[] = [
-  { label: 'Open…', shortcut: `${mod}O`, action: () => openFileDialog(store) },
+  {
+    label: 'New',
+    shortcut: `${mod}N`,
+    action: () => import('@/stores/tabs').then((m) => m.createTab())
+  },
+  { label: 'Open…', shortcut: `${mod}O`, action: () => openFileDialog() },
   { separator: true },
   { label: 'Save', shortcut: `${mod}S`, action: () => store.saveFigFile() },
   { label: 'Save as…', shortcut: `${mod}⇧S`, action: () => store.saveFigFileAs() },

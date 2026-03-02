@@ -265,6 +265,8 @@ export interface SceneNode {
   overrides: Record<string, unknown>
 
   boundVariables: Record<string, string>
+
+  textPicture: Uint8Array | null
 }
 
 export type VariableType = 'COLOR' | 'FLOAT' | 'STRING' | 'BOOLEAN'
@@ -385,6 +387,7 @@ function createDefaultNode(type: NodeType, overrides: Partial<SceneNode> = {}): 
     componentId: null,
     overrides: {},
     boundVariables: {},
+    textPicture: null,
     ...overrides
   }
 }

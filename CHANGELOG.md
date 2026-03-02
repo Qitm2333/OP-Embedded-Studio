@@ -4,8 +4,13 @@
 
 ### Features
 
+- Multi-file tabs — open multiple documents in tabs within a single window
+- Tab bar with close buttons, middle-click to close, and new tab (+) button
+- Keyboard shortcuts: ⌘N/⌘T new tab, ⌘W close tab, ⌘O opens in new tab
+- Native Tauri menu: File → New and File → Close Tab wired to tab actions
+- Render text from SkPicture cache when fonts are missing — pixel-perfect display without the font installed
+- Missing font indicator (⚠) next to font picker in the sidebar
 - Right-click context menu on layers panel — same actions as the canvas context menu
-- Extract shared `NodeContextMenuContent` component to avoid menu duplication
 - 40+ new AI/MCP tools ported from figma-use:
   - Granular set tools: `set_rotation`, `set_opacity`, `set_radius`, `set_minmax`, `set_text`, `set_font`, `set_font_range`, `set_text_resize`, `set_visible`, `set_blend`, `set_locked`, `set_stroke_align`
   - Node operations: `node_bounds`, `node_move`, `node_resize`, `node_ancestors`, `node_children`, `node_tree`, `node_bindings`, `node_replace_with`
@@ -17,6 +22,12 @@
   - Viewport: `viewport_get`, `viewport_set`, `viewport_zoom_to_fit`, `page_bounds`
   - Misc: `flatten_nodes`, `list_fonts`
 
+### Fixes
+
+- Fix clipboard "Outside int range" error — `pasteID` used unsigned int exceeding Kiwi's signed 32-bit field
+- Error toasts are now sticky (don't auto-dismiss), with selectable text, copy button, and close button
+- Truncate long node names in export button
+
 ### Build
 
 - Auto-populate GitHub Release notes from CHANGELOG.md via `ffurrer2/extract-release-notes@v2`
@@ -25,6 +36,11 @@
 ### Internal
 
 - Extract shared color constants (`BLACK`, `TRANSPARENT`, `DEFAULT_SHADOW_COLOR`) — replaces 8 inline literals across core
+- Extract shared `NodeContextMenuContent` component to avoid menu duplication
+
+### Tests
+
+- Clipboard roundtrip tests: encode to Figma Kiwi binary → decode → verify
 
 ## [0.4.2] (2026-03-02)
 
