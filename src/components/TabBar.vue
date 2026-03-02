@@ -19,7 +19,7 @@ function onClose(e: MouseEvent, tabId: string) {
 <template>
   <div
     v-if="tabs.length > 1"
-    class="flex h-9 shrink-0 items-end gap-0 overflow-x-auto border-b border-border bg-panel scrollbar-none"
+    class="flex h-9 shrink-0 items-end gap-0 overflow-x-auto border-b border-border bg-[#1e1e1e] scrollbar-none"
   >
     <div
       v-for="tab in tabs"
@@ -27,8 +27,8 @@ function onClose(e: MouseEvent, tabId: string) {
       class="group/tab flex h-full max-w-48 min-w-0 cursor-pointer items-center gap-1.5 border-r border-border px-3 text-xs transition-colors select-none"
       :class="
         tab.isActive
-          ? 'bg-surface text-surface'
-          : 'bg-panel text-muted hover:bg-hover hover:text-surface'
+          ? 'bg-panel text-surface'
+          : 'text-muted hover:text-surface'
       "
       @click="switchTab(tab.id)"
       @mousedown="onMiddleClick($event, tab.id)"
@@ -45,7 +45,7 @@ function onClose(e: MouseEvent, tabId: string) {
       </button>
     </div>
     <button
-      class="flex size-9 shrink-0 cursor-pointer items-center justify-center text-muted transition-colors hover:bg-hover hover:text-surface"
+      class="flex size-9 shrink-0 cursor-pointer items-center justify-center text-muted transition-colors hover:text-surface"
       title="New tab"
       @click="createTab()"
     >
