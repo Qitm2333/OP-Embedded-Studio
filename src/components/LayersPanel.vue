@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useEventListener } from '@vueuse/core'
-import { TreeRoot, TreeItem } from 'reka-ui'
+import { TreeRoot, TreeItem, ContextMenuRoot, ContextMenuTrigger, ContextMenuPortal } from 'reka-ui'
+
+import NodeContextMenuContent from './NodeContextMenuContent.vue'
 
 import IconCircle from '~icons/lucide/circle'
 import IconComponent from '~icons/lucide/diamond'
@@ -77,6 +79,16 @@ function onSelect(ev: CustomEvent) {
     store.select([node.id], true)
   } else {
     store.select([node.id])
+  }
+}
+
+function onLayerRightClick(e: MouseEvent) {
+  const row = (e.target as HTMLElement).closest<HTMLElement>('[data-node-id]')
+  if (!row) return
+  const nodeId = row.dataset.nodeId
+  if (!nodeId) return
+  if (!store.state.selectedIds.has(nodeId)) {
+    store.select([nodeId])
   }
 }
 
@@ -231,67 +243,76 @@ function updateDropTarget(ev: PointerEvent) {
     <header class="shrink-0 px-3 py-2 text-[11px] uppercase tracking-wider text-muted">
       Layers
     </header>
-    <div ref="listRef" class="relative flex-1 overflow-y-auto px-1">
-      <TreeRoot
-        :key="treeKey"
-        v-slot="{ flattenItems }"
-        :items="items"
-        :get-key="(v: LayerNode) => v.id"
-        :get-children="(v: LayerNode) => v.children"
-        v-model:expanded="expanded"
-      >
-        <div
-          v-for="item in flattenItems"
-          :key="item._id"
-          :data-node-id="item.value.id"
-          :data-level="item.level"
-        >
-          <TreeItem v-slot="{ isExpanded }" v-bind="item.bind" as-child @select="onSelect">
-            <button
-              class="group/row flex w-full cursor-pointer items-center gap-1 rounded border-none py-1 text-left text-xs"
-              :class="[
-                store.state.selectedIds.has(item.value.id)
-                  ? 'bg-accent text-white'
-                  : 'bg-transparent text-surface hover:bg-hover',
-                dragging && dragNodeId === item.value.id ? 'opacity-30' : '',
-                dropIntoId === item.value.id ? 'ring-2 ring-accent ring-inset' : '',
-                !item.value.visible ? 'opacity-50' : ''
-              ]"
-              :style="{ paddingLeft: `${8 + (item.level - 1) * 16}px` }"
-              @pointerdown.prevent="onPointerDown($event, item.value.id)"
+    <ContextMenuRoot :modal="false">
+      <ContextMenuTrigger as-child @contextmenu="onLayerRightClick">
+        <div ref="listRef" class="relative flex-1 overflow-y-auto px-1">
+          <TreeRoot
+            :key="treeKey"
+            v-slot="{ flattenItems }"
+            :items="items"
+            :get-key="(v: LayerNode) => v.id"
+            :get-children="(v: LayerNode) => v.children"
+            v-model:expanded="expanded"
+          >
+            <div
+              v-for="item in flattenItems"
+              :key="item._id"
+              :data-node-id="item.value.id"
+              :data-level="item.level"
             >
-              <span
-                v-if="item.hasChildren"
-                class="flex w-4 shrink-0 cursor-pointer items-center justify-center text-muted transition-transform hover:text-surface"
-                :class="isExpanded ? 'rotate-90' : 'rotate-0'"
-                @click.stop="toggleExpand(item.value.id)"
-              >
-                <icon-lucide-chevron-right class="size-3" />
-              </span>
-              <span v-else class="w-4 shrink-0" />
-              <component
-                :is="nodeIcons[item.value.type] ?? IconSquare"
-                class="size-3 shrink-0"
-                :class="
-                  COMPONENT_TYPES.has(item.value.type) ? 'text-[#9747ff] opacity-100' : 'opacity-70'
-                "
-              />
-              <span class="min-w-0 flex-1 truncate">{{ item.value.name }}</span>
-              <icon-lucide-eye-off
-                v-if="!item.value.visible"
-                class="mr-1 size-3 shrink-0 text-muted"
-              />
-            </button>
-          </TreeItem>
-        </div>
-      </TreeRoot>
+              <TreeItem v-slot="{ isExpanded }" v-bind="item.bind" as-child @select="onSelect">
+                <button
+                  class="group/row flex w-full cursor-pointer items-center gap-1 rounded border-none py-1 text-left text-xs"
+                  :class="[
+                    store.state.selectedIds.has(item.value.id)
+                      ? 'bg-accent text-white'
+                      : 'bg-transparent text-surface hover:bg-hover',
+                    dragging && dragNodeId === item.value.id ? 'opacity-30' : '',
+                    dropIntoId === item.value.id ? 'ring-2 ring-accent ring-inset' : '',
+                    !item.value.visible ? 'opacity-50' : ''
+                  ]"
+                  :style="{ paddingLeft: `${8 + (item.level - 1) * 16}px` }"
+                  @pointerdown.prevent="onPointerDown($event, item.value.id)"
+                >
+                  <span
+                    v-if="item.hasChildren"
+                    class="flex w-4 shrink-0 cursor-pointer items-center justify-center text-muted transition-transform hover:text-surface"
+                    :class="isExpanded ? 'rotate-90' : 'rotate-0'"
+                    @click.stop="toggleExpand(item.value.id)"
+                  >
+                    <icon-lucide-chevron-right class="size-3" />
+                  </span>
+                  <span v-else class="w-4 shrink-0" />
+                  <component
+                    :is="nodeIcons[item.value.type] ?? IconSquare"
+                    class="size-3 shrink-0"
+                    :class="
+                      COMPONENT_TYPES.has(item.value.type)
+                        ? 'text-[#9747ff] opacity-100'
+                        : 'opacity-70'
+                    "
+                  />
+                  <span class="min-w-0 flex-1 truncate">{{ item.value.name }}</span>
+                  <icon-lucide-eye-off
+                    v-if="!item.value.visible"
+                    class="mr-1 size-3 shrink-0 text-muted"
+                  />
+                </button>
+              </TreeItem>
+            </div>
+          </TreeRoot>
 
-      <!-- Drop indicator line -->
-      <div
-        v-if="dragging && indicatorY >= 0"
-        class="pointer-events-none absolute right-1 left-1 h-0.5 bg-accent"
-        :style="{ top: `${indicatorY}px`, marginLeft: `${indicatorDepth * 16}px` }"
-      />
-    </div>
+          <!-- Drop indicator line -->
+          <div
+            v-if="dragging && indicatorY >= 0"
+            class="pointer-events-none absolute right-1 left-1 h-0.5 bg-accent"
+            :style="{ top: `${indicatorY}px`, marginLeft: `${indicatorDepth * 16}px` }"
+          />
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuPortal>
+        <NodeContextMenuContent />
+      </ContextMenuPortal>
+    </ContextMenuRoot>
   </aside>
 </template>

@@ -37,8 +37,6 @@ useEventListener(
   { passive: false }
 )
 
-
-
 const params = useUrlSearchParams('history')
 const showChrome = !('no-chrome' in params)
 if (!('test' in params)) {

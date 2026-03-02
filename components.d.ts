@@ -82,6 +82,7 @@ declare module 'vue' {
     IconLucideX: typeof import('~icons/lucide/x')['default']
     LayersPanel: typeof import('./src/components/LayersPanel.vue')['default']
     LayoutSection: typeof import('./src/components/properties/LayoutSection.vue')['default']
+    NodeContextMenuContent: typeof import('./src/components/NodeContextMenuContent.vue')['default']
     PageSection: typeof import('./src/components/properties/PageSection.vue')['default']
     PagesPanel: typeof import('./src/components/PagesPanel.vue')['default']
     PositionSection: typeof import('./src/components/properties/PositionSection.vue')['default']

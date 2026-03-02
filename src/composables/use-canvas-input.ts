@@ -1161,28 +1161,43 @@ export function useCanvasInput(
 
   // Safari macOS: trackpad pinch-to-zoom uses gesture events, not wheel+ctrlKey
   let gestureStartZoom = 1
-  useEventListener(canvasRef, 'gesturestart' as keyof HTMLElementEventMap, (e: Event) => {
-    e.preventDefault()
-    gestureStartZoom = store.state.zoom
-  }, { passive: false })
-  useEventListener(canvasRef, 'gesturechange' as keyof HTMLElementEventMap, (e: Event) => {
-    e.preventDefault()
-    const ge = e as GestureEvent
-    const canvas = canvasRef.value
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const sx = (ge.clientX ?? rect.width / 2) - rect.left
-    const sy = (ge.clientY ?? rect.height / 2) - rect.top
-    const newZoom = Math.max(0.02, Math.min(256, gestureStartZoom * ge.scale))
-    const zoomRatio = newZoom / store.state.zoom
-    store.state.panX = sx - (sx - store.state.panX) * zoomRatio
-    store.state.panY = sy - (sy - store.state.panY) * zoomRatio
-    store.state.zoom = newZoom
-    store.requestRepaint()
-  }, { passive: false })
-  useEventListener(canvasRef, 'gestureend' as keyof HTMLElementEventMap, (e: Event) => {
-    e.preventDefault()
-  }, { passive: false })
+  useEventListener(
+    canvasRef,
+    'gesturestart' as keyof HTMLElementEventMap,
+    (e: Event) => {
+      e.preventDefault()
+      gestureStartZoom = store.state.zoom
+    },
+    { passive: false }
+  )
+  useEventListener(
+    canvasRef,
+    'gesturechange' as keyof HTMLElementEventMap,
+    (e: Event) => {
+      e.preventDefault()
+      const ge = e as GestureEvent
+      const canvas = canvasRef.value
+      if (!canvas) return
+      const rect = canvas.getBoundingClientRect()
+      const sx = (ge.clientX ?? rect.width / 2) - rect.left
+      const sy = (ge.clientY ?? rect.height / 2) - rect.top
+      const newZoom = Math.max(0.02, Math.min(256, gestureStartZoom * ge.scale))
+      const zoomRatio = newZoom / store.state.zoom
+      store.state.panX = sx - (sx - store.state.panX) * zoomRatio
+      store.state.panY = sy - (sy - store.state.panY) * zoomRatio
+      store.state.zoom = newZoom
+      store.requestRepaint()
+    },
+    { passive: false }
+  )
+  useEventListener(
+    canvasRef,
+    'gestureend' as keyof HTMLElementEventMap,
+    (e: Event) => {
+      e.preventDefault()
+    },
+    { passive: false }
+  )
 
   return {
     drag,
