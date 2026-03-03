@@ -356,7 +356,7 @@ export function importNodeChanges(
   }
 
   // Remove the default page created by constructor — we'll create pages from the file
-  for (const page of graph.getPages()) {
+  for (const page of graph.getPages(true)) {
     graph.deleteNode(page.id)
   }
 
@@ -597,6 +597,7 @@ export function importNodeChanges(
       if (!canvasNc) continue
       if (canvasNc.type === 'CANVAS') {
         const page = graph.addPage(canvasNc.name ?? 'Page')
+        if (canvasNc.internalOnly) page.internalOnly = true
         created.add(canvasId)
         for (const childId of getChildren(canvasId)) {
           createSceneNode(childId, page.id)
@@ -621,7 +622,7 @@ export function importNodeChanges(
   importVariables()
 
   // Ensure at least one page exists
-  if (graph.getPages().length === 0) {
+  if (graph.getPages(true).length === 0) {
     graph.addPage('Page 1')
   }
 

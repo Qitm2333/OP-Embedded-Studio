@@ -266,6 +266,8 @@ export interface SceneNode {
 
   boundVariables: Record<string, string>
 
+  internalOnly: boolean
+
   textPicture: Uint8Array | null
 }
 
@@ -387,6 +389,7 @@ function createDefaultNode(type: NodeType, overrides: Partial<SceneNode> = {}): 
     componentId: null,
     overrides: {},
     boundVariables: {},
+    internalOnly: false,
     textPicture: null,
     ...overrides
   }
@@ -427,8 +430,10 @@ export class SceneGraph {
     return this.createNode('CANVAS', this.rootId, { name, width: 0, height: 0 })
   }
 
-  getPages(): SceneNode[] {
-    return this.getChildren(this.rootId).filter((n) => n.type === 'CANVAS')
+  getPages(includeInternal = false): SceneNode[] {
+    return this.getChildren(this.rootId).filter(
+      (n) => n.type === 'CANVAS' && (includeInternal || !n.internalOnly)
+    )
   }
 
   getAllNodes(): Iterable<SceneNode> {

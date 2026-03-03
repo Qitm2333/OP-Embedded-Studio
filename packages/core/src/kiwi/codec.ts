@@ -274,6 +274,8 @@ export interface NodeChange {
   // ComponentSet
   isStateGroup?: boolean
   stateGroupPropertyValueOrders?: Array<{ property: string; values: string[] }>
+  // Internal
+  internalOnly?: boolean
   // Corners
   rectangleTopLeftCornerRadius?: number
   rectangleTopRightCornerRadius?: number
