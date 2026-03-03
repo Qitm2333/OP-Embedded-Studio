@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+    paths-ignore:
+      - 'packages/docs/**'
+      - 'openspec/**'
+      - '*.md'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bunx tsgo --noEmit
+
+      - name: Unit tests
+        run: bun test tests/engine/
+
+      - name: Copy-paste detection
+        run: bun run test:dupes

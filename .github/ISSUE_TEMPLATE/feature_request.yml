@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest an improvement or new capability
+labels: [enhancement]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What would you like to see? How would it work?
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What problem does this solve? How do you work around it today?
+
+  - type: textarea
+    id: figma-reference
+    attributes:
+      label: Figma reference
+      description: If this exists in Figma, describe how it works there. Screenshots welcome.

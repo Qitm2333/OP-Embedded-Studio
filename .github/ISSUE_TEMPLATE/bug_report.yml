@@ -1,0 +1,51 @@
+name: Bug report
+description: Something isn't working correctly
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps to trigger the bug.
+      placeholder: |
+        1. Open a .fig file with …
+        2. Click on …
+        3. See error
+
+  - type: textarea
+    id: file
+    attributes:
+      label: File
+      description: If the bug involves a specific .fig file, attach it or link to the original Figma file.
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Web (app.openpencil.dev)
+        - macOS (Tauri)
+        - Windows (Tauri)
+        - Linux (Tauri)
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser (web only)
+      placeholder: Chrome 131, Safari 18, Firefox 133
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots or screen recordings.
