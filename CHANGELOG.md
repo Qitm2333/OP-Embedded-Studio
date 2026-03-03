@@ -4,6 +4,8 @@
 
 ### Features
 
+- Effects rendering: drop shadow, inner shadow, shadow spread, layer blur, background blur, foreground blur
+- Text shadows render on glyphs instead of bounding box
 - Multi-file tabs — open multiple documents in tabs within a single window
 - Tab bar with close buttons, middle-click to close, and new tab (+) button
 - Keyboard shortcuts: ⌘N/⌘T new tab, ⌘W close tab, ⌘O opens in new tab
@@ -33,24 +35,36 @@
 
 ### Fixes
 
+- Fix drop shadow rendering on top of fills — shadow now draws behind opaque content
+- Fix effect property changes not recorded in undo/redo history
+- Fix active tab text invisible against same-color background
 - Fix clipboard "Outside int range" error — `pasteID` used unsigned int exceeding Kiwi's signed 32-bit field
 - Error toasts are now sticky (don't auto-dismiss), with selectable text, copy button, and close button
 - Truncate long node names in export button
+
+### Performance
+
+- Optimize zoom/pan smoothness with `shallowReactive`, `useRafFn`, and input coalescing
 
 ### Build
 
 - Auto-populate GitHub Release notes from CHANGELOG.md via `ffurrer2/extract-release-notes@v2`
 - Skip already-published npm versions on CI re-runs instead of failing
+- Exclude non-app directories from Vite file watcher
 
 ### Internal
 
 - Extract shared color constants (`BLACK`, `TRANSPARENT`, `DEFAULT_SHADOW_COLOR`) — replaces 8 inline literals across core
 - Extract shared `NodeContextMenuContent` component to avoid menu duplication
 - Fix `@open-pencil/core` dep in MCP package: `workspace:*` for local dev (pnpm resolves at publish time)
+- Replace store thunks with a late-binding proxy
 
 ### Tests
 
 - Clipboard roundtrip tests: encode to Figma Kiwi binary → decode → verify
+- 9 visual regression snapshot tests for effects rendering
+- Zoom/pan E2E tests and pipeline benchmark
+- MCP server edge-case tests for `find_nodes` and Zod validation
 
 ## [0.4.2] (2026-03-02)
 
