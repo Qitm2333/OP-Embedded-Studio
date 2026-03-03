@@ -274,9 +274,10 @@ export function importClipboardNodes(
       if (ovTd?.characters != null) updates.text = ovTd.characters
       if (ov.fillPaints) updates.fills = convertFills(ov.fillPaints as KiwiNodeChange['fillPaints'])
       if (ov.visible != null) updates.visible = ov.visible as boolean
+      if (ov.stackChildPrimaryGrow != null) updates.layoutGrow = ov.stackChildPrimaryGrow as number
+      if (ov.textAutoResize != null) updates.textAutoResize = ov.textAutoResize as SceneNode['textAutoResize']
 
-      if (updates.text != null || updates.fills || updates.visible != null)
-        graph.updateNode(instanceChildId, updates)
+      if (Object.keys(updates).length > 0) graph.updateNode(instanceChildId, updates)
     }
   }
 
