@@ -186,7 +186,8 @@ export function createEditorStore() {
     panY: 0,
     zoom: 1,
     renderVersion: 0,
-    sceneVersion: 0
+    sceneVersion: 0,
+    loading: false
   })
 
   const AUTOSAVE_DELAY = 3000
@@ -565,6 +566,8 @@ export function createEditorStore() {
 
   async function openFigFile(file: File, handle?: FileSystemFileHandle, path?: string) {
     try {
+      state.loading = true
+      await new Promise((r) => requestAnimationFrame(r))
       const imported = await readFigFile(file)
       graph = imported
       computeAllLayouts(graph)
@@ -585,6 +588,8 @@ export function createEditorStore() {
       startWatchingFile()
     } catch (e) {
       console.error('Failed to open .fig file:', e)
+    } finally {
+      state.loading = false
     }
   }
 

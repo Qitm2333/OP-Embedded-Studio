@@ -29,6 +29,7 @@
 
 ### UI
 
+- Loading overlay on canvas while opening .fig files
 - Replace all native `<select>` dropdowns with reka-ui `AppSelect` component
 - Smoother trackpad pinch-to-zoom with `Math.exp` curve and deltaMode normalization
 - Fix font picker dropdown truncating long font names
