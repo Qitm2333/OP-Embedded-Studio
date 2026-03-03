@@ -296,7 +296,7 @@ describe('MCP server', () => {
     const outsidePath = join(tmpdir(), `outside-${Date.now()}.fig`)
 
     const graph = new SceneGraph()
-    const bytes = exportFigFile(graph)
+    const bytes = await exportFigFile(graph)
     await writeFile(insidePath, new Uint8Array(bytes))
 
     const custom = await createLinkedClient({ fileRoot: rootDir })
