@@ -38,8 +38,8 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
 </script>
 
 <template>
-  <div class="shrink-0 border-b border-border">
-    <div class="flex items-center justify-between px-3 py-1.5">
+  <div class="flex min-h-0 flex-1 flex-col">
+    <div class="flex shrink-0 items-center justify-between px-3 py-1.5">
       <span class="text-[11px] uppercase tracking-wider text-muted">Pages</span>
       <button
         class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
@@ -49,7 +49,7 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
         +
       </button>
     </div>
-    <div class="px-1 pb-1">
+    <div class="overflow-y-auto px-1 pb-1">
       <div v-for="pg in pages" :key="pg.id">
         <input
           v-if="editingPageId === pg.id"

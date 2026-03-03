@@ -29,6 +29,7 @@
 
 ### UI
 
+- Resizable pages/layers split in left panel using reka-ui Splitter
 - Loading overlay on canvas while opening .fig files
 - Replace all native `<select>` dropdowns with reka-ui `AppSelect` component
 - Smoother trackpad pinch-to-zoom with `Math.exp` curve and deltaMode normalization
