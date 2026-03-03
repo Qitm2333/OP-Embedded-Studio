@@ -171,8 +171,8 @@ export function sceneNodeToKiwi(
   const localID = localIdCounter.value++
   const guid = { sessionID: 1, localID }
   const sx = node.flipX ? -1 : 1
-  const cos = Math.cos((node.rotation * Math.PI) / 180) * sx
-  const sin = Math.sin((node.rotation * Math.PI) / 180) * sx
+  const cos = Math.cos((node.rotation * Math.PI) / 180)
+  const sin = Math.sin((node.rotation * Math.PI) / 180)
 
   const fillPaints = node.fills.map((f) => {
     const paint: Paint = {
@@ -209,7 +209,7 @@ export function sceneNodeToKiwi(
     opacity: node.opacity,
     phase: 'CREATED',
     size: { x: node.width, y: node.height },
-    transform: { m00: cos, m01: -sin, m02: node.x, m10: sin, m11: cos, m12: node.y },
+    transform: { m00: cos * sx, m01: -sin, m02: node.x, m10: sin * sx, m11: cos, m12: node.y },
     strokeWeight: node.strokes.length > 0 ? node.strokes[0].weight : 1,
     strokeAlign: 'INSIDE'
   }

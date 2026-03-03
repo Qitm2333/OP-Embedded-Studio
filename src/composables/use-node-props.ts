@@ -11,6 +11,7 @@ export function useNodeProps() {
 
   function updateProp(key: string, value: number | string) {
     if (store.selectedNodes.value.length > 1) {
+      storePreviousValues(key)
       for (const n of store.selectedNodes.value) {
         store.updateNode(n.id, { [key]: value })
       }
@@ -20,11 +21,28 @@ export function useNodeProps() {
     }
   }
 
+  const previousValues = new Map<string, Record<string, number | string>>()
+
+  function storePreviousValues(key: string) {
+    for (const n of store.selectedNodes.value) {
+      let rec = previousValues.get(n.id)
+      if (!rec) {
+        rec = {}
+        previousValues.set(n.id, rec)
+      }
+      if (!(key in rec)) {
+        rec[key] = n[key as keyof SceneNode] as number | string
+      }
+    }
+  }
+
   function commitProp(key: string, _value: number | string, previous: number | string) {
     if (store.selectedNodes.value.length > 1) {
       for (const n of store.selectedNodes.value) {
-        store.commitNodeUpdate(n.id, { [key]: previous } as Partial<SceneNode>, `Change ${key}`)
+        const prev = previousValues.get(n.id)?.[key] ?? previous
+        store.commitNodeUpdate(n.id, { [key]: prev } as Partial<SceneNode>, `Change ${key}`)
       }
+      previousValues.clear()
     } else {
       const node = store.selectedNode.value
       if (node) {

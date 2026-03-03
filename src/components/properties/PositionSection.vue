@@ -1,8 +1,24 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import ScrubInput from '@/components/ScrubInput.vue'
 import { useNodeProps } from '@/composables/use-node-props'
+import { useMultiProps } from '@/composables/use-multi-props'
 
-const { store, node, nodes, updateProp, commitProp } = useNodeProps()
+const { store, updateProp, commitProp } = useNodeProps()
+const { node, nodes, isMulti, active, prop: multiProp } = useMultiProps()
+
+const xValue = computed(() =>
+  isMulti.value ? multiProp('x').value : Math.round(node.value?.x ?? 0)
+)
+const yValue = computed(() =>
+  isMulti.value ? multiProp('y').value : Math.round(node.value?.y ?? 0)
+)
+const wValue = multiProp('width')
+const hValue = multiProp('height')
+const rotationValue = computed(() =>
+  isMulti.value ? multiProp('rotation').value : Math.round(node.value?.rotation ?? 0)
+)
 
 type HAlign = 'left' | 'center' | 'right'
 type VAlign = 'top' | 'center' | 'bottom'
@@ -86,26 +102,29 @@ function alignVertical(align: VAlign) {
 }
 
 function flipHorizontal() {
-  const n = node.value
-  store.updateNodeWithUndo(n.id, { flipX: !n.flipX }, 'Flip horizontal')
+  for (const n of nodes.value) {
+    store.updateNodeWithUndo(n.id, { flipX: !n.flipX }, 'Flip horizontal')
+  }
   store.requestRender()
 }
 
 function flipVertical() {
-  const n = node.value
-  store.updateNodeWithUndo(n.id, { flipY: !n.flipY }, 'Flip vertical')
+  for (const n of nodes.value) {
+    store.updateNodeWithUndo(n.id, { flipY: !n.flipY }, 'Flip vertical')
+  }
   store.requestRender()
 }
 
 function rotate90() {
-  const n = node.value
-  store.updateNodeWithUndo(n.id, { rotation: (n.rotation + 90) % 360 }, 'Rotate 90°')
+  for (const n of nodes.value) {
+    store.updateNodeWithUndo(n.id, { rotation: (n.rotation + 90) % 360 }, 'Rotate 90°')
+  }
   store.requestRender()
 }
 </script>
 
 <template>
-  <div v-if="node" class="border-b border-border px-3 py-2">
+  <div v-if="active" class="border-b border-border px-3 py-2">
     <label class="mb-1.5 block text-[11px] text-muted">Position</label>
 
     <!-- Alignment buttons -->
@@ -162,15 +181,33 @@ function rotate90() {
     <div class="flex gap-1.5">
       <ScrubInput
         icon="X"
-        :model-value="Math.round(node.x)"
+        :model-value="xValue"
         @update:model-value="updateProp('x', $event)"
         @commit="(v: number, p: number) => commitProp('x', v, p)"
       />
       <ScrubInput
         icon="Y"
-        :model-value="Math.round(node.y)"
+        :model-value="yValue"
         @update:model-value="updateProp('y', $event)"
         @commit="(v: number, p: number) => commitProp('y', v, p)"
+      />
+    </div>
+
+    <!-- W / H (multi-select only; single-select shows in LayoutSection) -->
+    <div v-if="isMulti" class="mt-1.5 flex gap-1.5">
+      <ScrubInput
+        icon="W"
+        :model-value="wValue"
+        :min="1"
+        @update:model-value="updateProp('width', $event)"
+        @commit="(v: number, p: number) => commitProp('width', v, p)"
+      />
+      <ScrubInput
+        icon="H"
+        :model-value="hValue"
+        :min="1"
+        @update:model-value="updateProp('height', $event)"
+        @commit="(v: number, p: number) => commitProp('height', v, p)"
       />
     </div>
 
@@ -179,7 +216,7 @@ function rotate90() {
       <ScrubInput
         class="flex-1"
         suffix="°"
-        :model-value="Math.round(node.rotation)"
+        :model-value="rotationValue"
         :min="-360"
         :max="360"
         @update:model-value="updateProp('rotation', $event)"

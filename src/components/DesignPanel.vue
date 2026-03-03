@@ -33,7 +33,11 @@ const isComponentType = computed(() => {
       <span class="text-[11px] text-muted">Mixed</span>
       <span class="text-xs font-semibold">{{ multiCount }} layers</span>
     </div>
+    <PositionSection />
     <AppearanceSection />
+    <FillSection />
+    <StrokeSection />
+    <EffectsSection />
   </div>
 
   <!-- Single selection -->

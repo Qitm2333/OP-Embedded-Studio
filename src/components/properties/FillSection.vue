@@ -16,26 +16,41 @@ import {
 import FillPicker from '@/components/FillPicker.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import { useNodeProps } from '@/composables/use-node-props'
+import { useMultiProps } from '@/composables/use-multi-props'
 import { DEFAULT_SHAPE_FILL } from '@/constants'
 import { colorToHexRaw } from '@/engine/color'
 import type { Fill, Variable, Color } from '@/engine/scene-graph'
 
-const { store, node } = useNodeProps()
+const { store } = useNodeProps()
+const { nodes, isMulti, active, activeNode } = useMultiProps()
+
+const fillsAreMixed = computed(() => {
+  if (!isMulti.value) return false
+  const all = nodes.value
+  const first = JSON.stringify(all[0].fills)
+  return all.some((n) => JSON.stringify(n.fills) !== first)
+})
 
 const colorVariables = computed(() => store.graph.getVariablesByType('COLOR'))
 
 function getBoundVariable(index: number): Variable | undefined {
-  const varId = node.value.boundVariables[`fills/${index}/color`]
+  const n = activeNode.value
+  if (!n) return undefined
+  const varId = n.boundVariables[`fills/${index}/color`]
   return varId ? store.graph.variables.get(varId) : undefined
 }
 
 function bindVariable(index: number, variableId: string) {
-  store.graph.bindVariable(node.value.id, `fills/${index}/color`, variableId)
+  const n = activeNode.value
+  if (!n) return
+  store.graph.bindVariable(n.id, `fills/${index}/color`, variableId)
   store.requestRender()
 }
 
 function unbindVariable(index: number) {
-  store.graph.unbindVariable(node.value.id, `fills/${index}/color`)
+  const n = activeNode.value
+  if (!n) return
+  store.graph.unbindVariable(n.id, `fills/${index}/color`)
   store.requestRender()
 }
 
@@ -46,37 +61,50 @@ function resolvedSwatchStyle(variable: Variable): string {
 }
 
 function updateFill(index: number, fill: Fill) {
-  const fills = [...node.value.fills]
-  fills[index] = fill
-  store.updateNodeWithUndo(node.value.id, { fills }, 'Change fill')
+  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
+    if (!n) continue
+    const fills = [...n.fills]
+    fills[index] = fill
+    store.updateNodeWithUndo(n.id, { fills }, 'Change fill')
+  }
 }
 
 function updateOpacity(index: number, opacity: number) {
-  const fills = [...node.value.fills]
-  fills[index] = { ...fills[index], opacity: Math.max(0, Math.min(1, opacity / 100)) }
-  store.updateNodeWithUndo(node.value.id, { fills }, 'Change fill')
+  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
+    if (!n) continue
+    const fills = [...n.fills]
+    fills[index] = { ...fills[index], opacity: Math.max(0, Math.min(1, opacity / 100)) }
+    store.updateNodeWithUndo(n.id, { fills }, 'Change fill')
+  }
 }
 
 function toggleVisibility(index: number) {
-  const fills = [...node.value.fills]
-  fills[index] = { ...fills[index], visible: !fills[index].visible }
-  store.updateNodeWithUndo(node.value.id, { fills }, 'Change fill')
+  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
+    if (!n) continue
+    const fills = [...n.fills]
+    fills[index] = { ...fills[index], visible: !fills[index].visible }
+    store.updateNodeWithUndo(n.id, { fills }, 'Change fill')
+  }
 }
 
 function add() {
-  store.updateNodeWithUndo(
-    node.value.id,
-    { fills: [...node.value.fills, { ...DEFAULT_SHAPE_FILL }] },
-    'Add fill'
-  )
+  if (isMulti.value) {
+    for (const n of nodes.value) {
+      store.updateNodeWithUndo(n.id, { fills: [{ ...DEFAULT_SHAPE_FILL }] }, 'Set fill')
+    }
+    store.requestRender()
+  } else {
+    const n = activeNode.value
+    if (!n) return
+    store.updateNodeWithUndo(n.id, { fills: [...n.fills, { ...DEFAULT_SHAPE_FILL }] }, 'Add fill')
+  }
 }
 
 function remove(index: number) {
-  store.updateNodeWithUndo(
-    node.value.id,
-    { fills: node.value.fills.filter((_, i) => i !== index) },
-    'Remove fill'
-  )
+  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
+    if (!n) continue
+    store.updateNodeWithUndo(n.id, { fills: n.fills.filter((_, i) => i !== index) }, 'Remove fill')
+  }
 }
 
 const searchTerm = ref('')
@@ -88,7 +116,7 @@ const filteredVariables = computed(() => {
 </script>
 
 <template>
-  <div v-if="node" class="border-b border-border px-3 py-2">
+  <div v-if="active" class="border-b border-border px-3 py-2">
     <div class="flex items-center justify-between">
       <label class="mb-1 block text-[11px] text-muted">Fill</label>
       <button
@@ -98,7 +126,12 @@ const filteredVariables = computed(() => {
         +
       </button>
     </div>
-    <div v-for="(fill, i) in node.fills" :key="i" class="group flex items-center gap-1.5 py-0.5">
+    <p v-if="fillsAreMixed" class="text-[11px] text-muted">Click + to replace mixed fills</p>
+    <div
+      v-for="(fill, i) in fillsAreMixed ? [] : (activeNode?.fills ?? [])"
+      :key="i"
+      class="group flex items-center gap-1.5 py-0.5"
+    >
       <FillPicker :fill="fill" @update="updateFill(i, $event)" />
 
       <!-- Bound variable indicator or hex value -->
