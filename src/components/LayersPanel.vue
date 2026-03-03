@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useEventListener } from '@vueuse/core'
 import { TreeRoot, TreeItem, ContextMenuRoot, ContextMenuTrigger, ContextMenuPortal } from 'reka-ui'
 
@@ -73,6 +73,29 @@ watch([() => store.state.sceneVersion, () => store.state.currentPageId], () => {
 })
 
 const expanded = ref<string[]>([])
+
+watch(
+  () => store.state.selectedIds,
+  (ids) => {
+    const toExpand = new Set(expanded.value)
+    for (const id of ids) {
+      let node = store.graph.getNode(id)
+      while (node?.parentId && node.parentId !== store.state.currentPageId) {
+        toExpand.add(node.parentId)
+        node = store.graph.getNode(node.parentId)
+      }
+    }
+    if (toExpand.size > expanded.value.length) {
+      expanded.value = [...toExpand]
+    }
+    nextTick(() => {
+      const first = [...ids][0]
+      if (!first) return
+      const el = listRef.value?.querySelector<HTMLElement>(`[data-node-id="${first}"]`)
+      el?.scrollIntoView({ block: 'nearest' })
+    })
+  }
+)
 
 function onSelect(ev: CustomEvent) {
   ev.preventDefault()

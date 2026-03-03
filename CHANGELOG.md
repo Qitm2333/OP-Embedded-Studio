@@ -29,8 +29,12 @@
 
 ### UI
 
-- Resizable pages/layers split in left panel using reka-ui Splitter
+- Resizable pages/layers split in left panel with reka-ui Splitter
+- Layers tree auto-expands and scrolls to reveal selected node
 - Loading overlay on canvas while opening .fig files
+- Hide internal-only pages (e.g. "Internal Only Canvas" in design systems)
+- Render page dividers — pages named with only dashes/asterisks/spaces show as horizontal lines
+- Only show component labels for COMPONENT and COMPONENT_SET, not instances
 - Replace all native `<select>` dropdowns with reka-ui `AppSelect` component
 - Smoother trackpad pinch-to-zoom with `Math.exp` curve and deltaMode normalization
 - Fix font picker dropdown truncating long font names
