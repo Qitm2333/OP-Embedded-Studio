@@ -68,14 +68,6 @@ Your design files are yours. Your tools should be too.
 
 Download the latest release from the [releases page](https://github.com/open-pencil/open-pencil/releases/latest), or [use the web app](https://app.openpencil.dev) — no install needed.
 
-> **macOS: "OpenPencil is damaged and can't be opened"**
->
-> The app is not yet code-signed. After mounting the `.dmg`, run in Terminal:
-> ```sh
-> xattr -cr /Applications/OpenPencil.app
-> ```
-> Then open the app normally. This only needs to be done once.
-
 ## Getting Started
 
 ```sh

@@ -15,9 +15,6 @@
 - Apple code signing and notarization for macOS builds
 - Git LFS storage moved from GitHub to Cloudflare R2
 
-### Docs
-
-- Add macOS Gatekeeper workaround (`xattr -cr`) to README and docs for unsigned app warning
 
 ### Fixes
 
