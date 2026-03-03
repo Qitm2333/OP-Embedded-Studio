@@ -268,6 +268,16 @@ function mapTextDecoration(d?: string): TextDecoration {
   }
 }
 
+function convertLineHeight(
+  lh?: { value: number; units: string },
+  fontSize?: number
+): number | null {
+  if (!lh) return null
+  if (lh.units === 'PIXELS') return lh.value
+  if (lh.units === 'PERCENT') return (lh.value / 100) * (fontSize ?? 14)
+  return null
+}
+
 function convertLetterSpacing(
   ls?: { value: number; units: string },
   fontSize?: number
@@ -307,7 +317,10 @@ function importStyleRuns(nc: NodeChange): StyleRun[] {
     }
     if (override.fontSize !== undefined) style.fontSize = override.fontSize
     if (override.letterSpacing) style.letterSpacing = override.letterSpacing.value
-    if (override.lineHeight) style.lineHeight = override.lineHeight.value
+    if (override.lineHeight) {
+      const lh = convertLineHeight(override.lineHeight, override.fontSize)
+      if (lh != null) style.lineHeight = lh
+    }
     const deco = ext(override).textDecoration as string | undefined
     if (deco) style.textDecoration = mapTextDecoration(deco)
     if (Object.keys(style).length > 0) styleMap.set(id, style)
@@ -458,7 +471,7 @@ export function nodeChangeToProps(
     textAutoResize: (ext(nc).textAutoResize as TextAutoResize) ?? 'NONE',
     textCase: (ext(nc).textCase as TextCase) ?? 'ORIGINAL',
     textDecoration: mapTextDecoration(ext(nc).textDecoration as string),
-    lineHeight: nc.lineHeight?.value ?? null,
+    lineHeight: convertLineHeight(nc.lineHeight, nc.fontSize),
     letterSpacing: convertLetterSpacing(nc.letterSpacing, nc.fontSize),
     maxLines: (ext(nc).maxLines as number) ?? null,
     styleRuns: importStyleRuns(nc),
