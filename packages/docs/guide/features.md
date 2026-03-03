@@ -8,9 +8,11 @@ Design tools are a supply chain problem. When your tool is closed-source, the ve
 
 Open and save native Figma files directly. Import decodes the full 194-definition Kiwi schema including NodeChange messages with ~390 fields. Export encodes the scene graph back to Kiwi binary with Zstd compression and thumbnail generation. Save (<kbd>⌘</kbd><kbd>S</kbd>) and Save As (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>) use native OS dialogs on the desktop app. The import/export pipeline supports round-trip fidelity.
 
-## Figma Clipboard
+## Copy & Paste with Figma
 
-Copy/paste between OpenPencil and Figma. When you copy in Figma, OpenPencil decodes the fig-kiwi binary from the clipboard. When you copy in OpenPencil, it encodes fig-kiwi binary that Figma can read. Also works between OpenPencil instances.
+Select nodes in Figma, <kbd>⌘</kbd><kbd>C</kbd>, switch to OpenPencil, <kbd>⌘</kbd><kbd>V</kbd> — they appear with fills, strokes, auto-layout, text, corner radii, effects, and vector networks preserved. Works the other way too: copy from OpenPencil, paste into Figma.
+
+Under the hood, both directions use the same Kiwi binary format as .fig files — Figma base64-encodes it into HTML on the clipboard. OpenPencil decodes the full schema on paste (194 definitions, ~390 fields per NodeChange) and encodes it on copy. Vector data round-trips through the `vectorNetworkBlob` binary format. Also works between OpenPencil instances via a separate native clipboard format.
 
 ## Vector Networks
 
@@ -218,9 +220,11 @@ Built-in AI assistant accessible via the AI tab in the properties panel or <kbd>
 
 **Model selector** with curated models: Claude, Gemini, GPT, DeepSeek, Qwen, Kimi, Llama — stored in `@open-pencil/core` constants with benchmark-ranked tags. Responses stream as markdown (vue-stream-markdown).
 
-**10 AI tools** defined once in `packages/core/src/tools/schema.ts` as framework-agnostic `ToolDef` objects and adapted for AI via `toolsToAI()` with valibot schemas: `create_shape`, `set_fill`, `set_stroke`, `update_node`, `set_layout`, `delete_node`, `select_nodes`, `get_page_tree`, `get_selection`, `rename_node`. The same definitions power the CLI eval command via FigmaAPI. The ToolLoopAgent executes tools automatically in a loop. Tool calls display as collapsible timeline entries in the chat (reka-ui Collapsible).
+**29 tools** defined in `packages/core/src/tools/schema.ts`: read tools (`get_selection`, `get_page_tree`, `get_node`, `find_nodes`, `list_pages`, `list_variables`, `list_collections`), create tools (`create_shape`, `render`, `create_component`, `create_instance`), modify tools (`set_fill`, `set_stroke`, `set_effects`, `update_node`, `set_layout`, `set_constraints`, `rename_node`, `reparent_node`, `clone_node`, `delete_node`), organize tools (`select_nodes`, `group_nodes`, `ungroup_node`, `switch_page`), and `eval` escape hatch. Tools are wired to AI chat (valibot schemas), MCP server (zod schemas), and CLI (`eval` command). Tool calls display as collapsible timeline entries in the chat (reka-ui Collapsible).
 
-Tested with Playwright using mock transport for CI.
+**MCP server** (`packages/mcp/`) exposes all tools for external AI coding tools. Two transports: stdio for Claude Code/Cursor/Windsurf (`openpencil-mcp`), HTTP with Hono + Streamable HTTP for scripts and CI (`openpencil-mcp-http`). Adds 3 file management tools (`open_file`, `save_file`, `new_document`) on top of the 26 core tools. Runs on Bun and Node.js. See [MCP Tools reference](/reference/mcp-tools).
+
+Tested with Playwright using mock transport for CI (chat), bun:test for tool execution (MCP).
 
 ## Code Panel
 

@@ -62,7 +62,7 @@ See [Roadmap](/development/roadmap) for planned format support timeline.
 
 ## Clipboard Format
 
-Copy/paste uses the same fig-kiwi binary encoding:
+Copy/paste uses the same Kiwi binary encoding:
 
 1. **Copy** — encode selected NodeChange[] to Kiwi binary, compress, write to clipboard as `application/x-figma-design` MIME type
 2. **Paste** — read clipboard, decompress, decode Kiwi binary, create nodes in scene graph

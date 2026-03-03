@@ -1,7 +1,7 @@
-import type { CanvasKit, Paragraph } from 'canvaskit-wasm'
 import type { SkiaRenderer } from './renderer'
 import type { SceneNode } from './scene-graph'
 import type { Rect } from './types'
+import type { CanvasKit, Paragraph } from 'canvaskit-wasm'
 
 export interface TextCaret {
   x: number
@@ -342,7 +342,6 @@ export class TextEditor {
       return { x: left, y: top, width: right - left, height: bottom - top }
     })
   }
-
 }
 
 function isWordBoundary(ch: string): boolean {

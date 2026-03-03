@@ -14,6 +14,7 @@ dist-ssr
 
 # Copied from node_modules at build time
 public/canvaskit.wasm
+public/canvaskit-webgpu/
 
 # Editor directories and files
 .vscode/*
@@ -31,3 +32,6 @@ test-results/
 .env
 packages/docs/.vitepress/cache/
 packages/docs/.vitepress/dist/
+packages/collab/.wrangler/
+packages/core/vendor/canvaskit-webgpu/
+patches/skia-webgpu/

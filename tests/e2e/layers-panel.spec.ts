@@ -35,12 +35,11 @@ async function getLayerNames(): Promise<string[]> {
 
 async function getSceneTree() {
   return page.evaluate(() => {
-    const store = (window as any).__OPEN_PENCIL_STORE__
+    const store = window.__OPEN_PENCIL_STORE__
     if (!store) return null
-    const graph = store.graph
 
-    function nodeTree(id: string): any {
-      const node = graph.getNode(id)
+    function nodeTree(id: string): { name: string; type: string; children: unknown[] } | null {
+      const node = store.graph.getNode(id)
       if (!node) return null
       return {
         name: node.name,
@@ -54,8 +53,7 @@ async function getSceneTree() {
 
 async function getSelectedCount(): Promise<number> {
   return page.evaluate(() => {
-    const store = (window as any).__OPEN_PENCIL_STORE__
-    return store.state.selectedIds.size
+    return window.__OPEN_PENCIL_STORE__!.state.selectedIds.size
   })
 }
 

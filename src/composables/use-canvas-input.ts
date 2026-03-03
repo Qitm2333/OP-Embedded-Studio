@@ -225,7 +225,11 @@ export function useCanvasInput(
   canvasRef: Ref<HTMLCanvasElement | null>,
   store: EditorStore,
   hitTestSectionTitle: (cx: number, cy: number) => import('@/engine/scene-graph').SceneNode | null,
-  hitTestComponentLabel: (cx: number, cy: number) => import('@/engine/scene-graph').SceneNode | null
+  hitTestComponentLabel: (
+    cx: number,
+    cy: number
+  ) => import('@/engine/scene-graph').SceneNode | null,
+  onCursorMove?: (cx: number, cy: number) => void
 ) {
   const drag = ref<DragState | null>(null)
   const cursorOverride = ref<string | null>(null)
@@ -481,6 +485,11 @@ export function useCanvasInput(
   }
 
   function onMouseMove(e: MouseEvent) {
+    if (onCursorMove) {
+      const { cx, cy } = getCoords(e)
+      onCursorMove(cx, cy)
+    }
+
     // Pen tool: track cursor for preview line
     if (store.state.activeTool === 'PEN' && store.state.penState && !drag.value) {
       const { cx, cy } = getCoords(e)
@@ -910,18 +919,61 @@ export function useCanvasInput(
     cursorOverride.value = null
   }
 
+  let wheelAccum = {
+    deltaX: 0,
+    deltaY: 0,
+    zoomDelta: 0,
+    zoomCenterX: 0,
+    zoomCenterY: 0,
+    hasZoom: false,
+    rafId: 0
+  }
+
+  function flushWheel() {
+    wheelAccum.rafId = 0
+    if (wheelAccum.hasZoom) {
+      store.applyZoom(wheelAccum.zoomDelta, wheelAccum.zoomCenterX, wheelAccum.zoomCenterY)
+    } else {
+      store.pan(wheelAccum.deltaX, wheelAccum.deltaY)
+    }
+    wheelAccum.deltaX = 0
+    wheelAccum.deltaY = 0
+    wheelAccum.zoomDelta = 0
+    wheelAccum.hasZoom = false
+  }
+
+  // Normalize wheel deltaY across deltaMode variants (line/page/pixel).
+  // Trackpad pinch is always DOM_DELTA_PIXEL; external mice may use LINE or PAGE.
+  function normalizeWheelDelta(e: WheelEvent): { dx: number; dy: number } {
+    let { deltaX, deltaY } = e
+    if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+      deltaX *= 40
+      deltaY *= 40
+    } else if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+      deltaX *= 800
+      deltaY *= 800
+    }
+    return { dx: deltaX, dy: deltaY }
+  }
+
   function onWheel(e: WheelEvent) {
     e.preventDefault()
     const canvas = canvasRef.value
     if (!canvas) return
+    const { dx, dy } = normalizeWheelDelta(e)
 
     if (e.ctrlKey || e.metaKey) {
       const rect = canvas.getBoundingClientRect()
-      const sx = e.clientX - rect.left
-      const sy = e.clientY - rect.top
-      store.applyZoom(e.deltaY, sx, sy)
+      wheelAccum.zoomCenterX = e.clientX - rect.left
+      wheelAccum.zoomCenterY = e.clientY - rect.top
+      wheelAccum.zoomDelta += dy
+      wheelAccum.hasZoom = true
     } else {
-      store.pan(-e.deltaX, -e.deltaY)
+      wheelAccum.deltaX -= dx
+      wheelAccum.deltaY -= dy
+    }
+    if (!wheelAccum.rafId) {
+      wheelAccum.rafId = requestAnimationFrame(flushWheel)
     }
   }
 
@@ -1037,6 +1089,105 @@ export function useCanvasInput(
     })
   }
 
+  // Touch support for iOS/mobile: single-finger pan, two-finger pinch-zoom
+  const isTouchDevice = matchMedia('(pointer: coarse)').matches
+  let activeTouches: Touch[] = []
+  let pinchStartDist = 0
+  let pinchStartZoom = 0
+  let pinchMidX = 0
+  let pinchMidY = 0
+
+  function touchDist(a: Touch, b: Touch) {
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+  }
+
+  function onTouchStart(e: TouchEvent) {
+    if (!isTouchDevice) return
+    e.preventDefault()
+    activeTouches = Array.from(e.touches)
+    const canvas = canvasRef.value
+    if (!canvas) return
+
+    if (activeTouches.length === 2) {
+      drag.value = null
+      const [a, b] = activeTouches
+      pinchStartDist = touchDist(a, b)
+      pinchStartZoom = store.state.zoom
+      const rect = canvas.getBoundingClientRect()
+      pinchMidX = (a.clientX + b.clientX) / 2 - rect.left
+      pinchMidY = (a.clientY + b.clientY) / 2 - rect.top
+    } else if (activeTouches.length === 1) {
+      const t = activeTouches[0]
+      drag.value = {
+        type: 'pan',
+        startScreenX: t.clientX,
+        startScreenY: t.clientY,
+        startPanX: store.state.panX,
+        startPanY: store.state.panY
+      }
+    }
+  }
+
+  function onTouchMove(e: TouchEvent) {
+    if (!isTouchDevice) return
+    e.preventDefault()
+    activeTouches = Array.from(e.touches)
+    const canvas = canvasRef.value
+    if (!canvas) return
+
+    if (activeTouches.length === 2) {
+      const [a, b] = activeTouches
+      const rect = canvas.getBoundingClientRect()
+      const newMidX = (a.clientX + b.clientX) / 2 - rect.left
+      const newMidY = (a.clientY + b.clientY) / 2 - rect.top
+
+      const newDist = touchDist(a, b)
+      if (pinchStartDist > 0) {
+        const scale = newDist / pinchStartDist
+        const newZoom = Math.max(0.02, Math.min(256, pinchStartZoom * scale))
+        const zoomRatio = newZoom / store.state.zoom
+
+        const panDx = newMidX - pinchMidX
+        const panDy = newMidY - pinchMidY
+
+        store.state.panX = pinchMidX - (pinchMidX - store.state.panX) * zoomRatio + panDx
+        store.state.panY = pinchMidY - (pinchMidY - store.state.panY) * zoomRatio + panDy
+        store.state.zoom = newZoom
+      }
+
+      pinchMidX = newMidX
+      pinchMidY = newMidY
+      store.requestRepaint()
+    } else if (activeTouches.length === 1 && drag.value?.type === 'pan') {
+      const t = activeTouches[0]
+      const d = drag.value
+      store.state.panX = d.startPanX + (t.clientX - d.startScreenX)
+      store.state.panY = d.startPanY + (t.clientY - d.startScreenY)
+      store.requestRepaint()
+    }
+  }
+
+  function onTouchEnd(e: TouchEvent) {
+    if (!isTouchDevice) return
+    e.preventDefault()
+    activeTouches = Array.from(e.touches)
+
+    if (activeTouches.length === 0) {
+      drag.value = null
+      pinchStartDist = 0
+    } else if (activeTouches.length === 1) {
+      const t = activeTouches[0]
+      drag.value = {
+        type: 'pan',
+        startScreenX: t.clientX,
+        startScreenY: t.clientY,
+        startPanX: store.state.panX,
+        startPanY: store.state.panY
+      }
+      pinchStartDist = 0
+    }
+  }
+
   useEventListener(canvasRef, 'dblclick', onDblClick)
   useEventListener(canvasRef, 'mousedown', onMouseDown)
   useEventListener(canvasRef, 'mousemove', onMouseMove)
@@ -1046,6 +1197,66 @@ export function useCanvasInput(
     store.setHoveredNode(null)
   })
   useEventListener(canvasRef, 'wheel', onWheel, { passive: false })
+  useEventListener(canvasRef, 'touchstart', onTouchStart, { passive: false })
+  useEventListener(canvasRef, 'touchmove', onTouchMove, { passive: false })
+  useEventListener(canvasRef, 'touchend', onTouchEnd, { passive: false })
+  useEventListener(canvasRef, 'touchcancel', onTouchEnd, { passive: false })
+
+  // Safari macOS: trackpad pinch-to-zoom uses gesture events, not wheel+ctrlKey
+  let gestureStartZoom = 1
+  let gestureRafId = 0
+  let pendingGesture: { scale: number; sx: number; sy: number } | null = null
+
+  function flushGesture() {
+    gestureRafId = 0
+    if (!pendingGesture) return
+    const { scale, sx, sy } = pendingGesture
+    pendingGesture = null
+    const newZoom = Math.max(0.02, Math.min(256, gestureStartZoom * scale))
+    const zoomRatio = newZoom / store.state.zoom
+    store.state.panX = sx - (sx - store.state.panX) * zoomRatio
+    store.state.panY = sy - (sy - store.state.panY) * zoomRatio
+    store.state.zoom = newZoom
+    store.requestRepaint()
+  }
+
+  useEventListener(
+    canvasRef,
+    'gesturestart' as keyof HTMLElementEventMap,
+    (e: Event) => {
+      e.preventDefault()
+      gestureStartZoom = store.state.zoom
+    },
+    { passive: false }
+  )
+  useEventListener(
+    canvasRef,
+    'gesturechange' as keyof HTMLElementEventMap,
+    (e: Event) => {
+      e.preventDefault()
+      const ge = e as GestureEvent
+      const canvas = canvasRef.value
+      if (!canvas) return
+      const rect = canvas.getBoundingClientRect()
+      pendingGesture = {
+        scale: ge.scale,
+        sx: (ge.clientX ?? rect.width / 2) - rect.left,
+        sy: (ge.clientY ?? rect.height / 2) - rect.top
+      }
+      if (!gestureRafId) {
+        gestureRafId = requestAnimationFrame(flushGesture)
+      }
+    },
+    { passive: false }
+  )
+  useEventListener(
+    canvasRef,
+    'gestureend' as keyof HTMLElementEventMap,
+    (e: Event) => {
+      e.preventDefault()
+    },
+    { passive: false }
+  )
 
   return {
     drag,

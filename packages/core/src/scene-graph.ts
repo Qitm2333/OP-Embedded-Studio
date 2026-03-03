@@ -1,4 +1,4 @@
-import { DEFAULT_STROKE_MITER_LIMIT } from './constants'
+import { BLACK, DEFAULT_STROKE_MITER_LIMIT } from './constants'
 
 export type { GUID, Color } from './types'
 
@@ -265,6 +265,8 @@ export interface SceneNode {
   overrides: Record<string, unknown>
 
   boundVariables: Record<string, string>
+
+  textPicture: Uint8Array | null
 }
 
 export type VariableType = 'COLOR' | 'FLOAT' | 'STRING' | 'BOOLEAN'
@@ -295,7 +297,7 @@ export interface VariableCollection {
 
 let nextLocalID = 1
 
-function generateId(): string {
+export function generateId(): string {
   return `0:${nextLocalID++}`
 }
 
@@ -385,6 +387,7 @@ function createDefaultNode(type: NodeType, overrides: Partial<SceneNode> = {}): 
     componentId: null,
     overrides: {},
     boundVariables: {},
+    textPicture: null,
     ...overrides
   }
 }
@@ -406,6 +409,7 @@ export class SceneGraph {
   variableCollections = new Map<string, VariableCollection>()
   activeMode = new Map<string, string>()
   rootId: string
+  private absPosCache = new Map<string, { x: number; y: number }>()
 
   constructor() {
     const root = createDefaultNode('FRAME', {
@@ -467,6 +471,49 @@ export class SceneGraph {
     }
   }
 
+  createVariable(
+    name: string,
+    type: VariableType,
+    collectionId: string,
+    value?: VariableValue
+  ): Variable {
+    const collection = this.variableCollections.get(collectionId)
+    if (!collection) throw new Error(`Collection "${collectionId}" not found`)
+    const id = generateId()
+    const defaultValue =
+      value ??
+      (type === 'COLOR' ? { ...BLACK } : type === 'FLOAT' ? 0 : type === 'BOOLEAN' ? false : '')
+    const valuesByMode: Record<string, VariableValue> = {}
+    for (const mode of collection.modes) {
+      valuesByMode[mode.modeId] = structuredClone(defaultValue)
+    }
+    const variable: Variable = {
+      id,
+      name,
+      type,
+      collectionId,
+      valuesByMode,
+      description: '',
+      hiddenFromPublishing: false
+    }
+    this.addVariable(variable)
+    return variable
+  }
+
+  createCollection(name: string): VariableCollection {
+    const id = generateId()
+    const modeId = generateId()
+    const collection: VariableCollection = {
+      id,
+      name,
+      modes: [{ modeId, name: 'Mode 1' }],
+      defaultModeId: modeId,
+      variableIds: []
+    }
+    this.addCollection(collection)
+    return collection
+  }
+
   removeCollection(id: string): void {
     const collection = this.variableCollections.get(id)
     if (collection) {
@@ -489,7 +536,11 @@ export class SceneGraph {
     this.activeMode.set(collectionId, modeId)
   }
 
-  resolveVariable(variableId: string, modeId?: string, visited?: Set<string>): VariableValue | undefined {
+  resolveVariable(
+    variableId: string,
+    modeId?: string,
+    visited?: Set<string>
+  ): VariableValue | undefined {
     if (visited?.has(variableId)) return undefined
     const variable = this.variables.get(variableId)
     if (!variable) return undefined
@@ -559,7 +610,14 @@ export class SceneGraph {
     return false
   }
 
+  clearAbsPosCache(): void {
+    this.absPosCache.clear()
+  }
+
   getAbsolutePosition(id: string): { x: number; y: number } {
+    const cached = this.absPosCache.get(id)
+    if (cached) return cached
+
     let ax = 0
     let ay = 0
     let current = this.nodes.get(id)
@@ -568,7 +626,9 @@ export class SceneGraph {
       ay += current.y
       current = current.parentId ? this.nodes.get(current.parentId) : undefined
     }
-    return { x: ax, y: ay }
+    const result = { x: ax, y: ay }
+    this.absPosCache.set(id, result)
+    return result
   }
 
   getAbsoluteBounds(id: string): Rect {
@@ -598,6 +658,7 @@ export class SceneGraph {
   updateNode(id: string, changes: Partial<SceneNode>): void {
     const node = this.nodes.get(id)
     if (!node) return
+    this.absPosCache.clear()
     Object.assign(node, changes)
   }
 
@@ -610,6 +671,8 @@ export class SceneGraph {
     const newParent = this.nodes.get(newParentId)
     if (!newParent) return
     if (node.parentId === newParentId) return
+
+    this.absPosCache.clear()
 
     // Convert absolute position
     const absPos = this.getAbsolutePosition(nodeId)

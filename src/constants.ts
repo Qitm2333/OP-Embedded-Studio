@@ -57,7 +57,33 @@ export {
   RULER_MAJOR_TOLERANCE
 } from '@open-pencil/core'
 
+import type { Color } from '@/types'
 import type { Fill, Stroke } from '@open-pencil/core'
+
+export const TRYSTERO_APP_ID = 'openpencil'
+export const ROOM_ID_LENGTH = 8
+export const ROOM_ID_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789'
+
+export const PEER_COLORS: Color[] = [
+  { r: 0.96, g: 0.26, b: 0.21, a: 1 },
+  { r: 0.13, g: 0.59, b: 0.95, a: 1 },
+  { r: 0.3, g: 0.69, b: 0.31, a: 1 },
+  { r: 1.0, g: 0.76, b: 0.03, a: 1 },
+  { r: 0.61, g: 0.15, b: 0.69, a: 1 },
+  { r: 1.0, g: 0.34, b: 0.13, a: 1 },
+  { r: 0.0, g: 0.74, b: 0.83, a: 1 },
+  { r: 0.91, g: 0.12, b: 0.39, a: 1 }
+]
+
+export const YJS_JSON_FIELDS = new Set([
+  'childIds',
+  'fills',
+  'strokes',
+  'effects',
+  'vectorNetwork',
+  'boundVariables',
+  'styleRuns'
+])
 
 export const DEFAULT_SHAPE_FILL: Fill = {
   type: 'SOLID',
@@ -83,7 +109,14 @@ export const DEFAULT_TEXT_HEIGHT = 24
 export const AUTO_LAYOUT_BREAK_THRESHOLD = 8
 export const HANDLE_HIT_RADIUS = 6
 export const ROTATION_HIT_RADIUS = 8
-export const ZOOM_SENSITIVITY = 0.99
+
+// Pixels of deltaY for one e-fold of zoom (Math.exp(-deltaY / ZOOM_DIVISOR))
+// Trackpad pinch sends small deltas (~2-5px), mouse wheel sends large (~100px).
+// Lower = more responsive. 50 matches Figma's trackpad feel.
+export const ZOOM_DIVISOR = 50
+// Clamp scale factor per wheel flush to prevent jarring jumps from mouse wheels
+export const ZOOM_SCALE_MIN = 0.75
+export const ZOOM_SCALE_MAX = 1.25
 
 export const SECTION_DEFAULT_FILL: Fill = {
   type: 'SOLID',

@@ -1,16 +1,18 @@
 import { inflateSync, deflateSync } from 'fflate'
 
-import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
-import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
+import { BLACK } from './constants'
+import { styleToWeight } from './fonts'
 import {
   sceneNodeToKiwi,
   buildFigKiwi,
   parseFigKiwiChunks,
   decompressFigKiwiDataAsync
 } from './kiwi-serialize'
-
+import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
+import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
 import { decodeVectorNetworkBlob } from './vector'
 
+import type { NodeChange as KiwiNodeChange } from './kiwi/codec'
 import type {
   SceneGraph,
   SceneNode,
@@ -22,7 +24,6 @@ import type {
   LayoutCounterAlign,
   VectorNetwork
 } from './scene-graph'
-import type { NodeChange as KiwiNodeChange } from './kiwi/codec'
 
 interface FigmaClipboardMeta {
   fileKey: string
@@ -33,8 +34,6 @@ interface FigmaClipboardMeta {
 export async function prefetchFigmaSchema(): Promise<void> {
   await initCodec()
 }
-
-
 
 function binaryToBase64(bytes: Uint8Array): string {
   let binary = ''
@@ -105,6 +104,64 @@ function decodeVectorData(nc: KiwiNodeChange, blobs: Uint8Array[]): VectorNetwor
   }
 }
 
+const NON_VISUAL_TYPES = new Set([
+  'DOCUMENT',
+  'CANVAS',
+  'VARIABLE_SET',
+  'VARIABLE',
+  'VARIABLE_COLLECTION',
+  'STYLE',
+  'STYLE_SET',
+  'INTERNAL_ONLY_NODE',
+  'WIDGET',
+  'STAMP',
+  'STICKY',
+  'SHAPE_WITH_TEXT',
+  'CONNECTOR',
+  'CODE_BLOCK',
+  'TABLE_NODE',
+  'TABLE_CELL',
+  'SECTION_OVERLAY',
+  'SLIDE'
+])
+
+export function figmaNodesBounds(
+  nodeChanges: KiwiNodeChange[]
+): { x: number; y: number; w: number; h: number } | null {
+  let minX = Infinity
+  let minY = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+
+  const parentTypes = new Map<string, string>()
+  for (const nc of nodeChanges) {
+    if (!nc.guid) continue
+    const id = `${nc.guid.sessionID}:${nc.guid.localID}`
+    parentTypes.set(id, nc.type ?? '')
+  }
+
+  for (const nc of nodeChanges) {
+    if (!nc.guid || !nc.type || NON_VISUAL_TYPES.has(nc.type)) continue
+    const parentId = nc.parentIndex?.guid
+      ? `${nc.parentIndex.guid.sessionID}:${nc.parentIndex.guid.localID}`
+      : null
+    if (parentId && parentTypes.has(parentId) && !NON_VISUAL_TYPES.has(parentTypes.get(parentId)!))
+      continue
+
+    const x = nc.transform?.m02 ?? 0
+    const y = nc.transform?.m12 ?? 0
+    const w = nc.size?.x ?? 0
+    const h = nc.size?.y ?? 0
+    minX = Math.min(minX, x)
+    minY = Math.min(minY, y)
+    maxX = Math.max(maxX, x + w)
+    maxY = Math.max(maxY, y + h)
+  }
+
+  if (minX === Infinity) return null
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY }
+}
+
 export function importClipboardNodes(
   nodeChanges: KiwiNodeChange[],
   graph: SceneGraph,
@@ -124,12 +181,15 @@ export function importClipboardNodes(
     }
   }
 
-  const skipTypes = new Set(['DOCUMENT', 'CANVAS'])
   const topLevel: string[] = []
   for (const [id, nc] of guidMap) {
-    if (skipTypes.has(nc.type ?? '')) continue
+    if (NON_VISUAL_TYPES.has(nc.type ?? '')) continue
     const parentId = parentMap.get(id)
-    if (!parentId || !guidMap.has(parentId) || skipTypes.has(guidMap.get(parentId)?.type ?? '')) {
+    if (
+      !parentId ||
+      !guidMap.has(parentId) ||
+      NON_VISUAL_TYPES.has(guidMap.get(parentId)?.type ?? '')
+    ) {
       topLevel.push(id)
     }
   }
@@ -154,7 +214,7 @@ export function importClipboardNodes(
       .filter((p) => p.type === 'SOLID' && p.color)
       .map((p) => ({
         type: 'SOLID' as const,
-        color: p.color ?? { r: 0, g: 0, b: 0, a: 1 },
+        color: p.color ?? { ...BLACK },
         opacity: p.opacity ?? 1,
         visible: p.visible ?? true
       }))
@@ -162,7 +222,7 @@ export function importClipboardNodes(
     const strokes: Stroke[] = (nc.strokePaints ?? [])
       .filter((p) => p.type === 'SOLID' && p.color)
       .map((p) => ({
-        color: p.color ?? { r: 0, g: 0, b: 0, a: 1 },
+        color: p.color ?? { ...BLACK },
         weight: nc.strokeWeight ?? 1,
         opacity: p.opacity ?? 1,
         visible: p.visible ?? true,
@@ -219,6 +279,17 @@ export function importClipboardNodes(
       layoutPositioning:
         (nc.stackPositioning as string) === 'ABSOLUTE' ? ('ABSOLUTE' as const) : ('AUTO' as const),
       layoutGrow: (nc.stackChildPrimaryGrow as number) ?? 0,
+      layoutAlignSelf:
+        (nc.stackChildAlignSelf as string) === 'STRETCH' ? ('STRETCH' as const) : ('AUTO' as const),
+      clipsContent: nc.frameMaskDisabled === false,
+      textAutoResize: 'NONE' as const,
+      fontWeight: nc.fontWeight ?? styleToWeight(nc.fontName?.style ?? ''),
+      italic: nc.fontName?.style?.toLowerCase().includes('italic') ?? false,
+      lineHeight: mapLineHeight(nc.lineHeight as { value: number; units: string } | undefined),
+      letterSpacing: mapLetterSpacing(
+        nc.letterSpacing as { value: number; units: string } | undefined,
+        nc.fontSize as number | undefined
+      ),
       vectorNetwork: decodeVectorData(nc, blobs)
     })
 
@@ -227,7 +298,7 @@ export function importClipboardNodes(
 
     const children: string[] = []
     for (const [childId, pid] of parentMap) {
-      if (pid === figmaId && !skipTypes.has(guidMap.get(childId)?.type ?? '')) {
+      if (pid === figmaId && !NON_VISUAL_TYPES.has(guidMap.get(childId)?.type ?? '')) {
         children.push(childId)
       }
     }
@@ -273,6 +344,20 @@ function mapCounterAlign(align?: string): LayoutCounterAlign {
   if (align === 'STRETCH') return 'STRETCH'
   if (align === 'BASELINE') return 'BASELINE'
   return 'MIN'
+}
+
+function mapLetterSpacing(ls?: { value: number; units: string }, fontSize?: number): number {
+  if (!ls) return 0
+  if (ls.units === 'PIXELS') return ls.value
+  if (ls.units === 'PERCENT') return (ls.value / 100) * (fontSize ?? 14)
+  return 0
+}
+
+function mapLineHeight(lh?: { value: number; units: string }): number | undefined {
+  if (!lh) return undefined
+  if (lh.units === 'PIXELS') return lh.value
+  if (lh.units === 'PERCENT') return undefined
+  return undefined
 }
 
 function mapNodeType(type?: string): SceneNode['type'] {
@@ -349,7 +434,7 @@ export function buildFigmaClipboardHTML(nodes: SceneNode[], graph: SceneGraph): 
     type: 'NODE_CHANGES',
     sessionID: 0,
     ackID: 0,
-    pasteID: Math.floor(Math.random() * 2147483647),
+    pasteID: crypto.getRandomValues(new Int32Array(1))[0],
     pasteFileKey: 'openpencil',
     nodeChanges
   }
@@ -387,6 +472,7 @@ export function parseOpenPencilClipboard(
   try {
     const decoded = JSON.parse(atob(match[1]))
     if (decoded.format === 'openpencil/v1' && Array.isArray(decoded.nodes)) {
+      restoreTextPictures(decoded.nodes)
       return decoded.nodes
     }
   } catch {
@@ -395,23 +481,50 @@ export function parseOpenPencilClipboard(
   return null
 }
 
-export function buildOpenPencilClipboardHTML(nodes: SceneNode[], graph: SceneGraph): string {
+function restoreTextPictures(nodes: Array<Record<string, unknown>>): void {
+  for (const node of nodes) {
+    if (typeof node.textPicture === 'string') {
+      node.textPicture = base64ToBinary(node.textPicture)
+    }
+    if (Array.isArray(node.children)) {
+      restoreTextPictures(node.children)
+    }
+  }
+}
+
+export type TextPictureBuilder = (node: SceneNode) => Uint8Array | null
+
+export function buildOpenPencilClipboardHTML(
+  nodes: SceneNode[],
+  graph: SceneGraph,
+  textPictureBuilder?: TextPictureBuilder
+): string {
   const data = {
     format: 'openpencil/v1',
-    nodes: collectNodeTree(nodes, graph)
+    nodes: collectNodeTree(nodes, graph, textPictureBuilder)
   }
   return `<!--(openpencil)${btoa(JSON.stringify(data))}(/openpencil)-->`
 }
 
 function collectNodeTree(
   nodes: SceneNode[],
-  graph: SceneGraph
-): Array<SceneNode & { children?: SceneNode[] }> {
+  graph: SceneGraph,
+  textPictureBuilder?: TextPictureBuilder
+): Array<Record<string, unknown>> {
   return nodes.map((node) => {
     const children = graph.getChildren(node.id)
-    return {
-      ...node,
-      children: children.length > 0 ? collectNodeTree(children, graph) : undefined
+    const serialized: Record<string, unknown> = { ...node }
+
+    if (node.type === 'TEXT' && node.text && textPictureBuilder) {
+      const pic = node.textPicture ?? textPictureBuilder(node)
+      if (pic) serialized.textPicture = binaryToBase64(pic)
+    } else {
+      delete serialized.textPicture
     }
+
+    if (children.length > 0) {
+      serialized.children = collectNodeTree(children, graph, textPictureBuilder)
+    }
+    return serialized
   })
 }

@@ -2,6 +2,9 @@ import type { Color } from './types'
 
 export const IS_TAURI = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
+export const BLACK: Color = { r: 0, g: 0, b: 0, a: 1 }
+export const TRANSPARENT: Color = { r: 0, g: 0, b: 0, a: 0 }
+export const DEFAULT_SHADOW_COLOR: Color = { r: 0, g: 0, b: 0, a: 0.25 }
 export const SELECTION_COLOR = { r: 0.23, g: 0.51, b: 0.96, a: 1 } satisfies Color
 export const COMPONENT_COLOR = { r: 0.592, g: 0.278, b: 1, a: 1 } satisfies Color
 export const SNAP_COLOR = { r: 1.0, g: 0.0, b: 0.56, a: 1 } satisfies Color
@@ -71,7 +74,7 @@ export const RULER_TARGET_PIXEL_SPACING = 100
 export const RULER_MAJOR_TOLERANCE = 0.01
 
 export const TEXT_SELECTION_COLOR = { r: 0.26, g: 0.52, b: 0.96, a: 0.3 }
-export const TEXT_CARET_COLOR = { r: 0, g: 0, b: 0, a: 1 }
+export const TEXT_CARET_COLOR = BLACK
 export const TEXT_CARET_WIDTH = 1
 
 export interface ModelOption {
@@ -83,12 +86,27 @@ export interface ModelOption {
 
 export const AI_MODELS: ModelOption[] = [
   // Best for design: vision + frontend + tool calling (WebDev Arena #1, DesignBench, SWE-bench 79.6%)
-  { id: 'anthropic/claude-sonnet-4.6', name: 'Claude Sonnet 4.6', provider: 'Anthropic', tag: 'Best for design' },
-  { id: 'anthropic/claude-opus-4.6', name: 'Claude Opus 4.6', provider: 'Anthropic', tag: 'Smartest' },
+  {
+    id: 'anthropic/claude-sonnet-4.6',
+    name: 'Claude Sonnet 4.6',
+    provider: 'Anthropic',
+    tag: 'Best for design'
+  },
+  {
+    id: 'anthropic/claude-opus-4.6',
+    name: 'Claude Opus 4.6',
+    provider: 'Anthropic',
+    tag: 'Smartest'
+  },
   // 76.8% SWE-bench, vision + UI-to-code specialist
   { id: 'moonshotai/kimi-k2.5', name: 'Kimi K2.5', provider: 'Moonshot', tag: 'Vision + code' },
   // 1M context, multimodal (text+image+audio+video), 78% SWE-bench
-  { id: 'google/gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', provider: 'Google', tag: '1M context' },
+  {
+    id: 'google/gemini-3.1-pro-preview',
+    name: 'Gemini 3.1 Pro',
+    provider: 'Google',
+    tag: '1M context'
+  },
   // 80% SWE-bench, 400K context, agentic coding
   { id: 'openai/gpt-5.3-codex', name: 'GPT-5.3 Codex', provider: 'OpenAI' },
 
@@ -99,7 +117,7 @@ export const AI_MODELS: ModelOption[] = [
 
   // Free (with tool calling)
   { id: 'qwen/qwen3-coder:free', name: 'Qwen3 Coder', provider: 'Qwen', tag: 'Free' },
-  { id: 'openai/gpt-oss-120b:free', name: 'GPT-OSS 120B', provider: 'OpenAI', tag: 'Free' },
+  { id: 'openai/gpt-oss-120b:free', name: 'GPT-OSS 120B', provider: 'OpenAI', tag: 'Free' }
 ]
 
 export const DEFAULT_AI_MODEL = AI_MODELS[0].id

@@ -6,8 +6,8 @@ import dedent from 'dedent'
 import { computed, ref, watch } from 'vue'
 
 import { createAITools } from '@/ai/tools'
+import { useEditorStore } from '@/stores/editor'
 
-import type { EditorStore } from '@/stores/editor'
 import type { UIMessage } from 'ai'
 
 export { AI_MODELS as MODELS } from '@open-pencil/core'
@@ -32,8 +32,6 @@ const SYSTEM_PROMPT = dedent`
 const apiKey = ref(localStorage.getItem(API_KEY_STORAGE) ?? '')
 const modelId = ref(localStorage.getItem(MODEL_STORAGE) ?? DEFAULT_AI_MODEL)
 const activeTab = ref<'design' | 'ai'>('design')
-
-let editorStore: EditorStore | null = null
 
 watch(apiKey, (key) => {
   if (key) {
@@ -65,7 +63,7 @@ function createTransport() {
     }
   })
 
-  const tools = editorStore ? createAITools(editorStore) : {}
+  const tools = createAITools(useEditorStore())
 
   const agent = new ToolLoopAgent({
     model: openrouter(modelId.value),
@@ -96,10 +94,7 @@ if (typeof window !== 'undefined') {
   }
 }
 
-export function useAIChat(store?: EditorStore) {
-  if (store) {
-    editorStore = store
-  }
+export function useAIChat() {
   return {
     apiKey,
     modelId,

@@ -9,7 +9,6 @@
 import { decompress as zstdDecompress } from 'fzstd'
 
 import { parseColor } from '../color'
-
 import { compileSchema, encodeBinarySchema } from './kiwi-schema'
 import { isZstdCompressed, getKiwiMessageType } from './protocol'
 import figmaSchema from './schema'
@@ -248,6 +247,7 @@ export interface NodeChange {
   stackWrap?: string
   stackPositioning?: string
   stackChildPrimaryGrow?: number
+  stackChildAlignSelf?: string
   stackCounterSpacing?: number
   // Frame
   clipsContent?: boolean
@@ -256,6 +256,7 @@ export interface NodeChange {
   vectorData?: unknown
   // Text
   fontSize?: number
+  fontWeight?: number
   fontName?: { family: string; style: string; postscript?: string }
   textAlignHorizontal?: string
   textAlignVertical?: string

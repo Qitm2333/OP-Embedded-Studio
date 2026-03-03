@@ -22,7 +22,7 @@ Additionally, we need to assess the current state of documentation tooling — s
 - `text-editing`: Inline text editing with CanvasKit Paragraph API, textarea overlay, font loading (Inter default + Local Font Access API for system fonts), font weight, auto-width text boxes
 - `pen-tool`: Pen tool with vector network model, bezier curves, open/closed paths, vectorNetworkBlob binary encode/decode
 - `auto-layout`: Yoga WASM integration, horizontal/vertical/wrap, gap, padding, justify, align, child sizing, Shift+A toggle, drag reordering with insertion indicator, wrap selected nodes in auto-layout
-- `figma-clipboard`: Bidirectional Figma clipboard — paste from Figma (fig-kiwi binary decode), copy for Figma (fig-kiwi binary encode), cut/copy between OpenPencil instances
+- `figma-clipboard`: Bidirectional Figma clipboard — paste from Figma (Kiwi binary decode), copy for Figma (Kiwi binary encode), cut/copy between OpenPencil instances
 - `fig-import`: .fig file import via Kiwi codec — header parsing, Zstd decompression, schema decode, NodeChange[] extraction, scene graph population
 - `kiwi-codec`: Vendored kiwi-schema, Kiwi binary codec for Figma's 194-definition schema, ESM/CLI patching for sparse field IDs
 - `editor-ui`: Vue 3 + Reka UI panels — toolbar (bottom), layers panel (tree with expand/collapse, drag reorder, visibility toggle), properties panel (appearance, fill, stroke, typography, layout, position sections), color picker (HSV, hex, opacity, alpha)

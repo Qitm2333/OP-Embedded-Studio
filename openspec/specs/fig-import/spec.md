@@ -25,7 +25,7 @@ The import pipeline SHALL resolve blob references (images, vector networks, font
 - **THEN** the vector paths are correctly decoded and renderable
 
 ### Requirement: .fig file export
-The editor SHALL export documents as .fig files. The pipeline: scene graph → Kiwi encode NodeChange[] → compress → write ZIP with fig-kiwi header, schema, message, and thumbnail.
+The editor SHALL export documents as .fig files. The pipeline: scene graph → Kiwi encode NodeChange[] → compress → write ZIP with Kiwi header, schema, message, and thumbnail.
 
 #### Scenario: Save As .fig
 - **WHEN** user selects File → Save As

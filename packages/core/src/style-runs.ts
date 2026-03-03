@@ -9,10 +9,7 @@ export function getStyleAt(runs: StyleRun[], index: number): CharacterStyleOverr
   return {}
 }
 
-function expandRuns(
-  runs: StyleRun[],
-  textLength: number
-): (CharacterStyleOverride | null)[] {
+function expandRuns(runs: StyleRun[], textLength: number): (CharacterStyleOverride | null)[] {
   const chars: (CharacterStyleOverride | null)[] = new Array(textLength).fill(null)
   for (const run of runs) {
     for (let i = run.start; i < run.start + run.length && i < textLength; i++) {
@@ -104,7 +101,11 @@ function compactRuns(chars: (CharacterStyleOverride | null)[]): StyleRun[] {
   return result
 }
 
-export function adjustRunsForInsert(runs: StyleRun[], pos: number, insertLength: number): StyleRun[] {
+export function adjustRunsForInsert(
+  runs: StyleRun[],
+  pos: number,
+  insertLength: number
+): StyleRun[] {
   return runs.map((run) => {
     if (pos <= run.start) {
       return { ...run, start: run.start + insertLength }
@@ -116,7 +117,11 @@ export function adjustRunsForInsert(runs: StyleRun[], pos: number, insertLength:
   })
 }
 
-export function adjustRunsForDelete(runs: StyleRun[], start: number, deleteLength: number): StyleRun[] {
+export function adjustRunsForDelete(
+  runs: StyleRun[],
+  start: number,
+  deleteLength: number
+): StyleRun[] {
   const end = start + deleteLength
   const result: StyleRun[] = []
   for (const run of runs) {
@@ -157,7 +162,12 @@ export function toggleBoldInRange(
   return { runs: newRuns, newWeight: targetWeight }
 }
 
-function selectionAllBold(runs: StyleRun[], start: number, end: number, nodeWeight: number): boolean {
+function selectionAllBold(
+  runs: StyleRun[],
+  start: number,
+  end: number,
+  nodeWeight: number
+): boolean {
   for (let i = start; i < end; i++) {
     const style = getStyleAt(runs, i)
     const weight = style.fontWeight ?? nodeWeight
@@ -180,7 +190,12 @@ export function toggleItalicInRange(
   return { runs: newRuns, newItalic: !allItalic }
 }
 
-function selectionAllItalic(runs: StyleRun[], start: number, end: number, nodeItalic: boolean): boolean {
+function selectionAllItalic(
+  runs: StyleRun[],
+  start: number,
+  end: number,
+  nodeItalic: boolean
+): boolean {
   for (let i = start; i < end; i++) {
     const style = getStyleAt(runs, i)
     if (!(style.italic ?? nodeItalic)) return false

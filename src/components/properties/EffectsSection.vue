@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import AppSelect from '@/components/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import { useNodeProps } from '@/composables/use-node-props'
@@ -9,6 +10,7 @@ import type { Color, Effect } from '@/engine/scene-graph'
 const { store, node } = useNodeProps()
 
 const expandedIndex = ref<number | null>(null)
+const effectsBeforeScrub = ref<Effect[] | null>(null)
 
 type EffectType = Effect['type']
 
@@ -21,6 +23,7 @@ const EFFECT_LABELS: Record<string, string> = {
 }
 
 const EFFECT_TYPES = Object.keys(EFFECT_LABELS) as EffectType[]
+const EFFECT_OPTIONS = EFFECT_TYPES.map((t) => ({ value: t, label: EFFECT_LABELS[t] }))
 
 function isShadow(type: string) {
   return type === 'DROP_SHADOW' || type === 'INNER_SHADOW'
@@ -37,6 +40,36 @@ function defaultEffect(): Effect {
   }
 }
 
+function scrubEffect(index: number, changes: Partial<Effect>) {
+  const n = node.value
+  if (!n) return
+  if (!effectsBeforeScrub.value) {
+    effectsBeforeScrub.value = n.effects.map((e) => ({
+      ...e,
+      color: { ...e.color },
+      offset: { ...e.offset }
+    }))
+  }
+  const effects = [...n.effects]
+  effects[index] = { ...effects[index], ...changes }
+  store.updateNode(n.id, { effects })
+  store.requestRender()
+}
+
+function commitEffect(index: number, changes: Partial<Effect>) {
+  const n = node.value
+  if (!n) return
+  const previous = effectsBeforeScrub.value
+  effectsBeforeScrub.value = null
+  const effects = [...n.effects]
+  effects[index] = { ...effects[index], ...changes }
+  store.updateNode(n.id, { effects })
+  store.requestRender()
+  if (previous) {
+    store.commitNodeUpdate(n.id, { effects: previous }, 'Change effect')
+  }
+}
+
 function updateEffect(index: number, changes: Partial<Effect>) {
   const n = node.value
   if (!n) return
@@ -47,13 +80,6 @@ function updateEffect(index: number, changes: Partial<Effect>) {
 
 function updateColor(index: number, color: Color) {
   updateEffect(index, { color })
-}
-
-function updateColorOpacity(index: number, opacity: number) {
-  const n = node.value
-  if (!n) return
-  const existing = n.effects[index]
-  updateColor(index, { ...existing.color, a: Math.max(0, Math.min(1, opacity / 100)) })
 }
 
 function toggleVisibility(index: number) {
@@ -131,15 +157,11 @@ function toggleExpand(index: number) {
           <icon-lucide-blend class="size-3 text-muted" />
         </button>
 
-        <select
-          class="min-w-0 flex-1 cursor-pointer appearance-none border-none bg-transparent text-xs text-surface outline-none"
-          :value="effect.type"
-          @change="updateType(i, ($event.target as HTMLSelectElement).value as EffectType)"
-        >
-          <option v-for="t in EFFECT_TYPES" :key="t" :value="t" class="bg-panel text-surface">
-            {{ EFFECT_LABELS[t] }}
-          </option>
-        </select>
+        <AppSelect
+          :model-value="effect.type"
+          :options="EFFECT_OPTIONS"
+          @update:model-value="updateType(i, $event as EffectType)"
+        />
 
         <button
           class="cursor-pointer border-none bg-transparent p-0 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-surface"
@@ -163,12 +185,14 @@ function toggleExpand(index: number) {
             <ScrubInput
               icon="X"
               :model-value="effect.offset.x"
-              @update:model-value="updateEffect(i, { offset: { ...effect.offset, x: $event } })"
+              @update:model-value="scrubEffect(i, { offset: { ...effect.offset, x: $event } })"
+              @commit="commitEffect(i, { offset: { ...effect.offset, x: $event } })"
             />
             <ScrubInput
               icon="Y"
               :model-value="effect.offset.y"
-              @update:model-value="updateEffect(i, { offset: { ...effect.offset, y: $event } })"
+              @update:model-value="scrubEffect(i, { offset: { ...effect.offset, y: $event } })"
+              @commit="commitEffect(i, { offset: { ...effect.offset, y: $event } })"
             />
           </div>
 
@@ -177,12 +201,14 @@ function toggleExpand(index: number) {
               icon="B"
               :model-value="effect.radius"
               :min="0"
-              @update:model-value="updateEffect(i, { radius: $event })"
+              @update:model-value="scrubEffect(i, { radius: $event })"
+              @commit="commitEffect(i, { radius: $event })"
             />
             <ScrubInput
               icon="S"
               :model-value="effect.spread"
-              @update:model-value="updateEffect(i, { spread: $event })"
+              @update:model-value="scrubEffect(i, { spread: $event })"
+              @commit="commitEffect(i, { spread: $event })"
             />
           </div>
 
@@ -194,7 +220,16 @@ function toggleExpand(index: number) {
               :model-value="Math.round(effect.color.a * 100)"
               :min="0"
               :max="100"
-              @update:model-value="updateColorOpacity(i, $event)"
+              @update:model-value="
+                scrubEffect(i, {
+                  color: { ...effect.color, a: Math.max(0, Math.min(1, $event / 100)) }
+                })
+              "
+              @commit="
+                commitEffect(i, {
+                  color: { ...effect.color, a: Math.max(0, Math.min(1, $event / 100)) }
+                })
+              "
             />
           </div>
         </template>
@@ -204,7 +239,8 @@ function toggleExpand(index: number) {
             icon="B"
             :model-value="effect.radius"
             :min="0"
-            @update:model-value="updateEffect(i, { radius: $event })"
+            @update:model-value="scrubEffect(i, { radius: $event })"
+            @commit="commitEffect(i, { radius: $event })"
           />
         </template>
       </div>

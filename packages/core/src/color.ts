@@ -1,12 +1,14 @@
 import { parse, formatHex, converter } from 'culori'
 
+import { BLACK } from './constants'
+
 import type { Color } from './types'
 
 const toRgb = converter('rgb')
 
 export function parseColor(input: string): Color {
   const parsed = parse(input)
-  if (!parsed) return { r: 0, g: 0, b: 0, a: 1 }
+  if (!parsed) return { ...BLACK }
   const rgb = toRgb(parsed)
   return {
     r: rgb?.r ?? 0,

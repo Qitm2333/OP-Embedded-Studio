@@ -6,7 +6,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 ✅ Supported — feature works end-to-end · 🟡 Partial — core behavior exists, some sub-features missing · 🔲 Not yet implemented
 :::
 
-**Coverage:** 85 of 152 Figma feature items addressed — 66 ✅ fully supported, 19 🟡 partial, 67 🔲 not yet. Last updated: 2026-03-01.
+**Coverage:** 87 of 152 Figma feature items addressed — 69 ✅ fully supported, 18 🟡 partial, 65 🔲 not yet. Last updated: 2026-03-03.
 
 ## Interface & Navigation
 
@@ -28,7 +28,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Custom file thumbnails | 🔲 | Thumbnail generated on export, but no custom thumbnail picker |
 | Nudge value settings | 🔲 | Default 1px/10px; Figma allows custom small/big nudge values |
 | App menu (browser mode) | ✅ | File, Edit, View, Object, Text, Arrange menus; Tauri uses native menus |
-| AI tools | 🟡 | 10 tools via OpenRouter + unified tool definitions + eval command integration; no AI image generation yet |
+| AI tools | 🟡 | 29 tools via OpenRouter + MCP server; no AI-generated images or AI-powered search yet |
 
 ## Layers & Shapes
 
@@ -44,7 +44,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Layer types & hierarchy | ✅ | 17 node types, flat Map + parent-child tree |
 | Select layers | ✅ | Click, shift-click, marquee selection |
 | Alignment & position | ✅ | Position, rotation, dimensions in properties panel |
-| Copy & paste objects | ✅ | Standard clipboard + Figma fig-kiwi binary format |
+| Copy & paste objects | ✅ | Standard clipboard + Figma Kiwi binary format |
 | Scale layers proportionally | 🟡 | Shift-resize constrains proportions; no dedicated Scale tool (K) |
 | Lock & unlock layers | ✅ | ⇧⌘L toggles lock; locked nodes can't be selected/moved from canvas |
 | Toggle layer visibility | ✅ | Eye icon in layers panel + ⇧⌘H keyboard shortcut |
@@ -188,10 +188,10 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Feature | Status | Notes |
 |---------|--------|-------|
 | .fig file import | ✅ | Full Kiwi codec: 194 definitions, ~390 fields per NodeChange |
-| .fig file export | ✅ | Kiwi encoding + Zstd compression + thumbnail generation; COMPONENT/COMPONENT_SET correctly mapped to SYMBOL for Figma round-trip |
+| .fig file export | ✅ | Kiwi encoding + Zstd compression + thumbnail generation; COMPONENT/COMPONENT_SET mapped to SYMBOL for round-trip |
 | Save / Save As | ✅ | ⌘S / ⇧⌘S; native dialogs (Tauri), File System Access API (Chrome/Edge), download fallback (Safari) |
-| Figma clipboard (paste) | ✅ | Decode fig-kiwi binary from Figma clipboard |
-| Figma clipboard (copy) | ✅ | Encode fig-kiwi binary that Figma can read |
+| Figma clipboard (paste) | ✅ | Decode Kiwi binary from Figma clipboard |
+| Figma clipboard (copy) | ✅ | Encode Kiwi binary that Figma can read |
 | Sketch file import | 🔲 | .sketch file parsing |
 | Image/SVG export | 🟡 | PNG/JPG/WEBP with scale selector and live preview; SVG/PDF not yet |
 | Version history | 🔲 | Browse and restore previous versions |
@@ -208,15 +208,15 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Comments (pin, thread, resolve) | 🔲 | Planned for Phase 6 |
-| Real-time multiplayer | 🔲 | Planned (Yjs-based) |
+| Real-time multiplayer | ✅ | P2P via Trystero + Yjs CRDT, cursors, follow mode; no server required |
 | Cursor chat | 🔲 | Inline chat bubbles at cursor |
 | Branching & merging | 🔲 | Version branches for design files |
 | Dev Mode (inspect) | 🟡 | Code tab shows JSX representation of selection; no CSS properties or handoff specs |
 | Code Connect | 🔲 | Link design components to code |
 | Code snippets | 🟡 | JSX export with syntax highlighting and copy; no CSS/Swift/Kotlin snippets |
 | Figma for VS Code | 🔲 | Editor plugin integration |
-| MCP server | 🔲 | Planned for Phase 5; 117-tool MCP server from figma-use |
-| CLI tools | 🟡 | Headless CLI: info, tree, find, export, analyze (colors/typography/spacing/clusters), node, pages, variables; MCP server not yet |
+| MCP server | ✅ | @open-pencil/mcp with stdio + HTTP transports; 29 core tools + 3 file management tools |
+| CLI tools | ✅ | Headless CLI: info, tree, find, export, analyze, node, pages, variables, eval; MCP server with stdio + HTTP |
 
 ## Figma Draw
 

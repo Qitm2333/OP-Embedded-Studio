@@ -4,22 +4,22 @@ Open-source, AI-native design editor. Think Figma, but you can self-host it, ext
 
 ## Why
 
-- Figma is proprietary and expensive
+- Figma is proprietary, expensive, and actively fights programmatic access
 - Penpot is SVG-based (slow for complex documents)
-- Pencil.app showed AI-native design is possible, but it's closed source
-- None of the existing tools treat AI as a first-class citizen
+- No existing tool combines open source + Skia rendering + AI-native design + .fig compatibility
 
 ## Positioning
 
-| | OpenPencil | Figma | Penpot | Pencil.app |
-|---|---|---|---|---|
-| Open source | ✅ | ❌ | ✅ | ❌ |
-| Rendering | Skia (WASM) | Skia (WASM) | SVG | Skia (WASM) |
-| AI-native | ✅ MCP | ❌ Plugins only | ❌ | ✅ MCP |
-| Self-hosted | ✅ | ❌ | ✅ | ❌ |
-| .fig import | ✅ | N/A | ❌ | ❌ |
-| Desktop | Tauri | Electron | Browser | Electron |
-| Collaboration | CRDT | Proprietary | WebSocket | Proprietary |
+| | OpenPencil | Figma | Penpot |
+|---|---|---|---|
+| Open source | ✅ MIT | ❌ | ✅ |
+| Rendering | Skia (WASM) | Skia (WASM) | SVG |
+| AI-native | ✅ 26 tools | ❌ Plugins only | ❌ |
+| .fig import/export | ✅ | N/A | ❌ |
+| Desktop | Tauri (~7 MB) | Electron | Browser |
+| Collaboration | P2P (WebRTC + CRDT) | Proprietary | WebSocket |
+| Self-hosted | ✅ | ❌ | ✅ |
+| Cost | Free forever | $15/editor/mo | Free (self-host) |
 
 ## Reusable assets from figma-use
 
@@ -78,7 +78,7 @@ We've built a substantial toolkit in figma-use that transfers directly:
 │  │                     Editor (Web)                           │  │
 │  │                                                            │  │
 │  │  ┌─────────────────┐  ┌─────────────────────────────────┐ │  │
-│  │  │   React UI      │  │    Skia CanvasKit (WASM, 7MB)   │ │  │
+│  │  │   Vue 3 UI      │  │    Skia CanvasKit (WASM, 7MB)   │ │  │
 │  │  │                 │  │    - Vector rendering            │ │  │
 │  │  │  - Toolbar      │  │    - Text shaping               │ │  │
 │  │  │  - Panels       │  │    - Image processing           │ │  │
@@ -105,16 +105,17 @@ We've built a substantial toolkit in figma-use that transfers directly:
 │  └────────────────────────────────────────────────────────────┘  │
 │                              │                                   │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │                    MCP Server (TS/Bun)                     │  │
+│  │                  AI Tools (26 ToolDefs)                    │  │
 │  │                                                            │  │
-│  │  batch_get ── batch_design ── screenshot ── get_layout    │  │
-│  │  get_guidelines ── get_style_guide ── variables           │  │
+│  │  create_shape ── set_fill ── render (JSX) ── get_node     │  │
+│  │  set_layout ── find_nodes ── eval_code ── ...             │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                              │                                   │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │                  Collaboration (opt)                       │  │
+│  │              Collaboration (P2P, no server)               │  │
 │  │                                                            │  │
-│  │  CRDT sync ── Cursors ── Comments ── Version history      │  │
+│  │  Trystero (WebRTC) ── Yjs (CRDT) ── y-indexeddb          │  │
+│  │  Cursors ── Presence ── Follow mode                       │  │
 │  └────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────┘
 ```
@@ -544,222 +545,70 @@ Available when 2+ nodes selected. Shown in options bar and right-click menu.
 
 | Format | Import | Export |
 |--------|--------|--------|
-| .fig (Figma) | ✅ via Kiwi decoder | ❌ |
-| .pen (Pencil) | ✅ | ❌ |
-| .openpencil | ✅ | ✅ |
-| .svg | ✅ | ✅ |
-| .png | ✅ (image fill) | ✅ (1x, 2x, 3x) |
+| .fig (Figma) | ✅ Kiwi binary codec | ✅ Kiwi + Zstd + thumbnail |
+| .png | ✅ (image fill) | ✅ (1x, 2x, 3x) via CLI and editor |
 | .jpg | ✅ (image fill) | ✅ |
-| .pdf | ❌ | ✅ |
-| .jsx/.tsx | ❌ | ✅ (React components) |
-| CSS | ❌ | ✅ (design tokens, styles) |
-| Storybook | ❌ | ✅ (stories + components) |
+| .webp | — | ✅ |
+| .svg | planned | planned |
+| .pdf | — | planned |
+| Figma clipboard | ✅ copy/paste between apps | ✅ |
 
-### AI (MCP) — 118 tools
+### AI tools — 26 tools
 
-The editor exposes its **entire** API through MCP. Not a dumbed-down subset — every operation available to a human is available to AI. Ported from figma-use.
+Tools are defined once in `packages/core/src/tools/schema.ts` as framework-agnostic `ToolDef` objects. Available in the in-app AI chat (via Vercel AI SDK adapter) and in the CLI via the `eval` command.
 
-#### Create (14 tools)
+#### Read (7 tools)
 
 | Tool | Description |
 |------|-------------|
-| `create_frame` | Create a frame |
-| `create_rect` | Create a rectangle |
-| `create_ellipse` | Create an ellipse |
-| `create_text` | Create a text node |
-| `create_line` | Create a line |
-| `create_polygon` | Create a polygon |
-| `create_star` | Create a star |
-| `create_vector` | Create a vector path |
-| `create_component` | Create a component |
+| `get_selection` | Get selected nodes |
+| `get_page_tree` | Get page node tree |
+| `get_node` | Get node by ID |
+| `find_nodes` | Find nodes by name or type |
+| `list_pages` | List all pages |
+| `list_variables` | List design variables |
+| `list_collections` | List variable collections |
+
+#### Create (4 tools)
+
+| Tool | Description |
+|------|-------------|
+| `create_shape` | Create a shape (frame, rect, ellipse, line, polygon, star, text) |
+| `render` | Render JSX to design nodes |
+| `create_component` | Convert frame to component |
 | `create_instance` | Create a component instance |
-| `create_section` | Create a section |
-| `create_page` | Create a page |
-| `create_slice` | Create a slice |
-| `create_icon` | Create an icon from Iconify |
 
-#### Set / Modify (18 tools)
+#### Modify (10 tools)
 
 | Tool | Description |
 |------|-------------|
-| `set_fill` | Set fill color (hex or variable ref) |
+| `set_fill` | Set fill color |
 | `set_stroke` | Set stroke color and weight |
-| `set_stroke-align` | Set stroke alignment (inside/center/outside) |
-| `set_radius` | Set corner radius (uniform or per-corner) |
-| `set_opacity` | Set opacity |
-| `set_rotation` | Set rotation angle |
-| `set_blend` | Set blend mode |
-| `set_visible` | Set visibility |
-| `set_locked` | Set locked state |
-| `set_text` | Set text content |
-| `set_text-resize` | Set text auto resize mode |
-| `set_font` | Set font properties |
-| `set_font-range` | Set font properties for a text range |
-| `set_effect` | Set effect (shadow, blur) |
-| `set_image` | Set image fill from file |
+| `set_effects` | Set effects (shadow, blur) |
+| `update_node` | Update node properties (position, size, text, etc.) |
 | `set_layout` | Set auto-layout properties |
 | `set_constraints` | Set resize constraints |
-| `set_minmax` | Set min/max width and height |
-| `set_props` | Set instance component properties |
+| `rename_node` | Rename a node |
+| `reparent_node` | Move node to a different parent |
+| `clone_node` | Duplicate a node |
+| `delete_node` | Delete a node |
 
-#### Node Operations (15 tools)
-
-| Tool | Description |
-|------|-------------|
-| `node_get` | Get node properties |
-| `node_tree` | Get node tree with properties |
-| `node_children` | Get child nodes |
-| `node_ancestors` | Get ancestor chain to root |
-| `node_bounds` | Get bounding box |
-| `node_bindings` | Get variable bindings for fills/strokes |
-| `node_move` | Move a node |
-| `node_resize` | Resize a node |
-| `node_rename` | Rename a node |
-| `node_clone` | Clone node(s) |
-| `node_delete` | Delete node(s) |
-| `node_set-parent` | Reparent a node |
-| `node_replace-with` | Replace node with another node or JSX |
-| `node_to-component` | Convert frame(s) to component(s) |
-| `find` | Find nodes by name or type |
-
-#### Variables & Collections (11 tools)
+#### Organize (4 tools)
 
 | Tool | Description |
 |------|-------------|
-| `variable_list` | List all variables |
-| `variable_get` | Get variable by ID |
-| `variable_find` | Find variables by name pattern |
-| `variable_create` | Create a variable |
-| `variable_set` | Set variable value for mode |
-| `variable_bind` | Bind variable to node property |
-| `variable_delete` | Delete a variable |
-| `collection_list` | List variable collections |
-| `collection_get` | Get collection by ID |
-| `collection_create` | Create a variable collection |
-| `collection_delete` | Delete a collection |
+| `select_nodes` | Set selection |
+| `group_nodes` | Group nodes |
+| `ungroup_node` | Ungroup |
+| `switch_page` | Switch to a different page |
 
-#### Components (4 tools)
+#### Escape hatch (1 tool)
 
 | Tool | Description |
 |------|-------------|
-| `component_add-prop` | Add property to component |
-| `component_edit-prop` | Edit component property |
-| `component_delete-prop` | Delete component property |
-| `component_combine` | Combine components into a component set (variants) |
+| `eval_code` | Execute code with Figma-compatible plugin API |
 
-#### Styles (4 tools)
-
-| Tool | Description |
-|------|-------------|
-| `style_list` | List local styles |
-| `style_create-paint` | Create a paint/color style |
-| `style_create-text` | Create a text style |
-| `style_create-effect` | Create an effect style |
-
-#### Boolean Operations (4 tools)
-
-| Tool | Description |
-|------|-------------|
-| `boolean_union` | Union shapes |
-| `boolean_subtract` | Subtract shapes |
-| `boolean_intersect` | Intersect shapes |
-| `boolean_exclude` | Exclude shapes |
-
-#### Vector Paths (5 tools)
-
-| Tool | Description |
-|------|-------------|
-| `path_get` | Get vector path data |
-| `path_set` | Set vector path data |
-| `path_move` | Move all path points by offset |
-| `path_scale` | Scale path from center |
-| `path_flip` | Flip path horizontally or vertically |
-
-#### Groups (3 tools)
-
-| Tool | Description |
-|------|-------------|
-| `group_create` | Group nodes |
-| `group_ungroup` | Ungroup nodes |
-| `group_flatten` | Flatten nodes into single vector |
-
-#### Analyze (5 tools)
-
-| Tool | Description |
-|------|-------------|
-| `analyze_colors` | Analyze color palette usage |
-| `analyze_typography` | Analyze typography usage |
-| `analyze_spacing` | Analyze spacing values (gap, padding) |
-| `analyze_clusters` | Find repeated patterns (potential components) |
-| `analyze_snapshot` | Generate accessibility tree snapshot |
-
-#### Export (6 tools)
-
-| Tool | Description |
-|------|-------------|
-| `export_node` | Export node as image |
-| `export_screenshot` | Screenshot current viewport |
-| `export_selection` | Export selection as image |
-| `export_jsx` | Export node as JSX component |
-| `export_storybook` | Export components as Storybook stories |
-| `export_fonts` | List fonts used in the current page |
-
-#### Diff (5 tools)
-
-| Tool | Description |
-|------|-------------|
-| `diff_create` | Create a diff patch between two nodes/trees |
-| `diff_show` | Show diff between current state and provided props |
-| `diff_apply` | Apply a diff patch |
-| `diff_visual` | Create visual diff between two nodes as PNG |
-| `diff_jsx` | Show JSX diff between two nodes |
-
-#### Pages & Viewport (7 tools)
-
-| Tool | Description |
-|------|-------------|
-| `page_list` | List all pages |
-| `page_current` | Get current page |
-| `page_set` | Switch to page by ID or name |
-| `page_bounds` | Get bounding box of all objects on page |
-| `viewport_get` | Get viewport position and zoom |
-| `viewport_set` | Set viewport position and zoom |
-| `viewport_zoom-to-fit` | Zoom to fit nodes |
-
-#### Selection & Connectors (6 tools)
-
-| Tool | Description |
-|------|-------------|
-| `selection_get` | Get selected nodes |
-| `selection_set` | Set selection |
-| `connector_create` | Create a connector between two nodes |
-| `connector_get` | Get connector details |
-| `connector_set` | Update connector properties |
-| `connector_list` | List connectors on page |
-
-#### Meta & Escape Hatch (7 tools)
-
-| Tool | Description |
-|------|-------------|
-| `status` | Check connection status |
-| `lint` | Lint design for consistency and accessibility |
-| `import` | Import SVG |
-| `render` | Render JSX to design nodes (Frame, Rect, Ellipse, Text, Line, Star, Polygon, Vector, Group, Icon) |
-| `get_components` | Get all components |
-| `get_styles` | Get all local styles |
-| `get_pages` | Get all pages |
-| `font_list` | List available fonts |
-| `comment_watch` | Wait for new comment and return its content |
-| `eval` | Execute JavaScript in editor context |
-
-**AI workflow:**
-1. AI reads structure: `node_tree`, `find`, `analyze_*`
-2. AI creates/modifies: `create_*`, `set_*`, `node_*`, `render` (JSX)
-3. AI verifies visually: `export_screenshot` → inspects the image
-4. AI iterates: `diff_create` to see what changed, fix issues
-5. AI exports: `export_jsx`, `export_storybook` for developer handoff
-
-### Prototyping
+### Prototyping (planned)
 
 | Feature | Description |
 |---------|-------------|
@@ -770,15 +619,6 @@ The editor exposes its **entire** API through MCP. Not a dumbed-down subset — 
 | Easing | Linear, ease-in, ease-out, ease-in-out, spring, custom bezier |
 | Preview | Play prototype in browser |
 | Device frames | iPhone, Android, Desktop, custom sizes |
-
-### Comments
-
-| Feature | Description |
-|---------|-------------|
-| Pin comments | Click anywhere on canvas to leave a comment |
-| Threads | Reply to comments |
-| Resolve | Mark comments as resolved |
-| Mentions | @mention team members |
 
 ---
 
@@ -1180,662 +1020,95 @@ We already have the full Kiwi codec from figma-use. The `.openpencil` format wil
 
 Migration from .fig: decode with our Kiwi codec → re-encode as .openpencil.
 
-### Collaboration (CRDT)
+### Collaboration (P2P CRDT)
 
-The multiplayer model follows what we observed in Figma's protocol:
+Fully peer-to-peer via Trystero (WebRTC). No relay server — signaling via MQTT public brokers, data direct between peers.
 
-- Each client gets a `sessionID` from the server
-- Every node GUID is `{sessionID}:{localID}` — no conflicts
-- Changes are `NodeChange[]` messages broadcast to all clients
-- Position strings use fractional indexing for z-ordering (no conflicts on concurrent reorder)
-- Server is a relay (doesn't interpret node data, just broadcasts)
-
-We use Yjs for the CRDT layer, mapping NodeChange operations to Yjs documents. This gives us:
-- Offline editing with automatic merge on reconnect
-- Conflict-free concurrent edits
-- Built-in awareness protocol (cursors, selection, viewport)
+- Yjs CRDT for document state sync
+- Awareness protocol for cursors, selections, presence, follow mode
+- y-indexeddb for local persistence — room survives page refresh
+- ICE servers: Google STUN + Cloudflare STUN + Open Relay TURN (TCP + UDP)
+- Secure room IDs via `crypto.getRandomValues()`
+- Stale cursors cleaned on peer disconnect
 
 ## Tech Stack
 
 | Layer | Choice | Why |
 |-------|--------|-----|
 | Rendering | Skia CanvasKit WASM | Same as Figma/Pencil, proven performance |
-| UI | React + TypeScript | Ecosystem, hiring, figma-use renderer reusable |
-| Styling | Tailwind CSS | Fast iteration |
-| State | Zustand | Lightweight, no boilerplate |
-| Layout | Yoga WASM | Flexbox + Grid (soon), battle-tested |
-| Desktop | Tauri v2 | ~5MB vs Electron's ~100MB, Rust backend |
-| AI | MCP (TypeScript) | Protocol-level AI integration |
-| Collaboration | Yjs (CRDT) | Proven real-time sync library |
+| UI | Vue 3 + TypeScript | Reactivity, composables, SFC ecosystem |
+| Styling | Tailwind CSS 4 | Fast iteration |
+| State | Vue reactivity + composables | Native to the framework, zero boilerplate |
+| Layout | Yoga WASM | Flexbox, battle-tested (CSS Grid blocked on upstream) |
+| Desktop | Tauri v2 | ~7MB vs Electron's ~100MB, Rust backend |
+| AI | Vercel AI SDK + OpenRouter | Client-side tool use, no backend |
+| Collaboration | Trystero (WebRTC) + Yjs (CRDT) | P2P sync, no server required |
 | File format | Kiwi binary + Zstd | Compact, fast, .fig compatible |
-| Build | Bun | Fast bundling, native TS |
+| Build | Bun + Vite 7 | Fast bundling, native TS |
 
 ## Phases
 
-### Phase 1: Core engine (3 months)
+### Phase 1: Core engine ✅
 
 SceneGraph, Skia rendering, basic shapes, selection, zoom/pan, undo/redo.
 
-**Deliverable:** draw rectangles, ellipses, frames, move them, undo, zoom.
+### Phase 2: Editor UI + Layout ✅
 
-**Validation:**
+Properties panel, layers panel, toolbar, Yoga layout integration, text editing, pen tool with vector networks.
 
-| Test | Pass criteria |
-|------|---------------|
-| SceneGraph unit tests | CRUD nodes, parent-child, z-ordering, hit testing — 100% coverage of core ops |
-| Skia rendering tests | Render each primitive (rect, ellipse, line, star, polygon, vector path) → compare PNG output against reference images, <0.1% pixel diff |
-| Transform tests | Rotation, scaling, nested transforms → verify computed bounding boxes match expected values |
-| Undo/redo tests | Create 50 random operations, undo all → empty canvas. Redo all → identical state. Property-based testing with fast-check |
-| Performance benchmark | 10,000 nodes: scene graph ops <1ms, full render <16ms (60fps), pan/zoom stays interactive |
-| Memory test | Create 10,000 nodes, delete all → verify no WASM memory leak (CanvasKit paint/path objects freed) |
-| Integration smoke | Open browser → canvas loads → draw rect → move it → undo → redo. Manual but scripted with Playwright |
+### Phase 3: File format + Import/Export ✅
 
-### Phase 2: Editor UI + Layout (3 months)
+.fig import and export via Kiwi binary codec, Figma clipboard interop, PNG/JPG/WEBP export.
 
-Properties panel, layers panel, toolbar, Yoga layout integration, constraints, text editing.
+### Phase 4: Components + Variables ✅
 
-**Deliverable:** functional editor with auto-layout, text, and property editing.
+Components, instances, component sets with live sync and override preservation. Variables with collections, modes, color bindings, alias chains.
 
-**Validation:**
+### Phase 5: AI integration ✅
 
-| Test | Pass criteria |
-|------|---------------|
-| Yoga layout unit tests | Horizontal, vertical, nested, wrap, gap, padding, justify, align — verify computed positions match CSS flexbox reference (compare against browser rendering of equivalent CSS) |
-| Yoga ↔ Figma mapping tests | For each `stack*` field value, verify the Yoga adapter produces identical layout to Figma's auto-layout. Test corpus: 50+ layout configs exported from Figma |
-| Grid layout tests | (If Yoga Grid has landed) Template columns/rows, gap, track sizes — compare against CSS Grid reference |
-| Text editing tests | Type, select, bold range, change font size mid-text, undo text change — verify textData roundtrips correctly |
-| Constraint tests | Pin left, right, center, scale — resize parent frame → verify child positions match expected constraint behavior |
-| Panel integration tests | Layers panel reflects tree structure after every operation. Properties panel shows correct values for selected node. Playwright E2E |
-| Keyboard shortcuts | Every shortcut in the tools table fires the correct action. Automated with Playwright key simulation |
-| Accessibility | All panels keyboard-navigable, ARIA roles correct. axe-core audit passes |
+In-app AI chat (⌘J) with OpenRouter, 10 tools, streaming responses with tool call timeline. JSX renderer. Code panel with JSX export.
 
-### Phase 3: File format + Import (2 months)
+### Phase 6: Collaboration ✅
 
-.openpencil format, .fig import (from figma-use Kiwi codec), .svg import/export, PNG/PDF export.
+P2P real-time collaboration via Trystero (WebRTC) + Yjs CRDT. Cursors, presence, follow mode. No server required.
 
-**Deliverable:** open and save files, import from Figma.
+### Phase 7: Distribution ✅
 
-**Validation:**
+Tauri v2 desktop app (macOS, Windows, Linux). Web app at app.openpencil.dev. CLI published on npm. Documentation site at openpencil.dev. GitHub Actions CI for builds and deploys.
 
-| Test | Pass criteria |
-|------|---------------|
-| Roundtrip test | Create document → save .openpencil → close → reopen → all nodes, properties, and blobs identical (byte-level comparison of serialized NodeChange[]) |
-| .fig import corpus | Import 20+ .fig files of varying complexity. For each: parse succeeds, all nodes present in scene graph, no data loss on known fields |
-| Figma pixel-perfect (T0) | Basic shapes .fig → import → render → compare against Figma export. <0.1% diff on rectangles, ellipses, solid fills, positioning |
-| Figma pixel-perfect (T1) | Auto-layout .fig files → import → render → <0.5% diff (layout positions must match) |
-| SVG import | 50 SVG files from real-world icon sets → import → verify path data preserved, fills/strokes correct |
-| SVG export | Export 20 nodes as SVG → re-import → visual diff <0.1% |
-| PNG export | Export at 1x, 2x, 3x → verify dimensions are exact, pixel content matches canvas rendering |
-| PDF export | Export 5 frames → open in PDF viewer → visual sanity check (automated with pdf2png + pixelmatch) |
-| Schema versioning | Open .openpencil v1 file with v2 schema → migration runs without data loss |
-| Fuzz test | Feed 1000 random byte sequences to .openpencil parser → no crashes, only clean error messages |
+### What's next
 
-### Phase 4: Components + Variables (2 months)
-
-Components, instances, overrides, variants, variables, collections, modes/themes.
-
-**Deliverable:** design system creation workflow.
-
-**Validation:**
-
-| Test | Pass criteria |
-|------|---------------|
-| Component create/instantiate | Create component → create 10 instances → override text on instance 3 → verify main component unchanged, instance 3 has override, others inherit |
-| Override propagation | Change main component fill → all instances update except those with fill override |
-| Variant switching | Create component set with 3 variants → swap variant on instance → correct child structure rendered |
-| Component props | Add TEXT prop → set default → verify instance shows default → override on instance → verify override |
-| Nested instances | Instance containing instance containing instance → override deeply nested text → verify correct propagation |
-| Variables CRUD | Create collection → add 10 variables (color, number, string, boolean) → bind to node properties → verify rendered output uses variable values |
-| Theme switching | 2 modes (light/dark) → switch mode → all variable-bound properties update → render matches expected |
-| Variable binding roundtrip | Save file with variable bindings → reload → bindings intact, resolved values correct |
-| .fig component import | Import .fig with components → instances resolve correctly → overrides preserved |
-
-### Phase 5: AI integration (2 months)
-
-In-app AI chat + MCP server. Two interfaces to the same tool set: chat panel for interactive design, MCP for external agents.
-
-**Deliverable:** AI can design full interfaces through the chat panel or MCP.
-
-#### In-app AI chat
-
-**No backend.** Everything runs in the browser. The user provides their own OpenRouter API key. The app calls OpenRouter directly via `fetch()` — no proxy server, no sidecar, no extra process.
-
-```
-Browser (Vue)
-  ChatPanel.vue
-  useChat() ──stream──→  OpenRouter (SSE)
-  tool exec (local)      Claude Sonnet
-```
-
-Stack: `ai@6.0.0-beta` + `@ai-sdk/valibot` + `@openrouter/ai-sdk-provider` + `valibot`. All client-side — `ai/vue` `useChat()` composable with `fetch` transport directly to OpenRouter.
-
-**Why no backend:** All tools execute client-side (editor store, canvas). A backend would add SSE roundtrip latency on every tool call (10-20 per message), require a Tauri sidecar for production, and add failure modes — all to protect an API key that the user owns. Desktop apps (1Password, Cursor, etc.) use the same model.
-
-**API key storage:**
-- **Tauri (desktop):** `tauri-plugin-stronghold` — encrypted vault on disk, key loaded into JS memory at runtime for fetch headers. Never in source code, never in plaintext on disk.
-- **Browser mode:** `localStorage` with a clear warning. Acceptable for a local-first design tool — no worse than any SPA with user-provided keys.
-
-**Chat panel UI:** Replaces right sidebar (properties panel) when active, toggled with `⌘J`. Both share the same splitter slot. Tool calls render inline as a collapsible timeline (like beebro-chat's `ToolTimeline`) with icons, status, expandable params/results. Screenshots and visual diffs render inline as thumbnails.
-
-#### AI workflow (from figma-use)
-
-```
-1. Read    → snapshot (compact a11y tree), get_page_tree, find_nodes
-2. Create  → render (JSX), set_* for edits
-3. Verify  → screenshot → AI inspects the image
-4. Iterate → diff_create to see what changed, fix issues
-5. Export  → export_jsx for developer handoff
-```
-
-**`render` (JSX) is the primary creation tool** — not individual `create_frame`/`create_text` calls. One JSX call creates an entire component tree:
-
-```jsx
-<Frame name="Card" w={320} h="hug" flex="col" gap={16} p={24} bg="#FFF" rounded={16}>
-  <Rectangle name="Image" w="fill" h={200} bg="#E5E7EB" rounded={12} />
-  <Text name="Title" size={18} weight="bold" color="#111">Card Title</Text>
-  <Text name="Description" size={14} color="#6B7280">Lorem ipsum</Text>
-</Frame>
-```
-
-Individual `set_*` tools are for surgical edits only. JSX renderer ported from figma-use's `packages/cli/src/render/`, lives in `@open-pencil/core` (no DOM deps, works headless too).
-
-**Guardrail/diff tools** for the self-correcting loop:
-
-| Tool | Purpose |
-|------|---------|
-| `screenshot` | Render viewport/node to PNG → AI inspects visually |
-| `snapshot` | Compact text representation of the design tree |
-| `diff_create` | Structural diff between two nodes (unified patch) |
-| `diff_visual` | Pixel-level diff → image showing differences |
-| `diff_show` | Preview property changes before applying |
-| `diff_apply` | Apply a diff patch to nodes |
-
-#### Comment pins as AI context
-
-Users pin comments on canvas — AI context annotations, not collaboration comments. When chatting, comments visible in viewport are automatically included in the system prompt with their positions and attached node IDs.
-
-```typescript
-// Stored on SceneGraph, not individual nodes (can pin to empty canvas)
-interface CommentPin {
-  id: string
-  text: string
-  x: number; y: number
-  nodeId?: string
-  resolved: boolean
-  createdAt: number
-}
-```
-
-#### Implementation order
-
-1. ✅ JSX renderer in `@open-pencil/core` (port from figma-use)
-2. ✅ Chat panel UI — `ChatPanel.vue`, `useChat()`, message list, tool timeline, `⌘J` toggle
-3. Code panel — "Code" tab in properties panel, JSX export with syntax highlighting
-   - `sceneNodeToJsx()` in `packages/core/src/render/export-jsx.ts` (reverse of renderer.ts)
-   - `CodePanel.vue` with Prism.js highlighting, copy button, reka-ui ScrollArea
-   - Third tab in PropertiesPanel: Design | Code | AI
-   - Subtree export: full JSX tree for selection, multi-selection separated by blank lines
-4. API key settings — input UI, Stronghold storage (Tauri) / localStorage (browser)
-5. Core tools — render, set_fill, set_layout, set_text, snapshot, get_selection
-6. Screenshot + diff tools
-7. Comment pin system
-8. Full tool set (remaining 118 tools)
-
-#### Validation
-
-| Test | Pass criteria |
-|------|---------------|
-| Tool coverage | All 118 tools callable via chat and MCP. Automated: call each with valid args → no errors |
-| JSX render E2E | Render 10 JSX snippets of varying complexity → all nodes created with correct properties |
-| Screenshot loop | AI creates layout → screenshots → detects overlap → fixes → screenshots again → resolved in ≤3 iterations |
-| Diff roundtrip | diff_create between two nodes → diff_apply on source → source matches target |
-| Chat UX | Send message → tool calls stream in real-time → expandable timeline → final text renders |
-| Comment context | Pin 3 comments → send chat message → system prompt includes all 3 with correct positions |
-| Error handling | Invalid tool args → clean error in chat, no crash. Network failure → retry/abort UI |
-
-### Phase 6: Polish + Distribution (2 months)
-
-Prototyping, comments, Tauri desktop app, PWA, VS Code extension, documentation, public launch.
-
-**Deliverable:** shippable product.
-
-**Validation:**
-
-| Test | Pass criteria |
-|------|---------------|
-| Tauri build | Builds on macOS (Apple Silicon + Intel), Windows (x64), Linux (x64). Installer <15MB |
-| Tauri CanvasKit | CanvasKit WASM loads correctly in Tauri's WKWebView/WebView2/WebKitGTK. WebGL2 context created. Render test passes |
-| Tauri file I/O | Open/save .openpencil via native file dialog. Import .fig via drag-and-drop |
-| PWA | Install as PWA → offline capable (IndexedDB) → opens files via File System Access API |
-| Prototype preview | Create 3 frames with click transitions → preview mode → click → navigates → back works |
-| Comments | Add pin comment → reply → resolve → verify persistence across save/load |
-| Performance audit | Lighthouse score >90. First paint <2s. 1000-node document stays at 60fps |
-| Cross-browser | Chrome, Safari, Firefox — all E2E tests pass |
-| Full Figma compat suite | Run the pixel-perfect test corpus (all tiers). T0: 100% pass. T1: >95% pass. T2: >80% pass |
-
-**Total: ~14 months** (or faster with parallel tracks)
-
----
-
-## Stack Validation
-
-Every piece needs to work together. Here's the proof-of-concept checklist before committing to the stack:
-
-### PoC 1: CanvasKit + Tauri (Week 1)
-
-**Question:** Does CanvasKit WASM work in Tauri's webview on all platforms?
-
-**Test:**
-1. `bun create tauri-app poc-canvaskit` with React template
-2. Load `canvaskit-wasm` (7MB) — verify WASM instantiation works
-3. Draw 1000 rectangles with random fills → measure FPS
-4. Test WebGL2 context on macOS (WKWebView), Windows (WebView2), Linux (WebKitGTK)
-
-**Risk:** Linux WebKitGTK has historically been behind on WebGL2. Mitigation: CanvasKit has a CPU fallback, or we ship with a minimum WebKitGTK version requirement.
-
-**Risk:** WASM file size (7MB). Tauri serves assets via custom protocol (`tauri://`), not HTTP — should be fine but need to verify no loading issues. Mitigation: bundle canvaskit.wasm as a Tauri resource, load via `asset:` protocol.
-
-### PoC 2: Yoga WASM in browser (Week 1)
-
-**Question:** Does `yoga-layout` (v3.2.1, 224KB npm) work alongside CanvasKit WASM?
-
-**Test:**
-1. In the same Tauri app from PoC 1, `import { Yoga, Align } from 'yoga-layout'`
-2. Create a Yoga tree matching a Figma auto-layout (horizontal, gap:16, padding:20, 3 children with fill_container)
-3. Calculate layout → read computed positions → render with CanvasKit at those positions
-4. Compare screenshot against the same layout in Figma
-
-**Risk:** Two WASM modules (CanvasKit 7MB + Yoga 45KB) in one page. Should be fine — they use separate WASM memories. Verify no conflicts.
-
-**Risk:** Yoga Grid PR not merged yet. Mitigation: start with Flexbox only (covers 90% of design tool use). Grid can be added later without architecture changes.
-
-### PoC 3: Kiwi codec + .fig parsing (Week 2)
-
-**Question:** Can we extract the figma-use Kiwi code from git history and use it standalone?
-
-**Test:**
-1. Extract `multiplayer/schema.ts`, `multiplayer/codec.ts`, `multiplayer/protocol.ts` from git commit `9216dcc^`
-2. Package as `@openpencil/kiwi` with `kiwi-schema` dependency
-3. Parse 5 real .fig files → decode NodeChange[] → verify node count matches Figma API response
-4. Re-encode decoded data → verify byte-level roundtrip (decode → encode → decode → same data)
-
-**Risk:** `kiwi-schema` npm package (by Figma co-founder Evan Wallace) — need to verify it's still maintained and handles all field types correctly. Mitigation: we can vendor and patch if needed.
-
-### PoC 4: Kiwi → SceneGraph → CanvasKit pipeline (Week 2)
-
-**Question:** Can we go from .fig bytes to rendered pixels?
-
-**Test:**
-1. Parse .fig → NodeChange[]
-2. Build SceneGraph from NodeChange[]
-3. For each visible node: map properties to CanvasKit draw calls
-4. Render to offscreen CanvasKit surface → export PNG
-5. Compare against Figma REST API export of the same file
-
-**Target:** <1% pixel diff on a simple .fig file (frames, rectangles, text, solid fills).
-
-### PoC 5: Yjs + SceneGraph (Week 3)
-
-**Question:** Can Yjs efficiently sync our NodeChange-based scene graph?
-
-**Test:**
-1. Represent each node as a `Y.Map` inside a `Y.Map` (flat structure keyed by GUID)
-2. Two clients connected via `y-websocket`
-3. Client A creates 100 nodes → Client B receives all 100
-4. Client A moves node → Client B sees updated position
-5. Both clients offline-edit → reconnect → merge without conflicts
-6. Measure sync latency (<50ms for single property change over localhost)
-
-**Risk:** Y.Map per node could be memory-heavy for large documents (100K+ nodes). Mitigation: benchmark memory usage. If too high, consider a custom Yjs type or chunked sync.
-
-**Risk:** Yjs has Y.UndoManager — we need to verify it works with our undo model or if we need to keep our own inverse-command stack alongside.
-
-### PoC 6: Tauri + MCP server (Week 3)
-
-**Question:** Can the MCP server run as a sidecar/embedded process in Tauri?
-
-**Test:**
-1. Package the MCP server as a Bun binary (or TS compiled with Bun)
-2. Launch as Tauri sidecar process
-3. MCP client (Claude Desktop or test harness) connects → calls `create_frame` → node appears in editor
-
-**Alternative:** Run MCP as an in-process API (no sidecar). The editor's web code calls MCP tool handlers directly via JS imports. This is simpler and eliminates IPC latency.
-
-**Risk:** Tauri sidecar requires bundling a Bun/Node runtime. Mitigation: compile MCP server to a standalone binary with `bun build --compile`, or run it in-process.
-
-### PoC 7: Full vertical slice (Week 4)
-
-**Question:** Can a user open a .fig file, see it rendered, edit a property, undo, and save?
-
-**Test:**
-1. Tauri app with CanvasKit canvas + minimal React UI
-2. Import .fig → render scene graph
-3. Click to select a rectangle → properties panel shows fill color
-4. Change fill → CanvasKit re-renders → undo → original fill restored
-5. Save as .openpencil → reopen → identical
-
-This PoC validates the entire stack end-to-end in 4 weeks, before committing to 14 months of development.
+- **Multi-file / tabs** — open multiple documents in tabs within a single window
+- **More AI providers** — Anthropic API, Claude Code subscription, Gemini, local models via Ollama
+- **Code signing** — Apple & Azure certificates for properly signed desktop binaries
+- **.fig compatibility** — improving import/export fidelity across a larger set of real-world files
+- **Port all figma-use tools** — bring the full 118-tool set from [figma-use](https://github.com/dannote/figma-use) into the editor (currently 26/118) for complete AI agent design capabilities
+- **CI tools** — design linting, code export, visual regression in pipelines via the headless CLI
+- **Prototyping** — frame transitions, interaction triggers, preview mode
+- **SVG/PDF export** — vector export formats
 
 ---
 
 ## CLI & Headless Mode
 
-The editor should be fully controllable by AI agents and usable in CI without a GUI.
+The CLI (`@open-pencil/cli`) runs headless in Bun — loads the engine directly, no window, no Tauri, no WebGL. CanvasKit WASM CPU software rasterizer enables PNG export without a display server.
 
-### Architecture
+### Monorepo structure (implemented)
 
-Two modes of operation:
-
-**Attached** — CLI connects to a running OpenPencil instance via WebSocket. The app starts a WS server on a configurable port. `eval` runs JS in the app's context with full access to the editor store, scene graph, renderer, and CanvasKit. This is how interactive AI workflows work (create, modify, screenshot, iterate).
-
-**Headless** — CLI loads the engine directly in Bun, no window, no Tauri, no WebGL. For linting, analysis, .fig validation, rendering, CI pipelines. CanvasKit WASM has a CPU software rasterizer (`CanvasKit.MakeSurface(w, h)`) so even PNG export works without a display server.
-
-**Why not a Tauri CLI?** Tauri is a GUI framework — no headless mode. A Bun CLI that imports the engine directly starts instantly and works in CI (Docker, GitHub Actions) without X11/Wayland.
-
-### Monorepo structure
-
-Convert to a Bun workspace monorepo:
+Bun workspace with three packages:
 
 ```
-package.json              — workspace root: { "workspaces": ["packages/*"] }
+package.json              — workspace root
 packages/
-  core/                   — engine: scene-graph, layout, codec, types, renderer
-    src/
-      types.ts            — ← from src/types.ts
-      scene-graph.ts      — ← from src/engine/scene-graph.ts
-      layout.ts           — ← from src/engine/layout.ts
-      renderer.ts         — ← from src/engine/renderer.ts
-      fonts.ts            — ← from src/engine/fonts.ts
-      color.ts            — ← from src/engine/color.ts
-      vector.ts           — ← from src/engine/vector.ts
-      snap.ts             — ← from src/engine/snap.ts
-      undo.ts             — ← from src/engine/undo.ts
-      clipboard.ts        — ← from src/engine/clipboard.ts
-      fig-export.ts       — ← from src/engine/fig-export.ts
-      canvaskit.ts         — ← from src/engine/canvaskit.ts (+ headless init path)
-      constants.ts        — ← rendering/engine constants from src/constants.ts
-      kiwi/               — ← from src/kiwi/ (codec, fig-import, fig-file, schema, protocol)
-      index.ts            — public API barrel
-    package.json          — name: @open-pencil/core, no DOM deps
-  cli/                    — CLI: open-pencil command
-    src/
-      index.ts            — citty main (like figma-use)
-      headless.ts         — headless document context (load file → SceneGraph + CanvasKit CPU)
-      attached.ts         — WebSocket client for attached mode
-      commands/
-        eval.ts           — attached: run JS in editor context
-        lint.ts           — both: design linter (port from figma-use)
-        find.ts           — both: find nodes by name/type/query
-        export.ts         — both: PNG/SVG/PDF (headless uses CPU rasterizer)
-        node.ts           — both: get/tree node info
-        create.ts         — attached: create nodes
-        set.ts            — attached: set node properties
-        screenshot.ts     — both: render page to PNG
-        diff.ts           — headless: visual diff two files
-        analyze/
-          colors.ts       — both: color palette analysis
-          spacing.ts      — both: spacing consistency
-        mcp.ts            — both: start MCP server
-    package.json          — name: @open-pencil/cli, bin: { "open-pencil": "./src/index.ts" }
-  linter/                 — design lint rules (same pattern as figma-use/packages/linter)
-    src/
-      core/
-        types.ts          — LintMessage, LintConfig, LintResult, Rule, RuleContext
-        linter.ts         — Linter class: loads rules, walks SceneNode tree, collects messages
-        rule.ts           — defineRule() helper
-      rules/              — one file per rule
-        no-default-names.ts
-        pixel-perfect.ts
-        consistent-spacing.ts
-        consistent-radius.ts
-        no-hardcoded-colors.ts
-        no-empty-frames.ts
-        prefer-auto-layout.ts
-        touch-target-size.ts
-        color-contrast.ts
-      config/
-        presets.ts        — recommended, strict, accessibility
-      index.ts
-    package.json          — name: @open-pencil/linter, depends on @open-pencil/core
-  mcp/                    — MCP server for AI agents
-    src/
-      index.ts            — MCP protocol handler, tool definitions
-      tools.ts            — maps MCP tool calls → core/CLI operations
-    package.json          — name: @open-pencil/mcp
-  app/                    — ← current src/ (Vue + Tauri desktop app)
-    src/
-      components/         — Vue UI components (unchanged)
-      composables/        — Vue composables (unchanged)
-      stores/editor.ts    — imports from @open-pencil/core instead of ../engine/
-      constants.ts        — UI-only constants (colors kept, but types/engine constants → core)
-      demo.ts
-      ...
-    desktop/              — ← current desktop/ (Tauri Rust)
-    package.json          — name: @open-pencil/app, depends on @open-pencil/core
+  core/                   — @open-pencil/core: scene graph, renderer, layout, codec, tools
+  cli/                    — @open-pencil/cli: headless CLI (info, tree, find, export, analyze)
+  docs/                   — VitePress documentation site
+src/                      — Vue 3 + Tauri desktop editor (imports from @open-pencil/core)
+desktop/                  — Tauri v2 Rust backend
+tests/
+  e2e/                    — Playwright visual regression
+  engine/                 — bun:test unit tests
 ```
-
-### Implementation steps
-
-**Step 1: Bun workspace setup**
-- Add `"workspaces"` to root `package.json`
-- Create `packages/core/package.json`, `packages/cli/package.json`, etc.
-- All packages use `"type": "module"` and TypeScript
-
-**Step 2: Extract `@open-pencil/core`**
-
-The engine files are already clean — zero DOM imports. The work is:
-1. Move `src/engine/*.ts` → `packages/core/src/`
-2. Move `src/types.ts` → `packages/core/src/types.ts`
-3. Move `src/kiwi/` → `packages/core/src/kiwi/`
-4. Split `src/constants.ts`: engine constants → `packages/core/src/constants.ts`, UI constants stay in app
-5. Remove `@/` alias imports, use relative imports within core
-6. `canvaskit.ts` gets a headless init path: `initCanvasKit({ locateFile })` that works without `/canvaskit.wasm` served by Vite
-7. `fig-export.ts` IS_TAURI branch stays — but make the non-Tauri fflate path the default, Tauri path optional
-8. Create `index.ts` barrel exporting SceneGraph, SceneNode, SkiaRenderer, layout functions, codec, types
-
-After this step: `import { SceneGraph, SkiaRenderer } from '@open-pencil/core'` works from CLI, tests, and app.
-
-**Step 3: Update app to import from core**
-
-Replace all `@/engine/` and `@/types` imports in app code with `@open-pencil/core`:
-- `src/stores/editor.ts` — biggest consumer
-- `src/components/*.vue` — type imports
-- `src/composables/*.ts` — renderer, scene graph types
-- `src/demo.ts` — SceneGraph, SceneNode
-- Existing tests continue to work (`bun test`)
-
-**Step 4: WebSocket bridge in the app**
-
-Add a WS server to the running app (opt-in, e.g. `--ws-port 9333` or menu toggle):
-- Tauri side: use `tauri-plugin-localhost` or spawn from Rust, OR just do it in JS (the webview runs a full JS runtime)
-- Simpler: WS server in the Vue app itself using the browser's `WebSocket` API... no, the *app* needs to be the server
-- Best approach: tiny WS server in Rust (Tauri command) that forwards messages to the webview via Tauri events
-- OR: use the Vite dev server in dev mode, add WS endpoint. In production, Tauri Rust side runs a `tungstenite` WS server
-
-Protocol (JSON-RPC 2.0):
-```json
-{"jsonrpc":"2.0","id":1,"method":"eval","params":{"code":"editor.graph.getNode('0:1')"}}
-{"jsonrpc":"2.0","id":2,"method":"screenshot","params":{"width":1920,"height":1080}}
-{"jsonrpc":"2.0","id":3,"method":"createNode","params":{"type":"RECTANGLE","x":0,"y":0,"width":100,"height":100}}
-```
-
-The webview handler: receives JSON-RPC, calls editor store methods, returns results. `eval` uses `new Function()` with the store in scope.
-
-**Step 5: Headless document context**
-
-`packages/cli/src/headless.ts`:
-```ts
-import CanvasKitInit from 'canvaskit-wasm'
-import { SceneGraph, SkiaRenderer, readFigFile } from '@open-pencil/core'
-
-export async function loadDocument(filePath: string) {
-  const data = await Bun.file(filePath).arrayBuffer()
-  const graph = new SceneGraph()
-  await readFigFile(new File([data], filePath), graph)
-  return graph
-}
-
-export async function renderDocument(graph: SceneGraph, opts: { width: number, height: number }) {
-  const ck = await CanvasKitInit()
-  const surface = ck.MakeSurface(opts.width, opts.height)!
-  const renderer = new SkiaRenderer(ck, surface)
-  renderer.viewportWidth = opts.width
-  renderer.viewportHeight = opts.height
-  // ... set zoom to fit, render
-  renderer.render(graph, new Set())
-  return surface.makeImageSnapshot().encodeToBytes(ck.ImageFormat.PNG, 100)!
-}
-```
-
-**Step 6: CLI commands**
-
-Use `citty` (same as figma-use) for command framework:
-```
-open-pencil lint design.fig --preset recommended
-open-pencil export design.fig --format png --page "Home"
-open-pencil node tree design.fig
-open-pencil find design.fig --type RECTANGLE --name "Button*"
-open-pencil diff v1.fig v2.fig --output diff.png
-open-pencil screenshot --port 9333 --output screen.png
-open-pencil eval --port 9333 "editor.select(['0:5'])"
-open-pencil mcp --port 9333
-```
-
-Headless commands take a file path. Attached commands take `--port`.
-
-**Step 7: Linter**
-
-Port the figma-use linter architecture but adapt types from `FigmaNode` → `SceneNode`:
-- `Linter` class walks the `SceneGraph` tree
-- Rules get `SceneNode` + `RuleContext` (same pattern: `defineRule`, `context.report()`)
-- Start with rules that make sense for our node model: `no-default-names`, `pixel-perfect`, `consistent-spacing`, `no-empty-frames`, `prefer-auto-layout`, `touch-target-size`
-- Presets: recommended, strict
-- Output: text (with colors) and JSON
-
-**Step 8: MCP server**
-
-Wrap CLI operations as MCP tools. Two modes:
-- **Headless MCP**: load a file, expose read-only tools (lint, find, analyze, export)
-- **Attached MCP**: connect to running app, expose all tools (create, set, eval, screenshot)
-
-Tool definitions generated from command schemas (like figma-use's `mcp-tools.json`).
-
-### Dependencies
-
-| Package | New deps | Existing (from app) |
-|---------|----------|---------------------|
-| core | — | canvaskit-wasm, yoga-layout, fflate, fzstd, culori |
-| cli | citty, consola | — |
-| linter | — | @open-pencil/core |
-| mcp | @modelcontextprotocol/sdk | @open-pencil/core, @open-pencil/cli |
-| app | — | vue, reka-ui, tailwindcss, @tauri-apps/*, @open-pencil/core |
-
-### Types & shared code
-
-The linter, CLI, MCP, and app all need the same node/document types. These live in `@open-pencil/core` — it's the single source of truth:
-
-```
-@open-pencil/core exports:
-  types.ts          — GUID, Color, Vector, Matrix, Rect (primitives)
-  scene-graph.ts    — SceneNode, SceneGraph, NodeType, Fill, Stroke, Effect,
-                      LayoutMode, LayoutSizing, VectorNetwork, etc.
-  layout.ts         — computeLayout, computeAllLayouts
-  renderer.ts       — SkiaRenderer, RenderOverlays
-  color.ts          — parseColor, colorToHex, etc.
-  fonts.ts          — loadFont, listFamilies (browser + fs paths)
-  vector.ts         — vectorNetworkToPath, encode/decode blobs
-  snap.ts           — computeSelectionBounds, computeSnap, SnapGuide
-  undo.ts           — UndoManager
-  clipboard.ts      — parse/build clipboard HTML
-  fig-export.ts     — exportFigFile
-  kiwi/             — codec, fig-import, fig-file, schema, protocol
-```
-
-The linter doesn't define its own `FigmaNode` — it works directly with `SceneNode` from core. No adapter layer, no duplication.
-
-The JSON-RPC protocol types (for the WS bridge between CLI↔app) live in a shared file within `@open-pencil/core`:
-
-```ts
-// core/src/rpc.ts
-interface RpcRequest {
-  jsonrpc: '2.0'
-  id: number
-  method: string
-  params?: Record<string, unknown>
-}
-
-interface RpcResponse {
-  jsonrpc: '2.0'
-  id: number
-  result?: unknown
-  error?: { code: number; message: string }
-}
-
-type RpcMethod =
-  | 'eval'
-  | 'screenshot'
-  | 'getNode'
-  | 'getTree'
-  | 'createNode'
-  | 'updateNode'
-  | 'deleteNode'
-  | 'select'
-  | 'find'
-  | ... 
-```
-
-Both the app's WS server and the CLI's WS client import these types from `@open-pencil/core`.
-
-### Tests
-
-Tests live alongside the package they test. Each package has its own `tests/` dir:
-
-```
-packages/
-  core/
-    tests/
-      scene-graph.test.ts    — ← existing tests/engine/scene-graph.test.ts (76 tests)
-      layout.test.ts         — ← existing tests/engine/layout.test.ts
-      fig-import.test.ts     — ← existing tests/engine/fig-import.test.ts
-      renderer.test.ts       — NEW: headless render → PNG, compare snapshots
-      fig-roundtrip.test.ts  — NEW: import .fig → export .fig → reimport, verify lossless
-  linter/
-    tests/
-      linter.test.ts         — rule execution, preset loading, report format
-      rules/                 — one test file per rule (same pattern as figma-use)
-  cli/
-    tests/
-      headless.test.ts       — load .fig file headless, verify scene graph
-      commands.test.ts       — CLI command integration tests (invoke via subprocess)
-  app/
-    tests/
-      e2e/                   — ← existing Playwright tests (create-shapes, layers-panel)
-      helpers/               — ← existing CanvasHelper
-```
-
-All unit tests run with `bun test`. No Playwright, no browser needed. The test commands:
-
-```
-bun test                        — all unit tests across all packages
-bun test packages/core          — core only
-bun test packages/linter        — linter only
-bun test packages/cli           — CLI only
-bun test --project openpencil   — Playwright e2e (app must be running)
-```
-
-New test categories to add:
-
-| Category | Package | What it validates |
-|----------|---------|-------------------|
-| Headless render | core | `MakeSurface` → render scene → PNG snapshot matches expected |
-| Fig roundtrip | core | .fig import → export → reimport produces identical scene graph |
-| Linter rules | linter | Each rule produces expected messages on crafted test nodes |
-| Linter presets | linter | Preset loads correct rule set, severity overrides work |
-| CLI integration | cli | `open-pencil lint test.fig` exits 0/1, outputs expected format |
-| CLI headless render | cli | `open-pencil export test.fig --format png` produces valid PNG |
-| Visual diff | cli | `open-pencil diff a.fig b.fig` detects pixel differences |
-
-Snapshot tests for rendering: store expected PNGs in `packages/core/tests/snapshots/`. Use pixel-level comparison (allow small tolerance for anti-aliasing across platforms). CanvasKit CPU rasterizer is deterministic on the same platform, so CI snapshots only need per-platform baselines.
 
 ### Kiwi decoder performance — investigated
 
@@ -1852,13 +1125,13 @@ A faster Rust/WASM decoder would require code generation (like protobuf's `prost
 
 **The real bottleneck was O(n²) `getChildren()` in `importNodeChanges`** (scanning all parent entries for each node). Fixed by building a `childrenMap` index upfront → **69x speedup** (37s → 535ms for material3).
 
-### Risks — validated
+### Risks — all validated
 
-All three risks have been tested and eliminated:
-
-- **CanvasKit WASM in Bun** ✅ — `MakeSurface(100, 100)` creates a CPU surface, renders shapes, produces valid PNG. Zero issues.
-- **Font loading in headless** ✅ — `readFileSync` loads system fonts (e.g. `/System/Library/Fonts/SFNS.ttf`), `FontMgr.FromData()` + `ParagraphBuilder` renders anti-aliased text. For CI (Linux), bundle a default font (Inter or similar).
-- **Core extraction complexity** ✅ Low — engine files have zero DOM imports, no circular deps. Only 2 engine files reference `@/constants` (renderer + fig-export). ~30 import statements in app code need `@/engine/` → `@open-pencil/core`. Mechanical move.
+- **CanvasKit WASM in Bun** ✅ — CPU surface works headless for CLI export
+- **Font loading in headless** ✅ — system fonts loaded via `readFileSync` + `FontMgr.FromData()`
+- **Core extraction** ✅ — engine is `@open-pencil/core` with zero DOM deps, used by both app and CLI
+- **Kiwi codec performance** ✅ — JS decoder is 3.5–5.4x faster than Rust kiwi-schema crate (JIT-compiled `new Function()` vs dynamic `Value` with HashMap)
+- **P2P collaboration** ✅ — Trystero + Yjs works without a relay server
 
 ---
 
@@ -1992,4 +1265,4 @@ Full Figma-compatible shortcut map. Implemented shortcuts marked with ✅.
 
 ---
 
-*Created: 2026-02-26*
+*Created: 2026-02-26 · Updated: 2026-03-02*

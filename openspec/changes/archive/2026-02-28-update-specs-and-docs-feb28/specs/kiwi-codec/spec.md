@@ -5,7 +5,7 @@ The Kiwi codec SHALL support encoding NodeChange[] back to Kiwi binary format fo
 
 #### Scenario: Encode scene graph to Kiwi binary
 - **WHEN** the editor exports a document
-- **THEN** all nodes are encoded as NodeChange messages using the Kiwi schema and the binary output is a valid fig-kiwi payload
+- **THEN** all nodes are encoded as NodeChange messages using the Kiwi schema and the binary output is a valid Kiwi payload
 
 ### Requirement: .fig ZIP built in Rust
 On the desktop app, the .fig ZIP archive SHALL be assembled in Rust instead of JavaScript (fflate) for better performance and correct Zstd framing (content size in header).

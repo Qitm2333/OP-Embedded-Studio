@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 import Icons from 'unplugin-icons/vite'
 import IconsResolver from 'unplugin-icons/resolver'
 import Components from 'unplugin-vue-components/vite'
-import { copyFileSync, existsSync } from 'fs'
+import { copyFileSync, existsSync, mkdirSync } from 'fs'
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST
@@ -14,7 +14,8 @@ const host = process.env.TAURI_DEV_HOST
 export default defineConfig(async () => ({
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': resolve(__dirname, 'src'),
+      shiki: resolve(__dirname, 'src/shims/shiki.ts')
     }
   },
   plugins: [
@@ -25,6 +26,21 @@ export default defineConfig(async () => ({
         const dest = 'public/canvaskit.wasm'
         if (existsSync(src) && !existsSync(dest)) {
           copyFileSync(src, dest)
+        }
+
+        const webgpuSrc = 'packages/core/vendor/canvaskit-webgpu/canvaskit.wasm'
+        const webgpuDir = 'public/canvaskit-webgpu'
+        const webgpuDest = `${webgpuDir}/canvaskit.wasm`
+        if (existsSync(webgpuSrc) && !existsSync(webgpuDest)) {
+          mkdirSync(webgpuDir, { recursive: true })
+          copyFileSync(webgpuSrc, webgpuDest)
+        }
+
+        const webgpuJsSrc = 'packages/core/vendor/canvaskit-webgpu/canvaskit.js'
+        const webgpuJsDest = `${webgpuDir}/canvaskit.js`
+        if (existsSync(webgpuJsSrc) && !existsSync(webgpuJsDest)) {
+          mkdirSync(webgpuDir, { recursive: true })
+          copyFileSync(webgpuJsSrc, webgpuJsDest)
         }
       }
     },
@@ -46,7 +62,17 @@ export default defineConfig(async () => ({
         }
       : undefined,
     watch: {
-      ignored: ['**/desktop/**']
+      ignored: [
+        '**/desktop/**',
+        '**/packages/cli/**',
+        '**/packages/mcp/**',
+        '**/packages/docs/**',
+        '**/tests/**',
+        '**/openspec/**',
+        '**/.worktrees/**',
+        '**/.github/**',
+        '**/.pi/**'
+      ]
     }
   }
 }))

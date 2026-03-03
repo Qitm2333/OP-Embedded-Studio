@@ -1,18 +1,19 @@
 import { useEventListener } from '@vueuse/core'
 
 import { useAIChat } from '@/composables/use-chat'
-import { TOOL_SHORTCUTS } from '@/stores/editor'
+import { TOOL_SHORTCUTS, useEditorStore } from '@/stores/editor'
+import { closeTab, createTab, activeTab as activeTabRef } from '@/stores/tabs'
 
 import { openFileDialog } from './use-menu'
-
-import type { EditorStore } from '@/stores/editor'
 
 function isEditing(e: Event) {
   return e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement
 }
 
-export function useKeyboard(store: EditorStore) {
+export function useKeyboard() {
   const { activeTab } = useAIChat()
+  const store = useEditorStore()
+
   useEventListener(window, 'copy', (e: ClipboardEvent) => {
     if (isEditing(e)) return
     e.preventDefault()
@@ -81,9 +82,24 @@ export function useKeyboard(store: EditorStore) {
     }
 
     if (e.metaKey || e.ctrlKey) {
+      if (e.code === 'Backslash') {
+        e.preventDefault()
+        store.state.showUI = !store.state.showUI
+        return
+      }
       if (e.code === 'KeyJ') {
         e.preventDefault()
         activeTab.value = activeTab.value === 'ai' ? 'design' : 'ai'
+        return
+      }
+      if (e.key === 'w') {
+        e.preventDefault()
+        if (activeTabRef.value) closeTab(activeTabRef.value.id)
+        return
+      }
+      if (e.key === 'n' || e.key === 't') {
+        e.preventDefault()
+        createTab()
         return
       }
       if (e.key === 'z' && !e.shiftKey) {
@@ -109,7 +125,7 @@ export function useKeyboard(store: EditorStore) {
         store.saveFigFile()
       } else if (e.key === 'o') {
         e.preventDefault()
-        openFileDialog(store)
+        openFileDialog()
       } else if (e.key === 'g' && !e.shiftKey) {
         e.preventDefault()
         store.groupSelected()

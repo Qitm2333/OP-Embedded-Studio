@@ -1,15 +1,10 @@
-export type {
-  GUID,
-  Color,
-  Vector,
-  Matrix,
-  Rect
-} from './types'
+export type { GUID, Color, Vector, Matrix, Rect } from './types'
 
 export * from './constants'
 
 export {
   SceneGraph,
+  generateId,
   type SceneNode,
   type NodeType,
   type Fill,
@@ -54,18 +49,24 @@ export { ALL_TOOLS, defineTool, toolsToAI } from './tools'
 export type { ToolDef, ParamDef, ParamType } from './tools'
 export { SkiaRenderer, type RenderOverlays } from './renderer'
 export { computeLayout, computeAllLayouts } from './layout'
-export { getCanvasKit, type CanvasKitOptions } from './canvaskit'
+export { getCanvasKit, getGpuBackend, type CanvasKitOptions, type GpuBackend } from './canvaskit'
 export {
   loadFont,
   listFamilies,
   initFontService,
   getFontProvider,
+  isFontLoaded,
   ensureNodeFont,
   styleToWeight,
   weightToStyle
 } from './fonts'
 export { parseColor, colorToHex, colorToHexRaw, colorToRgba255 } from './color'
-export { vectorNetworkToPath, decodeVectorNetworkBlob, encodeVectorNetworkBlob, computeVectorBounds } from './vector'
+export {
+  vectorNetworkToPath,
+  decodeVectorNetworkBlob,
+  encodeVectorNetworkBlob,
+  computeVectorBounds
+} from './vector'
 export { computeSelectionBounds, computeSnap, type SnapGuide } from './snap'
 export { UndoManager } from './undo'
 export { TextEditor, type TextCaret, type TextEditorState } from './text-editor'
@@ -123,10 +124,12 @@ export {
 export {
   parseFigmaClipboard,
   importClipboardNodes,
+  figmaNodesBounds,
   parseOpenPencilClipboard,
   buildFigmaClipboardHTML,
   buildOpenPencilClipboardHTML,
-  prefetchFigmaSchema
+  prefetchFigmaSchema,
+  type TextPictureBuilder
 } from './clipboard'
 
 export { readFigFile, parseFigFile } from './kiwi/fig-file'

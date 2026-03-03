@@ -31,7 +31,7 @@ openspec/
 | text-editing | Text tool, Paragraph API, font loading |
 | pen-tool | Vector network model, bezier curves |
 | auto-layout | Yoga WASM flexbox, Shift+A toggle |
-| figma-clipboard | Bidirectional fig-kiwi clipboard |
+| figma-clipboard | Bidirectional Kiwi binary clipboard |
 | fig-import | .fig file import pipeline |
 | kiwi-codec | Kiwi binary codec, sparse field IDs |
 | editor-ui | Vue 3 panels, toolbar, color picker |

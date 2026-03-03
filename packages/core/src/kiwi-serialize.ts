@@ -2,11 +2,11 @@ export const FIG_KIWI_VERSION = 106
 
 import { deflateSync, inflateSync } from 'fflate'
 
-import { encodeVectorNetworkBlob } from './vector'
 import { weightToStyle } from './fonts'
+import { encodeVectorNetworkBlob } from './vector'
 
-import type { SceneGraph, SceneNode, CharacterStyleOverride } from './scene-graph'
 import type { NodeChange, Paint } from './kiwi/codec'
+import type { SceneGraph, SceneNode, CharacterStyleOverride } from './scene-graph'
 
 type KiwiNodeChange = NodeChange & Record<string, unknown>
 
@@ -109,8 +109,6 @@ export function mapToFigmaType(type: SceneNode['type']): string {
 export function fractionalPosition(index: number): string {
   return String.fromCharCode('!'.charCodeAt(0) + index)
 }
-
-
 
 function exportTextData(node: SceneNode): NodeChange['textData'] {
   const runs = node.styleRuns

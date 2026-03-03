@@ -1,16 +1,50 @@
-import { useResizeObserver } from '@vueuse/core'
-import { onMounted, onUnmounted, watch, type Ref } from 'vue'
+import { useRafFn, useResizeObserver } from '@vueuse/core'
+import { onMounted, onUnmounted, type Ref } from 'vue'
 
-import { getCanvasKit } from '@/engine/canvaskit'
+import { getCanvasKit, getGpuBackend } from '@/engine/canvaskit'
 import { SkiaRenderer } from '@/engine/renderer'
 
 import type { EditorStore } from '@/stores/editor'
 import type { CanvasKit } from 'canvaskit-wasm'
 
+interface WebGPUContext {
+  device: GPUDevice
+  deviceContext: unknown
+}
+
+interface CanvasKitWebGPU {
+  MakeGPUDeviceContext(device: GPUDevice): unknown
+  MakeGPUCanvasContext(ctx: unknown, canvas: HTMLCanvasElement, opts?: unknown): unknown
+  MakeGPUCanvasSurface(
+    ctx: unknown,
+    colorSpace?: unknown,
+    width?: number,
+    height?: number
+  ): ReturnType<CanvasKit['MakeSurface']>
+}
+
+function asWebGPU(ck: CanvasKit): CanvasKitWebGPU {
+  return ck as unknown as CanvasKitWebGPU
+}
+
+async function initWebGPU(ck: CanvasKit): Promise<WebGPUContext | null> {
+  if (!('gpu' in navigator)) return null
+  const adapter = await navigator.gpu.requestAdapter()
+  if (!adapter) return null
+  const device = await adapter.requestDevice()
+  const deviceContext = asWebGPU(ck).MakeGPUDeviceContext?.(device)
+  if (!deviceContext) return null
+  return { device, deviceContext }
+}
+
 export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: EditorStore) {
   let renderer: SkiaRenderer | null = null
   let ck: CanvasKit | null = null
+  let gpuCtx: WebGPUContext | null = null
   let destroyed = false
+  let dirty = true
+  let lastRenderVersion = -1
+  let lastSelectedIds: Set<string> | null = null
 
   async function init() {
     const canvas = canvasRef.value
@@ -18,6 +52,14 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
 
     ck = await getCanvasKit()
     if (destroyed) return
+
+    if (getGpuBackend() === 'webgpu') {
+      gpuCtx = await initWebGPU(ck)
+      if (!gpuCtx) {
+        console.warn('WebGPU init failed, reload without ?gpu=webgpu to use WebGL')
+        return
+      }
+    }
 
     await new Promise((r) => requestAnimationFrame(r))
     createSurface(canvas)
@@ -41,10 +83,26 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
     canvas.width = w * dpr
     canvas.height = h * dpr
 
-    const surface = ck.MakeWebGLCanvasSurface(canvas, undefined, { preserveDrawingBuffer: 1 })
-    if (!surface) {
-      console.error('Failed to create WebGL surface')
-      return
+    let surface
+    if (getGpuBackend() === 'webgpu' && gpuCtx) {
+      const gpu = asWebGPU(ck)
+      const canvasCtx = gpu.MakeGPUCanvasContext(gpuCtx.deviceContext, canvas)
+      surface = gpu.MakeGPUCanvasSurface(canvasCtx, ck.ColorSpace.SRGB, canvas.width, canvas.height)
+      if (!surface) {
+        console.error('Failed to create WebGPU surface')
+        return
+      }
+    } else {
+      const isTest = new URLSearchParams(window.location.search).has('test')
+      surface = ck.MakeWebGLCanvasSurface(
+        canvas,
+        undefined,
+        isTest ? { preserveDrawingBuffer: 1 } : undefined
+      )
+      if (!surface) {
+        console.error('Failed to create WebGL surface')
+        return
+      }
     }
 
     renderer = new SkiaRenderer(ck, surface)
@@ -54,7 +112,8 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
     canvas.dataset.ready = '1'
   }
 
-  let rafId = 0
+  const params = new URLSearchParams(window.location.search)
+  const showRulers = !params.has('no-rulers')
 
   function renderNow() {
     if (!renderer) return
@@ -64,35 +123,44 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
     renderer.zoom = store.state.zoom
     renderer.viewportWidth = canvasRef.value?.clientWidth ?? 0
     renderer.viewportHeight = canvasRef.value?.clientHeight ?? 0
-    renderer.showRulers = !new URLSearchParams(window.location.search).has('no-rulers')
+    renderer.showRulers = showRulers
     renderer.pageColor = store.state.pageColor
     renderer.pageId = store.state.currentPageId
-    renderer.render(store.graph, store.state.selectedIds, {
-      hoveredNodeId: store.state.hoveredNodeId,
-      editingTextId: store.state.editingTextId,
-      textEditor: store.textEditor,
-      marquee: store.state.marquee,
-      snapGuides: store.state.snapGuides,
-      rotationPreview: store.state.rotationPreview,
-      dropTargetId: store.state.dropTargetId,
-      layoutInsertIndicator: store.state.layoutInsertIndicator,
-      penState: store.state.penState
-        ? {
-            ...store.state.penState,
-            cursorX: store.state.penCursorX ?? undefined,
-            cursorY: store.state.penCursorY ?? undefined
-          }
-        : null
-    })
+    renderer.render(
+      store.graph,
+      store.state.selectedIds,
+      {
+        hoveredNodeId: store.state.hoveredNodeId,
+        editingTextId: store.state.editingTextId,
+        textEditor: store.textEditor,
+        marquee: store.state.marquee,
+        snapGuides: store.state.snapGuides,
+        rotationPreview: store.state.rotationPreview,
+        dropTargetId: store.state.dropTargetId,
+        layoutInsertIndicator: store.state.layoutInsertIndicator,
+        penState: store.state.penState
+          ? {
+              ...store.state.penState,
+              cursorX: store.state.penCursorX ?? undefined,
+              cursorY: store.state.penCursorY ?? undefined
+            }
+          : null,
+        remoteCursors: store.state.remoteCursors.length > 0 ? store.state.remoteCursors : undefined
+      },
+      store.state.sceneVersion
+    )
+    lastRenderVersion = store.state.renderVersion
+    lastSelectedIds = store.state.selectedIds
   }
 
-  function render() {
-    if (rafId) return
-    rafId = requestAnimationFrame(() => {
-      rafId = 0
+  const { pause } = useRafFn(() => {
+    const versionChanged = store.state.renderVersion !== lastRenderVersion
+    const selectionChanged = store.state.selectedIds !== lastSelectedIds
+    if (dirty || versionChanged || selectionChanged) {
+      dirty = false
       renderNow()
-    })
-  }
+    }
+  })
 
   onMounted(() => {
     init()
@@ -100,7 +168,7 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
 
   onUnmounted(() => {
     destroyed = true
-    cancelAnimationFrame(rafId)
+    pause()
     cancelAnimationFrame(resizeRaf)
     renderer?.destroy()
   })
@@ -115,16 +183,6 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
     })
   })
 
-  watch(
-    () => store.state.renderVersion,
-    () => render()
-  )
-
-  watch(
-    () => store.state.selectedIds,
-    () => render()
-  )
-
   function hitTestSectionTitle(canvasX: number, canvasY: number) {
     return renderer?.hitTestSectionTitle(store.graph, canvasX, canvasY) ?? null
   }
@@ -133,5 +191,11 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
     return renderer?.hitTestComponentLabel(store.graph, canvasX, canvasY) ?? null
   }
 
-  return { render, hitTestSectionTitle, hitTestComponentLabel }
+  return {
+    render: () => {
+      dirty = true
+    },
+    hitTestSectionTitle,
+    hitTestComponentLabel
+  }
 }

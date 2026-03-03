@@ -60,7 +60,7 @@ function onSelect(val: string) {
     <PopoverContent
       :side-offset="2"
       align="start"
-      class="z-50 flex w-[var(--reka-popper-anchor-width)] flex-col overflow-hidden rounded-md border border-border bg-panel shadow-lg"
+      class="z-50 flex min-w-56 w-[var(--reka-popper-anchor-width)] flex-col overflow-hidden rounded-md border border-border bg-panel shadow-lg"
       @open-auto-focus.prevent
     >
       <ListboxRoot :model-value="modelValue" @update:model-value="onSelect">
@@ -94,7 +94,16 @@ function onSelect(val: string) {
               <span class="truncate">{{ option }}</span>
             </ListboxItem>
           </ListboxVirtualizer>
-          <div v-if="filtered.length === 0" class="px-2 py-3 text-center text-xs text-muted">
+          <div
+            v-if="families.length === 0"
+            class="flex h-full items-center justify-center px-3 text-center text-xs text-muted"
+          >
+            <div>
+              <p>No local fonts available.</p>
+              <p class="mt-1">Use the desktop app or Chrome/Edge to access system fonts.</p>
+            </div>
+          </div>
+          <div v-else-if="filtered.length === 0" class="px-2 py-3 text-center text-xs text-muted">
             No fonts found
           </div>
         </ListboxContent>

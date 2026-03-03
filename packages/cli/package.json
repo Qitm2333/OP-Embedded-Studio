@@ -1,9 +1,10 @@
 {
   "name": "@open-pencil/cli",
-  "version": "0.1.0",
+  "version": "0.4.2",
+  "license": "MIT",
   "type": "module",
   "bin": {
-    "open-pencil": "./src/index.ts"
+    "openpencil": "./src/index.ts"
   },
   "files": ["src"],
   "repository": {

@@ -1,10 +1,10 @@
 import { onUnmounted } from 'vue'
 
 import { IS_TAURI } from '@/constants'
+import { useEditorStore } from '@/stores/editor'
+import { openFileInNewTab, createTab, closeTab, activeTab } from '@/stores/tabs'
 
-import type { EditorStore } from '@/stores/editor'
-
-export async function openFileDialog(store: EditorStore) {
+export async function openFileDialog() {
   if (IS_TAURI) {
     const { open } = await import('@tauri-apps/plugin-dialog')
     const { readFile } = await import('@tauri-apps/plugin-fs')
@@ -15,7 +15,7 @@ export async function openFileDialog(store: EditorStore) {
     if (!path) return
     const bytes = await readFile(path as string)
     const file = new File([bytes], (path as string).split('/').pop() ?? 'file.fig')
-    await store.openFigFile(file, undefined, path as string)
+    await openFileInNewTab(file, undefined, path as string)
     return
   }
 
@@ -30,7 +30,7 @@ export async function openFileDialog(store: EditorStore) {
         ]
       })
       const file = await handle.getFile()
-      await store.openFigFile(file, handle)
+      await openFileInNewTab(file, handle)
       return
     } catch (e) {
       if ((e as Error).name === 'AbortError') return
@@ -42,29 +42,35 @@ export async function openFileDialog(store: EditorStore) {
   input.accept = '.fig'
   input.addEventListener('change', () => {
     const file = input.files?.[0]
-    if (file) store.openFigFile(file)
+    if (file) openFileInNewTab(file)
   })
   input.click()
 }
 
-const MENU_ACTIONS: Record<string, (store: EditorStore) => void> = {
-  open: (store) => openFileDialog(store),
-  save: (store) => store.saveFigFile(),
-  'save-as': (store) => store.saveFigFileAs(),
-  duplicate: (store) => store.duplicateSelected(),
-  delete: (store) => store.deleteSelected(),
-  group: (store) => store.groupSelected(),
-  ungroup: (store) => store.ungroupSelected(),
-  'create-component': (store) => store.createComponentFromSelection(),
-  'create-component-set': (store) => store.createComponentSetFromComponents(),
-  'detach-instance': (store) => store.detachInstance(),
-  'zoom-fit': (store) => store.zoomToFit(),
-  export: (store) => {
+const store = useEditorStore()
+
+const MENU_ACTIONS: Record<string, () => void> = {
+  new: () => createTab(),
+  open: () => openFileDialog(),
+  close: () => {
+    if (activeTab.value) closeTab(activeTab.value.id)
+  },
+  save: () => store.saveFigFile(),
+  'save-as': () => store.saveFigFileAs(),
+  duplicate: () => store.duplicateSelected(),
+  delete: () => store.deleteSelected(),
+  group: () => store.groupSelected(),
+  ungroup: () => store.ungroupSelected(),
+  'create-component': () => store.createComponentFromSelection(),
+  'create-component-set': () => store.createComponentSetFromComponents(),
+  'detach-instance': () => store.detachInstance(),
+  'zoom-fit': () => store.zoomToFit(),
+  export: () => {
     if (store.state.selectedIds.size > 0) store.exportSelection(1, 'PNG')
   }
 }
 
-export function useMenu(store: EditorStore) {
+export function useMenu() {
   if (!IS_TAURI) return
 
   let unlisten: (() => void) | undefined
@@ -72,7 +78,7 @@ export function useMenu(store: EditorStore) {
   import('@tauri-apps/api/event').then(({ listen }) => {
     listen<string>('menu-event', (event) => {
       const action = MENU_ACTIONS[event.payload]
-      if (action) action(store)
+      if (action) action()
     }).then((fn) => {
       unlisten = fn
     })
