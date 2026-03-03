@@ -1946,7 +1946,7 @@ export class SkiaRenderer {
 
     if (this.fontsLoaded && this.fontProvider) {
       if (this.isNodeFontLoaded(node)) {
-        const paragraph = this.buildParagraph(node, this.fillPaint.getColor())
+        const paragraph = this.buildParagraph(node, this.fillPaint.getColor(), { halfLeading: true })
         canvas.drawParagraph(paragraph, 0, 0)
         paragraph.delete()
       } else if (node.textPicture) {
@@ -1993,7 +1993,7 @@ export class SkiaRenderer {
     const bounds = ck.LTRBRect(0, 0, node.width || 1e6, node.height || 1e6)
     const recCanvas = recorder.beginRecording(bounds)
 
-    const paragraph = this.buildParagraph(node)
+    const paragraph = this.buildParagraph(node, undefined, { halfLeading: true })
     recCanvas.drawParagraph(paragraph, 0, 0)
     paragraph.delete()
 
@@ -2005,7 +2005,11 @@ export class SkiaRenderer {
     return bytes ?? null
   }
 
-  buildParagraph(node: SceneNode, color?: Float32Array): import('canvaskit-wasm').Paragraph {
+  buildParagraph(
+    node: SceneNode,
+    color?: Float32Array,
+    { halfLeading = false }: { halfLeading?: boolean } = {}
+  ): import('canvaskit-wasm').Paragraph {
     const ck = this.ck
     const baseColor = color ?? ck.BLACK
     const baseFontSize = node.fontSize || DEFAULT_FONT_SIZE
@@ -2022,7 +2026,8 @@ export class SkiaRenderer {
         },
         letterSpacing: node.letterSpacing || 0,
         decoration: this.textDecorationValue(node.textDecoration),
-        heightMultiplier: node.lineHeight ? node.lineHeight / baseFontSize : undefined
+        heightMultiplier: node.lineHeight ? node.lineHeight / baseFontSize : undefined,
+        halfLeading
       }
     })
 
@@ -2053,7 +2058,8 @@ export class SkiaRenderer {
             heightMultiplier: (s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)
               ? (s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)! /
                 (s.fontSize ?? baseFontSize)
-              : undefined
+              : undefined,
+            halfLeading
           })
         )
         builder.addText(text.slice(run.start, run.start + run.length))
