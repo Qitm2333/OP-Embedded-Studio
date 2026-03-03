@@ -239,7 +239,7 @@ export function sceneNodeToKiwi(
 
   if (node.effects.length > 0) {
     nc.effects = node.effects.map((e) => ({
-      type: e.type,
+      type: e.type === 'LAYER_BLUR' ? 'FOREGROUND_BLUR' : e.type,
       color: e.color,
       offset: e.offset,
       radius: e.radius,
