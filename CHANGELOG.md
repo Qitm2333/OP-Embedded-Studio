@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0 — 2026-03-04
+
 ### Features
 
 - Multi-selection properties panel — edit position, size, appearance, fill, stroke, and effects across multiple selected nodes
