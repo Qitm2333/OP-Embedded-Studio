@@ -1712,7 +1712,10 @@ export function createEditorStore() {
     families.delete(DEFAULT_FONT_FAMILY)
     if (families.size === 0) return
     const promises = [...families].map((f) => loadFont(f))
-    Promise.all(promises).then(() => requestRender())
+    Promise.all(promises).then(() => {
+      computeAllLayouts(graph)
+      requestRender()
+    })
   }
 
   function pasteFromHTML(html: string) {
