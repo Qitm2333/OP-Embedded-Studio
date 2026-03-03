@@ -57,6 +57,7 @@ export {
   initFontService,
   getFontProvider,
   isFontLoaded,
+  markFontLoaded,
   ensureNodeFont,
   styleToWeight,
   weightToStyle
