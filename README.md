@@ -8,10 +8,12 @@ Open-source, AI-native design editor. Figma-compatible, AI-first, fully local.
 
 > **What's next**
 >
+> - 100% .fig compatibility — full rendering parity with Figma
+> - Shader effects (SkSL), skewing, native OkHCL color support
+> - Component libraries — publish, share, and consume design systems
 > - Live reload when .fig file changes on disk (MCP server → desktop app workflow)
 > - More AI providers (Anthropic API, Claude Code subscription, Gemini, local models via Ollama)
 > - Code signing (Apple & Azure certificates for properly signed binaries)
-> - Improving .fig compatibility across a larger set of files
 > - CI tools — design linting, code export, visual regression in pipelines
 
 ![OpenPencil](packages/docs/public/screenshot.png)
