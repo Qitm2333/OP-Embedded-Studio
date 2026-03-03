@@ -57,8 +57,8 @@ import {
   TEXT_CARET_COLOR,
   TEXT_CARET_WIDTH
 } from './constants'
-import { vectorNetworkToPath } from './vector'
 import { isFontLoaded } from './fonts'
+import { vectorNetworkToPath } from './vector'
 
 import type { SceneNode, SceneGraph, Fill, Stroke } from './scene-graph'
 import type { SnapGuide } from './snap'
@@ -484,6 +484,8 @@ export class SkiaRenderer {
     overlays: RenderOverlays = {},
     sceneVersion = -1
   ): void {
+    graph.clearAbsPosCache()
+
     const canvas = this.surface.getCanvas()
     canvas.clear(this.ck.Color4f(this.pageColor.r, this.pageColor.g, this.pageColor.b, 1))
 
