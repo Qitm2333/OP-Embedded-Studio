@@ -10,6 +10,10 @@
 - Flip horizontal/vertical using scale transform instead of rotation
 - Single-node alignment aligns to parent frame bounds
 
+### Docs
+
+- Add macOS Gatekeeper workaround (`xattr -cr`) to README and docs for unsigned app warning
+
 ### Fixes
 
 - Fix flip buttons using rotation math instead of actual mirroring

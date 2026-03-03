@@ -16,6 +16,16 @@ Pre-built binaries for macOS, Windows, and Linux are available on the [releases 
 | Windows (ARM) | `.msi` / `.exe` |
 | Linux (x64) | `.AppImage` / `.deb` |
 
+::: warning macOS: "OpenPencil is damaged and can't be opened"
+The app is not yet code-signed with an Apple Developer certificate, so macOS Gatekeeper blocks it. After mounting the `.dmg`, run in Terminal:
+
+```sh
+xattr -cr /Applications/OpenPencil.app
+```
+
+Then open the app normally. This only needs to be done once.
+:::
+
 ## Building from Source
 
 ### Prerequisites
