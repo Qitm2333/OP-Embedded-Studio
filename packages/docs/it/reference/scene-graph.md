@@ -1,8 +1,8 @@
 # Grafo della scena
 
-## In-Memory Representation
+## Rappresentazione in memoria
 
-Nodes live in a flat `Map<string, Node>` keyed by GUID string. The tree structure is maintained via `parentIndex` references. This gives O(1) lookup by ID and efficient traversal.
+I nodi vivono in una mappa piatta `Map<string, Node>` keyed by GUID string. La struttura ad albero è mantenuta via `parentIndex` references. This gives Lookup O(1) by ID and efficient traversal.
 
 ```typescript
 interface SceneGraph {

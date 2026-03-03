@@ -1,94 +1,88 @@
 # Mitwirken
 
-## Project Structure
+## Projektstruktur
 
 ```
 packages/
-  core/              @open-pencil/core — engine (zero DOM deps)
-    src/             Scene graph, renderer, layout, codec, kiwi, types
-  cli/               @open-pencil/cli — headless CLI for .fig operations
+  core/              @open-pencil/core — Engine (keine DOM-Abhängigkeiten)
+    src/             Szenengraph, Renderer, Layout, Codec, Kiwi, Typen
+  cli/               @open-pencil/cli — Headless-CLI für .fig-Operationen
     src/commands/    info, tree, find, export
 src/
-  components/        Vue SFCs (canvas, panels, toolbar, color picker)
-    properties/      Property panel sections (Appearance, Fill, Stroke, etc.)
-  composables/       Canvas input, keyboard shortcuts, rendering hooks
-  stores/            Editor state (Vue reactivity)
-  engine/            Re-export shims from @open-pencil/core
-  kiwi/              Re-export shims from @open-pencil/core
-  types.ts           Shared types (re-exported from core)
-  constants.ts       UI colors, defaults, thresholds
-desktop/             Tauri v2 (Rust + config)
+  components/        Vue SFCs (Canvas, Panels, Werkzeugleiste, Farbauswahl)
+    properties/      Eigenschaftspanel-Abschnitte
+  composables/       Canvas-Input, Tastenkürzel, Rendering-Hooks
+  stores/            Editor-Zustand (Vue-Reaktivität)
+  engine/            Re-Export-Shims von @open-pencil/core
+desktop/             Tauri v2 (Rust + Konfiguration)
 tests/
-  e2e/               Playwright visual regression
-  engine/            Unit tests (bun:test)
-docs/                VitePress documentation site
+  e2e/               Playwright visuelle Regression
+  engine/            Unit-Tests (bun:test)
+packages/docs/       VitePress-Dokumentationsseite
 openspec/
-  specs/             Capability specifications (source of truth)
-  changes/           Active and archived changes
+  specs/             Fähigkeitsspezifikationen (Wahrheitsquelle)
+  changes/           Aktive und archivierte Änderungen
 ```
 
-## Development Setup
+## Entwicklungsumgebung
 
 ```sh
 bun install
-bun run dev          # Editor at localhost:1420
-bun run docs:dev     # Docs at localhost:5173
+bun run dev          # Editor auf localhost:1420
+bun run docs:dev     # Dokumentation auf localhost:5173
 ```
 
-## Code Style
+## Code-Stil
 
-### Tooling
+### Werkzeuge
 
-| Tool | Command | Purpose |
-|------|---------|---------|
-| oxlint | `bun run lint` | Linting (Rust-based, fast) |
-| oxfmt | `bun run format` | Code formatting |
-| tsgo | `bun run typecheck` | Type checking (Go-based TypeScript checker) |
+| Werkzeug | Befehl | Zweck |
+|----------|--------|-------|
+| oxlint | `bun run lint` | Linting (Rust-basiert, schnell) |
+| oxfmt | `bun run format` | Code-Formatierung |
+| tsgo | `bun run typecheck` | Typprüfung (Go-basierter TypeScript-Prüfer) |
 
-Run all checks:
+Alle Prüfungen ausführen:
 
 ```sh
 bun run check
 ```
 
-### Conventions
+### Konventionen
 
-- **File names** — kebab-case (`scene-graph.ts`, `use-canvas-input.ts`)
-- **Components** — PascalCase Vue SFCs (`EditorCanvas.vue`, `ScrubInput.vue`)
-- **Constants** — SCREAMING_SNAKE_CASE
-- **Functions/variables** — camelCase
-- **Types/interfaces** — PascalCase
+- **Dateinamen** — kebab-case (`scene-graph.ts`, `use-canvas-input.ts`)
+- **Komponenten** — PascalCase Vue SFCs (`EditorCanvas.vue`, `ScrubInput.vue`)
+- **Konstanten** — SCREAMING_SNAKE_CASE
+- **Funktionen/Variablen** — camelCase
+- **Typen/Interfaces** — PascalCase
 
-### AI Agent Conventions
+### KI-Agent-Konventionen
 
-Developers and AI agents working on the codebase should read `AGENTS.md` in the repo root ([view on GitHub](https://github.com/open-pencil/open-pencil/blob/master/AGENTS.md)). Covers rendering, scene graph, components & instances, layout, UI, file format, Tauri conventions, and known issues.
+Entwickler und KI-Agenten sollten `AGENTS.md` im Repo-Root lesen ([auf GitHub ansehen](https://github.com/open-pencil/open-pencil/blob/master/AGENTS.md)). Behandelt Rendering, Szenengraph, Komponenten & Instanzen, Layout, UI, Dateiformat, Tauri-Konventionen und bekannte Probleme.
 
-## Making Changes
+## Änderungen vornehmen
 
-1. Check existing [openspec specs](/development/openspec) for the capability you're modifying
-2. Create an openspec change if adding new behavior: `openspec new change "my-change"`
-3. Implement the change
-4. Run `bun run check` and `bun run test`
-5. Submit a pull request
+1. Vorhandene [OpenSpec-Spezifikationen](/de/development/openspec) für die zu ändernde Fähigkeit prüfen
+2. Bei neuem Verhalten eine OpenSpec-Änderung erstellen: `openspec new change "meine-aenderung"`
+3. Änderung implementieren
+4. `bun run check` und `bun run test` ausführen
+5. Pull Request einreichen
 
-## Key Files
+## Schlüsseldateien
 
-Engine source lives in `packages/core/src/`. The app's `src/engine/` and `src/kiwi/` are re-export shims — edit the core package, not the shims.
+Engine-Quellcode lebt in `packages/core/src/`. Die `src/engine/`- und `src/kiwi/`-Dateien der App sind Re-Export-Shims — bearbeiten Sie das Core-Paket, nicht die Shims.
 
-| File | Purpose |
-|------|---------|
-| `packages/core/src/scene-graph.ts` | Scene graph: nodes, variables, instances, hit testing |
-| `packages/core/src/renderer.ts` | CanvasKit rendering pipeline |
-| `packages/core/src/layout.ts` | Yoga layout adapter |
-| `packages/core/src/undo.ts` | Undo/redo manager |
-| `packages/core/src/clipboard.ts` | Figma-compatible clipboard |
-| `packages/core/src/vector.ts` | Vector network model |
-| `packages/core/src/render-image.ts` | Offscreen image export (PNG/JPG/WEBP) |
-| `packages/core/src/kiwi/codec.ts` | Kiwi binary encoder/decoder |
-| `packages/core/src/kiwi/fig-import.ts` | .fig file import logic |
-| `packages/cli/src/index.ts` | CLI entry point |
-| `packages/cli/src/commands/` | CLI commands (info, tree, find, export) |
-| `src/stores/editor.ts` | Global editor state |
-| `src/composables/use-canvas.ts` | Canvas rendering composable |
-| `src/composables/use-canvas-input.ts` | Mouse/touch input handling |
-| `src/composables/use-keyboard.ts` | Keyboard shortcut handling |
+| Datei | Zweck |
+|-------|-------|
+| `packages/core/src/scene-graph.ts` | Szenengraph: Knoten, Variablen, Instanzen, Hit-Testing |
+| `packages/core/src/renderer.ts` | CanvasKit-Rendering-Pipeline |
+| `packages/core/src/layout.ts` | Yoga-Layout-Adapter |
+| `packages/core/src/undo.ts` | Rückgängig/Wiederherstellen-Manager |
+| `packages/core/src/clipboard.ts` | Figma-kompatible Zwischenablage |
+| `packages/core/src/vector.ts` | Vektornetzwerk-Modell |
+| `packages/core/src/kiwi/codec.ts` | Kiwi-Binär-Encoder/Decoder |
+| `packages/core/src/kiwi/fig-import.ts` | .fig-Datei-Import-Logik |
+| `packages/cli/src/index.ts` | CLI-Einstiegspunkt |
+| `src/stores/editor.ts` | Globaler Editor-Zustand |
+| `src/composables/use-canvas.ts` | Canvas-Rendering-Composable |
+| `src/composables/use-keyboard.ts` | Tastenkürzel-Behandlung |

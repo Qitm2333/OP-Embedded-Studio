@@ -1,6 +1,6 @@
 # Dateiformat
 
-## .fig File Structure
+## .fig-Dateistruktur
 
 ```
 ┌─────────────────────────────────┐
@@ -14,7 +14,7 @@
 └─────────────────────────────────┘
 ```
 
-## Import Pipeline
+## Import-Pipeline
 
 ```
 .fig file → Parse header → Decompress Zstd → Decode Kiwi schema
@@ -22,7 +22,7 @@
   → Resolve blob refs → Render on canvas
 ```
 
-## Export Pipeline
+## Export-Pipeline
 
 ```
 SceneGraph → NodeChange[] → Kiwi encode → Compress (Zstd/deflate)

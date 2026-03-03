@@ -1,107 +1,73 @@
 # Flujo OpenSpec
 
-OpenPencil uses [OpenSpec](https://github.com/Fission-AI/OpenSpec) for spec-driven development. Specifications are the source of truth for what the system does.
+OpenPencil usa OpenSpec para desarrollo dirigido por especificaciones. Las especificaciones son la fuente de verdad.
 
-## Structure
+## Estructura
 
 ```
 openspec/
-├── specs/              # Source of truth: how the system works now
+├── specs/              # Source of truth
 │   ├── scene-graph/
-│   │   └── spec.md
 │   ├── canvas-rendering/
-│   │   └── spec.md
 │   ├── auto-layout/
-│   │   └── spec.md
-│   └── ...             # 19 capability specs total
-├── changes/            # Proposed changes (one directory per change)
-│   └── archive/        # Completed changes
-└── config.yaml         # Optional configuration
+│   └── ...             # 19 capability specs
+├── changes/
+│   └── archive/
+└── config.yaml
 ```
 
-## Current Specs
+## Especificaciones actuales
 
 | Capability | Description |
 |-----------|-------------|
-| scene-graph | Flat Map storage, CRUD, hit testing |
-| canvas-rendering | CanvasKit WASM rendering pipeline |
-| canvas-navigation | Pan, zoom, hand tool |
-| selection-manipulation | Click/marquee select, move, resize, rotate |
-| undo-redo | Inverse-command pattern |
-| text-editing | Text tool, Paragraph API, font loading |
-| pen-tool | Vector network model, bezier curves |
-| auto-layout | Yoga WASM flexbox, Shift+A toggle |
-| figma-clipboard | Bidirectional Kiwi binary clipboard |
-| fig-import | .fig file import pipeline |
-| kiwi-codec | Kiwi binary codec, sparse field IDs |
-| editor-ui | Vue 3 panels, toolbar, color picker |
-| snap-guides | Edge/center snapping, rotation-aware |
-| rulers | Canvas rulers, selection highlight |
-| group-ungroup | ⌘G/⇧⌘G, position-based sort |
-| desktop-app | Tauri v2, macOS menu bar |
-| testing | Playwright E2E, bun:test unit |
-| scrub-input | Drag-to-scrub numeric inputs |
-| tooling | Vite 7, oxlint, oxfmt, tsgo, VitePress |
+| scene-graph | Flat Map, CRUD, hit testing |
+| canvas-rendering | CanvasKit WASM rendering |
+| auto-layout | Yoga WASM flexbox |
+| fig-import | .fig file import |
+| kiwi-codec | Kiwi binary codec |
+| editor-ui | Vue 3 panels, toolbar |
+| desktop-app | Tauri v2 |
+| testing | Playwright + bun:test |
+| tooling | Vite, oxlint, tsgo |
 
-## Workflow
+## Flujo de trabajo
 
-### 1. Propose a Change
+### 1. Proponer un cambio
 
 ```
-/opsx:propose add-dark-mode
+/opsx:propose change-name
 ```
 
-Creates `openspec/changes/add-dark-mode/` with:
-- `proposal.md` — why and what changes
-- `design.md` — technical approach
-- `specs/` — delta specifications (ADDED/MODIFIED/REMOVED requirements)
-- `tasks.md` — implementation checklist
+→ proposal.md, design.md, specs/, tasks.md
 
-### 2. Implement
+### 2. Implementar
 
 ```
 /opsx:apply
 ```
 
-Execute tasks from tasks.md, checking off items as they're completed.
-
-### 3. Archive
+### 3. Archivar
 
 ```
 /opsx:archive
 ```
 
-- Merges delta specs into `openspec/specs/` (the baseline)
-- Moves the change to `openspec/changes/archive/`
-
-## Spec Format
-
-Each spec file follows a consistent structure:
+## Formato de especificaciones
 
 ```markdown
 # capability-name Specification
-
-## Purpose
-One-line description of what this capability does.
-
 ## Requirements
-
 ### Requirement: Name
-Description using SHALL/MUST for normative requirements.
-
 #### Scenario: Name
 - **WHEN** condition
 - **THEN** expected outcome
 ```
 
-Every requirement has at least one scenario. Scenarios are potential test cases.
-
-## CLI Commands
+## Comandos CLI
 
 ```sh
-openspec list                    # List active changes
-openspec show <name>             # Show change details
-openspec status --change <name>  # Artifact status
-openspec archive <name>          # Archive completed change
-openspec update                  # Regenerate skills/prompts
+openspec list
+openspec show <name>
+openspec status --change <name>
+openspec archive <name>
 ```

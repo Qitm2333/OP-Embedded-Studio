@@ -1,10 +1,10 @@
 # Servidor MCP
 
-OpenPencil includes an MCP (Model Context Protocol) server that lets AI coding tools — Claude Code, Cursor, Windsurf, etc. — read and modify `.fig` files headlessly.
+OpenPencil incluye un servidor MCP (Model Context Protocol) que permite a las herramientas de coding IA — Claude Code, Cursor, Windsurf etc. — leer y modificar archivos .fig headless.
 
-Two transports: **stdio** for MCP clients, **HTTP** for everything else.
+Dos transportes
 
-## Install
+##  **stdio** para clientes MCP, **HTTP** para todo lo demás.
 
 ```sh
 bun add -g @open-pencil/mcp
@@ -24,7 +24,7 @@ Add to your MCP config (e.g. `~/.claude/settings.json` or `.cursor/mcp.json`):
 }
 ```
 
-Or run from source without installing:
+Instalación:O ejecutar desde el código fuente:
 
 ::: code-group
 ```json [Bun]
