@@ -503,6 +503,15 @@ export function nodeChangeToProps(
     textTruncation: (ext(nc).textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED',
     autoRename: (ext(nc).autoRename as boolean) ?? true,
     boundVariables: extractBoundVariables(nc),
-    clipsContent: nc.frameMaskDisabled === false
+    clipsContent: nc.frameMaskDisabled === false,
+    componentId: extractSymbolId(nc)
   }
+}
+
+function extractSymbolId(nc: NodeChange): string {
+  const sd = (nc as unknown as Record<string, unknown>).symbolData as
+    | { symbolID?: GUID }
+    | undefined
+  if (!sd?.symbolID) return ''
+  return guidToString(sd.symbolID)
 }

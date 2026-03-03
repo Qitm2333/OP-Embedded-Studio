@@ -257,6 +257,36 @@ describe('importClipboardNodes', () => {
     expect(children[1].name).toBe('Divider')
   })
 
+  it('populates instance children from pasted component', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page' },
+      // Component with a child
+      { guid: { sessionID: 1, localID: 10 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' }, type: 'SYMBOL', name: 'Icon/Warning', size: { x: 48, y: 48 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 } },
+      { guid: { sessionID: 1, localID: 11 }, parentIndex: { guid: { sessionID: 1, localID: 10 }, position: '!' }, type: 'VECTOR', name: 'Triangle', size: { x: 48, y: 42 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 3 } },
+      // Instance referencing the component
+      { guid: { sessionID: 2, localID: 20 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '"' }, type: 'INSTANCE', name: 'Icon/Warning', size: { x: 48, y: 48 }, transform: { m00: 1, m01: 0, m02: 100, m10: 0, m11: 1, m12: 0 }, symbolData: { symbolID: { sessionID: 1, localID: 10 } } },
+    ] as any[]
+
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    expect(created).toHaveLength(2)
+
+    const component = graph.getNode(created[0])!
+    expect(component.type).toBe('COMPONENT')
+    expect(graph.getChildren(component.id)).toHaveLength(1)
+
+    const instance = graph.getNode(created[1])!
+    expect(instance.type).toBe('INSTANCE')
+    expect(instance.componentId).toBe(component.id)
+
+    const instanceChildren = graph.getChildren(instance.id)
+    expect(instanceChildren).toHaveLength(1)
+    expect(instanceChildren[0].name).toBe('Triangle')
+    expect(instanceChildren[0].type).toBe('VECTOR')
+  })
+
   it('imports textAutoResize from clipboard data', () => {
     const { graph, pageId } = createGraphWithPage()
 

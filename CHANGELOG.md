@@ -16,6 +16,9 @@
 
 ### Fixes
 
+- Fix Figma clipboard paste: extract shared kiwi→SceneNode conversion, fixing broken auto-layout, missing gradient/image fills, effects, style runs, and text properties
+- Fix vector rendering on paste — scale path coordinates from Figma's normalizedSize to actual node bounds
+- Fix pasted instances having no children — populate from component via symbolData when both are in clipboard
 - Fix flip buttons using rotation math instead of actual mirroring
 - Fix flip transform encoding — scale first matrix column only (was incorrectly producing 180° rotation)
 - Decode flip state from .fig transform matrix on import

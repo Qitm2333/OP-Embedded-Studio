@@ -202,6 +202,20 @@ export function importClipboardNodes(
     createNode(id, targetParentId)
   }
 
+  for (const [, ourId] of created) {
+    const node = graph.getNode(ourId)
+    if (!node || node.type !== 'INSTANCE' || node.childIds.length > 0) continue
+
+    const figmaComponentId = node.componentId
+    if (!figmaComponentId) continue
+
+    const ourComponentId = created.get(figmaComponentId)
+    if (!ourComponentId) continue
+
+    graph.updateNode(ourId, { componentId: ourComponentId })
+    graph.populateInstanceChildren(ourId, ourComponentId)
+  }
+
   return createdIds
 }
 

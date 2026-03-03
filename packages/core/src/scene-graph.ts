@@ -922,6 +922,13 @@ export class SceneGraph {
     return instance
   }
 
+  populateInstanceChildren(instanceId: string, componentId: string): void {
+    const instance = this.nodes.get(instanceId)
+    const component = this.nodes.get(componentId)
+    if (!instance || !component || instance.type !== 'INSTANCE') return
+    this.cloneChildrenWithMapping(componentId, instanceId)
+  }
+
   private cloneChildrenWithMapping(sourceParentId: string, destParentId: string): void {
     const sourceParent = this.nodes.get(sourceParentId)
     if (!sourceParent) return
