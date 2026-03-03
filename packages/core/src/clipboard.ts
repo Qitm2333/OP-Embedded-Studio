@@ -8,7 +8,7 @@ import {
 } from './kiwi-serialize'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
-import { nodeChangeToProps } from './kiwi/kiwi-convert'
+import { nodeChangeToProps, convertFills } from './kiwi/kiwi-convert'
 
 import type { NodeChange as KiwiNodeChange } from './kiwi/codec'
 import type { SceneGraph, SceneNode } from './scene-graph'
@@ -226,7 +226,15 @@ export function importClipboardNodes(
     createNode(id, targetParentId)
   }
 
-  for (const [, ourId] of created) {
+  const overrideKeyToFigmaId = new Map<string, string>()
+  for (const [id, nc] of guidMap) {
+    const ok = (nc as unknown as Record<string, unknown>).overrideKey as
+      | { sessionID: number; localID: number }
+      | undefined
+    if (ok) overrideKeyToFigmaId.set(`${ok.sessionID}:${ok.localID}`, id)
+  }
+
+  for (const [figmaId, ourId] of created) {
     const node = graph.getNode(ourId)
     if (!node || node.type !== 'INSTANCE' || node.childIds.length > 0) continue
 
@@ -238,6 +246,41 @@ export function importClipboardNodes(
 
     graph.updateNode(ourId, { componentId: ourComponentId })
     graph.populateInstanceChildren(ourId, ourComponentId)
+
+    const nc = guidMap.get(figmaId)
+    const sd = (nc as unknown as Record<string, unknown>).symbolData as
+      | { symbolOverrides?: Array<Record<string, unknown>> }
+      | undefined
+    if (!sd?.symbolOverrides?.length) continue
+
+    const compChildIdMap = new Map<string, string>()
+    for (const childId of node.childIds) {
+      const child = graph.getNode(childId)
+      if (child?.componentId) compChildIdMap.set(child.componentId, childId)
+    }
+
+    for (const ov of sd.symbolOverrides) {
+      const gp = ov.guidPath as { guids?: Array<{ sessionID: number; localID: number }> } | undefined
+      if (!gp?.guids?.length) continue
+      const targetKey = `${gp.guids[0].sessionID}:${gp.guids[0].localID}`
+
+      const figmaChildId = overrideKeyToFigmaId.get(targetKey)
+      if (!figmaChildId) continue
+
+      const compChildOurId = created.get(figmaChildId)
+      if (!compChildOurId) continue
+
+      const instanceChildId = compChildIdMap.get(compChildOurId)
+      if (!instanceChildId) continue
+
+      const updates: Partial<SceneNode> = {}
+      const ovTd = ov.textData as { characters?: string } | undefined
+      if (ovTd?.characters != null) updates.text = ovTd.characters
+      if (ov.fillPaints) updates.fills = convertFills(ov.fillPaints as KiwiNodeChange['fillPaints'])
+      if (ov.visible != null) updates.visible = ov.visible as boolean
+
+      if (Object.keys(updates).length > 0) graph.updateNode(instanceChildId, updates)
+    }
   }
 
   for (const figmaId of internalTopLevel) {

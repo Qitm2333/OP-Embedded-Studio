@@ -321,6 +321,31 @@ describe('importClipboardNodes', () => {
     }
   })
 
+  it('applies symbolOverrides text to instance children via overrideKey', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page 1' },
+      { guid: { sessionID: 99, localID: 2 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '"' }, type: 'CANVAS', name: 'Internal Only Canvas', internalOnly: true },
+      // Component on internal canvas
+      { guid: { sessionID: 1, localID: 10 }, parentIndex: { guid: { sessionID: 99, localID: 2 }, position: '!' }, type: 'SYMBOL', name: 'Day', size: { x: 46, y: 46 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 } },
+      { guid: { sessionID: 1, localID: 11 }, parentIndex: { guid: { sessionID: 1, localID: 10 }, position: '!' }, type: 'TEXT', name: 'Number', size: { x: 14, y: 17 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 }, textData: { characters: '1' }, overrideKey: { sessionID: 50, localID: 100 } },
+      // Instance on visible page with text override
+      { guid: { sessionID: 2, localID: 20 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' }, type: 'INSTANCE', name: 'Day', size: { x: 46, y: 46 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+        symbolData: { symbolID: { sessionID: 1, localID: 10 }, symbolOverrides: [{ guidPath: { guids: [{ sessionID: 50, localID: 100 }] }, textData: { characters: '25' } }] } },
+    ] as any[]
+
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    expect(created).toHaveLength(1)
+
+    const instance = graph.getNode(created[0])!
+    expect(instance.type).toBe('INSTANCE')
+    const children = graph.getChildren(instance.id)
+    expect(children).toHaveLength(1)
+    expect(children[0].text).toBe('25')
+  })
+
   it('imports textAutoResize from clipboard data', () => {
     const { graph, pageId } = createGraphWithPage()
 
