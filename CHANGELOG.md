@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Fixes
+
+- Fix horizontal scrollbar on design and pages panels
+- Style scrollbars for Tauri (thin dark overlay instead of default OS chrome)
+- Enable file watcher in Tauri — `watch` feature was missing from `tauri-plugin-fs`
+
 ## 0.6.0 — 2026-03-04
 
 ### Features
