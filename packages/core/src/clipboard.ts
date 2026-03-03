@@ -148,7 +148,24 @@ export function importClipboardNodes(
     }
   }
 
+  const internalCanvasIds = new Set<string>()
+  for (const [id, nc] of guidMap) {
+    if (nc.type === 'CANVAS' && (nc as unknown as Record<string, unknown>).internalOnly) {
+      internalCanvasIds.add(id)
+    }
+  }
+
+  const internalFigmaIds = new Set<string>()
+  function markInternal(id: string) {
+    internalFigmaIds.add(id)
+    for (const [childId, pid] of parentMap) {
+      if (pid === id && !internalFigmaIds.has(childId)) markInternal(childId)
+    }
+  }
+  for (const canvasId of internalCanvasIds) markInternal(canvasId)
+
   const topLevel: string[] = []
+  const internalTopLevel: string[] = []
   for (const [id, nc] of guidMap) {
     if (NON_VISUAL_TYPES.has(nc.type ?? '')) continue
     const parentId = parentMap.get(id)
@@ -157,7 +174,11 @@ export function importClipboardNodes(
       !guidMap.has(parentId) ||
       NON_VISUAL_TYPES.has(guidMap.get(parentId)?.type ?? '')
     ) {
-      topLevel.push(id)
+      if (parentId && internalCanvasIds.has(parentId)) {
+        internalTopLevel.push(id)
+      } else {
+        topLevel.push(id)
+      }
     }
   }
 
@@ -180,7 +201,7 @@ export function importClipboardNodes(
     const node = graph.createNode(nodeType, ourParentId, props)
 
     created.set(figmaId, node.id)
-    if (ourParentId === targetParentId) createdIds.push(node.id)
+    if (ourParentId === targetParentId && !internalFigmaIds.has(figmaId)) createdIds.push(node.id)
 
     const children: string[] = []
     for (const [childId, pid] of parentMap) {
@@ -198,6 +219,9 @@ export function importClipboardNodes(
     }
   }
 
+  for (const id of internalTopLevel) {
+    createNode(id, targetParentId)
+  }
   for (const id of topLevel) {
     createNode(id, targetParentId)
   }
@@ -214,6 +238,11 @@ export function importClipboardNodes(
 
     graph.updateNode(ourId, { componentId: ourComponentId })
     graph.populateInstanceChildren(ourId, ourComponentId)
+  }
+
+  for (const figmaId of internalTopLevel) {
+    const ourId = created.get(figmaId)
+    if (ourId) graph.deleteNode(ourId)
   }
 
   return createdIds

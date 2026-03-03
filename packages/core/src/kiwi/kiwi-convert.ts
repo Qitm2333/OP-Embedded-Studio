@@ -396,7 +396,8 @@ export function nodeChangeToProps(
   nc: NodeChange,
   blobs: Uint8Array[]
 ): Partial<SceneNode> & { nodeType: NodeType | 'DOCUMENT' | 'VARIABLE' } {
-  const nodeType = mapNodeType(nc.type)
+  let nodeType = mapNodeType(nc.type)
+  if (nodeType === 'FRAME' && isComponentSet(nc)) nodeType = 'COMPONENT_SET'
 
   const x = nc.transform?.m02 ?? 0
   const y = nc.transform?.m12 ?? 0
@@ -506,6 +507,12 @@ export function nodeChangeToProps(
     clipsContent: nc.frameMaskDisabled === false,
     componentId: extractSymbolId(nc)
   }
+}
+
+function isComponentSet(nc: NodeChange): boolean {
+  const defs = ext(nc).componentPropDefs as Array<{ type?: string }> | undefined
+  if (!defs?.length) return false
+  return defs.some((d) => d.type === 'VARIANT')
 }
 
 function extractSymbolId(nc: NodeChange): string {

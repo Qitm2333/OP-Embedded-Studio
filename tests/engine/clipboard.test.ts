@@ -287,6 +287,40 @@ describe('importClipboardNodes', () => {
     expect(instanceChildren[0].type).toBe('VECTOR')
   })
 
+  it('internal canvas components populate instances but are not pasted', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page 1' },
+      // Internal Only Canvas with component
+      { guid: { sessionID: 99, localID: 2 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '"' }, type: 'CANVAS', name: 'Internal Only Canvas', internalOnly: true },
+      { guid: { sessionID: 1, localID: 10 }, parentIndex: { guid: { sessionID: 99, localID: 2 }, position: '!' }, type: 'SYMBOL', name: 'Icon', size: { x: 24, y: 24 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 } },
+      { guid: { sessionID: 1, localID: 11 }, parentIndex: { guid: { sessionID: 1, localID: 10 }, position: '!' }, type: 'VECTOR', name: 'Path', size: { x: 24, y: 24 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 } },
+      // Visible page with instance
+      { guid: { sessionID: 2, localID: 20 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' }, type: 'INSTANCE', name: 'Icon', size: { x: 24, y: 24 }, transform: { m00: 1, m01: 0, m02: 50, m10: 0, m11: 1, m12: 50 }, symbolData: { symbolID: { sessionID: 1, localID: 10 } } },
+    ] as any[]
+
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    expect(created).toHaveLength(1)
+
+    const instance = graph.getNode(created[0])!
+    expect(instance.type).toBe('INSTANCE')
+    expect(instance.name).toBe('Icon')
+
+    const children = graph.getChildren(instance.id)
+    expect(children).toHaveLength(1)
+    expect(children[0].name).toBe('Path')
+    expect(children[0].type).toBe('VECTOR')
+
+    // Component should NOT exist as a visible node
+    for (const node of graph.getAllNodes()) {
+      if (node.type === 'COMPONENT' && node.name === 'Icon') {
+        throw new Error('Internal component should not be pasted as visible node')
+      }
+    }
+  })
+
   it('imports textAutoResize from clipboard data', () => {
     const { graph, pageId } = createGraphWithPage()
 
