@@ -22,7 +22,7 @@ import {
   prefetchFigmaSchema
 } from '@/engine/clipboard'
 import { exportFigFile } from '@/engine/fig-export'
-import { computeLayout, computeAllLayouts } from '@/engine/layout'
+import { computeLayout, computeAllLayouts, setTextMeasurer } from '@/engine/layout'
 import { renderNodesToImage } from '@/engine/render-image'
 import { SceneGraph } from '@/engine/scene-graph'
 import { TextEditor } from '@/engine/text-editor'
@@ -603,6 +603,7 @@ export function createEditorStore() {
     _ck = ck
     _renderer = renderer
     _textEditor = new TextEditor(ck)
+    setTextMeasurer((node) => renderer.measureTextNode(node))
   }
 
   function buildFigFile() {

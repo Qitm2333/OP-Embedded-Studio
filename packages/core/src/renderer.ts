@@ -1963,6 +1963,18 @@ export class SkiaRenderer {
     }
   }
 
+  measureTextNode(node: SceneNode): { width: number; height: number } | null {
+    if (!this.fontsLoaded || !this.fontProvider || !this.isNodeFontLoaded(node)) return null
+    if (node.type !== 'TEXT' || !node.text) return null
+
+    const paragraph = this.buildParagraph(node)
+    paragraph.layout(node.textAutoResize === 'WIDTH_AND_HEIGHT' ? 1e6 : node.width || 1e6)
+    const width = paragraph.getLongestLine()
+    const height = paragraph.getHeight()
+    paragraph.delete()
+    return { width: Math.ceil(width), height: Math.ceil(height) }
+  }
+
   isNodeFontLoaded(node: SceneNode): boolean {
     const families = new Set<string>()
     families.add(node.fontFamily || DEFAULT_FONT_FAMILY)
