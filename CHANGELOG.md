@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- Flip horizontal/vertical using scale transform instead of rotation
+- Single-node alignment aligns to parent frame bounds
+
+### Fixes
+
+- Fix flip buttons using rotation math instead of actual mirroring
+- Decode flip state from .fig transform matrix on import
+
 ## 0.5.1 — 2026-03-03
 
 ### Fixes

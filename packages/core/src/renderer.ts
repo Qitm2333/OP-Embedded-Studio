@@ -1021,6 +1021,14 @@ export class SkiaRenderer {
       canvas.rotate(rotation, node.width / 2, node.height / 2)
     }
 
+    if (node.flipX || node.flipY) {
+      canvas.translate(
+        node.flipX ? node.width : 0,
+        node.flipY ? node.height : 0
+      )
+      canvas.scale(node.flipX ? -1 : 1, node.flipY ? -1 : 1)
+    }
+
     if (node.type === 'SECTION') {
       this.renderSection(canvas, node, graph)
     } else if (node.type === 'COMPONENT_SET') {

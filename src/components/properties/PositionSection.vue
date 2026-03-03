@@ -9,63 +9,91 @@ type VAlign = 'top' | 'center' | 'bottom'
 
 function alignHorizontal(align: HAlign) {
   const selected = nodes.value
-  if (selected.length < 2) return
+  if (selected.length === 0) return
 
-  let minX = Infinity,
+  let minX: number, maxX: number
+
+  if (selected.length === 1) {
+    const parent = store.graph.getNode(selected[0].parentId ?? '')
+    if (!parent) return
+    minX = 0
+    maxX = parent.width
+  } else {
+    minX = Infinity
     maxX = -Infinity
-  for (const n of selected) {
-    const abs = store.graph.getAbsolutePosition(n.id)
-    minX = Math.min(minX, abs.x)
-    maxX = Math.max(maxX, abs.x + n.width)
+    for (const n of selected) {
+      const abs = store.graph.getAbsolutePosition(n.id)
+      minX = Math.min(minX, abs.x)
+      maxX = Math.max(maxX, abs.x + n.width)
+    }
   }
 
   for (const n of selected) {
-    const abs = store.graph.getAbsolutePosition(n.id)
     let targetX: number
-    if (align === 'left') targetX = minX
-    else if (align === 'right') targetX = maxX - n.width
-    else targetX = (minX + maxX) / 2 - n.width / 2
-
-    const dx = targetX - abs.x
-    store.updateNode(n.id, { x: n.x + dx })
+    if (selected.length === 1) {
+      if (align === 'left') targetX = minX
+      else if (align === 'right') targetX = maxX - n.width
+      else targetX = (minX + maxX) / 2 - n.width / 2
+      store.updateNode(n.id, { x: targetX })
+    } else {
+      const abs = store.graph.getAbsolutePosition(n.id)
+      if (align === 'left') targetX = minX
+      else if (align === 'right') targetX = maxX - n.width
+      else targetX = (minX + maxX) / 2 - n.width / 2
+      store.updateNode(n.id, { x: n.x + (targetX - abs.x) })
+    }
   }
   store.requestRender()
 }
 
 function alignVertical(align: VAlign) {
   const selected = nodes.value
-  if (selected.length < 2) return
+  if (selected.length === 0) return
 
-  let minY = Infinity,
+  let minY: number, maxY: number
+
+  if (selected.length === 1) {
+    const parent = store.graph.getNode(selected[0].parentId ?? '')
+    if (!parent) return
+    minY = 0
+    maxY = parent.height
+  } else {
+    minY = Infinity
     maxY = -Infinity
-  for (const n of selected) {
-    const abs = store.graph.getAbsolutePosition(n.id)
-    minY = Math.min(minY, abs.y)
-    maxY = Math.max(maxY, abs.y + n.height)
+    for (const n of selected) {
+      const abs = store.graph.getAbsolutePosition(n.id)
+      minY = Math.min(minY, abs.y)
+      maxY = Math.max(maxY, abs.y + n.height)
+    }
   }
 
   for (const n of selected) {
-    const abs = store.graph.getAbsolutePosition(n.id)
     let targetY: number
-    if (align === 'top') targetY = minY
-    else if (align === 'bottom') targetY = maxY - n.height
-    else targetY = (minY + maxY) / 2 - n.height / 2
-
-    const dy = targetY - abs.y
-    store.updateNode(n.id, { y: n.y + dy })
+    if (selected.length === 1) {
+      if (align === 'top') targetY = minY
+      else if (align === 'bottom') targetY = maxY - n.height
+      else targetY = (minY + maxY) / 2 - n.height / 2
+      store.updateNode(n.id, { y: targetY })
+    } else {
+      const abs = store.graph.getAbsolutePosition(n.id)
+      if (align === 'top') targetY = minY
+      else if (align === 'bottom') targetY = maxY - n.height
+      else targetY = (minY + maxY) / 2 - n.height / 2
+      store.updateNode(n.id, { y: n.y + (targetY - abs.y) })
+    }
   }
   store.requestRender()
 }
 
 function flipHorizontal() {
   const n = node.value
-  store.updateNodeWithUndo(n.id, { rotation: -n.rotation || 0 }, 'Flip horizontal')
+  store.updateNodeWithUndo(n.id, { flipX: !n.flipX }, 'Flip horizontal')
   store.requestRender()
 }
 
 function flipVertical() {
   const n = node.value
-  store.updateNodeWithUndo(n.id, { rotation: (180 - n.rotation) % 360 }, 'Flip vertical')
+  store.updateNodeWithUndo(n.id, { flipY: !n.flipY }, 'Flip vertical')
   store.requestRender()
 }
 

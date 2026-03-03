@@ -170,8 +170,9 @@ export function sceneNodeToKiwi(
 ): KiwiNodeChange[] {
   const localID = localIdCounter.value++
   const guid = { sessionID: 1, localID }
-  const cos = Math.cos((node.rotation * Math.PI) / 180)
-  const sin = Math.sin((node.rotation * Math.PI) / 180)
+  const sx = node.flipX ? -1 : 1
+  const cos = Math.cos((node.rotation * Math.PI) / 180) * sx
+  const sin = Math.sin((node.rotation * Math.PI) / 180) * sx
 
   const fillPaints = node.fills.map((f) => {
     const paint: Paint = {

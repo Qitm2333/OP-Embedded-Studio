@@ -268,6 +268,9 @@ export interface SceneNode {
 
   internalOnly: boolean
 
+  flipX: boolean
+  flipY: boolean
+
   textPicture: Uint8Array | null
 }
 
@@ -390,6 +393,8 @@ function createDefaultNode(type: NodeType, overrides: Partial<SceneNode> = {}): 
     overrides: {},
     boundVariables: {},
     internalOnly: false,
+    flipX: false,
+    flipY: false,
     textPicture: null,
     ...overrides
   }

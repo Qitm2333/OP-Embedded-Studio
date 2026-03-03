@@ -412,8 +412,13 @@ export function importNodeChanges(
     const height = nc.size?.y ?? 100
 
     let rotation = 0
+    let flipX = false
+    let flipY = false
     if (nc.transform) {
-      rotation = Math.atan2(nc.transform.m10, nc.transform.m00) * (180 / Math.PI)
+      const det = nc.transform.m00 * nc.transform.m11 - nc.transform.m01 * nc.transform.m10
+      if (det < 0) flipX = true
+      const sx = flipX ? -1 : 1
+      rotation = Math.atan2(nc.transform.m10 * sx, nc.transform.m00 * sx) * (180 / Math.PI)
     }
 
     const dashPattern = (ext(nc).dashPattern as number[]) ?? []
@@ -425,6 +430,8 @@ export function importNodeChanges(
       width,
       height,
       rotation,
+      flipX,
+      flipY,
       opacity: nc.opacity ?? 1,
       visible: nc.visible ?? true,
       locked: nc.locked ?? false,
