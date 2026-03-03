@@ -75,7 +75,8 @@ import type {
   FontMgr,
   FontWeight,
   TypefaceFontProvider,
-  SkPicture
+  SkPicture,
+  ImageFilter
 } from 'canvaskit-wasm'
 
 export interface RenderOverlays {
@@ -125,6 +126,8 @@ export class SkiaRenderer {
   private auxFill: Paint
   private auxStroke: Paint
   private opacityPaint: Paint
+  private effectLayerPaint: Paint
+  private imageFilterCache = new Map<string, ImageFilter>()
   private textFont: Font | null = null
   private labelFont: Font | null = null
   private sizeFont: Font | null = null
@@ -216,6 +219,7 @@ export class SkiaRenderer {
     this.auxStroke.setAntiAlias(true)
 
     this.opacityPaint = new ck.Paint()
+    this.effectLayerPaint = new ck.Paint()
 
     this.textFont = new ck.Font(null, DEFAULT_FONT_SIZE)
 
@@ -961,17 +965,8 @@ export class SkiaRenderer {
 
     const layerBlur = node.effects.find((e) => e.visible && e.type === 'LAYER_BLUR')
     if (layerBlur) {
-      const blurPaint = new this.ck.Paint()
-      blurPaint.setImageFilter(
-        this.ck.ImageFilter.MakeBlur(
-          layerBlur.radius / 2,
-          layerBlur.radius / 2,
-          this.ck.TileMode.Clamp,
-          null
-        )
-      )
-      canvas.saveLayer(blurPaint)
-      blurPaint.delete()
+      this.effectLayerPaint.setImageFilter(this.getCachedBlur(layerBlur.radius / 2))
+      canvas.saveLayer(this.effectLayerPaint)
     }
 
     const rotation =
@@ -1552,6 +1547,41 @@ export class SkiaRenderer {
     )
   }
 
+  private getCachedDropShadow(
+    dx: number,
+    dy: number,
+    sigma: number,
+    color: Float32Array
+  ): ImageFilter {
+    const key = `ds:${dx},${dy},${sigma},${color[0]},${color[1]},${color[2]},${color[3]}`
+    let filter = this.imageFilterCache.get(key)
+    if (!filter) {
+      filter = this.ck.ImageFilter.MakeDropShadowOnly(dx, dy, sigma, sigma, color, null)
+      this.imageFilterCache.set(key, filter)
+    }
+    return filter
+  }
+
+  private getCachedBlur(sigma: number): ImageFilter {
+    const key = `blur:${sigma}`
+    let filter = this.imageFilterCache.get(key)
+    if (!filter) {
+      filter = this.ck.ImageFilter.MakeBlur(sigma, sigma, this.ck.TileMode.Clamp, null)
+      this.imageFilterCache.set(key, filter)
+    }
+    return filter
+  }
+
+  private getCachedDecalBlur(sigma: number): ImageFilter {
+    const key = `dblur:${sigma}`
+    let filter = this.imageFilterCache.get(key)
+    if (!filter) {
+      filter = this.ck.ImageFilter.MakeBlur(sigma, sigma, this.ck.TileMode.Decal, null)
+      this.imageFilterCache.set(key, filter)
+    }
+    return filter
+  }
+
   private applyClippedBlur(
     canvas: Canvas,
     node: SceneNode,
@@ -1561,14 +1591,10 @@ export class SkiaRenderer {
   ): void {
     canvas.save()
     this.clipNodeShape(canvas, node, rect, hasRadius)
-    const blurPaint = new this.ck.Paint()
-    blurPaint.setImageFilter(
-      this.ck.ImageFilter.MakeBlur(sigma, sigma, this.ck.TileMode.Clamp, null)
-    )
-    canvas.saveLayer(blurPaint)
+    this.effectLayerPaint.setImageFilter(this.getCachedBlur(sigma))
+    canvas.saveLayer(this.effectLayerPaint)
     canvas.restore()
     canvas.restore()
-    blurPaint.delete()
   }
 
   private clipNodeShape(canvas: Canvas, node: SceneNode, rect: Float32Array, hasRadius: boolean): void {
@@ -1694,33 +1720,20 @@ export class SkiaRenderer {
         )
         const sigma = effect.radius / 2
 
+        const dropFilter = this.getCachedDropShadow(
+          effect.offset.x,
+          effect.offset.y,
+          sigma,
+          shadowColor
+        )
+        this.effectLayerPaint.setImageFilter(dropFilter)
+
         if (node.type === 'TEXT') {
-          const dropFilter = this.ck.ImageFilter.MakeDropShadowOnly(
-            effect.offset.x,
-            effect.offset.y,
-            sigma,
-            sigma,
-            shadowColor,
-            null
-          )
-          const layerPaint = new this.ck.Paint()
-          layerPaint.setImageFilter(dropFilter)
-          canvas.saveLayer(layerPaint)
+          canvas.saveLayer(this.effectLayerPaint)
           this.renderText(canvas, node)
           canvas.restore()
-          layerPaint.delete()
         } else {
-          const dropFilter = this.ck.ImageFilter.MakeDropShadowOnly(
-            effect.offset.x,
-            effect.offset.y,
-            sigma,
-            sigma,
-            shadowColor,
-            null
-          )
-          const layerPaint = new this.ck.Paint()
-          layerPaint.setImageFilter(dropFilter)
-          canvas.saveLayer(layerPaint)
+          canvas.saveLayer(this.effectLayerPaint)
           this.auxFill.setColor(this.ck.WHITE)
           this.auxFill.setImageFilter(null)
           if (node.type === 'ELLIPSE') {
@@ -1733,7 +1746,6 @@ export class SkiaRenderer {
             canvas.drawRect(spreadRect, this.auxFill)
           }
           canvas.restore()
-          layerPaint.delete()
         }
       }
 
@@ -1746,36 +1758,27 @@ export class SkiaRenderer {
 
       if (pass === 'front' && effect.type === 'INNER_SHADOW') {
         if (node.type === 'TEXT') {
-          const blurFilter = this.ck.ImageFilter.MakeBlur(
-            effect.radius,
-            effect.radius,
-            this.ck.TileMode.Decal,
-            null
-          )
-          const layerPaint = new this.ck.Paint()
-          layerPaint.setImageFilter(blurFilter)
-          layerPaint.setColorFilter(
+          this.effectLayerPaint.setImageFilter(this.getCachedDecalBlur(effect.radius))
+          this.effectLayerPaint.setColorFilter(
             this.ck.ColorFilter.MakeBlend(
               this.ck.Color4f(effect.color.r, effect.color.g, effect.color.b, effect.color.a),
               this.ck.BlendMode.SrcIn
             )
           )
-          canvas.saveLayer(layerPaint)
+          canvas.saveLayer(this.effectLayerPaint)
           canvas.save()
           canvas.translate(effect.offset.x, effect.offset.y)
           this.renderText(canvas, node)
           canvas.restore()
           canvas.restore()
-          layerPaint.delete()
+          this.effectLayerPaint.setColorFilter(null)
           continue
         }
         const sp = effect.spread
         this.auxFill.setColor(
           this.ck.Color4f(effect.color.r, effect.color.g, effect.color.b, effect.color.a)
         )
-        this.auxFill.setImageFilter(
-          this.ck.ImageFilter.MakeBlur(effect.radius, effect.radius, this.ck.TileMode.Decal, null)
-        )
+        this.auxFill.setImageFilter(this.getCachedDecalBlur(effect.radius))
 
         canvas.save()
         if (node.type === 'ELLIPSE') {
@@ -2628,6 +2631,9 @@ export class SkiaRenderer {
     this.penHandlePaint.delete()
     this.penVertexFill.delete()
     this.penVertexStroke.delete()
+    this.effectLayerPaint.delete()
+    for (const filter of this.imageFilterCache.values()) filter.delete()
+    this.imageFilterCache.clear()
     this.scenePicture?.delete()
     this.surface.delete()
   }

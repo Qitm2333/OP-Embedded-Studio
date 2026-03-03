@@ -16,6 +16,8 @@
     {
       "identifier": "fs:allow-write-file",
       "allow": [{ "path": "**" }]
-    }
+    },
+    "fs:allow-watch",
+    "fs:allow-unwatch"
   ]
 }

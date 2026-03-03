@@ -53,7 +53,7 @@ describe('Shadow spread support', () => {
     )
     expect(dropShadowSection).toContain('effect.spread')
     expect(dropShadowSection).toContain('makeRRectWithSpread')
-    expect(dropShadowSection).toContain('MakeDropShadowOnly')
+    expect(dropShadowSection).toContain('getCachedDropShadow')
   })
 
   test('inner shadow uses spread for cutout contraction', () => {
@@ -81,7 +81,7 @@ describe('Text shadow renders on glyphs, not bounding box', () => {
     )
     expect(dropShadowBlock).toContain("node.type === 'TEXT'")
     expect(dropShadowBlock).toContain('renderText')
-    expect(dropShadowBlock).toContain('MakeDropShadowOnly')
+    expect(dropShadowBlock).toContain('getCachedDropShadow')
   })
 
   test('inner shadow has TEXT-specific branch', () => {
@@ -97,10 +97,9 @@ describe('Text shadow renders on glyphs, not bounding box', () => {
 describe('Blur effects use saveLayer pattern', () => {
   test('layer blur wraps node content in a blurred saveLayer', () => {
     expect(rendererSource).toContain("e.type === 'LAYER_BLUR'")
-    // Applied at the renderNode level, not in renderEffects
     const layerBlurIdx = rendererSource.indexOf("e.type === 'LAYER_BLUR'")
     const layerBlurSection = rendererSource.slice(layerBlurIdx - 200, layerBlurIdx + 300)
-    expect(layerBlurSection).toContain('MakeBlur')
+    expect(layerBlurSection).toContain('getCachedBlur')
     expect(layerBlurSection).toContain('saveLayer')
   })
 
@@ -114,7 +113,7 @@ describe('Blur effects use saveLayer pattern', () => {
     const idx = rendererSource.indexOf('private applyClippedBlur')
     const section = rendererSource.slice(idx, idx + 500)
     expect(section).toContain('clipNodeShape')
-    expect(section).toContain('MakeBlur')
+    expect(section).toContain('getCachedBlur')
     expect(section).toContain('saveLayer')
   })
 })
