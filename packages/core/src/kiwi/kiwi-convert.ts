@@ -342,6 +342,7 @@ export function resolveVectorNetwork(
   const vectorData = (nc as unknown as Record<string, unknown>).vectorData as
     | {
         vectorNetworkBlob?: number
+        normalizedSize?: { x: number; y: number }
         styleOverrideTable?: Array<{ styleID: number; handleMirroring?: string }>
       }
     | undefined
@@ -351,7 +352,26 @@ export function resolveVectorNetwork(
   if (idx < 0 || idx >= blobs.length) return null
 
   try {
-    return decodeVectorNetworkBlob(blobs[idx], vectorData.styleOverrideTable)
+    const network = decodeVectorNetworkBlob(blobs[idx], vectorData.styleOverrideTable)
+    if (!network) return null
+
+    const ns = vectorData.normalizedSize
+    const nodeW = nc.size?.x ?? 0
+    const nodeH = nc.size?.y ?? 0
+    if (ns && nodeW > 0 && nodeH > 0 && (ns.x !== nodeW || ns.y !== nodeH)) {
+      const sx = nodeW / ns.x
+      const sy = nodeH / ns.y
+      for (const v of network.vertices) {
+        v.x *= sx
+        v.y *= sy
+      }
+      for (const seg of network.segments) {
+        seg.tangentStart = { x: seg.tangentStart.x * sx, y: seg.tangentStart.y * sy }
+        seg.tangentEnd = { x: seg.tangentEnd.x * sx, y: seg.tangentEnd.y * sy }
+      }
+    }
+
+    return network
   } catch {
     return null
   }
