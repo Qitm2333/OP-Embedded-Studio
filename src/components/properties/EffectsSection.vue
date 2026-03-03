@@ -10,6 +10,7 @@ import type { Color, Effect } from '@/engine/scene-graph'
 const { store, node } = useNodeProps()
 
 const expandedIndex = ref<number | null>(null)
+const effectsBeforeScrub = ref<Effect[] | null>(null)
 
 type EffectType = Effect['type']
 
@@ -39,6 +40,36 @@ function defaultEffect(): Effect {
   }
 }
 
+function scrubEffect(index: number, changes: Partial<Effect>) {
+  const n = node.value
+  if (!n) return
+  if (!effectsBeforeScrub.value) {
+    effectsBeforeScrub.value = n.effects.map((e) => ({
+      ...e,
+      color: { ...e.color },
+      offset: { ...e.offset }
+    }))
+  }
+  const effects = [...n.effects]
+  effects[index] = { ...effects[index], ...changes }
+  store.updateNode(n.id, { effects })
+  store.requestRender()
+}
+
+function commitEffect(index: number, changes: Partial<Effect>) {
+  const n = node.value
+  if (!n) return
+  const previous = effectsBeforeScrub.value
+  effectsBeforeScrub.value = null
+  const effects = [...n.effects]
+  effects[index] = { ...effects[index], ...changes }
+  store.updateNode(n.id, { effects })
+  store.requestRender()
+  if (previous) {
+    store.commitNodeUpdate(n.id, { effects: previous }, 'Change effect')
+  }
+}
+
 function updateEffect(index: number, changes: Partial<Effect>) {
   const n = node.value
   if (!n) return
@@ -49,13 +80,6 @@ function updateEffect(index: number, changes: Partial<Effect>) {
 
 function updateColor(index: number, color: Color) {
   updateEffect(index, { color })
-}
-
-function updateColorOpacity(index: number, opacity: number) {
-  const n = node.value
-  if (!n) return
-  const existing = n.effects[index]
-  updateColor(index, { ...existing.color, a: Math.max(0, Math.min(1, opacity / 100)) })
 }
 
 function toggleVisibility(index: number) {
@@ -161,12 +185,14 @@ function toggleExpand(index: number) {
             <ScrubInput
               icon="X"
               :model-value="effect.offset.x"
-              @update:model-value="updateEffect(i, { offset: { ...effect.offset, x: $event } })"
+              @update:model-value="scrubEffect(i, { offset: { ...effect.offset, x: $event } })"
+              @commit="commitEffect(i, { offset: { ...effect.offset, x: $event } })"
             />
             <ScrubInput
               icon="Y"
               :model-value="effect.offset.y"
-              @update:model-value="updateEffect(i, { offset: { ...effect.offset, y: $event } })"
+              @update:model-value="scrubEffect(i, { offset: { ...effect.offset, y: $event } })"
+              @commit="commitEffect(i, { offset: { ...effect.offset, y: $event } })"
             />
           </div>
 
@@ -175,12 +201,14 @@ function toggleExpand(index: number) {
               icon="B"
               :model-value="effect.radius"
               :min="0"
-              @update:model-value="updateEffect(i, { radius: $event })"
+              @update:model-value="scrubEffect(i, { radius: $event })"
+              @commit="commitEffect(i, { radius: $event })"
             />
             <ScrubInput
               icon="S"
               :model-value="effect.spread"
-              @update:model-value="updateEffect(i, { spread: $event })"
+              @update:model-value="scrubEffect(i, { spread: $event })"
+              @commit="commitEffect(i, { spread: $event })"
             />
           </div>
 
@@ -192,7 +220,16 @@ function toggleExpand(index: number) {
               :model-value="Math.round(effect.color.a * 100)"
               :min="0"
               :max="100"
-              @update:model-value="updateColorOpacity(i, $event)"
+              @update:model-value="
+                scrubEffect(i, {
+                  color: { ...effect.color, a: Math.max(0, Math.min(1, $event / 100)) }
+                })
+              "
+              @commit="
+                commitEffect(i, {
+                  color: { ...effect.color, a: Math.max(0, Math.min(1, $event / 100)) }
+                })
+              "
             />
           </div>
         </template>
@@ -202,7 +239,8 @@ function toggleExpand(index: number) {
             icon="B"
             :model-value="effect.radius"
             :min="0"
-            @update:model-value="updateEffect(i, { radius: $event })"
+            @update:model-value="scrubEffect(i, { radius: $event })"
+            @commit="commitEffect(i, { radius: $event })"
           />
         </template>
       </div>

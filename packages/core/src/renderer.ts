@@ -959,6 +959,21 @@ export class SkiaRenderer {
       canvas.saveLayer(this.opacityPaint)
     }
 
+    const layerBlur = node.effects.find((e) => e.visible && e.type === 'LAYER_BLUR')
+    if (layerBlur) {
+      const blurPaint = new this.ck.Paint()
+      blurPaint.setImageFilter(
+        this.ck.ImageFilter.MakeBlur(
+          layerBlur.radius / 2,
+          layerBlur.radius / 2,
+          this.ck.TileMode.Clamp,
+          null
+        )
+      )
+      canvas.saveLayer(blurPaint)
+      blurPaint.delete()
+    }
+
     const rotation =
       overlays.rotationPreview?.nodeId === nodeId ? overlays.rotationPreview.angle : node.rotation
 
@@ -1013,6 +1028,9 @@ export class SkiaRenderer {
       }
     }
 
+    if (layerBlur) {
+      canvas.restore()
+    }
     if (node.opacity < 1) {
       canvas.restore()
     }
@@ -1357,6 +1375,9 @@ export class SkiaRenderer {
           node.bottomRightRadius > 0 ||
           node.bottomLeftRadius > 0))
 
+    // Effects (behind: drop shadow)
+    this.renderEffects(canvas, node, rect, hasRadius, 'behind')
+
     // Fills
     for (let fi = 0; fi < node.fills.length; fi++) {
       const fill = node.fills[fi]!
@@ -1367,9 +1388,6 @@ export class SkiaRenderer {
       this.drawNodeFill(canvas, node, rect, hasRadius)
       this.fillPaint.setShader(null)
     }
-
-    // Effects (behind: drop shadow)
-    this.renderEffects(canvas, node, rect, hasRadius, 'behind')
 
     // Strokes
     for (let si = 0; si < node.strokes.length; si++) {
@@ -1534,6 +1552,87 @@ export class SkiaRenderer {
     )
   }
 
+  private applyClippedBlur(
+    canvas: Canvas,
+    node: SceneNode,
+    rect: Float32Array,
+    hasRadius: boolean,
+    sigma: number
+  ): void {
+    canvas.save()
+    this.clipNodeShape(canvas, node, rect, hasRadius)
+    const blurPaint = new this.ck.Paint()
+    blurPaint.setImageFilter(
+      this.ck.ImageFilter.MakeBlur(sigma, sigma, this.ck.TileMode.Clamp, null)
+    )
+    canvas.saveLayer(blurPaint)
+    canvas.restore()
+    canvas.restore()
+    blurPaint.delete()
+  }
+
+  private clipNodeShape(canvas: Canvas, node: SceneNode, rect: Float32Array, hasRadius: boolean): void {
+    if (node.type === 'ELLIPSE') {
+      const clipPath = new this.ck.Path()
+      clipPath.addOval(rect)
+      canvas.clipPath(clipPath, this.ck.ClipOp.Intersect, true)
+      clipPath.delete()
+    } else if (hasRadius) {
+      canvas.clipRRect(this.makeRRect(node), this.ck.ClipOp.Intersect, true)
+    } else {
+      canvas.clipRect(rect, this.ck.ClipOp.Intersect, true)
+    }
+  }
+
+  private makeRRectWithSpread(node: SceneNode, spread: number): Float32Array {
+    if (node.independentCorners) {
+      return new Float32Array([
+        -spread,
+        -spread,
+        node.width + spread,
+        node.height + spread,
+        Math.max(0, node.topLeftRadius + spread),
+        Math.max(0, node.topLeftRadius + spread),
+        Math.max(0, node.topRightRadius + spread),
+        Math.max(0, node.topRightRadius + spread),
+        Math.max(0, node.bottomRightRadius + spread),
+        Math.max(0, node.bottomRightRadius + spread),
+        Math.max(0, node.bottomLeftRadius + spread),
+        Math.max(0, node.bottomLeftRadius + spread)
+      ])
+    }
+    return this.ck.RRectXY(
+      this.ck.LTRBRect(-spread, -spread, node.width + spread, node.height + spread),
+      Math.max(0, node.cornerRadius + spread),
+      Math.max(0, node.cornerRadius + spread)
+    )
+  }
+
+  private makeRRectWithOffset(node: SceneNode, ox: number, oy: number, spread: number): Float32Array {
+    const s = spread
+    if (node.independentCorners) {
+      return new Float32Array([
+        ox + s,
+        oy + s,
+        node.width + ox - s,
+        node.height + oy - s,
+        Math.max(0, node.topLeftRadius - s),
+        Math.max(0, node.topLeftRadius - s),
+        Math.max(0, node.topRightRadius - s),
+        Math.max(0, node.topRightRadius - s),
+        Math.max(0, node.bottomRightRadius - s),
+        Math.max(0, node.bottomRightRadius - s),
+        Math.max(0, node.bottomLeftRadius - s),
+        Math.max(0, node.bottomLeftRadius - s)
+      ])
+    }
+    return this.ck.RRectXY(
+      this.ck.LTRBRect(ox + s, oy + s, node.width + ox - s, node.height + oy - s),
+      Math.max(0, node.cornerRadius - s),
+      Math.max(0, node.cornerRadius - s)
+    )
+  }
+
   private drawArc(canvas: Canvas, node: SceneNode, paint: Paint): void {
     const arc = node.arcData
     if (!arc) return
@@ -1586,32 +1685,91 @@ export class SkiaRenderer {
       if (!effect.visible) continue
 
       if (pass === 'behind' && effect.type === 'DROP_SHADOW') {
-        this.auxFill.setColor(
-          this.ck.Color4f(effect.color.r, effect.color.g, effect.color.b, effect.color.a)
+        const sp = effect.spread
+        const shadowColor = this.ck.Color4f(
+          effect.color.r,
+          effect.color.g,
+          effect.color.b,
+          effect.color.a
         )
-        this.auxFill.setImageFilter(
-          this.ck.ImageFilter.MakeBlur(effect.radius, effect.radius, this.ck.TileMode.Decal, null)
-        )
+        const sigma = effect.radius / 2
 
-        canvas.save()
-        canvas.translate(effect.offset.x, effect.offset.y)
-        if (node.type === 'ELLIPSE') {
-          canvas.drawOval(rect, this.auxFill)
-        } else if (hasRadius) {
-          canvas.drawRRect(this.makeRRect(node), this.auxFill)
+        if (node.type === 'TEXT') {
+          const dropFilter = this.ck.ImageFilter.MakeDropShadowOnly(
+            effect.offset.x,
+            effect.offset.y,
+            sigma,
+            sigma,
+            shadowColor,
+            null
+          )
+          const layerPaint = new this.ck.Paint()
+          layerPaint.setImageFilter(dropFilter)
+          canvas.saveLayer(layerPaint)
+          this.renderText(canvas, node)
+          canvas.restore()
+          layerPaint.delete()
         } else {
-          canvas.drawRect(rect, this.auxFill)
+          const dropFilter = this.ck.ImageFilter.MakeDropShadowOnly(
+            effect.offset.x,
+            effect.offset.y,
+            sigma,
+            sigma,
+            shadowColor,
+            null
+          )
+          const layerPaint = new this.ck.Paint()
+          layerPaint.setImageFilter(dropFilter)
+          canvas.saveLayer(layerPaint)
+          this.auxFill.setColor(this.ck.WHITE)
+          this.auxFill.setImageFilter(null)
+          if (node.type === 'ELLIPSE') {
+            const spreadRect = this.ck.LTRBRect(-sp, -sp, node.width + sp, node.height + sp)
+            canvas.drawOval(spreadRect, this.auxFill)
+          } else if (hasRadius) {
+            canvas.drawRRect(this.makeRRectWithSpread(node, sp), this.auxFill)
+          } else {
+            const spreadRect = this.ck.LTRBRect(-sp, -sp, node.width + sp, node.height + sp)
+            canvas.drawRect(spreadRect, this.auxFill)
+          }
+          canvas.restore()
+          layerPaint.delete()
         }
-        canvas.restore()
-        this.auxFill.setImageFilter(null)
       }
 
-      if (pass === 'front' && effect.type === 'LAYER_BLUR') {
-        // Layer blur applied as save layer with blur filter — already applied via opacity layer
+      if (
+        (pass === 'behind' && effect.type === 'BACKGROUND_BLUR') ||
+        (pass === 'front' && effect.type === 'FOREGROUND_BLUR')
+      ) {
+        this.applyClippedBlur(canvas, node, rect, hasRadius, effect.radius / 2)
       }
 
       if (pass === 'front' && effect.type === 'INNER_SHADOW') {
-        // Inner shadow: draw a shadow clipped to the node shape
+        if (node.type === 'TEXT') {
+          const blurFilter = this.ck.ImageFilter.MakeBlur(
+            effect.radius,
+            effect.radius,
+            this.ck.TileMode.Decal,
+            null
+          )
+          const layerPaint = new this.ck.Paint()
+          layerPaint.setImageFilter(blurFilter)
+          layerPaint.setColorFilter(
+            this.ck.ColorFilter.MakeBlend(
+              this.ck.Color4f(effect.color.r, effect.color.g, effect.color.b, effect.color.a),
+              this.ck.BlendMode.SrcIn
+            )
+          )
+          canvas.saveLayer(layerPaint)
+          canvas.save()
+          canvas.translate(effect.offset.x, effect.offset.y)
+          this.renderText(canvas, node)
+          canvas.restore()
+          canvas.restore()
+          layerPaint.delete()
+          continue
+        }
+        const sp = effect.spread
         this.auxFill.setColor(
           this.ck.Color4f(effect.color.r, effect.color.g, effect.color.b, effect.color.a)
         )
@@ -1631,34 +1789,39 @@ export class SkiaRenderer {
           canvas.clipRect(rect, this.ck.ClipOp.Intersect, true)
         }
 
-        // Draw inverted shape offset by shadow offset
+        const expand = effect.radius * 2
         const big = this.ck.LTRBRect(
-          -effect.radius * 2 + effect.offset.x,
-          -effect.radius * 2 + effect.offset.y,
-          node.width + effect.radius * 2 + effect.offset.x,
-          node.height + effect.radius * 2 + effect.offset.y
+          -expand + effect.offset.x,
+          -expand + effect.offset.y,
+          node.width + expand + effect.offset.x,
+          node.height + expand + effect.offset.y
         )
         const bigPath = new this.ck.Path()
         bigPath.addRect(big)
         if (node.type === 'ELLIPSE') {
           const innerPath = new this.ck.Path()
           const offsetRect = this.ck.LTRBRect(
-            effect.offset.x,
-            effect.offset.y,
-            node.width + effect.offset.x,
-            node.height + effect.offset.y
+            effect.offset.x + sp,
+            effect.offset.y + sp,
+            node.width + effect.offset.x - sp,
+            node.height + effect.offset.y - sp
           )
           innerPath.addOval(offsetRect)
+          bigPath.op(innerPath, this.ck.PathOp.Difference)
+          innerPath.delete()
+        } else if (hasRadius) {
+          const innerPath = new this.ck.Path()
+          innerPath.addRRect(this.makeRRectWithOffset(node, effect.offset.x + sp, effect.offset.y + sp, -sp))
           bigPath.op(innerPath, this.ck.PathOp.Difference)
           innerPath.delete()
         } else {
           const innerPath = new this.ck.Path()
           innerPath.addRect(
             this.ck.LTRBRect(
-              effect.offset.x,
-              effect.offset.y,
-              node.width + effect.offset.x,
-              node.height + effect.offset.y
+              effect.offset.x + sp,
+              effect.offset.y + sp,
+              node.width + effect.offset.x - sp,
+              node.height + effect.offset.y - sp
             )
           )
           bigPath.op(innerPath, this.ck.PathOp.Difference)
