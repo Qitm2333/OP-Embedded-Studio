@@ -44,12 +44,23 @@ export function importNodeChanges(
     }
   }
 
-  for (const [, children] of childrenMap) {
-    children.sort((a, b) => {
-      const aPos = changeMap.get(a)?.parentIndex?.position ?? ''
-      const bPos = changeMap.get(b)?.parentIndex?.position ?? ''
-      return aPos.localeCompare(bPos)
-    })
+  for (const [parentId, children] of childrenMap) {
+    const parentNc = changeMap.get(parentId)
+    const stackMode = (parentNc as unknown as Record<string, unknown>)?.stackMode as string | undefined
+    if (stackMode === 'HORIZONTAL' || stackMode === 'VERTICAL') {
+      const axis = stackMode === 'HORIZONTAL' ? 'm02' : 'm12'
+      children.sort((a, b) => {
+        const aT = changeMap.get(a)?.transform?.[axis] ?? 0
+        const bT = changeMap.get(b)?.transform?.[axis] ?? 0
+        return aT - bT
+      })
+    } else {
+      children.sort((a, b) => {
+        const aPos = changeMap.get(a)?.parentIndex?.position ?? ''
+        const bPos = changeMap.get(b)?.parentIndex?.position ?? ''
+        return aPos.localeCompare(bPos)
+      })
+    }
   }
 
   function getChildren(ncId: string): string[] {

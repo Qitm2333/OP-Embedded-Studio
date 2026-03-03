@@ -209,11 +209,22 @@ export function importClipboardNodes(
         children.push(childId)
       }
     }
-    children.sort((a, b) => {
-      const aPos = guidMap.get(a)?.parentIndex?.position ?? ''
-      const bPos = guidMap.get(b)?.parentIndex?.position ?? ''
-      return aPos.localeCompare(bPos)
-    })
+    const parentNc = guidMap.get(figmaId)
+    const stackMode = (parentNc as unknown as Record<string, unknown>)?.stackMode as string | undefined
+    if (stackMode === 'HORIZONTAL' || stackMode === 'VERTICAL') {
+      const axis = stackMode === 'HORIZONTAL' ? 'm02' : 'm12'
+      children.sort((a, b) => {
+        const aT = guidMap.get(a)?.transform?.[axis] ?? 0
+        const bT = guidMap.get(b)?.transform?.[axis] ?? 0
+        return aT - bT
+      })
+    } else {
+      children.sort((a, b) => {
+        const aPos = guidMap.get(a)?.parentIndex?.position ?? ''
+        const bPos = guidMap.get(b)?.parentIndex?.position ?? ''
+        return aPos.localeCompare(bPos)
+      })
+    }
     for (const childId of children) {
       createNode(childId, node.id)
     }
