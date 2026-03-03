@@ -1,3 +1,4 @@
+import { weightToStyle } from '@open-pencil/core'
 import { shallowReactive, shallowRef, computed, watch } from 'vue'
 
 import {
@@ -22,13 +23,13 @@ import {
   prefetchFigmaSchema
 } from '@/engine/clipboard'
 import { exportFigFile } from '@/engine/fig-export'
+import { loadFont } from '@/engine/fonts'
 import { computeLayout, computeAllLayouts, setTextMeasurer } from '@/engine/layout'
 import { renderNodesToImage } from '@/engine/render-image'
 import { SceneGraph } from '@/engine/scene-graph'
 import { TextEditor } from '@/engine/text-editor'
 import { UndoManager } from '@/engine/undo'
 import { computeVectorBounds } from '@/engine/vector'
-import { loadFont } from '@/engine/fonts'
 import { readFigFile } from '@/kiwi/fig-file'
 
 import type { ExportFormat } from '@/engine/render-image'
@@ -1696,22 +1697,30 @@ export function createEditorStore() {
   }
 
   function loadFontsForNodes(nodeIds: string[]) {
-    const families = new Set<string>()
+    const fontKeys = new Set<string>()
     const collect = (id: string) => {
       const node = graph.getNode(id)
       if (!node) return
       if (node.type === 'TEXT') {
-        families.add(node.fontFamily || DEFAULT_FONT_FAMILY)
+        const family = node.fontFamily || DEFAULT_FONT_FAMILY
+        fontKeys.add(`${family}\0${weightToStyle(node.fontWeight || 400, node.italic)}`)
         for (const run of node.styleRuns) {
-          if (run.style.fontFamily) families.add(run.style.fontFamily)
+          const f = run.style.fontFamily ?? family
+          const w = run.style.fontWeight ?? node.fontWeight ?? 400
+          const i = run.style.italic ?? node.italic
+          fontKeys.add(`${f}\0${weightToStyle(w, i)}`)
         }
       }
       for (const childId of node.childIds) collect(childId)
     }
     for (const id of nodeIds) collect(id)
-    families.delete(DEFAULT_FONT_FAMILY)
-    if (families.size === 0) return
-    const promises = [...families].map((f) => loadFont(f))
+
+    const toLoad = [...fontKeys]
+      .map((k) => k.split('\0') as [string, string])
+      .filter(([family]) => family !== DEFAULT_FONT_FAMILY)
+    if (toLoad.length === 0) return
+
+    const promises = toLoad.map(([family, style]) => loadFont(family, style))
     Promise.all(promises).then(() => {
       computeAllLayouts(graph)
       requestRender()
