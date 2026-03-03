@@ -55,7 +55,8 @@ import {
   RULER_MAJOR_TOLERANCE,
   TEXT_SELECTION_COLOR,
   TEXT_CARET_COLOR,
-  TEXT_CARET_WIDTH
+  TEXT_CARET_WIDTH,
+  DEFAULT_FONT_FAMILY
 } from './constants'
 import { isFontLoaded } from './fonts'
 import { vectorNetworkToPath } from './vector'
@@ -306,7 +307,7 @@ export class SkiaRenderer {
     const { initFontService, loadFont } = await import('./fonts')
     initFontService(this.ck, this.fontProvider)
 
-    const fontData = await loadFont('Inter', 'Regular')
+    const fontData = await loadFont(DEFAULT_FONT_FAMILY, 'Regular')
     if (fontData) {
       const typeface = this.ck.Typeface.MakeFreeTypeFaceFromData(fontData)
       if (typeface) {
@@ -1964,7 +1965,7 @@ export class SkiaRenderer {
 
   isNodeFontLoaded(node: SceneNode): boolean {
     const families = new Set<string>()
-    families.add(node.fontFamily || 'Inter')
+    families.add(node.fontFamily || DEFAULT_FONT_FAMILY)
     for (const run of node.styleRuns) {
       if (run.style.fontFamily) families.add(run.style.fontFamily)
     }
@@ -2001,7 +2002,7 @@ export class SkiaRenderer {
       textAlign: this.getTextAlign(node.textAlignHorizontal),
       textStyle: {
         color: baseColor,
-        fontFamilies: [node.fontFamily || 'Inter'],
+        fontFamilies: [node.fontFamily || DEFAULT_FONT_FAMILY],
         fontSize: baseFontSize,
         fontStyle: {
           weight: { value: node.fontWeight || 400 } as FontWeight,
@@ -2029,7 +2030,7 @@ export class SkiaRenderer {
         builder.pushStyle(
           new ck.TextStyle({
             color: baseColor,
-            fontFamilies: [s.fontFamily ?? (node.fontFamily || 'Inter')],
+            fontFamilies: [s.fontFamily ?? (node.fontFamily || DEFAULT_FONT_FAMILY)],
             fontSize: s.fontSize ?? baseFontSize,
             fontStyle: {
               weight: { value: (s.fontWeight ?? node.fontWeight) || 400 } as FontWeight,

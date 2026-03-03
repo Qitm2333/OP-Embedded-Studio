@@ -1,4 +1,4 @@
-import { BLACK, DEFAULT_STROKE_MITER_LIMIT } from './constants'
+import { BLACK, DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from './constants'
 
 export type { GUID, Color } from './types'
 
@@ -334,7 +334,7 @@ function createDefaultNode(type: NodeType, overrides: Partial<SceneNode> = {}): 
     clipsContent: false,
     text: '',
     fontSize: 14,
-    fontFamily: 'Inter',
+    fontFamily: DEFAULT_FONT_FAMILY,
     fontWeight: 400,
     italic: false,
     textAlignHorizontal: 'LEFT',

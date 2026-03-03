@@ -1,4 +1,4 @@
-import { BLACK, DEFAULT_STROKE_MITER_LIMIT } from '../constants'
+import { BLACK, DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from '../constants'
 import { styleToWeight } from '../fonts'
 import { decodeVectorNetworkBlob } from '../vector'
 
@@ -449,7 +449,7 @@ export function nodeChangeToProps(
     cornerSmoothing: nc.cornerSmoothing ?? 0,
     text: nc.textData?.characters ?? '',
     fontSize: nc.fontSize ?? 14,
-    fontFamily: nc.fontName?.family ?? 'Inter',
+    fontFamily: nc.fontName?.family ?? DEFAULT_FONT_FAMILY,
     fontWeight: styleToWeight(nc.fontName?.style ?? ''),
     italic: nc.fontName?.style?.toLowerCase().includes('italic') ?? false,
     textAlignHorizontal:

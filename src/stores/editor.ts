@@ -9,7 +9,8 @@ import {
   CANVAS_BG_COLOR,
   ZOOM_DIVISOR,
   ZOOM_SCALE_MIN,
-  ZOOM_SCALE_MAX
+  ZOOM_SCALE_MAX,
+  DEFAULT_FONT_FAMILY
 } from '@/constants'
 import {
   parseFigmaClipboard,
@@ -27,6 +28,7 @@ import { SceneGraph } from '@/engine/scene-graph'
 import { TextEditor } from '@/engine/text-editor'
 import { UndoManager } from '@/engine/undo'
 import { computeVectorBounds } from '@/engine/vector'
+import { loadFont } from '@/engine/fonts'
 import { readFigFile } from '@/kiwi/fig-file'
 
 import type { ExportFormat } from '@/engine/render-image'
@@ -584,6 +586,7 @@ export function createEditorStore() {
       state.panY = 0
       state.zoom = 1
       state.pageColor = { ...CANVAS_BG_COLOR }
+      loadFontsForNodes(graph.getChildren(firstPage?.id ?? graph.rootId).map((n) => n.id))
       requestRender()
       startWatchingFile()
     } catch (e) {
@@ -1691,6 +1694,26 @@ export function createEditorStore() {
     return result
   }
 
+  function loadFontsForNodes(nodeIds: string[]) {
+    const families = new Set<string>()
+    const collect = (id: string) => {
+      const node = graph.getNode(id)
+      if (!node) return
+      if (node.type === 'TEXT') {
+        families.add(node.fontFamily || DEFAULT_FONT_FAMILY)
+        for (const run of node.styleRuns) {
+          if (run.style.fontFamily) families.add(run.style.fontFamily)
+        }
+      }
+      for (const childId of node.childIds) collect(childId)
+    }
+    for (const id of nodeIds) collect(id)
+    families.delete(DEFAULT_FONT_FAMILY)
+    if (families.size === 0) return
+    const promises = [...families].map((f) => loadFont(f))
+    Promise.all(promises).then(() => requestRender())
+  }
+
   function pasteFromHTML(html: string) {
     const ownNodes = parseOpenPencilClipboard(html)
     if (ownNodes) {
@@ -1741,6 +1764,7 @@ export function createEditorStore() {
               requestRender()
             }
           })
+          loadFontsForNodes(created)
           requestRender()
         }
       }
