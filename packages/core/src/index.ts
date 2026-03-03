@@ -48,7 +48,8 @@ export { FigmaAPI, FigmaNodeProxy, type FigmaFontName } from './figma-api'
 export { ALL_TOOLS, defineTool, toolsToAI } from './tools'
 export type { ToolDef, ParamDef, ParamType } from './tools'
 export { SkiaRenderer, type RenderOverlays } from './renderer'
-export { computeLayout, computeAllLayouts } from './layout'
+export { computeLayout, computeAllLayouts, setTextMeasurer } from './layout'
+export type { TextMeasurer } from './layout'
 export { getCanvasKit, getGpuBackend, type CanvasKitOptions, type GpuBackend } from './canvaskit'
 export {
   loadFont,
@@ -56,6 +57,7 @@ export {
   initFontService,
   getFontProvider,
   isFontLoaded,
+  markFontLoaded,
   ensureNodeFont,
   styleToWeight,
   weightToStyle

@@ -11,6 +11,14 @@ import Yoga, {
 
 import type { SceneGraph, SceneNode } from './scene-graph'
 
+export type TextMeasurer = (node: SceneNode) => { width: number; height: number } | null
+
+let globalTextMeasurer: TextMeasurer | null = null
+
+export function setTextMeasurer(measurer: TextMeasurer | null): void {
+  globalTextMeasurer = measurer
+}
+
 export function computeLayout(graph: SceneGraph, frameId: string): void {
   const frame = graph.getNode(frameId)
   if (!frame || frame.layoutMode === 'NONE') return
@@ -155,25 +163,36 @@ function configureChildAsLeaf(yogaChild: YogaNode, child: SceneNode, parent: Sce
   const isRow = parent.layoutMode === 'HORIZONTAL'
   const stretchCross = child.layoutAlignSelf === 'STRETCH' || parent.counterAxisAlign === 'STRETCH'
 
+  const measured = child.type === 'TEXT' && child.textAutoResize === 'WIDTH_AND_HEIGHT'
+    ? measureTextSize(child)
+    : null
+  const w = measured ? measured.width : child.width
+  const h = child.height
+
   if (child.layoutGrow > 0) {
     yogaChild.setFlexGrow(child.layoutGrow)
     if (!stretchCross) {
-      if (isRow) yogaChild.setHeight(child.height)
-      else yogaChild.setWidth(child.width)
+      if (isRow) yogaChild.setHeight(h)
+      else yogaChild.setWidth(w)
     }
   } else {
     if (isRow) {
-      yogaChild.setWidth(child.width)
-      if (!stretchCross) yogaChild.setHeight(child.height)
+      yogaChild.setWidth(w)
+      if (!stretchCross) yogaChild.setHeight(h)
     } else {
-      yogaChild.setHeight(child.height)
-      if (!stretchCross) yogaChild.setWidth(child.width)
+      yogaChild.setHeight(h)
+      if (!stretchCross) yogaChild.setWidth(w)
     }
   }
 
   if (child.layoutAlignSelf === 'STRETCH') {
     yogaChild.setAlignSelf(Align.Stretch)
   }
+}
+
+function measureTextSize(node: SceneNode): { width: number; height: number } | null {
+  if (!globalTextMeasurer) return null
+  return globalTextMeasurer(node)
 }
 
 function setSizing(

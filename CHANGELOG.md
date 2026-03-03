@@ -10,12 +10,33 @@
 - Flip horizontal/vertical using scale transform instead of rotation
 - Single-node alignment aligns to parent frame bounds
 
+### Build
+
+- Apple code signing and notarization for macOS builds
+- Git LFS storage moved from GitHub to Cloudflare R2
+
 ### Docs
 
 - Add macOS Gatekeeper workaround (`xattr -cr`) to README and docs for unsigned app warning
 
 ### Fixes
 
+- Fix Figma clipboard paste: extract shared kiwi→SceneNode conversion, fixing broken auto-layout, missing gradient/image fills, effects, style runs, and text properties
+- Fix vector rendering on paste — scale path coordinates from Figma's normalizedSize to actual node bounds
+- Fix pasted instances having no children — populate from component via symbolData when both are in clipboard
+- Detect component sets on import — promote FRAME nodes with VARIANT componentPropDefs to COMPONENT_SET
+- Skip internal canvas on paste — components on Figma's hidden internal page populate instances but are not pasted as visible nodes
+- Apply instance overrides on paste — text content, fills, visibility, layoutGrow, and textAutoResize from symbolOverrides
+- Fix auto-layout child ordering — sort by geometric position instead of z-order position strings
+- Load fonts on paste and .fig import — collect font families from text nodes and load into CanvasKit
+- Text measurement in auto-layout — use CanvasKit paragraph metrics for WIDTH_AND_HEIGHT text nodes
+- Recompute layouts after font loading completes
+- Fix PERCENT line height conversion — was stored as raw value instead of pixels
+- Fix InvalidCharacterError when copying nodes with non-ASCII text
+- Load all font weight/style variants needed by pasted text nodes
+- Fix font loading not registering in core cache
+- Fix halfLeading applied to text measurement — enable only for rendering
+- Clear hover on zoom/pinch to keep scene picture cache valid
 - Fix flip buttons using rotation math instead of actual mirroring
 - Fix flip transform encoding — scale first matrix column only (was incorrectly producing 180° rotation)
 - Decode flip state from .fig transform matrix on import

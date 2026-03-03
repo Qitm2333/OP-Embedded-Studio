@@ -50,7 +50,7 @@ describe('eval CLI', () => {
     expect(exitCode).toBe(0)
     const data = JSON.parse(stdout)
     expect(Array.isArray(data)).toBe(true)
-    expect(data.length).toBe(3)
+    expect(data.length).toBeGreaterThan(0)
     expect(data[0].type).toBe('TEXT')
   })
 

@@ -133,6 +133,12 @@ export async function ensureNodeFont(family: string, weight: number): Promise<vo
   await loadFont(family, style)
 }
 
+export function markFontLoaded(family: string, style: string, data: ArrayBuffer): void {
+  const cacheKey = `${family}|${style}`
+  loadedFamilies.set(cacheKey, data)
+  registerFontInCanvasKit(family, data)
+}
+
 export function isFontLoaded(family: string): boolean {
   return [...loadedFamilies.keys()].some((k) => k.startsWith(`${family}|`))
 }

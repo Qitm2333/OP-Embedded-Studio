@@ -55,7 +55,8 @@ import {
   RULER_MAJOR_TOLERANCE,
   TEXT_SELECTION_COLOR,
   TEXT_CARET_COLOR,
-  TEXT_CARET_WIDTH
+  TEXT_CARET_WIDTH,
+  DEFAULT_FONT_FAMILY
 } from './constants'
 import { isFontLoaded } from './fonts'
 import { vectorNetworkToPath } from './vector'
@@ -306,7 +307,7 @@ export class SkiaRenderer {
     const { initFontService, loadFont } = await import('./fonts')
     initFontService(this.ck, this.fontProvider)
 
-    const fontData = await loadFont('Inter', 'Regular')
+    const fontData = await loadFont(DEFAULT_FONT_FAMILY, 'Regular')
     if (fontData) {
       const typeface = this.ck.Typeface.MakeFreeTypeFaceFromData(fontData)
       if (typeface) {
@@ -1945,7 +1946,7 @@ export class SkiaRenderer {
 
     if (this.fontsLoaded && this.fontProvider) {
       if (this.isNodeFontLoaded(node)) {
-        const paragraph = this.buildParagraph(node, this.fillPaint.getColor())
+        const paragraph = this.buildParagraph(node, this.fillPaint.getColor(), { halfLeading: true })
         canvas.drawParagraph(paragraph, 0, 0)
         paragraph.delete()
       } else if (node.textPicture) {
@@ -1962,9 +1963,21 @@ export class SkiaRenderer {
     }
   }
 
+  measureTextNode(node: SceneNode): { width: number; height: number } | null {
+    if (!this.fontsLoaded || !this.fontProvider || !this.isNodeFontLoaded(node)) return null
+    if (node.type !== 'TEXT' || !node.text) return null
+
+    const paragraph = this.buildParagraph(node)
+    paragraph.layout(node.textAutoResize === 'WIDTH_AND_HEIGHT' ? 1e6 : node.width || 1e6)
+    const width = paragraph.getLongestLine()
+    const height = paragraph.getHeight()
+    paragraph.delete()
+    return { width: Math.ceil(width), height: Math.ceil(height) }
+  }
+
   isNodeFontLoaded(node: SceneNode): boolean {
     const families = new Set<string>()
-    families.add(node.fontFamily || 'Inter')
+    families.add(node.fontFamily || DEFAULT_FONT_FAMILY)
     for (const run of node.styleRuns) {
       if (run.style.fontFamily) families.add(run.style.fontFamily)
     }
@@ -1980,7 +1993,7 @@ export class SkiaRenderer {
     const bounds = ck.LTRBRect(0, 0, node.width || 1e6, node.height || 1e6)
     const recCanvas = recorder.beginRecording(bounds)
 
-    const paragraph = this.buildParagraph(node)
+    const paragraph = this.buildParagraph(node, undefined, { halfLeading: true })
     recCanvas.drawParagraph(paragraph, 0, 0)
     paragraph.delete()
 
@@ -1992,7 +2005,11 @@ export class SkiaRenderer {
     return bytes ?? null
   }
 
-  buildParagraph(node: SceneNode, color?: Float32Array): import('canvaskit-wasm').Paragraph {
+  buildParagraph(
+    node: SceneNode,
+    color?: Float32Array,
+    { halfLeading = false }: { halfLeading?: boolean } = {}
+  ): import('canvaskit-wasm').Paragraph {
     const ck = this.ck
     const baseColor = color ?? ck.BLACK
     const baseFontSize = node.fontSize || DEFAULT_FONT_SIZE
@@ -2001,7 +2018,7 @@ export class SkiaRenderer {
       textAlign: this.getTextAlign(node.textAlignHorizontal),
       textStyle: {
         color: baseColor,
-        fontFamilies: [node.fontFamily || 'Inter'],
+        fontFamilies: [node.fontFamily || DEFAULT_FONT_FAMILY],
         fontSize: baseFontSize,
         fontStyle: {
           weight: { value: node.fontWeight || 400 } as FontWeight,
@@ -2009,7 +2026,8 @@ export class SkiaRenderer {
         },
         letterSpacing: node.letterSpacing || 0,
         decoration: this.textDecorationValue(node.textDecoration),
-        heightMultiplier: node.lineHeight ? node.lineHeight / baseFontSize : undefined
+        heightMultiplier: node.lineHeight ? node.lineHeight / baseFontSize : undefined,
+        halfLeading
       }
     })
 
@@ -2029,7 +2047,7 @@ export class SkiaRenderer {
         builder.pushStyle(
           new ck.TextStyle({
             color: baseColor,
-            fontFamilies: [s.fontFamily ?? (node.fontFamily || 'Inter')],
+            fontFamilies: [s.fontFamily ?? (node.fontFamily || DEFAULT_FONT_FAMILY)],
             fontSize: s.fontSize ?? baseFontSize,
             fontStyle: {
               weight: { value: (s.fontWeight ?? node.fontWeight) || 400 } as FontWeight,
@@ -2040,7 +2058,8 @@ export class SkiaRenderer {
             heightMultiplier: (s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)
               ? (s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)! /
                 (s.fontSize ?? baseFontSize)
-              : undefined
+              : undefined,
+            halfLeading
           })
         )
         builder.addText(text.slice(run.start, run.start + run.length))

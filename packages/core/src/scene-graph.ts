@@ -1,4 +1,4 @@
-import { BLACK, DEFAULT_STROKE_MITER_LIMIT } from './constants'
+import { BLACK, DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from './constants'
 
 export type { GUID, Color } from './types'
 
@@ -334,7 +334,7 @@ function createDefaultNode(type: NodeType, overrides: Partial<SceneNode> = {}): 
     clipsContent: false,
     text: '',
     fontSize: 14,
-    fontFamily: 'Inter',
+    fontFamily: DEFAULT_FONT_FAMILY,
     fontWeight: 400,
     italic: false,
     textAlignHorizontal: 'LEFT',
@@ -920,6 +920,13 @@ export class SceneGraph {
     this.cloneChildrenWithMapping(component.id, instance.id)
 
     return instance
+  }
+
+  populateInstanceChildren(instanceId: string, componentId: string): void {
+    const instance = this.nodes.get(instanceId)
+    const component = this.nodes.get(componentId)
+    if (!instance || !component || instance.type !== 'INSTANCE') return
+    this.cloneChildrenWithMapping(componentId, instanceId)
   }
 
   private cloneChildrenWithMapping(sourceParentId: string, destParentId: string): void {
