@@ -48,6 +48,7 @@
 - Per-node SkPicture cache for effect rendering — unchanged shadow/blur nodes replay from cache on scene redraws
 - Drop shadows use `MaskFilter` direct draw instead of `saveLayer` offscreen buffers
 - Cached `ImageFilter`, `MaskFilter`, reusable effect paint — zero per-frame WASM allocations for effects
+- Per-frame absolute position cache — avoids repeated parent-chain walks during rendering
 - Optimize zoom/pan smoothness with `shallowReactive`, `useRafFn`, and input coalescing
 
 ### Build
@@ -69,6 +70,7 @@
 - 9 visual regression snapshot tests for effects rendering
 - Zoom/pan E2E tests and pipeline benchmark
 - MCP server edge-case tests for `find_nodes` and Zod validation
+- 6 unit tests for absolute position cache
 
 ## [0.4.2] (2026-03-02)
 
