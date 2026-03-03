@@ -223,6 +223,7 @@ describe('MCP tool execution', () => {
     const pages = findTool('list_pages').execute(api, {}) as { pages: { name: string }[] }
     expect(pages.pages.length).toBeGreaterThan(1)
 
+    findTool('switch_page').execute(api, { page: 'FOUNDATIONS' })
     const found = findTool('find_nodes').execute(api, { name: 'Button', type: 'COMPONENT' }) as { count: number }
     expect(found.count).toBeGreaterThan(0)
   })
