@@ -73,12 +73,13 @@ jobs:
         with:
           tauriScript: bunx tauri
           args: --target ${{ matrix.target }}
-          tagName: ${{ github.ref_name }}
-          releaseName: 'OpenPencil ${{ github.ref_name }}'
+          tagName: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
+          releaseName: ${{ startsWith(github.ref, 'refs/tags/v') && format('OpenPencil {0}', github.ref_name) || '' }}
           releaseBody: ${{ steps.changelog.outputs.release_notes }}
           releaseDraft: false
 
   publish-npm:
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
     permissions:
