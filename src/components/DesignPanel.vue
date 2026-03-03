@@ -28,7 +28,7 @@ const isComponentType = computed(() => {
 
 <template>
   <!-- Multi-select summary -->
-  <div v-if="multiCount > 1" class="flex-1 overflow-y-auto pb-4">
+  <div v-if="multiCount > 1" class="flex-1 overflow-x-hidden overflow-y-auto pb-4">
     <div class="flex items-center gap-1.5 border-b border-border px-3 py-2">
       <span class="text-[11px] text-muted">Mixed</span>
       <span class="text-xs font-semibold">{{ multiCount }} layers</span>
@@ -41,7 +41,7 @@ const isComponentType = computed(() => {
   </div>
 
   <!-- Single selection -->
-  <div v-else-if="node" class="flex-1 overflow-y-auto pb-4">
+  <div v-else-if="node" class="flex-1 overflow-x-hidden overflow-y-auto pb-4">
     <!-- Node header -->
     <div class="flex items-center gap-1.5 border-b border-border px-3 py-2">
       <span class="text-[11px]" :class="isComponentType ? 'text-[#9747ff]' : 'text-muted'">{{
@@ -80,7 +80,7 @@ const isComponentType = computed(() => {
     <ExportSection />
   </div>
 
-  <div v-else class="flex-1 overflow-y-auto pb-4">
+  <div v-else class="flex-1 overflow-x-hidden overflow-y-auto pb-4">
     <PageSection />
     <VariablesSection @open-dialog="variablesOpen = true" />
   </div>
