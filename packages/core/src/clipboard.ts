@@ -1,7 +1,5 @@
 import { inflateSync, deflateSync } from 'fflate'
 
-import { BLACK } from './constants'
-import { styleToWeight } from './fonts'
 import {
   sceneNodeToKiwi,
   buildFigKiwi,
@@ -10,20 +8,10 @@ import {
 } from './kiwi-serialize'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
-import { decodeVectorNetworkBlob } from './vector'
+import { nodeChangeToProps } from './kiwi/kiwi-convert'
 
 import type { NodeChange as KiwiNodeChange } from './kiwi/codec'
-import type {
-  SceneGraph,
-  SceneNode,
-  Fill,
-  Stroke,
-  LayoutMode,
-  LayoutSizing,
-  LayoutAlign,
-  LayoutCounterAlign,
-  VectorNetwork
-} from './scene-graph'
+import type { SceneGraph, SceneNode } from './scene-graph'
 
 interface FigmaClipboardMeta {
   fileKey: string
@@ -81,27 +69,6 @@ export async function parseFigmaClipboard(
   )
 
   return { nodes: msg.nodeChanges ?? [], meta, blobs }
-}
-
-function decodeVectorData(nc: KiwiNodeChange, blobs: Uint8Array[]): VectorNetwork | null {
-  const vectorData = nc.vectorData as
-    | {
-        vectorNetworkBlob?: number
-        normalizedSize?: { x: number; y: number }
-        styleOverrideTable?: Array<{ styleID: number; handleMirroring?: string }>
-      }
-    | undefined
-
-  if (!vectorData || vectorData.vectorNetworkBlob === undefined) return null
-
-  const blobIdx = vectorData.vectorNetworkBlob
-  if (blobIdx < 0 || blobIdx >= blobs.length) return null
-
-  try {
-    return decodeVectorNetworkBlob(blobs[blobIdx], vectorData.styleOverrideTable)
-  } catch {
-    return null
-  }
 }
 
 const NON_VISUAL_TYPES = new Set([
@@ -202,96 +169,15 @@ export function importClipboardNodes(
     const nc = guidMap.get(figmaId)
     if (!nc) return
 
-    const x = (nc.transform?.m02 ?? 0) + (ourParentId === targetParentId ? offsetX : 0)
-    const y = (nc.transform?.m12 ?? 0) + (ourParentId === targetParentId ? offsetY : 0)
+    const { nodeType, ...props } = nodeChangeToProps(nc, blobs)
+    if (nodeType === 'DOCUMENT' || nodeType === 'VARIABLE') return
 
-    let rotation = 0
-    if (nc.transform) {
-      rotation = Math.atan2(nc.transform.m10, nc.transform.m00) * (180 / Math.PI)
+    if (ourParentId === targetParentId) {
+      props.x = (props.x ?? 0) + offsetX
+      props.y = (props.y ?? 0) + offsetY
     }
 
-    const fills: Fill[] = (nc.fillPaints ?? [])
-      .filter((p) => p.type === 'SOLID' && p.color)
-      .map((p) => ({
-        type: 'SOLID' as const,
-        color: p.color ?? { ...BLACK },
-        opacity: p.opacity ?? 1,
-        visible: p.visible ?? true
-      }))
-
-    const strokes: Stroke[] = (nc.strokePaints ?? [])
-      .filter((p) => p.type === 'SOLID' && p.color)
-      .map((p) => ({
-        color: p.color ?? { ...BLACK },
-        weight: nc.strokeWeight ?? 1,
-        opacity: p.opacity ?? 1,
-        visible: p.visible ?? true,
-        align: 'CENTER' as const
-      }))
-
-    const nodeType = mapNodeType(nc.type)
-    const node = graph.createNode(nodeType, ourParentId, {
-      name: nc.name ?? nodeType,
-      x,
-      y,
-      width: nc.size?.x ?? 100,
-      height: nc.size?.y ?? 100,
-      rotation,
-      opacity: nc.opacity ?? 1,
-      visible: nc.visible ?? true,
-      fills,
-      strokes,
-      cornerRadius: nc.cornerRadius ?? 0,
-      independentCorners: nc.rectangleCornerRadiiIndependent ?? false,
-      topLeftRadius: nc.rectangleTopLeftCornerRadius ?? 0,
-      topRightRadius: nc.rectangleTopRightCornerRadius ?? 0,
-      bottomLeftRadius: nc.rectangleBottomLeftCornerRadius ?? 0,
-      bottomRightRadius: nc.rectangleBottomRightCornerRadius ?? 0,
-      text: nc.textData?.characters ?? '',
-      fontSize: nc.fontSize ?? 14,
-      fontFamily: nc.fontName?.family ?? 'Inter',
-      textAlignHorizontal:
-        (nc.textAlignHorizontal as 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED') ?? 'LEFT',
-      layoutMode: mapLayoutMode(nc.stackMode as string),
-      itemSpacing: (nc.stackSpacing as number) ?? 0,
-      paddingTop: (nc.stackVerticalPadding as number) ?? (nc.stackPadding as number) ?? 0,
-      paddingBottom:
-        (nc.stackPaddingBottom as number) ??
-        (nc.stackVerticalPadding as number) ??
-        (nc.stackPadding as number) ??
-        0,
-      paddingLeft: (nc.stackHorizontalPadding as number) ?? (nc.stackPadding as number) ?? 0,
-      paddingRight:
-        (nc.stackPaddingRight as number) ??
-        (nc.stackHorizontalPadding as number) ??
-        (nc.stackPadding as number) ??
-        0,
-      primaryAxisSizing: mapSizing(nc.stackPrimarySizing as string),
-      counterAxisSizing: mapSizing(nc.stackCounterSizing as string),
-      primaryAxisAlign: mapPrimaryAlign(
-        (nc.stackPrimaryAlignItems as string) ?? (nc.stackJustify as string)
-      ),
-      counterAxisAlign: mapCounterAlign(
-        (nc.stackCounterAlignItems as string) ?? (nc.stackCounterAlign as string)
-      ),
-      layoutWrap: (nc.stackWrap as string) === 'WRAP' ? ('WRAP' as const) : ('NO_WRAP' as const),
-      counterAxisSpacing: (nc.stackCounterSpacing as number) ?? 0,
-      layoutPositioning:
-        (nc.stackPositioning as string) === 'ABSOLUTE' ? ('ABSOLUTE' as const) : ('AUTO' as const),
-      layoutGrow: (nc.stackChildPrimaryGrow as number) ?? 0,
-      layoutAlignSelf:
-        (nc.stackChildAlignSelf as string) === 'STRETCH' ? ('STRETCH' as const) : ('AUTO' as const),
-      clipsContent: nc.frameMaskDisabled === false,
-      textAutoResize: 'NONE' as const,
-      fontWeight: nc.fontWeight ?? styleToWeight(nc.fontName?.style ?? ''),
-      italic: nc.fontName?.style?.toLowerCase().includes('italic') ?? false,
-      lineHeight: mapLineHeight(nc.lineHeight as { value: number; units: string } | undefined),
-      letterSpacing: mapLetterSpacing(
-        nc.letterSpacing as { value: number; units: string } | undefined,
-        nc.fontSize as number | undefined
-      ),
-      vectorNetwork: decodeVectorData(nc, blobs)
-    })
+    const node = graph.createNode(nodeType, ourParentId, props)
 
     created.set(figmaId, node.id)
     if (ourParentId === targetParentId) createdIds.push(node.id)
@@ -317,82 +203,6 @@ export function importClipboardNodes(
   }
 
   return createdIds
-}
-
-function mapLayoutMode(mode?: string): LayoutMode {
-  if (mode === 'HORIZONTAL') return 'HORIZONTAL'
-  if (mode === 'VERTICAL') return 'VERTICAL'
-  return 'NONE'
-}
-
-function mapSizing(sizing?: string): LayoutSizing {
-  if (sizing === 'RESIZE_TO_FIT' || sizing === 'RESIZE_TO_FIT_WITH_IMPLICIT_SIZE') return 'HUG'
-  if (sizing === 'FILL') return 'FILL'
-  return 'FIXED'
-}
-
-function mapPrimaryAlign(align?: string): LayoutAlign {
-  if (align === 'CENTER') return 'CENTER'
-  if (align === 'MAX') return 'MAX'
-  if (align === 'SPACE_BETWEEN' || align === 'SPACE_EVENLY') return 'SPACE_BETWEEN'
-  return 'MIN'
-}
-
-function mapCounterAlign(align?: string): LayoutCounterAlign {
-  if (align === 'CENTER') return 'CENTER'
-  if (align === 'MAX') return 'MAX'
-  if (align === 'STRETCH') return 'STRETCH'
-  if (align === 'BASELINE') return 'BASELINE'
-  return 'MIN'
-}
-
-function mapLetterSpacing(ls?: { value: number; units: string }, fontSize?: number): number {
-  if (!ls) return 0
-  if (ls.units === 'PIXELS') return ls.value
-  if (ls.units === 'PERCENT') return (ls.value / 100) * (fontSize ?? 14)
-  return 0
-}
-
-function mapLineHeight(lh?: { value: number; units: string }): number | undefined {
-  if (!lh) return undefined
-  if (lh.units === 'PIXELS') return lh.value
-  if (lh.units === 'PERCENT') return undefined
-  return undefined
-}
-
-function mapNodeType(type?: string): SceneNode['type'] {
-  switch (type) {
-    case 'FRAME':
-      return 'FRAME'
-    case 'COMPONENT':
-      return 'COMPONENT'
-    case 'COMPONENT_SET':
-      return 'COMPONENT_SET'
-    case 'INSTANCE':
-      return 'INSTANCE'
-    case 'RECTANGLE':
-    case 'ROUNDED_RECTANGLE':
-      return 'RECTANGLE'
-    case 'ELLIPSE':
-      return 'ELLIPSE'
-    case 'TEXT':
-      return 'TEXT'
-    case 'LINE':
-      return 'LINE'
-    case 'STAR':
-      return 'STAR'
-    case 'REGULAR_POLYGON':
-      return 'POLYGON'
-    case 'VECTOR':
-    case 'BOOLEAN_OPERATION':
-      return 'VECTOR'
-    case 'GROUP':
-      return 'GROUP'
-    case 'SECTION':
-      return 'SECTION'
-    default:
-      return 'RECTANGLE'
-  }
 }
 
 export function buildFigmaClipboardHTML(nodes: SceneNode[], graph: SceneGraph): string | null {

@@ -200,6 +200,80 @@ describe('importClipboardNodes', () => {
     expect(graph.getNode(created[2])!.letterSpacing).toBe(0)
   })
 
+  it('maps SYMBOL type to COMPONENT with auto-layout', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page' },
+      {
+        guid: { sessionID: 0, localID: 10 },
+        parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' },
+        type: 'SYMBOL',
+        name: 'Dialog/Form',
+        size: { x: 452, y: 299 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+        stackMode: 'VERTICAL',
+        stackSpacing: 16,
+        stackVerticalPadding: 24,
+        stackHorizontalPadding: 24,
+        stackPrimarySizing: 'RESIZE_TO_FIT',
+        stackCounterSizing: 'RESIZE_TO_FIT',
+      },
+      {
+        guid: { sessionID: 0, localID: 11 },
+        parentIndex: { guid: { sessionID: 0, localID: 10 }, position: '!' },
+        type: 'TEXT',
+        name: 'Title',
+        size: { x: 404, y: 32 },
+        transform: { m00: 1, m01: 0, m02: 24, m10: 0, m11: 1, m12: 24 },
+        textData: { characters: 'Hello' },
+        fontSize: 24,
+        fontWeight: 700,
+      },
+      {
+        guid: { sessionID: 0, localID: 12 },
+        parentIndex: { guid: { sessionID: 0, localID: 10 }, position: '"' },
+        type: 'RECTANGLE',
+        name: 'Divider',
+        size: { x: 404, y: 1 },
+        transform: { m00: 1, m01: 0, m02: 24, m10: 0, m11: 1, m12: 72 },
+      },
+    ] as any[]
+
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    expect(created).toHaveLength(1)
+
+    const component = graph.getNode(created[0])!
+    expect(component.type).toBe('COMPONENT')
+    expect(component.layoutMode).toBe('VERTICAL')
+    expect(component.itemSpacing).toBe(16)
+    expect(component.primaryAxisSizing).toBe('HUG')
+    expect(component.counterAxisSizing).toBe('HUG')
+
+    const children = graph.getChildren(component.id)
+    expect(children).toHaveLength(2)
+    expect(children[0].name).toBe('Title')
+    expect(children[1].name).toBe('Divider')
+  })
+
+  it('imports textAutoResize from clipboard data', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page' },
+      { guid: { sessionID: 0, localID: 10 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' }, type: 'TEXT', name: 'AutoHeight', size: { x: 200, y: 24 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 }, textData: { characters: 'Hello' }, fontSize: 16, textAutoResize: 'HEIGHT' },
+      { guid: { sessionID: 0, localID: 11 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '"' }, type: 'TEXT', name: 'AutoBoth', size: { x: 100, y: 24 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 30 }, textData: { characters: 'World' }, fontSize: 16, textAutoResize: 'WIDTH_AND_HEIGHT' },
+      { guid: { sessionID: 0, localID: 12 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '#' }, type: 'TEXT', name: 'Fixed', size: { x: 100, y: 24 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 60 }, textData: { characters: 'Fixed' }, fontSize: 16 },
+    ] as any[]
+
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    expect(graph.getNode(created[0])!.textAutoResize).toBe('HEIGHT')
+    expect(graph.getNode(created[1])!.textAutoResize).toBe('WIDTH_AND_HEIGHT')
+    expect(graph.getNode(created[2])!.textAutoResize).toBe('NONE')
+  })
+
   it('undo removes all imported nodes including children', () => {
     const { graph, pageId } = createGraphWithPage()
 
