@@ -103,7 +103,7 @@ export function convertFills(paints?: Paint[]): Fill[] {
   })
 }
 
-export function convertStrokes(
+function convertStrokes(
   paints?: Paint[],
   weight?: number,
   align?: string,
@@ -128,7 +128,7 @@ export function convertStrokes(
   }))
 }
 
-export function convertEffects(effects?: KiwiEffect[]): Effect[] {
+function convertEffects(effects?: KiwiEffect[]): Effect[] {
   if (!effects) return []
   return effects.map((e) => ({
     type: e.type as Effect['type'],
@@ -141,7 +141,7 @@ export function convertEffects(effects?: KiwiEffect[]): Effect[] {
   }))
 }
 
-export function mapNodeType(type?: string): NodeType | 'DOCUMENT' | 'VARIABLE' {
+function mapNodeType(type?: string): NodeType | 'DOCUMENT' | 'VARIABLE' {
   switch (type) {
     case 'DOCUMENT':
       return 'DOCUMENT'
@@ -190,7 +190,7 @@ export function mapNodeType(type?: string): NodeType | 'DOCUMENT' | 'VARIABLE' {
   }
 }
 
-export function mapStackMode(mode?: string): LayoutMode {
+function mapStackMode(mode?: string): LayoutMode {
   switch (mode) {
     case 'HORIZONTAL':
       return 'HORIZONTAL'
@@ -201,7 +201,7 @@ export function mapStackMode(mode?: string): LayoutMode {
   }
 }
 
-export function mapStackSizing(sizing?: string): LayoutSizing {
+function mapStackSizing(sizing?: string): LayoutSizing {
   switch (sizing) {
     case 'RESIZE_TO_FIT':
     case 'RESIZE_TO_FIT_WITH_IMPLICIT_SIZE':
@@ -213,7 +213,7 @@ export function mapStackSizing(sizing?: string): LayoutSizing {
   }
 }
 
-export function mapStackJustify(justify?: string): LayoutAlign {
+function mapStackJustify(justify?: string): LayoutAlign {
   switch (justify) {
     case 'CENTER':
       return 'CENTER'
@@ -227,7 +227,7 @@ export function mapStackJustify(justify?: string): LayoutAlign {
   }
 }
 
-export function mapStackCounterAlign(align?: string): LayoutCounterAlign {
+function mapStackCounterAlign(align?: string): LayoutCounterAlign {
   switch (align) {
     case 'CENTER':
       return 'CENTER'
@@ -242,7 +242,7 @@ export function mapStackCounterAlign(align?: string): LayoutCounterAlign {
   }
 }
 
-export function mapConstraint(c?: string): ConstraintType {
+function mapConstraint(c?: string): ConstraintType {
   switch (c) {
     case 'CENTER':
       return 'CENTER'
@@ -257,7 +257,7 @@ export function mapConstraint(c?: string): ConstraintType {
   }
 }
 
-export function mapTextDecoration(d?: string): TextDecoration {
+function mapTextDecoration(d?: string): TextDecoration {
   switch (d) {
     case 'UNDERLINE':
       return 'UNDERLINE'
@@ -278,7 +278,7 @@ function convertLetterSpacing(
   return ls.value
 }
 
-export function mapArcData(data?: Record<string, number>): ArcData | null {
+function mapArcData(data?: Record<string, number>): ArcData | null {
   if (!data) return null
   return {
     startingAngle: data.startingAngle ?? 0,
@@ -287,7 +287,7 @@ export function mapArcData(data?: Record<string, number>): ArcData | null {
   }
 }
 
-export function importStyleRuns(nc: NodeChange): StyleRun[] {
+function importStyleRuns(nc: NodeChange): StyleRun[] {
   const td = nc.textData
   if (!td?.characterStyleIDs || !td.styleOverrideTable) return []
 
@@ -335,7 +335,7 @@ export function importStyleRuns(nc: NodeChange): StyleRun[] {
   return runs
 }
 
-export function resolveVectorNetwork(
+function resolveVectorNetwork(
   nc: NodeChange,
   blobs: Uint8Array[]
 ): VectorNetwork | null {
@@ -377,7 +377,7 @@ export function resolveVectorNetwork(
   }
 }
 
-export function extractBoundVariables(nc: NodeChange): Record<string, string> {
+function extractBoundVariables(nc: NodeChange): Record<string, string> {
   const bindings: Record<string, string> = {}
   nc.fillPaints?.forEach((paint, i) => {
     if (paint.colorVariableBinding) {
@@ -513,6 +513,28 @@ function isComponentSet(nc: NodeChange): boolean {
   const defs = ext(nc).componentPropDefs as Array<{ type?: string }> | undefined
   if (!defs?.length) return false
   return defs.some((d) => d.type === 'VARIANT')
+}
+
+export function sortChildren(
+  children: string[],
+  parentNc: NodeChange,
+  nodeMap: Map<string, NodeChange>
+): void {
+  const stackMode = (parentNc as unknown as Record<string, unknown>).stackMode as string | undefined
+  if (stackMode === 'HORIZONTAL' || stackMode === 'VERTICAL') {
+    const axis = stackMode === 'HORIZONTAL' ? 'm02' : 'm12'
+    children.sort((a, b) => {
+      const aT = nodeMap.get(a)?.transform?.[axis] ?? 0
+      const bT = nodeMap.get(b)?.transform?.[axis] ?? 0
+      return aT - bT
+    })
+  } else {
+    children.sort((a, b) => {
+      const aPos = nodeMap.get(a)?.parentIndex?.position ?? ''
+      const bPos = nodeMap.get(b)?.parentIndex?.position ?? ''
+      return aPos.localeCompare(bPos)
+    })
+  }
 }
 
 function extractSymbolId(nc: NodeChange): string {

@@ -8,7 +8,7 @@ import {
 } from './kiwi-serialize'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
-import { nodeChangeToProps, convertFills } from './kiwi/kiwi-convert'
+import { nodeChangeToProps, convertFills, sortChildren } from './kiwi/kiwi-convert'
 
 import type { NodeChange as KiwiNodeChange } from './kiwi/codec'
 import type { SceneGraph, SceneNode } from './scene-graph'
@@ -209,22 +209,7 @@ export function importClipboardNodes(
         children.push(childId)
       }
     }
-    const parentNc = guidMap.get(figmaId)
-    const stackMode = (parentNc as unknown as Record<string, unknown>)?.stackMode as string | undefined
-    if (stackMode === 'HORIZONTAL' || stackMode === 'VERTICAL') {
-      const axis = stackMode === 'HORIZONTAL' ? 'm02' : 'm12'
-      children.sort((a, b) => {
-        const aT = guidMap.get(a)?.transform?.[axis] ?? 0
-        const bT = guidMap.get(b)?.transform?.[axis] ?? 0
-        return aT - bT
-      })
-    } else {
-      children.sort((a, b) => {
-        const aPos = guidMap.get(a)?.parentIndex?.position ?? ''
-        const bPos = guidMap.get(b)?.parentIndex?.position ?? ''
-        return aPos.localeCompare(bPos)
-      })
-    }
+    sortChildren(children, nc, guidMap)
     for (const childId of children) {
       createNode(childId, node.id)
     }
@@ -290,7 +275,8 @@ export function importClipboardNodes(
       if (ov.fillPaints) updates.fills = convertFills(ov.fillPaints as KiwiNodeChange['fillPaints'])
       if (ov.visible != null) updates.visible = ov.visible as boolean
 
-      if (Object.keys(updates).length > 0) graph.updateNode(instanceChildId, updates)
+      if (updates.text != null || updates.fills || updates.visible != null)
+        graph.updateNode(instanceChildId, updates)
     }
   }
 

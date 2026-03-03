@@ -1,6 +1,6 @@
 import { SceneGraph } from '../scene-graph'
 
-import { guidToString, nodeChangeToProps } from './kiwi-convert'
+import { guidToString, nodeChangeToProps, sortChildren } from './kiwi-convert'
 
 import type { NodeChange } from './codec'
 
@@ -46,21 +46,7 @@ export function importNodeChanges(
 
   for (const [parentId, children] of childrenMap) {
     const parentNc = changeMap.get(parentId)
-    const stackMode = (parentNc as unknown as Record<string, unknown>)?.stackMode as string | undefined
-    if (stackMode === 'HORIZONTAL' || stackMode === 'VERTICAL') {
-      const axis = stackMode === 'HORIZONTAL' ? 'm02' : 'm12'
-      children.sort((a, b) => {
-        const aT = changeMap.get(a)?.transform?.[axis] ?? 0
-        const bT = changeMap.get(b)?.transform?.[axis] ?? 0
-        return aT - bT
-      })
-    } else {
-      children.sort((a, b) => {
-        const aPos = changeMap.get(a)?.parentIndex?.position ?? ''
-        const bPos = changeMap.get(b)?.parentIndex?.position ?? ''
-        return aPos.localeCompare(bPos)
-      })
-    }
+    if (parentNc) sortChildren(children, parentNc, changeMap)
   }
 
   function getChildren(ncId: string): string[] {
