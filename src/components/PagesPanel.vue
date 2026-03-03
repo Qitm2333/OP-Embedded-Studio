@@ -55,7 +55,7 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
         +
       </button>
     </div>
-    <div class="overflow-y-auto px-1 pb-1">
+    <div class="overflow-x-hidden overflow-y-auto px-1 pb-1">
       <div v-for="pg in pages" :key="pg.id">
         <input
           v-if="editingPageId === pg.id"
@@ -84,7 +84,7 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
           @dblclick="startRename(pg.id)"
         >
           <icon-lucide-file class="size-3 shrink-0" />
-          {{ pg.name }}
+          <span class="truncate">{{ pg.name }}</span>
         </button>
       </div>
     </div>
