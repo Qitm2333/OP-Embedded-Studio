@@ -931,6 +931,7 @@ export function useCanvasInput(
 
   function flushWheel() {
     wheelAccum.rafId = 0
+    store.setHoveredNode(null)
     if (wheelAccum.hasZoom) {
       store.applyZoom(wheelAccum.zoomDelta, wheelAccum.zoomCenterX, wheelAccum.zoomCenterY)
     } else {
@@ -1141,6 +1142,7 @@ export function useCanvasInput(
       const newMidX = (a.clientX + b.clientX) / 2 - rect.left
       const newMidY = (a.clientY + b.clientY) / 2 - rect.top
 
+      store.setHoveredNode(null)
       const newDist = touchDist(a, b)
       if (pinchStartDist > 0) {
         const scale = newDist / pinchStartDist
@@ -1210,6 +1212,7 @@ export function useCanvasInput(
   function flushGesture() {
     gestureRafId = 0
     if (!pendingGesture) return
+    store.setHoveredNode(null)
     const { scale, sx, sy } = pendingGesture
     pendingGesture = null
     const newZoom = Math.max(0.02, Math.min(256, gestureStartZoom * scale))
