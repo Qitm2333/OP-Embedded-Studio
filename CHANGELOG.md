@@ -10,6 +10,11 @@
 - Flip horizontal/vertical using scale transform instead of rotation
 - Single-node alignment aligns to parent frame bounds
 
+### Build
+
+- Apple code signing and notarization for macOS builds
+- Git LFS storage moved from GitHub to Cloudflare R2
+
 ### Docs
 
 - Add macOS Gatekeeper workaround (`xattr -cr`) to README and docs for unsigned app warning
@@ -25,6 +30,13 @@
 - Fix auto-layout child ordering — sort by geometric position instead of z-order position strings
 - Load fonts on paste and .fig import — collect font families from text nodes and load into CanvasKit
 - Text measurement in auto-layout — use CanvasKit paragraph metrics for WIDTH_AND_HEIGHT text nodes
+- Recompute layouts after font loading completes
+- Fix PERCENT line height conversion — was stored as raw value instead of pixels
+- Fix InvalidCharacterError when copying nodes with non-ASCII text
+- Load all font weight/style variants needed by pasted text nodes
+- Fix font loading not registering in core cache
+- Fix halfLeading applied to text measurement — enable only for rendering
+- Clear hover on zoom/pinch to keep scene picture cache valid
 - Fix flip buttons using rotation math instead of actual mirroring
 - Fix flip transform encoding — scale first matrix column only (was incorrectly producing 180° rotation)
 - Decode flip state from .fig transform matrix on import
