@@ -420,7 +420,7 @@ export class SkiaRenderer {
     if (!pageNode) return null
 
     const font = this.componentLabelFont
-    const LABEL_TYPES = new Set(['COMPONENT', 'COMPONENT_SET', 'INSTANCE'])
+    const LABEL_TYPES = new Set(['COMPONENT', 'COMPONENT_SET'])
     let result: SceneNode | null = null
 
     const check = (parentId: string, ox: number, oy: number) => {
@@ -1281,7 +1281,7 @@ export class SkiaRenderer {
     if (!pageNode) return
 
     const font = this.componentLabelFont
-    const LABEL_TYPES = new Set(['COMPONENT', 'COMPONENT_SET', 'INSTANCE'])
+    const LABEL_TYPES = new Set(['COMPONENT', 'COMPONENT_SET'])
 
     const nodes: { node: SceneNode; absX: number; absY: number; inside: boolean }[] = []
     const collect = (parentId: string, ox: number, oy: number) => {
