@@ -23,23 +23,6 @@ export async function prefetchFigmaSchema(): Promise<void> {
   await initCodec()
 }
 
-function binaryToBase64(bytes: Uint8Array): string {
-  let binary = ''
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i])
-  }
-  return btoa(binary)
-}
-
-function base64ToBinary(b64: string): Uint8Array {
-  const raw = atob(b64)
-  const bytes = new Uint8Array(raw.length)
-  for (let i = 0; i < raw.length; i++) {
-    bytes[i] = raw.charCodeAt(i)
-  }
-  return bytes
-}
-
 // --- Paste from Figma ---
 
 export async function parseFigmaClipboard(
@@ -50,7 +33,7 @@ export async function parseFigmaClipboard(
   if (!metaMatch || !bufMatch) return null
 
   const meta: FigmaClipboardMeta = JSON.parse(atob(metaMatch[1]))
-  const binary = base64ToBinary(bufMatch[1])
+  const binary = Uint8Array.fromBase64(bufMatch[1])
 
   const chunks = parseFigKiwiChunks(binary)
   if (!chunks) return null
@@ -339,7 +322,7 @@ export function buildFigmaClipboardHTML(nodes: SceneNode[], graph: SceneGraph): 
 
   const dataRaw = compiled.encodeMessage(msg)
   const figKiwiBinary = buildFigKiwi(schemaDeflated, dataRaw)
-  const bufferB64 = binaryToBase64(figKiwiBinary)
+  const bufferB64 = figKiwiBinary.toBase64()
 
   const meta: FigmaClipboardMeta = {
     fileKey: 'openpencil',
@@ -364,7 +347,7 @@ export function parseOpenPencilClipboard(
   if (!match) return null
 
   try {
-    const decoded = JSON.parse(atob(match[1]))
+    const decoded = JSON.parse(new TextDecoder().decode(Uint8Array.fromBase64(match[1])))
     if (decoded.format === 'openpencil/v1' && Array.isArray(decoded.nodes)) {
       restoreTextPictures(decoded.nodes)
       return decoded.nodes
@@ -378,7 +361,7 @@ export function parseOpenPencilClipboard(
 function restoreTextPictures(nodes: Array<Record<string, unknown>>): void {
   for (const node of nodes) {
     if (typeof node.textPicture === 'string') {
-      node.textPicture = base64ToBinary(node.textPicture)
+      node.textPicture = Uint8Array.fromBase64(node.textPicture)
     }
     if (Array.isArray(node.children)) {
       restoreTextPictures(node.children)
@@ -397,7 +380,7 @@ export function buildOpenPencilClipboardHTML(
     format: 'openpencil/v1',
     nodes: collectNodeTree(nodes, graph, textPictureBuilder)
   }
-  return `<!--(openpencil)${btoa(JSON.stringify(data))}(/openpencil)-->`
+  return `<!--(openpencil)${new TextEncoder().encode(JSON.stringify(data)).toBase64()}(/openpencil)-->`
 }
 
 function collectNodeTree(
@@ -411,7 +394,7 @@ function collectNodeTree(
 
     if (node.type === 'TEXT' && node.text && textPictureBuilder) {
       const pic = node.textPicture ?? textPictureBuilder(node)
-      if (pic) serialized.textPicture = binaryToBase64(pic)
+      if (pic) serialized.textPicture = pic.toBase64()
     } else {
       delete serialized.textPicture
     }
