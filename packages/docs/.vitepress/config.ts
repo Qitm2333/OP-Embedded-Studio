@@ -27,6 +27,8 @@ interface SidebarLabels {
 
 interface NavLabels {
   userGuide: string
+  reference: string
+  development: string
   openApp: string
 }
 
@@ -78,6 +80,32 @@ const guideSidebar = (prefix: string, l: SidebarLabels): DefaultTheme.SidebarIte
   },
 ]
 
+const referenceSidebar = (prefix: string, label: string): DefaultTheme.SidebarItem[] => [
+  {
+    text: label,
+    items: [
+      { text: 'Keyboard Shortcuts', link: `${prefix}/reference/keyboard-shortcuts` },
+      { text: 'Node Types', link: `${prefix}/reference/node-types` },
+      { text: 'MCP Tools', link: `${prefix}/reference/mcp-tools` },
+      { text: 'Scene Graph', link: `${prefix}/reference/scene-graph` },
+      { text: 'File Format', link: `${prefix}/reference/file-format` },
+      { text: 'Eval Command', link: `${prefix}/eval-command` },
+    ],
+  },
+]
+
+const developmentSidebar = (prefix: string, label: string): DefaultTheme.SidebarItem[] => [
+  {
+    text: label,
+    items: [
+      { text: 'Contributing', link: `${prefix}/development/contributing` },
+      { text: 'Testing', link: `${prefix}/development/testing` },
+      { text: 'OpenSpec', link: `${prefix}/development/openspec` },
+      { text: 'Roadmap', link: `${prefix}/development/roadmap` },
+    ],
+  },
+]
+
 const localeThemeConfig = (
   prefix: string,
   nav: NavLabels,
@@ -85,11 +113,17 @@ const localeThemeConfig = (
 ): DefaultTheme.Config => ({
   nav: [
     { text: nav.userGuide, link: `${prefix}/user-guide/` },
+    { text: nav.reference, link: `${prefix}/reference/keyboard-shortcuts` },
+    { text: nav.development, link: `${prefix}/development/contributing` },
     { text: nav.openApp, link: 'https://app.openpencil.dev' },
   ],
   sidebar: {
     [`${prefix}/user-guide/`]: userGuideSidebar(prefix, sidebar),
-    [`${prefix}/`]: guideSidebar(prefix, sidebar),
+    [`${prefix}/reference/`]: referenceSidebar(prefix, nav.reference),
+    [`${prefix}/`]: [
+      ...guideSidebar(prefix, sidebar),
+      ...developmentSidebar(prefix, nav.development),
+    ],
   },
 })
 
@@ -128,31 +162,31 @@ export default defineConfig({
       label: 'Deutsch',
       lang: 'de',
       description: 'Open-Source, KI-nativer Design-Editor. Figma-Alternative.',
-      themeConfig: localeThemeConfig('/de', { userGuide: 'Benutzerhandbuch', openApp: 'App öffnen' }, DE),
+      themeConfig: localeThemeConfig('/de', { userGuide: 'Benutzerhandbuch', reference: 'Referenz', development: 'Entwicklung', openApp: 'App öffnen' }, DE),
     },
     it: {
       label: 'Italiano',
       lang: 'it',
       description: 'Editor di design open-source, IA-nativo. Alternativa a Figma.',
-      themeConfig: localeThemeConfig('/it', { userGuide: 'Guida utente', openApp: 'Apri app' }, IT),
+      themeConfig: localeThemeConfig('/it', { userGuide: 'Guida utente', reference: 'Riferimento', development: 'Sviluppo', openApp: 'Apri app' }, IT),
     },
     fr: {
       label: 'Français',
       lang: 'fr',
       description: 'Éditeur de design open-source, IA-natif. Alternative à Figma.',
-      themeConfig: localeThemeConfig('/fr', { userGuide: 'Guide utilisateur', openApp: 'Ouvrir l\'app' }, FR),
+      themeConfig: localeThemeConfig('/fr', { userGuide: 'Guide utilisateur', reference: 'Référence', development: 'Développement', openApp: 'Ouvrir l\'app' }, FR),
     },
     es: {
       label: 'Español',
       lang: 'es',
       description: 'Editor de diseño open-source, IA-nativo. Alternativa a Figma.',
-      themeConfig: localeThemeConfig('/es', { userGuide: 'Guía del usuario', openApp: 'Abrir app' }, ES),
+      themeConfig: localeThemeConfig('/es', { userGuide: 'Guía del usuario', reference: 'Referencia', development: 'Desarrollo', openApp: 'Abrir app' }, ES),
     },
     pl: {
       label: 'Polski',
       lang: 'pl',
       description: 'Open-source\'owy edytor graficzny z natywnym AI. Alternatywa dla Figmy.',
-      themeConfig: localeThemeConfig('/pl', { userGuide: 'Podręcznik', openApp: 'Otwórz app' }, PL),
+      themeConfig: localeThemeConfig('/pl', { userGuide: 'Podręcznik', reference: 'Referencja', development: 'Rozwój', openApp: 'Otwórz app' }, PL),
     },
   },
 
