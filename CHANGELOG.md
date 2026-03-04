@@ -16,6 +16,10 @@
 - Apply Figma component property assignments on import — boolean visibility toggles and instance swaps via `componentPropRefs`/`componentPropAssignments`
 - Apply `derivedSymbolData` sizes on import — containers now shrink correctly when component properties hide children
 - Fix override resolution for nested instance targets — check the current node before searching descendants
+- Fix component property assignments for nested instances — resolve scoped `componentPropAssignments` inside `symbolOverrides` via guidPath, handle `guidValue` for instance swaps, reorder phases so transitive sync doesn't clobber visibility
+- Pixel-perfect vector rendering using pre-computed `fillGeometry`/`strokeGeometry` blobs from .fig files — eliminates white gaps between adjacent stroked shapes
+- Stroke outlines on clipboard paste — convert vectorNetwork paths to filled outlines via CanvasKit when geometry blobs are unavailable
+- Apply `derivedSymbolData` transforms and geometry during import — instance children render at correct scale and position
 - Fix internal pages becoming visible after .fig round-trip — preserve `internalOnly` flag on export
 - Scope layout recomputation to current page for paste/undo/font-load (major speedup on large multi-page files)
 - Show loading overlay until all document fonts are loaded (no more partially rendered text)
