@@ -232,11 +232,28 @@ export function populateAndApplyOverrides(
       }
     }
 
-    // Apply assignments from cloned instance sources. After population,
-    // cloned instances have componentId pointing to the original kiwi node.
-    // If that node had componentPropAssignments, apply them to the clone.
+    // Apply assignments from the instance's own kiwi data first. The graph
+    // node for a kiwi INSTANCE has componentPropAssignments that control
+    // which children are visible, swapped, etc.
     for (const node of graph.getAllNodes()) {
-      if (node.type !== 'INSTANCE' || !node.componentId) continue
+      if (node.type !== 'INSTANCE') continue
+      const ownFigmaId = nodeIdToGuid.get(node.id)
+      if (ownFigmaId) {
+        const ownAssignments = assignmentSources.get(ownFigmaId)
+        if (ownAssignments) {
+          const valueByDef = new Map<string, ComponentPropAssignment['value']>()
+          for (const a of ownAssignments) {
+            if (a.defID) valueByDef.set(guidToString(a.defID), a.value)
+          }
+          applyPropAssignments(node.id, valueByDef, propRefsMap)
+        }
+      }
+
+      // Also apply assignments from cloned instance sources. After
+      // population, cloned instances have componentId pointing to
+      // the original kiwi node. If that node had assignments, apply
+      // them to the clone (defaults for nested instances).
+      if (!node.componentId) continue
       const sourceFigmaId = nodeIdToGuid.get(node.componentId)
       if (!sourceFigmaId) continue
       const assignments = assignmentSources.get(sourceFigmaId)
