@@ -348,6 +348,7 @@ export function geometryBlobToPath(
   windingRule: WindingRule
 ): Path {
   const path = new ck.Path()
+  if (!blob || !(blob.buffer instanceof ArrayBuffer)) return path
   const dv = new DataView(blob.buffer, blob.byteOffset, blob.byteLength)
   let o = 0
 
