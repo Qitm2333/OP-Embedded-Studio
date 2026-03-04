@@ -5,6 +5,7 @@ import type { GUID } from './codec'
 interface SymbolOverride {
   guidPath?: { guids?: GUID[] }
   overriddenSymbolID?: GUID
+  componentPropAssignments?: ComponentPropAssignment[]
   [key: string]: unknown
 }
 
@@ -20,7 +21,7 @@ interface ComponentPropRef {
 
 interface ComponentPropAssignment {
   defID: GUID
-  value: { boolValue?: boolean; textValue?: string }
+  value: { boolValue?: boolean; textValue?: string; guidValue?: GUID }
 }
 
 interface DerivedSymbolOverride {
@@ -175,18 +176,39 @@ export function populateAndApplyOverrides(
     if (propRefsMap.size === 0) return
 
     for (const [figmaId, nc] of changeMap) {
-      if (!nc.componentPropAssignments?.length) continue
-
       const instanceNodeId = guidToNodeId.get(figmaId)
       if (!instanceNodeId) continue
       if (graph.getNode(instanceNodeId)?.type !== 'INSTANCE') continue
 
-      const valueByDef = new Map<string, ComponentPropAssignment['value']>()
-      for (const a of nc.componentPropAssignments) {
-        if (a.defID) valueByDef.set(guidToString(a.defID), a.value)
+      // Top-level assignments apply to the instance itself
+      if (nc.componentPropAssignments?.length) {
+        const valueByDef = new Map<string, ComponentPropAssignment['value']>()
+        for (const a of nc.componentPropAssignments) {
+          if (a.defID) valueByDef.set(guidToString(a.defID), a.value)
+        }
+        applyPropAssignments(instanceNodeId, valueByDef, propRefsMap)
       }
 
-      applyPropAssignments(instanceNodeId, valueByDef, propRefsMap)
+      // symbolOverride entries with componentPropAssignments are scoped to
+      // the nested instance their guidPath resolves to
+      const overrides = nc.symbolData?.symbolOverrides
+      if (!overrides) continue
+      for (const ov of overrides) {
+        if (!ov.componentPropAssignments?.length) continue
+        const nested = ov.componentPropAssignments
+
+        const guids = ov.guidPath?.guids
+        if (!guids?.length) continue
+
+        const targetId = resolveOverrideTarget(instanceNodeId, guids)
+        if (!targetId) continue
+
+        const valueByDef = new Map<string, ComponentPropAssignment['value']>()
+        for (const a of nested) {
+          if (a.defID) valueByDef.set(guidToString(a.defID), a.value)
+        }
+        applyPropAssignments(targetId, valueByDef, propRefsMap)
+      }
     }
   }
 
@@ -214,8 +236,10 @@ export function populateAndApplyOverrides(
 
           if (ref.componentPropNodeField === 'VISIBLE' && val.boolValue !== undefined) {
             graph.updateNode(childId, { visible: val.boolValue })
-          } else if (ref.componentPropNodeField === 'OVERRIDDEN_SYMBOL_ID' && val.textValue) {
-            const newCompId = guidToNodeId.get(val.textValue)
+          } else if (ref.componentPropNodeField === 'OVERRIDDEN_SYMBOL_ID') {
+            const swapId = val.textValue ?? (val.guidValue ? guidToString(val.guidValue) : undefined)
+            if (!swapId) continue
+            const newCompId = guidToNodeId.get(swapId)
             if (newCompId) repopulateInstance(childId, newCompId)
           }
         }
@@ -278,7 +302,7 @@ export function populateAndApplyOverrides(
           if (newCompId) repopulateInstance(targetId, newCompId)
         }
 
-        const { guidPath: _, overriddenSymbolID: _s, ...fields } = ov
+        const { guidPath: _, overriddenSymbolID: _s, componentPropAssignments: _c, ...fields } = ov
         if (Object.keys(fields).length === 0) continue
 
         const updates = convertOverrideToProps(fields as Record<string, unknown>)
@@ -289,72 +313,82 @@ export function populateAndApplyOverrides(
     }
   }
 
-  // Order matters: symbolOverrides set property values, componentProperties
-  // toggle visibility/swap instances, derivedSymbolData applies Figma's
-  // pre-computed sizes for the resulting configuration.
+  function propagateOverridesTransitively(seeds: Set<string>) {
+    if (seeds.size === 0) return
+
+    const clonesOf = new Map<string, string[]>()
+    for (const node of graph.getAllNodes()) {
+      if (!node.componentId) continue
+      let arr = clonesOf.get(node.componentId)
+      if (!arr) {
+        arr = []
+        clonesOf.set(node.componentId, arr)
+      }
+      arr.push(node.id)
+    }
+
+    const needsSync = new Set<string>()
+    const queue = [...seeds]
+    for (let id = queue.pop(); id !== undefined; id = queue.pop()) {
+      const clones = clonesOf.get(id)
+      if (!clones) continue
+      for (const cloneId of clones) {
+        if (needsSync.has(cloneId)) continue
+        needsSync.add(cloneId)
+        queue.push(cloneId)
+      }
+    }
+
+    const visited = new Set<string>()
+    const syncQueue = [...seeds]
+    for (let sourceId = syncQueue.shift(); sourceId !== undefined; sourceId = syncQueue.shift()) {
+      const clones = clonesOf.get(sourceId)
+      if (!clones) continue
+      const source = graph.getNode(sourceId)
+      if (!source) continue
+
+      for (const cloneId of clones) {
+        if (!needsSync.has(cloneId) || visited.has(cloneId)) continue
+        visited.add(cloneId)
+        const node = graph.getNode(cloneId)
+        if (!node) continue
+
+        if (node.type === 'INSTANCE' && source.type === 'INSTANCE' && node.componentId) {
+          repopulateInstance(node.id, node.componentId)
+        } else {
+          // Only propagate explicitly-set properties — undefined values must
+          // not overwrite values set by other override phases.
+          const updates: Partial<SceneNode> = {}
+          if (source.text !== undefined && source.text !== node.text) updates.text = source.text
+          if (source.visible !== undefined && source.visible !== node.visible) updates.visible = source.visible
+          if (source.opacity !== undefined && source.opacity !== node.opacity) updates.opacity = source.opacity
+          if (source.name !== undefined && source.name !== node.name) updates.name = source.name
+          if (source.fills !== undefined && source.fills !== node.fills) updates.fills = structuredClone(source.fills)
+          if (source.strokes !== undefined && source.strokes !== node.strokes) updates.strokes = structuredClone(source.strokes)
+          if (source.effects !== undefined && source.effects !== node.effects) updates.effects = structuredClone(source.effects)
+          if (source.styleRuns !== undefined && source.styleRuns !== node.styleRuns) updates.styleRuns = structuredClone(source.styleRuns)
+          if (source.layoutGrow !== undefined && source.layoutGrow !== node.layoutGrow) updates.layoutGrow = source.layoutGrow
+          if (source.textAutoResize !== undefined && source.textAutoResize !== node.textAutoResize) updates.textAutoResize = source.textAutoResize
+          if (source.locked !== undefined && source.locked !== node.locked) updates.locked = source.locked
+          if (Object.keys(updates).length > 0) graph.updateNode(node.id, updates)
+        }
+
+        syncQueue.push(cloneId)
+      }
+    }
+  }
+
+  // Order matters:
+  // 1. symbolOverrides — set property values and swap instances
+  // 2. transitive sync — propagate overrides through clone chains (may
+  //    repopulate INSTANCE children, wiping any earlier property changes)
+  // 3. componentProperties — toggle visibility / swap via prop assignments
+  //    (must run AFTER sync so repopulated children aren't lost)
+  // 4. derivedSymbolData — apply Figma's pre-computed sizes last
   applySymbolOverrides()
+
+  propagateOverridesTransitively(overriddenNodes)
+
   applyComponentProperties()
   applyDerivedSymbolData()
-
-  if (overriddenNodes.size === 0) return
-
-  // Propagate overrides transitively through the clone chain
-  const clonesOf = new Map<string, string[]>()
-  for (const node of graph.getAllNodes()) {
-    if (!node.componentId) continue
-    let arr = clonesOf.get(node.componentId)
-    if (!arr) {
-      arr = []
-      clonesOf.set(node.componentId, arr)
-    }
-    arr.push(node.id)
-  }
-
-  const needsSync = new Set<string>()
-  const queue = [...overriddenNodes]
-  for (let id = queue.pop(); id !== undefined; id = queue.pop()) {
-    const clones = clonesOf.get(id)
-    if (!clones) continue
-    for (const cloneId of clones) {
-      if (needsSync.has(cloneId)) continue
-      needsSync.add(cloneId)
-      queue.push(cloneId)
-    }
-  }
-
-  const visited = new Set<string>()
-  const syncQueue = [...overriddenNodes]
-  for (let sourceId = syncQueue.shift(); sourceId !== undefined; sourceId = syncQueue.shift()) {
-    const clones = clonesOf.get(sourceId)
-    if (!clones) continue
-    const source = graph.getNode(sourceId)
-    if (!source) continue
-
-    for (const cloneId of clones) {
-      if (!needsSync.has(cloneId) || visited.has(cloneId)) continue
-      visited.add(cloneId)
-      const node = graph.getNode(cloneId)
-      if (!node) continue
-
-      if (node.type === 'INSTANCE' && source.type === 'INSTANCE' && node.componentId) {
-        repopulateInstance(node.id, node.componentId)
-      } else {
-        const updates: Partial<SceneNode> = {}
-        if (source.text !== node.text) updates.text = source.text
-        if (source.visible !== node.visible) updates.visible = source.visible
-        if (source.opacity !== node.opacity) updates.opacity = source.opacity
-        if (source.name !== node.name) updates.name = source.name
-        if (source.fills !== node.fills) updates.fills = structuredClone(source.fills)
-        if (source.strokes !== node.strokes) updates.strokes = structuredClone(source.strokes)
-        if (source.effects !== node.effects) updates.effects = structuredClone(source.effects)
-        if (source.styleRuns !== node.styleRuns) updates.styleRuns = structuredClone(source.styleRuns)
-        if (source.layoutGrow !== node.layoutGrow) updates.layoutGrow = source.layoutGrow
-        if (source.textAutoResize !== node.textAutoResize) updates.textAutoResize = source.textAutoResize
-        if (source.locked !== node.locked) updates.locked = source.locked
-        if (Object.keys(updates).length > 0) graph.updateNode(node.id, updates)
-      }
-
-      syncQueue.push(cloneId)
-    }
-  }
 }
