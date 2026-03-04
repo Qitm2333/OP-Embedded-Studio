@@ -890,7 +890,12 @@ export class SceneGraph {
     'paddingRight',
     'paddingBottom',
     'paddingLeft',
-    'clipsContent'
+    'clipsContent',
+    'independentStrokeWeights',
+    'borderTopWeight',
+    'borderRightWeight',
+    'borderBottomWeight',
+    'borderLeftWeight'
   ]
 
   private static copyProp<K extends keyof SceneNode>(
