@@ -2,8 +2,18 @@
 
 ## Unreleased
 
+### Features
+
+- Stroke align (Inside/Center/Outside) with clip-based rendering matching Figma behavior
+- Individual stroke weights per side (Top/Right/Bottom/Left) with side selector dropdown
+- Google Fonts fallback — automatically loads fonts from Google Fonts API when not available locally
+
 ### Fixes
 
+- Show loading overlay until all document fonts are loaded (no more partially rendered text)
+- Load fonts when switching pages (previously only loaded for the first page)
+- Always show visibility toggle on fill, stroke, and effect rows (matches Figma)
+- Fix text truncation using `textTruncation` field instead of `textAutoResize`
 - Fix horizontal scrollbar on design and pages panels
 - Style scrollbars for Tauri (thin dark overlay instead of default OS chrome)
 - Enable file watcher in Tauri — `watch` feature was missing from `tauri-plugin-fs`
