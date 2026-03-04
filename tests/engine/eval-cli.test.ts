@@ -12,7 +12,7 @@ async function run(args: string[], stdin?: string): Promise<{ stdout: string; st
   const proc = Bun.spawn(['bun', CLI, ...args], {
     stdout: 'pipe',
     stderr: 'pipe',
-    stdin: stdin ? new Response(stdin).body! : undefined,
+    stdin: stdin ? Buffer.from(stdin) : undefined,
   })
   const [stdout, stderr] = await Promise.all([
     new Response(proc.stdout).text(),
