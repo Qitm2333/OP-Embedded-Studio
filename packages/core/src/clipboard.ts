@@ -218,7 +218,8 @@ export function importClipboardNodes(
   populateAndApplyOverrides(
     graph,
     guidMap as unknown as Map<string, InstanceNodeChange>,
-    created
+    created,
+    blobs
   )
 
   for (const figmaId of internalTopLevel) {

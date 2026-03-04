@@ -1,5 +1,5 @@
 import type { SceneGraph, SceneNode } from '../scene-graph'
-import { guidToString, convertOverrideToProps } from './kiwi-convert'
+import { guidToString, convertOverrideToProps, resolveGeometryPaths } from './kiwi-convert'
 import type { GUID } from './codec'
 
 interface SymbolOverride {
@@ -27,6 +27,9 @@ interface ComponentPropAssignment {
 interface DerivedSymbolOverride {
   guidPath?: { guids?: GUID[] }
   size?: { x: number; y: number }
+  transform?: { m00: number; m01: number; m02: number; m10: number; m11: number; m12: number }
+  fillGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
+  strokeGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
 }
 
 export interface InstanceNodeChange {
@@ -54,7 +57,8 @@ export interface InstanceNodeChange {
 export function populateAndApplyOverrides(
   graph: SceneGraph,
   changeMap: Map<string, InstanceNodeChange>,
-  guidToNodeId: Map<string, string>
+  guidToNodeId: Map<string, string>,
+  blobs: Uint8Array[] = []
 ): void {
   // Iterative population: cloning creates new instances that themselves need children
   let populated = 1
@@ -252,6 +256,33 @@ export function populateAndApplyOverrides(
   // Apply derivedSymbolData — pre-computed sizes for the current set of
   // component property values. Uses the same guidPath resolution as
   // symbolOverrides.
+  function scaleGeometryBlobs(
+    geom: import('../scene-graph').GeometryPath[],
+    sx: number,
+    sy: number
+  ): import('../scene-graph').GeometryPath[] {
+    if (sx === 1 && sy === 1) return geom
+    return geom.map((g) => {
+      const src = g.commandsBlob
+      const scaled = new Uint8Array(src.length)
+      scaled.set(src)
+      const dv = new DataView(scaled.buffer, scaled.byteOffset, scaled.byteLength)
+      let o = 0
+      while (o < scaled.length) {
+        const cmd = scaled[o++]
+        if (cmd === 0) continue
+        const coords = cmd === 1 || cmd === 2 ? 1 : cmd === 4 ? 3 : -1
+        if (coords < 0) break
+        for (let i = 0; i < coords; i++) {
+          dv.setFloat32(o, dv.getFloat32(o, true) * sx, true)
+          dv.setFloat32(o + 4, dv.getFloat32(o + 4, true) * sy, true)
+          o += 8
+        }
+      }
+      return { windingRule: g.windingRule, commandsBlob: scaled }
+    })
+  }
+
   function applyDerivedSymbolData() {
     for (const [ncId, nc] of changeMap) {
       if (nc.type !== 'INSTANCE') continue
@@ -264,12 +295,38 @@ export function populateAndApplyOverrides(
       for (const d of derived) {
         const guids = d.guidPath?.guids
         if (!guids?.length) continue
-        if (!d.size) continue
 
         const targetId = resolveOverrideTarget(nodeId, guids)
         if (!targetId) continue
 
-        graph.updateNode(targetId, { width: d.size.x, height: d.size.y })
+        const target = graph.getNode(targetId)
+        if (!target) continue
+
+        const updates: Partial<SceneNode> = {}
+        if (d.size) {
+          updates.width = d.size.x
+          updates.height = d.size.y
+        }
+        if (d.transform) {
+          updates.x = d.transform.m02
+          updates.y = d.transform.m12
+        }
+        const fg = resolveGeometryPaths(d.fillGeometry, blobs)
+        const sg = resolveGeometryPaths(d.strokeGeometry, blobs)
+        if (fg.length > 0) {
+          updates.fillGeometry = fg
+        } else if (d.size && target.fillGeometry.length > 0 && target.width > 0 && target.height > 0) {
+          updates.fillGeometry = scaleGeometryBlobs(target.fillGeometry, d.size.x / target.width, d.size.y / target.height)
+        }
+        if (sg.length > 0) {
+          updates.strokeGeometry = sg
+        } else if (d.size && target.strokeGeometry.length > 0 && target.width > 0 && target.height > 0) {
+          updates.strokeGeometry = scaleGeometryBlobs(target.strokeGeometry, d.size.x / target.width, d.size.y / target.height)
+        }
+
+        if (Object.keys(updates).length > 0) {
+          graph.updateNode(targetId, updates)
+        }
       }
     }
   }

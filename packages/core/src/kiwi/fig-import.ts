@@ -182,7 +182,8 @@ export function importNodeChanges(
   populateAndApplyOverrides(
     graph,
     changeMap as unknown as Map<string, InstanceNodeChange>,
-    guidToNodeId
+    guidToNodeId,
+    blobs
   )
 
   // Ensure at least one page exists

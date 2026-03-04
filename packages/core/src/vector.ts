@@ -172,43 +172,48 @@ export function encodeVectorNetworkBlob(network: VectorNetwork): Uint8Array {
   return new Uint8Array(buf)
 }
 
-export function vectorNetworkToPath(ck: CanvasKit, network: VectorNetwork): Path {
-  const path = new ck.Path()
+export function vectorNetworkToPath(ck: CanvasKit, network: VectorNetwork): Path[] {
   const { vertices, segments, regions } = network
 
   if (regions.length > 0) {
+    const paths: Path[] = []
     for (const region of regions) {
+      const regionPath = new ck.Path()
       for (const loop of region.loops) {
-        addLoopToPath(path, loop, segments, vertices)
+        addLoopToPath(regionPath, loop, segments, vertices)
       }
-      path.setFillType(region.windingRule === 'EVENODD' ? ck.FillType.EvenOdd : ck.FillType.Winding)
+      regionPath.setFillType(
+        region.windingRule === 'EVENODD' ? ck.FillType.EvenOdd : ck.FillType.Winding
+      )
+      paths.push(regionPath)
     }
-  } else {
-    // No regions — draw all segments as open paths
-    const visited = new Set<number>()
-    const chains = buildChains(segments, vertices.length)
+    return paths
+  }
 
-    for (const chain of chains) {
-      if (chain.length === 0) continue
-      const firstSeg = segments[chain[0]]
-      path.moveTo(vertices[firstSeg.start].x, vertices[firstSeg.start].y)
+  // No regions — draw all segments as open paths
+  const path = new ck.Path()
+  const visited = new Set<number>()
+  const chains = buildChains(segments, vertices.length)
 
-      for (const segIdx of chain) {
-        visited.add(segIdx)
-        addSegmentToPath(path, segments[segIdx], vertices)
-      }
-    }
+  for (const chain of chains) {
+    if (chain.length === 0) continue
+    const firstSeg = segments[chain[0]]
+    path.moveTo(vertices[firstSeg.start].x, vertices[firstSeg.start].y)
 
-    // Any remaining disconnected segments
-    for (let i = 0; i < segments.length; i++) {
-      if (visited.has(i)) continue
-      const seg = segments[i]
-      path.moveTo(vertices[seg.start].x, vertices[seg.start].y)
-      addSegmentToPath(path, seg, vertices)
+    for (const segIdx of chain) {
+      visited.add(segIdx)
+      addSegmentToPath(path, segments[segIdx], vertices)
     }
   }
 
-  return path
+  for (let i = 0; i < segments.length; i++) {
+    if (visited.has(i)) continue
+    const seg = segments[i]
+    path.moveTo(vertices[seg.start].x, vertices[seg.start].y)
+    addSegmentToPath(path, seg, vertices)
+  }
+
+  return [path]
 }
 
 function addLoopToPath(
@@ -330,4 +335,58 @@ export function computeVectorBounds(network: VectorNetwork): {
   }
 
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+}
+
+const CMD_CLOSE = 0
+const CMD_MOVE_TO = 1
+const CMD_LINE_TO = 2
+const CMD_CUBIC_TO = 4
+
+export function geometryBlobToPath(
+  ck: CanvasKit,
+  blob: Uint8Array,
+  windingRule: WindingRule
+): Path {
+  const path = new ck.Path()
+  const dv = new DataView(blob.buffer, blob.byteOffset, blob.byteLength)
+  let o = 0
+
+  while (o < blob.length) {
+    const cmd = blob[o++]
+    switch (cmd) {
+      case CMD_CLOSE:
+        path.close()
+        break
+      case CMD_MOVE_TO: {
+        const x = dv.getFloat32(o, true)
+        const y = dv.getFloat32(o + 4, true)
+        o += 8
+        path.moveTo(x, y)
+        break
+      }
+      case CMD_LINE_TO: {
+        const x = dv.getFloat32(o, true)
+        const y = dv.getFloat32(o + 4, true)
+        o += 8
+        path.lineTo(x, y)
+        break
+      }
+      case CMD_CUBIC_TO: {
+        const x1 = dv.getFloat32(o, true)
+        const y1 = dv.getFloat32(o + 4, true)
+        const x2 = dv.getFloat32(o + 8, true)
+        const y2 = dv.getFloat32(o + 12, true)
+        const x = dv.getFloat32(o + 16, true)
+        const y = dv.getFloat32(o + 20, true)
+        o += 24
+        path.cubicTo(x1, y1, x2, y2, x, y)
+        break
+      }
+      default:
+        return path
+    }
+  }
+
+  path.setFillType(windingRule === 'EVENODD' ? ck.FillType.EvenOdd : ck.FillType.Winding)
+  return path
 }

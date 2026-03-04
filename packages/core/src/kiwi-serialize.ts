@@ -307,6 +307,21 @@ export function sceneNodeToKiwi(
     }
   }
 
+  if (node.fillGeometry.length > 0) {
+    nc.fillGeometry = node.fillGeometry.map((g) => {
+      const blobIdx = blobs.length
+      blobs.push(g.commandsBlob)
+      return { windingRule: g.windingRule, commandsBlob: blobIdx }
+    })
+  }
+  if (node.strokeGeometry.length > 0) {
+    nc.strokeGeometry = node.strokeGeometry.map((g) => {
+      const blobIdx = blobs.length
+      blobs.push(g.commandsBlob)
+      return { windingRule: g.windingRule, commandsBlob: blobIdx }
+    })
+  }
+
   const result: KiwiNodeChange[] = [nc]
   const children = graph.getChildren(node.id)
   for (let i = 0; i < children.length; i++) {
