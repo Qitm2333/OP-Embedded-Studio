@@ -12,7 +12,10 @@
 
 ### Fixes
 
-- Fix instance overrides on .fig import — resolve guidPaths by overrideKey, handle component swaps (`overriddenSymbolID`), propagate through nested clone chains
+- Fix instance overrides on .fig import and clipboard paste — resolve guidPaths by overrideKey, handle component swaps (`overriddenSymbolID`), propagate through nested clone chains. Import and paste now share a single override engine.
+- Apply Figma component property assignments on import — boolean visibility toggles and instance swaps via `componentPropRefs`/`componentPropAssignments`
+- Apply `derivedSymbolData` sizes on import — containers now shrink correctly when component properties hide children
+- Fix override resolution for nested instance targets — check the current node before searching descendants
 - Fix internal pages becoming visible after .fig round-trip — preserve `internalOnly` flag on export
 - Scope layout recomputation to current page for paste/undo/font-load (major speedup on large multi-page files)
 - Show loading overlay until all document fonts are loaded (no more partially rendered text)
