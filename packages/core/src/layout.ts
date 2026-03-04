@@ -252,6 +252,7 @@ function applyYogaLayout(graph: SceneGraph, frame: SceneNode, yogaNode: YogaNode
 
     const yogaChild = yogaNode.getChild(yogaIndex)
     yogaIndex++
+    if (!yogaChild) continue
 
     graph.updateNode(child.id, {
       x: yogaChild.getComputedLeft(),
