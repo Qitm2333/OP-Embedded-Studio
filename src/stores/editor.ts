@@ -1,4 +1,4 @@
-import { weightToStyle } from '@open-pencil/core'
+import { collectFontKeys } from '@open-pencil/core'
 import { shallowReactive, shallowRef, computed, watch } from 'vue'
 
 import {
@@ -10,8 +10,7 @@ import {
   CANVAS_BG_COLOR,
   ZOOM_DIVISOR,
   ZOOM_SCALE_MIN,
-  ZOOM_SCALE_MAX,
-  DEFAULT_FONT_FAMILY
+  ZOOM_SCALE_MAX
 } from '@/constants'
 import {
   parseFigmaClipboard,
@@ -1698,27 +1697,7 @@ export function createEditorStore() {
   }
 
   async function loadFontsForNodes(nodeIds: string[]) {
-    const fontKeys = new Set<string>()
-    const collect = (id: string) => {
-      const node = graph.getNode(id)
-      if (!node) return
-      if (node.type === 'TEXT') {
-        const family = node.fontFamily || DEFAULT_FONT_FAMILY
-        fontKeys.add(`${family}\0${weightToStyle(node.fontWeight || 400, node.italic)}`)
-        for (const run of node.styleRuns) {
-          const f = run.style.fontFamily ?? family
-          const w = run.style.fontWeight ?? node.fontWeight ?? 400
-          const i = run.style.italic ?? node.italic
-          fontKeys.add(`${f}\0${weightToStyle(w, i)}`)
-        }
-      }
-      for (const childId of node.childIds) collect(childId)
-    }
-    for (const id of nodeIds) collect(id)
-
-    const toLoad = [...fontKeys]
-      .map((k) => k.split('\0') as [string, string])
-      .filter(([family]) => family !== DEFAULT_FONT_FAMILY)
+    const toLoad = collectFontKeys(graph, nodeIds)
     if (toLoad.length === 0) return
 
     await Promise.all(toLoad.map(([family, style]) => loadFont(family, style)))

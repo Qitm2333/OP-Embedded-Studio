@@ -52,6 +52,7 @@ export { computeLayout, computeAllLayouts, setTextMeasurer } from './layout'
 export type { TextMeasurer } from './layout'
 export { getCanvasKit, getGpuBackend, type CanvasKitOptions, type GpuBackend } from './canvaskit'
 export {
+  collectFontKeys,
   loadFont,
   listFamilies,
   initFontService,
