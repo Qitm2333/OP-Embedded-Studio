@@ -493,17 +493,18 @@ export function populateAndApplyOverrides(
     if (Object.keys(updates).length > 0) graph.updateNode(target.id, updates)
   }
 
-  function syncChildrenDeep(sourceId: string, targetId: string) {
+  function syncChildrenDeep(sourceId: string, targetId: string, skip?: Set<string>) {
     const src = graph.getNode(sourceId)
     const tgt = graph.getNode(targetId)
     if (!src || !tgt) return
     const len = Math.min(src.childIds.length, tgt.childIds.length)
     for (let i = 0; i < len; i++) {
+      if (skip?.has(tgt.childIds[i])) continue
       const srcNode = graph.getNode(src.childIds[i])
       const tgtNode = graph.getNode(tgt.childIds[i])
       if (!srcNode || !tgtNode || srcNode.type !== tgtNode.type) continue
       syncNodeProps(srcNode, tgtNode)
-      syncChildrenDeep(src.childIds[i], tgt.childIds[i])
+      syncChildrenDeep(src.childIds[i], tgt.childIds[i], skip)
     }
   }
 
@@ -580,7 +581,7 @@ export function populateAndApplyOverrides(
             graph.populateInstanceChildren(node.id, sourceId)
           }
         } else if (source.childIds.length > 0 && node.childIds.length > 0) {
-          syncChildrenDeep(sourceId, cloneId)
+          syncChildrenDeep(sourceId, cloneId, seeds)
         }
 
         syncQueue.push(cloneId)
