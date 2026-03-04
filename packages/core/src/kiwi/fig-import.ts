@@ -1,8 +1,18 @@
 import { SceneGraph } from '../scene-graph'
 
-import { guidToString, nodeChangeToProps, sortChildren } from './kiwi-convert'
+import { guidToString, nodeChangeToProps, convertOverrideToProps, sortChildren } from './kiwi-convert'
 
-import type { NodeChange } from './codec'
+import type { NodeChange, GUID } from './codec'
+
+interface SymbolOverride {
+  guidPath?: { guids?: GUID[] }
+  [key: string]: unknown
+}
+
+interface SymbolData {
+  symbolID?: GUID
+  symbolOverrides?: SymbolOverride[]
+}
 
 export function importNodeChanges(
   nodeChanges: NodeChange[],
@@ -189,6 +199,77 @@ export function importNodeChanges(
       if (comp && comp.childIds.length > 0) {
         graph.populateInstanceChildren(node.id, node.componentId)
         populated++
+      }
+    }
+  }
+
+  // Apply symbol overrides to instance children.
+  // Each override has a guidPath (chain of original Figma GUIDs) targeting
+  // a descendant. We resolve it by walking cloned children via componentId.
+  // Build a set of all node IDs that are transitively cloned from a given
+  // component node. componentId chains: clone → source → source's source → ...
+  // We cache the root of each chain for fast lookup.
+  const componentIdRoot = new Map<string, string>()
+  function getComponentRoot(nodeId: string): string {
+    if (componentIdRoot.has(nodeId)) return componentIdRoot.get(nodeId) ?? nodeId
+    const node = graph.getNode(nodeId)
+    if (!node?.componentId) {
+      componentIdRoot.set(nodeId, nodeId)
+      return nodeId
+    }
+    const root = getComponentRoot(node.componentId)
+    componentIdRoot.set(nodeId, root)
+    return root
+  }
+
+  function findDescendantByComponentId(parentId: string, componentId: string): string | null {
+    const targetRoot = getComponentRoot(componentId)
+    const parent = graph.getNode(parentId)
+    if (!parent) return null
+    for (const childId of parent.childIds) {
+      const child = graph.getNode(childId)
+      if (!child) continue
+      if (child.componentId && getComponentRoot(child.componentId) === targetRoot) return childId
+      const deep = findDescendantByComponentId(childId, componentId)
+      if (deep) return deep
+    }
+    return null
+  }
+
+  function resolveOverrideTarget(instanceId: string, guids: GUID[]): string | null {
+    let currentId = instanceId
+    for (const guid of guids) {
+      const figmaId = guidToString(guid)
+      const remapped = guidToNodeId.get(figmaId)
+      if (!remapped) return null
+      const found = findDescendantByComponentId(currentId, remapped)
+      if (!found) return null
+      currentId = found
+    }
+    return currentId
+  }
+
+  for (const [ncId, nc] of changeMap) {
+    if (nc.type !== 'INSTANCE') continue
+    const sd = (nc as unknown as Record<string, unknown>).symbolData as SymbolData | undefined
+    if (!sd?.symbolOverrides?.length) continue
+
+    const nodeId = guidToNodeId.get(ncId)
+    if (!nodeId) continue
+
+    for (const ov of sd.symbolOverrides) {
+      const guids = ov.guidPath?.guids
+      if (!guids?.length) continue
+
+      const targetId = resolveOverrideTarget(nodeId, guids)
+      if (!targetId) continue
+
+      const { guidPath: _, ...fields } = ov
+      if (Object.keys(fields).length === 0) continue
+
+      const updates = convertOverrideToProps(fields)
+      if (Object.keys(updates).length > 0) {
+        graph.updateNode(targetId, updates)
       }
     }
   }
