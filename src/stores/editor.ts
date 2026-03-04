@@ -274,6 +274,7 @@ export function createEditorStore() {
       state.pageColor = { ...CANVAS_BG_COLOR }
     }
 
+    void loadFontsForNodes(graph.getChildren(pageId).map((n) => n.id))
     requestRender()
   }
 
@@ -587,7 +588,7 @@ export function createEditorStore() {
       state.panY = 0
       state.zoom = 1
       state.pageColor = { ...CANVAS_BG_COLOR }
-      loadFontsForNodes(graph.getChildren(firstPage?.id ?? graph.rootId).map((n) => n.id))
+      await loadFontsForNodes(graph.getChildren(firstPage?.id ?? graph.rootId).map((n) => n.id))
       requestRender()
       startWatchingFile()
     } catch (e) {
@@ -1696,7 +1697,7 @@ export function createEditorStore() {
     return result
   }
 
-  function loadFontsForNodes(nodeIds: string[]) {
+  async function loadFontsForNodes(nodeIds: string[]) {
     const fontKeys = new Set<string>()
     const collect = (id: string) => {
       const node = graph.getNode(id)
@@ -1720,11 +1721,9 @@ export function createEditorStore() {
       .filter(([family]) => family !== DEFAULT_FONT_FAMILY)
     if (toLoad.length === 0) return
 
-    const promises = toLoad.map(([family, style]) => loadFont(family, style))
-    Promise.all(promises).then(() => {
-      computeAllLayouts(graph)
-      requestRender()
-    })
+    await Promise.all(toLoad.map(([family, style]) => loadFont(family, style)))
+    computeAllLayouts(graph)
+    requestRender()
   }
 
   function pasteFromHTML(html: string) {
@@ -1777,7 +1776,7 @@ export function createEditorStore() {
               requestRender()
             }
           })
-          loadFontsForNodes(created)
+          void loadFontsForNodes(created)
           requestRender()
         }
       }
