@@ -232,81 +232,10 @@ const borderWeights = computed(() => {
 
 <template>
   <div v-if="active" class="border-b border-border px-3 py-2">
+    <!-- Header: label + add button -->
     <div class="flex items-center justify-between">
       <label class="mb-1 block text-[11px] text-muted">Stroke</label>
       <div class="flex items-center gap-0.5">
-        <DropdownMenuRoot v-model:open="sideMenuOpen">
-          <DropdownMenuTrigger as-child>
-            <button
-              v-if="hasStrokes"
-              class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
-              title="Stroke sides"
-            >
-              <svg
-                class="size-3.5"
-                viewBox="0 0 14 14"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <rect x="1" y="1" width="12" height="12" rx="1" />
-              </svg>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuPortal>
-            <DropdownMenuContent
-              :side-offset="4"
-              align="end"
-              class="z-50 min-w-[140px] rounded-md border border-border bg-panel p-0.5 shadow-lg"
-            >
-              <DropdownMenuItem
-                v-for="opt in SIDE_OPTIONS"
-                :key="opt.value"
-                class="relative flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs text-surface outline-none data-[highlighted]:bg-hover"
-                @click="selectSide(opt.value)"
-              >
-                <icon-lucide-check
-                  v-if="currentSides === opt.value"
-                  class="absolute left-2 size-3 text-accent"
-                />
-                <span class="flex items-center gap-2 pl-5">
-                  <!-- Side indicator icons -->
-                  <svg
-                    class="size-3.5"
-                    viewBox="0 0 14 14"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                  >
-                    <template v-if="opt.value === 'ALL'">
-                      <rect x="1" y="1" width="12" height="12" rx="1" />
-                    </template>
-                    <template v-else-if="opt.value === 'CUSTOM'">
-                      <line x1="4" y1="7" x2="10" y2="7" />
-                      <line x1="7" y1="4" x2="7" y2="10" />
-                    </template>
-                    <template v-else>
-                      <rect
-                        x="1"
-                        y="1"
-                        width="12"
-                        height="12"
-                        rx="1"
-                        stroke-opacity="0.3"
-                        stroke-dasharray="2 2"
-                      />
-                      <line v-if="opt.value === 'TOP'" x1="1" y1="1" x2="13" y2="1" />
-                      <line v-else-if="opt.value === 'BOTTOM'" x1="1" y1="13" x2="13" y2="13" />
-                      <line v-else-if="opt.value === 'LEFT'" x1="1" y1="1" x2="1" y2="13" />
-                      <line v-else-if="opt.value === 'RIGHT'" x1="13" y1="1" x2="13" y2="13" />
-                    </template>
-                  </svg>
-                  <span>{{ opt.label }}</span>
-                </span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenuPortal>
-        </DropdownMenuRoot>
         <button
           class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"
           @click="add"
@@ -315,7 +244,10 @@ const borderWeights = computed(() => {
         </button>
       </div>
     </div>
+
     <p v-if="strokesAreMixed" class="text-[11px] text-muted">Click + to replace mixed strokes</p>
+
+    <!-- Color row per stroke -->
     <div
       v-for="(stroke, i) in strokesAreMixed ? [] : (activeNode?.strokes ?? [])"
       :key="i"
@@ -345,7 +277,7 @@ const borderWeights = computed(() => {
       </button>
     </div>
 
-    <!-- Stroke details row -->
+    <!-- Stroke details row: [Align ▾] [≡ Weight] [Side selector] -->
     <div v-if="hasStrokes" class="mt-1 flex items-center gap-1.5">
       <AppSelect
         class="w-[72px]"
@@ -368,13 +300,83 @@ const borderWeights = computed(() => {
             stroke="currentColor"
             stroke-width="1.5"
           >
-            <rect x="1" y="4" width="10" height="4" rx="0.5" />
+            <line x1="1" y1="3" x2="11" y2="3" />
+            <line x1="1" y1="6" x2="11" y2="6" />
+            <line x1="1" y1="9" x2="11" y2="9" />
           </svg>
         </template>
       </ScrubInput>
+      <DropdownMenuRoot v-model:open="sideMenuOpen">
+        <DropdownMenuTrigger as-child>
+          <button
+            class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            :class="{ '!border-accent !text-accent': activeNode?.independentStrokeWeights }"
+            title="Stroke sides"
+          >
+            <svg class="size-3.5" viewBox="0 0 14 14" fill="currentColor">
+              <rect x="1" y="1" width="5" height="5" rx="1" />
+              <rect x="8" y="1" width="5" height="5" rx="1" />
+              <rect x="1" y="8" width="5" height="5" rx="1" />
+              <rect x="8" y="8" width="5" height="5" rx="1" />
+            </svg>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuPortal>
+          <DropdownMenuContent
+            :side-offset="4"
+            align="end"
+            class="z-50 min-w-[140px] rounded-md border border-border bg-panel p-0.5 shadow-lg"
+          >
+            <DropdownMenuItem
+              v-for="opt in SIDE_OPTIONS"
+              :key="opt.value"
+              class="relative flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs text-surface outline-none data-[highlighted]:bg-hover"
+              @click="selectSide(opt.value)"
+            >
+              <icon-lucide-check
+                v-if="currentSides === opt.value"
+                class="absolute left-2 size-3 text-accent"
+              />
+              <span class="flex items-center gap-2 pl-5">
+                <svg
+                  class="size-3.5"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <template v-if="opt.value === 'ALL'">
+                    <rect x="1" y="1" width="12" height="12" rx="1" />
+                  </template>
+                  <template v-else-if="opt.value === 'CUSTOM'">
+                    <line x1="4" y1="7" x2="10" y2="7" />
+                    <line x1="7" y1="4" x2="7" y2="10" />
+                  </template>
+                  <template v-else>
+                    <rect
+                      x="1"
+                      y="1"
+                      width="12"
+                      height="12"
+                      rx="1"
+                      stroke-opacity="0.3"
+                      stroke-dasharray="2 2"
+                    />
+                    <line v-if="opt.value === 'TOP'" x1="1" y1="1" x2="13" y2="1" />
+                    <line v-else-if="opt.value === 'BOTTOM'" x1="1" y1="13" x2="13" y2="13" />
+                    <line v-else-if="opt.value === 'LEFT'" x1="1" y1="1" x2="1" y2="13" />
+                    <line v-else-if="opt.value === 'RIGHT'" x1="13" y1="1" x2="13" y2="13" />
+                  </template>
+                </svg>
+                <span>{{ opt.label }}</span>
+              </span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenuPortal>
+      </DropdownMenuRoot>
     </div>
 
-    <!-- Individual side weights -->
+    <!-- Individual side weights (2×2 grid) -->
     <div
       v-if="hasStrokes && activeNode?.independentStrokeWeights"
       class="mt-1.5 grid grid-cols-2 gap-1.5"
