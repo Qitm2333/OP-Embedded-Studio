@@ -189,7 +189,8 @@ export function createEditorStore() {
     zoom: 1,
     renderVersion: 0,
     sceneVersion: 0,
-    loading: false
+    loading: false,
+    autosaveEnabled: true
   })
 
   const AUTOSAVE_DELAY = 3000
@@ -198,10 +199,12 @@ export function createEditorStore() {
     () => state.sceneVersion,
     (version) => {
       if (version === savedVersion) return
+      if (!state.autosaveEnabled) return
       if (!fileHandle && !filePath) return
       clearTimeout(autosaveTimer)
       autosaveTimer = setTimeout(async () => {
         if (state.sceneVersion === savedVersion) return
+        if (!state.autosaveEnabled) return
         try {
           await writeFile(await buildFigFile())
         } catch {

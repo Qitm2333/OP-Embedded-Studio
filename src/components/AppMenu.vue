@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import {
+  MenubarCheckboxItem,
   MenubarContent,
   MenubarItem,
+  MenubarItemIndicator,
   MenubarMenu,
   MenubarPortal,
   MenubarRoot,
@@ -50,6 +52,8 @@ interface MenuItem {
   action?: () => void
   separator?: boolean
   disabled?: boolean
+  checked?: boolean
+  onCheckedChange?: (checked: boolean) => void
   sub?: MenuItem[]
 }
 
@@ -71,6 +75,16 @@ const fileMenu: MenuItem[] = [
       if (store.state.selectedIds.size > 0) store.exportSelection(1, 'PNG')
     },
     disabled: store.state.selectedIds.size === 0
+  },
+  { separator: true },
+  {
+    label: 'Auto-save to local file',
+    get checked() {
+      return store.state.autosaveEnabled
+    },
+    onCheckedChange: (v: boolean) => {
+      store.state.autosaveEnabled = v
+    }
   }
 ]
 
@@ -221,6 +235,17 @@ const topMenus = [
                     </MenubarSubContent>
                   </MenubarPortal>
                 </MenubarSub>
+                <MenubarCheckboxItem
+                  v-else-if="item.onCheckedChange"
+                  :model-value="item.checked"
+                  class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-surface outline-none select-none hover:bg-hover"
+                  @update:model-value="item.onCheckedChange?.($event as boolean)"
+                >
+                  <span class="flex-1">{{ item.label }}</span>
+                  <MenubarItemIndicator class="text-surface">
+                    <icon-lucide-check class="size-3.5" />
+                  </MenubarItemIndicator>
+                </MenubarCheckboxItem>
                 <MenubarItem
                   v-else
                   class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none select-none"
