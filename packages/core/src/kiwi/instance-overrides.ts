@@ -29,6 +29,12 @@ interface ComponentPropAssignment {
   value: { boolValue?: boolean; textValue?: string }
 }
 
+interface DerivedSymbolOverride {
+  guidPath?: { guids?: GUID[] }
+  size?: { x: number; y: number }
+  [key: string]: unknown
+}
+
 export interface InstanceNodeChange {
   type?: string
   guid?: GUID
@@ -37,6 +43,7 @@ export interface InstanceNodeChange {
   componentPropDefs?: ComponentPropDef[]
   componentPropRefs?: ComponentPropRef[]
   componentPropAssignments?: ComponentPropAssignment[]
+  derivedSymbolData?: DerivedSymbolOverride[]
 }
 
 /**
@@ -223,6 +230,31 @@ export function populateAndApplyOverrides(
     }
   }
 
+  // Apply derivedSymbolData — pre-computed sizes for the current set of
+  // component property values. Uses the same guidPath resolution as
+  // symbolOverrides.
+  function applyDerivedSymbolData() {
+    for (const [ncId, nc] of changeMap) {
+      if (nc.type !== 'INSTANCE') continue
+      const derived = nc.derivedSymbolData
+      if (!derived?.length) continue
+
+      const nodeId = guidToNodeId.get(ncId)
+      if (!nodeId) continue
+
+      for (const d of derived) {
+        const guids = d.guidPath?.guids
+        if (!guids?.length) continue
+        if (!d.size) continue
+
+        const targetId = resolveOverrideTarget(nodeId, guids)
+        if (!targetId) continue
+
+        graph.updateNode(targetId, { width: d.size.x, height: d.size.y })
+      }
+    }
+  }
+
   // Apply overrides from each INSTANCE's symbolData
   const overriddenNodes = new Set<string>()
 
@@ -276,6 +308,7 @@ export function populateAndApplyOverrides(
 
   applySymbolOverrides()
   applyComponentProperties()
+  applyDerivedSymbolData()
 
   if (overriddenNodes.size === 0) return
 
