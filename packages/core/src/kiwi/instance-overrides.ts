@@ -428,10 +428,8 @@ export function populateAndApplyOverrides(
           if (source.y !== clone.y) cu.y = source.y
           if (source.fillGeometry !== clone.fillGeometry) cu.fillGeometry = structuredClone(source.fillGeometry)
           if (source.strokeGeometry !== clone.strokeGeometry) cu.strokeGeometry = structuredClone(source.strokeGeometry)
-          if (Object.keys(cu).length > 0) {
-            graph.updateNode(cloneId, cu)
-            queue.push(cloneId)
-          }
+          if (Object.keys(cu).length > 0) graph.updateNode(cloneId, cu)
+          queue.push(cloneId)
         }
       }
     }
