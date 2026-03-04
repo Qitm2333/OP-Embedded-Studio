@@ -1,4 +1,4 @@
-import type { SceneGraph, SceneNode } from '../scene-graph'
+import type { SceneGraph, SceneNode, GeometryPath } from '../scene-graph'
 import { guidToString, convertOverrideToProps, resolveGeometryPaths } from './kiwi-convert'
 import type { GUID } from './codec'
 
@@ -80,18 +80,46 @@ export function populateAndApplyOverrides(
     if (nc.overrideKey) overrideKeyToGuid.set(guidToString(nc.overrideKey), id)
   }
 
+  // Reverse map: graph node ID → figma GUID (used by getComponentRoot kiwi fallback)
+  const nodeIdToGuid = new Map<string, string>()
+  for (const [figmaId, nodeId] of guidToNodeId) {
+    nodeIdToGuid.set(nodeId, figmaId)
+  }
+
   // Component root resolution (walks componentId chain to the ultimate source)
   const componentIdRoot = new Map<string, string>()
   function getComponentRoot(nodeId: string, depth = 0): string {
     if (componentIdRoot.has(nodeId)) return componentIdRoot.get(nodeId) ?? nodeId
-    const node = graph.getNode(nodeId)
-    if (!node?.componentId || depth > 20) {
+    if (depth > 20) {
       componentIdRoot.set(nodeId, nodeId)
       return nodeId
     }
-    const root = getComponentRoot(node.componentId, depth + 1)
-    componentIdRoot.set(nodeId, root)
-    return root
+
+    // Try graph first
+    const node = graph.getNode(nodeId)
+    if (node?.componentId) {
+      const root = getComponentRoot(node.componentId, depth + 1)
+      componentIdRoot.set(nodeId, root)
+      return root
+    }
+
+    // For deleted nodes (internal page), resolve via kiwi symbolData
+    const figmaId = nodeIdToGuid.get(nodeId)
+    if (figmaId) {
+      const nc = changeMap.get(figmaId)
+      const symId = nc?.symbolData?.symbolID
+      if (symId) {
+        const compNodeId = guidToNodeId.get(guidToString(symId))
+        if (compNodeId && compNodeId !== nodeId) {
+          const root = getComponentRoot(compNodeId, depth + 1)
+          componentIdRoot.set(nodeId, root)
+          return root
+        }
+      }
+    }
+
+    componentIdRoot.set(nodeId, nodeId)
+    return nodeId
   }
 
   function findNodeByComponentId(parentId: string, componentId: string): string | null {
@@ -129,12 +157,6 @@ export function populateAndApplyOverrides(
       currentId = found
     }
     return currentId
-  }
-
-  // Reverse map: graph node ID → figma GUID
-  const nodeIdToGuid = new Map<string, string>()
-  for (const [figmaId, nodeId] of guidToNodeId) {
-    nodeIdToGuid.set(nodeId, figmaId)
   }
 
   // Apply component property assignments (boolean visibility, instance swap).
@@ -179,27 +201,44 @@ export function populateAndApplyOverrides(
     }
     if (propRefsMap.size === 0) return
 
+    // Collect all assignment sources: figmaGuid → assignments[]
+    // Sources: top-level on instance nodes, and inside symbolOverrides
+    const assignmentSources = new Map<string, ComponentPropAssignment[]>()
+    for (const [figmaId, nc] of changeMap) {
+      if (nc.componentPropAssignments?.length) {
+        assignmentSources.set(figmaId, nc.componentPropAssignments)
+      }
+    }
+
+    // Apply assignments from cloned instance sources. After population,
+    // cloned instances have componentId pointing to the original kiwi node.
+    // If that node had componentPropAssignments, apply them to the clone.
+    for (const node of graph.getAllNodes()) {
+      if (node.type !== 'INSTANCE' || !node.componentId) continue
+      const sourceFigmaId = nodeIdToGuid.get(node.componentId)
+      if (!sourceFigmaId) continue
+      const assignments = assignmentSources.get(sourceFigmaId)
+      if (!assignments) continue
+
+      const valueByDef = new Map<string, ComponentPropAssignment['value']>()
+      for (const a of assignments) {
+        if (a.defID) valueByDef.set(guidToString(a.defID), a.value)
+      }
+      applyPropAssignments(node.id, valueByDef, propRefsMap)
+    }
+
+    // Apply assignments from symbolOverrides, scoped to the nested
+    // instance their guidPath resolves to. These override the defaults
+    // set above.
     for (const [figmaId, nc] of changeMap) {
       const instanceNodeId = guidToNodeId.get(figmaId)
       if (!instanceNodeId) continue
       if (graph.getNode(instanceNodeId)?.type !== 'INSTANCE') continue
 
-      // Top-level assignments apply to the instance itself
-      if (nc.componentPropAssignments?.length) {
-        const valueByDef = new Map<string, ComponentPropAssignment['value']>()
-        for (const a of nc.componentPropAssignments) {
-          if (a.defID) valueByDef.set(guidToString(a.defID), a.value)
-        }
-        applyPropAssignments(instanceNodeId, valueByDef, propRefsMap)
-      }
-
-      // symbolOverride entries with componentPropAssignments are scoped to
-      // the nested instance their guidPath resolves to
       const overrides = nc.symbolData?.symbolOverrides
       if (!overrides) continue
       for (const ov of overrides) {
         if (!ov.componentPropAssignments?.length) continue
-        const nested = ov.componentPropAssignments
 
         const guids = ov.guidPath?.guids
         if (!guids?.length) continue
@@ -208,7 +247,7 @@ export function populateAndApplyOverrides(
         if (!targetId) continue
 
         const valueByDef = new Map<string, ComponentPropAssignment['value']>()
-        for (const a of nested) {
+        for (const a of ov.componentPropAssignments) {
           if (a.defID) valueByDef.set(guidToString(a.defID), a.value)
         }
         applyPropAssignments(targetId, valueByDef, propRefsMap)
@@ -256,11 +295,7 @@ export function populateAndApplyOverrides(
   // Apply derivedSymbolData — pre-computed sizes for the current set of
   // component property values. Uses the same guidPath resolution as
   // symbolOverrides.
-  function scaleGeometryBlobs(
-    geom: import('../scene-graph').GeometryPath[],
-    sx: number,
-    sy: number
-  ): import('../scene-graph').GeometryPath[] {
+  function scaleGeometryBlobs(geom: GeometryPath[], sx: number, sy: number): GeometryPath[] {
     if (sx === 1 && sy === 1) return geom
     return geom.map((g) => {
       const src = g.commandsBlob
@@ -331,10 +366,8 @@ export function populateAndApplyOverrides(
     }
   }
 
-  // Apply overrides from each INSTANCE's symbolData
-  const overriddenNodes = new Set<string>()
-
-  function applySymbolOverrides() {
+  function applySymbolOverrides(): Set<string> {
+    const overriddenNodes = new Set<string>()
     componentIdRoot.clear()
 
     for (const [ncId, nc] of changeMap) {
@@ -368,6 +401,7 @@ export function populateAndApplyOverrides(
         }
       }
     }
+    return overriddenNodes
   }
 
   function propagateOverridesTransitively(seeds: Set<string>) {
@@ -410,6 +444,12 @@ export function populateAndApplyOverrides(
         const node = graph.getNode(cloneId)
         if (!node) continue
 
+        // Don't overwrite nodes that were directly targeted by symbolOverrides
+        if (seeds.has(cloneId)) {
+          syncQueue.push(cloneId)
+          continue
+        }
+
         if (node.type === 'INSTANCE' && source.type === 'INSTANCE' && node.componentId) {
           repopulateInstance(node.id, node.componentId)
         } else {
@@ -442,7 +482,7 @@ export function populateAndApplyOverrides(
   // 3. componentProperties — toggle visibility / swap via prop assignments
   //    (must run AFTER sync so repopulated children aren't lost)
   // 4. derivedSymbolData — apply Figma's pre-computed sizes last
-  applySymbolOverrides()
+  const overriddenNodes = applySymbolOverrides()
 
   propagateOverridesTransitively(overriddenNodes)
 
