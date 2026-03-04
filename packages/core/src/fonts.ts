@@ -50,6 +50,55 @@ const BUNDLED_FONTS: Record<string, string> = {
   'Inter|Regular': '/Inter-Regular.ttf'
 }
 
+const GOOGLE_FONTS_API_KEY = 'AIzaSyD1tYDR_dUEiV-Tw1vksEhZbUytgKW5pc8'
+
+const googleFontsCache = new Map<string, Record<string, string>>()
+const googleFontsFailed = new Set<string>()
+
+async function fetchGoogleFontFiles(family: string): Promise<Record<string, string> | null> {
+  if (googleFontsCache.has(family)) return googleFontsCache.get(family)!
+  if (googleFontsFailed.has(family)) return null
+
+  const url = `https://www.googleapis.com/webfonts/v1/webfonts?family=${encodeURIComponent(family)}&key=${GOOGLE_FONTS_API_KEY}`
+  const response = await fetch(url)
+  if (!response.ok) {
+    googleFontsFailed.add(family)
+    return null
+  }
+
+  const data = (await response.json()) as { items?: Array<{ files?: Record<string, string> }> }
+  const files = data.items?.[0]?.files
+  if (!files) {
+    googleFontsFailed.add(family)
+    return null
+  }
+
+  googleFontsCache.set(family, files)
+  return files
+}
+
+function styleToVariant(style: string): string {
+  const weight = styleToWeight(style)
+  const italic = style.toLowerCase().includes('italic')
+  if (weight === 400 && !italic) return 'regular'
+  if (weight === 400 && italic) return 'italic'
+  return italic ? `${weight}italic` : `${weight}`
+}
+
+async function fetchGoogleFont(family: string, style: string): Promise<ArrayBuffer | null> {
+  const files = await fetchGoogleFontFiles(family)
+  if (!files) return null
+
+  const variant = styleToVariant(style)
+  const ttfUrl = files[variant] ?? files['regular']
+  if (!ttfUrl) return null
+
+  const response = await fetch(ttfUrl)
+  if (!response.ok) return null
+
+  return response.arrayBuffer()
+}
+
 export async function loadFont(family: string, style = 'Regular'): Promise<ArrayBuffer | null> {
   const cacheKey = `${family}|${style}`
   if (loadedFamilies.has(cacheKey)) {
@@ -70,6 +119,21 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
         const blob: Blob = await match.blob()
         const buffer = await blob.arrayBuffer()
 
+        loadedFamilies.set(cacheKey, buffer)
+        registerFontInCanvasKit(family, buffer)
+        registerFontInBrowser(family, style, buffer)
+        return buffer
+      }
+    } catch {
+      /* fall through to bundled */
+    }
+  }
+
+  // Try Google Fonts
+  if (typeof fetch !== 'undefined') {
+    try {
+      const buffer = await fetchGoogleFont(family, style)
+      if (buffer) {
         loadedFamilies.set(cacheKey, buffer)
         registerFontInCanvasKit(family, buffer)
         registerFontInBrowser(family, style, buffer)
