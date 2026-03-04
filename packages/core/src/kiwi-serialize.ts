@@ -211,7 +211,15 @@ export function sceneNodeToKiwi(
     size: { x: node.width, y: node.height },
     transform: { m00: cos * sx, m01: -sin, m02: node.x, m10: sin * sx, m11: cos, m12: node.y },
     strokeWeight: node.strokes.length > 0 ? node.strokes[0].weight : 1,
-    strokeAlign: 'INSIDE'
+    strokeAlign: node.strokes.length > 0 ? node.strokes[0].align : 'INSIDE'
+  }
+
+  if (node.independentStrokeWeights) {
+    nc.borderStrokeWeightsIndependent = true
+    nc.borderTopWeight = node.borderTopWeight
+    nc.borderRightWeight = node.borderRightWeight
+    nc.borderBottomWeight = node.borderBottomWeight
+    nc.borderLeftWeight = node.borderLeftWeight
   }
 
   if (fillPaints.length > 0) nc.fillPaints = fillPaints

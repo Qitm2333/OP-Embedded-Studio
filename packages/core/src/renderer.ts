@@ -1174,7 +1174,7 @@ export class SkiaRenderer {
       this.fillPaint.setShader(null)
     }
 
-    // Stroke
+    // Stroke — sections use a fixed corner radius, not node.cornerRadius
     for (let si = 0; si < node.strokes.length; si++) {
       const stroke = node.strokes[si]!
       if (!stroke.visible) continue
@@ -1182,7 +1182,12 @@ export class SkiaRenderer {
       this.strokePaint.setColor(this.ck.Color4f(sc.r, sc.g, sc.b, sc.a))
       this.strokePaint.setStrokeWidth(stroke.weight)
       this.strokePaint.setAlphaf(stroke.opacity)
-      canvas.drawRRect(rrect, this.strokePaint)
+
+      if (node.independentStrokeWeights) {
+        this.drawIndividualSideStrokes(canvas, node, stroke.align)
+      } else {
+        this.drawRRectStrokeWithAlign(canvas, rrect, node, stroke)
+      }
     }
   }
 
@@ -1506,7 +1511,11 @@ export class SkiaRenderer {
         this.strokePaint.setPathEffect(null)
       }
 
-      this.drawNodeStroke(canvas, node, rect, hasRadius)
+      if (node.independentStrokeWeights && this.isRectangularType(node.type)) {
+        this.drawIndividualSideStrokes(canvas, node, stroke.align)
+      } else {
+        this.drawStrokeWithAlign(canvas, node, rect, hasRadius, stroke.align)
+      }
     }
 
     // Effects (front: inner shadow, blur)
@@ -1586,6 +1595,163 @@ export class SkiaRenderer {
         } else {
           canvas.drawRect(rect, this.strokePaint)
         }
+    }
+  }
+
+  private drawRRectStrokeWithAlign(
+    canvas: Canvas,
+    rrect: Float32Array,
+    node: SceneNode,
+    stroke: Stroke
+  ): void {
+    if (stroke.align === 'INSIDE') {
+      canvas.save()
+      canvas.clipRRect(rrect, this.ck.ClipOp.Intersect, true)
+      this.strokePaint.setStrokeWidth(stroke.weight * 2)
+      canvas.drawRRect(rrect, this.strokePaint)
+      this.strokePaint.setStrokeWidth(stroke.weight)
+      canvas.restore()
+    } else if (stroke.align === 'OUTSIDE') {
+      canvas.save()
+      const outerPath = new this.ck.Path()
+      outerPath.addRect(
+        this.ck.LTRBRect(-node.width, -node.height, node.width * 2, node.height * 2)
+      )
+      const innerPath = new this.ck.Path()
+      innerPath.addRRect(rrect)
+      outerPath.op(innerPath, this.ck.PathOp.Difference)
+      innerPath.delete()
+      canvas.clipPath(outerPath, this.ck.ClipOp.Intersect, true)
+      outerPath.delete()
+      this.strokePaint.setStrokeWidth(stroke.weight * 2)
+      canvas.drawRRect(rrect, this.strokePaint)
+      this.strokePaint.setStrokeWidth(stroke.weight)
+      canvas.restore()
+    } else {
+      canvas.drawRRect(rrect, this.strokePaint)
+    }
+  }
+
+  private isRectangularType(type: string): boolean {
+    return (
+      type === 'FRAME' ||
+      type === 'RECTANGLE' ||
+      type === 'ROUNDED_RECTANGLE' ||
+      type === 'COMPONENT' ||
+      type === 'INSTANCE' ||
+      type === 'SECTION' ||
+      type === 'GROUP'
+    )
+  }
+
+  private drawStrokeWithAlign(
+    canvas: Canvas,
+    node: SceneNode,
+    rect: Float32Array,
+    hasRadius: boolean,
+    align: 'INSIDE' | 'CENTER' | 'OUTSIDE'
+  ): void {
+    if (align === 'INSIDE') {
+      canvas.save()
+      this.clipNodeShape(canvas, node, rect, hasRadius)
+      const origWidth = this.strokePaint.getStrokeWidth()
+      this.strokePaint.setStrokeWidth(origWidth * 2)
+      this.drawNodeStroke(canvas, node, rect, hasRadius)
+      this.strokePaint.setStrokeWidth(origWidth)
+      canvas.restore()
+    } else if (align === 'OUTSIDE') {
+      canvas.save()
+      const bigRect = this.ck.LTRBRect(
+        -node.width,
+        -node.height,
+        node.width * 2,
+        node.height * 2
+      )
+      const outerPath = new this.ck.Path()
+      outerPath.addRect(bigRect)
+      const innerPath = this.makeNodeShapePath(node, rect, hasRadius)
+      outerPath.op(innerPath, this.ck.PathOp.Difference)
+      innerPath.delete()
+      canvas.clipPath(outerPath, this.ck.ClipOp.Intersect, true)
+      outerPath.delete()
+      const origWidth = this.strokePaint.getStrokeWidth()
+      this.strokePaint.setStrokeWidth(origWidth * 2)
+      this.drawNodeStroke(canvas, node, rect, hasRadius)
+      this.strokePaint.setStrokeWidth(origWidth)
+      canvas.restore()
+    } else {
+      this.drawNodeStroke(canvas, node, rect, hasRadius)
+    }
+  }
+
+  private makeNodeShapePath(
+    node: SceneNode,
+    rect: Float32Array,
+    hasRadius: boolean
+  ): Path {
+    const path = new this.ck.Path()
+    switch (node.type) {
+      case 'ELLIPSE':
+        path.addOval(rect)
+        break
+      case 'VECTOR': {
+        const vp = this.getVectorPath(node)
+        if (vp) path.addPath(vp)
+        break
+      }
+      case 'POLYGON':
+      case 'STAR': {
+        const polyPath = this.makePolygonPath(node)
+        path.addPath(polyPath)
+        polyPath.delete()
+        break
+      }
+      default:
+        if (hasRadius) {
+          path.addRRect(this.makeRRect(node))
+        } else {
+          path.addRect(rect)
+        }
+    }
+    return path
+  }
+
+  private drawIndividualSideStrokes(
+    canvas: Canvas,
+    node: SceneNode,
+    align: 'INSIDE' | 'CENTER' | 'OUTSIDE'
+  ): void {
+    const w = node.width
+    const h = node.height
+    const inside = align === 'INSIDE'
+    const outside = align === 'OUTSIDE'
+
+    const tw = node.borderTopWeight
+    if (tw > 0) {
+      const y = inside ? tw / 2 : outside ? -tw / 2 : 0
+      this.strokePaint.setStrokeWidth(tw)
+      canvas.drawLine(0, y, w, y, this.strokePaint)
+    }
+
+    const rw = node.borderRightWeight
+    if (rw > 0) {
+      const x = inside ? w - rw / 2 : outside ? w + rw / 2 : w
+      this.strokePaint.setStrokeWidth(rw)
+      canvas.drawLine(x, 0, x, h, this.strokePaint)
+    }
+
+    const bw = node.borderBottomWeight
+    if (bw > 0) {
+      const y = inside ? h - bw / 2 : outside ? h + bw / 2 : h
+      this.strokePaint.setStrokeWidth(bw)
+      canvas.drawLine(0, y, w, y, this.strokePaint)
+    }
+
+    const lw = node.borderLeftWeight
+    if (lw > 0) {
+      const x = inside ? lw / 2 : outside ? -lw / 2 : 0
+      this.strokePaint.setStrokeWidth(lw)
+      canvas.drawLine(x, 0, x, h, this.strokePaint)
     }
   }
 
