@@ -545,7 +545,7 @@ export function sortChildren(
     children.sort((a, b) => {
       const aPos = nodeMap.get(a)?.parentIndex?.position ?? ''
       const bPos = nodeMap.get(b)?.parentIndex?.position ?? ''
-      return aPos.localeCompare(bPos)
+      return aPos < bPos ? -1 : aPos > bPos ? 1 : 0
     })
   }
 }
