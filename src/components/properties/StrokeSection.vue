@@ -253,24 +253,21 @@ const borderWeights = computed(() => {
       :key="i"
       class="group flex items-center gap-1.5 py-0.5"
     >
-      <ColorInput :color="stroke.color" editable @update="updateColor(i, $event)" />
-      <ScrubInput
-        class="w-12"
-        suffix="%"
-        :model-value="Math.round(stroke.opacity * 100)"
-        :min="0"
-        :max="100"
-        @update:model-value="updateOpacity(i, $event)"
+      <ColorInput
+        class="min-w-0 flex-1"
+        :color="stroke.color"
+        editable
+        @update="updateColor(i, $event)"
       />
       <button
-        class="cursor-pointer border-none bg-transparent p-0 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-surface"
+        class="shrink-0 cursor-pointer border-none bg-transparent p-0 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-surface"
         @click="toggleVisibility(i)"
       >
         <icon-lucide-eye v-if="stroke.visible" class="size-3.5" />
         <icon-lucide-eye-off v-else class="size-3.5" />
       </button>
       <button
-        class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"
+        class="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"
         @click="remove(i)"
       >
         −
