@@ -16,6 +16,7 @@ Pre-built binaries for macOS, Windows, and Linux are available on the [releases 
 | Windows (ARM) | `.msi` / `.exe` |
 | Linux (x64) | `.AppImage` / `.deb` |
 
+
 ## Building from Source
 
 ### Prerequisites

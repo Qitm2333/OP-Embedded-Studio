@@ -1,6 +1,6 @@
 export { initFontService, getFontProvider, ensureNodeFont } from '@open-pencil/core'
 
-import { loadFont as loadFontCore, getFontProvider, styleToWeight } from '@open-pencil/core'
+import { loadFont as loadFontCore, markFontLoaded, styleToWeight } from '@open-pencil/core'
 
 interface TauriFontFamily {
   family: string
@@ -60,8 +60,7 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
       const data = await invoke<number[]>('load_system_font', { family, style })
       const buffer = new Uint8Array(data).buffer
 
-      const provider = getFontProvider()
-      if (provider) provider.registerFont(buffer, family)
+      markFontLoaded(family, style, buffer)
 
       const weight = styleToWeight(style)
       const italic = style.toLowerCase().includes('italic') ? 'italic' : 'normal'

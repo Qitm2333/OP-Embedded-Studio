@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'bun:test'
 
 import { SceneGraph, type SceneNode } from '../../src/engine/scene-graph'
-import { computeLayout, computeAllLayouts } from '../../src/engine/layout'
+import { computeLayout, computeAllLayouts, setTextMeasurer } from '../../src/engine/layout'
 
 function pageId(graph: SceneGraph) {
   return graph.getPages()[0].id
@@ -883,6 +883,86 @@ describe('Auto Layout', () => {
       expect(children[2].y).toBe(0)
       expect(children[3].x).toBe(60)
       expect(children[3].y).toBe(90)
+    })
+  })
+
+  describe('text measurement', () => {
+    test('WIDTH_AND_HEIGHT text uses measured width in centered layout', () => {
+      const graph = new SceneGraph()
+      const pid = pageId(graph)
+
+      const frame = autoFrame(graph, pid, {
+        width: 300,
+        height: 40,
+        layoutMode: 'HORIZONTAL',
+        primaryAxisSizing: 'FIXED',
+        counterAxisSizing: 'FIXED',
+        primaryAxisAlign: 'CENTER',
+        paddingLeft: 10,
+        paddingRight: 10,
+        itemSpacing: 10,
+      })
+
+      const arrow1 = graph.createNode('FRAME', frame.id, { width: 20, height: 20 })
+      const text = graph.createNode('TEXT', frame.id, {
+        width: 200,
+        height: 20,
+        text: 'Test',
+        fontSize: 14,
+        textAutoResize: 'WIDTH_AND_HEIGHT' as const,
+      })
+      const arrow2 = graph.createNode('FRAME', frame.id, { width: 20, height: 20 })
+
+      setTextMeasurer((node) => {
+        if (node.type === 'TEXT' && node.textAutoResize === 'WIDTH_AND_HEIGHT') {
+          return { width: 60, height: 20 }
+        }
+        return null
+      })
+
+      computeAllLayouts(graph)
+
+      setTextMeasurer(null)
+
+      const updatedText = graph.getNode(text.id)!
+      const updatedArrow1 = graph.getNode(arrow1.id)!
+      const updatedArrow2 = graph.getNode(arrow2.id)!
+
+      expect(updatedText.width).toBe(60)
+
+      // Total content: 10 + 20 + 10 + 60 + 10 + 20 + 10 = 140
+      // Free space: 300 - 140 = 160, centered offset = 80
+      expect(updatedArrow1.x).toBe(90)
+      expect(updatedText.x).toBe(120)
+      expect(updatedArrow2.x).toBe(190)
+    })
+
+    test('without measurer, text keeps its existing width', () => {
+      const graph = new SceneGraph()
+      const pid = pageId(graph)
+
+      const frame = autoFrame(graph, pid, {
+        width: 300,
+        height: 40,
+        layoutMode: 'HORIZONTAL',
+        primaryAxisSizing: 'FIXED',
+        counterAxisSizing: 'FIXED',
+        primaryAxisAlign: 'CENTER',
+      })
+
+      const text = graph.createNode('TEXT', frame.id, {
+        width: 200,
+        height: 20,
+        text: 'Test',
+        fontSize: 14,
+        textAutoResize: 'WIDTH_AND_HEIGHT' as const,
+      })
+
+      setTextMeasurer(null)
+      computeAllLayouts(graph)
+
+      const updatedText = graph.getNode(text.id)!
+      expect(updatedText.width).toBe(200)
     })
   })
 })

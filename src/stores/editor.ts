@@ -1,3 +1,4 @@
+import { weightToStyle } from '@open-pencil/core'
 import { shallowReactive, shallowRef, computed, watch } from 'vue'
 
 import {
@@ -9,7 +10,8 @@ import {
   CANVAS_BG_COLOR,
   ZOOM_DIVISOR,
   ZOOM_SCALE_MIN,
-  ZOOM_SCALE_MAX
+  ZOOM_SCALE_MAX,
+  DEFAULT_FONT_FAMILY
 } from '@/constants'
 import {
   parseFigmaClipboard,
@@ -21,7 +23,8 @@ import {
   prefetchFigmaSchema
 } from '@/engine/clipboard'
 import { exportFigFile } from '@/engine/fig-export'
-import { computeLayout, computeAllLayouts } from '@/engine/layout'
+import { loadFont } from '@/engine/fonts'
+import { computeLayout, computeAllLayouts, setTextMeasurer } from '@/engine/layout'
 import { renderNodesToImage } from '@/engine/render-image'
 import { SceneGraph } from '@/engine/scene-graph'
 import { TextEditor } from '@/engine/text-editor'
@@ -186,7 +189,8 @@ export function createEditorStore() {
     panY: 0,
     zoom: 1,
     renderVersion: 0,
-    sceneVersion: 0
+    sceneVersion: 0,
+    loading: false
   })
 
   const AUTOSAVE_DELAY = 3000
@@ -565,6 +569,8 @@ export function createEditorStore() {
 
   async function openFigFile(file: File, handle?: FileSystemFileHandle, path?: string) {
     try {
+      state.loading = true
+      await new Promise((r) => requestAnimationFrame(r))
       const imported = await readFigFile(file)
       graph = imported
       computeAllLayouts(graph)
@@ -581,10 +587,13 @@ export function createEditorStore() {
       state.panY = 0
       state.zoom = 1
       state.pageColor = { ...CANVAS_BG_COLOR }
+      loadFontsForNodes(graph.getChildren(firstPage?.id ?? graph.rootId).map((n) => n.id))
       requestRender()
       startWatchingFile()
     } catch (e) {
       console.error('Failed to open .fig file:', e)
+    } finally {
+      state.loading = false
     }
   }
 
@@ -595,6 +604,7 @@ export function createEditorStore() {
     _ck = ck
     _renderer = renderer
     _textEditor = new TextEditor(ck)
+    setTextMeasurer((node) => renderer.measureTextNode(node))
   }
 
   function buildFigFile() {
@@ -1686,6 +1696,37 @@ export function createEditorStore() {
     return result
   }
 
+  function loadFontsForNodes(nodeIds: string[]) {
+    const fontKeys = new Set<string>()
+    const collect = (id: string) => {
+      const node = graph.getNode(id)
+      if (!node) return
+      if (node.type === 'TEXT') {
+        const family = node.fontFamily || DEFAULT_FONT_FAMILY
+        fontKeys.add(`${family}\0${weightToStyle(node.fontWeight || 400, node.italic)}`)
+        for (const run of node.styleRuns) {
+          const f = run.style.fontFamily ?? family
+          const w = run.style.fontWeight ?? node.fontWeight ?? 400
+          const i = run.style.italic ?? node.italic
+          fontKeys.add(`${f}\0${weightToStyle(w, i)}`)
+        }
+      }
+      for (const childId of node.childIds) collect(childId)
+    }
+    for (const id of nodeIds) collect(id)
+
+    const toLoad = [...fontKeys]
+      .map((k) => k.split('\0') as [string, string])
+      .filter(([family]) => family !== DEFAULT_FONT_FAMILY)
+    if (toLoad.length === 0) return
+
+    const promises = toLoad.map(([family, style]) => loadFont(family, style))
+    Promise.all(promises).then(() => {
+      computeAllLayouts(graph)
+      requestRender()
+    })
+  }
+
   function pasteFromHTML(html: string) {
     const ownNodes = parseOpenPencilClipboard(html)
     if (ownNodes) {
@@ -1736,6 +1777,7 @@ export function createEditorStore() {
               requestRender()
             }
           })
+          loadFontsForNodes(created)
           requestRender()
         }
       }

@@ -2,6 +2,58 @@
 
 ## Unreleased
 
+### Fixes
+
+- Fix horizontal scrollbar on design and pages panels
+- Style scrollbars for Tauri (thin dark overlay instead of default OS chrome)
+- Enable file watcher in Tauri — `watch` feature was missing from `tauri-plugin-fs`
+
+## 0.6.0 — 2026-03-04
+
+### Features
+
+- Multi-selection properties panel — edit position, size, appearance, fill, stroke, and effects across multiple selected nodes
+- Shared values display normally, differing values show "Mixed"
+- W/H inputs in multi-selection mode
+- Flip horizontal/vertical using scale transform instead of rotation
+- Single-node alignment aligns to parent frame bounds
+
+### Build
+
+- Apple code signing and notarization for macOS builds
+- Git LFS storage moved from GitHub to Cloudflare R2
+
+
+### Fixes
+
+- Fix Figma clipboard paste: extract shared kiwi→SceneNode conversion, fixing broken auto-layout, missing gradient/image fills, effects, style runs, and text properties
+- Fix vector rendering on paste — scale path coordinates from Figma's normalizedSize to actual node bounds
+- Fix pasted instances having no children — populate from component via symbolData when both are in clipboard
+- Detect component sets on import — promote FRAME nodes with VARIANT componentPropDefs to COMPONENT_SET
+- Skip internal canvas on paste — components on Figma's hidden internal page populate instances but are not pasted as visible nodes
+- Apply instance overrides on paste — text content, fills, visibility, layoutGrow, and textAutoResize from symbolOverrides
+- Fix auto-layout child ordering — sort by geometric position instead of z-order position strings
+- Load fonts on paste and .fig import — collect font families from text nodes and load into CanvasKit
+- Text measurement in auto-layout — use CanvasKit paragraph metrics for WIDTH_AND_HEIGHT text nodes
+- Recompute layouts after font loading completes
+- Fix PERCENT line height conversion — was stored as raw value instead of pixels
+- Fix InvalidCharacterError when copying nodes with non-ASCII text
+- Load all font weight/style variants needed by pasted text nodes
+- Fix font loading not registering in core cache
+- Fix halfLeading applied to text measurement — enable only for rendering
+- Clear hover on zoom/pinch to keep scene picture cache valid
+- Fix flip buttons using rotation math instead of actual mirroring
+- Fix flip transform encoding — scale first matrix column only (was incorrectly producing 180° rotation)
+- Decode flip state from .fig transform matrix on import
+
+## 0.5.1 — 2026-03-03
+
+### Fixes
+
+- Fix File → Save crash when document has layer blur effects
+
+## 0.5.0 — 2026-03-03
+
 ### Features
 
 - Effects rendering: drop shadow, inner shadow, shadow spread, layer blur, background blur, foreground blur
@@ -29,6 +81,12 @@
 
 ### UI
 
+- Resizable pages/layers split in left panel with reka-ui Splitter
+- Layers tree auto-expands and scrolls to reveal selected node
+- Loading overlay on canvas while opening .fig files
+- Hide internal-only pages (e.g. "Internal Only Canvas" in design systems)
+- Render page dividers — pages named with only dashes/asterisks/spaces show as horizontal lines
+- Only show component labels for COMPONENT and COMPONENT_SET, not instances
 - Replace all native `<select>` dropdowns with reka-ui `AppSelect` component
 - Smoother trackpad pinch-to-zoom with `Math.exp` curve and deltaMode normalization
 - Fix font picker dropdown truncating long font names
@@ -48,6 +106,7 @@
 - Per-node SkPicture cache for effect rendering — unchanged shadow/blur nodes replay from cache on scene redraws
 - Drop shadows use `MaskFilter` direct draw instead of `saveLayer` offscreen buffers
 - Cached `ImageFilter`, `MaskFilter`, reusable effect paint — zero per-frame WASM allocations for effects
+- Reuse GL context on panel resize — swap surface without recreating renderer, preserving all caches
 - Per-frame absolute position cache — avoids repeated parent-chain walks during rendering
 - Optimize zoom/pan smoothness with `shallowReactive`, `useRafFn`, and input coalescing
 

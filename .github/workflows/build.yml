@@ -42,11 +42,22 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri -> target
+          key: ${{ matrix.target }}
+
       - name: Install dependencies (Linux)
         if: startsWith(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
 
       - run: bun install
 
@@ -59,15 +70,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tauriScript: bunx tauri
           args: --target ${{ matrix.target }}
-          tagName: ${{ github.ref_name }}
-          releaseName: 'OpenPencil ${{ github.ref_name }}'
+          tagName: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
+          releaseName: ${{ startsWith(github.ref, 'refs/tags/v') && format('OpenPencil {0}', github.ref_name) || '' }}
           releaseBody: ${{ steps.changelog.outputs.release_notes }}
           releaseDraft: false
 
   publish-npm:
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -83,6 +100,12 @@ jobs:
           node-version: 24.x
           registry-url: https://registry.npmjs.org/
 
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
       - run: bun install
 
       - uses: pnpm/action-setup@v4
@@ -93,14 +116,18 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          cat > ~/.npmrc << EOF
+          //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+          EOF
+
           publish_if_new() {
             local dir=$1
-            local name=$(cd "$dir" && node -p "require('./package.json').name")
-            local version=$(cd "$dir" && node -p "require('./package.json').version")
+            local name=$(node -p "require('./$dir/package.json').name")
+            local version=$(node -p "require('./$dir/package.json').version")
             if npm view "${name}@${version}" version 2>/dev/null; then
               echo "${name}@${version} already published, skipping"
             else
-              cd "$dir" && pnpm publish --provenance --access public --no-git-checks
+              npm publish "./$dir" --access public
             fi
           }
           publish_if_new packages/core

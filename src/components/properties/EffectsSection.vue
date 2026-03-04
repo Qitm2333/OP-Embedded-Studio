@@ -4,10 +4,19 @@ import AppSelect from '@/components/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import { useNodeProps } from '@/composables/use-node-props'
+import { useMultiProps } from '@/composables/use-multi-props'
 
 import type { Color, Effect } from '@/engine/scene-graph'
 
-const { store, node } = useNodeProps()
+const { store } = useNodeProps()
+const { node, nodes, isMulti, active } = useMultiProps()
+
+const effectsAreMixed = computed(() => {
+  if (!isMulti.value) return false
+  const all = nodes.value
+  const first = JSON.stringify(all[0].effects)
+  return all.some((n) => JSON.stringify(n.effects) !== first)
+})
 
 const expandedIndex = ref<number | null>(null)
 const effectsBeforeScrub = ref<Effect[] | null>(null)
@@ -103,6 +112,13 @@ function updateType(index: number, type: EffectType) {
 }
 
 function add() {
+  if (isMulti.value) {
+    for (const n of nodes.value) {
+      store.updateNodeWithUndo(n.id, { effects: [defaultEffect()] }, 'Set effect')
+    }
+    store.requestRender()
+    return
+  }
   const n = node.value
   if (!n) return
   const effects = [...n.effects, defaultEffect()]
@@ -127,7 +143,7 @@ function toggleExpand(index: number) {
 </script>
 
 <template>
-  <div v-if="node" class="border-b border-border px-3 py-2">
+  <div v-if="active" class="border-b border-border px-3 py-2">
     <div class="flex items-center justify-between">
       <label class="mb-1 block text-[11px] text-muted">Effects</label>
       <button
@@ -138,7 +154,9 @@ function toggleExpand(index: number) {
       </button>
     </div>
 
-    <div v-for="(effect, i) in node.effects" :key="i">
+    <p v-if="effectsAreMixed" class="text-[11px] text-muted">Click + to replace mixed effects</p>
+
+    <div v-for="(effect, i) in effectsAreMixed ? [] : ((node ?? nodes[0])?.effects ?? [])" :key="i">
       <!-- Collapsed row: color swatch | type dropdown | eye | minus -->
       <div class="group flex items-center gap-1.5 py-0.5">
         <button

@@ -5,6 +5,12 @@ import { useEditorStore } from '@/stores/editor'
 
 const store = useEditorStore()
 
+const DIVIDER_RE = /^[-–—*\s]+$/
+
+function isDivider(page: { name: string; childIds: string[] }) {
+  return page.childIds.length === 0 && DIVIDER_RE.test(page.name)
+}
+
 const pages = computed(() => {
   void store.state.sceneVersion
   return store.graph.getPages()
@@ -38,8 +44,8 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
 </script>
 
 <template>
-  <div class="shrink-0 border-b border-border">
-    <div class="flex items-center justify-between px-3 py-1.5">
+  <div class="flex min-h-0 flex-1 flex-col">
+    <div class="flex shrink-0 items-center justify-between px-3 py-1.5">
       <span class="text-[11px] uppercase tracking-wider text-muted">Pages</span>
       <button
         class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
@@ -49,7 +55,7 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
         +
       </button>
     </div>
-    <div class="px-1 pb-1">
+    <div class="overflow-x-hidden overflow-y-auto px-1 pb-1">
       <div v-for="pg in pages" :key="pg.id">
         <input
           v-if="editingPageId === pg.id"
@@ -59,6 +65,13 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
           @blur="commitRename(pg.id, $event.target as HTMLInputElement)"
           @keydown="onKeydown($event, pg.id)"
         />
+        <div
+          v-else-if="isDivider(pg)"
+          class="my-1 flex items-center px-2"
+          @dblclick="startRename(pg.id)"
+        >
+          <div class="h-px flex-1 bg-border" />
+        </div>
         <button
           v-else
           class="flex w-full cursor-pointer items-center gap-1.5 rounded border-none px-2 py-1 text-left text-xs"
@@ -71,7 +84,7 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
           @dblclick="startRename(pg.id)"
         >
           <icon-lucide-file class="size-3 shrink-0" />
-          {{ pg.name }}
+          <span class="truncate">{{ pg.name }}</span>
         </button>
       </div>
     </div>

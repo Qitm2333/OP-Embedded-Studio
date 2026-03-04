@@ -170,6 +170,7 @@ export function sceneNodeToKiwi(
 ): KiwiNodeChange[] {
   const localID = localIdCounter.value++
   const guid = { sessionID: 1, localID }
+  const sx = node.flipX ? -1 : 1
   const cos = Math.cos((node.rotation * Math.PI) / 180)
   const sin = Math.sin((node.rotation * Math.PI) / 180)
 
@@ -208,7 +209,7 @@ export function sceneNodeToKiwi(
     opacity: node.opacity,
     phase: 'CREATED',
     size: { x: node.width, y: node.height },
-    transform: { m00: cos, m01: -sin, m02: node.x, m10: sin, m11: cos, m12: node.y },
+    transform: { m00: cos * sx, m01: -sin, m02: node.x, m10: sin * sx, m11: cos, m12: node.y },
     strokeWeight: node.strokes.length > 0 ? node.strokes[0].weight : 1,
     strokeAlign: 'INSIDE'
   }
@@ -239,7 +240,7 @@ export function sceneNodeToKiwi(
 
   if (node.effects.length > 0) {
     nc.effects = node.effects.map((e) => ({
-      type: e.type,
+      type: e.type === 'LAYER_BLUR' ? 'FOREGROUND_BLUR' : e.type,
       color: e.color,
       offset: e.offset,
       radius: e.radius,

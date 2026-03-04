@@ -4,7 +4,7 @@ import { useEventListener } from '@vueuse/core'
 
 const props = withDefaults(
   defineProps<{
-    modelValue: number
+    modelValue: number | symbol
     min?: number
     max?: number
     step?: number
@@ -12,14 +12,18 @@ const props = withDefaults(
     label?: string
     suffix?: string
     sensitivity?: number
+    placeholder?: string
   }>(),
   {
     min: -Infinity,
     max: Infinity,
     step: 1,
-    sensitivity: 1
+    sensitivity: 1,
+    placeholder: 'Mixed'
   }
 )
+
+const isMixed = computed(() => typeof props.modelValue === 'symbol')
 
 const emit = defineEmits<{
   'update:modelValue': [value: number]
@@ -33,14 +37,15 @@ const scrubbing = ref(false)
 let stopMove: (() => void) | undefined
 let stopUp: (() => void) | undefined
 
-const displayValue = computed(() => Math.round(props.modelValue))
+const numericValue = computed(() => (isMixed.value ? 0 : (props.modelValue as number)))
+const displayValue = computed(() => (isMixed.value ? '' : Math.round(numericValue.value)))
 
 function startScrub(e: PointerEvent) {
   e.preventDefault()
   const startX = e.clientX
   let lastX = startX
-  let accumulated = props.modelValue
-  const valueBeforeScrub = props.modelValue
+  let accumulated = numericValue.value
+  const valueBeforeScrub = numericValue.value
   let hasMoved = false
 
   stopMove = useEventListener(document, 'pointermove', (ev: PointerEvent) => {
@@ -84,7 +89,7 @@ function startEdit() {
 
 function commitEdit(e: Event) {
   const val = +(e.target as HTMLInputElement).value
-  const previous = props.modelValue
+  const previous = numericValue.value
   if (!Number.isNaN(val)) {
     const clamped = Math.min(props.max, Math.max(props.min, val))
     emit('update:modelValue', clamped)
@@ -123,7 +128,8 @@ function onKeydown(e: KeyboardEvent) {
       ref="inputRef"
       type="number"
       class="min-w-0 flex-1 cursor-text border-none bg-transparent pr-1.5 font-[inherit] text-xs text-surface outline-none"
-      :value="displayValue"
+      :value="isMixed ? '' : displayValue"
+      :placeholder="placeholder"
       :min="min === -Infinity ? undefined : min"
       :max="max === Infinity ? undefined : max"
       :step="step"
@@ -134,8 +140,11 @@ function onKeydown(e: KeyboardEvent) {
       v-else
       class="flex flex-1 select-none items-center truncate pr-1.5 text-xs overflow-hidden"
     >
-      <span class="flex-1 text-surface">{{ displayValue }}</span>
-      <span v-if="suffix" class="shrink-0 text-muted">{{ suffix }}</span>
+      <span v-if="isMixed" class="flex-1 text-muted">{{ placeholder }}</span>
+      <template v-else>
+        <span class="flex-1 text-surface">{{ displayValue }}</span>
+        <span v-if="suffix" class="shrink-0 text-muted">{{ suffix }}</span>
+      </template>
     </span>
   </div>
 </template>

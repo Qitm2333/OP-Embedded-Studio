@@ -1,6 +1,6 @@
 {
   "name": "@open-pencil/mcp",
-  "version": "0.4.2",
+  "version": "0.6.0",
   "license": "MIT",
   "type": "module",
   "main": "./src/server.ts",

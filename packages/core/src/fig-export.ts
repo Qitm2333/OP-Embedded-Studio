@@ -52,7 +52,7 @@ export async function exportFigFile(
   ]
 
   const blobs: Uint8Array[] = []
-  const pages = graph.getPages()
+  const pages = graph.getPages(true)
 
   for (let p = 0; p < pages.length; p++) {
     const page = pages[p]

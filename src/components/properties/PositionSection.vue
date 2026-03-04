@@ -1,83 +1,130 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import ScrubInput from '@/components/ScrubInput.vue'
 import { useNodeProps } from '@/composables/use-node-props'
+import { useMultiProps } from '@/composables/use-multi-props'
 
-const { store, node, nodes, updateProp, commitProp } = useNodeProps()
+const { store, updateProp, commitProp } = useNodeProps()
+const { node, nodes, isMulti, active, prop: multiProp } = useMultiProps()
+
+const xValue = computed(() =>
+  isMulti.value ? multiProp('x').value : Math.round(node.value?.x ?? 0)
+)
+const yValue = computed(() =>
+  isMulti.value ? multiProp('y').value : Math.round(node.value?.y ?? 0)
+)
+const wValue = multiProp('width')
+const hValue = multiProp('height')
+const rotationValue = computed(() =>
+  isMulti.value ? multiProp('rotation').value : Math.round(node.value?.rotation ?? 0)
+)
 
 type HAlign = 'left' | 'center' | 'right'
 type VAlign = 'top' | 'center' | 'bottom'
 
 function alignHorizontal(align: HAlign) {
   const selected = nodes.value
-  if (selected.length < 2) return
+  if (selected.length === 0) return
 
-  let minX = Infinity,
+  let minX: number, maxX: number
+
+  if (selected.length === 1) {
+    const parent = store.graph.getNode(selected[0].parentId ?? '')
+    if (!parent) return
+    minX = 0
+    maxX = parent.width
+  } else {
+    minX = Infinity
     maxX = -Infinity
-  for (const n of selected) {
-    const abs = store.graph.getAbsolutePosition(n.id)
-    minX = Math.min(minX, abs.x)
-    maxX = Math.max(maxX, abs.x + n.width)
+    for (const n of selected) {
+      const abs = store.graph.getAbsolutePosition(n.id)
+      minX = Math.min(minX, abs.x)
+      maxX = Math.max(maxX, abs.x + n.width)
+    }
   }
 
   for (const n of selected) {
-    const abs = store.graph.getAbsolutePosition(n.id)
     let targetX: number
-    if (align === 'left') targetX = minX
-    else if (align === 'right') targetX = maxX - n.width
-    else targetX = (minX + maxX) / 2 - n.width / 2
-
-    const dx = targetX - abs.x
-    store.updateNode(n.id, { x: n.x + dx })
+    if (selected.length === 1) {
+      if (align === 'left') targetX = minX
+      else if (align === 'right') targetX = maxX - n.width
+      else targetX = (minX + maxX) / 2 - n.width / 2
+      store.updateNode(n.id, { x: targetX })
+    } else {
+      const abs = store.graph.getAbsolutePosition(n.id)
+      if (align === 'left') targetX = minX
+      else if (align === 'right') targetX = maxX - n.width
+      else targetX = (minX + maxX) / 2 - n.width / 2
+      store.updateNode(n.id, { x: n.x + (targetX - abs.x) })
+    }
   }
   store.requestRender()
 }
 
 function alignVertical(align: VAlign) {
   const selected = nodes.value
-  if (selected.length < 2) return
+  if (selected.length === 0) return
 
-  let minY = Infinity,
+  let minY: number, maxY: number
+
+  if (selected.length === 1) {
+    const parent = store.graph.getNode(selected[0].parentId ?? '')
+    if (!parent) return
+    minY = 0
+    maxY = parent.height
+  } else {
+    minY = Infinity
     maxY = -Infinity
-  for (const n of selected) {
-    const abs = store.graph.getAbsolutePosition(n.id)
-    minY = Math.min(minY, abs.y)
-    maxY = Math.max(maxY, abs.y + n.height)
+    for (const n of selected) {
+      const abs = store.graph.getAbsolutePosition(n.id)
+      minY = Math.min(minY, abs.y)
+      maxY = Math.max(maxY, abs.y + n.height)
+    }
   }
 
   for (const n of selected) {
-    const abs = store.graph.getAbsolutePosition(n.id)
     let targetY: number
-    if (align === 'top') targetY = minY
-    else if (align === 'bottom') targetY = maxY - n.height
-    else targetY = (minY + maxY) / 2 - n.height / 2
-
-    const dy = targetY - abs.y
-    store.updateNode(n.id, { y: n.y + dy })
+    if (selected.length === 1) {
+      if (align === 'top') targetY = minY
+      else if (align === 'bottom') targetY = maxY - n.height
+      else targetY = (minY + maxY) / 2 - n.height / 2
+      store.updateNode(n.id, { y: targetY })
+    } else {
+      const abs = store.graph.getAbsolutePosition(n.id)
+      if (align === 'top') targetY = minY
+      else if (align === 'bottom') targetY = maxY - n.height
+      else targetY = (minY + maxY) / 2 - n.height / 2
+      store.updateNode(n.id, { y: n.y + (targetY - abs.y) })
+    }
   }
   store.requestRender()
 }
 
 function flipHorizontal() {
-  const n = node.value
-  store.updateNodeWithUndo(n.id, { rotation: -n.rotation || 0 }, 'Flip horizontal')
+  for (const n of nodes.value) {
+    store.updateNodeWithUndo(n.id, { flipX: !n.flipX }, 'Flip horizontal')
+  }
   store.requestRender()
 }
 
 function flipVertical() {
-  const n = node.value
-  store.updateNodeWithUndo(n.id, { rotation: (180 - n.rotation) % 360 }, 'Flip vertical')
+  for (const n of nodes.value) {
+    store.updateNodeWithUndo(n.id, { flipY: !n.flipY }, 'Flip vertical')
+  }
   store.requestRender()
 }
 
 function rotate90() {
-  const n = node.value
-  store.updateNodeWithUndo(n.id, { rotation: (n.rotation + 90) % 360 }, 'Rotate 90°')
+  for (const n of nodes.value) {
+    store.updateNodeWithUndo(n.id, { rotation: (n.rotation + 90) % 360 }, 'Rotate 90°')
+  }
   store.requestRender()
 }
 </script>
 
 <template>
-  <div v-if="node" class="border-b border-border px-3 py-2">
+  <div v-if="active" class="border-b border-border px-3 py-2">
     <label class="mb-1.5 block text-[11px] text-muted">Position</label>
 
     <!-- Alignment buttons -->
@@ -134,15 +181,33 @@ function rotate90() {
     <div class="flex gap-1.5">
       <ScrubInput
         icon="X"
-        :model-value="Math.round(node.x)"
+        :model-value="xValue"
         @update:model-value="updateProp('x', $event)"
         @commit="(v: number, p: number) => commitProp('x', v, p)"
       />
       <ScrubInput
         icon="Y"
-        :model-value="Math.round(node.y)"
+        :model-value="yValue"
         @update:model-value="updateProp('y', $event)"
         @commit="(v: number, p: number) => commitProp('y', v, p)"
+      />
+    </div>
+
+    <!-- W / H (multi-select only; single-select shows in LayoutSection) -->
+    <div v-if="isMulti" class="mt-1.5 flex gap-1.5">
+      <ScrubInput
+        icon="W"
+        :model-value="wValue"
+        :min="1"
+        @update:model-value="updateProp('width', $event)"
+        @commit="(v: number, p: number) => commitProp('width', v, p)"
+      />
+      <ScrubInput
+        icon="H"
+        :model-value="hValue"
+        :min="1"
+        @update:model-value="updateProp('height', $event)"
+        @commit="(v: number, p: number) => commitProp('height', v, p)"
       />
     </div>
 
@@ -151,7 +216,7 @@ function rotate90() {
       <ScrubInput
         class="flex-1"
         suffix="°"
-        :model-value="Math.round(node.rotation)"
+        :model-value="rotationValue"
         :min="-360"
         :max="360"
         @update:model-value="updateProp('rotation', $event)"

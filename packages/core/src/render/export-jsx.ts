@@ -1,4 +1,5 @@
 import { colorToHex } from '../color'
+import { DEFAULT_FONT_FAMILY } from '../constants'
 
 import type { SceneGraph, SceneNode, Fill, Stroke, Effect, NodeType, Color } from '../scene-graph'
 
@@ -189,7 +190,7 @@ function collectProps(node: SceneNode, graph: SceneGraph): [string, unknown][] {
 
   if (node.type === 'TEXT') {
     if (node.fontSize !== 14) props.push(['size', node.fontSize])
-    if (node.fontFamily && node.fontFamily !== 'Inter') props.push(['font', node.fontFamily])
+    if (node.fontFamily && node.fontFamily !== DEFAULT_FONT_FAMILY) props.push(['font', node.fontFamily])
     if (node.fontWeight !== 400) {
       if (node.fontWeight === 700) props.push(['weight', 'bold'])
       else if (node.fontWeight === 500) props.push(['weight', 'medium'])
