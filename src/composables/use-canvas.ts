@@ -129,7 +129,7 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
   const showRulers = !params.has('no-rulers')
 
   function renderNow() {
-    if (!renderer) return
+    if (!renderer || destroyed) return
     renderer.dpr = window.devicePixelRatio || 1
     renderer.panX = store.state.panX
     renderer.panY = store.state.panY

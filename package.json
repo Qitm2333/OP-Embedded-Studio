@@ -26,7 +26,8 @@
     "open-pencil": "bun packages/cli/src/index.ts",
     "docs:dev": "bun --filter @open-pencil/docs dev",
     "docs:build": "bun --filter @open-pencil/docs build",
-    "docs:preview": "bun --filter @open-pencil/docs preview"
+    "docs:preview": "bun --filter @open-pencil/docs preview",
+    "visual-compare": "bun scripts/visual-compare.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.37",

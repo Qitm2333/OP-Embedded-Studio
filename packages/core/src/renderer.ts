@@ -2902,7 +2902,12 @@ export class SkiaRenderer {
     return Math.round(value).toString()
   }
 
+  private destroyed = false
+
   destroy(): void {
+    if (this.destroyed) return
+    this.destroyed = true
+
     for (const img of this.imageCache.values()) img.delete()
     this.imageCache.clear()
     for (const p of this.vectorPathCache.values()) p.delete()
