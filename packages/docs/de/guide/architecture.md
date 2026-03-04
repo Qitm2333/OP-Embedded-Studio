@@ -29,7 +29,7 @@
 │  │  └──────────────────────────────────────────────────────┘ │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  MCP-Server (29+ Werkzeuge)       Kollaboration (P2P, Yjs CRDT) │
+│  MCP-Server (75+ Tools, stdio+HTTP) P2P-Kollab. (Trystero + Yjs) │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -79,4 +79,12 @@ Inverse-Command-Muster. Vor jeder Änderung werden betroffene Felder als Snapsho
 
 ### Zwischenablage
 
-Figma-kompatible bidirektionale Zwischenablage. Kodiert/dekodiert Kiwi-Binär (gleiches Format wie .fig-Dateien) über native Browser-Kopier/Einfüge-Events.
+Figma-kompatible bidirektionale Zwischenablage. Kodiert/dekodiert Kiwi-Binär (gleiches Format wie .fig-Dateien) über native Browser-Kopier/Einfüge-Events. Paste verarbeitet Vektorpfad-Skalierung, Instanz-Kind-Population aus Komponenten, Component-Set-Erkennung und Override-Anwendung.
+
+### MCP-Server
+
+`@open-pencil/mcp` stellt 75 Core-Tools + 3 Dateiverwaltungs-Tools für KI-Coding-Werkzeuge bereit. Zwei Transporte: stdio für Claude Code/Cursor/Windsurf, HTTP mit Hono + Streamable HTTP für Skripte und CI. Tools werden einmal in `packages/core/src/tools/schema.ts` definiert und für AI-Chat (valibot), MCP (zod) und CLI (eval-Befehl) adaptiert.
+
+### P2P-Kollaboration
+
+Echtzeit-Peer-to-Peer-Kollaboration über Trystero (WebRTC) + Yjs CRDT. Kein Server-Relay — Signalisierung über öffentliche MQTT-Broker, STUN/TURN für NAT-Traversal. Das Awareness-Protokoll bietet Live-Cursor, Auswahlen und Präsenz. Lokale Persistenz über y-indexeddb.

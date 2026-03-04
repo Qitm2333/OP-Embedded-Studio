@@ -24,7 +24,7 @@ Add to your MCP config (e.g. `~/.claude/settings.json` or `.cursor/mcp.json`):
 }
 ```
 
-Installazione:O eseguire dal codice sorgente:
+O eseguire dal codice sorgente:
 
 ::: code-group
 ```json [Bun]
@@ -73,7 +73,7 @@ Starts on port 3100 (override with `PORT` env var). Endpoints:
 5. **Structure** — `reparent_node`, `group_nodes`, `clone_node`, `delete_node`
 6. **Save** — `save_file` to write back to `.fig`
 
-## Tools (29)
+## Tools (75)
 
 ### Document
 

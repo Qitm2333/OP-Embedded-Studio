@@ -1,32 +1,69 @@
 # Fahrplan
 
-## Phase 1 ✅
-SceneGraph, Skia rendering, shapes, selection, zoom/pan, undo/redo, snap guides.
+## Phasen
 
-##  Core-Engine ✅
-Vue 3 + Reka UI panels, properties, layers, toolbar, Yoga auto-layout, inline text editing, canvas rulers.
+### Phase 1: Core-Engine ✅
 
-## Phase 2 ✅
-.fig import/export, Kiwi codec, clipboard, pen tool, vector networks, groups, Tauri v2 desktop, sections, multi-page, hover highlight, Tier 1 rendering.
+SceneGraph, Skia-Rendering, Grundformen, Auswahl, Zoom/Pan, Rückgängig/Wiederherstellen, Fanglinien.
 
-##  Editor-UI + Layout ✅
-Components, instances, overrides, component sets, variables (COLOR/FLOAT/STRING/BOOLEAN), collections, modes, image export, context menu, rich text formatting.
+### Phase 2: Editor-UI + Layout ✅
 
-## Phase 3 🟡
-@open-pencil/core, CLI (12 commands), MCP server (29+ tools), AI chat (OpenRouter), JSX renderer, code panel.
+Vue 3 + Reka UI Panels, Eigenschaften, Ebenen, Werkzeugleiste, Yoga Auto-Layout, Inline-Textbearbeitung, Canvas-Lineale.
 
-**Planned:** port remaining figma-use tools, attached mode, design guidelines, screenshot verification loop.
+### Phase 3: Datei-I/O + Visuelle Features ✅
 
-##  Datei-I/O + Visuelle Features 🔲
-Prototyping, comments, PWA, Linux Tauri builds, performance optimization, full Figma compatibility test suite.
+.fig Import/Export, Kiwi-Codec, Zwischenablage, Stiftwerkzeug, Vektornetzwerke, Gruppen, Tauri v2 Desktop, Sektionen, Mehrseiten, Hover-Hervorhebung, Tier-1-Rendering (Verläufe, Bilderfüllungen, Effekte, Kontur-Eigenschaften, Bögen).
 
-## Phase 4
+### Phase 4: Komponenten + Variablen ✅
 
-| Phase |  Komponenten + Variablen | Phase 5: KI-Integration & Werkzeuge:Phase 6: Feinschliff + Verteilung:Zeitplan:Geschätzte Dauer:Status |
-|-------|------|-----|
-| Phase 1 | 3 months | ✅ |
-|  Core-Engine | 3 months | ✅ |
-| Phase 2 | 2 months | ✅ |
-|  Editor-UI + Layout | 2 months | ✅ |
-| Phase 3 | 2 months | 🟡 |
-|  Datei-I/O + Visuelle Features | 2 months | 🔲 |
+Komponenten, Instanzen, Overrides, Komponenten-Sets, Variablen (COLOR/FLOAT/STRING/BOOLEAN), Sammlungen, Modi, Bildexport, Kontextmenü, Rich-Text-Formatierung.
+
+### Phase 5: KI-Integration & Werkzeuge ✅
+
+**Geliefert:**
+- @open-pencil/core extrahiert in packages/core/ (keine DOM-Abhängigkeiten)
+- @open-pencil/cli mit headless .fig-Operationen (info, tree, find, export, analyze, node, pages, variables, eval)
+- `eval`-Befehl mit Figma-kompatibler Plugin API für Headless-Skripting
+- KI-Chat: OpenRouter-Direktverbindung, 75 Werkzeuge in `schema.ts`, Modellauswahl, ⌘J
+- 49 zusätzliche KI/MCP-Werkzeuge portiert von figma-use (75 gesamt)
+- MCP-Server (@open-pencil/mcp): stdio + HTTP, 75 Core-Tools + 3 Dateiverwaltungs-Tools
+- Vereinheitlichte Werkzeugdefinitionen: einmal in `schema.ts` definieren, für KI-Chat (valibot), MCP (zod), CLI (eval) adaptieren
+- App-Menüleiste für Browser-Modus (Datei, Bearbeiten, Ansicht, Objekt, Text, Anordnen)
+- Automatisches Speichern: 3s Debounce nach letzter Szenenänderung
+- Multi-Selektion-Eigenschaftspanel mit gemeinsamen/gemischten Werten
+- npm-Veröffentlichung mit Provenance für core, cli und mcp
+
+**Geplant:**
+- Attached Mode: WebSocket zum laufenden Editor
+- Design-Guidelines-System
+- Screenshot-Verification-Loop
+
+### Phase 6: Kollaboration + Distribution 🟡
+
+**Geliefert:**
+- P2P-Kollaboration über Trystero (WebRTC) + Yjs CRDT — kein Server-Relay
+- Awareness-Protokoll: Live-Cursor, Auswahlen, Präsenz
+- Folgemodus: Klick auf Peer-Avatar zum Viewport-Folgen
+- Lokale Persistenz über y-indexeddb
+- Effekt-Rendering: Schlagschatten, innerer Schatten, Ebenen-/Hintergrund-/Vordergrund-Unschärfe
+- Multi-Datei-Tabs: ⌘N/⌘T neuer Tab, ⌘W schließen, ⌘O öffnen
+- Apple Code-Signierung und Notarisierung für macOS
+- Linux-Builds (x64) in CI hinzugefügt
+- VitePress-Dokumentationsseite mit i18n (6 Sprachen)
+
+**Geplant:**
+- Prototyping (Frame-Verbindungen, Übergänge, Animationen)
+- Kommentare (Pin, Threads, Auflösen)
+- PWA-Unterstützung
+- Varianten-Switching, FLOAT/STRING/BOOLEAN Variable UI, variablengesteuertes Theming
+
+## Zeitplan
+
+| Phase | Geschätzte Dauer | Status |
+|-------|-----------------|--------|
+| Phase 1: Core-Engine | 3 Monate | ✅ Abgeschlossen |
+| Phase 2: Editor-UI + Layout | 3 Monate | ✅ Abgeschlossen |
+| Phase 3: Datei-I/O + Visuelle Features | 2 Monate | ✅ Abgeschlossen |
+| Phase 4: Komponenten + Variablen | 2 Monate | ✅ Abgeschlossen |
+| Phase 5: KI-Integration & Werkzeuge | 2 Monate | ✅ Abgeschlossen |
+| Phase 6: Kollaboration + Distribution | 2 Monate | 🟡 In Arbeit |

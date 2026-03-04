@@ -1,32 +1,67 @@
 # Hoja de ruta
 
-## Fase 1 ✅
-SceneGraph, Skia rendering, shapes, selection, zoom/pan, undo/redo, snap guides.
+## Fases
 
-##  Motor Core ✅
-Vue 3 + Reka UI panels, properties, layers, toolbar, Yoga auto-layout, inline text editing, canvas rulers.
+### Fase 1: Motor Core ✅
 
-## Fase 2 ✅
-.fig import/export, Kiwi codec, clipboard, pen tool, vector networks, groups, Tauri v2 desktop, sections, multi-page, hover highlight, Tier 1 rendering.
+SceneGraph, renderizado Skia, formas básicas, selección, zoom/pan, deshacer/rehacer, guías de ajuste.
 
-##  UI Editor + Layout ✅
-Components, instances, overrides, component sets, variables (COLOR/FLOAT/STRING/BOOLEAN), collections, modes, image export, context menu, rich text formatting.
+### Fase 2: UI del Editor + Layout ✅
 
-## Fase 3 🟡
-@open-pencil/core, CLI (12 commands), MCP server (29+ tools), AI chat (OpenRouter), JSX renderer, code panel.
+Vue 3 + Reka UI panels, propiedades, capas, barra de herramientas, Yoga auto-layout, edición de texto inline, reglas del canvas.
 
-**Planned:** port remaining figma-use tools, attached mode, design guidelines, screenshot verification loop.
+### Fase 3: E/S de Archivos + Funciones Visuales ✅
 
-##  E/S Archivos + Funciones Visuales 🔲
-Prototyping, comments, PWA, Linux Tauri builds, performance optimization, full Figma compatibility test suite.
+Importación/exportación .fig, codec Kiwi, portapapeles, herramienta de pluma, redes vectoriales, grupos, Tauri v2 desktop, secciones, multi-página, resaltado hover, renderizado Tier 1.
 
-## Fase 4
+### Fase 4: Componentes + Variables ✅
 
-| Phase |  Componentes + Variables | Fase 5: Integración IA & Herramientas:Fase 6: Pulido + Distribución:Cronograma:Duración estimada:Estado |
-|-------|------|-----|
-| Fase 1 | 3 months | ✅ |
-|  Motor Core | 3 months | ✅ |
-| Fase 2 | 2 months | ✅ |
-|  UI Editor + Layout | 2 months | ✅ |
-| Fase 3 | 2 months | 🟡 |
-|  E/S Archivos + Funciones Visuales | 2 months | 🔲 |
+Componentes, instancias, overrides, conjuntos de componentes, variables (COLOR/FLOAT/STRING/BOOLEAN), colecciones, modos, exportación de imágenes, menú contextual, formateo de texto enriquecido.
+
+### Fase 5: Integración IA & Herramientas ✅
+
+**Entregado:**
+- @open-pencil/core extraído a packages/core/ (sin dependencias DOM)
+- @open-pencil/cli con operaciones headless .fig (info, tree, find, export, analyze, eval)
+- Comando `eval` con API Plugin compatible con Figma
+- Chat IA: conexión directa OpenRouter, 75 herramientas en `schema.ts`, ⌘J
+- 49 herramientas IA/MCP adicionales portadas de figma-use (75 en total)
+- Servidor MCP (@open-pencil/mcp): stdio + HTTP, 75 herramientas core + 3 de gestión de archivos
+- Definiciones de herramientas unificadas: definir una vez en `schema.ts`, adaptar para chat IA (valibot), MCP (zod), CLI (eval)
+- Menú de aplicación para modo navegador
+- Autoguardado: escritura con debounce de 3s
+- Panel de propiedades multi-selección con valores compartidos/mixtos
+
+**Planificado:**
+- Modo adjunto: WebSocket al editor en ejecución
+- Sistema de pautas de diseño
+
+### Fase 6: Colaboración + Distribución 🟡
+
+**Entregado:**
+- Colaboración P2P vía Trystero (WebRTC) + Yjs CRDT — sin servidor relay
+- Protocolo de awareness: cursores en vivo, selecciones, presencia
+- Modo seguimiento: clic en avatar del par para seguir su viewport
+- Persistencia local vía y-indexeddb
+- Renderizado de efectos: sombra paralela, sombra interior, desenfoque de capa/fondo/primer plano
+- Pestañas multi-archivo: ⌘N/⌘T nueva pestaña, ⌘W cerrar, ⌘O abrir
+- Firma de código Apple y notarización para macOS
+- Builds Linux (x64) añadidos al CI
+- Sitio de documentación VitePress con i18n (6 idiomas)
+
+**Planificado:**
+- Prototipado (conexiones de frames, transiciones, animaciones)
+- Comentarios (pin, hilos, resolver)
+- Soporte PWA
+- Cambio de variantes, UI de variables FLOAT/STRING/BOOLEAN, theming por variables
+
+## Cronograma
+
+| Fase | Duración estimada | Estado |
+|------|------------------|--------|
+| Fase 1: Motor Core | 3 meses | ✅ Completada |
+| Fase 2: UI del Editor + Layout | 3 meses | ✅ Completada |
+| Fase 3: E/S de Archivos + Funciones Visuales | 2 meses | ✅ Completada |
+| Fase 4: Componentes + Variables | 2 meses | ✅ Completada |
+| Fase 5: Integración IA & Herramientas | 2 meses | ✅ Completada |
+| Fase 6: Colaboración + Distribución | 2 meses | 🟡 En progreso |

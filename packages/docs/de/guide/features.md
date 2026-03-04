@@ -12,6 +12,8 @@ Design-Tools sind ein Lieferkettenproblem. Wenn Ihr Tool proprietär ist, bestim
 
 Knoten in Figma auswählen, <kbd>⌘</kbd><kbd>C</kbd>, zu OpenPencil wechseln, <kbd>⌘</kbd><kbd>V</kbd> — sie erscheinen mit Füllungen, Konturen, Auto-Layout, Text, Eckenradien, Effekten und Vektornetzwerken. Funktioniert auch umgekehrt.
 
+Paste verarbeitet komplexe Szenarien: Vektorpfade werden von Figmas `normalizedSize` auf die tatsächlichen Knotenmaße skaliert, Instanz-Kinder werden aus den `symbolData` ihrer Komponente gefüllt, Component-Sets werden erkannt und `symbolOverrides` für Text, Füllungen, Sichtbarkeit und Layout-Eigenschaften angewendet. Schriften, die von eingefügten Textknoten referenziert werden, werden automatisch geladen.
+
 ## Vektornetzwerke
 
 Das Stiftwerkzeug verwendet Figmas Vektornetzwerk-Modell — keine einfachen Pfade. Klicken für Eckpunkte, Klicken+Ziehen für Bézier-Kurven mit Tangentengriffen. Offene und geschlossene Pfade werden unterstützt.
@@ -87,6 +89,10 @@ Dokumente unterstützen mehrere Seiten wie Figma. Jede Seite hat einen unabhäng
 
 Knoten werden beim Überfahren mit einem formgerechten Umriss hervorgehoben.
 
+## Erweitertes Rendering (Tier 1)
+
+Der CanvasKit-Renderer unterstützt vollständige Tier-1-Visualfunktionen: Gradientenfüllungen (linear, radial, angular, diamant), Bildfüllungen, Effekte (Schatten, Unschärfe), Kontureigenschaften (Cap, Join, Dash), Bogendaten, Viewport-Culling, Paint-Wiederverwendung und RAF-Zusammenfassung.
+
 ## Komponenten & Instanzen
 
 Erstellen Sie wiederverwendbare Komponenten aus Frames oder Auswahlen (<kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd>). Live-Synchronisation, Override-Unterstützung und Komponenten-Sets (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd>).
@@ -103,6 +109,10 @@ Ausgewählte Knoten als PNG, JPG oder WEBP exportieren. Skalierung von 0,5× bis
 
 Rechtsklick auf dem Canvas öffnet ein Figma-ähnliches Kontextmenü mit Zwischenablage, Z-Reihenfolge, Gruppierung, Komponenten- und Sichtbarkeitsaktionen.
 
+## Z-Ordnung, Sichtbarkeit & Sperre
+
+<kbd>]</kbd> bringt ausgewählte Knoten nach vorne, <kbd>[</kbd> sendet nach hinten. <kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd> schaltet Sichtbarkeit um. <kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd> schaltet die Sperre um — gesperrte Knoten können nicht vom Canvas aus ausgewählt oder verschoben werden. Knoten zwischen Seiten verschieben über das Kontextmenü „Auf Seite verschieben".
+
 ## Web- & Desktop-App
 
 OpenPencil läuft im Browser unter [app.openpencil.dev](https://app.openpencil.dev). Die Desktop-App verwendet eine Tauri v2-Shell (~5 MB).
@@ -115,9 +125,60 @@ Im Browser-Modus bietet eine mit reka-ui Menubar erstellte Menüleiste Zugriff a
 
 Dateien werden 3 Sekunden nach der letzten Szenenänderung automatisch gespeichert.
 
+## P2P-Kollaboration
+
+Echtzeit-Peer-to-Peer-Kollaboration — kein Server erforderlich. Teilen Sie einen Link und bearbeiten Sie gemeinsam. Basiert auf Trystero (WebRTC) für direkte Peer-Verbindungen und Yjs (CRDT) für konfliktfreie Dokumentensynchronisation.
+
+- **Keine Hosting-Kosten** — Signalisierung über öffentliche MQTT-Broker, Daten fließen direkt zwischen Peers
+- **NAT-Traversal** — Google STUN, Cloudflare STUN und Open Relay TURN-Server
+- **Live-Cursor** — Figma-ähnliche farbige Cursor-Pfeile mit weißem Rand und Namens-Pills, im Bildschirmraum gerendert
+- **Präsenz** — sehen Sie, wer im Raum ist, mit farbigen Avataren
+- **Folgemodus** — klicken Sie auf den Avatar eines Peers, um seinem Viewport in Echtzeit zu folgen
+- **Lokale Persistenz** — y-indexeddb hält den Raum über Seitenaktualisierungen hinweg am Leben
+- **Sichere Räume** — IDs werden mit `crypto.getRandomValues()` generiert
+
+## Multi-Datei-Tabs
+
+Öffnen Sie mehrere Dokumente in Tabs innerhalb eines einzigen Fensters. Tab-Leiste mit Schließen-Buttons. Mittelklick zum Schließen eines Tabs.
+
+- <kbd>⌘</kbd><kbd>N</kbd> oder <kbd>⌘</kbd><kbd>T</kbd> — neuer Tab
+- <kbd>⌘</kbd><kbd>W</kbd> — aktuellen Tab schließen
+- <kbd>⌘</kbd><kbd>O</kbd> — Datei in neuem Tab öffnen
+
+Jeder Tab pflegt seinen eigenen Dokumentzustand, Undo-Verlauf und Viewport.
+
+## Effekt-Rendering
+
+Vollständiges Rendering von Figma-Effekten über CanvasKit:
+
+- **Schlagschatten** — Versatz, Unschärferadius, Ausdehnung, Farbe
+- **Innerer Schatten** — eingefügter Schatten mit Versatz, Unschärfe und Farbe
+- **Ebenen-Unschärfe** — Gaußsche Unschärfe auf der gesamten Ebene
+- **Hintergrund-Unschärfe** — Unschärfe des Inhalts hinter der Ebene (Glas-/Matteffekt)
+- **Vordergrund-Unschärfe** — Unschärfe im Vordergrund
+
+Per-Knoten `SkPicture`-Cache bedeutet, dass unveränderte Schatten-/Unschärfe-Knoten aus dem Cache wiedergegeben werden.
+
+## Multi-Selektion-Eigenschaften
+
+Wählen Sie mehrere Knoten aus und bearbeiten Sie gemeinsame Eigenschaften gleichzeitig:
+
+- Gemeinsame Werte werden in allen Abschnitten normal angezeigt (Position, Größe, Darstellung, Füllung, Kontur, Effekte)
+- Unterschiedliche Werte zeigen „Mixed"
+- Breiten- und Höheneingaben funktionieren über die Auswahl
+- Horizontal/vertikal spiegeln gilt für alle ausgewählten Knoten
+
+## ScrubInput
+
+Alle numerischen Eingaben im Eigenschafts-Panel verwenden eine Zieh-zum-Ändern-Interaktion — horizontal ziehen zum Anpassen des Wertes, oder klicken zum direkten Eingeben. Unterstützt Suffix-Anzeige (°, px, %).
+
+## CI/CD-Builds
+
+GitHub Actions baut native Tauri-Desktop-Apps bei Versions-Tags. Die Build-Matrix umfasst macOS (arm64, x64), Windows (x64, arm64) und Linux (x64). macOS-Builds sind mit Apple-Developer-Zertifikaten signiert und notarisiert. Release-Notes werden automatisch aus CHANGELOG.md befüllt.
+
 ## KI-Chat
 
-Integrierter KI-Assistent über den KI-Tab oder <kbd>⌘</kbd><kbd>J</kbd>. Kommuniziert direkt mit OpenRouter. **29 Werkzeuge** für Lesen, Erstellen, Ändern und Organisieren von Design-Elementen. **MCP-Server** für externe KI-Coding-Tools.
+Integrierter KI-Assistent über den KI-Tab oder <kbd>⌘</kbd><kbd>J</kbd>. Kommuniziert direkt mit OpenRouter. **75 Werkzeuge** für Lesen, Erstellen, Ändern und Organisieren von Design-Elementen. **MCP-Server** für externe KI-Coding-Tools.
 
 ## @open-pencil/core & CLI
 
@@ -130,6 +191,14 @@ Die Engine ist in `packages/core/` extrahiert. CLI bietet headless .fig-Dateiope
 - `open-pencil eval <file>` — JavaScript mit Figma Plugin API ausführen
 
 Alle Befehle unterstützen `--json` für maschinenlesbare Ausgabe.
+
+## JSX-Renderer
+
+Programmatische Design-Erstellung über TreeNode-Builder-Funktionen aus `@open-pencil/core`. Unterstützt Tailwind-ähnliche Kurzform-Props — `w`, `h`, `bg`, `rounded`, `flex`, `gap`, `p`/`px`/`py`.
+
+## Code-Panel
+
+Der Code-Tab im Eigenschafts-Panel zeigt die JSX-Darstellung der aktuellen Auswahl mit Prism.js-Syntaxhervorhebung und einem Kopieren-Button.
 
 ## Codequalität
 

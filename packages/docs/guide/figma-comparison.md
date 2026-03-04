@@ -6,7 +6,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 ✅ Supported — feature works end-to-end · 🟡 Partial — core behavior exists, some sub-features missing · 🔲 Not yet implemented
 :::
 
-**Coverage:** 87 of 152 Figma feature items addressed — 69 ✅ fully supported, 18 🟡 partial, 65 🔲 not yet. Last updated: 2026-03-03.
+**Coverage:** 88 of 152 Figma feature items addressed — 70 ✅ fully supported, 18 🟡 partial, 64 🔲 not yet. Last updated: 2026-03-04.
 
 ## Interface & Navigation
 
@@ -28,7 +28,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Custom file thumbnails | 🔲 | Thumbnail generated on export, but no custom thumbnail picker |
 | Nudge value settings | 🔲 | Default 1px/10px; Figma allows custom small/big nudge values |
 | App menu (browser mode) | ✅ | File, Edit, View, Object, Text, Arrange menus; Tauri uses native menus |
-| AI tools | 🟡 | 29 tools via OpenRouter + MCP server; no AI-generated images or AI-powered search yet |
+| AI tools | 🟡 | 75 tools via OpenRouter + MCP server; no AI-generated images or AI-powered search yet |
 
 ## Layers & Shapes
 
@@ -55,7 +55,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Smart selection (distribute/align) | 🔲 | Evenly space and align multi-selection |
 | Layout guides (columns, rows, grid) | 🔲 | Column/row/grid overlay guides on frames |
 | Measure distances between layers | 🔲 | Alt-hover to show distances |
-| Edit objects in bulk | 🔲 | Batch property editing |
+| Edit objects in bulk | ✅ | Multi-selection properties panel: edit position, size, appearance, fill, stroke, effects across multiple nodes; shared values display normally, differing values show "Mixed" |
 | Identify matching objects | 🔲 | Find similar layers |
 | Copy/paste properties | 🔲 | Copy fill/stroke/effects between layers |
 | Parent-child relationships | ✅ | Full hierarchy with parentIndex, reparenting via drag |
@@ -215,7 +215,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Code Connect | 🔲 | Link design components to code |
 | Code snippets | 🟡 | JSX export with syntax highlighting and copy; no CSS/Swift/Kotlin snippets |
 | Figma for VS Code | 🔲 | Editor plugin integration |
-| MCP server | ✅ | @open-pencil/mcp with stdio + HTTP transports; 29 core tools + 3 file management tools |
+| MCP server | ✅ | @open-pencil/mcp with stdio + HTTP transports; 75 core tools + 3 file management tools |
 | CLI tools | ✅ | Headless CLI: info, tree, find, export, analyze, node, pages, variables, eval; MCP server with stdio + HTTP |
 
 ## Figma Draw

@@ -14,6 +14,8 @@ Select nodes in Figma, <kbd>⌘</kbd><kbd>C</kbd>, switch to OpenPencil, <kbd>�
 
 Under the hood, both directions use the same Kiwi binary format as .fig files — Figma base64-encodes it into HTML on the clipboard. OpenPencil decodes the full schema on paste (194 definitions, ~390 fields per NodeChange) and encodes it on copy. Vector data round-trips through the `vectorNetworkBlob` binary format. Also works between OpenPencil instances via a separate native clipboard format.
 
+Paste handles complex scenarios: vector paths are scaled from Figma's `normalizedSize` to actual node bounds, instance children are populated from their component's `symbolData`, component sets are detected by promoting frames with variant `componentPropDefs`, internal canvas nodes are skipped, and `symbolOverrides` are applied for text, fills, visibility, and layout properties. Fonts referenced by pasted text nodes are automatically loaded.
+
 ## Vector Networks
 
 The pen tool uses Figma's vector network model — not simple paths. Click to place corner points, click+drag for bezier curves with tangent handles. Supports open and closed paths. Vector data uses the same `vectorNetworkBlob` binary format as Figma.
@@ -173,13 +175,61 @@ In browser mode, a menu bar built with reka-ui Menubar provides access to all ma
 
 Files are automatically saved 3 seconds after the last scene change. A debounced watcher monitors `sceneVersion` — multiple rapid edits only trigger a single write after activity settles. Uses the Tauri fs plugin on desktop or the File System Access API in supported browsers. Autosave is disabled for new untitled documents until the user performs an explicit Save As. Errors are handled silently — the user can always trigger a manual save with <kbd>⌘</kbd><kbd>S</kbd>.
 
+## P2P Collaboration
+
+Real-time peer-to-peer collaboration — no server required. Share a link and edit together. Built on Trystero (WebRTC) for direct peer connections and Yjs (CRDT) for conflict-free document sync.
+
+- **Zero hosting cost** — signaling via MQTT public brokers, data flows directly between peers
+- **NAT traversal** — Google STUN, Cloudflare STUN, and Open Relay TURN servers
+- **Live cursors** — Figma-style colored cursor arrows with white border and name pills, rendered in screen space
+- **Presence** — see who's in the room with colored avatars
+- **Follow mode** — click a peer's avatar to follow their viewport in real time, click again to stop
+- **Local persistence** — y-indexeddb keeps the room alive across page refreshes
+- **Secure rooms** — IDs generated with `crypto.getRandomValues()`, shared via `/share/<room-id>` URL
+
+Stale cursors are cleaned up automatically when a peer disconnects.
+
+## Multi-File Tabs
+
+Open multiple documents in tabs within a single window. Tab bar shows open files with close buttons. Middle-click a tab to close it.
+
+- <kbd>⌘</kbd><kbd>N</kbd> or <kbd>⌘</kbd><kbd>T</kbd> — new tab
+- <kbd>⌘</kbd><kbd>W</kbd> — close current tab
+- <kbd>⌘</kbd><kbd>O</kbd> — open file in new tab
+- <kbd>+</kbd> button in tab bar — new tab
+
+Each tab maintains its own document state, undo history, and viewport.
+
+## Effects Rendering
+
+Full rendering of Figma effects via CanvasKit:
+
+- **Drop shadow** — offset, blur radius, spread, color; draws behind opaque content using `MaskFilter` direct draw (no `saveLayer` overhead)
+- **Inner shadow** — inset shadow with offset, blur, and color
+- **Layer blur** — Gaussian blur on the entire layer
+- **Background blur** — blur content behind the layer (glass/frosted effect)
+- **Foreground blur** — blur in the foreground
+
+Text shadows render on individual glyphs instead of the bounding box. Each effect has an independent visibility toggle. Per-node `SkPicture` caching means unchanged shadow/blur nodes replay from cache on scene redraws — zero re-computation for static effects.
+
+## Multi-Selection Properties
+
+Select multiple nodes and edit shared properties at once. The properties panel adapts:
+
+- Shared values display normally in all sections (position, size, appearance, fill, stroke, effects)
+- Differing values show "Mixed"
+- Width and height inputs work across the selection
+- Flip horizontal/vertical applies to all selected nodes
+
+Single-node alignment aligns to parent frame bounds. Multi-selection uses the selection bounding box.
+
 ## ScrubInput
 
 All numeric inputs in the properties panel use a drag-to-scrub interaction — drag horizontally to adjust the value, or click to type directly. Supports suffix display (°, px, %).
 
 ## CI/CD Builds
 
-GitHub Actions workflow builds native Tauri desktop apps on version tags. The build matrix covers Windows (x64, arm64) and macOS (x64, arm64). Builds use `tauri-apps/tauri-action` and produce draft GitHub releases with platform-specific binaries.
+GitHub Actions workflow builds native Tauri desktop apps on version tags. The build matrix covers macOS (arm64, x64), Windows (x64, arm64), and Linux (x64). Builds use `tauri-apps/tauri-action` and produce draft GitHub releases with platform-specific binaries. macOS builds are code-signed and notarized via Apple Developer certificates. Release notes are auto-populated from CHANGELOG.md.
 
 ## @open-pencil/core & CLI
 
@@ -220,9 +270,9 @@ Built-in AI assistant accessible via the AI tab in the properties panel or <kbd>
 
 **Model selector** with curated models: Claude, Gemini, GPT, DeepSeek, Qwen, Kimi, Llama — stored in `@open-pencil/core` constants with benchmark-ranked tags. Responses stream as markdown (vue-stream-markdown).
 
-**29 tools** defined in `packages/core/src/tools/schema.ts`: read tools (`get_selection`, `get_page_tree`, `get_node`, `find_nodes`, `list_pages`, `list_variables`, `list_collections`), create tools (`create_shape`, `render`, `create_component`, `create_instance`), modify tools (`set_fill`, `set_stroke`, `set_effects`, `update_node`, `set_layout`, `set_constraints`, `rename_node`, `reparent_node`, `clone_node`, `delete_node`), organize tools (`select_nodes`, `group_nodes`, `ungroup_node`, `switch_page`), and `eval` escape hatch. Tools are wired to AI chat (valibot schemas), MCP server (zod schemas), and CLI (`eval` command). Tool calls display as collapsible timeline entries in the chat (reka-ui Collapsible).
+**75 tools** defined in `packages/core/src/tools/schema.ts`, covering: read operations (selection, page tree, node details, search), create operations (shapes, frames, vectors, slices, pages, components, instances), modify operations (fill, stroke, effects, layout, constraints, text, font, opacity, rotation, radius, visibility, blend mode, lock), node manipulation (move, resize, reparent, clone, delete, flatten, boolean operations), variable CRUD (get, find, create, set, delete, bind, collections), vector path tools (get, set, scale, flip, move), viewport control, and an `eval` escape hatch. Tools are wired to AI chat (valibot schemas), MCP server (zod schemas), and CLI (`eval` command). Tool calls display as collapsible timeline entries in the chat (reka-ui Collapsible).
 
-**MCP server** (`packages/mcp/`) exposes all tools for external AI coding tools. Two transports: stdio for Claude Code/Cursor/Windsurf (`openpencil-mcp`), HTTP with Hono + Streamable HTTP for scripts and CI (`openpencil-mcp-http`). Adds 3 file management tools (`open_file`, `save_file`, `new_document`) on top of the 26 core tools. Runs on Bun and Node.js. See [MCP Tools reference](/reference/mcp-tools).
+**MCP server** (`packages/mcp/`) exposes all tools for external AI coding tools. Two transports: stdio for Claude Code/Cursor/Windsurf (`openpencil-mcp`), HTTP with Hono + Streamable HTTP for scripts and CI (`openpencil-mcp-http`). Adds 3 file management tools (`open_file`, `save_file`, `new_document`) on top of the 75 core tools, for 78 total. Runs on Bun and Node.js. See [MCP Tools reference](/reference/mcp-tools).
 
 Tested with Playwright using mock transport for CI (chat), bun:test for tool execution (MCP).
 

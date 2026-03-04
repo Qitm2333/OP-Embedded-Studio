@@ -81,7 +81,7 @@ Server starts on port 3100 (override with `PORT` env var). Endpoints:
 5. **Structure** — `reparent_node`, `group_nodes`, `clone_node`, `delete_node`
 6. **Save** — `save_file` to write back to `.fig`
 
-## Tools (29)
+## Tools (75)
 
 ### Document
 

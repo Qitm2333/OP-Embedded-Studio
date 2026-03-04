@@ -29,7 +29,7 @@
 │  │  └──────────────────────────────────────────────────────┘ │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  MCP Server (planned, 117 tools)    Collaboration (planned, CRDT) │
+│  MCP Server (75+ tools, stdio+HTTP)  P2P Collab (Trystero + Yjs)   │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -85,4 +85,12 @@ Inverse-command pattern. Before applying any change, affected fields are snapsho
 
 ### Clipboard
 
-Figma-compatible bidirectional clipboard. Encodes/decodes Kiwi binary (same format as .fig files) using native browser copy/paste events (synchronous, not async Clipboard API).
+Figma-compatible bidirectional clipboard. Encodes/decodes Kiwi binary (same format as .fig files) using native browser copy/paste events (synchronous, not async Clipboard API). Paste handles vector path scaling, instance child population from components, component set detection, and override application.
+
+### MCP Server
+
+`@open-pencil/mcp` exposes 75 core tools + 3 file management tools for AI coding tools. Two transports: stdio for Claude Code/Cursor/Windsurf, HTTP with Hono + Streamable HTTP for scripts and CI. Tools are defined once in `packages/core/src/tools/schema.ts` and adapted for AI chat (valibot), MCP (zod), and CLI (eval command).
+
+### P2P Collaboration
+
+Real-time peer-to-peer collaboration via Trystero (WebRTC) + Yjs CRDT. No server relay — signaling over MQTT public brokers, STUN/TURN for NAT traversal. Awareness protocol provides live cursors, selections, and presence. Local persistence via y-indexeddb.
