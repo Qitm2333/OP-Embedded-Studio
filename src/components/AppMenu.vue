@@ -150,10 +150,11 @@ const topMenus = [
 <template>
   <div class="shrink-0 border-b border-border">
     <div class="flex items-center gap-2 px-2 py-1.5">
-      <img src="/favicon-32.png" class="size-4" alt="OpenPencil" />
+      <img data-test-id="app-logo" src="/favicon-32.png" class="size-4" alt="OpenPencil" />
       <input
         v-if="editingName"
         data-doc-name-edit
+        data-test-id="app-document-name-input"
         class="min-w-0 flex-1 rounded border border-accent bg-input px-1 py-0.5 text-xs text-surface outline-none"
         :value="store.state.documentName"
         @blur="commitRename($event.target as HTMLInputElement)"
@@ -162,11 +163,13 @@ const topMenus = [
       />
       <span
         v-else
+        data-test-id="app-document-name"
         class="min-w-0 flex-1 cursor-default truncate rounded px-1 py-0.5 text-xs text-surface hover:bg-hover"
         @dblclick="startRename"
         >{{ store.state.documentName }}</span
       >
       <button
+        data-test-id="app-toggle-ui"
         class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
         title="Toggle UI (⌘\)"
         @click="store.state.showUI = !store.state.showUI"
@@ -178,6 +181,7 @@ const topMenus = [
       <MenubarRoot class="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
         <MenubarMenu v-for="menu in topMenus" :key="menu.label">
           <MenubarTrigger
+            :data-test-id="`menubar-${menu.label.toLowerCase()}`"
             class="flex cursor-pointer items-center rounded px-2 py-1 text-xs text-muted transition-colors select-none hover:bg-hover hover:text-surface data-[state=open]:bg-hover data-[state=open]:text-surface"
           >
             {{ menu.label }}

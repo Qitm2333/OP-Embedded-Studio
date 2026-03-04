@@ -51,6 +51,7 @@ function handleSubmit(e: Event) {
       <div class="mb-1.5 flex items-center">
         <SelectRoot v-model="modelId">
           <SelectTrigger
+            data-test-id="chat-model-selector"
             class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
           >
             <icon-lucide-bot class="size-3" />
@@ -90,6 +91,7 @@ function handleSubmit(e: Event) {
         <input
           v-model="input"
           type="text"
+          data-test-id="chat-input"
           placeholder="Describe a change…"
           class="min-w-0 flex-1 rounded border border-border bg-input px-2.5 py-1.5 text-xs text-surface outline-none placeholder:text-muted focus:border-accent"
           :disabled="status === 'submitted'"
@@ -98,6 +100,7 @@ function handleSubmit(e: Event) {
           <TooltipTrigger as-child>
             <button
               type="button"
+              data-test-id="chat-stop-button"
               class="shrink-0 rounded border border-border px-2 py-1.5 text-xs text-muted hover:bg-hover"
               @click="emit('stop')"
             >
@@ -118,6 +121,7 @@ function handleSubmit(e: Event) {
           <TooltipTrigger as-child>
             <button
               type="submit"
+              data-test-id="chat-send-button"
               class="shrink-0 rounded bg-accent px-2.5 py-1.5 text-xs font-medium text-white hover:bg-accent/90"
               :disabled="!input.trim()"
             >

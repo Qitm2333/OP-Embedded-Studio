@@ -147,10 +147,11 @@ const cornerRadiusValue = computed(() => {
 </script>
 
 <template>
-  <div v-if="active" class="border-b border-border px-3 py-2">
+  <div v-if="active" data-test-id="appearance-section" class="border-b border-border px-3 py-2">
     <div class="mb-1.5 flex items-center justify-between">
       <label class="text-[11px] text-muted">Appearance</label>
       <button
+        data-test-id="appearance-visibility"
         class="flex cursor-pointer items-center justify-center rounded border-none bg-transparent p-0.5 text-muted hover:bg-hover hover:text-surface"
         :class="{ 'text-accent': visibilityState === 'hidden' }"
         title="Toggle visibility"

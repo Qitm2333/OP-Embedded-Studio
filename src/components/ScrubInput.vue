@@ -111,6 +111,7 @@ function onKeydown(e: KeyboardEvent) {
 
 <template>
   <div
+    data-test-id="scrub-input"
     class="flex min-w-0 flex-1 items-center rounded border border-border bg-input h-[26px] focus-within:border-accent"
     :style="{ cursor: editing ? 'auto' : 'ew-resize' }"
     @pointerdown="!editing && startScrub($event)"
@@ -127,6 +128,7 @@ function onKeydown(e: KeyboardEvent) {
       v-if="editing"
       ref="inputRef"
       type="number"
+      data-test-id="scrub-input-field"
       class="min-w-0 flex-1 cursor-text border-none bg-transparent pr-1.5 font-[inherit] text-xs text-surface outline-none"
       :value="isMixed ? '' : displayValue"
       :placeholder="placeholder"

@@ -126,7 +126,7 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
 </script>
 
 <template>
-  <div v-if="node" class="border-b border-border px-3 py-2">
+  <div v-if="node" data-test-id="layout-section" class="border-b border-border px-3 py-2">
     <label class="mb-1.5 block text-[11px] text-muted">Layout</label>
     <div class="flex gap-1.5">
       <!-- Width -->
@@ -147,6 +147,7 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
         </button>
         <div
           v-if="widthSizingOpen"
+          data-test-id="layout-width-sizing-dropdown"
           class="absolute top-full left-0 right-0 z-10 min-w-40 rounded-md border border-border bg-panel p-1 shadow-lg"
         >
           <button
@@ -194,6 +195,7 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
         </button>
         <div
           v-if="heightSizingOpen"
+          data-test-id="layout-height-sizing-dropdown"
           class="absolute top-full left-0 right-0 z-10 min-w-40 rounded-md border border-border bg-panel p-1 shadow-lg"
         >
           <button
@@ -233,6 +235,7 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
       <button
         v-if="node.layoutMode === 'NONE'"
         class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
+        data-test-id="layout-add-auto"
         title="Add auto layout (Shift+A)"
         @click="store.setLayoutMode(node.id, 'VERTICAL')"
       >
@@ -241,6 +244,7 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
       <button
         v-else
         class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
+        data-test-id="layout-remove-auto"
         title="Remove auto layout"
         @click="store.setLayoutMode(node.id, 'NONE')"
       >
@@ -258,6 +262,7 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
               ? 'border-accent bg-accent text-white'
               : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
           "
+          data-test-id="layout-direction-vertical"
           title="Vertical layout"
           @click="store.setLayoutMode(node.id, 'VERTICAL')"
         >
@@ -274,6 +279,7 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
               ? 'border-accent bg-accent text-white'
               : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
           "
+          data-test-id="layout-direction-horizontal"
           title="Horizontal layout"
           @click="store.setLayoutMode(node.id, 'HORIZONTAL')"
         >
@@ -290,6 +296,7 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
               ? 'border-accent bg-accent text-white'
               : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
           "
+          data-test-id="layout-direction-wrap"
           title="Wrap"
           @click="updateProp('layoutWrap', node.layoutWrap === 'WRAP' ? 'NO_WRAP' : 'WRAP')"
         >
@@ -303,7 +310,10 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
 
       <!-- Alignment grid + Gap -->
       <div class="mt-1.5 flex items-center gap-2">
-        <div class="grid grid-cols-3 gap-0.5 rounded border border-border bg-input p-1">
+        <div
+          data-test-id="layout-alignment-grid"
+          class="grid grid-cols-3 gap-0.5 rounded border border-border bg-input p-1"
+        >
           <button
             v-for="(a, i) in ALIGN_GRID"
             :key="i"

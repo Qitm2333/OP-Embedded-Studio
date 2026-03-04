@@ -13,6 +13,7 @@ const { copy, copied } = useClipboard({ copiedDuring: 1500 })
     <ToastRoot
       v-for="t in toast.toasts.value"
       :key="t.id"
+      data-test-id="toast-item"
       :duration="t.variant === 'error' ? 0 : toast.TOAST_DURATION"
       class="flex max-w-sm items-start gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-white shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=open]:slide-in-from-top-1 data-[state=closed]:fade-out data-[state=closed]:slide-out-to-top-1 data-[swipe=move]:translate-y-[var(--reka-toast-swipe-move-y)] data-[swipe=cancel]:translate-y-0 data-[swipe=cancel]:transition-transform"
       :class="t.variant === 'error' ? 'bg-red-600' : 'bg-blue-600'"
@@ -27,6 +28,7 @@ const { copy, copied } = useClipboard({ copiedDuring: 1500 })
       <ToastDescription class="min-w-0 flex-1 select-text">{{ t.message }}</ToastDescription>
       <button
         v-if="t.variant === 'error'"
+        data-test-id="toast-copy-error"
         class="mt-0.5 shrink-0 cursor-pointer rounded p-0.5 opacity-70 hover:opacity-100"
         :title="copied ? 'Copied!' : 'Copy error'"
         @click="copy(t.message)"
@@ -36,6 +38,7 @@ const { copy, copied } = useClipboard({ copiedDuring: 1500 })
       </button>
       <ToastClose
         v-if="t.variant === 'error'"
+        data-test-id="toast-close"
         class="mt-0.5 shrink-0 cursor-pointer rounded p-0.5 opacity-70 hover:opacity-100"
       >
         <icon-lucide-x class="size-3" />

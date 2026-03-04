@@ -95,10 +95,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="border-b border-border px-3 py-2">
+  <div data-test-id="export-section" class="border-b border-border px-3 py-2">
     <div class="flex items-center justify-between">
       <label class="mb-1 block text-[11px] text-muted">Export</label>
       <button
+        data-test-id="export-section-add"
         class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"
         @click="addSetting"
       >
@@ -106,7 +107,13 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <div v-for="(setting, i) in settings" :key="i" class="flex items-center gap-1.5 py-0.5">
+    <div
+      v-for="(setting, i) in settings"
+      :key="i"
+      data-test-id="export-item"
+      :data-test-index="i"
+      class="flex items-center gap-1.5 py-0.5"
+    >
       <AppSelect
         :model-value="setting.scale"
         :options="SCALE_OPTIONS"
@@ -128,6 +135,7 @@ onUnmounted(() => {
 
     <button
       v-if="settings.length > 0"
+      data-test-id="export-button"
       class="mt-1.5 w-full cursor-pointer truncate rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-default disabled:opacity-50"
       :disabled="exporting"
       @click="doExport"
@@ -137,6 +145,7 @@ onUnmounted(() => {
 
     <button
       v-if="settings.length > 0"
+      data-test-id="export-preview-toggle"
       class="mt-1 flex w-full cursor-pointer items-center gap-1 rounded border-none bg-transparent px-0 py-1 text-[11px] text-muted hover:text-surface"
       @click="showPreview = !showPreview"
     >
