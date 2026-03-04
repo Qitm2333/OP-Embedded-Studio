@@ -161,7 +161,7 @@ export function populateAndApplyOverrides(
       for (const childId of parent.childIds) {
         const child = graph.getNode(childId)
         if (!child?.componentId) continue
-        const childRoot = preComputedRoot.get(childId) ?? getComponentRoot(child.componentId)
+        const childRoot = preComputedRoot.get(child.componentId) ?? getComponentRoot(child.componentId)
         if (childRoot === targetRoot) {
           if (rootMatch) { ambiguous = true; break }
           rootMatch = childId
@@ -444,34 +444,44 @@ export function populateAndApplyOverrides(
     // their own values; nodes only touched for position/geometry inherit
     // size from their source.
     if (dsdModified.size > 0) {
-      const synced = new Set<string>()
-      let changed = true
-      while (changed) {
-        changed = false
-        for (const node of graph.getAllNodes()) {
-          if (!node.componentId || synced.has(node.id)) continue
-          const source = graph.getNode(node.componentId)
-          if (!source) continue
-          if (!dsdModified.has(node.componentId) && !synced.has(node.componentId)) continue
-          // Nodes with explicitly DSD-set size keep their values but still
-          // act as chain links so their clones are reached
-          if (dsdSizeSet.has(node.id)) {
-            synced.add(node.id)
-            changed = true
-            continue
+      const clonesOf = new Map<string, string[]>()
+      for (const node of graph.getAllNodes()) {
+        if (!node.componentId) continue
+        let arr = clonesOf.get(node.componentId)
+        if (!arr) {
+          arr = []
+          clonesOf.set(node.componentId, arr)
+        }
+        arr.push(node.id)
+      }
+
+      // BFS from DSD-modified nodes. Unlike the old version, intermediate
+      // clones that are also in dsdModified are NOT skipped — they act as
+      // chain links. Nodes in dsdSizeSet keep their explicit size but still
+      // propagate to their clones.
+      const queue = [...dsdModified]
+      const visited = new Set<string>()
+      for (let sourceId = queue.shift(); sourceId !== undefined; sourceId = queue.shift()) {
+        const source = graph.getNode(sourceId)
+        if (!source) continue
+        const clones = clonesOf.get(sourceId)
+        if (!clones) continue
+        for (const cloneId of clones) {
+          if (visited.has(cloneId)) continue
+          visited.add(cloneId)
+          const clone = graph.getNode(cloneId)
+          if (!clone) continue
+          if (!dsdSizeSet.has(cloneId)) {
+            const cu: Partial<SceneNode> = {}
+            if (source.width !== clone.width) cu.width = source.width
+            if (source.height !== clone.height) cu.height = source.height
+            if (source.x !== clone.x) cu.x = source.x
+            if (source.y !== clone.y) cu.y = source.y
+            if (source.fillGeometry !== clone.fillGeometry) cu.fillGeometry = structuredClone(source.fillGeometry)
+            if (source.strokeGeometry !== clone.strokeGeometry) cu.strokeGeometry = structuredClone(source.strokeGeometry)
+            if (Object.keys(cu).length > 0) graph.updateNode(cloneId, cu)
           }
-          const cu: Partial<SceneNode> = {}
-          if (source.width !== node.width) cu.width = source.width
-          if (source.height !== node.height) cu.height = source.height
-          if (source.x !== node.x) cu.x = source.x
-          if (source.y !== node.y) cu.y = source.y
-          if (source.fillGeometry !== node.fillGeometry) cu.fillGeometry = structuredClone(source.fillGeometry)
-          if (source.strokeGeometry !== node.strokeGeometry) cu.strokeGeometry = structuredClone(source.strokeGeometry)
-          if (Object.keys(cu).length > 0) {
-            graph.updateNode(node.id, cu)
-          }
-          synced.add(node.id)
-          changed = true
+          queue.push(cloneId)
         }
       }
     }
@@ -494,7 +504,6 @@ export function populateAndApplyOverrides(
         if (!guids?.length) continue
 
         const targetId = resolveOverrideTarget(nodeId, guids)
-
         if (!targetId) continue
 
         overriddenNodes.add(targetId)
