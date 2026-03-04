@@ -111,6 +111,16 @@ const viewMenu: MenuItem[] = [
     label: 'Zoom out',
     shortcut: `${mod}-`,
     action: () => store.applyZoom(100, window.innerWidth / 2, window.innerHeight / 2)
+  },
+  { separator: true },
+  {
+    label: 'Performance profiler',
+    get checked() {
+      return store.renderer?.profiler.hudVisible ?? false
+    },
+    onCheckedChange: () => {
+      store.toggleProfiler()
+    }
   }
 ]
 
