@@ -60,6 +60,7 @@ import {
 } from './constants'
 import { isFontLoaded } from './fonts'
 import { vectorNetworkToPath } from './vector'
+import { RenderProfiler } from './profiler'
 
 import type { SceneNode, SceneGraph, Fill, Stroke } from './scene-graph'
 import type { SnapGuide } from './snap'
@@ -147,6 +148,7 @@ export class SkiaRenderer {
   private scenePictureVersion = -1
   private scenePicturePageId: string | null = null
   private nodePictureCache = new Map<string, SkPicture>()
+  readonly profiler: RenderProfiler
 
   private rulerBgPaint: Paint
   private rulerTickPaint: Paint
@@ -170,6 +172,8 @@ export class SkiaRenderer {
   pageId: string | null = null
 
   private worldViewport = { x: 0, y: 0, w: 0, h: 0 }
+  private _nodeCount = 0
+  private _culledCount = 0
 
   private color4f(r: number, g: number, b: number, a: number): Float32Array {
     const c = this._tmpColor
@@ -201,9 +205,10 @@ export class SkiaRenderer {
     return type === 'COMPONENT' || type === 'COMPONENT_SET' || type === 'INSTANCE'
   }
 
-  constructor(ck: CanvasKit, surface: Surface) {
+  constructor(ck: CanvasKit, surface: Surface, gl?: WebGL2RenderingContext | null) {
     this.ck = ck
     this.surface = surface
+    this.profiler = new RenderProfiler(ck, gl ?? null)
 
     this.fillPaint = new ck.Paint()
     this.fillPaint.setStyle(ck.PaintStyle.Fill)
@@ -321,6 +326,7 @@ export class SkiaRenderer {
         this.sizeFont = new this.ck.Font(typeface, SIZE_FONT_SIZE)
         this.sectionTitleFont = new this.ck.Font(typeface, SECTION_TITLE_FONT_SIZE)
         this.componentLabelFont = new this.ck.Font(typeface, COMPONENT_LABEL_FONT_SIZE)
+        this.profiler.setTypeface(typeface)
       }
       this.fontMgr = this.ck.FontMgr.FromData(fontData) ?? null
     }
@@ -491,6 +497,9 @@ export class SkiaRenderer {
     overlays: RenderOverlays = {},
     sceneVersion = -1
   ): void {
+    const p = this.profiler
+    p.beginFrame()
+
     graph.clearAbsPosCache()
 
     const canvas = this.surface.getCanvas()
@@ -505,7 +514,6 @@ export class SkiaRenderer {
     }
 
     const hasVolatileOverlays =
-      overlays.hoveredNodeId != null ||
       overlays.dropTargetId != null ||
       overlays.rotationPreview != null ||
       overlays.editingTextId != null
@@ -516,48 +524,80 @@ export class SkiaRenderer {
       sceneVersion === this.scenePictureVersion &&
       this.pageId === this.scenePicturePageId
 
+    p.setCacheHit(!!canUsePicture)
+
     // Scene layer (world coordinates)
     canvas.save()
     canvas.scale(this.dpr, this.dpr)
     canvas.translate(this.panX, this.panY)
     canvas.scale(this.zoom, this.zoom)
 
+    p.beginPhase('render:scene')
     if (canUsePicture) {
+      p.beginPhase('render:drawPicture')
       canvas.drawPicture(this.scenePicture!)
+      p.endPhase('render:drawPicture')
     } else if (hasVolatileOverlays) {
+      this._nodeCount = 0
+      this._culledCount = 0
+      p.beginPhase('render:volatile')
       const pageNode = graph.getNode(this.pageId ?? graph.rootId)
       if (pageNode) {
         for (const childId of pageNode.childIds) {
           this.renderNode(canvas, graph, childId, overlays, 0, 0)
         }
       }
+      p.endPhase('render:volatile')
     } else {
+      this._nodeCount = 0
+      this._culledCount = 0
+      p.beginPhase('render:recordPicture')
       this.recordScenePicture(canvas, graph, sceneVersion)
+      p.endPhase('render:recordPicture')
     }
+    p.endPhase('render:scene')
 
     canvas.restore()
 
     // Section titles + component labels (screen coordinates, zoom-independent)
     canvas.save()
     canvas.scale(this.dpr, this.dpr)
+    p.beginPhase('render:sectionTitles')
     this.drawSectionTitles(canvas, graph)
+    p.endPhase('render:sectionTitles')
+    p.beginPhase('render:componentLabels')
     this.drawComponentLabels(canvas, graph)
+    p.endPhase('render:componentLabels')
     canvas.restore()
 
     // UI overlay layer (screen coordinates, zoom-independent)
     canvas.save()
     canvas.scale(this.dpr, this.dpr)
 
+    this.drawHoverHighlight(canvas, graph, overlays.hoveredNodeId)
+    p.beginPhase('render:selection')
     this.drawSelection(canvas, graph, selectedIds, overlays)
+    p.endPhase('render:selection')
     this.drawSnapGuides(canvas, overlays.snapGuides)
     this.drawMarquee(canvas, overlays.marquee)
     this.drawLayoutInsertIndicator(canvas, overlays.layoutInsertIndicator)
     this.drawPenOverlay(canvas, overlays.penState)
     this.drawRemoteCursors(canvas, graph, overlays.remoteCursors)
+    p.beginPhase('render:rulers')
     if (this.showRulers) this.drawRulers(canvas, graph, selectedIds)
+    p.endPhase('render:rulers')
+
+    // Profiler HUD (drawn last, on top of everything)
+    p.drawHUD(canvas, this.showRulers)
 
     canvas.restore()
+
+    p.beginPhase('render:flush')
     this.surface.flush()
+    p.endPhase('render:flush')
+
+    p.setNodeCounts(this._nodeCount, this._culledCount)
+    p.endFrame()
   }
 
   private recordScenePicture(canvas: Canvas, graph: SceneGraph, sceneVersion: number): void {
@@ -582,6 +622,37 @@ export class SkiaRenderer {
   }
 
   // --- Selection UI ---
+
+  private drawHoverHighlight(
+    canvas: Canvas,
+    graph: SceneGraph,
+    hoveredNodeId?: string | null
+  ): void {
+    if (!hoveredNodeId) return
+    const node = graph.getNode(hoveredNodeId)
+    if (!node) return
+
+    const abs = graph.getAbsolutePosition(node.id)
+    const sx = abs.x * this.zoom + this.panX
+    const sy = abs.y * this.zoom + this.panY
+
+    this.auxStroke.setStrokeWidth(1 / this.zoom)
+    this.auxStroke.setColor(
+      this.isComponentType(node.type) ? this.compColor() : this.selColor()
+    )
+    this.auxStroke.setPathEffect(null)
+
+    canvas.save()
+    canvas.translate(sx, sy)
+    if (node.rotation !== 0) {
+      const cx = (node.width / 2) * this.zoom
+      const cy = (node.height / 2) * this.zoom
+      canvas.rotate(node.rotation, cx, cy)
+    }
+    canvas.scale(this.zoom, this.zoom)
+    this.strokeNodeShape(canvas, node, this.auxStroke)
+    canvas.restore()
+  }
 
   private drawSelection(
     canvas: Canvas,
@@ -969,6 +1040,8 @@ export class SkiaRenderer {
     const node = graph.getNode(nodeId)
     if (!node || !node.visible) return
 
+    this._nodeCount++
+
     const absX = parentAbsX + node.x
     const absY = parentAbsY + node.y
 
@@ -994,9 +1067,11 @@ export class SkiaRenderer {
           cx + diag / 2 < vp.x ||
           cy + diag / 2 < vp.y
         ) {
+          this._culledCount++
           return
         }
       } else if (absX > vp.x + vp.w || absY > vp.y + vp.h || absX + bw < vp.x || absY + bh < vp.y) {
+        this._culledCount++
         return
       }
     }
@@ -1047,14 +1122,6 @@ export class SkiaRenderer {
       this.auxStroke.setStrokeWidth(DROP_HIGHLIGHT_STROKE / this.zoom)
       this.auxStroke.setColor(this.selColor(DROP_HIGHLIGHT_ALPHA))
       canvas.drawRect(this.ck.LTRBRect(0, 0, node.width, node.height), this.auxStroke)
-    }
-
-    // Hover highlight — shape-aware outline
-    if (overlays.hoveredNodeId === nodeId) {
-      this.auxStroke.setStrokeWidth(1 / this.zoom)
-      this.auxStroke.setColor(this.isComponentType(node.type) ? this.compColor() : this.selColor())
-      this.auxStroke.setPathEffect(null)
-      this.strokeNodeShape(canvas, node, this.auxStroke)
     }
 
     // Clip + render children for containers
@@ -2942,6 +3009,7 @@ export class SkiaRenderer {
     for (const pic of this.nodePictureCache.values()) pic?.delete()
     this.nodePictureCache.clear()
     this.scenePicture?.delete()
+    this.profiler.destroy()
     this.surface.delete()
   }
 }

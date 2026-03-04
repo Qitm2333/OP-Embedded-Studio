@@ -1477,6 +1477,11 @@ export function createEditorStore() {
     requestRender()
   }
 
+  function toggleProfiler() {
+    _renderer?.profiler.toggle()
+    requestRepaint()
+  }
+
   function toggleVisibility() {
     for (const id of state.selectedIds) {
       const node = graph.getNode(id)
@@ -2059,6 +2064,7 @@ export function createEditorStore() {
     goToMainComponent,
     bringToFront,
     sendToBack,
+    toggleProfiler,
     toggleVisibility,
     toggleLock,
     moveToPage,
