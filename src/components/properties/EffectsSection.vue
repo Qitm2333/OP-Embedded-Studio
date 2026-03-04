@@ -182,7 +182,7 @@ function toggleExpand(index: number) {
         />
 
         <button
-          class="cursor-pointer border-none bg-transparent p-0 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-surface"
+          class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
           @click="toggleVisibility(i)"
         >
           <icon-lucide-eye v-if="effect.visible" class="size-3.5" />

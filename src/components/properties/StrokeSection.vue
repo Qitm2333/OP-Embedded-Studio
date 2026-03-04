@@ -260,7 +260,7 @@ const borderWeights = computed(() => {
         @update="updateColor(i, $event)"
       />
       <button
-        class="shrink-0 cursor-pointer border-none bg-transparent p-0 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-surface"
+        class="shrink-0 cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
         @click="toggleVisibility(i)"
       >
         <icon-lucide-eye v-if="stroke.visible" class="size-3.5" />

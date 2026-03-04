@@ -173,7 +173,7 @@ const filteredVariables = computed(() => {
         v-if="colorVariables.length > 0 && fill.type === 'SOLID' && !getBoundVariable(i)"
       >
         <PopoverTrigger
-          class="cursor-pointer border-none bg-transparent p-0 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-surface"
+          class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
           title="Apply variable"
         >
           <icon-lucide-link class="size-3.5" />
@@ -213,7 +213,7 @@ const filteredVariables = computed(() => {
       </PopoverRoot>
 
       <button
-        class="cursor-pointer border-none bg-transparent p-0 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-surface"
+        class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
         @click="toggleVisibility(i)"
       >
         <icon-lucide-eye v-if="fill.visible" class="size-3.5" />
