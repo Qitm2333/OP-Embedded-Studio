@@ -143,15 +143,35 @@ export function populateAndApplyOverrides(
   }
 
   function findNodeByComponentId(parentId: string, componentId: string): string | null {
-    const targetRoot = preComputedRoot.get(componentId) ?? getComponentRoot(componentId)
     const parent = graph.getNode(parentId)
     if (!parent) return null
+
+    // Pass 1: exact componentId match on direct children
     for (const childId of parent.childIds) {
       const child = graph.getNode(childId)
-      if (!child) continue
-      if (child.componentId === componentId) return childId
-      const childRoot = preComputedRoot.get(childId) ?? (child.componentId ? getComponentRoot(child.componentId) : null)
-      if (childRoot && childRoot === targetRoot) return childId
+      if (child?.componentId === componentId) return childId
+    }
+
+    // Pass 2: root match — but only if exactly one child shares the root
+    // (multiple siblings with the same root are ambiguous)
+    const targetRoot = preComputedRoot.get(componentId) ?? getComponentRoot(componentId)
+    if (targetRoot) {
+      let rootMatch: string | null = null
+      let ambiguous = false
+      for (const childId of parent.childIds) {
+        const child = graph.getNode(childId)
+        if (!child?.componentId) continue
+        const childRoot = preComputedRoot.get(childId) ?? getComponentRoot(child.componentId)
+        if (childRoot === targetRoot) {
+          if (rootMatch) { ambiguous = true; break }
+          rootMatch = childId
+        }
+      }
+      if (rootMatch && !ambiguous) return rootMatch
+    }
+
+    // Pass 3: recurse into children
+    for (const childId of parent.childIds) {
       const deep = findNodeByComponentId(childId, componentId)
       if (deep) return deep
     }
@@ -474,6 +494,7 @@ export function populateAndApplyOverrides(
         if (!guids?.length) continue
 
         const targetId = resolveOverrideTarget(nodeId, guids)
+
         if (!targetId) continue
 
         overriddenNodes.add(targetId)
