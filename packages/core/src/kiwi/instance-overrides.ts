@@ -329,7 +329,10 @@ export function populateAndApplyOverrides(
         const cmd = scaled[o++]
         if (cmd === 0) continue
         const coords = cmd === 1 || cmd === 2 ? 1 : cmd === 4 ? 3 : -1
-        if (coords < 0) break
+        if (coords < 0) {
+          console.warn(`scaleGeometryBlobs: unknown path command ${cmd} at offset ${o - 1}`)
+          break
+        }
         for (let i = 0; i < coords; i++) {
           dv.setFloat32(o, dv.getFloat32(o, true) * sx, true)
           dv.setFloat32(o + 4, dv.getFloat32(o + 4, true) * sy, true)
@@ -339,12 +342,6 @@ export function populateAndApplyOverrides(
       return { windingRule: g.windingRule, commandsBlob: scaled }
     })
   }
-
-  // Pre-resolve DSD guidPaths while the original componentId chains are
-  // intact. Instance swaps (symbolOverrides, componentProperties) replace
-  // children and break the chains, but DSD guidPaths reference the original
-  // structure.
-
 
   function applyDerivedSymbolData() {
     const dsdModified = new Set<string>()
@@ -394,8 +391,6 @@ export function populateAndApplyOverrides(
           graph.updateNode(targetId, updates)
           dsdModified.add(targetId)
         }
-
-
       }
     }
 
@@ -433,8 +428,10 @@ export function populateAndApplyOverrides(
           if (source.y !== clone.y) cu.y = source.y
           if (source.fillGeometry !== clone.fillGeometry) cu.fillGeometry = structuredClone(source.fillGeometry)
           if (source.strokeGeometry !== clone.strokeGeometry) cu.strokeGeometry = structuredClone(source.strokeGeometry)
-          if (Object.keys(cu).length > 0) graph.updateNode(cloneId, cu)
-          queue.push(cloneId)
+          if (Object.keys(cu).length > 0) {
+            graph.updateNode(cloneId, cu)
+            queue.push(cloneId)
+          }
         }
       }
     }
