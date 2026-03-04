@@ -30,9 +30,9 @@ export function computeLayout(graph: SceneGraph, frameId: string): void {
   freeYogaTree(yogaRoot)
 }
 
-export function computeAllLayouts(graph: SceneGraph): void {
+export function computeAllLayouts(graph: SceneGraph, scopeId?: string): void {
   const visited = new Set<string>()
-  computeLayoutsBottomUp(graph, graph.rootId, visited)
+  computeLayoutsBottomUp(graph, scopeId ?? graph.rootId, visited)
 }
 
 function computeLayoutsBottomUp(graph: SceneGraph, nodeId: string, visited: Set<string>): void {

@@ -66,6 +66,12 @@ export function importNodeChanges(
   const created = new Set<string>()
   const guidToNodeId = new Map<string, string>()
 
+  const overrideKeyToGuid = new Map<string, string>()
+  for (const [id, nc] of changeMap) {
+    const ok = (nc as unknown as Record<string, unknown>).overrideKey as GUID | undefined
+    if (ok) overrideKeyToGuid.set(guidToString(ok), id)
+  }
+
   function createSceneNode(ncId: string, graphParentId: string) {
     if (created.has(ncId)) return
     created.add(ncId)
@@ -204,11 +210,7 @@ export function importNodeChanges(
   }
 
   // Apply symbol overrides to instance children.
-  // Each override has a guidPath (chain of original Figma GUIDs) targeting
-  // a descendant. We resolve it by walking cloned children via componentId.
-  // Build a set of all node IDs that are transitively cloned from a given
-  // component node. componentId chains: clone → source → source's source → ...
-  // We cache the root of each chain for fast lookup.
+  // symbolOverrides guidPaths reference nodes by overrideKey, not guid.
   const componentIdRoot = new Map<string, string>()
   function getComponentRoot(nodeId: string): string {
     if (componentIdRoot.has(nodeId)) return componentIdRoot.get(nodeId) ?? nodeId
@@ -239,8 +241,9 @@ export function importNodeChanges(
   function resolveOverrideTarget(instanceId: string, guids: GUID[]): string | null {
     let currentId = instanceId
     for (const guid of guids) {
-      const figmaId = guidToString(guid)
-      const remapped = guidToNodeId.get(figmaId)
+      const key = guidToString(guid)
+      const figmaGuid = overrideKeyToGuid.get(key) ?? key
+      const remapped = guidToNodeId.get(figmaGuid)
       if (!remapped) return null
       const found = findDescendantByComponentId(currentId, remapped)
       if (!found) return null
@@ -249,27 +252,119 @@ export function importNodeChanges(
     return currentId
   }
 
-  for (const [ncId, nc] of changeMap) {
-    if (nc.type !== 'INSTANCE') continue
-    const sd = (nc as unknown as Record<string, unknown>).symbolData as SymbolData | undefined
-    if (!sd?.symbolOverrides?.length) continue
+  const overriddenNodes = new Set<string>()
 
-    const nodeId = guidToNodeId.get(ncId)
-    if (!nodeId) continue
+  function applySymbolOverrides() {
+    componentIdRoot.clear()
 
-    for (const ov of sd.symbolOverrides) {
-      const guids = ov.guidPath?.guids
-      if (!guids?.length) continue
+    for (const [ncId, nc] of changeMap) {
+      if (nc.type !== 'INSTANCE') continue
+      const sd = (nc as unknown as Record<string, unknown>).symbolData as SymbolData | undefined
+      if (!sd?.symbolOverrides?.length) continue
 
-      const targetId = resolveOverrideTarget(nodeId, guids)
-      if (!targetId) continue
+      const nodeId = guidToNodeId.get(ncId)
+      if (!nodeId) continue
 
-      const { guidPath: _, ...fields } = ov
-      if (Object.keys(fields).length === 0) continue
+      for (const ov of sd.symbolOverrides) {
+        const guids = ov.guidPath?.guids
+        if (!guids?.length) continue
 
-      const updates = convertOverrideToProps(fields)
-      if (Object.keys(updates).length > 0) {
-        graph.updateNode(targetId, updates)
+        const targetId = resolveOverrideTarget(nodeId, guids)
+        if (!targetId) continue
+
+        overriddenNodes.add(targetId)
+
+        // Instance swap: replace target's component and re-populate children
+        const swapGuid = (ov as Record<string, unknown>).overriddenSymbolID as GUID | undefined
+        if (swapGuid) {
+          const swapFigmaId = guidToString(swapGuid)
+          const newCompId = guidToNodeId.get(swapFigmaId)
+          const target = graph.getNode(targetId)
+          if (newCompId && target?.type === 'INSTANCE') {
+            for (const childId of [...target.childIds]) graph.deleteNode(childId)
+            graph.updateNode(targetId, { componentId: newCompId })
+            const newComp = graph.getNode(newCompId)
+            if (newComp && newComp.childIds.length > 0) {
+              graph.populateInstanceChildren(targetId, newCompId)
+            }
+            componentIdRoot.clear()
+          }
+        }
+
+        const { guidPath: _, overriddenSymbolID: _s, ...fields } = ov as Record<string, unknown>
+        if (Object.keys(fields).length === 0) continue
+
+        const updates = convertOverrideToProps(fields as Record<string, unknown>)
+        if (Object.keys(updates).length > 0) {
+          graph.updateNode(targetId, updates)
+        }
+      }
+    }
+  }
+
+  applySymbolOverrides()
+
+  if (overriddenNodes.size > 0) {
+    // Build reverse map: source → clones
+    const clonesOf = new Map<string, string[]>()
+    for (const node of graph.getAllNodes()) {
+      if (!node.componentId) continue
+      let arr = clonesOf.get(node.componentId)
+      if (!arr) { arr = []; clonesOf.set(node.componentId, arr) }
+      arr.push(node.id)
+    }
+
+    // BFS from overridden nodes to find all transitive clones
+    const needsSync = new Set<string>()
+    const queue = [...overriddenNodes]
+    for (let id = queue.pop(); id !== undefined; id = queue.pop()) {
+      const clones = clonesOf.get(id)
+      if (!clones) continue
+      for (const cloneId of clones) {
+        if (needsSync.has(cloneId)) continue
+        needsSync.add(cloneId)
+        queue.push(cloneId)
+      }
+    }
+
+    // Sync each clone from its source. Process in BFS order (closest to
+    // overridden node first) so sources are updated before their clones.
+    const visited = new Set<string>()
+    const syncQueue = [...overriddenNodes]
+    for (let sourceId = syncQueue.shift(); sourceId !== undefined; sourceId = syncQueue.shift()) {
+      const clones = clonesOf.get(sourceId)
+      if (!clones) continue
+      const source = graph.getNode(sourceId)
+      if (!source) continue
+
+      for (const cloneId of clones) {
+        if (!needsSync.has(cloneId) || visited.has(cloneId)) continue
+        visited.add(cloneId)
+        const node = graph.getNode(cloneId)
+        if (!node) continue
+
+        // Instance swap: re-populate children from source
+        if (node.type === 'INSTANCE' && source.type === 'INSTANCE' && node.componentId) {
+          for (const childId of [...node.childIds]) graph.deleteNode(childId)
+          graph.populateInstanceChildren(node.id, node.componentId)
+        } else {
+          // Property sync
+          const updates: Partial<import('../scene-graph').SceneNode> = {}
+          if (source.text !== node.text) updates.text = source.text
+          if (source.visible !== node.visible) updates.visible = source.visible
+          if (source.opacity !== node.opacity) updates.opacity = source.opacity
+          if (source.name !== node.name) updates.name = source.name
+          if (source.fills !== node.fills) updates.fills = structuredClone(source.fills)
+          if (source.strokes !== node.strokes) updates.strokes = structuredClone(source.strokes)
+          if (source.effects !== node.effects) updates.effects = structuredClone(source.effects)
+          if (source.styleRuns !== node.styleRuns) updates.styleRuns = structuredClone(source.styleRuns)
+          if (source.layoutGrow !== node.layoutGrow) updates.layoutGrow = source.layoutGrow
+          if (source.textAutoResize !== node.textAutoResize) updates.textAutoResize = source.textAutoResize
+          if (source.locked !== node.locked) updates.locked = source.locked
+          if (Object.keys(updates).length > 0) graph.updateNode(node.id, updates)
+        }
+
+        syncQueue.push(cloneId)
       }
     }
   }

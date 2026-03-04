@@ -1704,7 +1704,7 @@ export function createEditorStore() {
     if (toLoad.length === 0) return
 
     await Promise.all(toLoad.map(([family, style]) => loadFont(family, style)))
-    computeAllLayouts(graph)
+    computeAllLayouts(graph, state.currentPageId)
     requestRender()
   }
 
@@ -1733,7 +1733,7 @@ export function createEditorStore() {
           figma.blobs
         )
         if (created.length > 0) {
-          computeAllLayouts(graph)
+          computeAllLayouts(graph, state.currentPageId)
           state.selectedIds = new Set(created)
 
           const allNodes = collectSubtrees(graph, created)
@@ -1747,13 +1747,13 @@ export function createEditorStore() {
                   childIds: []
                 })
               }
-              computeAllLayouts(graph)
+              computeAllLayouts(graph, pageId)
               state.selectedIds = new Set(created)
               requestRender()
             },
             inverse: () => {
               for (const id of [...created].reverse()) graph.deleteNode(id)
-              computeAllLayouts(graph)
+              computeAllLayouts(graph, pageId)
               state.selectedIds = prevSelection
               requestRender()
             }
