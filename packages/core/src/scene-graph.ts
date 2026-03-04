@@ -32,6 +32,11 @@ export interface VectorNetwork {
   regions: VectorRegion[]
 }
 
+export interface GeometryPath {
+  windingRule: WindingRule
+  commandsBlob: Uint8Array
+}
+
 export type NodeType =
   | 'CANVAS'
   | 'FRAME'
@@ -227,6 +232,8 @@ export interface SceneNode {
   layoutAlignSelf: 'AUTO' | 'STRETCH'
 
   vectorNetwork: VectorNetwork | null
+  fillGeometry: GeometryPath[]
+  strokeGeometry: GeometryPath[]
 
   arcData: ArcData | null
 
@@ -357,6 +364,8 @@ function createDefaultNode(type: NodeType, overrides: Partial<SceneNode> = {}): 
     layoutGrow: 0,
     layoutAlignSelf: 'AUTO',
     vectorNetwork: null,
+    fillGeometry: [],
+    strokeGeometry: [],
     arcData: null,
     textAlignVertical: 'TOP',
     textAutoResize: 'NONE',

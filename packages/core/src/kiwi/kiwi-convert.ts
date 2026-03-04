@@ -26,8 +26,10 @@ import type {
   TextDecoration,
   ArcData,
   VectorNetwork,
+  GeometryPath,
   StyleRun,
-  CharacterStyleOverride
+  CharacterStyleOverride,
+  WindingRule
 } from '../scene-graph'
 import type { NodeChange, Paint, Effect as KiwiEffect, GUID } from './codec'
 
@@ -390,6 +392,30 @@ function resolveVectorNetwork(
   }
 }
 
+interface KiwiPath {
+  windingRule?: string
+  commandsBlob?: number
+}
+
+export function resolveGeometryPaths(
+  paths: KiwiPath[] | undefined,
+  blobs: Uint8Array[]
+): GeometryPath[] {
+  if (!paths || paths.length === 0) return []
+  const result: GeometryPath[] = []
+  for (const p of paths) {
+    if (p.commandsBlob === undefined || p.commandsBlob < 0 || p.commandsBlob >= blobs.length)
+      continue
+    const blob = blobs[p.commandsBlob]
+    if (!blob || blob.length === 0) continue
+    result.push({
+      windingRule: (p.windingRule === 'EVENODD' ? 'EVENODD' : 'NONZERO') as WindingRule,
+      commandsBlob: blob
+    })
+  }
+  return result
+}
+
 function extractBoundVariables(nc: NodeChange): Record<string, string> {
   const bindings: Record<string, string> = {}
   nc.fillPaints?.forEach((paint, i) => {
@@ -493,6 +519,8 @@ export function nodeChangeToProps(
     layoutGrow: (ext(nc).stackChildPrimaryGrow as number) ?? 0,
     layoutAlignSelf: (ext(nc).stackChildAlignSelf as string) === 'STRETCH' ? 'STRETCH' : 'AUTO',
     vectorNetwork: resolveVectorNetwork(nc, blobs),
+    fillGeometry: resolveGeometryPaths(nc.fillGeometry, blobs),
+    strokeGeometry: resolveGeometryPaths(nc.strokeGeometry, blobs),
     arcData: mapArcData(ext(nc).arcData as Record<string, number> | undefined),
     strokeCap: (nc.strokeCap ?? 'NONE') as StrokeCap,
     strokeJoin: (nc.strokeJoin ?? 'MITER') as StrokeJoin,

@@ -33,6 +33,7 @@ export {
   type VectorVertex,
   type VectorSegment,
   type VectorRegion,
+  type GeometryPath,
   type HandleMirroring,
   type WindingRule,
   type VariableType,
@@ -68,6 +69,7 @@ export {
 export { parseColor, colorToHex, colorToHexRaw, colorToRgba255 } from './color'
 export {
   vectorNetworkToPath,
+  geometryBlobToPath,
   decodeVectorNetworkBlob,
   encodeVectorNetworkBlob,
   computeVectorBounds

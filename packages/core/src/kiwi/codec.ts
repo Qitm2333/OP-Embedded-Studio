@@ -254,6 +254,8 @@ export interface NodeChange {
   frameMaskDisabled?: boolean
   // Vector
   vectorData?: unknown
+  fillGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
+  strokeGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
   // Text
   fontSize?: number
   fontWeight?: number

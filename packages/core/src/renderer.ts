@@ -59,7 +59,7 @@ import {
   DEFAULT_FONT_FAMILY
 } from './constants'
 import { isFontLoaded } from './fonts'
-import { vectorNetworkToPath } from './vector'
+import { vectorNetworkToPath, geometryBlobToPath } from './vector'
 import { RenderProfiler } from './profiler'
 
 import type { SceneNode, SceneGraph, Fill, Stroke } from './scene-graph'
@@ -143,7 +143,9 @@ export class SkiaRenderer {
   private fontProvider: TypefaceFontProvider | null = null
   private fontsLoaded = false
   private imageCache = new Map<string, CKImage>()
-  private vectorPathCache = new Map<string, Path>()
+  private vectorPathCache = new Map<string, Path[]>()
+  private fillGeometryCache = new Map<string, Path[]>()
+  private strokeGeometryCache = new Map<string, Path[]>()
   private scenePicture: SkPicture | null = null
   private scenePictureVersion = -1
   private scenePicturePageId: string | null = null
@@ -1153,20 +1155,49 @@ export class SkiaRenderer {
     canvas.restore()
   }
 
-  private getVectorPath(node: SceneNode): Path | null {
+  private getVectorPaths(node: SceneNode): Path[] | null {
     if (!node.vectorNetwork) return null
     const cached = this.vectorPathCache.get(node.id)
     if (cached) return cached
-    const path = vectorNetworkToPath(this.ck, node.vectorNetwork)
-    this.vectorPathCache.set(node.id, path)
-    return path
+    const paths = vectorNetworkToPath(this.ck, node.vectorNetwork)
+    this.vectorPathCache.set(node.id, paths)
+    return paths
+  }
+
+  private getFillGeometry(node: SceneNode): Path[] | null {
+    if (node.fillGeometry.length === 0) return null
+    const cached = this.fillGeometryCache.get(node.id)
+    if (cached) return cached
+    const paths = node.fillGeometry.map((g) =>
+      geometryBlobToPath(this.ck, g.commandsBlob, g.windingRule)
+    )
+    this.fillGeometryCache.set(node.id, paths)
+    return paths
+  }
+
+  private getStrokeGeometry(node: SceneNode): Path[] | null {
+    if (node.strokeGeometry.length === 0) return null
+    const cached = this.strokeGeometryCache.get(node.id)
+    if (cached) return cached
+    const paths = node.strokeGeometry.map((g) =>
+      geometryBlobToPath(this.ck, g.commandsBlob, g.windingRule)
+    )
+    this.strokeGeometryCache.set(node.id, paths)
+    return paths
   }
 
   invalidateVectorPath(nodeId: string): void {
     const old = this.vectorPathCache.get(nodeId)
     if (old) {
-      old.delete()
+      for (const p of old) p.delete()
       this.vectorPathCache.delete(nodeId)
+    }
+    for (const cache of [this.fillGeometryCache, this.strokeGeometryCache]) {
+      const oldGeom = cache.get(nodeId)
+      if (oldGeom) {
+        for (const p of oldGeom) p.delete()
+        cache.delete(nodeId)
+      }
     }
   }
 
@@ -1178,8 +1209,10 @@ export class SkiaRenderer {
         canvas.drawOval(rect, paint)
         return
       case 'VECTOR': {
-        const vp = this.getVectorPath(node)
-        if (vp) canvas.drawPath(vp, paint)
+        const vps = this.getVectorPaths(node)
+        if (vps) {
+          for (const vp of vps) canvas.drawPath(vp, paint)
+        }
         return
       }
       case 'LINE':
@@ -1548,10 +1581,51 @@ export class SkiaRenderer {
     }
 
     // Strokes
+    const sg = node.type === 'VECTOR' ? this.getStrokeGeometry(node) : null
+    const vectorPaths = !sg && node.type === 'VECTOR' ? this.getVectorPaths(node) : null
     for (let si = 0; si < node.strokes.length; si++) {
       const stroke = node.strokes[si]!
       if (!stroke.visible) continue
       const sc = this.resolveStrokeColor(stroke, si, node, graph)
+
+      if (sg) {
+        this.fillPaint.setColor(this.ck.Color4f(sc.r, sc.g, sc.b, sc.a))
+        this.fillPaint.setAlphaf(stroke.opacity)
+        this.fillPaint.setShader(null)
+        for (const p of sg) canvas.drawPath(p, this.fillPaint)
+        continue
+      }
+
+      if (vectorPaths) {
+        const capMap: Record<string, EmbindEnumEntity> = {
+          NONE: this.ck.StrokeCap.Butt,
+          ROUND: this.ck.StrokeCap.Round,
+          SQUARE: this.ck.StrokeCap.Square
+        }
+        const joinMap: Record<string, EmbindEnumEntity> = {
+          MITER: this.ck.StrokeJoin.Miter,
+          ROUND: this.ck.StrokeJoin.Round,
+          BEVEL: this.ck.StrokeJoin.Bevel
+        }
+        const strokeOpts = {
+          width: stroke.weight,
+          miter_limit: 4,
+          cap: capMap[stroke.cap ?? 'NONE'] ?? this.ck.StrokeCap.Butt,
+          join: joinMap[stroke.join ?? 'MITER'] ?? this.ck.StrokeJoin.Miter
+        }
+        this.fillPaint.setColor(this.ck.Color4f(sc.r, sc.g, sc.b, sc.a))
+        this.fillPaint.setAlphaf(stroke.opacity)
+        this.fillPaint.setShader(null)
+        for (const vp of vectorPaths) {
+          const outline = vp.copy().stroke(strokeOpts)
+          if (outline) {
+            canvas.drawPath(outline, this.fillPaint)
+            outline.delete()
+          }
+        }
+        continue
+      }
+
       this.strokePaint.setColor(this.ck.Color4f(sc.r, sc.g, sc.b, sc.a))
       this.strokePaint.setStrokeWidth(stroke.weight)
       this.strokePaint.setAlphaf(stroke.opacity)
@@ -1597,8 +1671,15 @@ export class SkiaRenderer {
   ): void {
     switch (node.type) {
       case 'VECTOR': {
-        const vp = this.getVectorPath(node)
-        if (vp) canvas.drawPath(vp, this.fillPaint)
+        const fg = this.getFillGeometry(node)
+        if (fg) {
+          for (const p of fg) canvas.drawPath(p, this.fillPaint)
+        } else {
+          const vps = this.getVectorPaths(node)
+          if (vps) {
+            for (const vp of vps) canvas.drawPath(vp, this.fillPaint)
+          }
+        }
         break
       }
       case 'ELLIPSE':
@@ -1638,8 +1719,10 @@ export class SkiaRenderer {
   ): void {
     switch (node.type) {
       case 'VECTOR': {
-        const vp = this.getVectorPath(node)
-        if (vp) canvas.drawPath(vp, this.strokePaint)
+        const vps = this.getVectorPaths(node)
+        if (vps) {
+          for (const vp of vps) canvas.drawPath(vp, this.strokePaint)
+        }
         break
       }
       case 'ELLIPSE':
@@ -1762,8 +1845,10 @@ export class SkiaRenderer {
         path.addOval(rect)
         break
       case 'VECTOR': {
-        const vp = this.getVectorPath(node)
-        if (vp) path.addPath(vp)
+        const vps = this.getVectorPaths(node)
+        if (vps) {
+          for (const vp of vps) path.addPath(vp)
+        }
         break
       }
       case 'POLYGON':
@@ -2977,8 +3062,12 @@ export class SkiaRenderer {
 
     for (const img of this.imageCache.values()) img.delete()
     this.imageCache.clear()
-    for (const p of this.vectorPathCache.values()) p.delete()
-    this.vectorPathCache.clear()
+    for (const cache of [this.vectorPathCache, this.fillGeometryCache, this.strokeGeometryCache]) {
+      for (const paths of cache.values()) {
+        for (const p of paths) p.delete()
+      }
+      cache.clear()
+    }
     this.fillPaint.delete()
     this.strokePaint.delete()
     this.selectionPaint.delete()
