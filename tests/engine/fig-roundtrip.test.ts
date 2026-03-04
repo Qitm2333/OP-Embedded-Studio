@@ -766,4 +766,48 @@ describe('edge cases', () => {
     expect(iconChildren).toHaveLength(2)
     expect(iconChildren.map((c) => c.name).sort()).toEqual(['PathB1', 'PathB2'])
   })
+
+  test('DSD propagates through intermediate clones that are also DSD-targeted', async () => {
+    const graph = await parseFigFile(readFileSync(resolve(__dirname, '../fixtures/gold-preview.fig')).buffer)
+
+    const thumb = [...graph.getAllNodes()].find((n) => n.name === 'Preview Thumbnail')
+    expect(thumb).toBeDefined()
+
+    let overflows = 0
+    function walk(id: string) {
+      const node = graph.getNode(id)
+      if (!node) return
+      if (node.type === 'VECTOR') {
+        const parent = graph.getNode(node.parentId)
+        if (parent?.type === 'INSTANCE' && parent.width > 0 && parent.height > 0) {
+          // Check visibility
+          let vis = true
+          let cur: typeof node | null = node
+          while (cur) {
+            if (!cur.visible) {
+              vis = false
+              break
+            }
+            cur = cur.parentId ? graph.getNode(cur.parentId) ?? null : null
+          }
+          // Check clipping
+          let clipped = false
+          cur = graph.getNode(parent.parentId)
+          while (cur) {
+            if (cur.clipsContent) {
+              clipped = true
+              break
+            }
+            cur = cur.parentId ? graph.getNode(cur.parentId) ?? null : null
+          }
+          if (vis && !clipped && node.width > parent.width * 1.2) {
+            overflows++
+          }
+        }
+      }
+      for (const cid of node.childIds) walk(cid)
+    }
+    walk(thumb?.id ?? '')
+    expect(overflows).toBe(0)
+  })
 })

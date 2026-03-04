@@ -345,6 +345,7 @@ export function populateAndApplyOverrides(
 
   function applyDerivedSymbolData() {
     const dsdModified = new Set<string>()
+    const dsdSizeSet = new Set<string>()
 
     for (const [ncId, nc] of changeMap) {
       if (nc.type !== 'INSTANCE') continue
@@ -390,46 +391,50 @@ export function populateAndApplyOverrides(
         if (Object.keys(updates).length > 0) {
           graph.updateNode(targetId, updates)
           dsdModified.add(targetId)
+          if (d.size) dsdSizeSet.add(targetId)
         }
       }
     }
 
-    // Propagate DSD changes through clone chains. Clones inherit size,
-    // position, and geometry from their source but the normal transitive
-    // sync already ran before DSD.
+    // Propagate DSD changes through clone chains. Each clone should match
+    // its source (componentId) for size/position/geometry. Iterate until
+    // convergence so deeper clone levels receive updates even when
+    // intermediate clones were also directly DSD-targeted (e.g., a DSD
+    // entry set only geometry on an intermediate clone — its size must
+    // still be inherited from the source).
+    //
+    // Nodes whose size was explicitly set by DSD (in dsdSizeSet) keep
+    // their own values; nodes only touched for position/geometry inherit
+    // size from their source.
     if (dsdModified.size > 0) {
-      const clonesOf = new Map<string, string[]>()
-      for (const node of graph.getAllNodes()) {
-        if (!node.componentId) continue
-        let arr = clonesOf.get(node.componentId)
-        if (!arr) {
-          arr = []
-          clonesOf.set(node.componentId, arr)
-        }
-        arr.push(node.id)
-      }
-
-      const queue = [...dsdModified]
-      const visited = new Set(dsdModified)
-      for (let sourceId = queue.shift(); sourceId !== undefined; sourceId = queue.shift()) {
-        const source = graph.getNode(sourceId)
-        if (!source) continue
-        const clones = clonesOf.get(sourceId)
-        if (!clones) continue
-        for (const cloneId of clones) {
-          if (visited.has(cloneId)) continue
-          visited.add(cloneId)
-          const clone = graph.getNode(cloneId)
-          if (!clone) continue
+      const synced = new Set<string>()
+      let changed = true
+      while (changed) {
+        changed = false
+        for (const node of graph.getAllNodes()) {
+          if (!node.componentId || synced.has(node.id)) continue
+          const source = graph.getNode(node.componentId)
+          if (!source) continue
+          if (!dsdModified.has(node.componentId) && !synced.has(node.componentId)) continue
+          // Nodes with explicitly DSD-set size keep their values but still
+          // act as chain links so their clones are reached
+          if (dsdSizeSet.has(node.id)) {
+            synced.add(node.id)
+            changed = true
+            continue
+          }
           const cu: Partial<SceneNode> = {}
-          if (source.width !== clone.width) cu.width = source.width
-          if (source.height !== clone.height) cu.height = source.height
-          if (source.x !== clone.x) cu.x = source.x
-          if (source.y !== clone.y) cu.y = source.y
-          if (source.fillGeometry !== clone.fillGeometry) cu.fillGeometry = structuredClone(source.fillGeometry)
-          if (source.strokeGeometry !== clone.strokeGeometry) cu.strokeGeometry = structuredClone(source.strokeGeometry)
-          if (Object.keys(cu).length > 0) graph.updateNode(cloneId, cu)
-          queue.push(cloneId)
+          if (source.width !== node.width) cu.width = source.width
+          if (source.height !== node.height) cu.height = source.height
+          if (source.x !== node.x) cu.x = source.x
+          if (source.y !== node.y) cu.y = source.y
+          if (source.fillGeometry !== node.fillGeometry) cu.fillGeometry = structuredClone(source.fillGeometry)
+          if (source.strokeGeometry !== node.strokeGeometry) cu.strokeGeometry = structuredClone(source.strokeGeometry)
+          if (Object.keys(cu).length > 0) {
+            graph.updateNode(node.id, cu)
+          }
+          synced.add(node.id)
+          changed = true
         }
       }
     }
@@ -473,6 +478,35 @@ export function populateAndApplyOverrides(
     return overriddenNodes
   }
 
+  function syncNodeProps(source: SceneNode, target: SceneNode) {
+    const updates: Partial<SceneNode> = {}
+    if (source.text !== undefined && source.text !== target.text) updates.text = source.text
+    if (source.visible !== undefined && source.visible !== target.visible) updates.visible = source.visible
+    if (source.opacity !== undefined && source.opacity !== target.opacity) updates.opacity = source.opacity
+    if (source.fills !== undefined && source.fills !== target.fills) updates.fills = structuredClone(source.fills)
+    if (source.strokes !== undefined && source.strokes !== target.strokes) updates.strokes = structuredClone(source.strokes)
+    if (source.effects !== undefined && source.effects !== target.effects) updates.effects = structuredClone(source.effects)
+    if (source.styleRuns !== undefined && source.styleRuns !== target.styleRuns) updates.styleRuns = structuredClone(source.styleRuns)
+    if (source.layoutGrow !== undefined && source.layoutGrow !== target.layoutGrow) updates.layoutGrow = source.layoutGrow
+    if (source.textAutoResize !== undefined && source.textAutoResize !== target.textAutoResize) updates.textAutoResize = source.textAutoResize
+    if (source.locked !== undefined && source.locked !== target.locked) updates.locked = source.locked
+    if (Object.keys(updates).length > 0) graph.updateNode(target.id, updates)
+  }
+
+  function syncChildrenDeep(sourceId: string, targetId: string) {
+    const src = graph.getNode(sourceId)
+    const tgt = graph.getNode(targetId)
+    if (!src || !tgt) return
+    const len = Math.min(src.childIds.length, tgt.childIds.length)
+    for (let i = 0; i < len; i++) {
+      const srcNode = graph.getNode(src.childIds[i])
+      const tgtNode = graph.getNode(tgt.childIds[i])
+      if (!srcNode || !tgtNode || srcNode.type !== tgtNode.type) continue
+      syncNodeProps(srcNode, tgtNode)
+      syncChildrenDeep(src.childIds[i], tgt.childIds[i])
+    }
+  }
+
   function propagateOverridesTransitively(seeds: Set<string>) {
     if (seeds.size === 0) return
 
@@ -487,8 +521,25 @@ export function populateAndApplyOverrides(
       arr.push(node.id)
     }
 
+    // Also seed parent INSTANCE nodes of overridden children so their
+    // clones are visited by the BFS — deep overrides (e.g., stroke color
+    // on a Vector nested inside a check inside an _icon-xs) need the
+    // instance-level clone to be visited for syncChildrenDeep to propagate.
+    const expandedSeeds = new Set(seeds)
+    for (const seedId of seeds) {
+      let cur = graph.getNode(seedId)
+      while (cur?.parentId) {
+        const parent = graph.getNode(cur.parentId)
+        if (!parent) break
+        if (parent.type === 'INSTANCE' || parent.type === 'COMPONENT') {
+          expandedSeeds.add(parent.id)
+        }
+        cur = parent
+      }
+    }
+
     const needsSync = new Set<string>()
-    const queue = [...seeds]
+    const queue = [...expandedSeeds]
     for (let id = queue.pop(); id !== undefined; id = queue.pop()) {
       const clones = clonesOf.get(id)
       if (!clones) continue
@@ -500,7 +551,7 @@ export function populateAndApplyOverrides(
     }
 
     const visited = new Set<string>()
-    const syncQueue = [...seeds]
+    const syncQueue = [...expandedSeeds]
     for (let sourceId = syncQueue.shift(); sourceId !== undefined; sourceId = syncQueue.shift()) {
       const clones = clonesOf.get(sourceId)
       if (!clones) continue
@@ -519,24 +570,17 @@ export function populateAndApplyOverrides(
           continue
         }
 
-        if (node.type === 'INSTANCE' && source.type === 'INSTANCE' && node.componentId) {
-          repopulateInstance(node.id, node.componentId)
-        } else {
-          // Only propagate explicitly-set properties — undefined values must
-          // not overwrite values set by other override phases.
-          const updates: Partial<SceneNode> = {}
-          if (source.text !== undefined && source.text !== node.text) updates.text = source.text
-          if (source.visible !== undefined && source.visible !== node.visible) updates.visible = source.visible
-          if (source.opacity !== undefined && source.opacity !== node.opacity) updates.opacity = source.opacity
-          if (source.name !== undefined && source.name !== node.name) updates.name = source.name
-          if (source.fills !== undefined && source.fills !== node.fills) updates.fills = structuredClone(source.fills)
-          if (source.strokes !== undefined && source.strokes !== node.strokes) updates.strokes = structuredClone(source.strokes)
-          if (source.effects !== undefined && source.effects !== node.effects) updates.effects = structuredClone(source.effects)
-          if (source.styleRuns !== undefined && source.styleRuns !== node.styleRuns) updates.styleRuns = structuredClone(source.styleRuns)
-          if (source.layoutGrow !== undefined && source.layoutGrow !== node.layoutGrow) updates.layoutGrow = source.layoutGrow
-          if (source.textAutoResize !== undefined && source.textAutoResize !== node.textAutoResize) updates.textAutoResize = source.textAutoResize
-          if (source.locked !== undefined && source.locked !== node.locked) updates.locked = source.locked
-          if (Object.keys(updates).length > 0) graph.updateNode(node.id, updates)
+        syncNodeProps(source, node)
+        // For structural changes (instance swaps change child count/type),
+        // re-clone from the SOURCE (not the component) to preserve the
+        // componentId chain for DSD propagation.
+        if (source.childIds.length !== node.childIds.length) {
+          for (const childId of [...node.childIds]) graph.deleteNode(childId)
+          if (source.childIds.length > 0) {
+            graph.populateInstanceChildren(node.id, sourceId)
+          }
+        } else if (source.childIds.length > 0 && node.childIds.length > 0) {
+          syncChildrenDeep(sourceId, cloneId)
         }
 
         syncQueue.push(cloneId)
