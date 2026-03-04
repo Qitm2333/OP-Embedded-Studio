@@ -2014,8 +2014,20 @@ export class SkiaRenderer {
     const baseColor = color ?? ck.BLACK
     const baseFontSize = node.fontSize || DEFAULT_FONT_SIZE
 
+    const truncateOpts: { maxLines?: number; ellipsis?: string } = {}
+    if (node.textTruncation === 'ENDING') {
+      if (node.maxLines != null && node.maxLines > 0) {
+        truncateOpts.maxLines = node.maxLines
+      } else if (node.height > 0) {
+        const lineH = node.lineHeight || baseFontSize * 1.2
+        truncateOpts.maxLines = Math.max(1, Math.floor(node.height / lineH))
+      }
+      truncateOpts.ellipsis = '…'
+    }
+
     const paraStyle = new ck.ParagraphStyle({
       textAlign: this.getTextAlign(node.textAlignHorizontal),
+      ...truncateOpts,
       textStyle: {
         color: baseColor,
         fontFamilies: [node.fontFamily || DEFAULT_FONT_FAMILY],
