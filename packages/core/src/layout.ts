@@ -1,6 +1,7 @@
 import Yoga, {
   Align,
   Direction,
+  Display,
   FlexDirection,
   Gutter,
   Justify,
@@ -89,7 +90,9 @@ function buildYogaTree(graph: SceneGraph, frame: SceneNode): YogaNode {
 
     const yogaChild = Yoga.Node.create()
 
-    if (child.layoutMode !== 'NONE') {
+    if (!child.visible) {
+      yogaChild.setDisplay(Display.None)
+    } else if (child.layoutMode !== 'NONE') {
       configureChildAsAutoLayout(yogaChild, child, frame, graph)
     } else {
       configureChildAsLeaf(yogaChild, child, frame)
@@ -150,7 +153,9 @@ function configureChildAsAutoLayout(
   for (const gc of grandchildren) {
     if (gc.layoutPositioning === 'ABSOLUTE') continue
     const yogaGC = Yoga.Node.create()
-    if (gc.layoutMode !== 'NONE') {
+    if (!gc.visible) {
+      yogaGC.setDisplay(Display.None)
+    } else if (gc.layoutMode !== 'NONE') {
       configureChildAsAutoLayout(yogaGC, gc, child, graph)
     } else {
       configureChildAsLeaf(yogaGC, gc, child)

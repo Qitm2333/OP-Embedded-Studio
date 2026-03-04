@@ -54,6 +54,7 @@ export function importNodeChanges(
   }
 
   const created = new Set<string>()
+  const guidToNodeId = new Map<string, string>()
 
   function createSceneNode(ncId: string, graphParentId: string) {
     if (created.has(ncId)) return
@@ -66,6 +67,7 @@ export function importNodeChanges(
     if (nodeType === 'DOCUMENT' || nodeType === 'VARIABLE') return
 
     const node = graph.createNode(nodeType, graphParentId, props)
+    guidToNodeId.set(ncId, node.id)
 
     for (const childId of getChildren(ncId)) {
       createSceneNode(childId, node.id)
@@ -167,6 +169,29 @@ export function importNodeChanges(
   }
 
   importVariables()
+
+  // Remap componentId from original Figma GUIDs to imported node IDs
+  for (const node of graph.getAllNodes()) {
+    if (node.type !== 'INSTANCE' || !node.componentId) continue
+    const remapped = guidToNodeId.get(node.componentId)
+    if (remapped) node.componentId = remapped
+  }
+
+  // Populate instance children from their components.
+  // Multiple passes needed: cloning creates new instance nodes that
+  // themselves need population.
+  let populated = 1
+  while (populated > 0) {
+    populated = 0
+    for (const node of graph.getAllNodes()) {
+      if (node.type !== 'INSTANCE' || !node.componentId || node.childIds.length > 0) continue
+      const comp = graph.getNode(node.componentId)
+      if (comp && comp.childIds.length > 0) {
+        graph.populateInstanceChildren(node.id, node.componentId)
+        populated++
+      }
+    }
+  }
 
   // Ensure at least one page exists
   if (graph.getPages(true).length === 0) {
