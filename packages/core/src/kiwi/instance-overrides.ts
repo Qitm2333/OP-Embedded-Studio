@@ -70,15 +70,19 @@ export function populateAndApplyOverrides(
     return root
   }
 
-  function findDescendantByComponentId(parentId: string, componentId: string): string | null {
+  function findNodeByComponentId(parentId: string, componentId: string): string | null {
     const targetRoot = getComponentRoot(componentId)
     const parent = graph.getNode(parentId)
     if (!parent) return null
+    // Check direct children first, then recurse
     for (const childId of parent.childIds) {
       const child = graph.getNode(childId)
       if (!child) continue
+      if (child.componentId === componentId) return childId
       if (child.componentId && getComponentRoot(child.componentId) === targetRoot) return childId
-      const deep = findDescendantByComponentId(childId, componentId)
+    }
+    for (const childId of parent.childIds) {
+      const deep = findNodeByComponentId(childId, componentId)
       if (deep) return deep
     }
     return null
@@ -91,7 +95,15 @@ export function populateAndApplyOverrides(
       const figmaGuid = overrideKeyToGuid.get(key) ?? key
       const remapped = guidToNodeId.get(figmaGuid)
       if (!remapped) return null
-      const found = findDescendantByComponentId(currentId, remapped)
+
+      // The override may target the current node itself (when it's an instance
+      // cloned from the component the override points to)
+      const current = graph.getNode(currentId)
+      if (current?.componentId === remapped) {
+        continue
+      }
+
+      const found = findNodeByComponentId(currentId, remapped)
       if (!found) return null
       currentId = found
     }
