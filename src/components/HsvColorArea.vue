@@ -131,6 +131,7 @@ const hueColor = computed(() => {
   <!-- SV area -->
   <div
     ref="svAreaRef"
+    data-test-id="hsv-sv-area"
     class="relative h-[140px] w-full cursor-crosshair overflow-hidden rounded"
     :style="{ background: hueColor }"
     @pointerdown="onSvPointerDown"
@@ -146,7 +147,15 @@ const hueColor = computed(() => {
 
   <!-- Hue slider -->
   <div class="mt-2">
-    <input type="range" class="hue-slider" :value="hue" min="0" max="360" @input="onHueInput" />
+    <input
+      type="range"
+      data-test-id="hsv-hue-slider"
+      class="hue-slider"
+      :value="hue"
+      min="0"
+      max="360"
+      @input="onHueInput"
+    />
   </div>
 
   <!-- Alpha slider -->
@@ -157,6 +166,7 @@ const hueColor = computed(() => {
     />
     <input
       type="range"
+      data-test-id="hsv-alpha-slider"
       class="alpha-slider"
       :value="alpha * 100"
       min="0"
@@ -170,6 +180,7 @@ const hueColor = computed(() => {
     <span class="text-[11px] text-muted">#</span>
     <input
       type="text"
+      data-test-id="hsv-hex-input"
       class="min-w-0 flex-1 rounded border border-border bg-input px-1.5 py-0.5 font-mono text-xs text-surface"
       :value="hexValue"
       maxlength="6"
@@ -177,6 +188,7 @@ const hueColor = computed(() => {
     />
     <input
       type="number"
+      data-test-id="hsv-alpha-input"
       class="w-10 rounded border border-border bg-input px-1 py-0.5 text-right text-xs text-surface"
       :value="Math.round(alpha * 100)"
       min="0"

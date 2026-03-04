@@ -66,7 +66,7 @@ function onDisconnect() {
 </script>
 
 <template>
-  <div class="flex h-screen w-screen flex-col">
+  <div data-test-id="editor-root" class="flex h-screen w-screen flex-col">
     <SafariBanner />
     <TabBar />
     <SplitterGroup
@@ -122,8 +122,11 @@ function onDisconnect() {
           class="absolute left-7 top-7 z-10 flex items-center gap-2 rounded-lg border border-border bg-panel px-2 py-1 shadow-sm"
         >
           <img src="/favicon-32.png" class="size-4" alt="OpenPencil" />
-          <span class="text-xs text-surface">{{ store.state.documentName }}</span>
+          <span data-test-id="editor-document-name" class="text-xs text-surface">{{
+            store.state.documentName
+          }}</span>
           <button
+            data-test-id="editor-show-ui"
             class="ml-1 flex size-6 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
             title="Show UI (⌘\)"
             @click="store.state.showUI = true"

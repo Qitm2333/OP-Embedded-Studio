@@ -40,7 +40,7 @@ function handleStop() {
 </script>
 
 <template>
-  <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+  <div data-test-id="chat-panel" class="flex min-w-0 flex-1 flex-col overflow-hidden">
     <APIKeySetup v-if="!isConfigured" />
 
     <template v-else>
@@ -49,6 +49,7 @@ function handleStop() {
           <!-- Empty state -->
           <div
             v-if="messages.length === 0"
+            data-test-id="chat-empty-state"
             class="flex h-full flex-col items-center justify-center gap-3 text-muted"
           >
             <icon-lucide-message-circle class="size-8 opacity-50" />
@@ -56,11 +57,15 @@ function handleStop() {
           </div>
 
           <!-- Messages -->
-          <div v-else class="flex flex-col gap-3">
+          <div v-else data-test-id="chat-messages" class="flex flex-col gap-3">
             <ChatMessage v-for="msg in messages" :key="msg.id" :message="msg" />
 
             <!-- Typing indicator -->
-            <div v-if="status === 'submitted'" class="flex gap-2">
+            <div
+              v-if="status === 'submitted'"
+              data-test-id="chat-typing-indicator"
+              class="flex gap-2"
+            >
               <div
                 class="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted/20 text-[10px] font-bold text-muted"
               >

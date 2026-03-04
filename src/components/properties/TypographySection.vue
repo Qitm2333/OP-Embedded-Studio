@@ -73,13 +73,14 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="node" class="border-b border-border px-3 py-2">
+  <div v-if="node" data-test-id="typography-section" class="border-b border-border px-3 py-2">
     <label class="mb-1.5 block text-[11px] text-muted">Typography</label>
 
     <div class="mb-1.5 flex items-center gap-1.5">
       <FontPicker class="min-w-0 flex-1" :model-value="node.fontFamily" @select="selectFamily" />
       <icon-lucide-alert-triangle
         v-if="hasMissingFonts"
+        data-test-id="typography-missing-font"
         class="size-3.5 shrink-0 text-amber-400"
         :title="
           'Missing font' + (missingFonts.length > 1 ? 's' : '') + ': ' + missingFonts.join(', ')

@@ -92,6 +92,7 @@ function initials(name: string): string {
         <TooltipRoot>
           <TooltipTrigger as-child>
             <div
+              data-test-id="collab-local-avatar"
               class="flex size-6 items-center justify-center rounded-full border-2 border-panel text-[10px] font-semibold text-white"
               :style="{ background: colorToCSS(state.localColor) }"
             >
@@ -111,6 +112,7 @@ function initials(name: string): string {
         <TooltipRoot v-for="peer in peers" :key="peer.clientId">
           <TooltipTrigger as-child>
             <div
+              data-test-id="collab-peer-avatar"
               class="flex size-6 cursor-pointer items-center justify-center rounded-full border-2 text-[10px] font-semibold text-white transition-all"
               :class="
                 followingPeer === peer.clientId
@@ -145,6 +147,7 @@ function initials(name: string): string {
     <PopoverRoot v-model:open="popoverOpen">
       <PopoverTrigger as-child>
         <button
+          data-test-id="collab-share-button"
           class="flex h-7 cursor-pointer items-center gap-1.5 rounded-md border-none px-3 text-xs font-medium transition-colors"
           :class="
             state.connected
@@ -161,6 +164,7 @@ function initials(name: string): string {
 
       <PopoverPortal>
         <PopoverContent
+          data-test-id="collab-popover"
           class="z-50 w-72 rounded-lg border border-border bg-panel p-3 shadow-xl"
           :side-offset="8"
           side="bottom"
@@ -173,10 +177,12 @@ function initials(name: string): string {
               <input
                 :value="shareUrl"
                 readonly
+                data-test-id="collab-room-link"
                 class="min-w-0 flex-1 rounded border border-border bg-input px-2 py-1 text-xs text-surface"
                 @focus="($event.target as HTMLInputElement).select()"
               />
               <button
+                data-test-id="collab-copy-link"
                 class="flex h-7 cursor-pointer items-center gap-1 rounded border-none bg-accent px-2 text-xs text-white hover:bg-accent/90"
                 @click="copyLink"
               >
@@ -191,6 +197,7 @@ function initials(name: string): string {
             </div>
 
             <button
+              data-test-id="collab-disconnect"
               class="flex h-7 w-full cursor-pointer items-center justify-center rounded border border-border bg-transparent text-xs text-muted hover:bg-hover hover:text-surface"
               @click="emit('disconnect')"
             >
@@ -209,6 +216,7 @@ function initials(name: string): string {
               <label class="mb-1 block text-xs text-muted">Your name</label>
               <input
                 v-model="nameDraft"
+                data-test-id="collab-name-input"
                 class="w-full rounded border border-border bg-input px-2 py-1 text-xs text-surface"
                 placeholder="Enter your name"
                 autofocus
@@ -217,6 +225,7 @@ function initials(name: string): string {
             </div>
 
             <button
+              data-test-id="collab-join-button"
               class="flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded border-none bg-accent text-xs font-medium text-white hover:bg-accent/90 disabled:opacity-50"
               :disabled="!nameDraft.trim()"
               @click="onJoin"
@@ -232,6 +241,7 @@ function initials(name: string): string {
               <label class="mb-1 block text-xs text-muted">Your name</label>
               <input
                 v-model="nameDraft"
+                data-test-id="collab-name-input"
                 class="w-full rounded border border-border bg-input px-2 py-1 text-xs text-surface"
                 placeholder="Enter your name"
                 @keydown.enter="onShare"
@@ -239,6 +249,7 @@ function initials(name: string): string {
             </div>
 
             <button
+              data-test-id="collab-share-file"
               class="mb-3 flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded border-none bg-accent text-xs font-medium text-white hover:bg-accent/90 disabled:opacity-50"
               :disabled="!nameDraft.trim()"
               @click="onShare"
@@ -256,11 +267,13 @@ function initials(name: string): string {
             <div class="flex items-center gap-1.5">
               <input
                 v-model="joinInput"
+                data-test-id="collab-join-input"
                 class="min-w-0 flex-1 rounded border border-border bg-input px-2 py-1 text-xs text-surface"
                 placeholder="Paste room link or ID"
                 @keydown.enter="onJoin"
               />
               <button
+                data-test-id="collab-join-room-button"
                 class="flex h-7 cursor-pointer items-center rounded border-none bg-accent px-3 text-xs text-white hover:bg-accent/90 disabled:opacity-50"
                 :disabled="!joinInput.trim() || !nameDraft.trim()"
                 @click="onJoin"

@@ -124,7 +124,7 @@ function rotate90() {
 </script>
 
 <template>
-  <div v-if="active" class="border-b border-border px-3 py-2">
+  <div v-if="active" data-test-id="position-section" class="border-b border-border px-3 py-2">
     <label class="mb-1.5 block text-[11px] text-muted">Position</label>
 
     <!-- Alignment buttons -->
@@ -132,6 +132,7 @@ function rotate90() {
       <div class="flex gap-0.5">
         <button
           class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+          data-test-id="position-align-left"
           title="Align left"
           @click="alignHorizontal('left')"
         >
@@ -139,6 +140,7 @@ function rotate90() {
         </button>
         <button
           class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+          data-test-id="position-align-center-h"
           title="Align center horizontally"
           @click="alignHorizontal('center')"
         >
@@ -146,6 +148,7 @@ function rotate90() {
         </button>
         <button
           class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+          data-test-id="position-align-right"
           title="Align right"
           @click="alignHorizontal('right')"
         >
@@ -155,6 +158,7 @@ function rotate90() {
       <div class="flex gap-0.5">
         <button
           class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+          data-test-id="position-align-top"
           title="Align top"
           @click="alignVertical('top')"
         >
@@ -162,6 +166,7 @@ function rotate90() {
         </button>
         <button
           class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+          data-test-id="position-align-center-v"
           title="Align center vertically"
           @click="alignVertical('center')"
         >
@@ -169,6 +174,7 @@ function rotate90() {
         </button>
         <button
           class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+          data-test-id="position-align-bottom"
           title="Align bottom"
           @click="alignVertical('bottom')"
         >
@@ -228,6 +234,7 @@ function rotate90() {
       </ScrubInput>
       <button
         class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+        data-test-id="position-flip-horizontal"
         title="Flip horizontal"
         @click="flipHorizontal"
       >
@@ -235,6 +242,7 @@ function rotate90() {
       </button>
       <button
         class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+        data-test-id="position-flip-vertical"
         title="Flip vertical"
         @click="flipVertical"
       >
@@ -242,6 +250,7 @@ function rotate90() {
       </button>
       <button
         class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+        data-test-id="position-rotate-90"
         title="Rotate 90°"
         @click="rotate90"
       >

@@ -143,10 +143,11 @@ function toggleExpand(index: number) {
 </script>
 
 <template>
-  <div v-if="active" class="border-b border-border px-3 py-2">
+  <div v-if="active" data-test-id="effects-section" class="border-b border-border px-3 py-2">
     <div class="flex items-center justify-between">
       <label class="mb-1 block text-[11px] text-muted">Effects</label>
       <button
+        data-test-id="effects-section-add"
         class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"
         @click="add"
       >
@@ -156,7 +157,12 @@ function toggleExpand(index: number) {
 
     <p v-if="effectsAreMixed" class="text-[11px] text-muted">Click + to replace mixed effects</p>
 
-    <div v-for="(effect, i) in effectsAreMixed ? [] : ((node ?? nodes[0])?.effects ?? [])" :key="i">
+    <div
+      v-for="(effect, i) in effectsAreMixed ? [] : ((node ?? nodes[0])?.effects ?? [])"
+      :key="i"
+      data-test-id="effects-item"
+      :data-test-index="i"
+    >
       <!-- Collapsed row: color swatch | type dropdown | eye | minus -->
       <div class="group flex items-center gap-1.5 py-0.5">
         <button

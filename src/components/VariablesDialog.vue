@@ -378,6 +378,7 @@ const table = useVueTable({
     <DialogPortal>
       <DialogOverlay class="fixed inset-0 z-40 bg-black/50" />
       <DialogContent
+        data-test-id="variables-dialog"
         class="fixed left-1/2 top-1/2 z-50 flex h-[75vh] w-[800px] max-w-[90vw] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-panel shadow-2xl outline-none"
       >
         <div v-if="collections.length === 0" class="flex flex-1 flex-col">
@@ -393,6 +394,7 @@ const table = useVueTable({
             <div class="text-center">
               <p class="text-sm text-muted">No variable collections</p>
               <button
+                data-test-id="variables-create-collection"
                 class="mt-2 cursor-pointer rounded bg-hover px-3 py-1.5 text-xs text-surface hover:bg-border"
                 @click="addCollection"
               >
@@ -420,6 +422,7 @@ const table = useVueTable({
                   <TabsTrigger
                     v-else
                     :value="col.id"
+                    data-test-id="variables-collection-tab"
                     class="cursor-pointer whitespace-nowrap rounded border-none px-2.5 py-1 text-xs text-muted data-[state=active]:bg-hover data-[state=active]:text-surface"
                     @dblclick="startRenameCollection(col.id)"
                   >
@@ -438,6 +441,7 @@ const table = useVueTable({
                   />
                 </div>
                 <button
+                  data-test-id="variables-add-collection"
                   class="flex size-6 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
                   title="Add collection"
                   @click="addCollection"
@@ -521,6 +525,7 @@ const table = useVueTable({
 
               <!-- Footer -->
               <button
+                data-test-id="variables-add-variable"
                 class="flex w-full shrink-0 cursor-pointer items-center gap-1.5 border-t border-border bg-transparent px-4 py-2 text-xs text-muted hover:bg-hover hover:text-surface"
                 @click="addVariable"
               >

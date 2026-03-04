@@ -18,6 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Pull LFS files
+        run: git lfs pull
+
       - uses: oven-sh/setup-bun@v2
 
       - uses: actions/cache@v4

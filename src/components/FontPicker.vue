@@ -50,6 +50,7 @@ function onSelect(val: string) {
   <PopoverRoot v-model:open="open">
     <PopoverAnchor>
       <button
+        data-test-id="font-picker-trigger"
         class="flex w-full cursor-pointer items-center justify-between rounded border border-border bg-input px-2 py-1 text-xs text-surface hover:bg-hover"
         @click="open = !open"
       >
@@ -69,6 +70,7 @@ function onSelect(val: string) {
           <ListboxFilter
             ref="filterRef"
             v-model="searchTerm"
+            data-test-id="font-picker-search"
             class="min-w-0 flex-1 border-none bg-transparent text-xs text-surface outline-none placeholder:text-muted"
             placeholder="Search fonts…"
             autocomplete="off"
@@ -86,6 +88,7 @@ function onSelect(val: string) {
           >
             <ListboxItem
               :value="option"
+              data-test-id="font-picker-item"
               class="flex w-full cursor-pointer items-center gap-2 px-2 py-2 text-sm text-surface outline-none data-[highlighted]:bg-hover"
               :style="{ fontFamily: `'${option}', sans-serif` }"
             >
