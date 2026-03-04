@@ -55,7 +55,7 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
         +
       </button>
     </div>
-    <div class="overflow-x-hidden overflow-y-auto px-1 pb-1">
+    <div class="overflow-x-hidden overflow-y-auto scrollbar-thin px-1 pb-1">
       <div v-for="pg in pages" :key="pg.id">
         <input
           v-if="editingPageId === pg.id"
