@@ -50,7 +50,7 @@ const BUNDLED_FONTS: Record<string, string> = {
   'Inter|Regular': '/Inter-Regular.ttf'
 }
 
-const GOOGLE_FONTS_API_KEY = 'AIzaSyD1tYDR_dUEiV-Tw1vksEhZbUytgKW5pc8'
+import { GOOGLE_FONTS_API_KEY } from './constants'
 
 const googleFontsCache = new Map<string, Record<string, string>>()
 const googleFontsFailed = new Set<string>()

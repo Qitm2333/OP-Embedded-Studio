@@ -122,3 +122,5 @@ export const AI_MODELS: ModelOption[] = [
 ]
 
 export const DEFAULT_AI_MODEL = AI_MODELS[0].id
+
+export const GOOGLE_FONTS_API_KEY = 'AIzaSyD1tYDR_dUEiV-Tw1vksEhZbUytgKW5pc8'
