@@ -26,6 +26,7 @@ import { loadFont } from '@/engine/fonts'
 import { computeLayout, computeAllLayouts, setTextMeasurer } from '@/engine/layout'
 import { renderNodesToImage } from '@/engine/render-image'
 import { SceneGraph } from '@/engine/scene-graph'
+import { renderNodesToSVG } from '@/engine/svg-export'
 import { TextEditor } from '@/engine/text-editor'
 import { UndoManager } from '@/engine/undo'
 import { computeVectorBounds } from '@/engine/vector'
@@ -809,6 +810,21 @@ export function createEditorStore() {
 
   async function exportSelection(scale: number, format: ExportFormat) {
     const ids = [...state.selectedIds]
+
+    if (format === 'SVG') {
+      const nodeIds = ids.length > 0 ? ids : graph.getChildren(state.currentPageId).map((n) => n.id)
+      const svgStr = renderNodesToSVG(graph, state.currentPageId, nodeIds)
+      if (!svgStr) {
+        console.error('Export failed: renderNodesToSVG returned null')
+        return
+      }
+      const svgData = new TextEncoder().encode(svgStr)
+      const node = ids.length === 1 ? graph.getNode(ids[0]) : undefined
+      const fileName = `${node?.name ?? 'Export'}.svg`
+      await saveExportedFile(svgData, fileName, 'SVG', '.svg', 'image/svg+xml')
+      return
+    }
+
     const data = await renderExportImage(ids, scale, format)
     if (!data) {
       console.error(
@@ -821,7 +837,16 @@ export function createEditorStore() {
     const baseName = node?.name ?? 'Export'
     const ext = exportImageExtension(format)
     const fileName = `${baseName}@${scale}x${ext}`
+    await saveExportedFile(new Uint8Array(data), fileName, format, ext, exportImageMime(format))
+  }
 
+  async function saveExportedFile(
+    data: Uint8Array,
+    fileName: string,
+    format: string,
+    ext: string,
+    mime: string
+  ) {
     if (IS_TAURI) {
       const { save } = await import('@tauri-apps/plugin-dialog')
       const path = await save({
@@ -840,8 +865,8 @@ export function createEditorStore() {
           suggestedName: fileName,
           types: [
             {
-              description: `${format} image`,
-              accept: { [exportImageMime(format)]: [ext] }
+              description: `${format} file`,
+              accept: { [mime]: [ext] }
             }
           ]
         })
@@ -854,7 +879,7 @@ export function createEditorStore() {
       }
     }
 
-    downloadBlob(new Uint8Array(data), fileName, exportImageMime(format))
+    downloadBlob(data, fileName, mime)
   }
 
   function runLayoutForNode(id: string) {

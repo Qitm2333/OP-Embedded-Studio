@@ -86,7 +86,14 @@ export {
   adjustRunsForInsert,
   adjustRunsForDelete
 } from './style-runs'
-export { renderNodesToImage, renderThumbnail, type ExportFormat } from './render-image'
+export { renderNodesToImage, renderThumbnail, computeContentBounds, type ExportFormat } from './render-image'
+export {
+  renderNodesToSVG,
+  geometryBlobToSVGPath,
+  vectorNetworkToSVGPaths,
+  type SVGExportOptions
+} from './svg-export'
+export { svg, renderSVGNode, type SVGNode } from './svg-node'
 export { exportFigFile } from './fig-export'
 export {
   FIG_KIWI_VERSION,

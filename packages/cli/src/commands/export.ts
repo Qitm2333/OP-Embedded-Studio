@@ -1,16 +1,20 @@
 import { defineCommand } from 'citty'
 import { basename, extname, resolve } from 'node:path'
 
+import { renderNodesToSVG } from '@open-pencil/core'
+
 import { loadDocument, loadFonts, exportNodes, exportThumbnail } from '../headless'
 import { ok, printError } from '../format'
 import type { ExportFormat } from '@open-pencil/core'
 
+const RASTER_FORMATS = ['PNG', 'JPG', 'WEBP']
+
 export default defineCommand({
-  meta: { description: 'Export a .fig file to PNG, JPG, or WEBP' },
+  meta: { description: 'Export a .fig file to PNG, JPG, WEBP, or SVG' },
   args: {
     file: { type: 'positional', description: '.fig file path', required: true },
     output: { type: 'string', alias: 'o', description: 'Output file path (default: <name>.<format>)' },
-    format: { type: 'string', alias: 'f', description: 'Export format: png, jpg, webp (default: png)', default: 'png' },
+    format: { type: 'string', alias: 'f', description: 'Export format: png, jpg, webp, svg (default: png)', default: 'png' },
     scale: { type: 'string', alias: 's', description: 'Export scale (default: 1)', default: '1' },
     quality: { type: 'string', alias: 'q', description: 'Quality 0-100 for JPG/WEBP (default: 90)' },
     page: { type: 'string', description: 'Page name (default: first page)' },
@@ -21,8 +25,8 @@ export default defineCommand({
   },
   async run({ args }) {
     const format = args.format.toUpperCase() as ExportFormat
-    if (!['PNG', 'JPG', 'WEBP'].includes(format)) {
-      printError(`Invalid format "${args.format}". Use png, jpg, or webp.`)
+    if (![...RASTER_FORMATS, 'SVG'].includes(format)) {
+      printError(`Invalid format "${args.format}". Use png, jpg, webp, or svg.`)
       process.exit(1)
     }
 
@@ -42,6 +46,18 @@ export default defineCommand({
     const ext = format.toLowerCase() === 'jpg' ? 'jpg' : format.toLowerCase()
     const defaultName = basename(args.file, extname(args.file))
     const output = resolve(args.output ?? `${defaultName}.${ext}`)
+
+    if (format === 'SVG') {
+      const nodeIds = args.node ? [args.node] : page.childIds
+      const svgStr = renderNodesToSVG(graph, page.id, nodeIds)
+      if (!svgStr) {
+        printError('Nothing to export (empty page or no visible nodes).')
+        process.exit(1)
+      }
+      await Bun.write(output, svgStr)
+      console.log(ok(`Exported ${output} (${(svgStr.length / 1024).toFixed(1)} KB)`))
+      return
+    }
 
     let data: Uint8Array | null
 

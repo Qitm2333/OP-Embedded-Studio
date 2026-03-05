@@ -2,7 +2,7 @@ import type { SkiaRenderer } from './renderer'
 import type { SceneGraph } from './scene-graph'
 import type { CanvasKit } from 'canvaskit-wasm'
 
-export type ExportFormat = 'PNG' | 'JPG' | 'WEBP'
+export type ExportFormat = 'PNG' | 'JPG' | 'WEBP' | 'SVG'
 
 interface RenderOptions {
   scale: number
@@ -10,7 +10,7 @@ interface RenderOptions {
   quality?: number
 }
 
-function computeContentBounds(
+export function computeContentBounds(
   graph: SceneGraph,
   nodeIds: string[]
 ): { minX: number; minY: number; maxX: number; maxY: number } | null {

@@ -20,7 +20,7 @@ const exporting = ref(false)
 
 const SCALES = [0.5, 0.75, 1, 1.5, 2, 3, 4] as const
 const SCALE_OPTIONS = SCALES.map((s) => ({ value: s, label: s % 1 === 0 ? `${s}x` : `${s}x` }))
-const FORMATS: ExportFormat[] = ['PNG', 'JPG', 'WEBP']
+const FORMATS: ExportFormat[] = ['PNG', 'JPG', 'WEBP', 'SVG']
 const FORMAT_OPTIONS = FORMATS.map((f) => ({ value: f, label: f }))
 
 const nodeName = computed(() => {
@@ -115,6 +115,7 @@ onUnmounted(() => {
       class="flex items-center gap-1.5 py-0.5"
     >
       <AppSelect
+        v-if="setting.format !== 'SVG'"
         :model-value="setting.scale"
         :options="SCALE_OPTIONS"
         @update:model-value="setting.scale = Number($event)"
