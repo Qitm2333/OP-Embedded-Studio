@@ -1,4 +1,10 @@
-export { initFontService, getFontProvider, ensureNodeFont } from '@open-pencil/core'
+export {
+  initFontService,
+  getFontProvider,
+  ensureNodeFont,
+  ensureCJKFallback,
+  getCJKFallbackFamily
+} from '@open-pencil/core'
 
 import { loadFont as loadFontCore, markFontLoaded, styleToWeight } from '@open-pencil/core'
 

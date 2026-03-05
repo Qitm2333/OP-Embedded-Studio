@@ -63,6 +63,8 @@ export {
   isFontLoaded,
   markFontLoaded,
   ensureNodeFont,
+  ensureCJKFallback,
+  getCJKFallbackFamily,
   styleToWeight,
   weightToStyle
 } from './fonts'

@@ -58,7 +58,7 @@ import {
   TEXT_CARET_WIDTH,
   DEFAULT_FONT_FAMILY
 } from './constants'
-import { isFontLoaded } from './fonts'
+import { isFontLoaded, getCJKFallbackFamily } from './fonts'
 import { vectorNetworkToPath, geometryBlobToPath } from './vector'
 import { RenderProfiler } from './profiler'
 
@@ -311,7 +311,7 @@ export class SkiaRenderer {
   async loadFonts(): Promise<void> {
     this.fontProvider = this.ck.TypefaceFontProvider.Make()
 
-    const { initFontService, loadFont } = await import('./fonts')
+    const { initFontService, loadFont, ensureCJKFallback } = await import('./fonts')
     initFontService(this.ck, this.fontProvider)
 
     const fontData = await loadFont(DEFAULT_FONT_FAMILY, 'Regular')
@@ -335,6 +335,10 @@ export class SkiaRenderer {
 
     this.fontsLoaded = true
     this.invalidateAllPictures()
+
+    ensureCJKFallback().then((family) => {
+      if (family) this.invalidateAllPictures()
+    })
   }
 
   replaceSurface(surface: Surface): void {
@@ -2331,6 +2335,7 @@ export class SkiaRenderer {
     const ck = this.ck
     const baseColor = color ?? ck.BLACK
     const baseFontSize = node.fontSize || DEFAULT_FONT_SIZE
+    const cjkFallback = getCJKFallbackFamily()
 
     const truncateOpts: { maxLines?: number; ellipsis?: string } = {}
     if (node.textTruncation === 'ENDING') {
@@ -2343,12 +2348,15 @@ export class SkiaRenderer {
       truncateOpts.ellipsis = '…'
     }
 
+    const fontFamilies = (primary: string) =>
+      cjkFallback ? [primary, cjkFallback] : [primary]
+
     const paraStyle = new ck.ParagraphStyle({
       textAlign: this.getTextAlign(node.textAlignHorizontal),
       ...truncateOpts,
       textStyle: {
         color: baseColor,
-        fontFamilies: [node.fontFamily || DEFAULT_FONT_FAMILY],
+        fontFamilies: fontFamilies(node.fontFamily || DEFAULT_FONT_FAMILY),
         fontSize: baseFontSize,
         fontStyle: {
           weight: { value: node.fontWeight || 400 } as FontWeight,
@@ -2377,7 +2385,7 @@ export class SkiaRenderer {
         builder.pushStyle(
           new ck.TextStyle({
             color: baseColor,
-            fontFamilies: [s.fontFamily ?? (node.fontFamily || DEFAULT_FONT_FAMILY)],
+            fontFamilies: fontFamilies(s.fontFamily ?? (node.fontFamily || DEFAULT_FONT_FAMILY)),
             fontSize: s.fontSize ?? baseFontSize,
             fontStyle: {
               weight: { value: (s.fontWeight ?? node.fontWeight) || 400 } as FontWeight,

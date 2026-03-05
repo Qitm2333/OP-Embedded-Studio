@@ -124,3 +124,28 @@ export const AI_MODELS: ModelOption[] = [
 export const DEFAULT_AI_MODEL = AI_MODELS[0].id
 
 export const GOOGLE_FONTS_API_KEY = 'AIzaSyD1tYDR_dUEiV-Tw1vksEhZbUytgKW5pc8'
+
+export const CJK_FALLBACK_FAMILIES_MACOS = [
+  'PingFang SC',
+  'Hiragino Sans',
+  'Apple SD Gothic Neo',
+  'Heiti SC'
+]
+
+export const CJK_FALLBACK_FAMILIES_WINDOWS = [
+  'Microsoft YaHei',
+  'Microsoft JhengHei',
+  'Yu Gothic',
+  'Malgun Gothic',
+  'SimHei'
+]
+
+export const CJK_FALLBACK_FAMILIES_LINUX = [
+  'Noto Sans CJK SC',
+  'Noto Sans CJK JP',
+  'Noto Sans CJK KR',
+  'WenQuanYi Micro Hei',
+  'Droid Sans Fallback'
+]
+
+export const CJK_GOOGLE_FONT = 'Noto Sans SC'
