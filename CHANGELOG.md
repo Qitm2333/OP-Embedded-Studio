@@ -2,20 +2,21 @@
 
 ## Unreleased
 
-### Improvements
-
-- Replace custom color picker with Reka UI Color components (ColorArea, ColorSlider, ColorField) — adds keyboard navigation and accessibility to the color area, hue, and alpha controls
+## 0.7.0 — 2026-03-05
 
 ### Features
 
 - SVG export — export selections as SVG from the export panel, context menu, CLI (`bun open-pencil export --format svg`), or MCP/AI tools (`export_svg`). Supports rectangles, ellipses, lines, stars, polygons, vectors, text with style runs, gradients, image fills, effects, blend modes, clip paths, and nested groups (#46)
 - Copy/Paste as submenu in context menu — Copy as text, Copy as SVG, Copy as PNG (⇧⌘C), Copy as JSX
-
 - Stroke align (Inside/Center/Outside) with clip-based rendering matching Figma behavior
 - Individual stroke weights per side (Top/Right/Bottom/Left) with side selector dropdown
 - Google Fonts fallback — automatically loads fonts from Google Fonts API when not available locally
 - Auto-save toggle in File menu — disable to prevent automatic writes to the opened .fig file
 - Renderer profiler with in-canvas HUD overlay, GPU timing, and phase instrumentation
+
+### Improvements
+
+- Replace custom color picker with Reka UI Color components (ColorArea, ColorSlider, ColorField) — adds keyboard navigation and accessibility to the color area, hue, and alpha controls
 
 ### Fixes
 
