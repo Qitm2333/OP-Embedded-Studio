@@ -150,10 +150,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          cat > ~/.npmrc << EOF
-          //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
-          EOF
-
           publish_if_new() {
             local dir=$1
             local name=$(node -p "require('./$dir/package.json').name")
