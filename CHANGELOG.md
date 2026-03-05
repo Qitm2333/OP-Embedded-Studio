@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Improvements
+
+- Replace custom color picker with Reka UI Color components (ColorArea, ColorSlider, ColorField) — adds keyboard navigation and accessibility to the color area, hue, and alpha controls
+
 ### Features
 
 - Stroke align (Inside/Center/Outside) with clip-based rendering matching Figma behavior
