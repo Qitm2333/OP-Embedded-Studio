@@ -96,9 +96,11 @@ const drawerSwipe = useSwipe(drawerRef, {
     dragOffset.value = Math.max(0, -drawerSwipe.lengthY.value)
   },
   onSwipeEnd(_e, direction) {
-    dragOffset.value = 0
     if (direction === 'up') swipeUp()
     else if (direction === 'down') swipeDown()
+    requestAnimationFrame(() => {
+      dragOffset.value = 0
+    })
   }
 })
 
