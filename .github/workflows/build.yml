@@ -65,7 +65,7 @@ jobs:
         id: changelog
         uses: ffurrer2/extract-release-notes@v2
 
-      - name: Add contributors to release notes
+      - name: Add new contributors to release notes
         if: startsWith(github.ref, 'refs/tags/v')
         id: release_body
         env:
@@ -73,20 +73,27 @@ jobs:
           RELEASE_NOTES: ${{ steps.changelog.outputs.release_notes }}
         run: |
           PREV_TAG=$(git tag -l 'v*' --sort=-version:refname | sed -n '2p')
-          CONTRIBUTORS=""
+          NEW=""
           if [ -n "$PREV_TAG" ]; then
-            CONTRIBUTORS=$(gh api "repos/${{ github.repository }}/compare/${PREV_TAG}...${{ github.ref_name }}" \
-              --jq '[.commits[].author.login // empty] | unique | map("@" + .) | join(", ")' 2>/dev/null || true)
+            PREV=$(git log "$PREV_TAG" --format='%aE' | sort -u)
+            NEW=$(comm -23 \
+              <(git log "${PREV_TAG}..${{ github.ref_name }}" --format='%aE' | sort -u) \
+              <(echo "$PREV") \
+            | while read -r email; do
+                git log "${PREV_TAG}..${{ github.ref_name }}" --format="%aE %aN" \
+                  | grep "^${email} " | head -1 | sed 's/^[^ ]* //'
+              done)
           fi
+
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           {
             echo "body<<$EOF"
             printf '%s\n' "$RELEASE_NOTES"
-            if [ -n "$CONTRIBUTORS" ]; then
+            if [ -n "$NEW" ]; then
               echo ""
-              echo "### Contributors"
+              echo "### New Contributors"
               echo ""
-              echo "$CONTRIBUTORS"
+              echo "$NEW" | while read -r name; do echo "- $name"; done
             fi
             echo "$EOF"
           } >> "$GITHUB_OUTPUT"
