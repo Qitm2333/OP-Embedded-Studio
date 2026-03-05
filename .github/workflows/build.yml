@@ -65,6 +65,32 @@ jobs:
         id: changelog
         uses: ffurrer2/extract-release-notes@v2
 
+      - name: Add contributors to release notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        id: release_body
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NOTES: ${{ steps.changelog.outputs.release_notes }}
+        run: |
+          PREV_TAG=$(git tag -l 'v*' --sort=-version:refname | sed -n '2p')
+          CONTRIBUTORS=""
+          if [ -n "$PREV_TAG" ]; then
+            CONTRIBUTORS=$(gh api "repos/${{ github.repository }}/compare/${PREV_TAG}...${{ github.ref_name }}" \
+              --jq '[.commits[].author.login // empty] | unique | map("@" + .) | join(", ")' 2>/dev/null || true)
+          fi
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          {
+            echo "body<<$EOF"
+            printf '%s\n' "$RELEASE_NOTES"
+            if [ -n "$CONTRIBUTORS" ]; then
+              echo ""
+              echo "### Contributors"
+              echo ""
+              echo "$CONTRIBUTORS"
+            fi
+            echo "$EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Build Tauri
         uses: tauri-apps/tauri-action@v0
         env:
@@ -80,7 +106,7 @@ jobs:
           args: --target ${{ matrix.target }}
           tagName: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
           releaseName: ${{ startsWith(github.ref, 'refs/tags/v') && format('OpenPencil {0}', github.ref_name) || '' }}
-          releaseBody: ${{ steps.changelog.outputs.release_notes }}
+          releaseBody: ${{ steps.release_body.outputs.body || steps.changelog.outputs.release_notes }}
           releaseDraft: false
 
   publish-npm:

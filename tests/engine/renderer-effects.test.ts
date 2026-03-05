@@ -15,7 +15,7 @@ describe('Renderer effect ordering', () => {
   })
 
   test('inner shadow and blur render after strokes', () => {
-    const strokeIdx = rendererSource.indexOf('this.drawNodeStroke(canvas, node, rect, hasRadius)')
+    const strokeIdx = rendererSource.indexOf('this.drawStrokeWithAlign(canvas, node, rect, hasRadius, stroke.align)')
     const frontIdx = rendererSource.indexOf("renderEffects(canvas, node, rect, hasRadius, 'front')")
     expect(strokeIdx).toBeGreaterThan(-1)
     expect(frontIdx).toBeGreaterThan(-1)
