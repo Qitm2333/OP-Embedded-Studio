@@ -193,7 +193,7 @@ export const render = defineTool({
     parent_id: { type: 'string', description: 'Parent node ID to render into' }
   },
   execute: async (figma, args) => {
-    const { renderJsx } = await import('../render/render-jsx')
+    const { renderJsx } = await import('../render/render-jsx.js')
     const result = await renderJsx(figma.graph, args.jsx, {
       parentId: args.parent_id ?? figma.currentPageId,
       x: args.x,
@@ -1046,7 +1046,7 @@ export const nodeReplaceWith = defineTool({
     const x = node.x
     const y = node.y
     node.remove()
-    const { renderJsx } = await import('../render/render-jsx')
+    const { renderJsx } = await import('../render/render-jsx.js')
     const result = await renderJsx(figma.graph, args.jsx, { parentId, x, y })
     return { id: result.id, name: result.name, type: result.type }
   }
