@@ -16,6 +16,7 @@
 
 ### Fixes
 
+- Fix `render` tool failing on Windows + Bun with "Cannot find module" error (#43)
 - Fix hover highlighting nodes from internal component pages — scope hit-test to current page
 - Fix hit-testing on transparent frames and groups — empty containers without fills or strokes are now click-through, clipping parents reject hits outside their bounds, matching Figma behavior
 - Fix instance overrides on .fig import and clipboard paste — resolve guidPaths by overrideKey, handle component swaps (`overriddenSymbolID`), propagate through nested clone chains. Import and paste now share a single override engine.
