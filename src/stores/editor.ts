@@ -243,6 +243,22 @@ export function createEditorStore() {
     state.renderVersion++
   }
 
+  let flashRafId = 0
+  function flashNodes(nodeIds: string[]) {
+    if (!_renderer) return
+    for (const id of nodeIds) _renderer.flashNode(id)
+    if (!flashRafId) pumpFlashes()
+  }
+
+  function pumpFlashes() {
+    if (!_renderer?.hasActiveFlashes) {
+      flashRafId = 0
+      return
+    }
+    state.renderVersion++
+    flashRafId = requestAnimationFrame(pumpFlashes)
+  }
+
   function isTopLevel(parentId: string | null): boolean {
     return !parentId || parentId === graph.rootId || parentId === state.currentPageId
   }
@@ -2052,6 +2068,7 @@ export function createEditorStore() {
     layerTree,
     requestRender,
     requestRepaint,
+    flashNodes,
     setTool,
     select,
     clearSelection,

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Features
+
+- New AI/MCP tools: `analyze_colors`, `analyze_typography`, `analyze_spacing`, `analyze_clusters`, `diff_create`, `diff_show`, `get_components`, `get_current_page`, `arrange`, `node_to_component`
+
+### Improvements
+
+- Split tools into domain files (read, create, modify, structure, variables, vector, analyze) — easier to navigate and extend
+- Replace inline type definitions with named types (`Color`, `Vector`, `SceneNode`) across the codebase
+
 ## 0.7.0 — 2026-03-05
 
 ### Features
