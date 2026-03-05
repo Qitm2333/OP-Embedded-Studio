@@ -44,10 +44,13 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
 </script>
 
 <template>
-  <div class="flex min-h-0 flex-1 flex-col">
+  <div data-test-id="pages-panel" class="flex min-h-0 flex-1 flex-col">
     <div class="flex shrink-0 items-center justify-between px-3 py-1.5">
-      <span class="text-[11px] uppercase tracking-wider text-muted">Pages</span>
+      <span data-test-id="pages-header" class="text-[11px] uppercase tracking-wider text-muted"
+        >Pages</span
+      >
       <button
+        data-test-id="pages-add"
         class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
         title="Add page"
         @click="store.addPage()"
@@ -60,6 +63,7 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
         <input
           v-if="editingPageId === pg.id"
           data-page-edit
+          data-test-id="pages-item-input"
           class="w-full rounded border border-accent bg-input px-2 py-1 text-xs text-surface outline-none"
           :value="pg.name"
           @blur="commitRename(pg.id, $event.target as HTMLInputElement)"
@@ -74,6 +78,7 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
         </div>
         <button
           v-else
+          data-test-id="pages-item"
           class="flex w-full cursor-pointer items-center gap-1.5 rounded border-none px-2 py-1 text-left text-xs"
           :class="
             pg.id === store.state.currentPageId

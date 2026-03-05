@@ -116,10 +116,11 @@ const filteredVariables = computed(() => {
 </script>
 
 <template>
-  <div v-if="active" class="border-b border-border px-3 py-2">
+  <div v-if="active" data-test-id="fill-section" class="border-b border-border px-3 py-2">
     <div class="flex items-center justify-between">
       <label class="mb-1 block text-[11px] text-muted">Fill</label>
       <button
+        data-test-id="fill-section-add"
         class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"
         @click="add"
       >
@@ -130,6 +131,8 @@ const filteredVariables = computed(() => {
     <div
       v-for="(fill, i) in fillsAreMixed ? [] : (activeNode?.fills ?? [])"
       :key="i"
+      data-test-id="fill-item"
+      :data-test-index="i"
       class="group flex items-center gap-1.5 py-0.5"
     >
       <FillPicker :fill="fill" @update="updateFill(i, $event)" />
@@ -142,6 +145,7 @@ const filteredVariables = computed(() => {
           {{ getBoundVariable(i)!.name }}
         </span>
         <button
+          data-test-id="fill-unbind-variable"
           class="cursor-pointer border-none bg-transparent p-0 text-violet-400 hover:text-surface"
           title="Detach variable"
           @click="unbindVariable(i)"

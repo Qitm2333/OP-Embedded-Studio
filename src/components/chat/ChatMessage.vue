@@ -55,11 +55,15 @@ function toolState(part: ToolPart): 'pending' | 'done' | 'error' {
 </script>
 
 <template>
-  <div :class="message.role === 'user' ? 'flex justify-end' : ''">
+  <div
+    :data-test-id="`chat-message-${message.role}`"
+    :class="message.role === 'user' ? 'flex justify-end' : ''"
+  >
     <div class="min-w-0 space-y-1.5" :class="message.role === 'user' ? 'max-w-[85%]' : ''">
       <!-- Tool timeline -->
       <div
         v-if="message.role === 'assistant' && getToolParts(message).length > 0"
+        data-test-id="chat-tool-timeline"
         class="space-y-0.5 rounded-lg border border-border bg-canvas p-2"
       >
         <CollapsibleRoot v-for="tool in getToolParts(message)" :key="tool.toolCallId">
@@ -114,6 +118,7 @@ function toolState(part: ToolPart): 'pending' | 'done' | 'error' {
       <!-- Text bubble -->
       <div
         v-if="getTextContent(message)"
+        data-test-id="chat-text-bubble"
         class="rounded-xl px-3 py-2 text-xs leading-relaxed"
         :class="
           message.role === 'user'

@@ -1,10 +1,11 @@
 import { describe, expect, test, setDefaultTimeout } from 'bun:test'
+import { join } from 'path'
+import { heavy } from '../helpers/test-utils'
 
 setDefaultTimeout(30_000)
-import { join } from 'path'
 
 const CLI = join(import.meta.dir, '../../packages/cli/src/index.ts')
-const FIXTURE = join(import.meta.dir, '../fixtures/material3.fig')
+const FIXTURE = join(import.meta.dir, '../fixtures/gold-preview.fig')
 
 async function evalCode(
   code: string
@@ -25,7 +26,7 @@ function parseJSON(stdout: string): unknown {
   return JSON.parse(stdout)
 }
 
-describe('CLI tool operations via eval', () => {
+heavy('CLI tool operations via eval', () => {
   test('create and read back a node', async () => {
     const { stdout, exitCode } = await evalCode(`
       const r = figma.createRectangle()

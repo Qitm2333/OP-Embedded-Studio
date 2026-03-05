@@ -190,19 +190,23 @@ export function vectorNetworkToPath(ck: CanvasKit, network: VectorNetwork): Path
     return paths
   }
 
-  // No regions — draw all segments as open paths
+  // No regions — draw all segments as open paths, tracking direction
   const path = new ck.Path()
   const visited = new Set<number>()
   const chains = buildChains(segments, vertices.length)
 
   for (const chain of chains) {
     if (chain.length === 0) continue
-    const firstSeg = segments[chain[0]]
-    path.moveTo(vertices[firstSeg.start].x, vertices[firstSeg.start].y)
+    // Determine starting vertex by tracing chain direction
+    let current = findChainStart(chain, segments)
+    path.moveTo(vertices[current].x, vertices[current].y)
 
     for (const segIdx of chain) {
       visited.add(segIdx)
-      addSegmentToPath(path, segments[segIdx], vertices)
+      const seg = segments[segIdx]
+      const forward = seg.start === current
+      addSegmentDirected(path, seg, vertices, forward)
+      current = forward ? seg.end : seg.start
     }
   }
 
@@ -210,7 +214,7 @@ export function vectorNetworkToPath(ck: CanvasKit, network: VectorNetwork): Path
     if (visited.has(i)) continue
     const seg = segments[i]
     path.moveTo(vertices[seg.start].x, vertices[seg.start].y)
-    addSegmentToPath(path, seg, vertices)
+    addSegmentDirected(path, seg, vertices, true)
   }
 
   return [path]
@@ -224,11 +228,12 @@ function addLoopToPath(
 ): void {
   if (loop.length === 0) return
 
+  // Region loops have pre-oriented segments — always draw forward
   const firstSeg = segments[loop[0]]
   path.moveTo(vertices[firstSeg.start].x, vertices[firstSeg.start].y)
 
   for (const segIdx of loop) {
-    addSegmentToPath(path, segments[segIdx], vertices)
+    addSegmentDirected(path, segments[segIdx], vertices, true)
   }
 
   const lastSeg = segments[loop[loop.length - 1]]
@@ -237,19 +242,37 @@ function addLoopToPath(
   }
 }
 
-function addSegmentToPath(path: Path, seg: VectorSegment, vertices: VectorVertex[]): void {
-  const start = vertices[seg.start]
-  const end = vertices[seg.end]
+function addSegmentDirected(
+  path: Path,
+  seg: VectorSegment,
+  vertices: VectorVertex[],
+  forward: boolean
+): void {
+  const p0 = forward ? vertices[seg.start] : vertices[seg.end]
+  const p3 = forward ? vertices[seg.end] : vertices[seg.start]
   const ts = seg.tangentStart
   const te = seg.tangentEnd
 
   const isLine = ts.x === 0 && ts.y === 0 && te.x === 0 && te.y === 0
   if (isLine) {
-    path.lineTo(end.x, end.y)
+    path.lineTo(p3.x, p3.y)
+  } else if (forward) {
+    path.cubicTo(p0.x + ts.x, p0.y + ts.y, p3.x + te.x, p3.y + te.y, p3.x, p3.y)
   } else {
-    // Cubic bezier: control points are tangent offsets from start/end
-    path.cubicTo(start.x + ts.x, start.y + ts.y, end.x + te.x, end.y + te.y, end.x, end.y)
+    // Reversed cubic: swap control points
+    path.cubicTo(p0.x + te.x, p0.y + te.y, p3.x + ts.x, p3.y + ts.y, p3.x, p3.y)
   }
+}
+
+function findChainStart(chain: number[], segments: VectorSegment[]): number {
+  if (chain.length < 2) return segments[chain[0]].start
+
+  const first = segments[chain[0]]
+  const second = segments[chain[1]]
+  // The shared vertex between first and second is the "end" of the first
+  // segment in this chain — so the start is the other vertex.
+  if (first.start === second.start || first.start === second.end) return first.end
+  return first.start
 }
 
 function buildChains(segments: VectorSegment[], _vertexCount: number): number[][] {
@@ -348,6 +371,7 @@ export function geometryBlobToPath(
   windingRule: WindingRule
 ): Path {
   const path = new ck.Path()
+  if (!blob || !(blob.buffer instanceof ArrayBuffer)) return path
   const dv = new DataView(blob.buffer, blob.byteOffset, blob.byteLength)
   let o = 0
 

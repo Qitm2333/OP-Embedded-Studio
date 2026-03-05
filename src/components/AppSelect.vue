@@ -22,6 +22,7 @@ const modelValue = defineModel<T>({ required: true })
 <template>
   <SelectRoot v-model="modelValue">
     <SelectTrigger
+      data-test-id="app-select-trigger"
       class="flex min-w-0 flex-1 cursor-pointer items-center justify-between rounded border border-border bg-input px-1.5 py-1 text-xs text-surface outline-none hover:bg-hover"
     >
       <SelectValue :placeholder="placeholder" />
