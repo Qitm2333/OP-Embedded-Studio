@@ -772,6 +772,13 @@ export class SceneGraph {
 
   private static readonly OPAQUE_CONTAINER_TYPES = new Set<NodeType>(['COMPONENT', 'INSTANCE'])
 
+  private static hasVisibleFillOrStroke(node: SceneNode): boolean {
+    return (
+      node.fills.some((f) => f.visible) ||
+      node.strokes.some((s) => s.visible)
+    )
+  }
+
   private hitTestChildren(
     px: number,
     py: number,
@@ -783,6 +790,12 @@ export class SceneGraph {
     const parent = this.nodes.get(parentId)
     if (!parent) return null
 
+    if (parent.clipsContent) {
+      if (px < offsetX || px > offsetX + parent.width || py < offsetY || py > offsetY + parent.height) {
+        return null
+      }
+    }
+
     // Reverse order = topmost first
     for (let i = parent.childIds.length - 1; i >= 0; i--) {
       const childId = parent.childIds[i]
@@ -792,18 +805,28 @@ export class SceneGraph {
       const ax = offsetX + child.x
       const ay = offsetY + child.y
 
-      // Components/instances: don't recurse unless in deep mode (double-click)
-      if (SceneGraph.OPAQUE_CONTAINER_TYPES.has(child.type) && !deep) {
-        if (px >= ax && px <= ax + child.width && py >= ay && py <= ay + child.height) {
-          return child
-        }
-        continue
-      }
-
-      // Check children first (deeper hit)
       if (CONTAINER_TYPES.has(child.type)) {
+        // Components/instances: don't recurse unless in deep mode (double-click).
+        // Still check fills — empty instances are click-through like frames.
+        if (SceneGraph.OPAQUE_CONTAINER_TYPES.has(child.type) && !deep) {
+          if (px >= ax && px <= ax + child.width && py >= ay && py <= ay + child.height) {
+            const childHit = this.hitTestChildren(px, py, childId, ax, ay, deep)
+            if (childHit) return child
+            if (SceneGraph.hasVisibleFillOrStroke(child)) return child
+          }
+          continue
+        }
+
         const deepHit = this.hitTestChildren(px, py, childId, ax, ay, deep)
         if (deepHit) return deepHit
+
+        // Groups are always click-through (only children are hittable).
+        // Frames/sections without visible fills or strokes are also click-through.
+        if (child.type === 'GROUP') continue
+        if (px >= ax && px <= ax + child.width && py >= ay && py <= ay + child.height) {
+          if (SceneGraph.hasVisibleFillOrStroke(child)) return child
+        }
+        continue
       }
 
       if (px >= ax && px <= ax + child.width && py >= ay && py <= ay + child.height) {

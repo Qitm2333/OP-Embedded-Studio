@@ -561,7 +561,7 @@ export function useCanvasInput(
       cursorOverride.value = cursor
 
       const hit =
-        hitTestSectionTitle(cx, cy) ?? hitTestComponentLabel(cx, cy) ?? store.graph.hitTest(cx, cy)
+        hitTestSectionTitle(cx, cy) ?? hitTestComponentLabel(cx, cy) ?? store.graph.hitTest(cx, cy, store.state.currentPageId)
       store.setHoveredNode(hit && !store.state.selectedIds.has(hit.id) ? hit.id : null)
     }
 

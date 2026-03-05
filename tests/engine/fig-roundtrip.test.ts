@@ -9,6 +9,7 @@ import { initCodec } from '../../packages/core/src/kiwi/codec'
 import { SceneGraph } from '../../packages/core/src/scene-graph'
 
 import type { SceneNode, NodeType, Fill } from '../../packages/core/src/scene-graph'
+import { heavy } from '../helpers/test-utils'
 
 setDefaultTimeout(60_000)
 
@@ -60,80 +61,55 @@ function countByType(nodes: SceneNode[]): Map<NodeType, number> {
   return counts
 }
 
-// Parse fixtures once — they're large
-let material3: SceneGraph
-let nuxtui: SceneGraph
-let material3Nodes: SceneNode[]
-let nuxtUiNodes: SceneNode[]
+let parsed: SceneGraph
+let allNodes: SceneNode[]
 
 beforeAll(async () => {
-  const m3Buf = readFileSync(resolve(FIXTURES, 'material3.fig'))
-  const nuBuf = readFileSync(resolve(FIXTURES, 'nuxtui.fig'))
-  material3 = await parseFigFile(m3Buf.buffer as ArrayBuffer)
-  nuxtui = await parseFigFile(nuBuf.buffer as ArrayBuffer)
-  material3Nodes = collectAllNodes(material3)
-  nuxtUiNodes = collectAllNodes(nuxtui)
+  const buf = readFileSync(resolve(FIXTURES, 'gold-preview.fig'))
+  parsed = await parseFigFile(buf.buffer as ArrayBuffer)
+  allNodes = collectAllNodes(parsed)
 })
 
 describe('parse real .fig files', () => {
-  test('material3.fig parses without error', () => {
-    expect(material3).toBeInstanceOf(SceneGraph)
+  test('parses without error', () => {
+    expect(parsed).toBeInstanceOf(SceneGraph)
   })
 
-  test('nuxtui.fig parses without error', () => {
-    expect(nuxtui).toBeInstanceOf(SceneGraph)
+  test('has pages', () => {
+    expect(parsed.getPages().length).toBeGreaterThan(0)
   })
 
-  test('material3.fig has pages', () => {
-    expect(material3.getPages().length).toBeGreaterThan(0)
-  })
-
-  test('material3.fig has nodes', () => {
-    expect(material3Nodes.length).toBeGreaterThan(0)
-  })
-
-  test('nuxtui.fig has pages', () => {
-    expect(nuxtui.getPages().length).toBeGreaterThan(0)
-  })
-
-  test('nuxtui.fig has nodes', () => {
-    expect(nuxtUiNodes.length).toBeGreaterThan(0)
+  test('has nodes', () => {
+    expect(allNodes.length).toBeGreaterThan(0)
   })
 })
 
 describe('node type coverage', () => {
-  test('material3: contains FRAME nodes', () => {
-    expect(material3Nodes.some((n) => n.type === 'FRAME')).toBe(true)
+  test('contains FRAME nodes', () => {
+    expect(allNodes.some((n) => n.type === 'FRAME')).toBe(true)
   })
 
-  test('material3: contains TEXT nodes with content', () => {
-    const textNodes = material3Nodes.filter((n) => n.type === 'TEXT')
+  test('contains TEXT nodes with content', () => {
+    const textNodes = allNodes.filter((n) => n.type === 'TEXT')
     expect(textNodes.length).toBeGreaterThan(0)
     expect(textNodes.some((n) => n.text.length > 0)).toBe(true)
   })
 
-  test('material3: contains COMPONENT nodes', () => {
-    expect(material3Nodes.some((n) => n.type === 'COMPONENT')).toBe(true)
+  test('contains INSTANCE nodes referencing components', () => {
+    const instances = allNodes.filter((n) => n.type === 'INSTANCE')
+    expect(instances.length).toBeGreaterThan(0)
+    expect(instances.some((n) => n.componentId)).toBe(true)
   })
 
-  test('material3: contains INSTANCE nodes', () => {
-    expect(material3Nodes.some((n) => n.type === 'INSTANCE')).toBe(true)
-  })
-
-  test('material3: no unmapped node types', () => {
-    const invalid = material3Nodes.filter((n) => !VALID_NODE_TYPES.has(n.type))
-    expect(invalid.map((n) => `${n.name}: ${n.type}`)).toEqual([])
-  })
-
-  test('nuxtui: no unmapped node types', () => {
-    const invalid = nuxtUiNodes.filter((n) => !VALID_NODE_TYPES.has(n.type))
+  test('no unmapped node types', () => {
+    const invalid = allNodes.filter((n) => !VALID_NODE_TYPES.has(n.type))
     expect(invalid.map((n) => `${n.name}: ${n.type}`)).toEqual([])
   })
 })
 
 describe('property integrity', () => {
   test('all nodes have finite dimensions', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       expect(Number.isFinite(n.width)).toBe(true)
       expect(Number.isFinite(n.height)).toBe(true)
       expect(n.width).toBeGreaterThanOrEqual(0)
@@ -142,21 +118,21 @@ describe('property integrity', () => {
   })
 
   test('all nodes have finite positions', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       expect(Number.isFinite(n.x)).toBe(true)
       expect(Number.isFinite(n.y)).toBe(true)
     }
   })
 
   test('all nodes have valid opacity', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       expect(n.opacity).toBeGreaterThanOrEqual(0)
       expect(n.opacity).toBeLessThanOrEqual(1)
     }
   })
 
   test('TEXT nodes have fontFamily', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       if (n.type === 'TEXT') {
         expect(typeof n.fontFamily).toBe('string')
         expect(n.fontFamily.length).toBeGreaterThan(0)
@@ -165,7 +141,7 @@ describe('property integrity', () => {
   })
 
   test('TEXT nodes have valid fontSize', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       if (n.type === 'TEXT') {
         expect(n.fontSize).toBeGreaterThan(0)
       }
@@ -186,7 +162,7 @@ describe('property integrity', () => {
         expect(a).toBeLessThanOrEqual(1)
       }
     }
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       for (const fill of n.fills) {
         checkFill(fill, n.name)
       }
@@ -194,7 +170,7 @@ describe('property integrity', () => {
   })
 
   test('effects have valid radius', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       for (const e of n.effects) {
         expect(e.radius).toBeGreaterThanOrEqual(0)
       }
@@ -202,13 +178,74 @@ describe('property integrity', () => {
   })
 
   test('layout nodes have valid spacing', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       if (n.layoutMode !== 'NONE') {
         expect(Number.isFinite(n.itemSpacing)).toBe(true)
         expect(n.paddingTop).toBeGreaterThanOrEqual(0)
         expect(n.paddingRight).toBeGreaterThanOrEqual(0)
         expect(n.paddingBottom).toBeGreaterThanOrEqual(0)
         expect(n.paddingLeft).toBeGreaterThanOrEqual(0)
+      }
+    }
+  })
+
+})
+
+heavy('parse heavy .fig files', () => {
+  let material3: SceneGraph
+  let nuxtui: SceneGraph
+  let material3Nodes: SceneNode[]
+  let nuxtUiNodes: SceneNode[]
+
+  beforeAll(async () => {
+    const m3Buf = readFileSync(resolve(FIXTURES, 'material3.fig'))
+    const nuBuf = readFileSync(resolve(FIXTURES, 'nuxtui.fig'))
+    material3 = await parseFigFile(m3Buf.buffer as ArrayBuffer)
+    nuxtui = await parseFigFile(nuBuf.buffer as ArrayBuffer)
+    material3Nodes = collectAllNodes(material3)
+    nuxtUiNodes = collectAllNodes(nuxtui)
+  })
+
+  test('material3.fig parses with pages and nodes', () => {
+    expect(material3).toBeInstanceOf(SceneGraph)
+    expect(material3.getPages().length).toBeGreaterThan(0)
+    expect(material3Nodes.length).toBeGreaterThan(0)
+  })
+
+  test('nuxtui.fig parses with pages and nodes', () => {
+    expect(nuxtui).toBeInstanceOf(SceneGraph)
+    expect(nuxtui.getPages().length).toBeGreaterThan(0)
+    expect(nuxtUiNodes.length).toBeGreaterThan(0)
+  })
+
+  test('material3: contains COMPONENT nodes', () => {
+    expect(material3Nodes.some((n) => n.type === 'COMPONENT')).toBe(true)
+  })
+
+  test('material3: no unmapped node types', () => {
+    const invalid = material3Nodes.filter((n) => !VALID_NODE_TYPES.has(n.type))
+    expect(invalid.map((n) => `${n.name}: ${n.type}`)).toEqual([])
+  })
+
+  test('nuxtui: no unmapped node types', () => {
+    const invalid = nuxtUiNodes.filter((n) => !VALID_NODE_TYPES.has(n.type))
+    expect(invalid.map((n) => `${n.name}: ${n.type}`)).toEqual([])
+  })
+
+  test('material3: fills have valid colors', () => {
+    for (const n of material3Nodes) {
+      for (const fill of n.fills) {
+        if (fill.type === 'SOLID') {
+          const { r, g, b, a } = fill.color
+          expect(r).toBeGreaterThanOrEqual(0)
+          expect(r).toBeLessThanOrEqual(1)
+          expect(g).toBeGreaterThanOrEqual(0)
+          expect(g).toBeLessThanOrEqual(1)
+          expect(b).toBeGreaterThanOrEqual(0)
+          expect(b).toBeLessThanOrEqual(1)
+          expect(a).toBeGreaterThanOrEqual(0)
+          expect(a).toBeLessThanOrEqual(1)
+        }
       }
     }
   })

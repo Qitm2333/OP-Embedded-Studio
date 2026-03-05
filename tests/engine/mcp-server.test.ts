@@ -138,7 +138,7 @@ describe('MCP server', () => {
   })
 
   test('open_file loads a .fig file', async () => {
-    const fixturePath = join(import.meta.dir, '..', 'fixtures', 'nuxtui.fig')
+    const fixturePath = join(import.meta.dir, '..', 'fixtures', 'gold-preview.fig')
     const result = await client.callTool({ name: 'open_file', arguments: { path: fixturePath } })
     const data = parseResult(result) as { pages: { name: string }[]; currentPage: string }
     expect(data.pages.length).toBeGreaterThan(0)
