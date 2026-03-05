@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuPortal
 } from 'reka-ui'
-import { useBreakpoints } from '@vueuse/core'
+import { useBreakpoints, useWindowSize } from '@vueuse/core'
 
 import IconChevronDown from '~icons/lucide/chevron-down'
 import IconChevronLeft from '~icons/lucide/chevron-left'
@@ -32,6 +32,7 @@ import type { Tool } from '@/stores/editor'
 
 const store = useEditorStore()
 const breakpoints = useBreakpoints({ mobile: 768 })
+const { width: viewportW } = useWindowSize()
 const isMobile = breakpoints.smaller('mobile')
 
 const toolLabels: Record<Tool, string> = {
@@ -129,7 +130,8 @@ const measured = ref(false)
 function measure() {
   const el = catRefs[mobileCategory.value]?.value
   if (el) {
-    wrapperW.value = el.scrollWidth
+    const maxPillW = viewportW.value - 80
+    wrapperW.value = Math.min(el.scrollWidth, maxPillW)
     wrapperH.value = el.scrollHeight
     measured.value = true
   }
@@ -139,7 +141,7 @@ onMounted(() => {
   nextTick(measure)
 })
 
-watch(mobileCategory, () => {
+watch([mobileCategory, viewportW], () => {
   nextTick(measure)
 })
 </script>
@@ -233,8 +235,11 @@ watch(mobileCategory, () => {
   <div
     v-else
     data-test-id="mobile-toolbar"
-    class="fixed inset-x-0 z-20 flex items-center justify-center gap-1.5 px-2"
-    :style="{ bottom: `calc(44px + env(safe-area-inset-bottom) + 0.75rem)` }"
+    class="fixed left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5"
+    :style="{
+      maxWidth: 'calc(100vw - 2rem)',
+      bottom: `calc(56px + env(safe-area-inset-bottom) + 0.75rem)`
+    }"
     @touchstart.stop
   >
     <button

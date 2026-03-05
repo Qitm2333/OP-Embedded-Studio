@@ -80,14 +80,14 @@ const onlineCount = computed(() => props.collabPeers.length + 1)
     <div class="pointer-events-auto flex flex-col items-start gap-1.5">
       <div class="flex gap-1.5">
         <button
-          class="flex size-8 cursor-pointer items-center justify-center rounded-full border border-border bg-panel shadow-md select-none active:bg-hover"
+          class="flex size-8 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-panel/70 shadow-md backdrop-blur-xl select-none active:bg-hover"
           title="Undo"
           @click="store.undoAction()"
         >
           <icon-lucide-undo-2 class="size-3.5 text-surface" />
         </button>
         <button
-          class="flex size-8 cursor-pointer items-center justify-center rounded-full border border-border bg-panel shadow-md select-none active:bg-hover"
+          class="flex size-8 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-panel/70 shadow-md backdrop-blur-xl select-none active:bg-hover"
           title="Redo"
           @click="store.redoAction()"
         >
@@ -95,7 +95,7 @@ const onlineCount = computed(() => props.collabPeers.length + 1)
         </button>
       </div>
       <div
-        class="flex size-8 items-center justify-center rounded-full border border-accent/30 bg-panel shadow-md transition-colors duration-200"
+        class="flex size-8 items-center justify-center rounded-full border border-accent/20 bg-panel/70 shadow-md backdrop-blur-xl transition-colors duration-200"
       >
         <Transition
           mode="out-in"
@@ -117,7 +117,7 @@ const onlineCount = computed(() => props.collabPeers.length + 1)
       <PopoverRoot v-if="props.collabState.connected">
         <PopoverTrigger as-child>
           <button
-            class="flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-panel px-3 shadow-md select-none active:bg-hover"
+            class="flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-white/10 bg-panel/70 px-3 shadow-md backdrop-blur-xl select-none active:bg-hover"
           >
             <span class="size-2 rounded-full bg-green-500" />
             <span class="text-xs text-surface">Online: {{ onlineCount }}</span>
@@ -150,7 +150,9 @@ const onlineCount = computed(() => props.collabPeers.length + 1)
                 v-for="peer in props.collabPeers"
                 :key="peer.clientId"
                 class="flex cursor-pointer items-center gap-2 rounded-md px-0.5 py-0.5 select-none active:bg-hover"
-                @click="emit('follow', props.followingPeer === peer.clientId ? null : peer.clientId)"
+                @click="
+                  emit('follow', props.followingPeer === peer.clientId ? null : peer.clientId)
+                "
               >
                 <div
                   class="flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
@@ -177,11 +179,14 @@ const onlineCount = computed(() => props.collabPeers.length + 1)
       </PopoverRoot>
 
       <!-- Action toast -->
-      <Transition enter-active-class="animate-in fade-in duration-150" leave-active-class="animate-out fade-out duration-200">
+      <Transition
+        enter-active-class="animate-in fade-in duration-150"
+        leave-active-class="animate-out fade-out duration-200"
+      >
         <div
           v-if="store.state.actionToast"
           :key="store.state.actionToast"
-          class="flex h-8 items-center rounded-full border border-accent/30 bg-panel px-3 shadow-md"
+          class="flex h-8 items-center rounded-full border border-accent/20 bg-panel/70 px-3 shadow-md backdrop-blur-xl"
         >
           <span class="whitespace-nowrap text-xs text-accent">{{ store.state.actionToast }}</span>
         </div>
@@ -191,7 +196,7 @@ const onlineCount = computed(() => props.collabPeers.length + 1)
     <!-- Share + Menu -->
     <div class="pointer-events-auto flex items-center gap-1.5">
       <button
-        class="flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-panel px-3 shadow-md select-none active:bg-hover"
+        class="flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-white/10 bg-panel/70 px-3 shadow-md backdrop-blur-xl select-none active:bg-hover"
         @click="emit('share')"
       >
         <icon-lucide-share-2 class="size-3.5 text-surface" />
@@ -201,7 +206,7 @@ const onlineCount = computed(() => props.collabPeers.length + 1)
       <DropdownMenuRoot>
         <DropdownMenuTrigger as-child>
           <button
-            class="flex size-8 cursor-pointer items-center justify-center rounded-full border border-border bg-panel shadow-md select-none active:bg-hover"
+            class="flex size-8 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-panel/70 shadow-md backdrop-blur-xl select-none active:bg-hover"
           >
             <icon-lucide-menu class="size-3.5 text-surface" />
           </button>
@@ -228,4 +233,3 @@ const onlineCount = computed(() => props.collabPeers.length + 1)
     </div>
   </div>
 </template>
-

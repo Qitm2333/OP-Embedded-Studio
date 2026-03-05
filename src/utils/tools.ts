@@ -10,8 +10,8 @@ import IconStar from '~icons/lucide/star'
 import IconTriangle from '~icons/lucide/triangle'
 import IconType from '~icons/lucide/type'
 
-import type { Component } from 'vue'
 import type { Tool } from '@/stores/editor'
+import type { Component } from 'vue'
 
 export const toolIcons: Record<Tool, Component> = {
   SELECT: IconMousePointer,

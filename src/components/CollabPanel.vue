@@ -68,8 +68,6 @@ function onJoin() {
   emit('join', roomId)
   popoverOpen.value = false
 }
-
-
 </script>
 
 <template>

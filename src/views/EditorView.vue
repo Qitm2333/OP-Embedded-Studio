@@ -17,7 +17,6 @@ import EditorCanvas from '@/components/EditorCanvas.vue'
 import LayersPanel from '@/components/LayersPanel.vue'
 import MobileDrawer from '@/components/MobileDrawer.vue'
 import MobileHud from '@/components/MobileHud.vue'
-import MobileRibbon from '@/components/MobileRibbon.vue'
 import PropertiesPanel from '@/components/PropertiesPanel.vue'
 import SafariBanner from '@/components/SafariBanner.vue'
 import TabBar from '@/components/TabBar.vue'
@@ -67,12 +66,6 @@ function onJoin(roomId: string) {
 function onDisconnect() {
   collab.disconnect()
   router.push('/')
-}
-
-function onMobileTabChange() {
-  if (store.state.mobileDrawerSnap === 'closed') {
-    store.state.mobileDrawerSnap = 'half'
-  }
 }
 </script>
 
@@ -145,7 +138,6 @@ function onMobileTabChange() {
         />
         <Toolbar />
       </div>
-      <MobileRibbon @tab-change="onMobileTabChange" />
       <MobileDrawer />
     </div>
 
