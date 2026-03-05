@@ -24,6 +24,7 @@ const swatchColor = computed(() => {
   <PopoverRoot>
     <PopoverTrigger as-child>
       <button
+        data-test-id="color-picker-swatch"
         class="size-5 shrink-0 cursor-pointer rounded border border-border p-0"
         :style="{ background: swatchColor }"
       />
@@ -31,6 +32,7 @@ const swatchColor = computed(() => {
 
     <PopoverPortal>
       <PopoverContent
+        data-test-id="color-picker-popover"
         class="z-[100] w-56 rounded-lg border border-border bg-panel p-2 shadow-xl"
         :side-offset="4"
         side="left"

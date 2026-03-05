@@ -260,6 +260,7 @@ function updateDropTarget(ev: PointerEvent) {
 
 <template>
   <aside
+    data-test-id="layers-panel"
     class="flex min-w-0 flex-1 flex-col overflow-hidden border-r border-border bg-panel"
     style="contain: paint layout style"
   >
@@ -279,12 +280,19 @@ function updateDropTarget(ev: PointerEvent) {
         />
       </SplitterResizeHandle>
       <SplitterPanel :default-size="70" :min-size="20" class="flex flex-col overflow-hidden">
-        <header class="shrink-0 px-3 py-2 text-[11px] uppercase tracking-wider text-muted">
+        <header
+          data-test-id="layers-header"
+          class="shrink-0 px-3 py-2 text-[11px] uppercase tracking-wider text-muted"
+        >
           Layers
         </header>
         <ContextMenuRoot :modal="false">
           <ContextMenuTrigger as-child @contextmenu="onLayerRightClick">
-            <div ref="listRef" class="relative flex-1 overflow-y-auto scrollbar-thin px-1">
+            <div
+              ref="listRef"
+              data-test-id="layers-tree"
+              class="relative flex-1 overflow-y-auto scrollbar-thin px-1"
+            >
               <TreeRoot
                 :key="treeKey"
                 v-slot="{ flattenItems }"
@@ -301,6 +309,7 @@ function updateDropTarget(ev: PointerEvent) {
                 >
                   <TreeItem v-slot="{ isExpanded }" v-bind="item.bind" as-child @select="onSelect">
                     <button
+                      data-test-id="layers-item"
                       class="group/row flex w-full cursor-pointer items-center gap-1 rounded border-none py-1 text-left text-xs"
                       :class="[
                         store.state.selectedIds.has(item.value.id)

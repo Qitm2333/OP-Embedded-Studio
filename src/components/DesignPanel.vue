@@ -28,8 +28,15 @@ const isComponentType = computed(() => {
 
 <template>
   <!-- Multi-select summary -->
-  <div v-if="multiCount > 1" class="flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin pb-4">
-    <div class="flex items-center gap-1.5 border-b border-border px-3 py-2">
+  <div
+    v-if="multiCount > 1"
+    data-test-id="design-panel-multi"
+    class="flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin pb-4"
+  >
+    <div
+      data-test-id="design-multi-header"
+      class="flex items-center gap-1.5 border-b border-border px-3 py-2"
+    >
       <span class="text-[11px] text-muted">Mixed</span>
       <span class="text-xs font-semibold">{{ multiCount }} layers</span>
     </div>
@@ -41,9 +48,15 @@ const isComponentType = computed(() => {
   </div>
 
   <!-- Single selection -->
-  <div v-else-if="node" class="flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin pb-4">
-    <!-- Node header -->
-    <div class="flex items-center gap-1.5 border-b border-border px-3 py-2">
+  <div
+    v-else-if="node"
+    data-test-id="design-panel-single"
+    class="flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin pb-4"
+  >
+    <div
+      data-test-id="design-node-header"
+      class="flex items-center gap-1.5 border-b border-border px-3 py-2"
+    >
       <span class="text-[11px]" :class="isComponentType ? 'text-[#9747ff]' : 'text-muted'">{{
         node.type
       }}</span>
@@ -56,12 +69,14 @@ const isComponentType = computed(() => {
       class="flex flex-col gap-1 border-b border-border px-3 py-2"
     >
       <button
+        data-test-id="design-go-to-component"
         class="rounded bg-[#9747ff]/10 px-2 py-1 text-left text-[11px] text-[#9747ff] hover:bg-[#9747ff]/20"
         @click="store.goToMainComponent()"
       >
         Go to Main Component
       </button>
       <button
+        data-test-id="design-detach-instance"
         class="rounded px-2 py-1 text-left text-[11px] text-muted hover:bg-hover"
         @click="store.detachInstance()"
       >
@@ -80,7 +95,11 @@ const isComponentType = computed(() => {
     <ExportSection />
   </div>
 
-  <div v-else class="flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin pb-4">
+  <div
+    v-else
+    data-test-id="design-panel-empty"
+    class="flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin pb-4"
+  >
     <PageSection />
     <VariablesSection @open-dialog="variablesOpen = true" />
   </div>

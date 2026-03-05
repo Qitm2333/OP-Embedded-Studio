@@ -231,6 +231,7 @@ function stopSwatchColor(stop: GradientStop) {
   <PopoverRoot>
     <PopoverTrigger as-child>
       <button
+        data-test-id="fill-picker-swatch"
         class="size-5 shrink-0 cursor-pointer rounded border border-border p-0"
         :style="{ background: swatchBackground }"
       />
@@ -247,6 +248,7 @@ function stopSwatchColor(stop: GradientStop) {
           <button
             class="flex size-6 cursor-pointer items-center justify-center rounded border-none p-0 text-muted transition-colors hover:bg-hover hover:text-surface"
             :class="{ 'bg-hover text-surface': fillCategory === 'SOLID' }"
+            data-test-id="fill-picker-tab-solid"
             title="Solid"
             @click="setCategory('SOLID')"
           >
@@ -257,6 +259,7 @@ function stopSwatchColor(stop: GradientStop) {
           <button
             class="flex size-6 cursor-pointer items-center justify-center rounded border-none p-0 text-muted transition-colors hover:bg-hover hover:text-surface"
             :class="{ 'bg-hover text-surface': fillCategory === 'GRADIENT' }"
+            data-test-id="fill-picker-tab-gradient"
             title="Gradient"
             @click="setCategory('GRADIENT')"
           >
@@ -273,6 +276,7 @@ function stopSwatchColor(stop: GradientStop) {
           <button
             class="flex size-6 cursor-pointer items-center justify-center rounded border-none p-0 text-muted transition-colors hover:bg-hover hover:text-surface"
             :class="{ 'bg-hover text-surface': fillCategory === 'IMAGE' }"
+            data-test-id="fill-picker-tab-image"
             title="Image"
             @click="setCategory('IMAGE')"
           >
@@ -319,6 +323,7 @@ function stopSwatchColor(stop: GradientStop) {
         <div
           v-if="isGradient && fill.gradientStops?.length"
           ref="gradientStopBarRef"
+          data-test-id="fill-picker-gradient-bar"
           class="relative mb-2 h-6 rounded"
           :style="{ background: gradientBarBackground }"
           @pointermove="onStopBarPointerMove"
@@ -343,6 +348,7 @@ function stopSwatchColor(stop: GradientStop) {
             <span class="text-[11px] text-muted">Stops</span>
             <button
               class="flex size-4 cursor-pointer items-center justify-center rounded border-none bg-transparent p-0 text-muted hover:text-surface"
+              data-test-id="fill-picker-add-stop"
               title="Add stop"
               @click="addStop"
             >
@@ -399,6 +405,7 @@ function stopSwatchColor(stop: GradientStop) {
         <!-- Image placeholder -->
         <div
           v-if="fill.type === 'IMAGE'"
+          data-test-id="fill-picker-image-placeholder"
           class="flex h-24 items-center justify-center rounded border border-dashed border-border text-xs text-muted"
         >
           Image fill (coming soon)

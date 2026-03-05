@@ -18,10 +18,11 @@ const variableCount = computed(() => {
 </script>
 
 <template>
-  <div class="border-b border-border px-3 py-2">
+  <div data-test-id="variables-section" class="border-b border-border px-3 py-2">
     <div class="flex items-center justify-between">
       <label class="text-[11px] font-medium text-surface">Variables</label>
       <button
+        data-test-id="variables-section-open"
         class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
         title="Open variables"
         @click="emit('openDialog')"

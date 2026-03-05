@@ -28,6 +28,7 @@ function onHexChange(e: Event) {
     <ColorPicker :color="color" @update="emit('update', $event)" />
     <input
       v-if="editable"
+      data-test-id="color-hex-input"
       class="min-w-0 flex-1 border-none bg-transparent font-mono text-xs text-surface outline-none"
       :value="colorToHexRaw(color)"
       maxlength="6"
