@@ -11,11 +11,11 @@ import {
   DEFAULT_TEXT_WIDTH,
   DEFAULT_TEXT_HEIGHT
 } from '@/constants'
-import { computeSelectionBounds, computeSnap } from '@/engine/snap'
+import { computeSelectionBounds, computeSnap } from '@open-pencil/core'
 
-import type { NodeType, SceneNode } from '@/engine/scene-graph'
 import type { EditorStore, Tool } from '@/stores/editor'
 import type { Rect } from '@/types'
+import type { NodeType, SceneNode } from '@open-pencil/core'
 
 type HandlePosition = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
 
@@ -151,7 +151,7 @@ function getHandlePositions(
     s: { x: mx, y: y2 },
     sw: { x: x1, y: y2 },
     w: { x: x1, y: my }
-  } as Record<HandlePosition, { x: number; y: number }>
+  } satisfies Record<HandlePosition, { x: number; y: number }>
 }
 
 function unrotate(
@@ -224,11 +224,8 @@ function hitTestRotationHandle(
 export function useCanvasInput(
   canvasRef: Ref<HTMLCanvasElement | null>,
   store: EditorStore,
-  hitTestSectionTitle: (cx: number, cy: number) => import('@/engine/scene-graph').SceneNode | null,
-  hitTestComponentLabel: (
-    cx: number,
-    cy: number
-  ) => import('@/engine/scene-graph').SceneNode | null,
+  hitTestSectionTitle: (cx: number, cy: number) => import('@open-pencil/core').SceneNode | null,
+  hitTestComponentLabel: (cx: number, cy: number) => import('@open-pencil/core').SceneNode | null,
   onCursorMove?: (cx: number, cy: number) => void
 ) {
   const drag = ref<DragState | null>(null)

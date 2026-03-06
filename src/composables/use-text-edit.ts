@@ -7,10 +7,10 @@ import {
   toggleBoldInRange,
   toggleDecorationInRange,
   toggleItalicInRange
-} from '@/engine/style-runs'
+} from '@open-pencil/core'
 
-import type { SceneNode } from '@/engine/scene-graph'
 import type { EditorStore } from '@/stores/editor'
+import type { SceneNode } from '@open-pencil/core'
 
 const CARET_BLINK_MS = 530
 

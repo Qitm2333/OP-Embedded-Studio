@@ -1,8 +1,8 @@
 import { useRafFn, useResizeObserver } from '@vueuse/core'
 import { onMounted, onUnmounted, type Ref } from 'vue'
 
-import { getCanvasKit, getGpuBackend } from '@/engine/canvaskit'
-import { SkiaRenderer } from '@/engine/renderer'
+import { getCanvasKit, getGpuBackend } from '@open-pencil/core'
+import { SkiaRenderer } from '@open-pencil/core'
 
 import type { EditorStore } from '@/stores/editor'
 import type { CanvasKit } from 'canvaskit-wasm'

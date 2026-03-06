@@ -1,5 +1,4 @@
 import { Chat } from '@ai-sdk/vue'
-import { DEFAULT_AI_MODEL } from '@open-pencil/core'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { DirectChatTransport, ToolLoopAgent } from 'ai'
 import dedent from 'dedent'
@@ -7,6 +6,7 @@ import { computed, ref, watch } from 'vue'
 
 import { createAITools } from '@/ai/tools'
 import { useEditorStore } from '@/stores/editor'
+import { DEFAULT_AI_MODEL } from '@open-pencil/core'
 
 import type { UIMessage } from 'ai'
 

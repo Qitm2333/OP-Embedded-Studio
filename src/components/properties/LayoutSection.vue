@@ -5,7 +5,7 @@ import { onClickOutside } from '@vueuse/core'
 import ScrubInput from '@/components/ScrubInput.vue'
 import { useNodeProps } from '@/composables/use-node-props'
 
-import type { SceneNode, LayoutSizing, LayoutAlign, LayoutCounterAlign } from '@/engine/scene-graph'
+import type { SceneNode, LayoutSizing, LayoutAlign, LayoutCounterAlign } from '@open-pencil/core'
 
 const { store, node, updateProp, commitProp } = useNodeProps()
 

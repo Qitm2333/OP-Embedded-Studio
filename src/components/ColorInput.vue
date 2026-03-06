@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ColorPicker from './ColorPicker.vue'
-import { colorToHexRaw, parseColor } from '@/engine/color'
+import { colorToHexRaw, parseColor } from '@open-pencil/core'
 
 import type { Color } from '@/types'
 

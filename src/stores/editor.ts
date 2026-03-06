@@ -1,4 +1,3 @@
-import { collectFontKeys } from '@open-pencil/core'
 import { shallowReactive, shallowRef, computed, watch } from 'vue'
 
 import {
@@ -12,39 +11,42 @@ import {
   ZOOM_SCALE_MIN,
   ZOOM_SCALE_MAX
 } from '@/constants'
+import { loadFont } from '@/engine/fonts'
 import {
-  parseFigmaClipboard,
+  collectFontKeys,
+  computeLayout,
+  computeAllLayouts,
+  computeVectorBounds,
+  exportFigFile,
   importClipboardNodes,
   figmaNodesBounds,
+  parseFigmaClipboard,
   parseOpenPencilClipboard,
   buildFigmaClipboardHTML,
   buildOpenPencilClipboardHTML,
-  prefetchFigmaSchema
-} from '@/engine/clipboard'
-import { exportFigFile } from '@/engine/fig-export'
-import { loadFont } from '@/engine/fonts'
-import { computeLayout, computeAllLayouts, setTextMeasurer } from '@/engine/layout'
-import { renderNodesToImage } from '@/engine/render-image'
-import { SceneGraph } from '@/engine/scene-graph'
-import { renderNodesToSVG } from '@/engine/svg-export'
-import { TextEditor } from '@/engine/text-editor'
-import { UndoManager } from '@/engine/undo'
-import { computeVectorBounds } from '@/engine/vector'
-import { readFigFile } from '@/kiwi/fig-file'
+  prefetchFigmaSchema,
+  renderNodesToImage,
+  renderNodesToSVG,
+  SceneGraph,
+  setTextMeasurer,
+  TextEditor,
+  UndoManager
+} from '@open-pencil/core'
+import { readFigFile } from '@open-pencil/core'
 
-import type { ExportFormat } from '@/engine/render-image'
+import type { Color, Rect } from '@/types'
 import type {
-  SceneNode,
-  NodeType,
+  ExportFormat,
   Fill,
   LayoutMode,
-  VectorVertex,
-  VectorSegment,
+  NodeType,
+  SceneNode,
+  SnapGuide,
+  VectorNetwork,
   VectorRegion,
-  VectorNetwork
-} from '@/engine/scene-graph'
-import type { SnapGuide } from '@/engine/snap'
-import type { Color, Rect } from '@/types'
+  VectorSegment,
+  VectorVertex
+} from '@open-pencil/core'
 
 export type Tool =
   | 'SELECT'
@@ -129,7 +131,7 @@ export function createEditorStore() {
   let lastWriteTime = 0
   let unwatchFile: (() => void) | null = null
   let _ck: import('canvaskit-wasm').CanvasKit | null = null
-  let _renderer: import('@/engine/renderer').SkiaRenderer | null = null
+  let _renderer: import('@open-pencil/core').SkiaRenderer | null = null
   let _textEditor: TextEditor | null = null
 
   prefetchFigmaSchema()
@@ -624,7 +626,7 @@ export function createEditorStore() {
 
   function setCanvasKit(
     ck: import('canvaskit-wasm').CanvasKit,
-    renderer: import('@/engine/renderer').SkiaRenderer
+    renderer: import('@open-pencil/core').SkiaRenderer
   ) {
     _ck = ck
     _renderer = renderer
@@ -945,10 +947,9 @@ export function createEditorStore() {
   function updateNodeWithUndo(id: string, changes: Partial<SceneNode>, label = 'Update') {
     const node = graph.getNode(id)
     if (!node) return
-    const previous: Partial<SceneNode> = {}
-    for (const key of Object.keys(changes) as (keyof SceneNode)[]) {
-      ;(previous as Record<string, unknown>)[key] = node[key]
-    }
+    const previous = Object.fromEntries(
+      (Object.keys(changes) as (keyof SceneNode)[]).map((key) => [key, node[key]])
+    ) as Partial<SceneNode>
     graph.updateNode(id, changes)
     runLayoutForNode(id)
     syncIfInsideComponent(id)
@@ -1006,12 +1007,11 @@ export function createEditorStore() {
     if (mode !== 'NONE') computeLayout(graph, id)
     runLayoutForNode(id)
 
-    const finalState: Partial<SceneNode> = {}
     const updated = graph.getNode(id)
     if (!updated) return
-    for (const key of Object.keys(previous) as (keyof SceneNode)[]) {
-      ;(finalState as Record<string, unknown>)[key] = updated[key]
-    }
+    const finalState = Object.fromEntries(
+      (Object.keys(previous) as (keyof SceneNode)[]).map((key) => [key, updated[key]])
+    ) as Partial<SceneNode>
 
     undo.push({
       label: mode === 'NONE' ? 'Remove auto layout' : 'Add auto layout',
@@ -1989,10 +1989,9 @@ export function createEditorStore() {
   function commitNodeUpdate(nodeId: string, previous: Partial<SceneNode>, label = 'Update') {
     const node = graph.getNode(nodeId)
     if (!node) return
-    const current: Partial<SceneNode> = {}
-    for (const key of Object.keys(previous) as (keyof SceneNode)[]) {
-      ;(current as Record<string, unknown>)[key] = node[key]
-    }
+    const current = Object.fromEntries(
+      (Object.keys(previous) as (keyof SceneNode)[]).map((key) => [key, node[key]])
+    ) as Partial<SceneNode>
     undo.push({
       label,
       forward: () => {

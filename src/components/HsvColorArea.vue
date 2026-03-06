@@ -14,7 +14,7 @@ import {
   type Color as RekaColor
 } from 'reka-ui'
 
-import { colorToHex } from '@/engine/color'
+import { colorToHex } from '@open-pencil/core'
 
 import type { Color } from '@/types'
 

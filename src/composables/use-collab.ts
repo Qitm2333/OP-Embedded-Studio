@@ -12,9 +12,9 @@ import {
   YJS_JSON_FIELDS
 } from '@/constants'
 
-import type { SceneNode } from '@/engine/scene-graph'
 import type { EditorStore } from '@/stores/editor'
 import type { Color } from '@/types'
+import type { SceneNode } from '@open-pencil/core'
 import type { Room } from 'trystero'
 
 export interface RemotePeer {
@@ -179,7 +179,9 @@ export function useCollab(store: EditorStore) {
       () => store.state.zoom,
       (zoom) => {
         if (!awareness) return
-        const prev = awareness.getLocalState()?.cursor as Record<string, unknown> | undefined
+        const prev = awareness.getLocalState()?.cursor as
+          | { x: number; y: number; pageId: string; zoom: number }
+          | undefined
         if (prev) {
           awareness.setLocalStateField('cursor', { ...prev, zoom })
         }
