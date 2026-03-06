@@ -1,41 +1,13 @@
 import { defineCommand } from 'citty'
 
 import { loadDocument } from '../../headless'
+import { isAppMode, rpc } from '../../app-client'
 import { bold, fmtList, fmtSummary } from '../../format'
-import type { SceneNode, SceneGraph } from '@open-pencil/core'
+import { executeRpcCommand } from '@open-pencil/core'
 
-interface ClusterNode {
-  id: string
-  name: string
-  type: string
-  width: number
-  height: number
-  childCount: number
-}
+import type { AnalyzeClustersResult } from '@open-pencil/core'
 
-interface Cluster {
-  signature: string
-  nodes: ClusterNode[]
-}
-
-function buildSignature(graph: SceneGraph, node: SceneNode): string {
-  const childTypes = new Map<string, number>()
-  for (const childId of node.childIds) {
-    const child = graph.getNode(childId)
-    if (!child) continue
-    childTypes.set(child.type, (childTypes.get(child.type) ?? 0) + 1)
-  }
-  const childPart = [...childTypes.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([t, c]) => `${t}:${c}`)
-    .join(',')
-
-  const w = Math.round(node.width / 10) * 10
-  const h = Math.round(node.height / 10) * 10
-  return `${node.type}:${w}x${h}|${childPart}`
-}
-
-function calcConfidence(nodes: ClusterNode[]): number {
+function calcConfidence(nodes: Array<{ width: number; height: number; childCount: number }>): number {
   if (nodes.length < 2) return 100
   const base = nodes[0]!
   let score = 0
@@ -67,63 +39,31 @@ function formatSignature(sig: string): string {
   return `${typeName} > [${childParts.join(', ')}]`
 }
 
-function findClusters(
-  graph: SceneGraph,
-  minSize: number,
-  minCount: number
-): { clusters: Cluster[]; totalNodes: number } {
-  const sigMap = new Map<string, ClusterNode[]>()
-  let totalNodes = 0
-
-  for (const node of graph.getAllNodes()) {
-    if (node.type === 'CANVAS') continue
-    totalNodes++
-    if (node.width < minSize || node.height < minSize) continue
-    if (node.childIds.length === 0) continue
-
-    const sig = buildSignature(graph, node)
-    const arr = sigMap.get(sig) ?? []
-    arr.push({
-      id: node.id,
-      name: node.name,
-      type: node.type,
-      width: Math.round(node.width),
-      height: Math.round(node.height),
-      childCount: node.childIds.length
-    })
-    sigMap.set(sig, arr)
-  }
-
-  const clusters = [...sigMap.entries()]
-    .filter(([, nodes]) => nodes.length >= minCount)
-    .map(([signature, nodes]) => ({ signature, nodes }))
-    .sort((a, b) => b.nodes.length - a.nodes.length)
-
-  return { clusters, totalNodes }
+async function getData(file: string | undefined, args: { limit?: string; 'min-size'?: string; 'min-count'?: string }): Promise<AnalyzeClustersResult> {
+  const rpcArgs = { limit: Number(args.limit ?? 20), minSize: Number(args['min-size'] ?? 30), minCount: Number(args['min-count'] ?? 2) }
+  if (isAppMode(file)) return rpc<AnalyzeClustersResult>('analyze_clusters', rpcArgs)
+  const graph = await loadDocument(file!)
+  return executeRpcCommand(graph, 'analyze_clusters', rpcArgs) as AnalyzeClustersResult
 }
 
 export default defineCommand({
   meta: { description: 'Find repeated design patterns (potential components)' },
   args: {
-    file: { type: 'positional', description: '.fig file path', required: true },
+    file: { type: 'positional', description: '.fig file path (omit to connect to running app)', required: false },
     limit: { type: 'string', description: 'Max clusters to show', default: '20' },
     'min-size': { type: 'string', description: 'Min node size in px', default: '30' },
     'min-count': { type: 'string', description: 'Min instances to form cluster', default: '2' },
     json: { type: 'boolean', description: 'Output as JSON' }
   },
   async run({ args }) {
-    const graph = await loadDocument(args.file)
-    const limit = Number(args.limit)
-    const minSize = Number(args['min-size'])
-    const minCount = Number(args['min-count'])
-    const { clusters, totalNodes } = findClusters(graph, minSize, minCount)
+    const data = await getData(args.file, args)
 
     if (args.json) {
-      console.log(JSON.stringify({ clusters: clusters.slice(0, limit), totalNodes }, null, 2))
+      console.log(JSON.stringify(data, null, 2))
       return
     }
 
-    if (clusters.length === 0) {
+    if (data.clusters.length === 0) {
       console.log('No repeated patterns found.')
       return
     }
@@ -132,7 +72,7 @@ export default defineCommand({
     console.log(bold('  Repeated patterns'))
     console.log('')
 
-    const items = clusters.slice(0, limit).map((c) => {
+    const items = data.clusters.map((c) => {
       const first = c.nodes[0]!
       const confidence = calcConfidence(c.nodes)
 
@@ -160,11 +100,11 @@ export default defineCommand({
 
     console.log(fmtList(items, { numbered: true }))
 
-    const clusteredNodes = clusters.reduce((sum, c) => sum + c.nodes.length, 0)
+    const clusteredNodes = data.clusters.reduce((sum, c) => sum + c.nodes.length, 0)
     console.log('')
     console.log(
-      fmtSummary({ clusters: clusters.length }) +
-        ` from ${totalNodes} nodes (${clusteredNodes} clustered)`
+      fmtSummary({ clusters: data.clusters.length }) +
+        ` from ${data.totalNodes} nodes (${clusteredNodes} clustered)`
     )
     console.log('')
   }

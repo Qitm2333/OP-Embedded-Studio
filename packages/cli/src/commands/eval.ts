@@ -3,6 +3,7 @@ import { defineCommand } from 'citty'
 import { FigmaAPI } from '@open-pencil/core'
 
 import { loadDocument } from '../headless'
+import { isAppMode, rpc } from '../app-client'
 import { printError } from '../format'
 
 function serializeResult(value: unknown): unknown {
@@ -17,7 +18,7 @@ function serializeResult(value: unknown): unknown {
 export default defineCommand({
   meta: { description: 'Execute JavaScript with Figma plugin API' },
   args: {
-    file: { type: 'positional', description: '.fig file path', required: true },
+    file: { type: 'positional', description: '.fig file path (omit to connect to running app)', required: false },
     code: { type: 'string', alias: 'c', description: 'JavaScript code to execute' },
     stdin: { type: 'boolean', description: 'Read code from stdin' },
     write: { type: 'boolean', alias: 'w', description: 'Write changes back to the input file' },
@@ -39,7 +40,19 @@ export default defineCommand({
       process.exit(1)
     }
 
-    const graph = await loadDocument(args.file)
+    if (isAppMode(args.file)) {
+      const response = await rpc<{ ok: boolean; result?: unknown; error?: string }>('eval', { code })
+      if (!args.quiet && response.result !== undefined) {
+        if (args.json || !process.stdout.isTTY) {
+          console.log(JSON.stringify(response.result, null, 2))
+        } else {
+          console.log(response.result)
+        }
+      }
+      return
+    }
+
+    const graph = await loadDocument(args.file!)
     const figma = new FigmaAPI(graph)
 
     const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
@@ -67,9 +80,9 @@ export default defineCommand({
 
     if (args.write || args.output) {
       const { exportFigFile } = await import('@open-pencil/core')
-      const outPath = args.output ?? args.file
-      const data = exportFigFile(graph)
-      await Bun.write(outPath, data)
+      const outPath = args.output ?? args.file!
+      const data = await exportFigFile(graph)
+      await Bun.write(outPath, new Uint8Array(data))
       if (!args.quiet) {
         console.error(`Written to ${outPath}`)
       }
