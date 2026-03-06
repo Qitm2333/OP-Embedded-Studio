@@ -2,6 +2,7 @@
 import { provide } from 'vue'
 import { useBreakpoints, useEventListener, useUrlSearchParams } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
+import { useHead } from '@unhead/vue'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 
 import { useKeyboard } from '@/composables/use-keyboard'
@@ -45,9 +46,11 @@ useEventListener(
 
 const params = useUrlSearchParams('history')
 const showChrome = !('no-chrome' in params)
-if (!('test' in params)) {
+if (route.meta.demo && !('test' in params)) {
   createDemoShapes(firstTab.store)
 }
+
+useHead({ title: route.meta.demo ? 'Demo' : undefined })
 
 const pendingRoomId = (route.params.roomId as string) || null
 

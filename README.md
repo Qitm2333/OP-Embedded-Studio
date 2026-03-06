@@ -4,7 +4,7 @@ Open-source, AI-native design editor. Figma-compatible, AI-first, fully local.
 
 > **Status:** Active development. Not ready for production use.
 
-**[Try it online →](https://app.openpencil.dev)** · [Download](https://github.com/open-pencil/open-pencil/releases/latest) · [Documentation](https://openpencil.dev)
+**[Try it online →](https://app.openpencil.dev/demo)** · [Download](https://github.com/open-pencil/open-pencil/releases/latest) · [Documentation](https://openpencil.dev)
 
 > **What's next**
 >
