@@ -191,7 +191,9 @@ function registerFontInBrowser(family: string, style: string, data: ArrayBuffer)
     weight: String(weight),
     style: italic
   })
-  face.load().then(() => document.fonts.add(face))
+  face.load().then(() => document.fonts.add(face)).catch(() => {
+    console.warn(`Failed to load font "${family}" (${style})`)
+  })
 }
 
 export function styleToWeight(style: string): number {
