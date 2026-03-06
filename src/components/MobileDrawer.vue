@@ -9,7 +9,14 @@ import CodePanel from './CodePanel.vue'
 import DesignPanel from './DesignPanel.vue'
 import LayerTree from './LayerTree.vue'
 import PagesPanel from './PagesPanel.vue'
-import { HALF_FRAC, HUD_TOP, SWIPE_THRESHOLD, SWIPE_VELOCITY_THRESHOLD } from '@/constants'
+import {
+  DRAWER_SPRING_DAMPING,
+  DRAWER_SPRING_STIFFNESS,
+  HALF_FRAC,
+  HUD_TOP,
+  SWIPE_THRESHOLD,
+  SWIPE_VELOCITY_THRESHOLD
+} from '@/constants'
 import { useEditorStore } from '@/stores/editor'
 
 type Snap = 'closed' | 'half' | 'full'
@@ -38,12 +45,16 @@ function selectTab(tab: 'panels' | 'code' | 'ai', panelMode?: 'layers' | 'design
 
   if (isSameTab && isOpen.value) {
     snap.value = 'closed'
+    targetHeight.value = snapHeight('closed')
     return
   }
 
   store.state.activeRibbonTab = tab
   if (panelMode) store.state.panelMode = panelMode
-  if (!isOpen.value) snap.value = 'half'
+  if (!isOpen.value) {
+    snap.value = 'half'
+    targetHeight.value = snapHeight('half')
+  }
 }
 
 function snapHeight(s: Snap): number {
@@ -57,23 +68,19 @@ function snapHeight(s: Snap): number {
   }
 }
 
-const dragging = ref(false)
-const dragOffset = ref(0)
-
-function onPanStart() {
-  dragging.value = true
-}
+const targetHeight = ref(snapHeight(snap.value))
 
 function onPan(_e: PointerEvent, info: PanInfo) {
   const maxHeight = snapHeight('full')
   const raw = snapHeight(snap.value) - info.offset.y
-  dragOffset.value = snapHeight(snap.value) - Math.max(headerH.value, Math.min(maxHeight, raw))
+  targetHeight.value = Math.max(headerH.value, Math.min(maxHeight, raw))
+
+  if (info.offset.y < 0 && !store.state.activeRibbonTab) {
+    store.state.activeRibbonTab = 'panels'
+  }
 }
 
 function onPanEnd(_e: PointerEvent, info: PanInfo) {
-  dragging.value = false
-  dragOffset.value = 0
-
   const isSwipeUp = info.offset.y < -SWIPE_THRESHOLD || info.velocity.y < -SWIPE_VELOCITY_THRESHOLD
   const isSwipeDown = info.offset.y > SWIPE_THRESHOLD || info.velocity.y > SWIPE_VELOCITY_THRESHOLD
 
@@ -84,26 +91,23 @@ function onPanEnd(_e: PointerEvent, info: PanInfo) {
     if (snap.value === 'full') snap.value = 'half'
     else snap.value = 'closed'
   }
+
+  targetHeight.value = snapHeight(snap.value)
 }
 
-const drawerHeight = computed(() => {
-  const base = snapHeight(snap.value)
-  return Math.max(headerH.value, base - dragOffset.value)
-})
-
-const springTransition = { type: 'spring' as const, damping: 30, stiffness: 300 }
-const immediateTransition = { duration: 0 }
-
-const drawerTransition = computed(() => (dragging.value ? immediateTransition : springTransition))
+const drawerTransition = {
+  type: 'spring' as const,
+  stiffness: DRAWER_SPRING_STIFFNESS,
+  damping: DRAWER_SPRING_DAMPING
+}
 </script>
 
 <template>
   <motion.div
     data-test-id="mobile-drawer"
     class="fixed inset-x-0 bottom-0 z-30 flex touch-none flex-col rounded-t-3xl bg-panel shadow-[0_-2px_10px_rgba(0,0,0,0.3)] pb-[env(safe-area-inset-bottom)]"
-    :animate="{ height: `${drawerHeight}px` }"
+    :animate="{ height: `${targetHeight}px` }"
     :transition="drawerTransition"
-    @panStart="onPanStart"
     @pan="onPan"
     @panEnd="onPanEnd"
   >
