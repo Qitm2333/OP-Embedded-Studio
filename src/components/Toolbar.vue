@@ -24,6 +24,7 @@ import IconGroup from '~icons/lucide/group'
 import IconUngroup from '~icons/lucide/ungroup'
 import IconLock from '~icons/lucide/lock'
 
+import { menuContent, menuItem } from '@/components/ui/menu'
 import { ACTION_TOAST_DURATION } from '@/constants'
 import { TOOLS, useEditorStore } from '@/stores/editor'
 import { toolIcons } from '@/utils/tools'
@@ -174,18 +175,14 @@ function goNext() {
                 side="top"
                 :side-offset="8"
                 align="start"
-                class="min-w-32 rounded-lg border border-border bg-panel p-1 shadow-lg"
+                :class="menuContent({ class: 'min-w-32' })"
               >
                 <DropdownMenuItem
                   v-for="sub in tool.flyout"
                   :key="sub"
                   :data-test-id="`toolbar-flyout-item-${sub.toLowerCase()}`"
-                  class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none transition-colors"
-                  :class="
-                    store.state.activeTool === sub
-                      ? 'bg-accent text-white'
-                      : 'text-surface hover:bg-hover'
-                  "
+                  :class="menuItem()"
+                  :class="store.state.activeTool === sub ? 'bg-accent text-white' : undefined"
                   @select="store.setTool(sub)"
                 >
                   <component :is="toolIcons[sub]" class="size-3.5" />
@@ -291,13 +288,13 @@ function goNext() {
                     side="top"
                     :side-offset="8"
                     align="start"
-                    class="min-w-32 rounded-lg border border-border bg-panel p-1 shadow-lg"
+                    :class="menuContent({ class: 'min-w-32' })"
                   >
                     <DropdownMenuItem
                       v-for="sub in tool.flyout"
                       :key="sub"
                       :data-test-id="`mobile-toolbar-flyout-item-${sub.toLowerCase()}`"
-                      class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none transition-colors"
+                      :class="menuItem()"
                       :class="
                         store.state.activeTool === sub
                           ? 'bg-accent text-white'

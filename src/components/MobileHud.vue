@@ -18,6 +18,7 @@ import IconImageDown from '~icons/lucide/image-down'
 import IconSave from '~icons/lucide/save'
 import IconZoomIn from '~icons/lucide/zoom-in'
 
+import { menuContent, menuItem } from '@/components/ui/menu'
 import { openFileDialog } from '@/composables/use-menu'
 import { useEditorStore } from '@/stores/editor'
 import { colorToCSS } from '@open-pencil/core'
@@ -216,12 +217,12 @@ const onlineCount = computed(() => props.collabPeers.length + 1)
             :side-offset="8"
             side="bottom"
             align="end"
-            class="z-50 w-48 rounded-xl border border-border bg-panel p-1.5 shadow-xl"
+            :class="menuContent({ class: 'w-48 rounded-xl p-1.5 shadow-xl' })"
           >
             <DropdownMenuItem
               v-for="item in menuItems"
               :key="item.label"
-              class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg border-none bg-transparent px-2.5 py-2 text-xs text-surface outline-none select-none active:bg-hover data-[highlighted]:bg-hover"
+              :class="menuItem({ justify: 'start', class: 'w-full gap-2.5 rounded-lg border-none bg-transparent px-2.5 py-2 active:bg-hover' })"
               @click="item.action()"
             >
               <component :is="item.icon" class="size-4 text-muted" />

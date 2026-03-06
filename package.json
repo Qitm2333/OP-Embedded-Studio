@@ -53,6 +53,8 @@
     "motion-v": "^2.0.0",
     "prismjs": "^1.30.0",
     "reka-ui": "^2.9.0",
+    "tailwind-merge": "^3.5.0",
+    "tailwind-variants": "^3.2.2",
     "tailwindcss": "^4.2.1",
     "trystero": "^0.22.0",
     "valibot": "^1.2.0",

@@ -18,6 +18,7 @@ import IconChevronRight from '~icons/lucide/chevron-right'
 
 import { ref } from 'vue'
 
+import { menuContent, menuItem, menuSeparator } from '@/components/ui/menu'
 import { IS_TAURI } from '@/constants'
 import { openFileDialog } from '@/composables/use-menu'
 import { useEditorStore } from '@/stores/editor'
@@ -214,13 +215,13 @@ const topMenus = [
             <MenubarContent
               :side-offset="4"
               align="start"
-              class="min-w-52 rounded-lg border border-border bg-panel p-1 shadow-lg"
+              :class="menuContent({ class: 'min-w-52' })"
             >
               <template v-for="(item, i) in menu.items" :key="i">
-                <MenubarSeparator v-if="item.separator" class="mx-1 my-1 h-px bg-border" />
+                <MenubarSeparator v-if="item.separator" :class="menuSeparator()" />
                 <MenubarSub v-else-if="item.sub">
                   <MenubarSubTrigger
-                    class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-surface outline-none select-none hover:bg-hover"
+                    :class="menuItem()"
                   >
                     <span class="flex-1">{{ item.label }}</span>
                     <IconChevronRight class="size-3 text-muted" />
@@ -228,14 +229,13 @@ const topMenus = [
                   <MenubarPortal>
                     <MenubarSubContent
                       :side-offset="4"
-                      class="min-w-44 rounded-lg border border-border bg-panel p-1 shadow-lg"
+                      :class="menuContent({ class: 'min-w-44' })"
                     >
                       <template v-for="(sub, j) in item.sub" :key="j">
-                        <MenubarSeparator v-if="sub.separator" class="mx-1 my-1 h-px bg-border" />
+                        <MenubarSeparator v-if="sub.separator" :class="menuSeparator()" />
                         <MenubarItem
                           v-else
-                          class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none select-none"
-                          :class="sub.disabled ? 'text-muted/50' : 'text-surface hover:bg-hover'"
+                          :class="menuItem()"
                           :disabled="sub.disabled"
                           @select="sub.action?.()"
                         >
@@ -251,7 +251,7 @@ const topMenus = [
                 <MenubarCheckboxItem
                   v-else-if="item.onCheckedChange"
                   :model-value="item.checked"
-                  class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-surface outline-none select-none hover:bg-hover"
+                  :class="menuItem()"
                   @update:model-value="item.onCheckedChange?.($event as boolean)"
                 >
                   <span class="flex-1">{{ item.label }}</span>
@@ -261,8 +261,7 @@ const topMenus = [
                 </MenubarCheckboxItem>
                 <MenubarItem
                   v-else
-                  class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none select-none"
-                  :class="item.disabled ? 'text-muted/50' : 'text-surface hover:bg-hover'"
+                  :class="menuItem()"
                   :disabled="item.disabled"
                   @select="item.action?.()"
                 >
