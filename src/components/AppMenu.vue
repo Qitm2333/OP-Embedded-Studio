@@ -16,7 +16,7 @@ import {
 
 import IconChevronRight from '~icons/lucide/chevron-right'
 
-import { ref, nextTick } from 'vue'
+import { ref } from 'vue'
 
 import { IS_TAURI } from '@/constants'
 import { openFileDialog } from '@/composables/use-menu'
@@ -25,14 +25,13 @@ import { useEditorStore } from '@/stores/editor'
 const store = useEditorStore()
 
 const editingName = ref(false)
+const nameInputRef = ref<HTMLInputElement | null>(null)
 
-function startRename() {
+async function startRename() {
   editingName.value = true
-  nextTick(() => {
-    const input = document.querySelector<HTMLInputElement>('[data-doc-name-edit]')
-    input?.focus()
-    input?.select()
-  })
+  await nextTick()
+  nameInputRef.value?.focus()
+  nameInputRef.value?.select()
 }
 
 function commitRename(input: HTMLInputElement) {
@@ -177,7 +176,7 @@ const topMenus = [
       <img data-test-id="app-logo" src="/favicon-32.png" class="size-4" alt="OpenPencil" />
       <input
         v-if="editingName"
-        data-doc-name-edit
+        ref="nameInputRef"
         data-test-id="app-document-name-input"
         class="min-w-0 flex-1 rounded border border-accent bg-input px-1 py-0.5 text-xs text-surface outline-none"
         :value="store.state.documentName"

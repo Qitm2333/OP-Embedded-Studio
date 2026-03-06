@@ -6,6 +6,9 @@
  * and MCP (JSON Schema) are generated from these definitions.
  */
 
+import { parseColor } from '../color'
+import { DEFAULT_SHADOW_COLOR } from '../constants'
+
 import type { FigmaAPI, FigmaNodeProxy } from '../figma-api'
 
 export type ParamType = 'string' | 'number' | 'boolean' | 'color' | 'string[]'
