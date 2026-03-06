@@ -36,8 +36,9 @@ export function colorToRgba255(color: Color) {
 }
 
 export function colorToCSS(color: Color): string {
-  const { r, g, b } = colorToRgba255(color)
-  return `rgb(${r}, ${g}, ${b})`
+  const { r, g, b, a } = colorToRgba255(color)
+  if (a >= 1) return `rgb(${r}, ${g}, ${b})`
+  return `rgba(${r}, ${g}, ${b}, ${a})`
 }
 
 export function rgba255ToColor(rgba: Color): Color {
