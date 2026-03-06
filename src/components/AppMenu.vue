@@ -16,8 +16,9 @@ import {
 
 import IconChevronRight from '~icons/lucide/chevron-right'
 
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
+import { useInlineRename } from '@/composables/use-inline-rename'
 import { menuContent, menuItem, menuSeparator } from '@/components/ui/menu'
 import { IS_TAURI } from '@/constants'
 import { openFileDialog } from '@/composables/use-menu'
@@ -25,22 +26,20 @@ import { useEditorStore } from '@/stores/editor'
 
 const store = useEditorStore()
 
-const editingName = ref(false)
+const DOCUMENT_NAME_ID = 'document-name'
 const nameInputRef = ref<HTMLInputElement | null>(null)
+const rename = useInlineRename<'document-name'>((_id, name) => {
+  store.state.documentName = name
+})
+const editingName = computed(() => rename.editingId.value === DOCUMENT_NAME_ID)
 
-async function startRename() {
-  editingName.value = true
-  await nextTick()
-  nameInputRef.value?.focus()
-  nameInputRef.value?.select()
+function startRename() {
+  rename.start(DOCUMENT_NAME_ID, store.state.documentName)
+  void rename.focusInput(nameInputRef.value)
 }
 
 function commitRename(input: HTMLInputElement) {
-  const value = input.value.trim()
-  if (value) {
-    store.state.documentName = value
-  }
-  editingName.value = false
+  rename.commit(DOCUMENT_NAME_ID, input)
 }
 
 const isMac = navigator.platform.includes('Mac')
@@ -183,7 +182,7 @@ const topMenus = [
         :value="store.state.documentName"
         @blur="commitRename($event.target as HTMLInputElement)"
         @keydown.enter="($event.target as HTMLInputElement).blur()"
-        @keydown.escape="editingName = false"
+        @keydown="rename.onKeydown"
       />
       <span
         v-else

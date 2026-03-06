@@ -1,10 +1,10 @@
 import { nextTick, ref } from 'vue'
 
-export function useInlineRename(onCommit: (id: string, newName: string) => void) {
-  const editingId = ref<string | null>(null)
+export function useInlineRename<T extends string>(onCommit: (id: T, newName: string) => void) {
+  const editingId = ref<T | null>(null)
   let originalName = ''
 
-  function start(id: string, currentName: string) {
+  function start(id: T, currentName: string) {
     editingId.value = id
     originalName = currentName
   }
@@ -15,7 +15,7 @@ export function useInlineRename(onCommit: (id: string, newName: string) => void)
     input?.select()
   }
 
-  function commit(id: string, input: HTMLInputElement) {
+  function commit(id: T, input: HTMLInputElement) {
     if (editingId.value !== id) return
     const value = input.value.trim()
     if (value && value !== originalName) {

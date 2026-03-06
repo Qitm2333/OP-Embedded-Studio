@@ -37,32 +37,31 @@ const snap = computed({
   }
 })
 
-const activeDrawerTab = computed<DrawerTab>({
-  get: () => {
-    if (store.state.activeRibbonTab === 'code') return 'code'
-    if (store.state.activeRibbonTab === 'ai') return 'ai'
-    return store.state.panelMode === 'design' ? 'design' : 'layers'
-  },
-  set: (tab) => {
-    if (tab === 'code' || tab === 'ai') {
-      store.state.activeRibbonTab = tab
-      return
-    }
-    store.state.activeRibbonTab = 'panels'
-    store.state.panelMode = tab
+function getDrawerTab(): DrawerTab {
+  if (store.state.activeRibbonTab === 'code') return 'code'
+  if (store.state.activeRibbonTab === 'ai') return 'ai'
+  return store.state.panelMode === 'design' ? 'design' : 'layers'
+}
+
+function setDrawerTab(tab: DrawerTab) {
+  if (tab === 'code' || tab === 'ai') {
+    store.state.activeRibbonTab = tab
+    return
   }
-})
+  store.state.activeRibbonTab = 'panels'
+  store.state.panelMode = tab
+}
 
 const isOpen = computed(() => snap.value !== 'closed')
 
 function toggleTab(tab: DrawerTab) {
-  if (activeDrawerTab.value === tab && isOpen.value) {
+  if (getDrawerTab() === tab && isOpen.value) {
     snap.value = 'closed'
     targetHeight.value = snapHeight('closed')
     return
   }
 
-  activeDrawerTab.value = tab
+  setDrawerTab(tab)
   if (!isOpen.value) {
     snap.value = 'half'
     targetHeight.value = snapHeight('half')
@@ -119,7 +118,7 @@ const drawerTransition = {
     @pan="onPan"
     @panEnd="onPanEnd"
   >
-    <TabsRoot :model-value="activeDrawerTab" class="flex min-h-0 flex-1 flex-col">
+    <TabsRoot :model-value="getDrawerTab()" class="flex min-h-0 flex-1 flex-col">
       <nav ref="headerRef" aria-label="Mobile panel navigation" class="flex shrink-0 flex-col">
         <div class="flex w-full justify-center pt-2">
           <div class="h-1 w-8 rounded-full bg-muted/40" />

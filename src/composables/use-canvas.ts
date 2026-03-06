@@ -1,4 +1,4 @@
-import { useMediaQuery, useRafFn, useResizeObserver } from '@vueuse/core'
+import { useBreakpoints, useRafFn, useResizeObserver } from '@vueuse/core'
 import { onMounted, onUnmounted, type Ref } from 'vue'
 
 import { getCanvasKit, getGpuBackend } from '@/engine/canvaskit'
@@ -128,7 +128,8 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
 
   const params = new URLSearchParams(window.location.search)
   const noRulersParam = params.has('no-rulers')
-  const isMobile = useMediaQuery('(max-width: 767px)')
+  const breakpoints = useBreakpoints({ mobile: 768 })
+  const isMobile = breakpoints.smaller('mobile')
 
   function showRulers() {
     return !noRulersParam && !isMobile.value
