@@ -1,7 +1,17 @@
 import { colorToHex } from '../color'
 import { DEFAULT_FONT_FAMILY } from '../constants'
+import {
+  pxToSpacing,
+  colorToTwClass,
+  fontSizeToTw,
+  fontWeightToTw,
+  borderRadiusToTw,
+  opacityToTw
+} from './tailwind'
 
 import type { SceneGraph, SceneNode, Fill, Stroke, Effect, NodeType, Color } from '../scene-graph'
+
+export type JSXFormat = 'openpencil' | 'tailwind'
 
 const NODE_TYPE_TO_TAG: Partial<Record<NodeType, string>> = {
   FRAME: 'Frame',
@@ -18,6 +28,23 @@ const NODE_TYPE_TO_TAG: Partial<Record<NodeType, string>> = {
   COMPONENT: 'Component',
   COMPONENT_SET: 'Frame',
   INSTANCE: 'Frame'
+}
+
+const NODE_TYPE_TO_TW_TAG: Partial<Record<NodeType, string>> = {
+  FRAME: 'div',
+  RECTANGLE: 'div',
+  ROUNDED_RECTANGLE: 'div',
+  ELLIPSE: 'div',
+  TEXT: 'p',
+  LINE: 'div',
+  STAR: 'div',
+  POLYGON: 'div',
+  VECTOR: 'div',
+  GROUP: 'div',
+  SECTION: 'section',
+  COMPONENT: 'div',
+  COMPONENT_SET: 'div',
+  INSTANCE: 'div'
 }
 
 function formatColor(color: Color, opacity = 1): string {
@@ -52,6 +79,40 @@ function formatShadow(e: Effect): string | null {
   return `${e.offset.x} ${e.offset.y} ${e.radius} ${formatColor(e.color, e.color.a)}`
 }
 
+function formatTailwindShadow(e: Effect): string | null {
+  if (e.type !== 'DROP_SHADOW' && e.type !== 'INNER_SHADOW') return null
+  const { r, g, b } = e.color
+  const color = `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${Number(e.color.a.toFixed(3))})`
+  const inset = e.type === 'INNER_SHADOW' ? 'inset_' : ''
+  const spread = e.spread !== 0 ? `_${e.spread}px` : ''
+  return `${inset}${e.offset.x}px_${e.offset.y}px_${e.radius}px${spread}_${color}`
+}
+
+function formatTailwindAngle(degrees: number): string {
+  const rounded = Number(degrees.toFixed(2))
+  const integer = Math.round(rounded)
+  const named = new Set([0, 1, 2, 3, 6, 12, 45, 90, 180])
+  if (rounded === integer && named.has(integer)) return String(integer)
+  return `[${rounded}deg]`
+}
+
+function formatTailwindFontFamily(fontFamily: string): string {
+  const escaped = fontFamily.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+  return `['${escaped}']`
+}
+
+const JSX_ENTITY: Record<string, string> = {
+  '{': '&#123;',
+  '}': '&#125;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '&': '&amp;'
+}
+
+function escapeJSXText(text: string): string {
+  return text.replace(/[{}<>&]/g, (c) => JSX_ENTITY[c]!)
+}
+
 function formatProp(key: string, value: unknown): string {
   if (typeof value === 'string') return `${key}="${value}"`
   if (typeof value === 'number') return `${key}={${value}}`
@@ -59,58 +120,90 @@ function formatProp(key: string, value: unknown): string {
   return `${key}={${JSON.stringify(value)}}`
 }
 
+function getNodeContext(node: SceneNode, graph: SceneGraph) {
+  const parent = node.parentId ? graph.getNode(node.parentId) : null
+  return {
+    isAutoLayout: node.layoutMode !== 'NONE',
+    parentIsAutoLayout: parent ? parent.layoutMode !== 'NONE' : false
+  }
+}
+
+type PaddingEdges = { pt: number; pr: number; pb: number; pl: number }
+
+function collectPadding(node: SceneNode): PaddingEdges | null {
+  const { paddingTop: pt, paddingRight: pr, paddingBottom: pb, paddingLeft: pl } = node
+  if (pt === 0 && pr === 0 && pb === 0 && pl === 0) return null
+  return { pt, pr, pb, pl }
+}
+
+function emitPadding<T>(
+  edges: PaddingEdges,
+  uniform: (v: number) => T,
+  symmetric: (y: number, x: number) => T[],
+  individual: (edges: PaddingEdges) => T[]
+): T[] {
+  const { pt, pr, pb, pl } = edges
+  if (pt === pr && pr === pb && pb === pl) return [uniform(pt)]
+  if (pt === pb && pl === pr) return symmetric(pt, pl)
+  return individual(edges)
+}
+
+interface CornerRadii {
+  tl: number
+  tr: number
+  br: number
+  bl: number
+}
+
+function collectCornerRadii(node: SceneNode): CornerRadii | null {
+  if (node.cornerRadius <= 0) return null
+  if (node.independentCorners) {
+    return {
+      tl: node.topLeftRadius,
+      tr: node.topRightRadius,
+      br: node.bottomRightRadius,
+      bl: node.bottomLeftRadius
+    }
+  }
+  const r = node.cornerRadius
+  return { tl: r, tr: r, br: r, bl: r }
+}
+
+// --- OpenPencil format ---
+
 function collectProps(node: SceneNode, graph: SceneGraph): [string, unknown][] {
   const props: [string, unknown][] = []
+  const { isAutoLayout, parentIsAutoLayout } = getNodeContext(node, graph)
 
   if (node.name && node.name !== node.type) {
     props.push(['name', node.name])
   }
 
-  if (node.layoutMode !== 'NONE') {
-    props.push(['flex', node.layoutMode === 'HORIZONTAL' ? 'row' : 'col'])
-  }
-
-  const isAutoLayout = node.layoutMode !== 'NONE'
-  const parent = node.parentId ? graph.getNode(node.parentId) : null
-  const parentIsAutoLayout = parent ? parent.layoutMode !== 'NONE' : false
-
   if (isAutoLayout) {
+    props.push(['flex', node.layoutMode === 'HORIZONTAL' ? 'row' : 'col'])
     const primaryAxis = node.layoutMode === 'HORIZONTAL' ? 'width' : 'height'
     const crossAxis = node.layoutMode === 'HORIZONTAL' ? 'height' : 'width'
 
-    if (node.primaryAxisSizing === 'HUG') {
-      /* hug is default with flex, omit */
-    } else if (node.primaryAxisSizing === 'FILL') {
+    if (node.primaryAxisSizing === 'FILL')
       props.push([primaryAxis === 'width' ? 'w' : 'h', 'fill'])
-    } else {
+    else if (node.primaryAxisSizing !== 'HUG')
       props.push([primaryAxis === 'width' ? 'w' : 'h', node[primaryAxis]])
-    }
 
-    if (node.counterAxisSizing === 'HUG') {
-      /* hug is default, omit */
-    } else if (node.counterAxisSizing === 'FILL') {
+    if (node.counterAxisSizing === 'FILL')
       props.push([crossAxis === 'width' ? 'w' : 'h', 'fill'])
-    } else {
+    else if (node.counterAxisSizing !== 'HUG')
       props.push([crossAxis === 'width' ? 'w' : 'h', node[crossAxis]])
-    }
   } else {
     if (node.width > 0) props.push(['w', node.width])
     if (node.height > 0) props.push(['h', node.height])
   }
 
-  if (parentIsAutoLayout && node.layoutGrow > 0) {
-    props.push(['grow', node.layoutGrow])
-  }
-
-  if (isAutoLayout && node.itemSpacing > 0) {
-    props.push(['gap', node.itemSpacing])
-  }
+  if (parentIsAutoLayout && node.layoutGrow > 0) props.push(['grow', node.layoutGrow])
+  if (isAutoLayout && node.itemSpacing > 0) props.push(['gap', node.itemSpacing])
 
   if (isAutoLayout && node.layoutWrap === 'WRAP') {
     props.push(['wrap', true])
-    if (node.counterAxisSpacing > 0) {
-      props.push(['rowGap', node.counterAxisSpacing])
-    }
+    if (node.counterAxisSpacing > 0) props.push(['rowGap', node.counterAxisSpacing])
   }
 
   if (isAutoLayout) {
@@ -121,22 +214,24 @@ function collectProps(node: SceneNode, graph: SceneGraph): [string, unknown][] {
     if (node.counterAxisAlign === 'CENTER') props.push(['items', 'center'])
     else if (node.counterAxisAlign === 'MAX') props.push(['items', 'end'])
     else if (node.counterAxisAlign === 'STRETCH') props.push(['items', 'stretch'])
-  }
 
-  if (isAutoLayout) {
-    const { paddingTop: pt, paddingRight: pr, paddingBottom: pb, paddingLeft: pl } = node
-    if (pt > 0 || pr > 0 || pb > 0 || pl > 0) {
-      if (pt === pr && pr === pb && pb === pl) {
-        props.push(['p', pt])
-      } else if (pt === pb && pl === pr) {
-        props.push(['py', pt])
-        props.push(['px', pl])
-      } else {
-        if (pt > 0) props.push(['pt', pt])
-        if (pr > 0) props.push(['pr', pr])
-        if (pb > 0) props.push(['pb', pb])
-        if (pl > 0) props.push(['pl', pl])
-      }
+    const pad = collectPadding(node)
+    if (pad) {
+      props.push(
+        ...emitPadding(
+          pad,
+          (v) => ['p', v] as [string, unknown],
+          (y, x) => [['py', y], ['px', x]] as [string, unknown][],
+          ({ pt, pr, pb, pl }) => {
+            const r: [string, unknown][] = []
+            if (pt > 0) r.push(['pt', pt])
+            if (pr > 0) r.push(['pr', pr])
+            if (pb > 0) r.push(['pb', pb])
+            if (pl > 0) r.push(['pl', pl])
+            return r
+          }
+        )
+      )
     }
   }
 
@@ -149,24 +244,16 @@ function collectProps(node: SceneNode, graph: SceneGraph): [string, unknown][] {
     if (stroke.weight !== 1) props.push(['strokeWidth', stroke.weight])
   }
 
-  if (node.cornerRadius > 0) {
-    if (node.independentCorners) {
-      const {
-        topLeftRadius: tl,
-        topRightRadius: tr,
-        bottomRightRadius: br,
-        bottomLeftRadius: bl
-      } = node
-      if (tl === tr && tr === br && br === bl) {
-        props.push(['rounded', tl])
-      } else {
-        if (tl > 0) props.push(['roundedTL', tl])
-        if (tr > 0) props.push(['roundedTR', tr])
-        if (br > 0) props.push(['roundedBR', br])
-        if (bl > 0) props.push(['roundedBL', bl])
-      }
+  const corners = collectCornerRadii(node)
+  if (corners) {
+    const { tl, tr, br, bl } = corners
+    if (tl === tr && tr === br && br === bl) {
+      props.push(['rounded', tl])
     } else {
-      props.push(['rounded', node.cornerRadius])
+      if (tl > 0) props.push(['roundedTL', tl])
+      if (tr > 0) props.push(['roundedTR', tr])
+      if (br > 0) props.push(['roundedBR', br])
+      if (bl > 0) props.push(['roundedBL', bl])
     }
   }
 
@@ -190,7 +277,8 @@ function collectProps(node: SceneNode, graph: SceneGraph): [string, unknown][] {
 
   if (node.type === 'TEXT') {
     if (node.fontSize !== 14) props.push(['size', node.fontSize])
-    if (node.fontFamily && node.fontFamily !== DEFAULT_FONT_FAMILY) props.push(['font', node.fontFamily])
+    if (node.fontFamily && node.fontFamily !== DEFAULT_FONT_FAMILY)
+      props.push(['font', node.fontFamily])
     if (node.fontWeight !== 400) {
       if (node.fontWeight === 700) props.push(['weight', 'bold'])
       else if (node.fontWeight === 500) props.push(['weight', 'medium'])
@@ -218,69 +306,196 @@ function collectProps(node: SceneNode, graph: SceneGraph): [string, unknown][] {
   return props
 }
 
-function nodeToJsx(node: SceneNode, graph: SceneGraph, indent: number): string {
-  const tag = NODE_TYPE_TO_TAG[node.type]
+// --- Tailwind CSS v4 format ---
+
+function twRounded(prefix: string, px: number): string {
+  const r = borderRadiusToTw(px)
+  return r ? `${prefix}-${r}` : prefix
+}
+
+function collectTailwindClasses(node: SceneNode, graph: SceneGraph): string[] {
+  const classes: string[] = []
+  const { isAutoLayout, parentIsAutoLayout } = getNodeContext(node, graph)
+
+  if (isAutoLayout) {
+    classes.push('flex')
+    if (node.layoutMode === 'VERTICAL') classes.push('flex-col')
+
+    const primaryAxis = node.layoutMode === 'HORIZONTAL' ? 'width' : 'height'
+    const crossAxis = node.layoutMode === 'HORIZONTAL' ? 'height' : 'width'
+    const wProp = primaryAxis === 'width' ? 'w' : 'h'
+    const hProp = crossAxis === 'width' ? 'w' : 'h'
+
+    if (node.primaryAxisSizing === 'FILL') classes.push(`${wProp}-full`)
+    else if (node.primaryAxisSizing !== 'HUG')
+      classes.push(`${wProp}-${pxToSpacing(node[primaryAxis])}`)
+
+    if (node.counterAxisSizing === 'FILL') classes.push(`${hProp}-full`)
+    else if (node.counterAxisSizing !== 'HUG')
+      classes.push(`${hProp}-${pxToSpacing(node[crossAxis])}`)
+  } else {
+    if (node.width > 0) classes.push(`w-${pxToSpacing(node.width)}`)
+    if (node.height > 0) classes.push(`h-${pxToSpacing(node.height)}`)
+  }
+
+  if (parentIsAutoLayout && node.layoutGrow > 0) classes.push('grow')
+  if (isAutoLayout && node.itemSpacing > 0) classes.push(`gap-${pxToSpacing(node.itemSpacing)}`)
+
+  if (isAutoLayout && node.layoutWrap === 'WRAP') {
+    classes.push('flex-wrap')
+    if (node.counterAxisSpacing > 0) classes.push(`gap-y-${pxToSpacing(node.counterAxisSpacing)}`)
+  }
+
+  if (isAutoLayout) {
+    if (node.primaryAxisAlign === 'CENTER') classes.push('justify-center')
+    else if (node.primaryAxisAlign === 'MAX') classes.push('justify-end')
+    else if (node.primaryAxisAlign === 'SPACE_BETWEEN') classes.push('justify-between')
+
+    if (node.counterAxisAlign === 'CENTER') classes.push('items-center')
+    else if (node.counterAxisAlign === 'MAX') classes.push('items-end')
+    else if (node.counterAxisAlign === 'STRETCH') classes.push('items-stretch')
+
+    const pad = collectPadding(node)
+    if (pad) {
+      classes.push(
+        ...emitPadding(
+          pad,
+          (v) => `p-${pxToSpacing(v)}`,
+          (y, x) => [`py-${pxToSpacing(y)}`, `px-${pxToSpacing(x)}`],
+          ({ pt, pr, pb, pl }) => {
+            const r: string[] = []
+            if (pt > 0) r.push(`pt-${pxToSpacing(pt)}`)
+            if (pr > 0) r.push(`pr-${pxToSpacing(pr)}`)
+            if (pb > 0) r.push(`pb-${pxToSpacing(pb)}`)
+            if (pl > 0) r.push(`pl-${pxToSpacing(pl)}`)
+            return r
+          }
+        )
+      )
+    }
+  }
+
+  const bg = solidFillColor(node.fills)
+  if (bg && node.type !== 'TEXT') classes.push(`bg-${colorToTwClass(bg)}`)
+
+  const stroke = solidStroke(node.strokes)
+  if (stroke) {
+    if (stroke.weight !== 1) classes.push(`border-${pxToSpacing(stroke.weight)}`)
+    else classes.push('border')
+    classes.push(`border-${colorToTwClass(stroke.color)}`)
+  }
+
+  const corners = collectCornerRadii(node)
+  if (corners) {
+    const { tl, tr, br, bl } = corners
+    if (tl === tr && tr === br && br === bl) {
+      classes.push(twRounded('rounded', tl))
+    } else {
+      if (tl > 0) classes.push(twRounded('rounded-tl', tl))
+      if (tr > 0) classes.push(twRounded('rounded-tr', tr))
+      if (br > 0) classes.push(twRounded('rounded-br', br))
+      if (bl > 0) classes.push(twRounded('rounded-bl', bl))
+    }
+  }
+
+  if (node.opacity < 1) classes.push(`opacity-${opacityToTw(node.opacity)}`)
+  if (node.rotation !== 0) classes.push(`rotate-${formatTailwindAngle(node.rotation)}`)
+  if (node.clipsContent) classes.push('overflow-hidden')
+
+  for (const effect of node.effects) {
+    if (!effect.visible) continue
+    if (effect.type === 'DROP_SHADOW' || effect.type === 'INNER_SHADOW') {
+      const shadow = formatTailwindShadow(effect)
+      if (shadow) classes.push(`shadow-[${shadow}]`)
+    } else if (effect.type === 'LAYER_BLUR' || effect.type === 'FOREGROUND_BLUR') {
+      classes.push(`blur-[${effect.radius}px]`)
+    } else if (effect.type === 'BACKGROUND_BLUR') {
+      classes.push(`backdrop-blur-[${effect.radius}px]`)
+    }
+  }
+
+  if (node.type === 'TEXT') {
+    classes.push(`text-${fontSizeToTw(node.fontSize)}`)
+    if (node.fontFamily && node.fontFamily !== DEFAULT_FONT_FAMILY) {
+      classes.push(`font-${formatTailwindFontFamily(node.fontFamily)}`)
+    }
+    if (node.fontWeight !== 400) classes.push(`font-${fontWeightToTw(node.fontWeight)}`)
+    if (node.textAlignHorizontal !== 'LEFT') {
+      classes.push(`text-${node.textAlignHorizontal.toLowerCase()}`)
+    }
+    const textColor = solidFillColor(node.fills)
+    if (textColor) classes.push(`text-${colorToTwClass(textColor)}`)
+  }
+
+  return classes
+}
+
+// --- JSX rendering ---
+
+function nodeToJSX(node: SceneNode, graph: SceneGraph, indent: number, format: JSXFormat): string {
+  const tagMap = format === 'tailwind' ? NODE_TYPE_TO_TW_TAG : NODE_TYPE_TO_TAG
+  const tag = tagMap[node.type]
   if (!tag) return ''
 
   const prefix = '  '.repeat(indent)
-  const props = collectProps(node, graph)
-  const propsStr = props.map(([k, v]) => formatProp(k, v)).join(' ')
-  const opening = propsStr ? `<${tag} ${propsStr}` : `<${tag}`
+  let attrsStr: string
 
+  if (format === 'tailwind') {
+    const classes = collectTailwindClasses(node, graph)
+    const nameAttr = node.name && node.name !== node.type ? ` data-name="${node.name}"` : ''
+    const classAttr = classes.length > 0 ? ` className="${classes.join(' ')}"` : ''
+    attrsStr = `${nameAttr}${classAttr}`.trim()
+  } else {
+    const props = collectProps(node, graph)
+    attrsStr = props.map(([k, v]) => formatProp(k, v)).join(' ')
+  }
+
+  const opening = attrsStr ? `<${tag} ${attrsStr}` : `<${tag}`
   const children = graph.getChildren(node.id)
-  const isText = node.type === 'TEXT'
 
-  if (isText) {
+  if (node.type === 'TEXT') {
     const text = node.text
     if (!text) return `${prefix}${opening} />`
-    const escaped = text.replace(/[{}<>&]/g, (c) =>
-      c === '{'
-        ? '&#123;'
-        : c === '}'
-          ? '&#125;'
-          : c === '<'
-            ? '&lt;'
-            : c === '>'
-              ? '&gt;'
-              : '&amp;'
-    )
+    const escaped = escapeJSXText(text)
     if (!escaped.includes('\n')) {
       return `${prefix}${opening}>${escaped}</${tag}>`
     }
-    const lines = escaped.split('\n')
-    const parts = [
+    return [
       `${prefix}${opening}>`,
-      ...lines.map((l) => `${prefix}  ${l}`),
+      ...escaped.split('\n').map((l) => `${prefix}  ${l}`),
       `${prefix}</${tag}>`
-    ]
-    return parts.join('\n')
+    ].join('\n')
   }
 
-  if (children.length === 0) {
-    return `${prefix}${opening} />`
-  }
+  if (children.length === 0) return `${prefix}${opening} />`
 
-  const childJsx = children
+  const childJSX = children
     .filter((c) => c.visible)
-    .map((c) => nodeToJsx(c, graph, indent + 1))
+    .map((c) => nodeToJSX(c, graph, indent + 1, format))
     .filter(Boolean)
 
-  if (childJsx.length === 0) {
-    return `${prefix}${opening} />`
-  }
+  if (childJSX.length === 0) return `${prefix}${opening} />`
 
-  return [`${prefix}${opening}>`, ...childJsx, `${prefix}</${tag}>`].join('\n')
+  return [`${prefix}${opening}>`, ...childJSX, `${prefix}</${tag}>`].join('\n')
 }
 
-export function sceneNodeToJsx(nodeId: string, graph: SceneGraph): string {
+export function sceneNodeToJSX(
+  nodeId: string,
+  graph: SceneGraph,
+  format: JSXFormat = 'openpencil'
+): string {
   const node = graph.getNode(nodeId)
   if (!node) return ''
-  return nodeToJsx(node, graph, 0)
+  return nodeToJSX(node, graph, 0, format)
 }
 
-export function selectionToJsx(nodeIds: string[], graph: SceneGraph): string {
+export function selectionToJSX(
+  nodeIds: string[],
+  graph: SceneGraph,
+  format: JSXFormat = 'openpencil'
+): string {
   return nodeIds
-    .map((id) => sceneNodeToJsx(id, graph))
+    .map((id) => sceneNodeToJSX(id, graph, format))
     .filter(Boolean)
     .join('\n\n')
 }
