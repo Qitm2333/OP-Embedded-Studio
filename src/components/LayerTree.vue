@@ -3,6 +3,8 @@ import { nextTick, onUnmounted, ref, watch } from 'vue'
 import { useEventListener } from '@vueuse/core'
 import { TreeRoot, TreeItem, ContextMenuRoot, ContextMenuTrigger, ContextMenuPortal } from 'reka-ui'
 
+import { useInlineRename } from '@/composables/use-inline-rename'
+
 import IconCircle from '~icons/lucide/circle'
 import IconComponent from '~icons/lucide/diamond'
 import IconComponentSet from '~icons/lucide/component'
@@ -19,6 +21,7 @@ import { useEditorStore } from '@/stores/editor'
 import NodeContextMenuContent from './NodeContextMenuContent.vue'
 
 const store = useEditorStore()
+const rename = useInlineRename((id, name) => store.renameNode(id, name))
 
 interface LayerNode {
   id: string
@@ -277,7 +280,27 @@ function updateDropTarget(ev: PointerEvent) {
             :data-level="item.level"
           >
             <TreeItem v-slot="{ isExpanded }" v-bind="item.bind" as-child @select="onSelect">
+              <div
+                v-if="rename.editingId.value === item.value.id"
+                class="flex w-full items-center gap-1 py-1"
+                :style="{ paddingLeft: `${8 + (item.level - 1) * 16}px` }"
+              >
+                <span class="w-4 shrink-0" />
+                <component
+                  :is="nodeIcons[item.value.type] ?? IconSquare"
+                  class="size-3 shrink-0 opacity-70"
+                />
+                <input
+                  data-layer-edit
+                  data-test-id="layers-item-input"
+                  class="min-w-0 flex-1 rounded border border-accent bg-input px-1 py-0 text-xs text-surface outline-none"
+                  :value="item.value.name"
+                  @blur="rename.commit(item.value.id, $event.target as HTMLInputElement)"
+                  @keydown="rename.onKeydown"
+                />
+              </div>
               <button
+                v-else
                 data-test-id="layers-item"
                 class="group/row flex w-full cursor-pointer items-center gap-1 rounded border-none py-1 text-left text-xs"
                 :class="[
@@ -290,6 +313,7 @@ function updateDropTarget(ev: PointerEvent) {
                 ]"
                 :style="{ paddingLeft: `${8 + (item.level - 1) * 16}px` }"
                 @pointerdown.prevent="onPointerDown($event, item.value.id)"
+                @dblclick="rename.start(item.value.id, item.value.name, '[data-layer-edit]')"
               >
                 <span
                   v-if="item.hasChildren"
