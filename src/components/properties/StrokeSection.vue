@@ -20,14 +20,9 @@ import type { SceneNode } from '@open-pencil/core'
 type StrokeSides = 'ALL' | 'TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT' | 'CUSTOM'
 
 const { store } = useNodeProps()
-const { nodes, isMulti, active, activeNode } = useMultiProps()
+const { nodes, isMulti, active, activeNode, isArrayMixed } = useMultiProps()
 
-const strokesAreMixed = computed(() => {
-  if (!isMulti.value) return false
-  const all = nodes.value
-  const first = JSON.stringify(all[0].strokes)
-  return all.some((n) => JSON.stringify(n.strokes) !== first)
-})
+const strokesAreMixed = computed(() => isArrayMixed('strokes'))
 
 const ALIGN_OPTIONS: { value: Stroke['align']; label: string }[] = [
   { value: 'INSIDE', label: 'Inside' },

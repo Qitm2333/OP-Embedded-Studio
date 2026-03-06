@@ -5,9 +5,10 @@ import {
   importClipboardNodes,
   figmaNodesBounds,
   buildFigmaClipboardHTML,
-} from '../../packages/core/src/clipboard'
-import { initCodec } from '../../packages/core/src/kiwi/codec'
-import { SceneGraph, type SceneNode } from '../../packages/core/src/scene-graph'
+  initCodec,
+  SceneGraph,
+  type SceneNode,
+} from '@open-pencil/core'
 
 function makeClipboardHtml(nodeChanges: unknown[], meta = { fileKey: 'test', pasteID: 1, dataType: 'scene' }) {
   // Minimal fig-kiwi clipboard: just meta + empty figma buffer

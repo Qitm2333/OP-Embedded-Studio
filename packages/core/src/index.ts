@@ -50,7 +50,15 @@ export { FigmaAPI, FigmaNodeProxy, type FigmaFontName } from './figma-api'
 export { ALL_TOOLS, defineTool, toolsToAI } from './tools'
 export type { ToolDef, ParamDef, ParamType } from './tools'
 export { SkiaRenderer, type RenderOverlays } from './renderer/index'
-export { RenderProfiler } from './profiler'
+export {
+  RenderProfiler,
+  FrameStats,
+  GPUTimer,
+  DrawCallCounter,
+  PhaseTimer,
+  CaptureStack,
+  toSpeedscopeJSON
+} from './profiler'
 export type { FrameCapture, NodeProfile } from './profiler'
 export { computeLayout, computeAllLayouts, setTextMeasurer } from './layout'
 export type { TextMeasurer } from './layout'
@@ -81,6 +89,10 @@ export { computeSelectionBounds, computeSnap, type SnapGuide } from './snap'
 export { UndoManager } from './undo'
 export { TextEditor, type TextCaret, type TextEditorState } from './text-editor'
 export {
+  getStyleAt,
+  applyStyleToRange,
+  removeStyleFromRange,
+  selectionHasStyle,
   toggleBoldInRange,
   toggleItalicInRange,
   toggleDecorationInRange,

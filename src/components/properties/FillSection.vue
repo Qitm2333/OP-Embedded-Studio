@@ -22,14 +22,9 @@ import { colorToCSS, colorToHexRaw } from '@open-pencil/core'
 import type { Fill, Variable, Color } from '@open-pencil/core'
 
 const { store } = useNodeProps()
-const { nodes, isMulti, active, activeNode } = useMultiProps()
+const { nodes, isMulti, active, activeNode, isArrayMixed } = useMultiProps()
 
-const fillsAreMixed = computed(() => {
-  if (!isMulti.value) return false
-  const all = nodes.value
-  const first = JSON.stringify(all[0].fills)
-  return all.some((n) => JSON.stringify(n.fills) !== first)
-})
+const fillsAreMixed = computed(() => isArrayMixed('fills'))
 
 const colorVariables = computed(() => store.graph.getVariablesByType('COLOR'))
 
