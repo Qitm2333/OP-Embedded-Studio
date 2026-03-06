@@ -1,4 +1,5 @@
 export type { GUID, Color, Vector, Matrix, Rect } from './types'
+export { degToRad, radToDeg, rotatePoint, rotatedCorners, rotatedBBox } from './geometry'
 
 export * from './constants'
 
@@ -48,7 +49,7 @@ export {
 export { FigmaAPI, FigmaNodeProxy, type FigmaFontName } from './figma-api'
 export { ALL_TOOLS, defineTool, toolsToAI } from './tools'
 export type { ToolDef, ParamDef, ParamType } from './tools'
-export { SkiaRenderer, type RenderOverlays } from './renderer'
+export { SkiaRenderer, type RenderOverlays } from './renderer/index'
 export { RenderProfiler } from './profiler'
 export type { FrameCapture, NodeProfile } from './profiler'
 export { computeLayout, computeAllLayouts, setTextMeasurer } from './layout'
