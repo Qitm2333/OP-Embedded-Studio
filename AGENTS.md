@@ -53,6 +53,7 @@ The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files 
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
 | `build.yml` | `v*` tag push or manual | Build Tauri desktop apps (5 targets), create GitHub Release, publish npm |
+| `homebrew.yml` | Release published | Update `open-pencil/homebrew-tap` cask with new version + SHA256 hashes |
 | `app.yml` | Push to `master` (non-docs) | Build web app, deploy to Cloudflare Pages (`app.openpencil.dev`) |
 | `docs.yml` | Push to `master` (`packages/docs/**`) | Build VitePress docs, deploy to Cloudflare Pages (`openpencil.dev`) |
 

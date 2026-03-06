@@ -66,7 +66,13 @@ Your design files are yours. Your tools should be too.
 
 ## Installation
 
-Download the latest release from the [releases page](https://github.com/open-pencil/open-pencil/releases/latest), or [use the web app](https://app.openpencil.dev) — no install needed.
+**macOS (Homebrew):**
+
+```sh
+brew install open-pencil/tap/open-pencil
+```
+
+Or download the latest release from the [releases page](https://github.com/open-pencil/open-pencil/releases/latest), or [use the web app](https://app.openpencil.dev) — no install needed.
 
 ## Getting Started
 
