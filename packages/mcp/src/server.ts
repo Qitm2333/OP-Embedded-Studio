@@ -114,7 +114,7 @@ export function createServer(version: string, options: CreateServerOptions = {})
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic schema from ToolDef params
     server.registerTool(def.name, { description: def.description, inputSchema: z.object(shape) } as any, async (args: any) => {
       try {
-        const result = await def.execute(makeFigma(), args as Record<string, unknown>) as Record<string, unknown>
+        const result = await def.execute(makeFigma(), args)
         if (result && typeof result === 'object' && 'base64' in result && 'mimeType' in result) {
           return {
             content: [{ type: 'image' as const, data: result.base64 as string, mimeType: result.mimeType as string }]

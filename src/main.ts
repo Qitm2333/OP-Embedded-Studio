@@ -1,5 +1,5 @@
-import { createApp } from 'vue'
 import { createHead } from '@unhead/vue/client'
+import { createApp } from 'vue'
 
 import './app.css'
 import { IS_TAURI } from '@/constants'

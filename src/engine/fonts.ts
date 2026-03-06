@@ -6,7 +6,12 @@ export {
   getCJKFallbackFamily
 } from '@open-pencil/core'
 
-import { loadFont as loadFontCore, markFontLoaded, styleToWeight } from '@open-pencil/core'
+import {
+  IS_TAURI,
+  loadFont as loadFontCore,
+  markFontLoaded,
+  styleToWeight
+} from '@open-pencil/core'
 
 interface TauriFontFamily {
   family: string
@@ -14,10 +19,6 @@ interface TauriFontFamily {
 }
 
 let tauriFontsCache: TauriFontFamily[] | null = null
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
 
 let tauriFontsPromise: Promise<TauriFontFamily[]> | null = null
 
@@ -36,7 +37,7 @@ async function getTauriFonts(): Promise<TauriFontFamily[]> {
 }
 
 export function preloadFonts(): void {
-  if (isTauri()) {
+  if (IS_TAURI) {
     getTauriFonts().then(registerFontFaces)
   }
 }
@@ -50,7 +51,7 @@ function registerFontFaces(fonts: TauriFontFamily[]): void {
 }
 
 export async function listFamilies(): Promise<string[]> {
-  if (isTauri()) {
+  if (IS_TAURI) {
     const fonts = await getTauriFonts()
     return fonts.map((f) => f.family)
   }
@@ -60,7 +61,7 @@ export async function listFamilies(): Promise<string[]> {
 }
 
 export async function loadFont(family: string, style = 'Regular'): Promise<ArrayBuffer | null> {
-  if (isTauri()) {
+  if (IS_TAURI) {
     try {
       const { invoke } = await import('@tauri-apps/api/core')
       const data = await invoke<number[]>('load_system_font', { family, style })

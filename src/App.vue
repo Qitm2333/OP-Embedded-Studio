@@ -5,7 +5,7 @@ import { useHead } from '@unhead/vue'
 import AppToast from '@/components/AppToast.vue'
 import { toast } from '@/composables/use-toast'
 
-useHead({ titleTemplate: (title) => title ? `${title} — OpenPencil` : 'OpenPencil' })
+useHead({ titleTemplate: (title) => (title ? `${title} — OpenPencil` : 'OpenPencil') })
 
 onMounted(() => {
   toast.setupGlobalErrorHandler()

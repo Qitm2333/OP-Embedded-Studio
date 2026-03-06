@@ -33,9 +33,7 @@ import type {
 } from '../scene-graph'
 import type { NodeChange, Paint, Effect as KiwiEffect, GUID } from './codec'
 
-function ext(nc: NodeChange): Record<string, unknown> {
-  return nc as unknown as Record<string, unknown>
-}
+
 
 export function guidToString(guid: GUID): string {
   return `${guid.sessionID}:${guid.localID}`
@@ -290,7 +288,7 @@ function convertLetterSpacing(
   return ls.value
 }
 
-function mapArcData(data?: Record<string, number>): ArcData | null {
+function mapArcData(data?: Partial<ArcData>): ArcData | null {
   if (!data) return null
   return {
     startingAngle: data.startingAngle ?? 0,
@@ -309,7 +307,7 @@ function importStyleRuns(nc: NodeChange): StyleRun[] {
 
   const styleMap = new Map<number, CharacterStyleOverride>()
   for (const override of table) {
-    const id = (override as unknown as Record<string, unknown>).styleID as number | undefined
+    const id = override.styleID as number | undefined
     if (id === undefined) continue
     const style: CharacterStyleOverride = {}
     if (override.fontName) {
@@ -323,7 +321,7 @@ function importStyleRuns(nc: NodeChange): StyleRun[] {
       const lh = convertLineHeight(override.lineHeight, override.fontSize)
       if (lh != null) style.lineHeight = lh
     }
-    const deco = ext(override).textDecoration as string | undefined
+    const deco = override.textDecoration as string | undefined
     if (deco) style.textDecoration = mapTextDecoration(deco)
     if (Object.keys(style).length > 0) styleMap.set(id, style)
   }
@@ -354,7 +352,7 @@ function resolveVectorNetwork(
   nc: NodeChange,
   blobs: Uint8Array[]
 ): VectorNetwork | null {
-  const vectorData = (nc as unknown as Record<string, unknown>).vectorData as
+  const vectorData = nc.vectorData as
     | {
         vectorNetworkBlob?: number
         normalizedSize?: { x: number; y: number }
@@ -453,7 +451,7 @@ export function nodeChangeToProps(
     rotation = Math.atan2(nc.transform.m10 * sx, nc.transform.m00 * sx) * (180 / Math.PI)
   }
 
-  const dashPattern = (ext(nc).dashPattern as number[]) ?? []
+  const dashPattern = (nc.dashPattern as number[]) ?? []
 
   return {
     nodeType,
@@ -468,7 +466,7 @@ export function nodeChangeToProps(
     opacity: nc.opacity ?? 1,
     visible: nc.visible ?? true,
     locked: nc.locked ?? false,
-    blendMode: (ext(nc).blendMode as Fill['blendMode']) ?? 'PASS_THROUGH',
+    blendMode: (nc.blendMode as Fill['blendMode']) ?? 'PASS_THROUGH',
     fills: convertFills(nc.fillPaints),
     strokes: convertStrokes(
       nc.strokePaints,
@@ -493,16 +491,16 @@ export function nodeChangeToProps(
     italic: nc.fontName?.style?.toLowerCase().includes('italic') ?? false,
     textAlignHorizontal:
       (nc.textAlignHorizontal as 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED') ?? 'LEFT',
-    textAlignVertical: (ext(nc).textAlignVertical as TextAlignVertical) ?? 'TOP',
-    textAutoResize: (ext(nc).textAutoResize as TextAutoResize) ?? 'NONE',
-    textCase: (ext(nc).textCase as TextCase) ?? 'ORIGINAL',
-    textDecoration: mapTextDecoration(ext(nc).textDecoration as string),
+    textAlignVertical: (nc.textAlignVertical as TextAlignVertical) ?? 'TOP',
+    textAutoResize: (nc.textAutoResize as TextAutoResize) ?? 'NONE',
+    textCase: (nc.textCase as TextCase) ?? 'ORIGINAL',
+    textDecoration: mapTextDecoration(nc.textDecoration as string),
     lineHeight: convertLineHeight(nc.lineHeight, nc.fontSize),
     letterSpacing: convertLetterSpacing(nc.letterSpacing, nc.fontSize),
-    maxLines: (ext(nc).maxLines as number) ?? null,
+    maxLines: (nc.maxLines as number) ?? null,
     styleRuns: importStyleRuns(nc),
-    horizontalConstraint: mapConstraint(ext(nc).horizontalConstraint as string),
-    verticalConstraint: mapConstraint(ext(nc).verticalConstraint as string),
+    horizontalConstraint: mapConstraint(nc.horizontalConstraint as string),
+    verticalConstraint: mapConstraint(nc.verticalConstraint as string),
     layoutMode: mapStackMode(nc.stackMode),
     itemSpacing: nc.stackSpacing ?? 0,
     paddingTop: nc.stackVerticalPadding ?? nc.stackPadding ?? 0,
@@ -513,37 +511,37 @@ export function nodeChangeToProps(
     counterAxisSizing: mapStackSizing(nc.stackCounterSizing),
     primaryAxisAlign: mapStackJustify(nc.stackPrimaryAlignItems ?? nc.stackJustify),
     counterAxisAlign: mapStackCounterAlign(nc.stackCounterAlignItems ?? nc.stackCounterAlign),
-    layoutWrap: ext(nc).stackWrap === 'WRAP' ? 'WRAP' : 'NO_WRAP',
-    counterAxisSpacing: (ext(nc).stackCounterSpacing as number) ?? 0,
-    layoutPositioning: ext(nc).stackPositioning === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO',
-    layoutGrow: (ext(nc).stackChildPrimaryGrow as number) ?? 0,
-    layoutAlignSelf: (ext(nc).stackChildAlignSelf as string) === 'STRETCH' ? 'STRETCH' : 'AUTO',
+    layoutWrap: nc.stackWrap === 'WRAP' ? 'WRAP' : 'NO_WRAP',
+    counterAxisSpacing: (nc.stackCounterSpacing as number) ?? 0,
+    layoutPositioning: nc.stackPositioning === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO',
+    layoutGrow: (nc.stackChildPrimaryGrow as number) ?? 0,
+    layoutAlignSelf: (nc.stackChildAlignSelf as string) === 'STRETCH' ? 'STRETCH' : 'AUTO',
     vectorNetwork: resolveVectorNetwork(nc, blobs),
     fillGeometry: resolveGeometryPaths(nc.fillGeometry, blobs),
     strokeGeometry: resolveGeometryPaths(nc.strokeGeometry, blobs),
-    arcData: mapArcData(ext(nc).arcData as Record<string, number> | undefined),
+    arcData: mapArcData(nc.arcData as Partial<ArcData> | undefined),
     strokeCap: (nc.strokeCap ?? 'NONE') as StrokeCap,
     strokeJoin: (nc.strokeJoin ?? 'MITER') as StrokeJoin,
     dashPattern,
-    borderTopWeight: (ext(nc).borderTopWeight as number) ?? 0,
-    borderRightWeight: (ext(nc).borderRightWeight as number) ?? 0,
-    borderBottomWeight: (ext(nc).borderBottomWeight as number) ?? 0,
-    borderLeftWeight: (ext(nc).borderLeftWeight as number) ?? 0,
-    independentStrokeWeights: (ext(nc).borderStrokeWeightsIndependent as boolean) ?? false,
+    borderTopWeight: (nc.borderTopWeight as number) ?? 0,
+    borderRightWeight: (nc.borderRightWeight as number) ?? 0,
+    borderBottomWeight: (nc.borderBottomWeight as number) ?? 0,
+    borderLeftWeight: (nc.borderLeftWeight as number) ?? 0,
+    independentStrokeWeights: (nc.borderStrokeWeightsIndependent as boolean) ?? false,
     strokeMiterLimit: DEFAULT_STROKE_MITER_LIMIT,
-    minWidth: (ext(nc).minWidth as number) ?? null,
-    maxWidth: (ext(nc).maxWidth as number) ?? null,
-    minHeight: (ext(nc).minHeight as number) ?? null,
-    maxHeight: (ext(nc).maxHeight as number) ?? null,
-    isMask: (ext(nc).isMask as boolean) ?? false,
-    maskType: ((ext(nc).maskType as string) ?? 'ALPHA') as 'ALPHA' | 'VECTOR' | 'LUMINANCE',
+    minWidth: (nc.minWidth as number) ?? null,
+    maxWidth: (nc.maxWidth as number) ?? null,
+    minHeight: (nc.minHeight as number) ?? null,
+    maxHeight: (nc.maxHeight as number) ?? null,
+    isMask: (nc.isMask as boolean) ?? false,
+    maskType: ((nc.maskType as string) ?? 'ALPHA') as 'ALPHA' | 'VECTOR' | 'LUMINANCE',
     counterAxisAlignContent:
-      (ext(nc).stackCounterAlignContent as string) === 'SPACE_BETWEEN' ? 'SPACE_BETWEEN' : 'AUTO',
-    itemReverseZIndex: (ext(nc).stackReverseZIndex as boolean) ?? false,
-    strokesIncludedInLayout: (ext(nc).strokesIncludedInLayout as boolean) ?? false,
+      (nc.stackCounterAlignContent as string) === 'SPACE_BETWEEN' ? 'SPACE_BETWEEN' : 'AUTO',
+    itemReverseZIndex: (nc.stackReverseZIndex as boolean) ?? false,
+    strokesIncludedInLayout: (nc.strokesIncludedInLayout as boolean) ?? false,
     expanded: true,
-    textTruncation: (ext(nc).textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED',
-    autoRename: (ext(nc).autoRename as boolean) ?? true,
+    textTruncation: (nc.textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED',
+    autoRename: (nc.autoRename as boolean) ?? true,
     boundVariables: extractBoundVariables(nc),
     clipsContent: nc.frameMaskDisabled === false,
     componentId: extractSymbolId(nc)
@@ -551,7 +549,7 @@ export function nodeChangeToProps(
 }
 
 function isComponentSet(nc: NodeChange): boolean {
-  const defs = ext(nc).componentPropDefs as Array<{ type?: string }> | undefined
+  const defs = nc.componentPropDefs as Array<{ type?: string }> | undefined
   if (!defs?.length) return false
   return defs.some((d) => d.type === 'VARIANT')
 }
@@ -561,7 +559,7 @@ export function sortChildren(
   parentNc: NodeChange,
   nodeMap: Map<string, NodeChange>
 ): void {
-  const stackMode = (parentNc as unknown as Record<string, unknown>).stackMode as string | undefined
+  const stackMode = parentNc.stackMode as string | undefined
   if (stackMode === 'HORIZONTAL' || stackMode === 'VERTICAL') {
     const axis = stackMode === 'HORIZONTAL' ? 'm02' : 'm12'
     children.sort((a, b) => {
@@ -579,7 +577,7 @@ export function sortChildren(
 }
 
 function extractSymbolId(nc: NodeChange): string {
-  const sd = (nc as unknown as Record<string, unknown>).symbolData as
+  const sd = nc.symbolData as
     | { symbolID?: GUID }
     | undefined
   if (!sd?.symbolID) return ''
@@ -699,7 +697,7 @@ export function convertOverrideToProps(ov: Record<string, unknown>): Partial<Sce
     updates.textDecoration = mapTextDecoration(ov.textDecoration as string)
 
   if (ov.arcData != null)
-    updates.arcData = mapArcData(ov.arcData as Record<string, number> | undefined)
+    updates.arcData = mapArcData(ov.arcData as Partial<ArcData> | undefined)
   if (ov.frameMaskDisabled != null) updates.clipsContent = ov.frameMaskDisabled === false
 
   return updates

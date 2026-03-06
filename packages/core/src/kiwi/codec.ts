@@ -210,6 +210,7 @@ export interface Effect {
 }
 
 export interface NodeChange {
+  [key: string]: unknown
   guid: GUID
   phase?: 'CREATED' | 'REMOVED'
   parentIndex?: ParentIndex
@@ -296,6 +297,7 @@ export interface FigmaMessage {
   ackID?: number
   reconnectSequenceNumber?: number
   nodeChanges?: NodeChange[]
+  blobs?: Array<{ bytes: Uint8Array }>
 }
 
 /**

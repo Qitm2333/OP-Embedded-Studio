@@ -135,7 +135,7 @@ export function importClipboardNodes(
 
   const internalCanvasIds = new Set<string>()
   for (const [id, nc] of guidMap) {
-    if (nc.type === 'CANVAS' && (nc as unknown as Record<string, unknown>).internalOnly) {
+    if (nc.type === 'CANVAS' && nc.internalOnly) {
       internalCanvasIds.add(id)
     }
   }

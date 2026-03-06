@@ -18,8 +18,8 @@ export interface AIAdapterOptions {
 function extractIdsFromArray(arr: unknown[]): string[] {
   const ids: string[] = []
   for (const item of arr) {
-    if (item && typeof item === 'object' && typeof (item as Record<string, unknown>).id === 'string') {
-      ids.push((item as Record<string, unknown>).id as string)
+    if (item && typeof item === 'object' && 'id' in item && typeof item.id === 'string') {
+      ids.push(item.id)
     }
   }
   return ids
@@ -27,12 +27,11 @@ function extractIdsFromArray(arr: unknown[]): string[] {
 
 function extractNodeIds(result: unknown): string[] {
   if (!result || typeof result !== 'object') return []
-  const obj = result as Record<string, unknown>
-  if (typeof obj.deleted === 'string') return []
+  if ('deleted' in result && typeof result.deleted === 'string') return []
   const ids: string[] = []
-  if (typeof obj.id === 'string') ids.push(obj.id)
-  if (Array.isArray(obj.selection)) ids.push(...extractIdsFromArray(obj.selection))
-  if (Array.isArray(obj.results)) ids.push(...extractIdsFromArray(obj.results))
+  if ('id' in result && typeof result.id === 'string') ids.push(result.id)
+  if ('selection' in result && Array.isArray(result.selection)) ids.push(...extractIdsFromArray(result.selection))
+  if ('results' in result && Array.isArray(result.results)) ids.push(...extractIdsFromArray(result.results))
   return ids
 }
 

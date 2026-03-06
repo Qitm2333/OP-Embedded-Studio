@@ -270,8 +270,7 @@ export function sceneNodeToKiwi(
     if (node.lineHeight != null) nc.lineHeight = { value: node.lineHeight, units: 'PIXELS' }
     if (node.letterSpacing !== 0) nc.letterSpacing = { value: node.letterSpacing, units: 'PIXELS' }
     if (node.textDecoration !== 'NONE') {
-      ;(nc as Record<string, unknown>).textDecoration =
-        node.textDecoration === 'UNDERLINE' ? 'UNDERLINE' : 'STRIKETHROUGH'
+      nc.textDecoration = node.textDecoration === 'UNDERLINE' ? 'UNDERLINE' : 'STRIKETHROUGH'
     }
   }
 
