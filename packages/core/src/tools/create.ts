@@ -6,6 +6,7 @@ import type { FigmaNodeProxy } from '../figma-api'
 
 export const createShape = defineTool({
   name: 'create_shape',
+  mutates: true,
   description:
     'Create a shape on the canvas. Use FRAME for containers/cards, RECTANGLE for solid blocks, ELLIPSE for circles, TEXT for labels, SECTION for page sections.',
   params: {
@@ -47,6 +48,7 @@ export const createShape = defineTool({
 
 export const render = defineTool({
   name: 'render',
+  mutates: true,
   description:
     'Render JSX to design nodes. Primary creation tool — creates entire component trees in one call. Example: <Frame name="Card" w={320} h="hug" flex="col" gap={16} p={24} bg="#FFF" rounded={16}><Text size={18} weight="bold">Title</Text></Frame>',
   params: {
@@ -68,6 +70,7 @@ export const render = defineTool({
 
 export const createComponent = defineTool({
   name: 'create_component',
+  mutates: true,
   description: 'Convert a frame/group into a component.',
   params: {
     id: { type: 'string', description: 'Node ID to convert', required: true }
@@ -82,6 +85,7 @@ export const createComponent = defineTool({
 
 export const createInstance = defineTool({
   name: 'create_instance',
+  mutates: true,
   description: 'Create an instance of a component.',
   params: {
     component_id: { type: 'string', description: 'Component node ID', required: true },
@@ -100,6 +104,7 @@ export const createInstance = defineTool({
 
 export const createPage = defineTool({
   name: 'create_page',
+  mutates: true,
   description: 'Create a new page.',
   params: {
     name: { type: 'string', description: 'Page name', required: true }
@@ -113,6 +118,7 @@ export const createPage = defineTool({
 
 export const createVector = defineTool({
   name: 'create_vector',
+  mutates: true,
   description: 'Create a vector node with optional path data.',
   params: {
     x: { type: 'number', description: 'X position', required: true },
@@ -156,6 +162,7 @@ export const createVector = defineTool({
 
 export const createSlice = defineTool({
   name: 'create_slice',
+  mutates: true,
   description: 'Create a slice (export region) on the canvas.',
   params: {
     x: { type: 'number', description: 'X position', required: true },

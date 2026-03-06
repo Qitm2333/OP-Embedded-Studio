@@ -23,6 +23,7 @@ export interface ParamDef {
 export interface ToolDef {
   name: string
   description: string
+  mutates?: boolean
   params: Record<string, ParamDef>
   execute: (figma: FigmaAPI, args: Record<string, any>) => unknown
 }
@@ -48,6 +49,7 @@ type ResolvedParams<P extends Record<string, ParamDef>> = {
 export function defineTool<P extends Record<string, ParamDef>>(def: {
   name: string
   description: string
+  mutates?: boolean
   params: P
   execute: (figma: FigmaAPI, args: ResolvedParams<P>) => unknown
 }): ToolDef {

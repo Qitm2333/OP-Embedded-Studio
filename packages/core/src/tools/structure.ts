@@ -4,6 +4,7 @@ import type { FigmaNodeProxy } from '../figma-api'
 
 export const deleteNode = defineTool({
   name: 'delete_node',
+  mutates: true,
   description: 'Delete a node by ID.',
   params: {
     id: { type: 'string', description: 'Node ID to delete', required: true }
@@ -18,6 +19,7 @@ export const deleteNode = defineTool({
 
 export const cloneNode = defineTool({
   name: 'clone_node',
+  mutates: true,
   description: 'Clone (duplicate) a node.',
   params: {
     id: { type: 'string', description: 'Node ID to clone', required: true }
@@ -32,6 +34,7 @@ export const cloneNode = defineTool({
 
 export const renameNode = defineTool({
   name: 'rename_node',
+  mutates: true,
   description: 'Rename a node in the layers panel.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -47,6 +50,7 @@ export const renameNode = defineTool({
 
 export const reparentNode = defineTool({
   name: 'reparent_node',
+  mutates: true,
   description: 'Move a node into a different parent.',
   params: {
     id: { type: 'string', description: 'Node ID to move', required: true },
@@ -64,6 +68,7 @@ export const reparentNode = defineTool({
 
 export const groupNodes = defineTool({
   name: 'group_nodes',
+  mutates: true,
   description: 'Group selected nodes.',
   params: {
     ids: { type: 'string[]', description: 'Node IDs to group', required: true }
@@ -81,6 +86,7 @@ export const groupNodes = defineTool({
 
 export const ungroupNode = defineTool({
   name: 'ungroup_node',
+  mutates: true,
   description: 'Ungroup a group node.',
   params: {
     id: { type: 'string', description: 'Group node ID', required: true }
@@ -95,6 +101,7 @@ export const ungroupNode = defineTool({
 
 export const flattenNodes = defineTool({
   name: 'flatten_nodes',
+  mutates: true,
   description: 'Flatten nodes into a single vector.',
   params: {
     ids: { type: 'string[]', description: 'Node IDs to flatten', required: true }
@@ -107,6 +114,7 @@ export const flattenNodes = defineTool({
 
 export const nodeToComponent = defineTool({
   name: 'node_to_component',
+  mutates: true,
   description: 'Convert one or more frames/groups into components.',
   params: {
     ids: { type: 'string[]', description: 'Node IDs to convert', required: true }
@@ -138,6 +146,7 @@ export const nodeBounds = defineTool({
 
 export const nodeMove = defineTool({
   name: 'node_move',
+  mutates: true,
   description: 'Move a node to new coordinates.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -155,6 +164,7 @@ export const nodeMove = defineTool({
 
 export const nodeResize = defineTool({
   name: 'node_resize',
+  mutates: true,
   description: 'Resize a node.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -244,6 +254,7 @@ export const nodeBindings = defineTool({
 
 export const nodeReplaceWith = defineTool({
   name: 'node_replace_with',
+  mutates: true,
   description: 'Replace a node with JSX content.',
   params: {
     id: { type: 'string', description: 'Node ID to replace', required: true },
@@ -264,6 +275,7 @@ export const nodeReplaceWith = defineTool({
 
 export const arrangeNodes = defineTool({
   name: 'arrange',
+  mutates: true,
   description:
     'Arrange top-level nodes on the canvas in a grid, row, or column layout. Useful after batch creation to tidy up overlapping frames.',
   params: {

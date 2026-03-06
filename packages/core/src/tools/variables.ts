@@ -61,6 +61,7 @@ export const findVariables = defineTool({
 
 export const createVariable = defineTool({
   name: 'create_variable',
+  mutates: true,
   description: 'Create a new variable in a collection.',
   params: {
     name: { type: 'string', description: 'Variable name', required: true },
@@ -93,6 +94,7 @@ export const createVariable = defineTool({
 
 export const setVariable = defineTool({
   name: 'set_variable',
+  mutates: true,
   description: 'Set the value of a variable for a specific mode.',
   params: {
     id: { type: 'string', description: 'Variable ID', required: true },
@@ -118,6 +120,7 @@ export const setVariable = defineTool({
 
 export const deleteVariable = defineTool({
   name: 'delete_variable',
+  mutates: true,
   description: 'Delete a variable.',
   params: {
     id: { type: 'string', description: 'Variable ID', required: true }
@@ -130,6 +133,7 @@ export const deleteVariable = defineTool({
 
 export const bindVariable = defineTool({
   name: 'bind_variable',
+  mutates: true,
   description: 'Bind a variable to a node property (fills, strokes, opacity, width, height, etc.).',
   params: {
     node_id: { type: 'string', description: 'Node ID', required: true },
@@ -165,6 +169,7 @@ export const getCollection = defineTool({
 
 export const createCollection = defineTool({
   name: 'create_collection',
+  mutates: true,
   description: 'Create a new variable collection.',
   params: {
     name: { type: 'string', description: 'Collection name', required: true }
@@ -176,6 +181,7 @@ export const createCollection = defineTool({
 
 export const deleteCollection = defineTool({
   name: 'delete_collection',
+  mutates: true,
   description: 'Delete a variable collection and all its variables.',
   params: {
     id: { type: 'string', description: 'Collection ID', required: true }

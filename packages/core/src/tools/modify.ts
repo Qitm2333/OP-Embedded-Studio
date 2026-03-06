@@ -5,6 +5,7 @@ import { defineTool } from './schema'
 
 export const setFill = defineTool({
   name: 'set_fill',
+  mutates: true,
   description: 'Set the fill color of a node. Accepts hex (#ff0000) or named color.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -22,6 +23,7 @@ export const setFill = defineTool({
 
 export const setStroke = defineTool({
   name: 'set_stroke',
+  mutates: true,
   description: 'Set the stroke (border) of a node.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -54,6 +56,7 @@ export const setStroke = defineTool({
 
 export const setEffects = defineTool({
   name: 'set_effects',
+  mutates: true,
   description:
     'Set effects on a node (drop shadow, inner shadow, blur). Pass an array or a single effect.',
   params: {
@@ -94,6 +97,7 @@ export const setEffects = defineTool({
 
 export const updateNode = defineTool({
   name: 'update_node',
+  mutates: true,
   description:
     'Update properties of an existing node: position, size, opacity, corner radius, visibility, text, font.',
   params: {
@@ -160,6 +164,7 @@ export const updateNode = defineTool({
 
 export const setLayout = defineTool({
   name: 'set_layout',
+  mutates: true,
   description: 'Set auto-layout (flexbox) on a frame. Direction, alignment, spacing, padding.',
   params: {
     id: { type: 'string', description: 'Frame node ID', required: true },
@@ -208,6 +213,7 @@ export const setLayout = defineTool({
 
 export const setConstraints = defineTool({
   name: 'set_constraints',
+  mutates: true,
   description: 'Set resize constraints for a node within its parent.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -237,6 +243,7 @@ export const setConstraints = defineTool({
 
 export const setRotation = defineTool({
   name: 'set_rotation',
+  mutates: true,
   description: 'Set rotation angle of a node in degrees.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -252,6 +259,7 @@ export const setRotation = defineTool({
 
 export const setOpacity = defineTool({
   name: 'set_opacity',
+  mutates: true,
   description: 'Set opacity of a node (0-1).',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -267,6 +275,7 @@ export const setOpacity = defineTool({
 
 export const setRadius = defineTool({
   name: 'set_radius',
+  mutates: true,
   description: 'Set corner radius. Use individual corners for independent values.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -292,6 +301,7 @@ export const setRadius = defineTool({
 
 export const setMinMax = defineTool({
   name: 'set_minmax',
+  mutates: true,
   description: 'Set min/max width and height constraints on a node.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -319,6 +329,7 @@ export const setMinMax = defineTool({
 
 export const setText = defineTool({
   name: 'set_text',
+  mutates: true,
   description: 'Set text content of a text node.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -334,6 +345,7 @@ export const setText = defineTool({
 
 export const setFont = defineTool({
   name: 'set_font',
+  mutates: true,
   description: 'Set font properties of a text node.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -358,6 +370,7 @@ export const setFont = defineTool({
 
 export const setFontRange = defineTool({
   name: 'set_font_range',
+  mutates: true,
   description: 'Set font properties for a text range.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -385,6 +398,7 @@ export const setFontRange = defineTool({
 
 export const setTextResize = defineTool({
   name: 'set_text_resize',
+  mutates: true,
   description: 'Set text auto-resize mode.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -405,6 +419,7 @@ export const setTextResize = defineTool({
 
 export const setVisible = defineTool({
   name: 'set_visible',
+  mutates: true,
   description: 'Set visibility of a node.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -420,6 +435,7 @@ export const setVisible = defineTool({
 
 export const setBlend = defineTool({
   name: 'set_blend',
+  mutates: true,
   description: 'Set blend mode of a node.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -457,6 +473,7 @@ export const setBlend = defineTool({
 
 export const setLocked = defineTool({
   name: 'set_locked',
+  mutates: true,
   description: 'Set locked state of a node.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -472,6 +489,7 @@ export const setLocked = defineTool({
 
 export const setStrokeAlign = defineTool({
   name: 'set_stroke_align',
+  mutates: true,
   description: 'Set stroke alignment of a node.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -492,6 +510,7 @@ export const setStrokeAlign = defineTool({
 
 export const setTextProperties = defineTool({
   name: 'set_text_properties',
+  mutates: true,
   description:
     'Set text layout properties: alignment, auto-resize, text case, decoration, truncation.',
   params: {
@@ -544,6 +563,7 @@ export const setTextProperties = defineTool({
 
 export const setLayoutChild = defineTool({
   name: 'set_layout_child',
+  mutates: true,
   description:
     'Configure auto-layout child: sizing (FIXED/HUG/FILL), grow, alignment, absolute positioning.',
   params: {

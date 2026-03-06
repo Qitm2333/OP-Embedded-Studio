@@ -15,43 +15,24 @@ export interface AIAdapterOptions {
   onFlashNodes?: (nodeIds: string[]) => void
 }
 
-const READ_ONLY_TOOLS = new Set([
-  'get_selection',
-  'get_page_tree',
-  'get_node',
-  'find_nodes',
-  'list_pages',
-  'list_variables',
-  'list_collections',
-  'node_bounds',
-  'node_ancestors',
-  'node_children',
-  'node_tree',
-  'node_bindings',
-  'list_fonts',
-  'get_variable',
-  'find_variables',
-  'get_collection',
-  'export_svg',
-  'export_image',
-  'viewport_get',
-  'page_bounds',
-  'eval'
-])
+function extractIdsFromArray(arr: unknown[]): string[] {
+  const ids: string[] = []
+  for (const item of arr) {
+    if (item && typeof item === 'object' && typeof (item as Record<string, unknown>).id === 'string') {
+      ids.push((item as Record<string, unknown>).id as string)
+    }
+  }
+  return ids
+}
 
 function extractNodeIds(result: unknown): string[] {
   if (!result || typeof result !== 'object') return []
   const obj = result as Record<string, unknown>
+  if (typeof obj.deleted === 'string') return []
   const ids: string[] = []
   if (typeof obj.id === 'string') ids.push(obj.id)
-  if (typeof obj.deleted === 'string') return []
-  if (Array.isArray(obj.selection)) {
-    for (const item of obj.selection) {
-      if (item && typeof item === 'object' && typeof (item as Record<string, unknown>).id === 'string') {
-        ids.push((item as Record<string, unknown>).id as string)
-      }
-    }
-  }
+  if (Array.isArray(obj.selection)) ids.push(...extractIdsFromArray(obj.selection))
+  if (Array.isArray(obj.results)) ids.push(...extractIdsFromArray(obj.results))
   return ids
 }
 
@@ -73,7 +54,6 @@ export function toolsToAI(
       shape[key] = paramToValibot(v, param)
     }
 
-    const isReadOnly = READ_ONLY_TOOLS.has(def.name)
     result[def.name] = tool({
       description: def.description,
       inputSchema: valibotSchema(v.object(shape as any)),
@@ -81,7 +61,7 @@ export function toolsToAI(
         options.onBeforeExecute?.()
         try {
           const execResult = await def.execute(options.getFigma(), args as any)
-          if (!isReadOnly && options.onFlashNodes) {
+          if (def.mutates && options.onFlashNodes) {
             const ids = extractNodeIds(execResult)
             if (ids.length > 0) options.onFlashNodes(ids)
           }

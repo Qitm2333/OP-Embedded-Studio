@@ -191,7 +191,7 @@ export function createEditorStore() {
     renderVersion: 0,
     sceneVersion: 0,
     loading: false,
-    activeRibbonTab: null as 'panels' | 'code' | 'ai' | null,
+    activeRibbonTab: 'panels' as 'panels' | 'code' | 'ai',
     panelMode: 'design' as 'layers' | 'design',
     actionToast: null as string | null,
     mobileDrawerSnap: 'closed' as 'closed' | 'half' | 'full',

@@ -116,6 +116,7 @@ export const listPages = defineTool({
 
 export const switchPage = defineTool({
   name: 'switch_page',
+  mutates: true,
   description: 'Switch to a different page by name or ID.',
   params: {
     page: { type: 'string', description: 'Page name or ID', required: true }
@@ -161,6 +162,7 @@ export const pageBounds = defineTool({
 
 export const selectNodes = defineTool({
   name: 'select_nodes',
+  mutates: true,
   description: 'Select one or more nodes by ID.',
   params: {
     ids: { type: 'string[]', description: 'Node IDs to select', required: true }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import {
   DropdownMenuRoot,
   DropdownMenuTrigger,
@@ -7,7 +7,8 @@ import {
   DropdownMenuItem,
   DropdownMenuPortal
 } from 'reka-ui'
-import { useBreakpoints, useWindowSize } from '@vueuse/core'
+import { useBreakpoints } from '@vueuse/core'
+import { AnimatePresence, motion } from 'motion-v'
 
 import IconChevronDown from '~icons/lucide/chevron-down'
 import IconChevronLeft from '~icons/lucide/chevron-left'
@@ -32,7 +33,6 @@ import type { Tool } from '@/stores/editor'
 
 const store = useEditorStore()
 const breakpoints = useBreakpoints({ mobile: 768 })
-const { width: viewportW } = useWindowSize()
 const isMobile = breakpoints.smaller('mobile')
 
 const toolLabels: Record<Tool, string> = {
@@ -100,13 +100,6 @@ const mobileCategory = ref(0)
 const hasPrev = computed(() => mobileCategory.value > 0)
 const hasNext = computed(() => mobileCategory.value < CATEGORY_COUNT - 1)
 
-function prevCategory() {
-  if (hasPrev.value) mobileCategory.value--
-}
-function nextCategory() {
-  if (hasNext.value) mobileCategory.value++
-}
-
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 
 function onActionTap(item: ActionItem) {
@@ -118,32 +111,25 @@ function onActionTap(item: ActionItem) {
   }, ACTION_TOAST_DURATION)
 }
 
-const cat0Ref = ref<HTMLElement | null>(null)
-const cat1Ref = ref<HTMLElement | null>(null)
-const cat2Ref = ref<HTMLElement | null>(null)
-const catRefs = [cat0Ref, cat1Ref, cat2Ref]
+const slideDirection = ref(1)
 
-const wrapperW = ref(0)
-const wrapperH = ref(0)
-const measured = ref(false)
-
-function measure() {
-  const el = catRefs[mobileCategory.value]?.value
-  if (el) {
-    const maxPillW = viewportW.value - 80
-    wrapperW.value = Math.min(el.scrollWidth, maxPillW)
-    wrapperH.value = el.scrollHeight
-    measured.value = true
-  }
+const slideVariants = {
+  initial: (dir: number) => ({ opacity: 0, x: dir * 20 }),
+  animate: { opacity: 1, x: 0 },
+  exit: (dir: number) => ({ opacity: 0, x: dir * -20 })
 }
 
-onMounted(() => {
-  nextTick(measure)
-})
+function goPrev() {
+  if (!hasPrev.value) return
+  slideDirection.value = -1
+  mobileCategory.value--
+}
 
-watch([mobileCategory, viewportW], () => {
-  nextTick(measure)
-})
+function goNext() {
+  if (!hasNext.value) return
+  slideDirection.value = 1
+  mobileCategory.value++
+}
 </script>
 
 <template>
@@ -240,153 +226,164 @@ watch([mobileCategory, viewportW], () => {
       maxWidth: 'calc(100vw - 2rem)',
       bottom: `calc(56px + env(safe-area-inset-bottom) + 0.75rem)`
     }"
-    @touchstart.stop
   >
-    <button
+    <motion.button
       data-test-id="mobile-toolbar-prev"
-      class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-panel shadow-sm transition-opacity select-none"
-      :class="hasPrev ? 'text-muted opacity-100' : 'pointer-events-none opacity-0'"
-      @click="prevCategory"
+      class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-panel shadow-sm select-none"
+      :class="hasPrev ? 'text-muted' : 'pointer-events-none'"
+      :animate="{ opacity: hasPrev ? 1 : 0 }"
+      :transition="{ duration: 0.15 }"
+      @click="goPrev"
     >
       <IconChevronLeft class="size-3.5" />
-    </button>
+    </motion.button>
 
-    <div
+    <motion.div
+      layout
       data-test-id="mobile-toolbar-container"
       class="relative flex h-11 items-center overflow-hidden rounded-[8px] border border-border bg-panel px-2 shadow-lg"
-      :style="measured ? { width: wrapperW + 16 + 'px', transition: 'width 250ms ease' } : {}"
+      :transition="{ layout: { type: 'spring', damping: 30, stiffness: 500 } }"
     >
-      <div
-        ref="cat0Ref"
-        data-test-id="mobile-toolbar-tools"
-        class="flex gap-0.5 transition-opacity duration-200"
-        :class="
-          mobileCategory === 0
-            ? 'relative opacity-100'
-            : 'absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-0'
-        "
-      >
-        <template v-for="tool in TOOLS" :key="tool.key">
-          <div v-if="tool.flyout && tool.flyout.length > 1" class="flex items-center">
+      <AnimatePresence mode="popLayout" :custom="slideDirection">
+        <motion.div
+          v-if="mobileCategory === 0"
+          key="tools"
+          data-test-id="mobile-toolbar-tools"
+          class="flex gap-0.5"
+          :variants="slideVariants"
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          :transition="{ duration: 0.15 }"
+        >
+          <template v-for="tool in TOOLS" :key="tool.key">
+            <div v-if="tool.flyout && tool.flyout.length > 1" class="flex items-center">
+              <button
+                :data-test-id="`mobile-toolbar-tool-${activeKeyForTool(tool).toLowerCase()}`"
+                class="flex size-8 cursor-pointer items-center justify-center rounded-[6px] border-none transition-colors select-none"
+                :class="
+                  isActive(tool)
+                    ? 'bg-accent text-white'
+                    : 'bg-transparent text-muted active:bg-hover'
+                "
+                @click="store.setTool(activeKeyForTool(tool))"
+              >
+                <component :is="toolIcons[activeKeyForTool(tool)]" class="size-4" />
+              </button>
+
+              <DropdownMenuRoot>
+                <DropdownMenuTrigger as-child>
+                  <button
+                    :data-test-id="`mobile-toolbar-flyout-${tool.key.toLowerCase()}`"
+                    class="flex h-8 w-3 cursor-pointer items-center justify-center rounded-[6px] border-none transition-colors select-none"
+                    :class="
+                      isActive(tool)
+                        ? 'bg-accent text-white'
+                        : 'bg-transparent text-muted active:bg-hover'
+                    "
+                  >
+                    <IconChevronDown class="size-2.5" />
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuPortal>
+                  <DropdownMenuContent
+                    side="top"
+                    :side-offset="8"
+                    align="start"
+                    class="min-w-32 rounded-lg border border-border bg-panel p-1 shadow-lg"
+                  >
+                    <DropdownMenuItem
+                      v-for="sub in tool.flyout"
+                      :key="sub"
+                      :data-test-id="`mobile-toolbar-flyout-item-${sub.toLowerCase()}`"
+                      class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none transition-colors"
+                      :class="
+                        store.state.activeTool === sub
+                          ? 'bg-accent text-white'
+                          : 'text-surface hover:bg-hover'
+                      "
+                      @select="store.setTool(sub)"
+                    >
+                      <component :is="toolIcons[sub]" class="size-3.5" />
+                      <span class="flex-1">{{ toolLabels[sub] }}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenuRoot>
+            </div>
+
             <button
-              :data-test-id="`mobile-toolbar-tool-${activeKeyForTool(tool).toLowerCase()}`"
+              v-else
+              :data-test-id="`mobile-toolbar-tool-${tool.key.toLowerCase()}`"
               class="flex size-8 cursor-pointer items-center justify-center rounded-[6px] border-none transition-colors select-none"
               :class="
                 isActive(tool)
                   ? 'bg-accent text-white'
                   : 'bg-transparent text-muted active:bg-hover'
               "
-              @click="store.setTool(activeKeyForTool(tool))"
+              @click="store.setTool(tool.key)"
             >
-              <component :is="toolIcons[activeKeyForTool(tool)]" class="size-4" />
+              <component :is="toolIcons[tool.key]" class="size-4" />
             </button>
+          </template>
+        </motion.div>
 
-            <DropdownMenuRoot>
-              <DropdownMenuTrigger as-child>
-                <button
-                  :data-test-id="`mobile-toolbar-flyout-${tool.key.toLowerCase()}`"
-                  class="flex h-8 w-3 cursor-pointer items-center justify-center rounded-[6px] border-none transition-colors select-none"
-                  :class="
-                    isActive(tool)
-                      ? 'bg-accent text-white'
-                      : 'bg-transparent text-muted active:bg-hover'
-                  "
-                >
-                  <IconChevronDown class="size-2.5" />
-                </button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuPortal>
-                <DropdownMenuContent
-                  side="top"
-                  :side-offset="8"
-                  align="start"
-                  class="min-w-32 rounded-lg border border-border bg-panel p-1 shadow-lg"
-                >
-                  <DropdownMenuItem
-                    v-for="sub in tool.flyout"
-                    :key="sub"
-                    :data-test-id="`mobile-toolbar-flyout-item-${sub.toLowerCase()}`"
-                    class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none transition-colors"
-                    :class="
-                      store.state.activeTool === sub
-                        ? 'bg-accent text-white'
-                        : 'text-surface hover:bg-hover'
-                    "
-                    @select="store.setTool(sub)"
-                  >
-                    <component :is="toolIcons[sub]" class="size-3.5" />
-                    <span class="flex-1">{{ toolLabels[sub] }}</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenuPortal>
-            </DropdownMenuRoot>
-          </div>
-
+        <motion.div
+          v-else-if="mobileCategory === 1"
+          key="edit"
+          data-test-id="mobile-toolbar-edit"
+          class="flex gap-0.5"
+          :variants="slideVariants"
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          :transition="{ duration: 0.15 }"
+        >
           <button
-            v-else
-            :data-test-id="`mobile-toolbar-tool-${tool.key.toLowerCase()}`"
-            class="flex size-8 cursor-pointer items-center justify-center rounded-[6px] border-none transition-colors select-none"
-            :class="
-              isActive(tool) ? 'bg-accent text-white' : 'bg-transparent text-muted active:bg-hover'
-            "
-            @click="store.setTool(tool.key)"
+            v-for="item in editActions"
+            :key="item.label"
+            :data-test-id="`mobile-toolbar-${item.label.toLowerCase()}`"
+            class="flex size-8 cursor-pointer items-center justify-center rounded-[6px] border-none bg-transparent text-muted transition-colors select-none active:bg-hover active:text-surface"
+            @click="onActionTap(item)"
           >
-            <component :is="toolIcons[tool.key]" class="size-4" />
+            <component :is="item.icon" class="size-4" />
           </button>
-        </template>
-      </div>
+        </motion.div>
 
-      <div
-        ref="cat1Ref"
-        data-test-id="mobile-toolbar-edit"
-        class="flex gap-0.5 transition-opacity duration-200"
-        :class="
-          mobileCategory === 1
-            ? 'relative opacity-100'
-            : 'absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-0'
-        "
-      >
-        <button
-          v-for="item in editActions"
-          :key="item.label"
-          :data-test-id="`mobile-toolbar-${item.label.toLowerCase()}`"
-          class="flex size-8 cursor-pointer items-center justify-center rounded-[6px] border-none bg-transparent text-muted transition-colors select-none active:bg-hover active:text-surface"
-          @click="onActionTap(item)"
+        <motion.div
+          v-else
+          key="arrange"
+          data-test-id="mobile-toolbar-arrange"
+          class="flex gap-0.5"
+          :variants="slideVariants"
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          :transition="{ duration: 0.15 }"
         >
-          <component :is="item.icon" class="size-4" />
-        </button>
-      </div>
+          <button
+            v-for="item in arrangeActions"
+            :key="item.label"
+            :data-test-id="`mobile-toolbar-${item.label.toLowerCase()}`"
+            class="flex size-8 cursor-pointer items-center justify-center rounded-[6px] border-none bg-transparent text-muted transition-colors select-none active:bg-hover active:text-surface"
+            @click="onActionTap(item)"
+          >
+            <component :is="item.icon" class="size-4" />
+          </button>
+        </motion.div>
+      </AnimatePresence>
+    </motion.div>
 
-      <div
-        ref="cat2Ref"
-        data-test-id="mobile-toolbar-arrange"
-        class="flex gap-0.5 transition-opacity duration-200"
-        :class="
-          mobileCategory === 2
-            ? 'relative opacity-100'
-            : 'absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-0'
-        "
-      >
-        <button
-          v-for="item in arrangeActions"
-          :key="item.label"
-          :data-test-id="`mobile-toolbar-${item.label.toLowerCase()}`"
-          class="flex size-8 cursor-pointer items-center justify-center rounded-[6px] border-none bg-transparent text-muted transition-colors select-none active:bg-hover active:text-surface"
-          @click="onActionTap(item)"
-        >
-          <component :is="item.icon" class="size-4" />
-        </button>
-      </div>
-    </div>
-
-    <button
+    <motion.button
       data-test-id="mobile-toolbar-next"
-      class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-panel shadow-sm transition-opacity select-none"
-      :class="hasNext ? 'text-muted opacity-100' : 'pointer-events-none opacity-0'"
-      @click="nextCategory"
+      class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-panel shadow-sm select-none"
+      :class="hasNext ? 'text-muted' : 'pointer-events-none'"
+      :animate="{ opacity: hasNext ? 1 : 0 }"
+      :transition="{ duration: 0.15 }"
+      @click="goNext"
     >
       <IconChevronRight class="size-3.5" />
-    </button>
+    </motion.button>
   </div>
 </template>

@@ -1060,10 +1060,10 @@ export class SkiaRenderer {
       }
 
       const abs = graph.getAbsolutePosition(flash.nodeId)
-      const sx = abs.x * zoom + this.panX
-      const sy = abs.y * zoom + this.panY
-      const sw = node.width * zoom
-      const sh = node.height * zoom
+      const cx = (abs.x + node.width / 2) * zoom + this.panX
+      const cy = (abs.y + node.height / 2) * zoom + this.panY
+      const hw = (node.width / 2) * zoom
+      const hh = (node.height / 2) * zoom
 
       let opacity: number
       let extraPad: number
@@ -1072,7 +1072,7 @@ export class SkiaRenderer {
         const t = elapsed / FLASH_ATTACK_MS
         const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
         opacity = ease
-        extraPad = (1 - ease) * FLASH_OVERSHOOT / zoom
+        extraPad = (1 - ease) * FLASH_OVERSHOOT
       } else if (elapsed < FLASH_ATTACK_MS + FLASH_HOLD_MS) {
         opacity = 1
         extraPad = 0
@@ -1088,12 +1088,16 @@ export class SkiaRenderer {
       paint.setColor(ck.Color4f(FLASH_COLOR.r, FLASH_COLOR.g, FLASH_COLOR.b, opacity))
       paint.setStrokeWidth(FLASH_STROKE_WIDTH)
 
+      canvas.save()
+      if (node.rotation !== 0) canvas.rotate(node.rotation, cx, cy)
+
       const rect = ck.RRectXY(
-        ck.LTRBRect(sx - pad, sy - pad, sx + sw + pad, sy + sh + pad),
+        ck.LTRBRect(cx - hw - pad, cy - hh - pad, cx + hw + pad, cy + hh + pad),
         r,
         r
       )
       canvas.drawRRect(rect, paint)
+      canvas.restore()
     }
   }
 
@@ -3195,6 +3199,7 @@ export class SkiaRenderer {
     for (const pic of this.nodePictureCache.values()) pic?.delete()
     this.nodePictureCache.clear()
     this.scenePicture?.delete()
+    this._flashPaint?.delete()
     this.profiler.destroy()
     this.surface.delete()
   }

@@ -106,6 +106,7 @@ export const HALF_FRAC = 3 / 7
 export const HUD_TOP = 12 + 32 + 6 + 32 + 12
 
 export const SWIPE_THRESHOLD = 30
+export const SWIPE_VELOCITY_THRESHOLD = 500
 
 export const ACTION_TOAST_DURATION = 800
 export const DRAG_DEAD_ZONE = 4

@@ -2,6 +2,7 @@ import { defineTool, nodeSummary } from './schema'
 
 export const booleanUnion = defineTool({
   name: 'boolean_union',
+  mutates: true,
   description: 'Union (combine) multiple nodes.',
   params: {
     ids: { type: 'string[]', description: 'Node IDs to union', required: true }
@@ -14,6 +15,7 @@ export const booleanUnion = defineTool({
 
 export const booleanSubtract = defineTool({
   name: 'boolean_subtract',
+  mutates: true,
   description: 'Subtract the second node from the first.',
   params: {
     ids: { type: 'string[]', description: 'Node IDs (first minus rest)', required: true }
@@ -26,6 +28,7 @@ export const booleanSubtract = defineTool({
 
 export const booleanIntersect = defineTool({
   name: 'boolean_intersect',
+  mutates: true,
   description: 'Intersect multiple nodes.',
   params: {
     ids: { type: 'string[]', description: 'Node IDs to intersect', required: true }
@@ -38,6 +41,7 @@ export const booleanIntersect = defineTool({
 
 export const booleanExclude = defineTool({
   name: 'boolean_exclude',
+  mutates: true,
   description: 'Exclude (XOR) multiple nodes.',
   params: {
     ids: { type: 'string[]', description: 'Node IDs to exclude', required: true }
@@ -64,6 +68,7 @@ export const pathGet = defineTool({
 
 export const pathSet = defineTool({
   name: 'path_set',
+  mutates: true,
   description: 'Set vector path data on a node. Provide a VectorNetwork JSON.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -80,6 +85,7 @@ export const pathSet = defineTool({
 
 export const pathScale = defineTool({
   name: 'path_scale',
+  mutates: true,
   description: 'Scale vector path from center.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -113,6 +119,7 @@ export const pathScale = defineTool({
 
 export const pathFlip = defineTool({
   name: 'path_flip',
+  mutates: true,
   description: 'Flip vector path horizontally or vertically.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -151,6 +158,7 @@ export const pathFlip = defineTool({
 
 export const pathMove = defineTool({
   name: 'path_move',
+  mutates: true,
   description: 'Move all path points by an offset.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
@@ -182,6 +190,7 @@ export const viewportGet = defineTool({
 
 export const viewportSet = defineTool({
   name: 'viewport_set',
+  mutates: true,
   description: 'Set viewport position and zoom.',
   params: {
     x: { type: 'number', description: 'Center X', required: true },
@@ -196,6 +205,7 @@ export const viewportSet = defineTool({
 
 export const viewportZoomToFit = defineTool({
   name: 'viewport_zoom_to_fit',
+  mutates: true,
   description: 'Zoom viewport to fit specified nodes.',
   params: {
     ids: { type: 'string[]', description: 'Node IDs to fit in view', required: true }
