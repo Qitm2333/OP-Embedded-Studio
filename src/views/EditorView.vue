@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { provide } from 'vue'
 import { useBreakpoints, useEventListener, useUrlSearchParams } from '@vueuse/core'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 
 import { useKeyboard } from '@/composables/use-keyboard'
 import { useMenu } from '@/composables/use-menu'
 import { useCollab, COLLAB_KEY } from '@/composables/use-collab'
-import { toast } from '@/composables/use-toast'
 import { createDemoShapes } from '@/demo'
 import { useEditorStore } from '@/stores/editor'
 import { createTab, activeTab } from '@/stores/tabs'
@@ -24,8 +23,6 @@ import TabBar from '@/components/TabBar.vue'
 import Toolbar from '@/components/Toolbar.vue'
 
 const route = useRoute()
-const router = useRouter()
-
 const firstTab = createTab()
 const store = useEditorStore()
 const breakpoints = useBreakpoints({ mobile: 768 })
@@ -51,25 +48,6 @@ if (route.meta.demo && !('test' in params)) {
 }
 
 useHead({ title: route.meta.demo ? 'Demo' : undefined })
-
-const pendingRoomId = (route.params.roomId as string) || null
-
-function onShare() {
-  const roomId = collab.shareCurrentDoc()
-  router.push(`/share/${roomId}`)
-  navigator.clipboard.writeText(`${window.location.origin}/share/${roomId}`)
-  toast.show('Link copied to clipboard')
-}
-
-function onJoin(roomId: string) {
-  collab.connect(roomId)
-  router.push(`/share/${roomId}`)
-}
-
-function onDisconnect() {
-  collab.disconnect()
-  router.push('/')
-}
 </script>
 
 <template>
@@ -104,17 +82,7 @@ function onDisconnect() {
         <div
           class="flex shrink-0 items-center justify-between border-b border-border px-1.5 py-1.5"
         >
-          <CollabPanel
-            :state="collab.state.value"
-            :peers="collab.remotePeers.value"
-            :pending-room-id="pendingRoomId"
-            :following-peer="collab.followingPeer.value"
-            @share="onShare"
-            @join="onJoin"
-            @disconnect="onDisconnect"
-            @update:name="collab.setLocalName"
-            @follow="collab.followPeer"
-          />
+          <CollabPanel />
         </div>
         <PropertiesPanel />
       </SplitterPanel>
