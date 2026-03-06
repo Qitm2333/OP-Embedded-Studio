@@ -15,6 +15,8 @@ import {
 } from 'reka-ui'
 import { computed, ref } from 'vue'
 
+import { uiButton } from '@/components/ui/button'
+import { selectContent, selectItem, selectTrigger } from '@/components/ui/select'
 import { MODELS, useAIChat } from '@/composables/use-chat'
 
 const { modelId } = useAIChat()
@@ -52,7 +54,7 @@ function handleSubmit(e: Event) {
         <SelectRoot v-model="modelId">
           <SelectTrigger
             data-test-id="chat-model-selector"
-            class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
+            :class="selectTrigger({ class: 'gap-1 rounded border-none bg-transparent px-1.5 py-0.5 text-[10px] text-muted' })"
           >
             <icon-lucide-bot class="size-3" />
             {{ selectedModelName }}
@@ -63,14 +65,14 @@ function handleSubmit(e: Event) {
               position="popper"
               side="top"
               :side-offset="4"
-              class="z-50 max-h-60 overflow-y-auto rounded-lg border border-border bg-panel p-1 shadow-lg"
+              :class="selectContent({ radius: 'lg', padding: 'md', class: 'max-h-60 overflow-y-auto' })"
             >
               <SelectViewport>
                 <SelectItem
                   v-for="model in MODELS"
                   :key="model.id"
                   :value="model.id"
-                  class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[11px] text-surface outline-none data-[highlighted]:bg-hover"
+                  :class="selectItem({ class: 'gap-2 rounded px-2 py-1.5 text-[11px]' })"
                 >
                   <SelectItemText class="flex-1">{{ model.name }}</SelectItemText>
                   <span
@@ -101,7 +103,7 @@ function handleSubmit(e: Event) {
             <button
               type="button"
               data-test-id="chat-stop-button"
-              class="shrink-0 rounded border border-border px-2 py-1.5 text-xs text-muted hover:bg-hover"
+              :class="uiButton({ tone: 'ghost', shape: 'rounded', size: 'sm', class: 'shrink-0 border border-border px-2 py-1.5' })"
               @click="emit('stop')"
             >
               <icon-lucide-square class="size-3" />
@@ -122,7 +124,7 @@ function handleSubmit(e: Event) {
             <button
               type="submit"
               data-test-id="chat-send-button"
-              class="shrink-0 rounded bg-accent px-2.5 py-1.5 text-xs font-medium text-white hover:bg-accent/90"
+              :class="uiButton({ tone: 'accent', shape: 'rounded', size: 'sm', class: 'shrink-0 px-2.5 py-1.5 font-medium' })"
               :disabled="!input.trim()"
             >
               <icon-lucide-send class="size-3" />
