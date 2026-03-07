@@ -69,7 +69,10 @@ function handleBrowserMessage(data: string) {
       pending.delete(msg.id)
       clearTimeout(req.timer)
       if (msg.ok === false) req.reject(new Error(msg.error ?? 'RPC failed'))
-      else req.resolve(msg.result)
+      else {
+        const { type: _, id: __, ...payload } = msg
+        req.resolve(payload)
+      }
     }
   } catch {
     // ignore malformed messages
@@ -130,7 +133,7 @@ export function startAutomationBridge(server: ViteServer) {
     try {
       body = await preprocessRpc(body as Record<string, unknown>)
       const result = await sendToBrowser(body as Record<string, unknown>)
-      return c.json({ ok: true, result })
+      return c.json(result)
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       return c.json({ ok: false, error: msg }, 502)
