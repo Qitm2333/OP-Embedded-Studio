@@ -19,11 +19,10 @@ function weightName(w: number): string {
   return 'Black'
 }
 
-async function getData(file: string | undefined, groupBy?: string): Promise<AnalyzeTypographyResult> {
-  const rpcArgs = { groupBy }
-  if (isAppMode(file)) return rpc<AnalyzeTypographyResult>('analyze_typography', rpcArgs)
+async function getData(file?: string): Promise<AnalyzeTypographyResult> {
+  if (isAppMode(file)) return rpc<AnalyzeTypographyResult>('analyze_typography')
   const graph = await loadDocument(requireFile(file))
-  return executeRpcCommand(graph, 'analyze_typography', rpcArgs) as AnalyzeTypographyResult
+  return executeRpcCommand(graph, 'analyze_typography', {}) as AnalyzeTypographyResult
 }
 
 export default defineCommand({
@@ -35,7 +34,7 @@ export default defineCommand({
     json: { type: 'boolean', description: 'Output as JSON' }
   },
   async run({ args }) {
-    const data = await getData(args.file, args['group-by'])
+    const data = await getData(args.file)
     const limit = Number(args.limit)
     const groupBy = args['group-by']
 

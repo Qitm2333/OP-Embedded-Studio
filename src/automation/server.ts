@@ -1,10 +1,19 @@
+import { makeFigmaFromStore } from '@/automation/figma-factory'
 /**
  * Browser-side automation handler.
  *
  * Connects to the bridge via WebSocket, receives RPC requests,
  * executes them against the live EditorStore, and sends results back.
  */
-import { ALL_TOOLS, AUTOMATION_WS_PORT, FigmaAPI, executeRpcCommand, renderTreeNode, computeAllLayouts } from '@open-pencil/core'
+import {
+  ALL_TOOLS,
+  AUTOMATION_WS_PORT,
+  executeRpcCommand,
+  renderTreeNode,
+  computeAllLayouts,
+  selectionToJSX,
+  sceneNodeToJSX
+} from '@open-pencil/core'
 
 import type { EditorStore } from '@/stores/editor'
 import type { ExportFormat } from '@open-pencil/core'
@@ -22,23 +31,8 @@ export function connectAutomation(getStore: () => EditorStore) {
   let ws: WebSocket | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | undefined
 
-  function makeFigma(): FigmaAPI {
-    const store = getStore()
-    const api = new FigmaAPI(store.graph)
-    api.currentPage = api.wrapNode(store.state.currentPageId)
-    api.currentPage.selection = [...store.state.selectedIds]
-      .map((id) => api.getNodeById(id))
-      .filter((n): n is NonNullable<typeof n> => n !== null)
-    api.viewport = {
-      center: {
-        x: (-store.state.panX + window.innerWidth / 2) / store.state.zoom,
-        y: (-store.state.panY + window.innerHeight / 2) / store.state.zoom
-      },
-      zoom: store.state.zoom
-    }
-    api.exportImage = (nodeIds, opts) =>
-      store.renderExportImage(nodeIds, opts.scale ?? 1, (opts.format ?? 'PNG') as ExportFormat)
-    return api
+  function makeFigma() {
+    return makeFigmaFromStore(getStore())
   }
 
   async function handleRequest(_id: string, command: string, args: unknown): Promise<unknown> {
@@ -73,7 +67,10 @@ export function connectAutomation(getStore: () => EditorStore) {
         computeAllLayouts(store.graph, store.state.currentPageId)
         store.requestRender()
         store.flashNodes([result.id])
-        return { ok: true, result: { id: result.id, name: result.name, type: result.type, children: result.childIds } }
+        return {
+          ok: true,
+          result: { id: result.id, name: result.name, type: result.type, children: result.childIds }
+        }
       }
 
       const def = ALL_TOOLS.find((t) => t.name === toolName)
@@ -98,8 +95,24 @@ export function connectAutomation(getStore: () => EditorStore) {
         (exportArgs?.format ?? 'PNG') as ExportFormat
       )
       if (!data) throw new Error('Export failed')
-      const base64 = btoa(String.fromCharCode(...data))
-      return { ok: true, base64, mimeType: `image/${(exportArgs?.format ?? 'png').toLowerCase()}` }
+      let binary = ''
+      for (let i = 0; i < data.length; i++) binary += String.fromCharCode(data[i])
+      const base64 = btoa(binary)
+      return {
+        ok: true,
+        result: { base64, mimeType: `image/${(exportArgs?.format ?? 'png').toLowerCase()}` }
+      }
+    }
+
+    if (command === 'export_jsx') {
+      const jsxArgs = args as { nodeIds?: string[]; style?: string } | undefined
+      const style = (jsxArgs?.style ?? 'openpencil') as 'openpencil' | 'tailwind'
+      const nodeIds = jsxArgs?.nodeIds ?? store.graph.getPages()[0]?.childIds ?? []
+      const jsx =
+        nodeIds.length === 1
+          ? sceneNodeToJSX(nodeIds[0], store.graph, style)
+          : selectionToJSX(nodeIds, store.graph, style)
+      return { ok: true, result: { jsx: jsx ?? '' } }
     }
 
     const result = executeRpcCommand(store.graph, command, args ?? {})

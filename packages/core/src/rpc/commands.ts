@@ -7,17 +7,21 @@ export interface RpcCommand<A = unknown, R = unknown> {
   execute: (graph: SceneGraph, args: A) => R
 }
 
-function walkNodes(graph: SceneGraph, rootId: string, fn: (node: SceneNode) => void) {
+/** Walk descendants. Callback returns `false` to stop traversal. */
+function walkNodes(graph: SceneGraph, rootId: string, fn: (node: SceneNode) => boolean): boolean {
   const node = graph.getNode(rootId)
-  if (!node) return
-  fn(node)
-  for (const childId of node.childIds) walkNodes(graph, childId, fn)
+  if (!node) return true
+  if (!fn(node)) return false
+  for (const childId of node.childIds) {
+    if (!walkNodes(graph, childId, fn)) return false
+  }
+  return true
 }
 
 function countNodes(graph: SceneGraph, pageId: string): number {
   let count = 0
   const page = graph.getNode(pageId)
-  if (page) for (const cid of page.childIds) walkNodes(graph, cid, () => count++)
+  if (page) for (const cid of page.childIds) walkNodes(graph, cid, () => { count++; return true })
   return count
 }
 
@@ -48,6 +52,7 @@ export const infoCommand: RpcCommand<void, InfoResult> = {
           pageCount++
           types[node.type] = (types[node.type] ?? 0) + 1
           if (node.fontFamily) fonts.add(node.fontFamily)
+          return true
         })
       }
       pageCounts[page.name] = pageCount
@@ -160,8 +165,8 @@ export const findCommand: RpcCommand<FindArgs, FindNodeResult[]> = {
 
     const searchPage = (page: SceneNode) => {
       for (const cid of page.childIds) {
-        walkNodes(graph, cid, (node) => {
-          if (results.length >= max) return
+        const cont = walkNodes(graph, cid, (node) => {
+          if (results.length >= max) return false
           const matchesName = !namePattern || node.name.toLowerCase().includes(namePattern)
           const matchesType = !typeFilter || node.type === typeFilter
           if (matchesName && matchesType) {
@@ -170,7 +175,9 @@ export const findCommand: RpcCommand<FindArgs, FindNodeResult[]> = {
               width: Math.round(node.width), height: Math.round(node.height)
             })
           }
+          return true
         })
+        if (!cont) break
       }
     }
 
@@ -340,7 +347,6 @@ export const variablesCommand: RpcCommand<VariablesArgs, VariablesResult> = {
 // ── analyze colors ──
 
 export interface AnalyzeColorsArgs {
-  limit?: number
   threshold?: number
   similar?: boolean
 }
@@ -449,9 +455,7 @@ export const analyzeColorsCommand: RpcCommand<AnalyzeColorsArgs, AnalyzeColorsRe
 
 // ── analyze typography ──
 
-export interface AnalyzeTypographyArgs {
-  groupBy?: string
-}
+export interface AnalyzeTypographyArgs {}
 
 export interface TypographyStyle {
   family: string

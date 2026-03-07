@@ -7,8 +7,8 @@ import { executeRpcCommand } from '@open-pencil/core'
 
 import type { AnalyzeColorsResult } from '@open-pencil/core'
 
-async function getData(file: string | undefined, args: { limit?: string; threshold?: string; similar?: boolean }): Promise<AnalyzeColorsResult> {
-  const rpcArgs = { limit: Number(args.limit ?? 30), threshold: Number(args.threshold ?? 15), similar: args.similar }
+async function getData(file: string | undefined, args: { threshold?: string; similar?: boolean }): Promise<AnalyzeColorsResult> {
+  const rpcArgs = { threshold: Number(args.threshold ?? 15), similar: args.similar }
   if (isAppMode(file)) return rpc<AnalyzeColorsResult>('analyze_colors', rpcArgs)
   const graph = await loadDocument(requireFile(file))
   return executeRpcCommand(graph, 'analyze_colors', rpcArgs) as AnalyzeColorsResult

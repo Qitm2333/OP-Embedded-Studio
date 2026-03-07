@@ -2,8 +2,8 @@ import { defineCommand } from 'citty'
 
 import { loadDocument } from '../headless'
 import { isAppMode, requireFile, rpc } from '../app-client'
-import { fmtNode, fmtList, nodeToData, printError, formatType } from '../format'
-import { executeRpcCommand } from '@open-pencil/core'
+import { fmtNode, printError, formatType } from '../format'
+import { executeRpcCommand, colorToHex } from '@open-pencil/core'
 
 import type { NodeResult } from '@open-pencil/core'
 
@@ -47,11 +47,10 @@ export default defineCommand({
     if (data.parent) details.parent = `${data.parent.name} (${data.parent.id})`
     if (data.text) details.text = data.text
     if (data.fills.length > 0) {
-      const solid = (data.fills as Array<{ type: string; visible: boolean; color: { r: number; g: number; b: number }; opacity: number }>)
+      const solid = (data.fills as Array<{ type: string; visible: boolean; color: { r: number; g: number; b: number; a: number }; opacity: number }>)
         .find((f) => f.type === 'SOLID' && f.visible)
       if (solid) {
-        const { r, g, b } = solid.color
-        const hex = '#' + [r, g, b].map((c) => Math.round(c * 255).toString(16).padStart(2, '0')).join('')
+        const hex = colorToHex(solid.color)
         details.fill = solid.opacity < 1 ? `${hex} ${Math.round(solid.opacity * 100)}%` : hex
       }
     }

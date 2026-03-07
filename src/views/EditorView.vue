@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { provide } from 'vue'
+import { provide, onUnmounted } from 'vue'
 import { useBreakpoints, useEventListener, useUrlSearchParams } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
@@ -30,7 +30,8 @@ const breakpoints = useBreakpoints({ mobile: 768 })
 const isMobile = breakpoints.smaller('mobile')
 useKeyboard()
 useMenu()
-connectAutomation(getActiveStore)
+const { disconnect: disconnectAutomation } = connectAutomation(getActiveStore)
+onUnmounted(disconnectAutomation)
 const collab = useCollab(firstTab.store)
 provide(COLLAB_KEY, collab)
 

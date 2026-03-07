@@ -40,21 +40,30 @@ export default defineCommand({
     }
 
     if (isAppMode(args.file)) {
-      if (format === 'JSX' || format === 'SVG') {
-        const toolName = format === 'SVG' ? 'export_svg' : 'eval'
-        const toolArgs = format === 'SVG'
-          ? { ids: args.node ? [args.node] : undefined }
-          : { code: `return selectionToJSX([${args.node ? `"${args.node}"` : '...figma.currentPage.children.map(n => n.id)'}], figma.graph, "${args.style}")` }
-
-        const result = await rpc<{ svg?: string; result?: string }>('tool', { name: toolName, args: toolArgs })
-        const content = format === 'SVG' ? (result as { svg: string }).svg : (result as { result: string }).result
-        if (!content) {
+      if (format === 'SVG') {
+        const result = await rpc<{ svg: string }>('tool', { name: 'export_svg', args: { ids: args.node ? [args.node] : undefined } })
+        if (!result.svg) {
           printError('Nothing to export.')
           process.exit(1)
         }
-        const output = resolve(args.output ?? `export.${format.toLowerCase()}`)
-        await Bun.write(output, content)
-        console.log(ok(`Exported ${output} (${(content.length / 1024).toFixed(1)} KB)`))
+        const output = resolve(args.output ?? 'export.svg')
+        await Bun.write(output, result.svg)
+        console.log(ok(`Exported ${output} (${(result.svg.length / 1024).toFixed(1)} KB)`))
+        return
+      }
+
+      if (format === 'JSX') {
+        const result = await rpc<{ jsx: string }>('export_jsx', {
+          nodeIds: args.node ? [args.node] : undefined,
+          style: args.style
+        })
+        if (!result.jsx) {
+          printError('Nothing to export.')
+          process.exit(1)
+        }
+        const output = resolve(args.output ?? 'export.jsx')
+        await Bun.write(output, result.jsx)
+        console.log(ok(`Exported ${output} (${(result.jsx.length / 1024).toFixed(1)} KB)`))
         return
       }
 
