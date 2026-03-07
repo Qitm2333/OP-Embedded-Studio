@@ -9,8 +9,8 @@ Open-source, AI-native design editor. Figma-compatible, AI-first, fully local.
 > **What's next**
 >
 > - 100% .fig compatibility — full rendering parity with Figma
-> - Individual stroke sides (top/right/bottom/left) — per-side width, color, and style
 > - Shader effects (SkSL) — custom visual effects via GPU shaders
+> - Skewing and OkHCL color support
 > - Raster tile caching — instant zoom/pan for complex documents
 > - Component libraries — publish, share, and consume design systems
 > - CI tools — design linting, code export, visual regression in pipelines
