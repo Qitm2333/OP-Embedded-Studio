@@ -173,8 +173,6 @@ jobs:
           done
 
       - name: Publish packages to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           publish_if_new() {
             local dir=$1
