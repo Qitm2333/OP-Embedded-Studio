@@ -9,7 +9,7 @@ packages/
   cli/               @open-pencil/cli — CLI headless per operazioni .fig
     src/commands/    info, tree, find, export, eval, analyze
   mcp/               @open-pencil/mcp — server MCP per strumenti IA
-    src/             Trasporti stdio + HTTP (Hono), 75 strumenti
+    src/             Trasporti stdio + HTTP (Hono), 87 strumenti
 src/
   components/        Vue SFCs (canvas, pannelli, barra strumenti, selettore colore)
     properties/      Sezioni pannello proprietà (Aspetto, Riempimento, Contorno, ecc.)
@@ -89,7 +89,7 @@ Il codice sorgente del motore si trova in `packages/core/src/`. I directory `src
 | `packages/core/src/kiwi/codec.ts` | Encoder/decoder binario Kiwi |
 | `packages/core/src/kiwi/fig-import.ts` | Logica import file .fig |
 | `packages/cli/src/index.ts` | Punto di ingresso CLI |
-| `packages/core/src/tools/schema.ts` | Definizioni strumenti unificate (IA, MCP, CLI) |
+| `packages/core/src/tools/` | Definizioni strumenti unificate (IA, MCP, CLI) |
 | `packages/core/src/figma-api.ts` | Implementazione Figma Plugin API |
 | `packages/mcp/src/server.ts` | Factory del server MCP |
 | `packages/cli/src/commands/` | Comandi CLI (info, tree, find, export, eval, analyze) |

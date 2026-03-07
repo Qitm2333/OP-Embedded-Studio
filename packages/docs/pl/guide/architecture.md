@@ -89,7 +89,7 @@ Dwukierunkowy schowek kompatybilny z Figmą. Koduje/dekoduje binarne Kiwi (ten s
 
 ### Serwer MCP
 
-`@open-pencil/mcp` udostępnia 75 narzędzi core + 3 narzędzia zarządzania plikami dla narzędzi kodowania AI. Dwa transporty: stdio dla Claude Code/Cursor/Windsurf, HTTP z Hono + Streamable HTTP dla skryptów i CI. Narzędzia są definiowane raz w `packages/core/src/tools/schema.ts` i adaptowane dla chatu AI (valibot), MCP (zod) i CLI (polecenie eval).
+`@open-pencil/mcp` udostępnia 87 narzędzi core + 3 narzędzia zarządzania plikami dla narzędzi kodowania AI. Dwa transporty: stdio dla Claude Code/Cursor/Windsurf, HTTP z Hono + Streamable HTTP dla skryptów i CI. Narzędzia są definiowane raz w `packages/core/src/tools/` i adaptowane dla chatu AI (valibot), MCP (zod) i CLI (polecenie eval).
 
 ### Współpraca P2P
 

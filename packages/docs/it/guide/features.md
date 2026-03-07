@@ -152,7 +152,7 @@ Creazione programmabile via TreeNode builder. Props shorthand stile Tailwind.
 
 ## Chat IA
 
-Assistente IA integrato via <kbd>⌘</kbd><kbd>J</kbd>. **78 strumenti** in `schema.ts` che coprono lettura, creazione, modifica, manipolazione nodi, CRUD variabili, strumenti vettoriali, controllo viewport e `eval`. **Server MCP** espone 78 strumenti totali (75 core + 3 gestione file) per strumenti di codifica IA esterni.
+Assistente IA integrato via <kbd>⌘</kbd><kbd>J</kbd>. **87 strumenti** in `packages/core/src/tools/` che coprono lettura, creazione, modifica, manipolazione nodi, CRUD variabili, strumenti vettoriali, controllo viewport e `eval`. **Server MCP** espone 90 strumenti totali (87 core + 3 gestione file) per strumenti di codifica IA esterni.
 
 ## Export SVG
 

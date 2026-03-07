@@ -28,7 +28,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 | Benutzerdefinierte Dateiminiatur | 🔲 | Miniatur beim Export generiert, aber kein benutzerdefinierter Auswähler |
 | Nudge-Wert-Einstellungen | 🔲 | Standard 1px/10px; Figma erlaubt benutzerdefinierte Werte |
 | App-Menü (Browser-Modus) | ✅ | Datei, Bearbeiten, Ansicht, Objekt, Text, Anordnen; Tauri verwendet native Menüs |
-| KI-Werkzeuge | 🟡 | 78 Werkzeuge via OpenRouter + MCP-Server; noch keine KI-generierten Bilder oder KI-Suche |
+| KI-Werkzeuge | 🟡 | 90 Werkzeuge via OpenRouter + MCP-Server; noch keine KI-generierten Bilder oder KI-Suche |
 
 ## Ebenen & Formen
 
@@ -215,7 +215,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 | Code Connect | 🔲 | Design-Komponenten mit Code verknüpfen |
 | Code-Snippets | 🟡 | JSX-Export mit Hervorhebung und Kopieren; keine CSS/Swift/Kotlin-Snippets |
 | Figma für VS Code | 🔲 | Editor-Plugin-Integration |
-| MCP-Server | ✅ | @open-pencil/mcp mit stdio + HTTP-Transporten; 75 Kern-Werkzeuge + 3 Dateiverwaltung = 78 gesamt |
+| MCP-Server | ✅ | @open-pencil/mcp mit stdio + HTTP-Transporten; 87 Kern-Werkzeuge + 3 Dateiverwaltung = 90 gesamt |
 | CLI-Werkzeuge | ✅ | Headless-CLI: info, tree, find, export, analyze, node, pages, variables, eval; MCP-Server |
 
 ## Figma Draw

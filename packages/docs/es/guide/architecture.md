@@ -89,7 +89,7 @@ Portapapeles bidireccional compatible con Figma. Codifica/decodifica binario Kiw
 
 ### Servidor MCP
 
-`@open-pencil/mcp` expone 75 herramientas core + 3 herramientas de gestión de archivos para herramientas de codificación IA. Dos transportes: stdio para Claude Code/Cursor/Windsurf, HTTP con Hono + Streamable HTTP para scripts y CI. Las herramientas se definen una vez en `packages/core/src/tools/schema.ts` y se adaptan para chat IA (valibot), MCP (zod) y CLI (comando eval).
+`@open-pencil/mcp` expone 87 herramientas core + 3 herramientas de gestión de archivos para herramientas de codificación IA. Dos transportes: stdio para Claude Code/Cursor/Windsurf, HTTP con Hono + Streamable HTTP para scripts y CI. Las herramientas se definen una vez en `packages/core/src/tools/` y se adaptan para chat IA (valibot), MCP (zod) y CLI (comando eval).
 
 ### Colaboración P2P
 

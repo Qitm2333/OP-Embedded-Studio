@@ -24,10 +24,10 @@ Componenti, istanze, override, set di componenti, variabili (COLOR/FLOAT/STRING/
 - @open-pencil/core estratto in packages/core/ (nessuna dipendenza DOM)
 - @open-pencil/cli con operazioni headless .fig (info, tree, find, export, analyze, eval)
 - Comando `eval` con API Plugin compatibile Figma
-- Chat IA: connessione diretta OpenRouter, 75 strumenti in `schema.ts`, ⌘J
+- Chat IA: connessione diretta OpenRouter, 87 strumenti in `packages/core/src/tools/`, ⌘J
 - 49 strumenti IA/MCP aggiuntivi portati da figma-use (75 in totale)
-- Server MCP (@open-pencil/mcp): stdio + HTTP, 75 strumenti core + 3 gestione file
-- Definizioni strumenti unificate: definire una volta in `schema.ts`, adattare per chat IA (valibot), MCP (zod), CLI (eval)
+- Server MCP (@open-pencil/mcp): stdio + HTTP, 87 strumenti core + 3 gestione file
+- Definizioni strumenti unificate: definire una volta in `packages/core/src/tools/`, adattare per chat IA (valibot), MCP (zod), CLI (eval)
 - Barra dei menu per modalità browser
 - Salvataggio automatico: scrittura con debounce di 3s
 - Pannello proprietà multi-selezione con valori condivisi/misti

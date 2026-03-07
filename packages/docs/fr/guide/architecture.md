@@ -89,7 +89,7 @@ Presse-papiers bidirectionnel compatible Figma. Encode/décode le binaire Kiwi (
 
 ### Serveur MCP
 
-`@open-pencil/mcp` expose 75 outils core + 3 outils de gestion de fichiers pour les outils de codage IA. Deux transports : stdio pour Claude Code/Cursor/Windsurf, HTTP avec Hono + Streamable HTTP pour les scripts et le CI. Les outils sont définis une fois dans `packages/core/src/tools/schema.ts` et adaptés pour le chat IA (valibot), MCP (zod) et CLI (commande eval).
+`@open-pencil/mcp` expose 87 outils core + 3 outils de gestion de fichiers pour les outils de codage IA. Deux transports : stdio pour Claude Code/Cursor/Windsurf, HTTP avec Hono + Streamable HTTP pour les scripts et le CI. Les outils sont définis une fois dans `packages/core/src/tools/` et adaptés pour le chat IA (valibot), MCP (zod) et CLI (commande eval).
 
 ### Collaboration P2P
 

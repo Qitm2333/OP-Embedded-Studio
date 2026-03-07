@@ -152,7 +152,7 @@ Programistyczne tworzenie designu przez buildery TreeNode. Propsy shorthand w st
 
 ## Chat AI
 
-Wbudowany asystent AI przez <kbd>⌘</kbd><kbd>J</kbd>. **78 narzędzi** w `schema.ts` obejmujących: odczyt, tworzenie, modyfikację, manipulację węzłów, CRUD zmiennych, narzędzia wektorowe, kontrolę viewportu i `eval`. **Serwer MCP** udostępnia 78 narzędzi łącznie (75 core + 3 zarządzanie plikami) dla zewnętrznych narzędzi kodowania AI.
+Wbudowany asystent AI przez <kbd>⌘</kbd><kbd>J</kbd>. **87 narzędzi** w `packages/core/src/tools/` obejmujących: odczyt, tworzenie, modyfikację, manipulację węzłów, CRUD zmiennych, narzędzia wektorowe, kontrolę viewportu i `eval`. **Serwer MCP** udostępnia 90 narzędzi łącznie (87 core + 3 zarządzanie plikami) dla zewnętrznych narzędzi kodowania AI.
 
 ## Eksport SVG
 

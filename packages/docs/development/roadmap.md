@@ -107,10 +107,10 @@ Core extraction, CLI, MCP server, AI tools, eval command.
 - jscpd copy-paste detection (15.6% → 0.62%), kiwi-serialize.ts consolidation
 - .fig roundtrip tests with LFS fixtures (material3.fig 87K nodes, nuxtui.fig 314K nodes)
 - .fig import O(n²) → O(n) fix (37s → 535ms on 87K nodes), ByteBuffer optimization
-- AI chat: OpenRouter direct (no backend), Stronghold key storage, 75 tools defined once in `schema.ts`, model selector, ⌘J toggle, streaming markdown, Playwright tests with mock transport
-- 49 additional AI/MCP tools ported from figma-use (75 total): granular set tools, node operations, variable CRUD, boolean operations, vector path tools, viewport control
-- MCP server (@open-pencil/mcp): stdio + HTTP (Hono + Streamable HTTP with sessions), 75 core tools + 3 file management tools, runs on Bun and Node.js
-- Unified tool definitions: define once in `schema.ts`, adapt for AI chat (valibot), MCP (zod), CLI (eval)
+- AI chat: OpenRouter direct (no backend), Stronghold key storage, 87 tools split across domain files in `tools/`, model selector, ⌘J toggle, streaming markdown, Playwright tests with mock transport
+- 49 additional AI/MCP tools ported from figma-use (87 total): granular set tools, node operations, variable CRUD, boolean operations, vector path tools, viewport control
+- MCP server (@open-pencil/mcp): stdio + HTTP (Hono + Streamable HTTP with sessions), 87 core tools + 3 file management tools (90 total), runs on Bun and Node.js
+- Unified tool definitions: define once in `packages/core/src/tools/` (split by domain), adapt for AI chat (valibot), MCP (zod), CLI (eval)
 - Code panel: sceneNodeToJsx() export, Prism.js highlighting, line numbers, copy button, 14 tests
 - Properties panel restructured: Design | Code | AI tabs
 - App menu bar for browser mode (File, Edit, View, Object, Text, Arrange)

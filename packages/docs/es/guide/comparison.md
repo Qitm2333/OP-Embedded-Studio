@@ -242,7 +242,7 @@ El enfoque de Open Pencil es más simple y con menos overhead.
 
 ## 11. Scripting y extensibilidad
 
-OpenPencil incluye un [comando `eval`](/eval-command) que proporciona una API de Plugin compatible con Figma para scripting headless. Además, 78 herramientas AI disponibles vía chat integrado, servidor MCP (stdio + HTTP) y CLI. Penpot tiene sistema de plugins con ejecución sandboxed pero sin API de scripting headless ni integración MCP.
+OpenPencil incluye un [comando `eval`](/eval-command) que proporciona una API de Plugin compatible con Figma para scripting headless. Además, 90 herramientas AI disponibles vía chat integrado, servidor MCP (stdio + HTTP) y CLI. Penpot tiene sistema de plugins con ejecución sandboxed pero sin API de scripting headless ni integración MCP.
 
 ## Resumen
 
@@ -259,4 +259,4 @@ OpenPencil incluye un [comando `eval`](/eval-command) que proporciona una API de
 | **Self-hosting** | Penpot | Listo para Docker vs solo desktop |
 | **Madurez del ecosistema** | Penpot | Años de producción vs etapa temprana |
 
-Open Pencil es arquitectónicamente más ligero — un renderer CanvasKit de proceso único en ~26K LOC de TypeScript, compatible con Figma por diseño. Penpot es una plataforma full-stack con ~299K LOC. Ambos ofrecen colaboración en tiempo real (P2P vs servidor). Penpot tiene ecosistema de plugins y exportación PDF en servidor; Open Pencil tiene scripting headless compatible con Figma, **78 herramientas AI/MCP**, exportación SVG y app desktop nativa.
+Open Pencil es arquitectónicamente más ligero — un renderer CanvasKit de proceso único en ~26K LOC de TypeScript, compatible con Figma por diseño. Penpot es una plataforma full-stack con ~299K LOC. Ambos ofrecen colaboración en tiempo real (P2P vs servidor). Penpot tiene ecosistema de plugins y exportación PDF en servidor; Open Pencil tiene scripting headless compatible con Figma, **90 herramientas AI/MCP**, exportación SVG y app desktop nativa.

@@ -89,7 +89,7 @@ Appunti bidirezionali compatibili con Figma. Codifica/decodifica binario Kiwi (s
 
 ### Server MCP
 
-`@open-pencil/mcp` espone 75 strumenti core + 3 strumenti di gestione file per strumenti di codifica IA. Due trasporti: stdio per Claude Code/Cursor/Windsurf, HTTP con Hono + Streamable HTTP per script e CI. Gli strumenti sono definiti una volta in `packages/core/src/tools/schema.ts` e adattati per chat IA (valibot), MCP (zod) e CLI (comando eval).
+`@open-pencil/mcp` espone 87 strumenti core + 3 strumenti di gestione file per strumenti di codifica IA. Due trasporti: stdio per Claude Code/Cursor/Windsurf, HTTP con Hono + Streamable HTTP per script e CI. Gli strumenti sono definiti una volta in `packages/core/src/tools/` e adattati per chat IA (valibot), MCP (zod) e CLI (comando eval).
 
 ### Collaborazione P2P
 

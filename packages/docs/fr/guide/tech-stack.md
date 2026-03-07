@@ -12,7 +12,7 @@
 | **Format de fichier** | Kiwi binaire + Zstd | Format propre de Figma — compact, parsing rapide, compatible .fig |
 | **Collaboration** | Trystero + Yjs | P2P WebRTC via signalisation MQTT, sync CRDT, persistance y-indexeddb |
 | **Couleur** | culori | Conversions d'espaces colorimétriques (HSV, RGB, hex) |
-| **IA/MCP** | MCP SDK + Hono | 75 outils pour le codage IA, transports stdio + HTTP |
+| **IA/MCP** | MCP SDK + Hono | 87 outils pour le codage IA, transports stdio + HTTP |
 | **Desktop** | Tauri v2 | ~5 Mo app native (vs ~100 Mo d'Electron), backend Rust |
 | **Build** | Vite 7 | HMR rapide, modules ES natifs |
 | **Test** | Playwright + bun:test | Régression visuelle (E2E) + tests unitaires rapides |

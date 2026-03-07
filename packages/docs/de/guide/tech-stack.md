@@ -12,7 +12,7 @@
 | **Dateiformat** | Kiwi-Binär + Zstd | Figmas eigenes Format — kompakt, schnelles Parsen, .fig-kompatibel |
 | **Kollaboration** | Trystero + Yjs | P2P-WebRTC über MQTT-Signalisierung, CRDT-Sync, y-indexeddb-Persistenz |
 | **Farbe** | culori | Farbraum-Konvertierungen (HSV, RGB, Hex) |
-| **KI/MCP** | MCP SDK + Hono | 75 Tools für KI-Coding-Werkzeuge, stdio- + HTTP-Transporte |
+| **KI/MCP** | MCP SDK + Hono | 87 Tools für KI-Coding-Werkzeuge, stdio- + HTTP-Transporte |
 | **Desktop** | Tauri v2 | ~5 MB native App (vs. Electrons ~100 MB), Rust-Backend |
 | **Build** | Vite 7 | Schnelles HMR, native ES-Module |
 | **Testing** | Playwright + bun:test | Visuelle Regression (E2E) + schnelle Unit-Tests |

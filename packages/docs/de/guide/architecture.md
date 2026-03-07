@@ -83,7 +83,7 @@ Figma-kompatible bidirektionale Zwischenablage. Kodiert/dekodiert Kiwi-Binär (g
 
 ### MCP-Server
 
-`@open-pencil/mcp` stellt 75 Core-Tools + 3 Dateiverwaltungs-Tools für KI-Coding-Werkzeuge bereit. Zwei Transporte: stdio für Claude Code/Cursor/Windsurf, HTTP mit Hono + Streamable HTTP für Skripte und CI. Tools werden einmal in `packages/core/src/tools/schema.ts` definiert und für AI-Chat (valibot), MCP (zod) und CLI (eval-Befehl) adaptiert.
+`@open-pencil/mcp` stellt 87 Core-Tools + 3 Dateiverwaltungs-Tools für KI-Coding-Werkzeuge bereit. Zwei Transporte: stdio für Claude Code/Cursor/Windsurf, HTTP mit Hono + Streamable HTTP für Skripte und CI. Tools werden einmal in `packages/core/src/tools/` definiert und für AI-Chat (valibot), MCP (zod) und CLI (eval-Befehl) adaptiert.
 
 ### P2P-Kollaboration
 

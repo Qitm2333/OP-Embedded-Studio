@@ -225,7 +225,7 @@ Ein HUD-Overlay zeigt Frame-Timing, GPU-Phasen und Frame-Budget. Zugänglich üb
 
 ## KI-Chat
 
-Integrierter KI-Assistent über den KI-Tab oder <kbd>⌘</kbd><kbd>J</kbd>. Kommuniziert direkt mit OpenRouter. **78 Werkzeuge** für Lesen, Erstellen, Ändern und Organisieren von Design-Elementen. **MCP-Server** für externe KI-Coding-Tools.
+Integrierter KI-Assistent über den KI-Tab oder <kbd>⌘</kbd><kbd>J</kbd>. Kommuniziert direkt mit OpenRouter. **87 Werkzeuge** für Lesen, Erstellen, Ändern und Organisieren von Design-Elementen. **MCP-Server** für externe KI-Coding-Tools.
 
 ## @open-pencil/core & CLI
 

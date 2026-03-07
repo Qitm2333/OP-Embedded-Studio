@@ -89,7 +89,7 @@ Figma-compatible bidirectional clipboard. Encodes/decodes Kiwi binary (same form
 
 ### MCP Server
 
-`@open-pencil/mcp` exposes 75 core tools + 3 file management tools (78 total) for AI coding tools. Two transports: stdio for Claude Code/Cursor/Windsurf, HTTP with Hono + Streamable HTTP for scripts and CI. Tools are defined once in `packages/core/src/tools/schema.ts` and adapted for AI chat (valibot), MCP (zod), and CLI (eval command).
+`@open-pencil/mcp` exposes 87 core tools + 3 file management tools (90 total) for AI coding tools. Two transports: stdio for Claude Code/Cursor/Windsurf, HTTP with Hono + Streamable HTTP for scripts and CI. Tools are defined once in `packages/core/src/tools/` (split by domain: read, create, modify, structure, variables, vector, analyze) and adapted for AI chat (valibot), MCP (zod), and CLI (eval command).
 
 ### P2P Collaboration
 
@@ -105,7 +105,7 @@ The AI chat currently routes through OpenRouter. Direct integrations planned: An
 
 ### Full figma-use Tool Set
 
-The MCP server currently exposes 78 tools. The reference implementation in [figma-use](https://github.com/dannote/figma-use) has 118. The remaining 40 tools cover advanced layout constraints, prototype connections, advanced component property editing, and bulk document operations — all will be ported.
+The MCP server currently exposes 90 tools. The reference implementation in [figma-use](https://github.com/dannote/figma-use) has 118. The remaining tools cover advanced layout constraints, prototype connections, advanced component property editing, and bulk document operations — all will be ported.
 
 ### CI Design Tooling
 
