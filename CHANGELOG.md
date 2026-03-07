@@ -15,10 +15,18 @@
 
 - Split tools into domain files (read, create, modify, structure, variables, vector, analyze) — easier to navigate and extend
 - Replace inline type definitions with named types (`Color`, `Vector`, `SceneNode`) across the codebase
+- Split 3200-line `renderer.ts` into `packages/core/src/renderer/` with 10 focused files (scene, overlays, fills, strokes, shapes, effects, rulers, labels)
+- Centralize all color utilities in `packages/core/src/color.ts` — `colorToHex8`, `colorToCSSCompact`, `normalizeColor`, `colorDistance`; remove 5 duplicate implementations across the codebase
+- Add `geometry.ts` with shared rotation math (`degToRad`, `radToDeg`, `rotatePoint`, `rotatedCorners`, `rotatedBBox`)
+- Extract `isArrayMixed()` helper for multi-selection property panels
 
 ### Fixes
 
 - Fix drawer animation jump on close — single spring transition instead of two-phase
+- Fix `ALL_TOOLS` registry missing newer tools (`analyzeColors`, `diffCreate`, `exportImage`, `arrangeNodes`)
+- Fix `renderJSX` typo in tool definitions (`renderJsx` → `renderJSX`)
+- Fix broken test imports — stale `../../src/engine/` paths updated to `@open-pencil/core`
+- Fix flaky E2E tests: layers panel navigates to `/demo`, zoom-to-fit test zooms in first, snapshot rendering stabilized with `workers: 1` and `colorScheme: dark`
 
 ### Internal
 
@@ -26,6 +34,8 @@
 - Mobile drawer: replace `useSwipe` + manual rAF animation with `motion.div` `:animate` + `@pan`/`@panEnd`; always-on tab state (no more null `activeRibbonTab`); content stays rendered when closed
 - Mobile toolbar: replace manual `scrollWidth` measuring + inline CSS transitions with `motion.div layout` + `AnimatePresence` directional slide variants
 - Mobile UI cleanup: extract shared `colorToCSS` util to core, `initials` to `src/utils/text`, `toolIcons` to `src/utils/tools`; replace hand-rolled dropdowns with reka-ui Popover/DropdownMenu; narrow `mobileDrawerSnap` type to string union; move magic numbers to constants; disable PWA service worker in dev mode
+- 83 new E2E tests (57 → 140): design panel, code panel, components, copy/paste, multi-page, text editing, keyboard shortcuts, context menu
+- 150 new unit tests (588 → 738): color, undo, snap, vector, style-runs, text-editor
 
 ## 0.7.0 — 2026-03-05
 
