@@ -27,15 +27,17 @@ import { useEditorStore } from '@/stores/editor'
 const store = useEditorStore()
 
 const DOCUMENT_NAME_ID = 'document-name'
-const nameInputRef = ref<HTMLInputElement | null>(null)
 const rename = useInlineRename<'document-name'>((_id, name) => {
   store.state.documentName = name
 })
 const editingName = computed(() => rename.editingId.value === DOCUMENT_NAME_ID)
 
+function setNameInputRef(el: HTMLInputElement | null) {
+  if (el) void rename.focusInput(el)
+}
+
 function startRename() {
   rename.start(DOCUMENT_NAME_ID, store.state.documentName)
-  void rename.focusInput(nameInputRef.value)
 }
 
 function commitRename(input: HTMLInputElement) {
@@ -176,7 +178,7 @@ const topMenus = [
       <img data-test-id="app-logo" src="/favicon-32.png" class="size-4" alt="OpenPencil" />
       <input
         v-if="editingName"
-        ref="nameInputRef"
+        :ref="(el) => setNameInputRef(el as HTMLInputElement | null)"
         data-test-id="app-document-name-input"
         class="min-w-0 flex-1 rounded border border-accent bg-input px-1 py-0.5 text-xs text-surface outline-none"
         :value="store.state.documentName"
@@ -219,17 +221,12 @@ const topMenus = [
               <template v-for="(item, i) in menu.items" :key="i">
                 <MenubarSeparator v-if="item.separator" :class="menuSeparator()" />
                 <MenubarSub v-else-if="item.sub">
-                  <MenubarSubTrigger
-                    :class="menuItem()"
-                  >
+                  <MenubarSubTrigger :class="menuItem()">
                     <span class="flex-1">{{ item.label }}</span>
                     <IconChevronRight class="size-3 text-muted" />
                   </MenubarSubTrigger>
                   <MenubarPortal>
-                    <MenubarSubContent
-                      :side-offset="4"
-                      :class="menuContent({ class: 'min-w-44' })"
-                    >
+                    <MenubarSubContent :side-offset="4" :class="menuContent({ class: 'min-w-44' })">
                       <template v-for="(sub, j) in item.sub" :key="j">
                         <MenubarSeparator v-if="sub.separator" :class="menuSeparator()" />
                         <MenubarItem

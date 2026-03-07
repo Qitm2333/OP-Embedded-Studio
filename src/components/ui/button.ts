@@ -1,5 +1,5 @@
-import { tv } from 'tailwind-variants'
 import { twMerge } from 'tailwind-merge'
+import { tv } from 'tailwind-variants'
 
 const button = tv({
   base: 'inline-flex items-center justify-center transition-colors select-none',
@@ -24,10 +24,6 @@ const button = tv({
     bordered: {
       true: 'border border-white/10',
       false: ''
-    },
-    active: {
-      true: '',
-      false: ''
     }
   },
   compoundVariants: [
@@ -43,8 +39,7 @@ const button = tv({
     tone: 'ghost',
     shape: 'rounded',
     size: 'sm',
-    bordered: false,
-    active: false
+    bordered: false
   }
 })
 
@@ -53,7 +48,6 @@ export function uiButton(options?: {
   shape?: 'square' | 'rounded' | 'pill'
   size?: 'sm' | 'md' | 'icon' | 'iconSm'
   bordered?: boolean
-  active?: boolean
   class?: string
 }) {
   return twMerge(button(options), options?.class)

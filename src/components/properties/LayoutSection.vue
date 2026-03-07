@@ -188,26 +188,43 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
     <template v-if="node.layoutMode !== 'NONE'">
       <div class="mt-1.5 flex gap-0.5">
         <button
+          data-test-id="layout-direction-horizontal"
           class="flex cursor-pointer items-center justify-center rounded border px-2 py-1"
           :class="
             node.layoutMode === 'HORIZONTAL'
               ? 'border-accent bg-accent/10 text-accent'
               : 'border-border text-muted hover:bg-hover hover:text-surface'
           "
+          title="Horizontal layout"
           @click="store.setLayoutMode(node.id, 'HORIZONTAL')"
         >
           <icon-lucide-arrow-right class="size-3.5" />
         </button>
         <button
+          data-test-id="layout-direction-vertical"
           class="flex cursor-pointer items-center justify-center rounded border px-2 py-1"
           :class="
             node.layoutMode === 'VERTICAL'
               ? 'border-accent bg-accent/10 text-accent'
               : 'border-border text-muted hover:bg-hover hover:text-surface'
           "
+          title="Vertical layout"
           @click="store.setLayoutMode(node.id, 'VERTICAL')"
         >
           <icon-lucide-arrow-down class="size-3.5" />
+        </button>
+        <button
+          data-test-id="layout-direction-wrap"
+          class="flex cursor-pointer items-center justify-center rounded border px-2 py-1"
+          :class="
+            node.layoutWrap === 'WRAP'
+              ? 'border-accent bg-accent/10 text-accent'
+              : 'border-border text-muted hover:bg-hover hover:text-surface'
+          "
+          title="Wrap"
+          @click="updateProp('layoutWrap', node.layoutWrap === 'WRAP' ? 'NO_WRAP' : 'WRAP')"
+        >
+          <icon-lucide-wrap-text class="size-3.5" />
         </button>
       </div>
 
@@ -237,7 +254,10 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
         </button>
       </div>
 
-      <div v-if="showIndividualPadding || !hasUniformPadding()" class="mt-1.5 grid grid-cols-2 gap-1.5">
+      <div
+        v-if="showIndividualPadding || !hasUniformPadding()"
+        class="mt-1.5 grid grid-cols-2 gap-1.5"
+      >
         <ScrubInput
           icon="Top"
           :model-value="Math.round(node.paddingTop)"
@@ -270,7 +290,7 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
 
       <div class="mt-2">
         <label class="mb-1 block text-[11px] text-muted">Alignment</label>
-        <div class="grid grid-cols-3 gap-1">
+        <div data-test-id="layout-alignment-grid" class="grid grid-cols-3 gap-1">
           <button
             v-for="cell in ALIGN_GRID"
             :key="`${cell.primary}-${cell.counter}`"
@@ -287,5 +307,23 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
         </div>
       </div>
     </template>
+  </div>
+
+  <div v-if="node.type === 'FRAME'" class="border-b border-border px-3 py-2">
+    <label class="flex cursor-pointer items-center gap-2 text-xs text-surface">
+      <input
+        type="checkbox"
+        class="accent-accent"
+        :checked="node.clipsContent"
+        @change="
+          store.updateNodeWithUndo(
+            node.id,
+            { clipsContent: !node.clipsContent },
+            'Toggle clip content'
+          )
+        "
+      />
+      Clip content
+    </label>
   </div>
 </template>

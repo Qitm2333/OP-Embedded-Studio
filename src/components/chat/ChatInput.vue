@@ -54,7 +54,12 @@ function handleSubmit(e: Event) {
         <SelectRoot v-model="modelId">
           <SelectTrigger
             data-test-id="chat-model-selector"
-            :class="selectTrigger({ class: 'gap-1 rounded border-none bg-transparent px-1.5 py-0.5 text-[10px] text-muted' })"
+            :class="
+              selectTrigger({
+                class:
+                  'gap-1 rounded border-none bg-transparent px-1.5 py-0.5 text-[10px] text-muted'
+              })
+            "
           >
             <icon-lucide-bot class="size-3" />
             {{ selectedModelName }}
@@ -65,7 +70,9 @@ function handleSubmit(e: Event) {
               position="popper"
               side="top"
               :side-offset="4"
-              :class="selectContent({ radius: 'lg', padding: 'md', class: 'max-h-60 overflow-y-auto' })"
+              :class="
+                selectContent({ radius: 'lg', padding: 'md', class: 'max-h-60 overflow-y-auto' })
+              "
             >
               <SelectViewport>
                 <SelectItem
@@ -103,7 +110,14 @@ function handleSubmit(e: Event) {
             <button
               type="button"
               data-test-id="chat-stop-button"
-              :class="uiButton({ tone: 'ghost', shape: 'rounded', size: 'sm', class: 'shrink-0 border border-border px-2 py-1.5' })"
+              :class="
+                uiButton({
+                  tone: 'ghost',
+                  shape: 'rounded',
+                  size: 'sm',
+                  class: 'shrink-0 border border-border px-2 py-1.5'
+                })
+              "
               @click="emit('stop')"
             >
               <icon-lucide-square class="size-3" />
@@ -124,7 +138,14 @@ function handleSubmit(e: Event) {
             <button
               type="submit"
               data-test-id="chat-send-button"
-              :class="uiButton({ tone: 'accent', shape: 'rounded', size: 'sm', class: 'shrink-0 px-2.5 py-1.5 font-medium' })"
+              :class="
+                uiButton({
+                  tone: 'accent',
+                  shape: 'rounded',
+                  size: 'sm',
+                  class: 'shrink-0 px-2.5 py-1.5 font-medium'
+                })
+              "
               :disabled="!input.trim()"
             >
               <icon-lucide-send class="size-3" />

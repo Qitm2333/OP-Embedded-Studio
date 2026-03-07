@@ -181,8 +181,11 @@ function goNext() {
                   v-for="sub in tool.flyout"
                   :key="sub"
                   :data-test-id="`toolbar-flyout-item-${sub.toLowerCase()}`"
-                  :class="menuItem()"
-                  :class="store.state.activeTool === sub ? 'bg-accent text-white' : undefined"
+                  :class="
+                    menuItem({
+                      class: store.state.activeTool === sub ? 'bg-accent text-white' : undefined
+                    })
+                  "
                   @select="store.setTool(sub)"
                 >
                   <component :is="toolIcons[sub]" class="size-3.5" />
@@ -294,11 +297,10 @@ function goNext() {
                       v-for="sub in tool.flyout"
                       :key="sub"
                       :data-test-id="`mobile-toolbar-flyout-item-${sub.toLowerCase()}`"
-                      :class="menuItem()"
                       :class="
-                        store.state.activeTool === sub
-                          ? 'bg-accent text-white'
-                          : 'text-surface hover:bg-hover'
+                        menuItem({
+                          class: store.state.activeTool === sub ? 'bg-accent text-white' : undefined
+                        })
                       "
                       @select="store.setTool(sub)"
                     >

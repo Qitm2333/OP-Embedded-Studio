@@ -1,5 +1,5 @@
-import { tv } from 'tailwind-variants'
 import { twMerge } from 'tailwind-merge'
+import { tv } from 'tailwind-variants'
 
 const trigger = tv({
   base: 'flex items-center justify-between border border-border bg-input text-surface outline-none hover:bg-hover'

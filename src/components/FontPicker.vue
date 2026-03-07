@@ -63,7 +63,13 @@ function onSelect(val: string) {
     <PopoverContent
       :side-offset="2"
       align="start"
-      :class="panelSurface({ radius: 'md', padding: 'none', class: 'z-50 flex min-w-56 w-[var(--reka-popper-anchor-width)] flex-col overflow-hidden' })"
+      :class="
+        panelSurface({
+          radius: 'md',
+          padding: 'none',
+          class: 'z-50 flex min-w-56 w-[var(--reka-popper-anchor-width)] flex-col overflow-hidden'
+        })
+      "
       @open-auto-focus.prevent
     >
       <ListboxRoot :model-value="modelValue" @update:model-value="onSelect">

@@ -1,5 +1,5 @@
-import { tv } from 'tailwind-variants'
 import { twMerge } from 'tailwind-merge'
+import { tv } from 'tailwind-variants'
 
 const content = tv({
   base: 'z-50 rounded-lg border border-border bg-panel p-1 shadow-lg'
@@ -10,7 +10,8 @@ const item = tv({
   variants: {
     tone: {
       default: 'text-surface',
-      component: 'text-[#9747ff] data-[highlighted]:bg-[#9747ff]/12 data-[disabled]:text-[#9747ff]/40'
+      component:
+        'text-[#9747ff] data-[highlighted]:bg-[#9747ff]/12 data-[disabled]:text-[#9747ff]/40'
     },
     justify: {
       between: 'justify-between gap-6',

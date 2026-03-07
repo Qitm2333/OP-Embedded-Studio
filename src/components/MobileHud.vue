@@ -222,7 +222,13 @@ const onlineCount = computed(() => props.collabPeers.length + 1)
             <DropdownMenuItem
               v-for="item in menuItems"
               :key="item.label"
-              :class="menuItem({ justify: 'start', class: 'w-full gap-2.5 rounded-lg border-none bg-transparent px-2.5 py-2 active:bg-hover' })"
+              :class="
+                menuItem({
+                  justify: 'start',
+                  class:
+                    'w-full gap-2.5 rounded-lg border-none bg-transparent px-2.5 py-2 active:bg-hover'
+                })
+              "
               @click="item.action()"
             >
               <component :is="item.icon" class="size-4 text-muted" />

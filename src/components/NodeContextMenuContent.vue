@@ -102,7 +102,9 @@ function copyAsJSX() {
 
 const itemClass = menuItem()
 const componentItemClass = menuItem({ tone: 'component' })
-const menuClass = menuContent({ class: 'min-w-56 shadow-[0_8px_30px_rgb(0_0_0/0.4)] animate-in fade-in zoom-in-95' })
+const menuClass = menuContent({
+  class: 'min-w-56 shadow-[0_8px_30px_rgb(0_0_0/0.4)] animate-in fade-in zoom-in-95'
+})
 const separatorClass = menuSeparator({ class: 'my-1' })
 </script>
 
