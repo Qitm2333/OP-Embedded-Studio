@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.0 — 2026-03-07
 
 ### Features
 
@@ -17,6 +17,8 @@
 
 - Refactor mobile drawer tabs, layout sizing dropdowns, and inline rename to use Reka UI primitives
 - Add shared UI style helpers with tailwind-variants for menus, selects, buttons, and surfaces
+- Unified tool definitions — define once in `packages/core/src/tools/`, automatically available in AI chat, CLI, and MCP
+- Harden FigmaAPI — hide internals via Symbols, freeze arrays, fix `layoutSizing`, 30+ new properties and methods
 - Split tools into domain files (read, create, modify, structure, variables, vector, analyze) — easier to navigate and extend
 - Replace inline type definitions with named types (`Color`, `Vector`, `SceneNode`) across the codebase
 - Split 3200-line `renderer.ts` into `packages/core/src/renderer/` with 10 focused files (scene, overlays, fills, strokes, shapes, effects, rulers, labels)
@@ -32,6 +34,11 @@
 - Fix all oxlint warnings and tsgo errors — replace `!` non-null assertions in `use-collab.ts` with local const captures
 - Fix broken test imports — stale `../../src/engine/` paths updated to `@open-pencil/core`
 - Fix flaky E2E tests: layers panel navigates to `/demo`, zoom-to-fit test zooms in first, snapshot rendering stabilized with `workers: 1` and `colorScheme: dark`
+- Fix bogus .fig import mappings for `expanded` and `strokeMiterLimit` fields
+- Fix PWA manifest error in dev mode, handle invalid font data gracefully
+- Fix eval response unwrapping and `export_jsx` page selection in RPC bridge
+- Fix automation commands not recomputing layouts after mutations
+- Fix workspace dependency not resolved when installing from npm (switch CI to pnpm publish)
 
 ### Internal
 

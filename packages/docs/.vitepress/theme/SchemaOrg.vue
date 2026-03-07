@@ -19,7 +19,7 @@ const schema = JSON.stringify({
   url: 'https://app.openpencil.dev',
   description:
     'Open-source, AI-native design editor. Figma-compatible with full .fig file support.',
-  softwareVersion: '0.7.0',
+  softwareVersion: '0.8.0',
   license: 'https://opensource.org/licenses/MIT',
   screenshot: 'https://openpencil.dev/screenshot.png',
   downloadUrl: 'https://github.com/open-pencil/open-pencil/releases/latest',
