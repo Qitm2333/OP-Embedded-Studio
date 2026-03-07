@@ -163,6 +163,15 @@ jobs:
             }
           "
 
+      - name: Build packages for publish
+        run: |
+          for dir in packages/core packages/mcp; do
+            if [ -f "$dir/package.json" ] && node -p "require('./$dir/package.json').scripts?.build" 2>/dev/null | grep -qv undefined; then
+              echo "Building $dir..."
+              cd "$dir" && bun run build && cd -
+            fi
+          done
+
       - name: Publish packages to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -174,7 +183,7 @@ jobs:
             if npm view "${name}@${version}" version 2>/dev/null; then
               echo "${name}@${version} already published, skipping"
             else
-              npm publish "./$dir" --access public --provenance
+              npm publish "./$dir" --access public --provenance --ignore-scripts
             fi
           }
           publish_if_new packages/core
