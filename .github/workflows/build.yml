@@ -151,7 +151,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
         run: |
-          echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > ~/.npmrc
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > .npmrc
           publish_if_new() {
             local dir=$1
             local name=$(node -p "require('./$dir/package.json').name")
@@ -159,7 +159,7 @@ jobs:
             if npm view "${name}@${version}" version 2>/dev/null; then
               echo "${name}@${version} already published, skipping"
             else
-              cd "$dir" && pnpm publish --no-git-checks --access public && cd -
+              pnpm --dir "$dir" publish --no-git-checks --access public
             fi
           }
           publish_if_new packages/core
