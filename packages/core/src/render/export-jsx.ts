@@ -1,4 +1,4 @@
-import { colorToHex } from '../color'
+import { colorToHex8, colorToCSSCompact } from '../color'
 import { DEFAULT_FONT_FAMILY } from '../constants'
 import {
   pxToSpacing,
@@ -48,15 +48,7 @@ const NODE_TYPE_TO_TW_TAG: Partial<Record<NodeType, string>> = {
 }
 
 function formatColor(color: Color, opacity = 1): string {
-  const hex = colorToHex(color)
-  if (opacity < 1)
-    return (
-      hex +
-      Math.round(opacity * 255)
-        .toString(16)
-        .padStart(2, '0')
-    )
-  return hex
+  return colorToHex8(color, opacity)
 }
 
 function solidFillColor(fills: Fill[]): string | null {
@@ -81,8 +73,7 @@ function formatShadow(e: Effect): string | null {
 
 function formatTailwindShadow(e: Effect): string | null {
   if (e.type !== 'DROP_SHADOW' && e.type !== 'INNER_SHADOW') return null
-  const { r, g, b } = e.color
-  const color = `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${Number(e.color.a.toFixed(3))})`
+  const color = colorToCSSCompact(e.color)
   const inset = e.type === 'INNER_SHADOW' ? 'inset_' : ''
   const spread = e.spread !== 0 ? `_${e.spread}px` : ''
   return `${inset}${e.offset.x}px_${e.offset.y}px_${e.radius}px${spread}_${color}`
