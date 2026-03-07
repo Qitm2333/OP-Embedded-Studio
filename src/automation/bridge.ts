@@ -1,11 +1,14 @@
 /**
- * Automation bridge — runs in the Vite/Bun process (NOT in the browser).
+ * Automation bridge — runs in the Vite process (Node.js or Bun).
  *
- * The browser page connects via WebSocket and registers itself
- * as the RPC executor. CLI/MCP clients connect via HTTP.
+ * Hono HTTP server on :7600 for CLI/MCP clients.
+ * ws WebSocket server on :7601 for the browser page.
  *
- * Flow: CLI → HTTP POST /rpc → bridge → WebSocket → browser → execute → response
+ * Flow: CLI → HTTP POST /rpc → Hono → WebSocket → browser → execute → response
  */
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
+import { WebSocketServer, type WebSocket } from 'ws'
 
 const AUTOMATION_PORT = 7600
 const AUTOMATION_WS_PORT = 7601
@@ -17,16 +20,13 @@ interface PendingRequest {
   timer: ReturnType<typeof setTimeout>
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Bun WebSocket type not available in browser tsconfig
-type BunWebSocket = any
-
 const pending = new Map<string, PendingRequest>()
-let browserWs: BunWebSocket | null = null
+let browserWs: WebSocket | null = null
 let authToken: string | null = null
 
 function sendToBrowser(body: Record<string, unknown>): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    if (!browserWs) {
+    if (!browserWs || browserWs.readyState !== browserWs.OPEN) {
       reject(new Error('OpenPencil app is not connected'))
       return
     }
@@ -63,103 +63,82 @@ function handleBrowserMessage(data: string) {
       else req.resolve(msg.result)
     }
   } catch {
-    // ignore
+    // ignore malformed messages
   }
 }
 
 export function startAutomationBridge() {
-  // @ts-expect-error -- Bun global not in browser tsconfig, but this file runs in Vite/Bun
-  const BunGlobal = globalThis.Bun
-  if (!BunGlobal) {
-    console.warn('[automation] Bun runtime not available, skipping bridge')
-    return
-  }
+  const wss = new WebSocketServer({ port: AUTOMATION_WS_PORT, host: '127.0.0.1' })
 
-  BunGlobal.serve({
-    port: AUTOMATION_WS_PORT,
-    hostname: '127.0.0.1',
-    fetch(req: Request, server: { upgrade: (req: Request) => boolean }) {
-      if (server.upgrade(req)) return undefined
-      return new Response('WebSocket only', { status: 400 })
-    },
-    websocket: {
-      open(ws: BunWebSocket) {
-        browserWs = ws
-      },
-      message(_ws: BunWebSocket, message: string | ArrayBuffer) {
-        handleBrowserMessage(
-          typeof message === 'string' ? message : new TextDecoder().decode(message as ArrayBuffer)
-        )
-      },
-      close(ws: BunWebSocket) {
-        if (browserWs === ws) {
-          browserWs = null
-          authToken = null
-          for (const [id, req] of pending) {
-            clearTimeout(req.timer)
-            req.reject(new Error('Browser disconnected'))
-            pending.delete(id)
-          }
+  wss.on('connection', (ws) => {
+    browserWs = ws
+
+    ws.on('message', (raw) => {
+      handleBrowserMessage(typeof raw === 'string' ? raw : raw.toString('utf-8'))
+    })
+
+    ws.on('close', () => {
+      if (browserWs === ws) {
+        browserWs = null
+        authToken = null
+        for (const [id, req] of pending) {
+          clearTimeout(req.timer)
+          req.reject(new Error('Browser disconnected'))
+          pending.delete(id)
         }
       }
+    })
+  })
+
+  const app = new Hono()
+  app.use('*', cors())
+
+  app.get('/health', (c) => {
+    return c.json({
+      status: browserWs ? 'ok' : 'no_app',
+      ...(browserWs && authToken ? { token: authToken } : {})
+    })
+  })
+
+  app.use('/rpc', async (c, next) => {
+    if (!browserWs || !authToken) {
+      return c.json({ error: 'OpenPencil app is not connected. Is a document open?' }, 503)
+    }
+    const auth = c.req.header('authorization')
+    const provided = auth?.startsWith('Bearer ') ? auth.slice(7) : null
+    if (provided !== authToken) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+    await next()
+  })
+
+  app.post('/rpc', async (c) => {
+    const body = await c.req.json().catch(() => null)
+    if (!body || typeof body !== 'object') {
+      return c.json({ error: 'Invalid request body' }, 400)
+    }
+    try {
+      const result = await sendToBrowser(body as Record<string, unknown>)
+      return c.json({ ok: true, result })
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      return c.json({ ok: false, error: msg }, 502)
     }
   })
 
-  BunGlobal.serve({
-    port: AUTOMATION_PORT,
-    hostname: '127.0.0.1',
-    async fetch(req: Request) {
-      const url = new URL(req.url)
-      const headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Authorization, Content-Type'
-      }
-
-      if (req.method === 'OPTIONS') {
-        return new Response(null, { status: 204, headers })
-      }
-
-      if (url.pathname === '/health') {
-        return Response.json(
-          {
-            status: browserWs ? 'ok' : 'no_app',
-            ...(browserWs && authToken ? { token: authToken } : {})
-          },
-          { headers }
-        )
-      }
-
-      if (!browserWs || !authToken) {
-        return Response.json(
-          { error: 'OpenPencil app is not connected. Is a document open?' },
-          { status: 503, headers }
-        )
-      }
-
-      const auth = req.headers.get('authorization')
-      const provided = auth?.startsWith('Bearer ') ? auth.slice(7) : null
-      if (provided !== authToken) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401, headers })
-      }
-
-      if (url.pathname === '/rpc' && req.method === 'POST') {
-        const body = await req.json().catch(() => null)
-        if (!body || typeof body !== 'object') {
-          return Response.json({ error: 'Invalid request body' }, { status: 400, headers })
-        }
-        try {
-          const result = await sendToBrowser(body as Record<string, unknown>)
-          return Response.json({ ok: true, result }, { headers })
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : String(e)
-          return Response.json({ ok: false, error: msg }, { status: 502, headers })
-        }
-      }
-
-      return Response.json({ error: 'Not found' }, { status: 404, headers })
-    }
-  })
+  startServer(app)
 
   console.log(`[automation] HTTP  http://127.0.0.1:${AUTOMATION_PORT}`)
   console.log(`[automation] WS    ws://127.0.0.1:${AUTOMATION_WS_PORT}`)
+}
+
+async function startServer(app: Hono) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- runtime detection across Bun/Node
+  if ((globalThis as any).Bun !== undefined) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Bun.serve not in Node types
+    ;(globalThis as any).Bun.serve({ fetch: app.fetch, port: AUTOMATION_PORT, hostname: '127.0.0.1' })
+  } else {
+    const { serve } = await import('@hono/node-server')
+    serve({ fetch: app.fetch, port: AUTOMATION_PORT, hostname: '127.0.0.1' })
+  }
 }
