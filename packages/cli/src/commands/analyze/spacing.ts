@@ -1,7 +1,7 @@
 import { defineCommand } from 'citty'
 
 import { loadDocument } from '../../headless'
-import { isAppMode, rpc } from '../../app-client'
+import { isAppMode, requireFile, rpc } from '../../app-client'
 import { bold, kv, fmtHistogram, fmtSummary } from '../../format'
 import { executeRpcCommand } from '@open-pencil/core'
 
@@ -9,7 +9,7 @@ import type { AnalyzeSpacingResult } from '@open-pencil/core'
 
 async function getData(file?: string): Promise<AnalyzeSpacingResult> {
   if (isAppMode(file)) return rpc<AnalyzeSpacingResult>('analyze_spacing')
-  const graph = await loadDocument(file!)
+  const graph = await loadDocument(requireFile(file))
   return executeRpcCommand(graph, 'analyze_spacing', undefined) as AnalyzeSpacingResult
 }
 

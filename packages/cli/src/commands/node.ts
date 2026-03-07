@@ -1,7 +1,7 @@
 import { defineCommand } from 'citty'
 
 import { loadDocument } from '../headless'
-import { isAppMode, rpc } from '../app-client'
+import { isAppMode, requireFile, rpc } from '../app-client'
 import { fmtNode, fmtList, nodeToData, printError, formatType } from '../format'
 import { executeRpcCommand } from '@open-pencil/core'
 
@@ -9,7 +9,7 @@ import type { NodeResult } from '@open-pencil/core'
 
 async function getData(file: string | undefined, id: string): Promise<NodeResult | { error: string }> {
   if (isAppMode(file)) return rpc<NodeResult>('node', { id })
-  const graph = await loadDocument(file!)
+  const graph = await loadDocument(requireFile(file))
   return executeRpcCommand(graph, 'node', { id }) as NodeResult | { error: string }
 }
 

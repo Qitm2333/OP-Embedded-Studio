@@ -1,7 +1,7 @@
 import { defineCommand } from 'citty'
 
 import { loadDocument } from '../../headless'
-import { isAppMode, rpc } from '../../app-client'
+import { isAppMode, requireFile, rpc } from '../../app-client'
 import { bold, fmtHistogram, fmtSummary } from '../../format'
 import { executeRpcCommand } from '@open-pencil/core'
 
@@ -22,7 +22,7 @@ function weightName(w: number): string {
 async function getData(file: string | undefined, groupBy?: string): Promise<AnalyzeTypographyResult> {
   const rpcArgs = { groupBy }
   if (isAppMode(file)) return rpc<AnalyzeTypographyResult>('analyze_typography', rpcArgs)
-  const graph = await loadDocument(file!)
+  const graph = await loadDocument(requireFile(file))
   return executeRpcCommand(graph, 'analyze_typography', rpcArgs) as AnalyzeTypographyResult
 }
 

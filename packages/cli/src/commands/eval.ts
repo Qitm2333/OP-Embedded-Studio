@@ -3,7 +3,7 @@ import { defineCommand } from 'citty'
 import { FigmaAPI } from '@open-pencil/core'
 
 import { loadDocument } from '../headless'
-import { isAppMode, rpc } from '../app-client'
+import { isAppMode, requireFile, rpc } from '../app-client'
 import { printError } from '../format'
 
 function serializeResult(value: unknown): unknown {
@@ -52,7 +52,8 @@ export default defineCommand({
       return
     }
 
-    const graph = await loadDocument(args.file!)
+    const file = requireFile(args.file)
+    const graph = await loadDocument(file)
     const figma = new FigmaAPI(graph)
 
     const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
@@ -80,7 +81,7 @@ export default defineCommand({
 
     if (args.write || args.output) {
       const { exportFigFile } = await import('@open-pencil/core')
-      const outPath = args.output ?? args.file!
+      const outPath = args.output ?? file
       const data = await exportFigFile(graph)
       await Bun.write(outPath, new Uint8Array(data))
       if (!args.quiet) {

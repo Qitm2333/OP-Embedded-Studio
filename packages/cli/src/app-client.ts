@@ -1,6 +1,7 @@
-const AUTOMATION_PORT = 7600
-const HEALTH_URL = `http://127.0.0.1:${AUTOMATION_PORT}/health`
-const RPC_URL = `http://127.0.0.1:${AUTOMATION_PORT}/rpc`
+import { AUTOMATION_HTTP_PORT } from '@open-pencil/core'
+
+const HEALTH_URL = `http://127.0.0.1:${AUTOMATION_HTTP_PORT}/health`
+const RPC_URL = `http://127.0.0.1:${AUTOMATION_HTTP_PORT}/rpc`
 
 let cachedToken: string | null = null
 
@@ -9,7 +10,7 @@ export async function getAppToken(): Promise<string> {
   const res = await fetch(HEALTH_URL).catch(() => null)
   if (!res || !res.ok) {
     throw new Error(
-      'Could not connect to OpenPencil app on localhost:7600.\n' +
+      `Could not connect to OpenPencil app on localhost:${AUTOMATION_HTTP_PORT}.\n` +
       'Is the app running? Start it with: bun run tauri dev'
     )
   }
@@ -47,4 +48,9 @@ export async function rpc<T = unknown>(command: string, args: unknown = {}): Pro
 
 export function isAppMode(file?: string): boolean {
   return !file
+}
+
+export function requireFile(file?: string): string {
+  if (!file) throw new Error('File path is required for headless mode')
+  return file
 }

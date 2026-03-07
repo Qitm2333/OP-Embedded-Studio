@@ -1,7 +1,7 @@
 import { defineCommand } from 'citty'
 
 import { loadDocument } from '../../headless'
-import { isAppMode, rpc } from '../../app-client'
+import { isAppMode, requireFile, rpc } from '../../app-client'
 import { bold, fmtList, fmtSummary } from '../../format'
 import { executeRpcCommand } from '@open-pencil/core'
 
@@ -42,7 +42,7 @@ function formatSignature(sig: string): string {
 async function getData(file: string | undefined, args: { limit?: string; 'min-size'?: string; 'min-count'?: string }): Promise<AnalyzeClustersResult> {
   const rpcArgs = { limit: Number(args.limit ?? 20), minSize: Number(args['min-size'] ?? 30), minCount: Number(args['min-count'] ?? 2) }
   if (isAppMode(file)) return rpc<AnalyzeClustersResult>('analyze_clusters', rpcArgs)
-  const graph = await loadDocument(file!)
+  const graph = await loadDocument(requireFile(file))
   return executeRpcCommand(graph, 'analyze_clusters', rpcArgs) as AnalyzeClustersResult
 }
 

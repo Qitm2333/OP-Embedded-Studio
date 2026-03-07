@@ -1,7 +1,7 @@
 import { defineCommand } from 'citty'
 
 import { loadDocument } from '../headless'
-import { isAppMode, rpc } from '../app-client'
+import { isAppMode, requireFile, rpc } from '../app-client'
 import { fmtTree, printError, entity, formatType } from '../format'
 import { executeRpcCommand } from '@open-pencil/core'
 
@@ -21,7 +21,7 @@ function toAgentfmtTree(node: TreeNodeResult, maxDepth: number, depth = 0): Tree
 async function getData(file: string | undefined, args: { page?: string; depth?: string }): Promise<TreeResult | { error: string }> {
   const rpcArgs = { page: args.page, depth: args.depth ? Number(args.depth) : undefined }
   if (isAppMode(file)) return rpc<TreeResult>('tree', rpcArgs)
-  const graph = await loadDocument(file!)
+  const graph = await loadDocument(requireFile(file))
   return executeRpcCommand(graph, 'tree', rpcArgs) as TreeResult | { error: string }
 }
 

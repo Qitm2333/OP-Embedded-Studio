@@ -4,7 +4,7 @@ import { basename, extname, resolve } from 'node:path'
 import { renderNodesToSVG, sceneNodeToJSX, selectionToJSX } from '@open-pencil/core'
 
 import { loadDocument, loadFonts, exportNodes, exportThumbnail } from '../headless'
-import { isAppMode, rpc } from '../app-client'
+import { isAppMode, requireFile, rpc } from '../app-client'
 import { ok, printError } from '../format'
 import type { ExportFormat, JSXFormat } from '@open-pencil/core'
 
@@ -71,7 +71,8 @@ export default defineCommand({
       return
     }
 
-    const graph = await loadDocument(args.file!)
+    const file = requireFile(args.file)
+    const graph = await loadDocument(file)
     await loadFonts(graph)
 
     const pages = graph.getPages()
@@ -84,7 +85,7 @@ export default defineCommand({
       process.exit(1)
     }
 
-    const defaultName = basename(args.file!, extname(args.file!))
+    const defaultName = basename(file, extname(file))
 
     if (format === 'JSX') {
       const jsxFormat = args.style as JSXFormat

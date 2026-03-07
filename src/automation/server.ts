@@ -4,8 +4,7 @@
  * Connects to the bridge via WebSocket, receives RPC requests,
  * executes them against the live EditorStore, and sends results back.
  */
-import { ALL_TOOLS, FigmaAPI, executeRpcCommand } from '@open-pencil/core'
-const AUTOMATION_WS_PORT = 7601
+import { ALL_TOOLS, AUTOMATION_WS_PORT, FigmaAPI, executeRpcCommand } from '@open-pencil/core'
 
 import type { EditorStore } from '@/stores/editor'
 import type { ExportFormat } from '@open-pencil/core'

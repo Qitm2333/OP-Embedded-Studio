@@ -5,13 +5,18 @@
  * ws WebSocket server on :7601 for the browser page.
  *
  * Flow: CLI → HTTP POST /rpc → Hono → WebSocket → browser → execute → response
+ *
+ * Security model: same-machine trust. Both HTTP and WebSocket bind to 127.0.0.1.
+ * The browser generates a random bearer token and registers it via WebSocket.
+ * GET /health exposes the token so the CLI can discover it — this is intentional:
+ * any local process can access the bridge, and the token only prevents accidental
+ * cross-session collisions when multiple instances are running.
  */
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { WebSocketServer, type WebSocket } from 'ws'
 
-const AUTOMATION_PORT = 7600
-const AUTOMATION_WS_PORT = 7601
+import { AUTOMATION_HTTP_PORT, AUTOMATION_WS_PORT } from '@open-pencil/core'
 const RPC_TIMEOUT = 30_000
 
 interface PendingRequest {
@@ -128,17 +133,23 @@ export function startAutomationBridge() {
 
   startServer(app)
 
-  console.log(`[automation] HTTP  http://127.0.0.1:${AUTOMATION_PORT}`)
+  console.log(`[automation] HTTP  http://127.0.0.1:${AUTOMATION_HTTP_PORT}`)
   console.log(`[automation] WS    ws://127.0.0.1:${AUTOMATION_WS_PORT}`)
 }
 
+function isBunRuntime(): boolean {
+  return 'Bun' in globalThis
+}
+
 async function startServer(app: Hono) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- runtime detection across Bun/Node
-  if ((globalThis as any).Bun !== undefined) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Bun.serve not in Node types
-    ;(globalThis as any).Bun.serve({ fetch: app.fetch, port: AUTOMATION_PORT, hostname: '127.0.0.1' })
+  if (isBunRuntime()) {
+    ;(globalThis as unknown as { Bun: { serve: (opts: object) => void } }).Bun.serve({
+      fetch: app.fetch,
+      port: AUTOMATION_HTTP_PORT,
+      hostname: '127.0.0.1'
+    })
   } else {
     const { serve } = await import('@hono/node-server')
-    serve({ fetch: app.fetch, port: AUTOMATION_PORT, hostname: '127.0.0.1' })
+    serve({ fetch: app.fetch, port: AUTOMATION_HTTP_PORT, hostname: '127.0.0.1' })
   }
 }

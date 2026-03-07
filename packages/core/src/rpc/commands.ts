@@ -1,3 +1,5 @@
+import { colorToHex, colorDistance as colorDist } from '../color'
+import type { Color } from '../types'
 import type { SceneGraph, SceneNode, Variable } from '../scene-graph'
 
 export interface RpcCommand<A = unknown, R = unknown> {
@@ -276,8 +278,7 @@ function formatVariableValue(variable: Variable, graph: SceneGraph): string {
   }
 
   if (typeof raw === 'object' && raw !== null && 'r' in raw) {
-    const { r, g, b } = raw as { r: number; g: number; b: number }
-    return '#' + [r, g, b].map((c) => Math.round(c * 255).toString(16).padStart(2, '0')).join('')
+    return colorToHex(raw as Color).toLowerCase()
   }
 
   return String(raw)
@@ -346,6 +347,7 @@ export interface AnalyzeColorsArgs {
 
 interface ColorInfo {
   hex: string
+  color: Color
   count: number
   variableName: string | null
 }
@@ -354,17 +356,6 @@ interface ColorCluster {
   colors: ColorInfo[]
   suggestedHex: string
   totalCount: number
-}
-
-function hexToRgb(hex: string): [number, number, number] {
-  const clean = hex.replace('#', '')
-  return [parseInt(clean.slice(0, 2), 16), parseInt(clean.slice(2, 4), 16), parseInt(clean.slice(4, 6), 16)]
-}
-
-function colorDistance(hex1: string, hex2: string): number {
-  const [r1, g1, b1] = hexToRgb(hex1)
-  const [r2, g2, b2] = hexToRgb(hex2)
-  return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2)
 }
 
 function clusterColors(colors: ColorInfo[], threshold: number): ColorCluster[] {
@@ -379,7 +370,7 @@ function clusterColors(colors: ColorInfo[], threshold: number): ColorCluster[] {
 
     for (const other of sorted) {
       if (used.has(other.hex)) continue
-      if (colorDistance(color.hex, other.hex) <= threshold) {
+      if (colorDist(color.color, other.color) <= threshold) {
         cluster.colors.push(other)
         cluster.totalCount += other.count
         used.add(other.hex)
@@ -392,21 +383,18 @@ function clusterColors(colors: ColorInfo[], threshold: number): ColorCluster[] {
   return clusters.sort((a, b) => b.colors.length - a.colors.length)
 }
 
-function toHex(r: number, g: number, b: number): string {
-  return '#' + [r, g, b].map((c) => Math.round(c * 255).toString(16).padStart(2, '0')).join('')
-}
-
 function collectColors(graph: SceneGraph): { colors: ColorInfo[]; totalNodes: number } {
   const colorMap = new Map<string, ColorInfo>()
   let totalNodes = 0
 
-  const addColor = (hex: string, variableName: string | null) => {
+  const addColor = (c: Color, variableName: string | null) => {
+    const hex = colorToHex(c).toLowerCase()
     const existing = colorMap.get(hex)
     if (existing) {
       existing.count++
       if (variableName && !existing.variableName) existing.variableName = variableName
     } else {
-      colorMap.set(hex, { hex, count: 1, variableName })
+      colorMap.set(hex, { hex, color: c, count: 1, variableName })
     }
   }
 
@@ -416,15 +404,15 @@ function collectColors(graph: SceneGraph): { colors: ColorInfo[]; totalNodes: nu
 
     for (const fill of node.fills) {
       if (!fill.visible || fill.type !== 'SOLID') continue
-      addColor(toHex(fill.color.r, fill.color.g, fill.color.b), null)
+      addColor(fill.color, null)
     }
     for (const stroke of node.strokes) {
       if (!stroke.visible) continue
-      addColor(toHex(stroke.color.r, stroke.color.g, stroke.color.b), null)
+      addColor(stroke.color, null)
     }
     for (const effect of node.effects) {
       if (!effect.visible) continue
-      addColor(toHex(effect.color.r, effect.color.g, effect.color.b), null)
+      addColor(effect.color, null)
     }
 
     for (const [field, varId] of Object.entries(node.boundVariables)) {
@@ -433,7 +421,7 @@ function collectColors(graph: SceneGraph): { colors: ColorInfo[]; totalNodes: nu
       if (variable) {
         const resolvedColor = graph.resolveColorVariable(varId)
         if (resolvedColor) {
-          const hex = toHex(resolvedColor.r, resolvedColor.g, resolvedColor.b)
+          const hex = colorToHex(resolvedColor).toLowerCase()
           const existing = colorMap.get(hex)
           if (existing) existing.variableName = variable.name
         }
