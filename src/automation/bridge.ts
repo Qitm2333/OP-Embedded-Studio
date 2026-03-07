@@ -16,7 +16,11 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { WebSocketServer, type WebSocket } from 'ws'
 
-import { AUTOMATION_HTTP_PORT, AUTOMATION_WS_PORT } from '@open-pencil/core'
+// Can't import from @open-pencil/core here — this file is bundled by esbuild
+// as part of the Vite config, and workspace packages are externalized then
+// loaded by Node's ESM resolver which can't handle .ts source imports.
+const AUTOMATION_HTTP_PORT = 7600
+const AUTOMATION_WS_PORT = 7601
 const RPC_TIMEOUT = 30_000
 
 interface PendingRequest {
