@@ -4,7 +4,7 @@
  * Connects to the bridge via WebSocket, receives RPC requests,
  * executes them against the live EditorStore, and sends results back.
  */
-import { ALL_TOOLS, AUTOMATION_WS_PORT, FigmaAPI, executeRpcCommand, renderTreeNode } from '@open-pencil/core'
+import { ALL_TOOLS, AUTOMATION_WS_PORT, FigmaAPI, executeRpcCommand, renderTreeNode, computeAllLayouts } from '@open-pencil/core'
 
 import type { EditorStore } from '@/stores/editor'
 import type { ExportFormat } from '@open-pencil/core'
@@ -70,6 +70,7 @@ export function connectAutomation(getStore: () => EditorStore) {
           x: toolArgs.x as number | undefined,
           y: toolArgs.y as number | undefined
         })
+        computeAllLayouts(store.graph, store.state.currentPageId)
         store.requestRender()
         store.flashNodes([result.id])
         return { ok: true, result: { id: result.id, name: result.name, type: result.type, children: result.childIds } }
@@ -80,6 +81,7 @@ export function connectAutomation(getStore: () => EditorStore) {
       const figma = makeFigma()
       const result = await def.execute(figma, toolArgs)
       if (def.mutates) {
+        computeAllLayouts(store.graph, store.state.currentPageId)
         store.requestRender()
         store.flashNodes(extractNodeIds(result))
       }
