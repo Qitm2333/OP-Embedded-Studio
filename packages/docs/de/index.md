@@ -1,5 +1,6 @@
 ---
 layout: home
+title: OpenPencil — KI-nativer Design-Editor
 description: Open-Source Figma-Alternative. Vollständig lokal, KI-nativ, programmierbar.
 
 hero:

@@ -139,6 +139,19 @@ const ES: SidebarLabels = { gettingAround: 'Orientación', creatingContent: 'Cre
 
 const PL: SidebarLabels = { gettingAround: 'Nawigacja', creatingContent: 'Tworzenie treści', organizing: 'Organizacja', advanced: 'Zaawansowane', canvasNav: 'Nawigacja po płótnie', selection: 'Zaznaczanie i edycja', shapes: 'Rysowanie kształtów', text: 'Edycja tekstu', pen: 'Narzędzie pióro', layers: 'Warstwy i strony', contextMenu: 'Menu kontekstowe', exporting: 'Eksportowanie', autoLayout: 'Auto-layout', components: 'Komponenty', variables: 'Zmienne', guide: 'Przewodnik', gettingStarted: 'Rozpoczęcie pracy', features: 'Funkcje', architecture: 'Architektura', techStack: 'Stack technologiczny', comparison: 'Porównanie', figmaMatrix: 'Matryca funkcji Figma' }
 
+const BASE = 'https://openpencil.dev'
+
+const LOCALE_PREFIXES = ['de', 'fr', 'es', 'it', 'pl'] as const
+
+const LOCALES: Record<string, { hreflang: string; ogLocale: string; prefix: string }> = {
+  en: { hreflang: 'en', ogLocale: 'en_US', prefix: '' },
+  de: { hreflang: 'de', ogLocale: 'de_DE', prefix: '/de' },
+  fr: { hreflang: 'fr', ogLocale: 'fr_FR', prefix: '/fr' },
+  es: { hreflang: 'es', ogLocale: 'es_ES', prefix: '/es' },
+  it: { hreflang: 'it', ogLocale: 'it_IT', prefix: '/it' },
+  pl: { hreflang: 'pl', ogLocale: 'pl_PL', prefix: '/pl' },
+}
+
 export default defineConfig({
   title: 'OpenPencil',
   description: 'Open-source, AI-native design editor. Figma alternative built from scratch with full .fig file compatibility.',
@@ -146,12 +159,85 @@ export default defineConfig({
   lastUpdated: true,
   appearance: 'dark',
 
+  sitemap: {
+    hostname: BASE,
+    transformItems(items) {
+      return items.map((item) => {
+        const localeKey = LOCALE_PREFIXES.find((p) => item.url.startsWith(p + '/')) ?? 'en'
+        const slug = item.url
+          .replace(new RegExp(`^(${LOCALE_PREFIXES.join('|')})/`), '')
+          .replace(/\/$/, '')
+
+        return {
+          ...item,
+          links: Object.entries(LOCALES).map(([, loc]) => {
+            const url = slug ? `${BASE}${loc.prefix}/${slug}` : `${BASE}${loc.prefix || '/'}`
+            return { lang: loc.hreflang, url }
+          }),
+        }
+      })
+    },
+  },
+
   head: [
     ['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }],
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: 'OpenPencil' }],
-    ['meta', { property: 'og:description', content: 'Open-source, AI-native design editor' }],
+    ['meta', { property: 'og:site_name', content: 'OpenPencil' }],
+    ['meta', { property: 'og:image', content: `${BASE}/screenshot.png` }],
+    ['meta', { property: 'og:image:width', content: '2784' }],
+    ['meta', { property: 'og:image:height', content: '1824' }],
+    ['meta', { property: 'og:image:alt', content: 'OpenPencil — AI-Native Design Editor' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:site', content: '@openpencildev' }],
+    ['meta', { name: 'twitter:image', content: `${BASE}/screenshot.png` }],
   ],
+
+  transformPageData(pageData) {
+    const rel = pageData.relativePath
+
+    const localeKey = (LOCALE_PREFIXES.find((p) => rel.startsWith(p + '/')) as string) ?? 'en'
+    const locale = LOCALES[localeKey]
+
+    const slug = rel
+      .replace(new RegExp(`^(${LOCALE_PREFIXES.join('|')})/`), '')
+      .replace(/\.md$/, '')
+      .replace(/\/index$/, '')
+      .replace(/^index$/, '')
+
+    const pageUrl = slug ? `${BASE}${locale.prefix}/${slug}` : `${BASE}${locale.prefix || ''}`
+    const enSlug = slug ? `${BASE}/${slug}` : BASE
+
+    pageData.frontmatter.head ??= []
+    const h = pageData.frontmatter.head as [string, Record<string, string>][]
+
+    h.push(['link', { rel: 'canonical', href: pageUrl }])
+    h.push(['meta', { property: 'og:url', content: pageUrl }])
+    h.push(['meta', { property: 'og:locale', content: locale.ogLocale }])
+
+    for (const [key, loc] of Object.entries(LOCALES)) {
+      if (key !== localeKey) {
+        h.push(['meta', { property: 'og:locale:alternate', content: loc.ogLocale }])
+      }
+    }
+
+    for (const [, loc] of Object.entries(LOCALES)) {
+      const altUrl = slug ? `${BASE}${loc.prefix}/${slug}` : `${BASE}${loc.prefix || ''}`
+      h.push(['link', { rel: 'alternate', hreflang: loc.hreflang, href: altUrl }])
+    }
+    h.push(['link', { rel: 'alternate', hreflang: 'x-default', href: enSlug }])
+
+    if (pageData.title) {
+      const ogTitle = `${pageData.title} — OpenPencil`
+      h.push(['meta', { property: 'og:title', content: ogTitle }])
+      h.push(['meta', { name: 'twitter:title', content: ogTitle }])
+    }
+
+    if (pageData.description) {
+      h.push(['meta', { property: 'og:description', content: pageData.description }])
+      h.push(['meta', { name: 'twitter:description', content: pageData.description }])
+      h.push(['meta', { name: 'description', content: pageData.description }])
+    }
+  },
 
   locales: {
     root: {
@@ -174,7 +260,7 @@ export default defineConfig({
       label: 'Français',
       lang: 'fr',
       description: 'Éditeur de design open-source, IA-natif. Alternative à Figma.',
-      themeConfig: localeThemeConfig('/fr', { userGuide: 'Guide utilisateur', reference: 'Référence', development: 'Développement', openApp: 'Ouvrir l\'app' }, FR),
+      themeConfig: localeThemeConfig('/fr', { userGuide: 'Guide utilisateur', reference: 'Référence', development: 'Développement', openApp: "Ouvrir l'app" }, FR),
     },
     es: {
       label: 'Español',
@@ -185,7 +271,7 @@ export default defineConfig({
     pl: {
       label: 'Polski',
       lang: 'pl',
-      description: 'Open-source\'owy edytor graficzny z natywnym AI. Alternatywa dla Figmy.',
+      description: "Open-source'owy edytor graficzny z natywnym AI. Alternatywa dla Figmy.",
       themeConfig: localeThemeConfig('/pl', { userGuide: 'Podręcznik', reference: 'Referencja', development: 'Rozwój', openApp: 'Otwórz app' }, PL),
     },
   },
@@ -229,9 +315,7 @@ export default defineConfig({
       ],
     },
 
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/open-pencil/open-pencil' },
-    ],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/open-pencil/open-pencil' }],
 
     editLink: {
       pattern: 'https://github.com/open-pencil/open-pencil/edit/main/packages/docs/:path',

@@ -1,5 +1,6 @@
 ---
 layout: home
+title: OpenPencil — Editor di Design IA-Nativo
 description: Alternativa open-source a Figma. Completamente locale, IA-nativa, programmabile.
 
 hero:
