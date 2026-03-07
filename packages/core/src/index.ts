@@ -1,4 +1,5 @@
 export type { GUID, Color, Vector, Matrix, Rect } from './types'
+export { degToRad, radToDeg, rotatePoint, rotatedCorners, rotatedBBox } from './geometry'
 
 export * from './constants'
 
@@ -58,8 +59,16 @@ export type {
   AnalyzeSpacingResult, SpacingValue,
   AnalyzeClustersArgs, AnalyzeClustersResult, TypographyStyle
 } from './rpc'
-export { SkiaRenderer, type RenderOverlays } from './renderer'
-export { RenderProfiler } from './profiler'
+export { SkiaRenderer, type RenderOverlays } from './renderer/index'
+export {
+  RenderProfiler,
+  FrameStats,
+  GPUTimer,
+  DrawCallCounter,
+  PhaseTimer,
+  CaptureStack,
+  toSpeedscopeJSON
+} from './profiler'
 export type { FrameCapture, NodeProfile } from './profiler'
 export { computeLayout, computeAllLayouts, setTextMeasurer } from './layout'
 export type { TextMeasurer } from './layout'
@@ -78,7 +87,19 @@ export {
   styleToWeight,
   weightToStyle
 } from './fonts'
-export { parseColor, colorToHex, colorToHexRaw, colorToRgba255, colorToCSS } from './color'
+export {
+  parseColor,
+  normalizeColor,
+  colorToHex,
+  colorToHex8,
+  colorToHexRaw,
+  colorToRgba255,
+  colorToCSS,
+  colorToCSSCompact,
+  rgba255ToColor,
+  colorToFill,
+  colorDistance
+} from './color'
 export {
   vectorNetworkToPath,
   geometryBlobToPath,
@@ -90,6 +111,10 @@ export { computeSelectionBounds, computeSnap, type SnapGuide } from './snap'
 export { UndoManager } from './undo'
 export { TextEditor, type TextCaret, type TextEditorState } from './text-editor'
 export {
+  getStyleAt,
+  applyStyleToRange,
+  removeStyleFromRange,
+  selectionHasStyle,
   toggleBoldInRange,
   toggleItalicInRange,
   toggleDecorationInRange,

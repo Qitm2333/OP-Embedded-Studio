@@ -11,14 +11,9 @@ import { colorToCSS } from '@open-pencil/core'
 import type { Color, Effect } from '@open-pencil/core'
 
 const { store } = useNodeProps()
-const { node, nodes, isMulti, active } = useMultiProps()
+const { node, nodes, isMulti, active, isArrayMixed } = useMultiProps()
 
-const effectsAreMixed = computed(() => {
-  if (!isMulti.value) return false
-  const all = nodes.value
-  const first = JSON.stringify(all[0].effects)
-  return all.some((n) => JSON.stringify(n.effects) !== first)
-})
+const effectsAreMixed = computed(() => isArrayMixed('effects'))
 
 const expandedIndex = ref<number | null>(null)
 const effectsBeforeScrub = ref<Effect[] | null>(null)

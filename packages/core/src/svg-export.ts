@@ -1,4 +1,4 @@
-import { colorToHex } from './color'
+import { colorToHex, colorToHex8 } from './color'
 import { computeContentBounds } from './render-image'
 
 import { svg, renderSVGNode } from './svg-node'
@@ -36,14 +36,7 @@ function round(n: number, decimals = 2): number {
 }
 
 function formatColor(color: Color, opacity = 1): string {
-  if (opacity < 1) {
-    const hex = colorToHex(color)
-    const alpha = Math.round(opacity * 255)
-      .toString(16)
-      .padStart(2, '0')
-    return hex + alpha
-  }
-  return colorToHex(color)
+  return colorToHex8(color, opacity)
 }
 
 // --- Path data ---

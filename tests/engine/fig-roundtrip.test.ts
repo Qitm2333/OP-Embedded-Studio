@@ -2,13 +2,16 @@ import { describe, test, expect, beforeAll, setDefaultTimeout } from 'bun:test'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
-import { parseFigFile } from '../../packages/core/src/kiwi/fig-file'
-import { exportFigFile } from '../../packages/core/src/fig-export'
-import { importNodeChanges } from '../../packages/core/src/kiwi/fig-import'
-import { initCodec } from '../../packages/core/src/kiwi/codec'
-import { SceneGraph } from '../../packages/core/src/scene-graph'
-
-import type { SceneNode, NodeType, Fill } from '../../packages/core/src/scene-graph'
+import {
+  parseFigFile,
+  exportFigFile,
+  importNodeChanges,
+  initCodec,
+  SceneGraph,
+  type SceneNode,
+  type NodeType,
+  type Fill,
+} from '@open-pencil/core'
 import { heavy } from '../helpers/test-utils'
 
 setDefaultTimeout(60_000)

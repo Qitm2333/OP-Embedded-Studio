@@ -1,20 +1,12 @@
 import { createTwoFilesPatch } from 'diff'
 
-import { colorToHex, parseColor } from '../color'
+import { colorDistance, colorToHex, parseColor } from '../color'
 
 import { defineTool } from './schema'
 
 import type { Color } from '../types'
 import type { SceneNode } from '../scene-graph'
 import type { FigmaAPI } from '../figma-api'
-
-// ─── Color analysis helpers ───────────────────────────────────
-
-function colorDistance(c1: Color, c2: Color): number {
-  return Math.sqrt(
-    ((c1.r - c2.r) * 255) ** 2 + ((c1.g - c2.g) * 255) ** 2 + ((c1.b - c2.b) * 255) ** 2
-  )
-}
 
 interface ColorEntry {
   hex: string

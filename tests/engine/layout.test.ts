@@ -1,7 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 
-import { SceneGraph, type SceneNode } from '../../src/engine/scene-graph'
-import { computeLayout, computeAllLayouts, setTextMeasurer } from '../../src/engine/layout'
+import { SceneGraph, type SceneNode, computeLayout, computeAllLayouts, setTextMeasurer } from '@open-pencil/core'
 
 function pageId(graph: SceneGraph) {
   return graph.getPages()[0].id

@@ -36,5 +36,23 @@ export function useMultiProps() {
     store.requestRender()
   }
 
-  return { store, node, nodes, isMulti, active, activeNode, prop, merged, updateAllWithUndo }
+  function isArrayMixed<K extends keyof SceneNode>(key: K): boolean {
+    const all = nodes.value
+    if (all.length <= 1) return false
+    const first = JSON.stringify(all[0][key])
+    return all.some((n) => JSON.stringify(n[key]) !== first)
+  }
+
+  return {
+    store,
+    node,
+    nodes,
+    isMulti,
+    active,
+    activeNode,
+    prop,
+    merged,
+    updateAllWithUndo,
+    isArrayMixed
+  }
 }
