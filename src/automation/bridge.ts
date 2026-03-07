@@ -76,7 +76,8 @@ function handleBrowserMessage(data: string) {
   }
 }
 
-export function startAutomationBridge() {
+export function startAutomationBridge(server: ViteServer) {
+  viteServer = server
   const wss = new WebSocketServer({ port: AUTOMATION_WS_PORT, host: '127.0.0.1' })
 
   wss.on('connection', (ws) => {
@@ -142,12 +143,15 @@ export function startAutomationBridge() {
   console.log(`[automation] WS    ws://127.0.0.1:${AUTOMATION_WS_PORT}`)
 }
 
+type ViteServer = { ssrLoadModule: (id: string) => Promise<Record<string, unknown>> }
+let viteServer: ViteServer | null = null
+
 async function jsxToTree(jsx: string): Promise<unknown> {
-  // Dynamic import hidden from esbuild's static analysis — this file is bundled
-  // as part of the Vite config, and esbuild can't resolve workspace packages.
-  // At runtime (inside configureServer), the import resolves normally via Vite.
-  const pkg = '@open-pencil' + '/core'
-  const { buildComponent, resolveToTree, createElement } = await import(/* @vite-ignore */ pkg)
+  if (!viteServer) throw new Error('Vite server not initialized')
+  const core = await viteServer.ssrLoadModule('@open-pencil/core')
+  const buildComponent = core.buildComponent as (jsx: string) => Promise<() => unknown>
+  const resolveToTree = core.resolveToTree as (el: unknown) => unknown
+  const createElement = core.createElement as (type: unknown, props: unknown) => unknown
   const Component = await buildComponent(jsx)
   const element = createElement(Component, null)
   return resolveToTree(element)

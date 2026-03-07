@@ -7,7 +7,6 @@
     ".": {
       "types": "./src/index.ts",
       "bun": "./src/index.ts",
-      "node": "./dist/index.js",
       "default": "./src/index.ts"
     }
   },
@@ -25,7 +24,16 @@
   },
   "publishConfig": {
     "access": "public",
-    "provenance": true
+    "provenance": true,
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "node": "./dist/index.js",
+        "default": "./dist/index.js"
+      }
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts"
   },
   "dependencies": {
     "canvaskit-wasm": "^0.40.0",
