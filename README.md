@@ -9,12 +9,13 @@ Open-source, AI-native design editor. Figma-compatible, AI-first, fully local.
 > **What's next**
 >
 > - 100% .fig compatibility — full rendering parity with Figma
-> - Shader effects (SkSL), skewing, native OkHCL color support
+> - Individual stroke sides (top/right/bottom/left) — per-side width, color, and style
+> - Shader effects (SkSL) — custom visual effects via GPU shaders
+> - Raster tile caching — instant zoom/pan for complex documents
 > - Component libraries — publish, share, and consume design systems
-> - Live reload when .fig file changes on disk (MCP server → desktop app workflow)
-> - More AI providers (Anthropic API, Claude Code subscription, Gemini, local models via Ollama)
-> - Code signing (Apple & Azure certificates for properly signed binaries)
 > - CI tools — design linting, code export, visual regression in pipelines
+> - Code signing (Apple & Azure certificates for properly signed binaries)
+> - Experimental WebGPU/Graphite rendering backend
 
 ![OpenPencil](packages/docs/public/screenshot.png)
 
@@ -42,9 +43,12 @@ Your design files are yours. Your tools should be too.
 - **Copy & paste with Figma** — select nodes in Figma, paste into OpenPencil (and vice versa). Uses the same Kiwi binary format as .fig files
 - **Real-time collaboration** — P2P via WebRTC, no server required. Cursors, presence, follow mode
 - **Drawing tools** — shapes, pen tool with vector networks, rich text with system fonts, auto-layout, components with live sync, variables with modes and collections
-- **AI chat** — describe what you want, the AI builds it. 75 tools wired to chat, CLI, and MCP
+- **AI chat** — describe what you want, the AI builds it. 87 tools wired to chat, CLI, and MCP
 - **MCP server** — connect Claude Code, Cursor, or any MCP client to read/write .fig files headlessly
-- **Headless CLI** — inspect, search, analyze, and render .fig files without a GUI
+- **Headless CLI** — inspect, search, analyze, and render .fig files without a GUI. Run against live app via RPC bridge or standalone against .fig files
+- **Tailwind CSS export** — export selections as HTML with Tailwind v4 utility classes from the Code panel, CLI, or programmatically
+- **Mobile & PWA** — responsive editor with touch-optimized toolbar, swipeable drawer, installable as a Progressive Web App
+- **Documentation** — full docs at [openpencil.dev](https://openpencil.dev) with 6 locales
 - **~7 MB desktop app** — Tauri v2, macOS/Windows/Linux. Also runs in the browser
 
 ## Tech Stack
@@ -139,7 +143,7 @@ Security defaults for HTTP transport:
 - Optional auth: set `OPENPENCIL_MCP_AUTH_TOKEN` and send `Authorization: Bearer <token>` (or `x-mcp-token`)
 - CORS is disabled by default; set `OPENPENCIL_MCP_CORS_ORIGIN` to allow a specific origin
 
-75 tools: create shapes, set fills/strokes/layout, variables, vectors, boolean ops, viewport, find nodes, open/save `.fig` files, render JSX to design nodes.
+90 tools: create shapes, set fills/strokes/layout, variables, vectors, boolean ops, viewport, find nodes, open/save `.fig` files, render JSX to design nodes.
 
 ## Scripts
 
@@ -202,9 +206,10 @@ packages/
   core/           @open-pencil/core — engine (scene graph, renderer, layout, codec)
   cli/            @open-pencil/cli — headless CLI (info, tree, find, export)
   mcp/            @open-pencil/mcp — MCP server (stdio + HTTP)
-  docs/           VitePress documentation site
+  docs/           VitePress documentation site (openpencil.dev)
 src/
   ai/             AI tool wiring
+  automation/     CLI-to-app RPC bridge (WebSocket + HTTP)
   components/     Vue SFCs (canvas, panels, collaboration, color picker)
   composables/    Canvas input, keyboard shortcuts, collaboration, rendering
   views/          Route views
@@ -212,8 +217,9 @@ src/
   engine/         Re-export shims from @open-pencil/core
 desktop/          Tauri v2 (Rust + config)
 tests/
-  e2e/            Playwright visual regression
-  engine/         Unit tests
+  e2e/            Playwright E2E tests (188 tests)
+  engine/         Unit tests (764 tests)
+  helpers/        Test utilities (canvas interaction, store access)
 ```
 
 ## Acknowledgments

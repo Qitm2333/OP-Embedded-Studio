@@ -147,7 +147,10 @@ export function useCollab(store: EditorStore) {
       'update',
       ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }) => {
         const changedClients = [...added, ...updated, ...removed]
-        const encodedUpdate = awarenessProtocol.encodeAwarenessUpdate(localAwareness, changedClients)
+        const encodedUpdate = awarenessProtocol.encodeAwarenessUpdate(
+          localAwareness,
+          changedClients
+        )
         sendAwareness?.(encodedUpdate)
       }
     )

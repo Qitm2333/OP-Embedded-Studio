@@ -1,3 +1,4 @@
+import { makeFigmaFromStore } from '@/automation/figma-factory'
 /**
  * Browser-side automation handler.
  *
@@ -14,7 +15,6 @@ import {
   sceneNodeToJSX
 } from '@open-pencil/core'
 
-import { makeFigmaFromStore } from '@/automation/figma-factory'
 import type { EditorStore } from '@/stores/editor'
 import type { ExportFormat } from '@open-pencil/core'
 
