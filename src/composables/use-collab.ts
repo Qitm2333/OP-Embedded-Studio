@@ -140,35 +140,34 @@ export function useCollab(store: EditorStore) {
       sendYjsUpdate?.(update)
     })
 
-    awareness.on(
+    const localAwareness = awareness
+    const localYdoc = ydoc
+
+    localAwareness.on(
       'update',
       ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }) => {
         const changedClients = [...added, ...updated, ...removed]
-        const encodedUpdate = awarenessProtocol.encodeAwarenessUpdate(awareness!, changedClients)
+        const encodedUpdate = awarenessProtocol.encodeAwarenessUpdate(localAwareness, changedClients)
         sendAwareness?.(encodedUpdate)
       }
     )
 
     room.onPeerJoin((peerId) => {
       state.value.connected = true
-      const sv = Y.encodeStateVector(ydoc!)
+      const sv = Y.encodeStateVector(localYdoc)
       sendSyncStep1?.(sv, peerId)
 
-      if (awareness) {
-        const encodedUpdate = awarenessProtocol.encodeAwarenessUpdate(awareness, [
-          awareness.clientID
-        ])
-        sendAwareness?.(encodedUpdate, peerId)
-      }
+      const encodedUpdate = awarenessProtocol.encodeAwarenessUpdate(localAwareness, [
+        localAwareness.clientID
+      ])
+      sendAwareness?.(encodedUpdate, peerId)
     })
 
     room.onPeerLeave(() => {
-      if (awareness) {
-        const remoteClients = [...awareness.getStates().keys()].filter(
-          (id) => id !== awareness!.clientID
-        )
-        awarenessProtocol.removeAwarenessStates(awareness, remoteClients, 'peer-left')
-      }
+      const remoteClients = [...localAwareness.getStates().keys()].filter(
+        (id) => id !== localAwareness.clientID
+      )
+      awarenessProtocol.removeAwarenessStates(localAwareness, remoteClients, 'peer-left')
       updatePeersList()
     })
 
@@ -229,12 +228,13 @@ export function useCollab(store: EditorStore) {
     const node = store.graph.getNode(nodeId)
     if (!node) return
 
+    const localYnodes = ynodes
     suppressYjsEvents = true
     ydoc.transact(() => {
-      let ynode = ynodes!.get(nodeId)
+      let ynode = localYnodes.get(nodeId)
       if (!ynode) {
         ynode = new Y.Map()
-        ynodes!.set(nodeId, ynode)
+        localYnodes.set(nodeId, ynode)
       }
       syncNodePropsToYMap(node, ynode)
     })
@@ -253,13 +253,14 @@ export function useCollab(store: EditorStore) {
 
   function syncAllNodesToYjs() {
     if (!ydoc || !ynodes) return
+    const localYnodes = ynodes
     suppressYjsEvents = true
     ydoc.transact(() => {
       for (const node of store.graph.getAllNodes()) {
-        let ynode = ynodes!.get(node.id)
+        let ynode = localYnodes.get(node.id)
         if (!ynode) {
           ynode = new Y.Map()
-          ynodes!.set(node.id, ynode)
+          localYnodes.set(node.id, ynode)
         }
         syncNodePropsToYMap(node, ynode)
       }
@@ -268,20 +269,22 @@ export function useCollab(store: EditorStore) {
   }
 
   function applyYjsToGraph(events: Y.YEvent<Y.Map<unknown>>[]) {
+    if (!ynodes) return
+    const localYnodes = ynodes
     for (const event of events) {
-      if (event.target === ynodes) {
+      if (event.target === localYnodes) {
         for (const [key, change] of event.changes.keys) {
           if (change.action === 'add') {
-            const ynode = ynodes!.get(key)
+            const ynode = localYnodes.get(key)
             if (ynode) applyYnodeToGraph(key, ynode)
           } else if (change.action === 'delete') {
             store.graph.deleteNode(key)
           }
         }
-      } else if (event.target.parent === ynodes) {
+      } else if (event.target.parent === localYnodes) {
         const nodeId = findNodeIdForYMap(event.target as Y.Map<unknown>)
         if (nodeId) {
-          const ynode = ynodes!.get(nodeId)
+          const ynode = localYnodes.get(nodeId)
           if (ynode) applyYnodeToGraph(nodeId, ynode)
         }
       }
@@ -367,13 +370,16 @@ export function useCollab(store: EditorStore) {
     state.value.peers = peers
     store.state.remoteCursors = peers
       .filter((p) => p.cursor && p.cursor.pageId === currentPageId)
-      .map((p) => ({
-        name: p.name,
-        color: p.color,
-        x: p.cursor!.x,
-        y: p.cursor!.y,
-        selection: p.selection
-      }))
+      .map((p) => {
+        const cursor = p.cursor as NonNullable<RemotePeer['cursor']>
+        return {
+          name: p.name,
+          color: p.color,
+          x: cursor.x,
+          y: cursor.y,
+          selection: p.selection
+        }
+      })
     store.requestRender()
   }
 
