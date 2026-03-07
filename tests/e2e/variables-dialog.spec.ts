@@ -72,8 +72,16 @@ test('click name cell activates editable input', async () => {
 })
 
 test('color swatch opens color picker', async () => {
+  await createColorVariable('SwatchVar')
+  // close dialog if open from previous test
+  await page.keyboard.press('Escape')
+  await page.waitForTimeout(200)
+  await page.locator('[data-test-id="variables-section-open"]').click()
+  await expect(page.locator('[data-test-id="variables-dialog"]')).toBeVisible({ timeout: 3000 })
+
   const swatch = page.locator('[data-test-id="variable-row"]').first().locator('[data-test-id="color-picker-swatch"]')
+  await expect(swatch).toBeVisible({ timeout: 3000 })
   await swatch.click()
-  await expect(page.locator('[data-test-id="color-picker-popover"]')).toBeVisible()
+  await expect(page.locator('[data-test-id="color-picker-popover"]')).toBeVisible({ timeout: 5000 })
   canvas.assertNoErrors()
 })

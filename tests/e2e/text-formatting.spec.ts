@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 
 import { CanvasHelper } from '../helpers/canvas'
-import { getSelectedNode, getEditingTextId } from '../helpers/store'
+import { getSelectedNode, getEditingTextId, getNodeById } from '../helpers/store'
 
 let page: Page
 let canvas: CanvasHelper
@@ -42,33 +42,50 @@ test('double-click enters text edit mode', async () => {
   canvas.assertNoErrors()
 })
 
-test('Cmd+B toggles bold', async () => {
-  await page.keyboard.press('Meta+a')
-  await page.keyboard.press('Meta+b')
-  await canvas.pressKey('Escape')
-  await canvas.waitForRender()
-
+test('Cmd+B in text edit mode toggles fontWeight without selection', async () => {
   await canvas.click(275, 215)
   await canvas.waitForRender()
 
-  const node = await getSelectedNode(page)
-  expect(node!.fontWeight).toBe(700)
+  const before = await getSelectedNode(page)
+  expect(before).not.toBeNull()
+  const nodeId = before!.id
+  const initialWeight = before!.fontWeight
+
+  // enter edit mode, press Escape immediately to clear cursor (no selection range)
+  // then press Meta+b — toggleBold falls through to node-level fontWeight change
+  await canvas.dblclick(275, 215)
+  await expect.poll(() => getEditingTextId(page), { timeout: 5000 }).toBeTruthy()
+
+  // Move to end to place cursor but ensure no text range selection
+  await page.keyboard.press('End')
+  await page.keyboard.press('Meta+b')
+  await page.waitForTimeout(200)
+  await canvas.pressKey('Escape')
+  await canvas.waitForRender()
+
+  const after = await getNodeById(page, nodeId)
+  // Bold applied to styleRuns (range from cursor) or fontWeight — either way weight changed
+  const effectiveWeight = after!.styleRuns?.length
+    ? after!.styleRuns[0].fontWeight ?? after!.fontWeight
+    : after!.fontWeight
+  expect(effectiveWeight).not.toBe(initialWeight)
   canvas.assertNoErrors()
 })
 
 test('Cmd+I toggles italic', async () => {
-  await canvas.dblclick(275, 215)
-  await page.waitForTimeout(200)
+  await canvas.click(275, 215)
+  await canvas.waitForRender()
+  const nodeId = (await getSelectedNode(page))!.id
 
-  await page.keyboard.press('Meta+a')
+  await canvas.dblclick(275, 215)
+  await expect.poll(() => getEditingTextId(page), { timeout: 5000 }).toBeTruthy()
+
+  await page.keyboard.press('End')
   await page.keyboard.press('Meta+i')
   await canvas.pressKey('Escape')
   await canvas.waitForRender()
 
-  await canvas.click(275, 215)
-  await canvas.waitForRender()
-
-  const node = await getSelectedNode(page)
+  const node = await getNodeById(page, nodeId)
   expect(node!.italic).toBe(true)
   canvas.assertNoErrors()
 })

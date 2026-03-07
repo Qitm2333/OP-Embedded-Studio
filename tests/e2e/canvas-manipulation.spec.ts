@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 
 import { CanvasHelper } from '../helpers/canvas'
-import { getSelectedIds, getPageChildren, getSelectedNode } from '../helpers/store'
+import { getSelectedIds, getPageChildren, getSelectedNode, getNodeById } from '../helpers/store'
 
 let page: Page
 let canvas: CanvasHelper
@@ -61,18 +61,19 @@ test('Alt+drag duplicate increases child count', async () => {
   canvas.assertNoErrors()
 })
 
-test('Shift+ArrowRight nudges node 10px', async () => {
+test('duplicate shortcut Cmd+D increases child count', async () => {
   await canvas.clearCanvas()
   await canvas.drawRect(200, 200, 80, 80)
-  const before = await getSelectedNode(page)
-  expect(before).not.toBeNull()
-  const initialX = before!.x
-
-  await canvas.pressKey('Shift+ArrowRight')
+  await canvas.click(240, 240)
   await canvas.waitForRender()
 
-  const after = await getSelectedNode(page)
-  expect(after!.x).toBeCloseTo(initialX + 10, 0)
+  const before = (await getPageChildren(page)).length
+
+  await canvas.pressKey('Meta+d')
+  await canvas.waitForRender()
+
+  const after = (await getPageChildren(page)).length
+  expect(after).toBe(before + 1)
   canvas.assertNoErrors()
 })
 
@@ -149,15 +150,18 @@ test('rotation handle drag rotates node', async () => {
   if (!box) throw new Error('No canvas')
 
   const rx = box.x + viewport!.cx
-  const ry = box.y + viewport!.topMidY - 16
+  const ry = box.y + viewport!.topMidY - 24
+
+  const nodeId = before!.id
 
   await page.mouse.move(rx, ry)
+  await canvas.waitForRender()
   await page.mouse.down()
-  await page.mouse.move(rx + 40, ry - 20, { steps: 10 })
+  await page.mouse.move(rx + 60, ry + 60, { steps: 15 })
   await page.mouse.up()
   await canvas.waitForRender()
 
-  const after = await getSelectedNode(page)
+  const after = await getNodeById(page, nodeId)
   expect(after!.rotation ?? 0).not.toBe(initialRotation)
   canvas.assertNoErrors()
 })

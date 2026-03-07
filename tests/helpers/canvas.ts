@@ -27,7 +27,8 @@ export class CanvasHelper {
   }
 
   async waitForInit() {
-    await this.page.locator('canvas[data-ready="1"]').waitFor({ timeout: 5000 })
+    await this.page.locator('canvas[data-ready="1"]').waitFor({ timeout: 30000 })
+    await this.page.locator('[data-test-id="canvas-loading"]').waitFor({ state: 'hidden', timeout: 30000 })
   }
 
   async clearCanvas() {

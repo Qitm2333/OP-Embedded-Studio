@@ -79,6 +79,7 @@ export function getNodeById(page: Page, id: string) {
       fills: n.fills,
       fontWeight: n.fontWeight,
       italic: n.italic,
+      styleRuns: n.styleRuns,
     }
   }, id)
 }

@@ -64,9 +64,19 @@ test('independent corners toggle shows four corner inputs', async () => {
 
 test('fill gradient switch changes fill type', async () => {
   await canvas.clearCanvas()
-  await canvas.drawRect(200, 200, 80, 80)
+  await canvas.pressKey('Escape')
+  await canvas.waitForRender()
+  // fresh rect with default solid fill
+  await canvas.drawRect(300, 300, 80, 80)
+  await canvas.waitForRender()
 
-  await page.locator('[data-test-id="fill-item"]').first().locator('[data-test-id="color-picker-swatch"]').click()
+  await expect(page.locator('[data-test-id="fill-section"]')).toBeVisible({ timeout: 5000 })
+
+  const fillItem = page.locator('[data-test-id="fill-item"]').first()
+  await expect(fillItem).toBeVisible({ timeout: 5000 })
+  const fillSwatch = fillItem.locator('[data-test-id="fill-picker-swatch"]')
+  await expect(fillSwatch).toBeVisible({ timeout: 5000 })
+  await fillSwatch.click()
   await canvas.waitForRender()
 
   await page.locator('[data-test-id="fill-picker-tab-gradient"]').click()
