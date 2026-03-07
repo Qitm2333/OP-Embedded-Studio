@@ -1,4 +1,3 @@
-import { makeFigmaFromStore } from '@/automation/figma-factory'
 /**
  * Browser-side automation handler.
  *
@@ -15,6 +14,7 @@ import {
   sceneNodeToJSX
 } from '@open-pencil/core'
 
+import { makeFigmaFromStore } from '@/automation/figma-factory'
 import type { EditorStore } from '@/stores/editor'
 import type { ExportFormat } from '@open-pencil/core'
 
@@ -107,7 +107,8 @@ export function connectAutomation(getStore: () => EditorStore) {
     if (command === 'export_jsx') {
       const jsxArgs = args as { nodeIds?: string[]; style?: string } | undefined
       const style = (jsxArgs?.style ?? 'openpencil') as 'openpencil' | 'tailwind'
-      const nodeIds = jsxArgs?.nodeIds ?? store.graph.getPages()[0]?.childIds ?? []
+      const currentPage = store.graph.getNode(store.state.currentPageId)
+      const nodeIds = jsxArgs?.nodeIds ?? currentPage?.childIds ?? []
       const jsx =
         nodeIds.length === 1
           ? sceneNodeToJSX(nodeIds[0], store.graph, style)

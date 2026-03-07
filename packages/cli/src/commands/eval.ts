@@ -41,12 +41,12 @@ export default defineCommand({
     }
 
     if (isAppMode(args.file)) {
-      const response = await rpc<{ ok: boolean; result?: unknown; error?: string }>('eval', { code })
-      if (!args.quiet && response.result !== undefined) {
+      const result = await rpc<unknown>('eval', { code })
+      if (!args.quiet && result !== undefined && result !== null) {
         if (args.json || !process.stdout.isTTY) {
-          console.log(JSON.stringify(response.result, null, 2))
+          console.log(JSON.stringify(result, null, 2))
         } else {
-          console.log(response.result)
+          console.log(result)
         }
       }
       return
