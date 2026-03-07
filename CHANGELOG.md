@@ -2,8 +2,82 @@
 
 ## Unreleased
 
+### Features
+
+- Mobile layout & PWA — responsive editor with touch-optimized toolbar, swipeable bottom drawer (layers/properties/design/code), HUD overlay, and installable PWA with icons and service worker
+- Tailwind CSS v4 JSX export — export selections as HTML with Tailwind utility classes (`<div className="flex gap-4 p-3">`) from the Code panel, CLI (`bun open-pencil export --format jsx --style tailwind`), or programmatically via `sceneNodeToJSX(id, graph, 'tailwind')`. Supports layout, sizing, colors, border radius, opacity, rotation, overflow, shadows, blur, and typography. Uses v4 spacing semantics (px/4 multiplier) with automatic fallback to arbitrary values.
+- Code panel format toggle — switch between OpenPencil (custom components) and Tailwind (HTML + utility classes) output
+- Homebrew tap — `brew install open-pencil/tap/open-pencil` for macOS (arm64 + x64), auto-updated on each release
+- Double-click to rename layers — inline rename in layer panel, shared `useInlineRename` composable
+- New AI/MCP tools: `analyze_colors`, `analyze_typography`, `analyze_spacing`, `analyze_clusters`, `diff_create`, `diff_show`, `get_components`, `get_current_page`, `arrange`, `node_to_component`
+
+### Improvements
+
+- Refactor mobile drawer tabs, layout sizing dropdowns, and inline rename to use Reka UI primitives
+- Add shared UI style helpers with tailwind-variants for menus, selects, buttons, and surfaces
+- Split tools into domain files (read, create, modify, structure, variables, vector, analyze) — easier to navigate and extend
+- Replace inline type definitions with named types (`Color`, `Vector`, `SceneNode`) across the codebase
+- Split 3200-line `renderer.ts` into `packages/core/src/renderer/` with 10 focused files (scene, overlays, fills, strokes, shapes, effects, rulers, labels)
+- Centralize all color utilities in `packages/core/src/color.ts` — `colorToHex8`, `colorToCSSCompact`, `normalizeColor`, `colorDistance`; remove 5 duplicate implementations across the codebase
+- Add `geometry.ts` with shared rotation math (`degToRad`, `radToDeg`, `rotatePoint`, `rotatedCorners`, `rotatedBBox`)
+- Extract `isArrayMixed()` helper for multi-selection property panels
+
 ### Fixes
 
+- Fix drawer animation jump on close — single spring transition instead of two-phase
+- Fix `ALL_TOOLS` registry missing newer tools (`analyzeColors`, `diffCreate`, `exportImage`, `arrangeNodes`)
+- Fix `renderJSX` typo in tool definitions (`renderJsx` → `renderJSX`)
+- Fix broken test imports — stale `../../src/engine/` paths updated to `@open-pencil/core`
+- Fix flaky E2E tests: layers panel navigates to `/demo`, zoom-to-fit test zooms in first, snapshot rendering stabilized with `workers: 1` and `colorScheme: dark`
+
+### Internal
+
+- Add `motion-v` for declarative animations — used in mobile drawer (spring-animated height with pan gestures) and toolbar (layout-animated category switching with directional slide transitions)
+- Mobile drawer: replace `useSwipe` + manual rAF animation with `motion.div` `:animate` + `@pan`/`@panEnd`; always-on tab state (no more null `activeRibbonTab`); content stays rendered when closed
+- Mobile toolbar: replace manual `scrollWidth` measuring + inline CSS transitions with `motion.div layout` + `AnimatePresence` directional slide variants
+- Mobile UI cleanup: extract shared `colorToCSS` util to core, `initials` to `src/utils/text`, `toolIcons` to `src/utils/tools`; replace hand-rolled dropdowns with reka-ui Popover/DropdownMenu; narrow `mobileDrawerSnap` type to string union; move magic numbers to constants; disable PWA service worker in dev mode
+- 83 new E2E tests (57 → 140): design panel, code panel, components, copy/paste, multi-page, text editing, keyboard shortcuts, context menu
+- 150 new unit tests (588 → 738): color, undo, snap, vector, style-runs, text-editor
+
+## 0.7.0 — 2026-03-05
+
+### Features
+
+- SVG export — export selections as SVG from the export panel, context menu, CLI (`bun open-pencil export --format svg`), or MCP/AI tools (`export_svg`). Supports rectangles, ellipses, lines, stars, polygons, vectors, text with style runs, gradients, image fills, effects, blend modes, clip paths, and nested groups (#46)
+- Copy/Paste as submenu in context menu — Copy as text, Copy as SVG, Copy as PNG (⇧⌘C), Copy as JSX
+- Stroke align (Inside/Center/Outside) with clip-based rendering matching Figma behavior
+- Individual stroke weights per side (Top/Right/Bottom/Left) with side selector dropdown
+- Google Fonts fallback — automatically loads fonts from Google Fonts API when not available locally
+- Auto-save toggle in File menu — disable to prevent automatic writes to the opened .fig file
+- Renderer profiler with in-canvas HUD overlay, GPU timing, and phase instrumentation
+
+### Improvements
+
+- Replace custom color picker with Reka UI Color components (ColorArea, ColorSlider, ColorField) — adds keyboard navigation and accessibility to the color area, hue, and alpha controls
+
+### Fixes
+
+- CJK text rendering — load a system CJK font (PingFang SC, Microsoft YaHei, Noto Sans CJK) as fallback; falls back to Noto Sans SC from Google Fonts when no system font is available (#48)
+- Font registration errors no longer cache invalid font data — `loadFont` only caches after successful CanvasKit registration
+- Fix `render` tool failing on Windows + Bun with "Cannot find module" error (#43)
+- Fix hover highlighting nodes from internal component pages — scope hit-test to current page
+- Fix hit-testing on transparent frames and groups — empty containers without fills or strokes are now click-through, clipping parents reject hits outside their bounds, matching Figma behavior
+- Fix instance overrides on .fig import and clipboard paste — resolve guidPaths by overrideKey, handle component swaps (`overriddenSymbolID`), propagate through nested clone chains. Import and paste now share a single override engine.
+- Apply Figma component property assignments on import — boolean visibility toggles and instance swaps via `componentPropRefs`/`componentPropAssignments`
+- Apply `derivedSymbolData` sizes on import — containers now shrink correctly when component properties hide children
+- Fix override resolution for nested instance targets — check the current node before searching descendants
+- Fix component property assignments for nested instances — resolve scoped `componentPropAssignments` inside `symbolOverrides` via guidPath, handle `guidValue` for instance swaps, reorder phases so transitive sync doesn't clobber visibility
+- Pixel-perfect vector rendering using pre-computed `fillGeometry`/`strokeGeometry` blobs from .fig files — eliminates white gaps between adjacent stroked shapes
+- Stroke outlines on clipboard paste — convert vectorNetwork paths to filled outlines via CanvasKit when geometry blobs are unavailable
+- Apply `derivedSymbolData` transforms and geometry during import — instance children render at correct scale and position
+- Fix internal pages becoming visible after .fig round-trip — preserve `internalOnly` flag on export
+- Scope layout recomputation to current page for paste/undo/font-load (major speedup on large multi-page files)
+- Show loading overlay until all document fonts are loaded (no more partially rendered text)
+- Load fonts when switching pages (previously only loaded for the first page)
+- Always show visibility toggle on fill, stroke, and effect rows (matches Figma)
+- Fix renderer crash on double destroy when closing files quickly
+- Fix .fig page ordering — use deterministic byte comparison for fractional index positions
+- Fix text truncation using `textTruncation` field instead of `textAutoResize`
 - Fix horizontal scrollbar on design and pages panels
 - Style scrollbars for Tauri (thin dark overlay instead of default OS chrome)
 - Enable file watcher in Tauri — `watch` feature was missing from `tauri-plugin-fs`
@@ -17,6 +91,7 @@
 - W/H inputs in multi-selection mode
 - Flip horizontal/vertical using scale transform instead of rotation
 - Single-node alignment aligns to parent frame bounds
+- ACP agent package — Agent Communication Protocol server for AI coding tools, reusing core ToolDefs
 
 ### Build
 

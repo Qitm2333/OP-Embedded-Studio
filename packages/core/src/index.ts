@@ -1,4 +1,5 @@
 export type { GUID, Color, Vector, Matrix, Rect } from './types'
+export { degToRad, radToDeg, rotatePoint, rotatedCorners, rotatedBBox } from './geometry'
 
 export * from './constants'
 
@@ -33,6 +34,7 @@ export {
   type VectorVertex,
   type VectorSegment,
   type VectorRegion,
+  type GeometryPath,
   type HandleMirroring,
   type WindingRule,
   type VariableType,
@@ -47,11 +49,22 @@ export {
 export { FigmaAPI, FigmaNodeProxy, type FigmaFontName } from './figma-api'
 export { ALL_TOOLS, defineTool, toolsToAI } from './tools'
 export type { ToolDef, ParamDef, ParamType } from './tools'
-export { SkiaRenderer, type RenderOverlays } from './renderer'
+export { SkiaRenderer, type RenderOverlays } from './renderer/index'
+export {
+  RenderProfiler,
+  FrameStats,
+  GPUTimer,
+  DrawCallCounter,
+  PhaseTimer,
+  CaptureStack,
+  toSpeedscopeJSON
+} from './profiler'
+export type { FrameCapture, NodeProfile } from './profiler'
 export { computeLayout, computeAllLayouts, setTextMeasurer } from './layout'
 export type { TextMeasurer } from './layout'
 export { getCanvasKit, getGpuBackend, type CanvasKitOptions, type GpuBackend } from './canvaskit'
 export {
+  collectFontKeys,
   loadFont,
   listFamilies,
   initFontService,
@@ -59,12 +72,27 @@ export {
   isFontLoaded,
   markFontLoaded,
   ensureNodeFont,
+  ensureCJKFallback,
+  getCJKFallbackFamily,
   styleToWeight,
   weightToStyle
 } from './fonts'
-export { parseColor, colorToHex, colorToHexRaw, colorToRgba255 } from './color'
+export {
+  parseColor,
+  normalizeColor,
+  colorToHex,
+  colorToHex8,
+  colorToHexRaw,
+  colorToRgba255,
+  colorToCSS,
+  colorToCSSCompact,
+  rgba255ToColor,
+  colorToFill,
+  colorDistance
+} from './color'
 export {
   vectorNetworkToPath,
+  geometryBlobToPath,
   decodeVectorNetworkBlob,
   encodeVectorNetworkBlob,
   computeVectorBounds
@@ -73,13 +101,24 @@ export { computeSelectionBounds, computeSnap, type SnapGuide } from './snap'
 export { UndoManager } from './undo'
 export { TextEditor, type TextCaret, type TextEditorState } from './text-editor'
 export {
+  getStyleAt,
+  applyStyleToRange,
+  removeStyleFromRange,
+  selectionHasStyle,
   toggleBoldInRange,
   toggleItalicInRange,
   toggleDecorationInRange,
   adjustRunsForInsert,
   adjustRunsForDelete
 } from './style-runs'
-export { renderNodesToImage, renderThumbnail, type ExportFormat } from './render-image'
+export { renderNodesToImage, renderThumbnail, computeContentBounds, type ExportFormat } from './render-image'
+export {
+  renderNodesToSVG,
+  geometryBlobToSVGPath,
+  vectorNetworkToSVGPaths,
+  type SVGExportOptions
+} from './svg-export'
+export { svg, renderSVGNode, type SVGNode } from './svg-node'
 export { exportFigFile } from './fig-export'
 export {
   FIG_KIWI_VERSION,
@@ -94,7 +133,7 @@ export {
 
 export {
   renderTree,
-  renderJsx,
+  renderJSX,
   renderTreeNode,
   buildComponent,
   Frame,
@@ -120,8 +159,9 @@ export {
   type TextProps,
   type StyleProps,
   type RenderResult,
-  sceneNodeToJsx,
-  selectionToJsx
+  sceneNodeToJSX,
+  selectionToJSX,
+  type JSXFormat
 } from './render'
 export {
   parseFigmaClipboard,

@@ -1,4 +1,5 @@
-import { BLACK, DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from '../constants'
+import { normalizeColor } from '../color'
+import { DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from '../constants'
 import { styleToWeight } from '../fonts'
 import { decodeVectorNetworkBlob } from '../vector'
 
@@ -9,7 +10,6 @@ import type {
   FillType,
   Stroke,
   Effect,
-  Color,
   BlendMode,
   ImageScaleMode,
   GradientTransform,
@@ -26,23 +26,20 @@ import type {
   TextDecoration,
   ArcData,
   VectorNetwork,
+  GeometryPath,
   StyleRun,
-  CharacterStyleOverride
+  CharacterStyleOverride,
+  WindingRule
 } from '../scene-graph'
 import type { NodeChange, Paint, Effect as KiwiEffect, GUID } from './codec'
 
-function ext(nc: NodeChange): Record<string, unknown> {
-  return nc as unknown as Record<string, unknown>
-}
+
 
 export function guidToString(guid: GUID): string {
   return `${guid.sessionID}:${guid.localID}`
 }
 
-function convertColor(color?: { r: number; g: number; b: number; a: number }): Color {
-  if (!color) return { ...BLACK }
-  return { r: color.r, g: color.g, b: color.b, a: color.a }
-}
+const convertColor = normalizeColor
 
 function imageHashToString(hash: Record<string, number>): string {
   const bytes = Object.keys(hash)
@@ -288,7 +285,7 @@ function convertLetterSpacing(
   return ls.value
 }
 
-function mapArcData(data?: Record<string, number>): ArcData | null {
+function mapArcData(data?: Partial<ArcData>): ArcData | null {
   if (!data) return null
   return {
     startingAngle: data.startingAngle ?? 0,
@@ -307,7 +304,7 @@ function importStyleRuns(nc: NodeChange): StyleRun[] {
 
   const styleMap = new Map<number, CharacterStyleOverride>()
   for (const override of table) {
-    const id = (override as unknown as Record<string, unknown>).styleID as number | undefined
+    const id = override.styleID as number | undefined
     if (id === undefined) continue
     const style: CharacterStyleOverride = {}
     if (override.fontName) {
@@ -321,7 +318,7 @@ function importStyleRuns(nc: NodeChange): StyleRun[] {
       const lh = convertLineHeight(override.lineHeight, override.fontSize)
       if (lh != null) style.lineHeight = lh
     }
-    const deco = ext(override).textDecoration as string | undefined
+    const deco = override.textDecoration as string | undefined
     if (deco) style.textDecoration = mapTextDecoration(deco)
     if (Object.keys(style).length > 0) styleMap.set(id, style)
   }
@@ -352,7 +349,7 @@ function resolveVectorNetwork(
   nc: NodeChange,
   blobs: Uint8Array[]
 ): VectorNetwork | null {
-  const vectorData = (nc as unknown as Record<string, unknown>).vectorData as
+  const vectorData = nc.vectorData as
     | {
         vectorNetworkBlob?: number
         normalizedSize?: { x: number; y: number }
@@ -388,6 +385,30 @@ function resolveVectorNetwork(
   } catch {
     return null
   }
+}
+
+interface KiwiPath {
+  windingRule?: string
+  commandsBlob?: number
+}
+
+export function resolveGeometryPaths(
+  paths: KiwiPath[] | undefined,
+  blobs: Uint8Array[]
+): GeometryPath[] {
+  if (!paths || paths.length === 0) return []
+  const result: GeometryPath[] = []
+  for (const p of paths) {
+    if (p.commandsBlob === undefined || p.commandsBlob < 0 || p.commandsBlob >= blobs.length)
+      continue
+    const blob = blobs[p.commandsBlob]
+    if (!blob || blob.length === 0) continue
+    result.push({
+      windingRule: (p.windingRule === 'EVENODD' ? 'EVENODD' : 'NONZERO') as WindingRule,
+      commandsBlob: blob
+    })
+  }
+  return result
 }
 
 function extractBoundVariables(nc: NodeChange): Record<string, string> {
@@ -427,7 +448,7 @@ export function nodeChangeToProps(
     rotation = Math.atan2(nc.transform.m10 * sx, nc.transform.m00 * sx) * (180 / Math.PI)
   }
 
-  const dashPattern = (ext(nc).dashPattern as number[]) ?? []
+  const dashPattern = (nc.dashPattern as number[]) ?? []
 
   return {
     nodeType,
@@ -442,7 +463,7 @@ export function nodeChangeToProps(
     opacity: nc.opacity ?? 1,
     visible: nc.visible ?? true,
     locked: nc.locked ?? false,
-    blendMode: (ext(nc).blendMode as Fill['blendMode']) ?? 'PASS_THROUGH',
+    blendMode: (nc.blendMode as Fill['blendMode']) ?? 'PASS_THROUGH',
     fills: convertFills(nc.fillPaints),
     strokes: convertStrokes(
       nc.strokePaints,
@@ -467,16 +488,16 @@ export function nodeChangeToProps(
     italic: nc.fontName?.style?.toLowerCase().includes('italic') ?? false,
     textAlignHorizontal:
       (nc.textAlignHorizontal as 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED') ?? 'LEFT',
-    textAlignVertical: (ext(nc).textAlignVertical as TextAlignVertical) ?? 'TOP',
-    textAutoResize: (ext(nc).textAutoResize as TextAutoResize) ?? 'NONE',
-    textCase: (ext(nc).textCase as TextCase) ?? 'ORIGINAL',
-    textDecoration: mapTextDecoration(ext(nc).textDecoration as string),
+    textAlignVertical: (nc.textAlignVertical as TextAlignVertical) ?? 'TOP',
+    textAutoResize: (nc.textAutoResize as TextAutoResize) ?? 'NONE',
+    textCase: (nc.textCase as TextCase) ?? 'ORIGINAL',
+    textDecoration: mapTextDecoration(nc.textDecoration as string),
     lineHeight: convertLineHeight(nc.lineHeight, nc.fontSize),
     letterSpacing: convertLetterSpacing(nc.letterSpacing, nc.fontSize),
-    maxLines: (ext(nc).maxLines as number) ?? null,
+    maxLines: (nc.maxLines as number) ?? null,
     styleRuns: importStyleRuns(nc),
-    horizontalConstraint: mapConstraint(ext(nc).horizontalConstraint as string),
-    verticalConstraint: mapConstraint(ext(nc).verticalConstraint as string),
+    horizontalConstraint: mapConstraint(nc.horizontalConstraint as string),
+    verticalConstraint: mapConstraint(nc.verticalConstraint as string),
     layoutMode: mapStackMode(nc.stackMode),
     itemSpacing: nc.stackSpacing ?? 0,
     paddingTop: nc.stackVerticalPadding ?? nc.stackPadding ?? 0,
@@ -487,35 +508,37 @@ export function nodeChangeToProps(
     counterAxisSizing: mapStackSizing(nc.stackCounterSizing),
     primaryAxisAlign: mapStackJustify(nc.stackPrimaryAlignItems ?? nc.stackJustify),
     counterAxisAlign: mapStackCounterAlign(nc.stackCounterAlignItems ?? nc.stackCounterAlign),
-    layoutWrap: ext(nc).stackWrap === 'WRAP' ? 'WRAP' : 'NO_WRAP',
-    counterAxisSpacing: (ext(nc).stackCounterSpacing as number) ?? 0,
-    layoutPositioning: ext(nc).stackPositioning === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO',
-    layoutGrow: (ext(nc).stackChildPrimaryGrow as number) ?? 0,
-    layoutAlignSelf: (ext(nc).stackChildAlignSelf as string) === 'STRETCH' ? 'STRETCH' : 'AUTO',
+    layoutWrap: nc.stackWrap === 'WRAP' ? 'WRAP' : 'NO_WRAP',
+    counterAxisSpacing: (nc.stackCounterSpacing as number) ?? 0,
+    layoutPositioning: nc.stackPositioning === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO',
+    layoutGrow: (nc.stackChildPrimaryGrow as number) ?? 0,
+    layoutAlignSelf: (nc.stackChildAlignSelf as string) === 'STRETCH' ? 'STRETCH' : 'AUTO',
     vectorNetwork: resolveVectorNetwork(nc, blobs),
-    arcData: mapArcData(ext(nc).arcData as Record<string, number> | undefined),
+    fillGeometry: resolveGeometryPaths(nc.fillGeometry, blobs),
+    strokeGeometry: resolveGeometryPaths(nc.strokeGeometry, blobs),
+    arcData: mapArcData(nc.arcData as Partial<ArcData> | undefined),
     strokeCap: (nc.strokeCap ?? 'NONE') as StrokeCap,
     strokeJoin: (nc.strokeJoin ?? 'MITER') as StrokeJoin,
     dashPattern,
-    borderTopWeight: (ext(nc).borderTopWeight as number) ?? 0,
-    borderRightWeight: (ext(nc).borderRightWeight as number) ?? 0,
-    borderBottomWeight: (ext(nc).borderBottomWeight as number) ?? 0,
-    borderLeftWeight: (ext(nc).borderLeftWeight as number) ?? 0,
-    independentStrokeWeights: (ext(nc).borderStrokeWeightsIndependent as boolean) ?? false,
+    borderTopWeight: (nc.borderTopWeight as number) ?? 0,
+    borderRightWeight: (nc.borderRightWeight as number) ?? 0,
+    borderBottomWeight: (nc.borderBottomWeight as number) ?? 0,
+    borderLeftWeight: (nc.borderLeftWeight as number) ?? 0,
+    independentStrokeWeights: (nc.borderStrokeWeightsIndependent as boolean) ?? false,
     strokeMiterLimit: DEFAULT_STROKE_MITER_LIMIT,
-    minWidth: (ext(nc).minWidth as number) ?? null,
-    maxWidth: (ext(nc).maxWidth as number) ?? null,
-    minHeight: (ext(nc).minHeight as number) ?? null,
-    maxHeight: (ext(nc).maxHeight as number) ?? null,
-    isMask: (ext(nc).isMask as boolean) ?? false,
-    maskType: ((ext(nc).maskType as string) ?? 'ALPHA') as 'ALPHA' | 'VECTOR' | 'LUMINANCE',
+    minWidth: (nc.minWidth as number) ?? null,
+    maxWidth: (nc.maxWidth as number) ?? null,
+    minHeight: (nc.minHeight as number) ?? null,
+    maxHeight: (nc.maxHeight as number) ?? null,
+    isMask: (nc.isMask as boolean) ?? false,
+    maskType: ((nc.maskType as string) ?? 'ALPHA') as 'ALPHA' | 'VECTOR' | 'LUMINANCE',
     counterAxisAlignContent:
-      (ext(nc).stackCounterAlignContent as string) === 'SPACE_BETWEEN' ? 'SPACE_BETWEEN' : 'AUTO',
-    itemReverseZIndex: (ext(nc).stackReverseZIndex as boolean) ?? false,
-    strokesIncludedInLayout: (ext(nc).strokesIncludedInLayout as boolean) ?? false,
+      (nc.stackCounterAlignContent as string) === 'SPACE_BETWEEN' ? 'SPACE_BETWEEN' : 'AUTO',
+    itemReverseZIndex: (nc.stackReverseZIndex as boolean) ?? false,
+    strokesIncludedInLayout: (nc.strokesIncludedInLayout as boolean) ?? false,
     expanded: true,
-    textTruncation: (ext(nc).textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED',
-    autoRename: (ext(nc).autoRename as boolean) ?? true,
+    textTruncation: (nc.textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED',
+    autoRename: (nc.autoRename as boolean) ?? true,
     boundVariables: extractBoundVariables(nc),
     clipsContent: nc.frameMaskDisabled === false,
     componentId: extractSymbolId(nc)
@@ -523,7 +546,7 @@ export function nodeChangeToProps(
 }
 
 function isComponentSet(nc: NodeChange): boolean {
-  const defs = ext(nc).componentPropDefs as Array<{ type?: string }> | undefined
+  const defs = nc.componentPropDefs as Array<{ type?: string }> | undefined
   if (!defs?.length) return false
   return defs.some((d) => d.type === 'VARIANT')
 }
@@ -533,7 +556,7 @@ export function sortChildren(
   parentNc: NodeChange,
   nodeMap: Map<string, NodeChange>
 ): void {
-  const stackMode = (parentNc as unknown as Record<string, unknown>).stackMode as string | undefined
+  const stackMode = parentNc.stackMode as string | undefined
   if (stackMode === 'HORIZONTAL' || stackMode === 'VERTICAL') {
     const axis = stackMode === 'HORIZONTAL' ? 'm02' : 'm12'
     children.sort((a, b) => {
@@ -545,15 +568,134 @@ export function sortChildren(
     children.sort((a, b) => {
       const aPos = nodeMap.get(a)?.parentIndex?.position ?? ''
       const bPos = nodeMap.get(b)?.parentIndex?.position ?? ''
-      return aPos.localeCompare(bPos)
+      return aPos < bPos ? -1 : aPos > bPos ? 1 : 0
     })
   }
 }
 
 function extractSymbolId(nc: NodeChange): string {
-  const sd = (nc as unknown as Record<string, unknown>).symbolData as
+  const sd = nc.symbolData as
     | { symbolID?: GUID }
     | undefined
   if (!sd?.symbolID) return ''
   return guidToString(sd.symbolID)
+}
+
+export function convertOverrideToProps(ov: Record<string, unknown>): Partial<SceneNode> {
+  const updates: Partial<SceneNode> = {}
+
+  if (ov.textData != null) {
+    const td = ov.textData as { characters?: string }
+    if (td.characters != null) updates.text = td.characters
+    const runs = importStyleRuns(ov as unknown as NodeChange)
+    if (runs.length > 0) updates.styleRuns = runs
+  }
+  if (ov.fillPaints != null) updates.fills = convertFills(ov.fillPaints as Paint[])
+  if (ov.strokePaints != null)
+    updates.strokes = convertStrokes(
+      ov.strokePaints as Paint[],
+      ov.strokeWeight as number | undefined,
+      ov.strokeAlign as string | undefined
+    )
+  if (ov.effects != null) updates.effects = convertEffects(ov.effects as KiwiEffect[])
+  if (ov.visible != null) updates.visible = ov.visible as boolean
+  if (ov.opacity != null) updates.opacity = ov.opacity as number
+  if (ov.name != null) updates.name = ov.name as string
+  if (ov.locked != null) updates.locked = ov.locked as boolean
+
+  if (ov.size != null) {
+    const sz = ov.size as { x?: number; y?: number }
+    if (sz.x != null) updates.width = sz.x
+    if (sz.y != null) updates.height = sz.y
+  }
+
+  if (ov.cornerRadius != null) updates.cornerRadius = ov.cornerRadius as number
+  if (ov.rectangleTopLeftCornerRadius != null)
+    updates.topLeftRadius = ov.rectangleTopLeftCornerRadius as number
+  if (ov.rectangleTopRightCornerRadius != null)
+    updates.topRightRadius = ov.rectangleTopRightCornerRadius as number
+  if (ov.rectangleBottomRightCornerRadius != null)
+    updates.bottomRightRadius = ov.rectangleBottomRightCornerRadius as number
+  if (ov.rectangleBottomLeftCornerRadius != null)
+    updates.bottomLeftRadius = ov.rectangleBottomLeftCornerRadius as number
+  if (ov.rectangleCornerRadiiIndependent != null)
+    updates.independentCorners = ov.rectangleCornerRadiiIndependent as boolean
+
+  if (ov.stackSpacing != null) updates.itemSpacing = ov.stackSpacing as number
+  if (ov.stackPrimarySizing != null)
+    updates.primaryAxisSizing = mapStackSizing(ov.stackPrimarySizing as string)
+  if (ov.stackCounterSizing != null)
+    updates.counterAxisSizing = mapStackSizing(ov.stackCounterSizing as string)
+  if (ov.stackPrimaryAlignItems != null)
+    updates.primaryAxisAlign = mapStackJustify(ov.stackPrimaryAlignItems as string)
+  if (ov.stackCounterAlignItems != null)
+    updates.counterAxisAlign = mapStackCounterAlign(ov.stackCounterAlignItems as string)
+  if (ov.stackChildPrimaryGrow != null) updates.layoutGrow = ov.stackChildPrimaryGrow as number
+  if (ov.stackChildAlignSelf != null)
+    updates.layoutAlignSelf =
+      (ov.stackChildAlignSelf as string) === 'STRETCH' ? 'STRETCH' : 'AUTO'
+  if (ov.stackPositioning != null)
+    updates.layoutPositioning =
+      (ov.stackPositioning as string) === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO'
+  if (ov.stackVerticalPadding != null) {
+    updates.paddingTop = ov.stackVerticalPadding as number
+    if (ov.stackPaddingBottom == null) updates.paddingBottom = ov.stackVerticalPadding as number
+  }
+  if (ov.stackHorizontalPadding != null) {
+    updates.paddingLeft = ov.stackHorizontalPadding as number
+    if (ov.stackPaddingRight == null) updates.paddingRight = ov.stackHorizontalPadding as number
+  }
+  if (ov.stackPaddingBottom != null) updates.paddingBottom = ov.stackPaddingBottom as number
+  if (ov.stackPaddingRight != null) updates.paddingRight = ov.stackPaddingRight as number
+
+  if (ov.strokeWeight != null && !ov.strokePaints) {
+    updates.strokes = updates.strokes ?? []
+  }
+  if (ov.strokeAlign != null && updates.strokes) {
+    const align = (
+      ov.strokeAlign === 'INSIDE' ? 'INSIDE' : ov.strokeAlign === 'OUTSIDE' ? 'OUTSIDE' : 'CENTER'
+    ) as Stroke['align']
+    for (const s of updates.strokes) s.align = align
+  }
+  if (ov.borderTopWeight != null) updates.borderTopWeight = ov.borderTopWeight as number
+  if (ov.borderRightWeight != null) updates.borderRightWeight = ov.borderRightWeight as number
+  if (ov.borderBottomWeight != null) updates.borderBottomWeight = ov.borderBottomWeight as number
+  if (ov.borderLeftWeight != null) updates.borderLeftWeight = ov.borderLeftWeight as number
+  if (ov.borderStrokeWeightsIndependent != null)
+    updates.independentStrokeWeights = ov.borderStrokeWeightsIndependent as boolean
+
+  if (ov.fontName != null) {
+    const fn = ov.fontName as { family?: string; style?: string }
+    if (fn.family) updates.fontFamily = fn.family
+    if (fn.style) {
+      updates.fontWeight = styleToWeight(fn.style)
+      updates.italic = fn.style.toLowerCase().includes('italic')
+    }
+  }
+  if (ov.fontSize != null) updates.fontSize = ov.fontSize as number
+  if (ov.textAlignHorizontal != null)
+    updates.textAlignHorizontal = ov.textAlignHorizontal as SceneNode['textAlignHorizontal']
+  if (ov.textAutoResize != null) updates.textAutoResize = ov.textAutoResize as TextAutoResize
+  if (ov.lineHeight != null)
+    updates.lineHeight = convertLineHeight(
+      ov.lineHeight as NodeChange['lineHeight'],
+      ov.fontSize as number | undefined
+    )
+  if (ov.letterSpacing != null)
+    updates.letterSpacing = convertLetterSpacing(
+      ov.letterSpacing as NodeChange['letterSpacing'],
+      ov.fontSize as number | undefined
+    )
+  if (ov.maxLines != null) updates.maxLines = ov.maxLines as number | null
+  if (ov.textTruncation != null)
+    updates.textTruncation =
+      (ov.textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED'
+  if (ov.textDecoration != null)
+    updates.textDecoration = mapTextDecoration(ov.textDecoration as string)
+
+  if (ov.arcData != null)
+    updates.arcData = mapArcData(ov.arcData as Partial<ArcData> | undefined)
+  if (ov.frameMaskDisabled != null) updates.clipsContent = ov.frameMaskDisabled === false
+
+  return updates
 }

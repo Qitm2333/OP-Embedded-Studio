@@ -211,7 +211,15 @@ export function sceneNodeToKiwi(
     size: { x: node.width, y: node.height },
     transform: { m00: cos * sx, m01: -sin, m02: node.x, m10: sin * sx, m11: cos, m12: node.y },
     strokeWeight: node.strokes.length > 0 ? node.strokes[0].weight : 1,
-    strokeAlign: 'INSIDE'
+    strokeAlign: node.strokes.length > 0 ? node.strokes[0].align : 'INSIDE'
+  }
+
+  if (node.independentStrokeWeights) {
+    nc.borderStrokeWeightsIndependent = true
+    nc.borderTopWeight = node.borderTopWeight
+    nc.borderRightWeight = node.borderRightWeight
+    nc.borderBottomWeight = node.borderBottomWeight
+    nc.borderLeftWeight = node.borderLeftWeight
   }
 
   if (fillPaints.length > 0) nc.fillPaints = fillPaints
@@ -262,8 +270,7 @@ export function sceneNodeToKiwi(
     if (node.lineHeight != null) nc.lineHeight = { value: node.lineHeight, units: 'PIXELS' }
     if (node.letterSpacing !== 0) nc.letterSpacing = { value: node.letterSpacing, units: 'PIXELS' }
     if (node.textDecoration !== 'NONE') {
-      ;(nc as Record<string, unknown>).textDecoration =
-        node.textDecoration === 'UNDERLINE' ? 'UNDERLINE' : 'STRIKETHROUGH'
+      nc.textDecoration = node.textDecoration === 'UNDERLINE' ? 'UNDERLINE' : 'STRIKETHROUGH'
     }
   }
 
@@ -297,6 +304,21 @@ export function sceneNodeToKiwi(
       vectorNetworkBlob: blobIdx,
       normalizedSize: { x: node.width, y: node.height }
     }
+  }
+
+  if (node.fillGeometry.length > 0) {
+    nc.fillGeometry = node.fillGeometry.map((g) => {
+      const blobIdx = blobs.length
+      blobs.push(g.commandsBlob)
+      return { windingRule: g.windingRule, commandsBlob: blobIdx }
+    })
+  }
+  if (node.strokeGeometry.length > 0) {
+    nc.strokeGeometry = node.strokeGeometry.map((g) => {
+      const blobIdx = blobs.length
+      blobs.push(g.commandsBlob)
+      return { windingRule: g.windingRule, commandsBlob: blobIdx }
+    })
   }
 
   const result: KiwiNodeChange[] = [nc]

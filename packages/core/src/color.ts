@@ -1,4 +1,4 @@
-import { parse, formatHex, converter } from 'culori'
+import { parse, formatHex, formatHex8, formatRgb, converter, differenceEuclidean } from 'culori'
 
 import { BLACK } from './constants'
 
@@ -18,8 +18,21 @@ export function parseColor(input: string): Color {
   }
 }
 
+export function normalizeColor(color?: Partial<Color>): Color {
+  if (!color) return { ...BLACK }
+  return { r: color.r ?? 0, g: color.g ?? 0, b: color.b ?? 0, a: color.a ?? 1 }
+}
+
 export function colorToHex(color: Color): string {
   return (formatHex({ mode: 'rgb', r: color.r, g: color.g, b: color.b }) ?? '#000000').toUpperCase()
+}
+
+export function colorToHex8(color: Color, alpha?: number): string {
+  const a = alpha ?? color.a
+  if (a >= 1) return colorToHex(color)
+  return (
+    formatHex8({ mode: 'rgb', r: color.r, g: color.g, b: color.b, alpha: a }) ?? '#000000FF'
+  ).toUpperCase()
 }
 
 export function colorToHexRaw(color: Color): string {
@@ -35,8 +48,19 @@ export function colorToRgba255(color: Color) {
   }
 }
 
-export function rgba255ToColor(rgba: { r: number; g: number; b: number; a: number }): Color {
-  return { r: rgba.r / 255, g: rgba.g / 255, b: rgba.b / 255, a: rgba.a }
+export function colorToCSS(color: Color): string {
+  return formatRgb({ mode: 'rgb', r: color.r, g: color.g, b: color.b, alpha: color.a }) ?? 'rgb(0, 0, 0)'
+}
+
+export function colorToCSSCompact(color: Color): string {
+  const { r, g, b } = colorToRgba255(color)
+  const a = Number(color.a.toFixed(3))
+  if (a >= 1) return `rgb(${r},${g},${b})`
+  return `rgba(${r},${g},${b},${a})`
+}
+
+export function rgba255ToColor(r: number, g: number, b: number, a = 1): Color {
+  return { r: r / 255, g: g / 255, b: b / 255, a }
 }
 
 export function colorToFill(color: string | Color) {
@@ -47,4 +71,13 @@ export function colorToFill(color: string | Color) {
     opacity: rgba.a,
     visible: true
   }
+}
+
+const euclideanRgb255 = differenceEuclidean('rgb')
+
+export function colorDistance(c1: Color, c2: Color): number {
+  return euclideanRgb255(
+    { mode: 'rgb', r: c1.r, g: c1.g, b: c1.b },
+    { mode: 'rgb', r: c2.r, g: c2.g, b: c2.b }
+  ) * 255
 }

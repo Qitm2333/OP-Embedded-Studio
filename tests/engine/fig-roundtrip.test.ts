@@ -2,12 +2,17 @@ import { describe, test, expect, beforeAll, setDefaultTimeout } from 'bun:test'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
-import { parseFigFile } from '../../packages/core/src/kiwi/fig-file'
-import { exportFigFile } from '../../packages/core/src/fig-export'
-import { initCodec } from '../../packages/core/src/kiwi/codec'
-import { SceneGraph } from '../../packages/core/src/scene-graph'
-
-import type { SceneNode, NodeType, Fill } from '../../packages/core/src/scene-graph'
+import {
+  parseFigFile,
+  exportFigFile,
+  importNodeChanges,
+  initCodec,
+  SceneGraph,
+  type SceneNode,
+  type NodeType,
+  type Fill,
+} from '@open-pencil/core'
+import { heavy } from '../helpers/test-utils'
 
 setDefaultTimeout(60_000)
 
@@ -59,80 +64,55 @@ function countByType(nodes: SceneNode[]): Map<NodeType, number> {
   return counts
 }
 
-// Parse fixtures once — they're large
-let material3: SceneGraph
-let nuxtui: SceneGraph
-let material3Nodes: SceneNode[]
-let nuxtUiNodes: SceneNode[]
+let parsed: SceneGraph
+let allNodes: SceneNode[]
 
 beforeAll(async () => {
-  const m3Buf = readFileSync(resolve(FIXTURES, 'material3.fig'))
-  const nuBuf = readFileSync(resolve(FIXTURES, 'nuxtui.fig'))
-  material3 = await parseFigFile(m3Buf.buffer as ArrayBuffer)
-  nuxtui = await parseFigFile(nuBuf.buffer as ArrayBuffer)
-  material3Nodes = collectAllNodes(material3)
-  nuxtUiNodes = collectAllNodes(nuxtui)
+  const buf = readFileSync(resolve(FIXTURES, 'gold-preview.fig'))
+  parsed = await parseFigFile(buf.buffer as ArrayBuffer)
+  allNodes = collectAllNodes(parsed)
 })
 
 describe('parse real .fig files', () => {
-  test('material3.fig parses without error', () => {
-    expect(material3).toBeInstanceOf(SceneGraph)
+  test('parses without error', () => {
+    expect(parsed).toBeInstanceOf(SceneGraph)
   })
 
-  test('nuxtui.fig parses without error', () => {
-    expect(nuxtui).toBeInstanceOf(SceneGraph)
+  test('has pages', () => {
+    expect(parsed.getPages().length).toBeGreaterThan(0)
   })
 
-  test('material3.fig has pages', () => {
-    expect(material3.getPages().length).toBeGreaterThan(0)
-  })
-
-  test('material3.fig has nodes', () => {
-    expect(material3Nodes.length).toBeGreaterThan(0)
-  })
-
-  test('nuxtui.fig has pages', () => {
-    expect(nuxtui.getPages().length).toBeGreaterThan(0)
-  })
-
-  test('nuxtui.fig has nodes', () => {
-    expect(nuxtUiNodes.length).toBeGreaterThan(0)
+  test('has nodes', () => {
+    expect(allNodes.length).toBeGreaterThan(0)
   })
 })
 
 describe('node type coverage', () => {
-  test('material3: contains FRAME nodes', () => {
-    expect(material3Nodes.some((n) => n.type === 'FRAME')).toBe(true)
+  test('contains FRAME nodes', () => {
+    expect(allNodes.some((n) => n.type === 'FRAME')).toBe(true)
   })
 
-  test('material3: contains TEXT nodes with content', () => {
-    const textNodes = material3Nodes.filter((n) => n.type === 'TEXT')
+  test('contains TEXT nodes with content', () => {
+    const textNodes = allNodes.filter((n) => n.type === 'TEXT')
     expect(textNodes.length).toBeGreaterThan(0)
     expect(textNodes.some((n) => n.text.length > 0)).toBe(true)
   })
 
-  test('material3: contains COMPONENT nodes', () => {
-    expect(material3Nodes.some((n) => n.type === 'COMPONENT')).toBe(true)
+  test('contains INSTANCE nodes referencing components', () => {
+    const instances = allNodes.filter((n) => n.type === 'INSTANCE')
+    expect(instances.length).toBeGreaterThan(0)
+    expect(instances.some((n) => n.componentId)).toBe(true)
   })
 
-  test('material3: contains INSTANCE nodes', () => {
-    expect(material3Nodes.some((n) => n.type === 'INSTANCE')).toBe(true)
-  })
-
-  test('material3: no unmapped node types', () => {
-    const invalid = material3Nodes.filter((n) => !VALID_NODE_TYPES.has(n.type))
-    expect(invalid.map((n) => `${n.name}: ${n.type}`)).toEqual([])
-  })
-
-  test('nuxtui: no unmapped node types', () => {
-    const invalid = nuxtUiNodes.filter((n) => !VALID_NODE_TYPES.has(n.type))
+  test('no unmapped node types', () => {
+    const invalid = allNodes.filter((n) => !VALID_NODE_TYPES.has(n.type))
     expect(invalid.map((n) => `${n.name}: ${n.type}`)).toEqual([])
   })
 })
 
 describe('property integrity', () => {
   test('all nodes have finite dimensions', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       expect(Number.isFinite(n.width)).toBe(true)
       expect(Number.isFinite(n.height)).toBe(true)
       expect(n.width).toBeGreaterThanOrEqual(0)
@@ -141,21 +121,21 @@ describe('property integrity', () => {
   })
 
   test('all nodes have finite positions', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       expect(Number.isFinite(n.x)).toBe(true)
       expect(Number.isFinite(n.y)).toBe(true)
     }
   })
 
   test('all nodes have valid opacity', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       expect(n.opacity).toBeGreaterThanOrEqual(0)
       expect(n.opacity).toBeLessThanOrEqual(1)
     }
   })
 
   test('TEXT nodes have fontFamily', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       if (n.type === 'TEXT') {
         expect(typeof n.fontFamily).toBe('string')
         expect(n.fontFamily.length).toBeGreaterThan(0)
@@ -164,7 +144,7 @@ describe('property integrity', () => {
   })
 
   test('TEXT nodes have valid fontSize', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       if (n.type === 'TEXT') {
         expect(n.fontSize).toBeGreaterThan(0)
       }
@@ -185,7 +165,7 @@ describe('property integrity', () => {
         expect(a).toBeLessThanOrEqual(1)
       }
     }
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       for (const fill of n.fills) {
         checkFill(fill, n.name)
       }
@@ -193,7 +173,7 @@ describe('property integrity', () => {
   })
 
   test('effects have valid radius', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       for (const e of n.effects) {
         expect(e.radius).toBeGreaterThanOrEqual(0)
       }
@@ -201,13 +181,74 @@ describe('property integrity', () => {
   })
 
   test('layout nodes have valid spacing', () => {
-    for (const n of material3Nodes) {
+    for (const n of allNodes) {
       if (n.layoutMode !== 'NONE') {
         expect(Number.isFinite(n.itemSpacing)).toBe(true)
         expect(n.paddingTop).toBeGreaterThanOrEqual(0)
         expect(n.paddingRight).toBeGreaterThanOrEqual(0)
         expect(n.paddingBottom).toBeGreaterThanOrEqual(0)
         expect(n.paddingLeft).toBeGreaterThanOrEqual(0)
+      }
+    }
+  })
+
+})
+
+heavy('parse heavy .fig files', () => {
+  let material3: SceneGraph
+  let nuxtui: SceneGraph
+  let material3Nodes: SceneNode[]
+  let nuxtUiNodes: SceneNode[]
+
+  beforeAll(async () => {
+    const m3Buf = readFileSync(resolve(FIXTURES, 'material3.fig'))
+    const nuBuf = readFileSync(resolve(FIXTURES, 'nuxtui.fig'))
+    material3 = await parseFigFile(m3Buf.buffer as ArrayBuffer)
+    nuxtui = await parseFigFile(nuBuf.buffer as ArrayBuffer)
+    material3Nodes = collectAllNodes(material3)
+    nuxtUiNodes = collectAllNodes(nuxtui)
+  })
+
+  test('material3.fig parses with pages and nodes', () => {
+    expect(material3).toBeInstanceOf(SceneGraph)
+    expect(material3.getPages().length).toBeGreaterThan(0)
+    expect(material3Nodes.length).toBeGreaterThan(0)
+  })
+
+  test('nuxtui.fig parses with pages and nodes', () => {
+    expect(nuxtui).toBeInstanceOf(SceneGraph)
+    expect(nuxtui.getPages().length).toBeGreaterThan(0)
+    expect(nuxtUiNodes.length).toBeGreaterThan(0)
+  })
+
+  test('material3: contains COMPONENT nodes', () => {
+    expect(material3Nodes.some((n) => n.type === 'COMPONENT')).toBe(true)
+  })
+
+  test('material3: no unmapped node types', () => {
+    const invalid = material3Nodes.filter((n) => !VALID_NODE_TYPES.has(n.type))
+    expect(invalid.map((n) => `${n.name}: ${n.type}`)).toEqual([])
+  })
+
+  test('nuxtui: no unmapped node types', () => {
+    const invalid = nuxtUiNodes.filter((n) => !VALID_NODE_TYPES.has(n.type))
+    expect(invalid.map((n) => `${n.name}: ${n.type}`)).toEqual([])
+  })
+
+  test('material3: fills have valid colors', () => {
+    for (const n of material3Nodes) {
+      for (const fill of n.fills) {
+        if (fill.type === 'SOLID') {
+          const { r, g, b, a } = fill.color
+          expect(r).toBeGreaterThanOrEqual(0)
+          expect(r).toBeLessThanOrEqual(1)
+          expect(g).toBeGreaterThanOrEqual(0)
+          expect(g).toBeLessThanOrEqual(1)
+          expect(b).toBeGreaterThanOrEqual(0)
+          expect(b).toBeLessThanOrEqual(1)
+          expect(a).toBeGreaterThanOrEqual(0)
+          expect(a).toBeLessThanOrEqual(1)
+        }
       }
     }
   })
@@ -234,6 +275,13 @@ describe('roundtrip: export → re-import', () => {
     const graph = new SceneGraph()
     const page1 = graph.getPages()[0]
     const page2 = graph.addPage('Second Page')
+    const internalPage = graph.addPage('Internal Only Canvas')
+    internalPage.internalOnly = true
+    graph.createNode('RECTANGLE', internalPage.id, {
+      name: 'Internal Rect',
+      width: 50,
+      height: 50,
+    })
 
     graph.createNode('FRAME', page1.id, {
       name: 'Container',
@@ -328,6 +376,17 @@ describe('roundtrip: export → re-import', () => {
     const names = reImported.getPages().map((p) => p.name)
     expect(names).toContain('Page 1')
     expect(names).toContain('Second Page')
+  })
+
+  test('preserves internal pages', () => {
+    const allPages = reImported.getPages(true)
+    const publicPages = reImported.getPages(false)
+    expect(allPages.length).toBe(3)
+    expect(publicPages.length).toBe(2)
+    const internal = allPages.find((p) => p.internalOnly)
+    expect(internal).toBeDefined()
+    expect(internal!.name).toBe('Internal Only Canvas')
+    expect(reImported.getChildren(internal!.id).length).toBe(1)
   })
 
   test('preserves node count', () => {
@@ -477,5 +536,318 @@ describe('edge cases', () => {
     const children = graph.getChildren(graph.getPages()[0].id)
     expect(children).toHaveLength(1)
     expect(children[0].name).toBe('Visible')
+  })
+
+  test('symbolOverrides propagate through nested instances', () => {
+    // Structure:
+    //   DOCUMENT (0:0)
+    //   └─ CANVAS "Page" (0:1)
+    //       ├─ COMPONENT "Inner" (1:1)    ← inner component
+    //       │   └─ TEXT "Label" (1:2)     ← default text "Default"
+    //       ├─ COMPONENT "Outer" (1:3)    ← outer component
+    //       │   └─ INSTANCE "InnerUse" (1:4) symId=1:1, override: Label→"Changed"
+    //       └─ INSTANCE "OuterUse" (1:5)  ← instance of Outer
+    //
+    // After import, OuterUse should contain a clone of InnerUse,
+    // which should contain a Label text with "Changed" (not "Default")
+    const graph = importNodeChanges([
+      {
+        guid: { sessionID: 0, localID: 0 },
+        type: 'DOCUMENT',
+        name: 'Document',
+        phase: 'CREATED',
+      } as NodeChange,
+      {
+        guid: { sessionID: 0, localID: 1 },
+        parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' },
+        type: 'CANVAS',
+        name: 'Page',
+        phase: 'CREATED',
+      } as NodeChange,
+      // Inner component
+      {
+        guid: { sessionID: 1, localID: 1 },
+        parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' },
+        type: 'SYMBOL',
+        name: 'Inner',
+        phase: 'CREATED',
+        size: { x: 100, y: 40 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+      } as NodeChange,
+      // TEXT child of Inner
+      {
+        guid: { sessionID: 1, localID: 2 },
+        overrideKey: { sessionID: 99, localID: 2 },
+        parentIndex: { guid: { sessionID: 1, localID: 1 }, position: '!' },
+        type: 'TEXT',
+        name: 'Label',
+        textData: { characters: 'Default' },
+        phase: 'CREATED',
+        size: { x: 80, y: 20 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+      } as NodeChange,
+      // Outer component
+      {
+        guid: { sessionID: 1, localID: 3 },
+        parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '"' },
+        type: 'SYMBOL',
+        name: 'Outer',
+        phase: 'CREATED',
+        size: { x: 200, y: 40 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+      } as NodeChange,
+      // INSTANCE of Inner inside Outer, with symbolOverride on Label
+      {
+        guid: { sessionID: 1, localID: 4 },
+        parentIndex: { guid: { sessionID: 1, localID: 3 }, position: '!' },
+        type: 'INSTANCE',
+        name: 'InnerUse',
+        phase: 'CREATED',
+        size: { x: 100, y: 40 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+        symbolData: {
+          symbolID: { sessionID: 1, localID: 1 },
+          symbolOverrides: [
+            {
+              guidPath: { guids: [{ sessionID: 99, localID: 2 }] },
+              textData: { characters: 'Changed' },
+            },
+          ],
+        },
+      } as NodeChange,
+      // Top-level INSTANCE of Outer on the page
+      {
+        guid: { sessionID: 1, localID: 5 },
+        parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '#' },
+        type: 'INSTANCE',
+        name: 'OuterUse',
+        phase: 'CREATED',
+        size: { x: 200, y: 40 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+        symbolData: {
+          symbolID: { sessionID: 1, localID: 3 },
+        },
+      } as NodeChange,
+    ])
+
+    const page = graph.getPages()[0]
+    const outerUse = graph.getChildren(page.id).find((n) => n.name === 'OuterUse')
+    expect(outerUse).toBeDefined()
+    expect(outerUse!.type).toBe('INSTANCE')
+
+    // Walk down: OuterUse > InnerUse clone > Label clone
+    const innerClone = graph.getChildren(outerUse!.id)[0]
+    expect(innerClone).toBeDefined()
+    expect(innerClone.name).toBe('InnerUse')
+
+    const labelClone = graph.getChildren(innerClone.id)[0]
+    expect(labelClone).toBeDefined()
+    expect(labelClone.name).toBe('Label')
+    expect(labelClone.text).toBe('Changed')
+  })
+
+  test('overriddenSymbolID swaps instance component through nested levels', () => {
+    // Structure:
+    //   COMPONENT "IconA" (1:1) → VECTOR "PathA"
+    //   COMPONENT "IconB" (1:3) → VECTOR "PathB1", VECTOR "PathB2"
+    //   COMPONENT "Button" (1:5) → INSTANCE "icon" of IconA
+    //   COMPONENT "Toolbar" (1:7) → INSTANCE "btn" of Button, with override swapping icon to IconB
+    //   INSTANCE "ToolbarUse" (1:9) of Toolbar on the page
+    //
+    // After import, ToolbarUse > btn clone > icon clone should have IconB's children
+    const graph = importNodeChanges([
+      {
+        guid: { sessionID: 0, localID: 0 },
+        type: 'DOCUMENT',
+        name: 'Document',
+        phase: 'CREATED',
+      } as NodeChange,
+      {
+        guid: { sessionID: 0, localID: 1 },
+        parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' },
+        type: 'CANVAS',
+        name: 'Page',
+        phase: 'CREATED',
+      } as NodeChange,
+      // IconA component with 1 child
+      {
+        guid: { sessionID: 1, localID: 1 },
+        overrideKey: { sessionID: 90, localID: 1 },
+        parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' },
+        type: 'SYMBOL',
+        name: 'IconA',
+        phase: 'CREATED',
+        size: { x: 24, y: 24 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+      } as NodeChange,
+      {
+        guid: { sessionID: 1, localID: 2 },
+        overrideKey: { sessionID: 90, localID: 2 },
+        parentIndex: { guid: { sessionID: 1, localID: 1 }, position: '!' },
+        type: 'VECTOR',
+        name: 'PathA',
+        phase: 'CREATED',
+        size: { x: 24, y: 24 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+      } as NodeChange,
+      // IconB component with 2 children
+      {
+        guid: { sessionID: 1, localID: 3 },
+        overrideKey: { sessionID: 90, localID: 3 },
+        parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '"' },
+        type: 'SYMBOL',
+        name: 'IconB',
+        phase: 'CREATED',
+        size: { x: 24, y: 24 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+      } as NodeChange,
+      {
+        guid: { sessionID: 1, localID: 31 },
+        overrideKey: { sessionID: 90, localID: 31 },
+        parentIndex: { guid: { sessionID: 1, localID: 3 }, position: '!' },
+        type: 'VECTOR',
+        name: 'PathB1',
+        phase: 'CREATED',
+        size: { x: 24, y: 12 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+      } as NodeChange,
+      {
+        guid: { sessionID: 1, localID: 32 },
+        overrideKey: { sessionID: 90, localID: 32 },
+        parentIndex: { guid: { sessionID: 1, localID: 3 }, position: '"' },
+        type: 'VECTOR',
+        name: 'PathB2',
+        phase: 'CREATED',
+        size: { x: 24, y: 12 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+      } as NodeChange,
+      // Button component with instance of IconA
+      {
+        guid: { sessionID: 1, localID: 5 },
+        overrideKey: { sessionID: 90, localID: 5 },
+        parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '#' },
+        type: 'SYMBOL',
+        name: 'Button',
+        phase: 'CREATED',
+        size: { x: 40, y: 40 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+      } as NodeChange,
+      {
+        guid: { sessionID: 1, localID: 6 },
+        overrideKey: { sessionID: 90, localID: 6 },
+        parentIndex: { guid: { sessionID: 1, localID: 5 }, position: '!' },
+        type: 'INSTANCE',
+        name: 'icon',
+        phase: 'CREATED',
+        size: { x: 24, y: 24 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+        symbolData: { symbolID: { sessionID: 1, localID: 1 } },
+      } as NodeChange,
+      // Toolbar component with instance of Button, swapping icon to IconB
+      {
+        guid: { sessionID: 1, localID: 7 },
+        overrideKey: { sessionID: 90, localID: 7 },
+        parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '$' },
+        type: 'SYMBOL',
+        name: 'Toolbar',
+        phase: 'CREATED',
+        size: { x: 200, y: 40 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+      } as NodeChange,
+      {
+        guid: { sessionID: 1, localID: 8 },
+        overrideKey: { sessionID: 90, localID: 8 },
+        parentIndex: { guid: { sessionID: 1, localID: 7 }, position: '!' },
+        type: 'INSTANCE',
+        name: 'btn',
+        phase: 'CREATED',
+        size: { x: 40, y: 40 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+        symbolData: {
+          symbolID: { sessionID: 1, localID: 5 },
+          symbolOverrides: [
+            {
+              guidPath: { guids: [{ sessionID: 90, localID: 6 }] },
+              overriddenSymbolID: { sessionID: 1, localID: 3 },
+            },
+          ],
+        },
+      } as NodeChange,
+      // Page-level instance of Toolbar
+      {
+        guid: { sessionID: 1, localID: 9 },
+        parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '%' },
+        type: 'INSTANCE',
+        name: 'ToolbarUse',
+        phase: 'CREATED',
+        size: { x: 200, y: 40 },
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+        symbolData: {
+          symbolID: { sessionID: 1, localID: 7 },
+        },
+      } as NodeChange,
+    ])
+
+    const page = graph.getPages()[0]
+    const toolbarUse = graph.getChildren(page.id).find((n) => n.name === 'ToolbarUse')
+    expect(toolbarUse).toBeDefined()
+
+    // ToolbarUse > btn clone > icon clone
+    const btnClone = graph.getChildren(toolbarUse?.id ?? '')[0]
+    expect(btnClone).toBeDefined()
+    expect(btnClone.name).toBe('btn')
+
+    const iconClone = graph.getChildren(btnClone.id)[0]
+    expect(iconClone).toBeDefined()
+    expect(iconClone.name).toBe('icon')
+
+    // Icon should have IconB's 2 children, not IconA's 1 child
+    const iconChildren = graph.getChildren(iconClone.id)
+    expect(iconChildren).toHaveLength(2)
+    expect(iconChildren.map((c) => c.name).sort()).toEqual(['PathB1', 'PathB2'])
+  })
+
+  test('DSD propagates through intermediate clones that are also DSD-targeted', async () => {
+    const graph = await parseFigFile(readFileSync(resolve(__dirname, '../fixtures/gold-preview.fig')).buffer)
+
+    const thumb = [...graph.getAllNodes()].find((n) => n.name === 'Preview Thumbnail')
+    expect(thumb).toBeDefined()
+
+    let overflows = 0
+    function walk(id: string) {
+      const node = graph.getNode(id)
+      if (!node) return
+      if (node.type === 'VECTOR') {
+        const parent = graph.getNode(node.parentId)
+        if (parent?.type === 'INSTANCE' && parent.width > 0 && parent.height > 0) {
+          // Check visibility
+          let vis = true
+          let cur: typeof node | null = node
+          while (cur) {
+            if (!cur.visible) {
+              vis = false
+              break
+            }
+            cur = cur.parentId ? graph.getNode(cur.parentId) ?? null : null
+          }
+          // Check clipping
+          let clipped = false
+          cur = graph.getNode(parent.parentId)
+          while (cur) {
+            if (cur.clipsContent) {
+              clipped = true
+              break
+            }
+            cur = cur.parentId ? graph.getNode(cur.parentId) ?? null : null
+          }
+          if (vis && !clipped && node.width > parent.width * 1.2) {
+            overflows++
+          }
+        }
+      }
+      for (const cid of node.childIds) walk(cid)
+    }
+    walk(thumb?.id ?? '')
+    expect(overflows).toBe(0)
   })
 })

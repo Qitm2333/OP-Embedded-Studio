@@ -1,12 +1,13 @@
 import { describe, expect, test, setDefaultTimeout } from 'bun:test'
-
-setDefaultTimeout(30_000)
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { randomUUID } from 'crypto'
+import { heavy } from '../helpers/test-utils'
+
+setDefaultTimeout(30_000)
 
 const CLI = join(import.meta.dir, '../../packages/cli/src/index.ts')
-const FIXTURE = join(import.meta.dir, '../fixtures/material3.fig')
+const FIXTURE = join(import.meta.dir, '../fixtures/gold-preview.fig')
 
 async function run(args: string[], stdin?: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   const proc = Bun.spawn(['bun', CLI, ...args], {
@@ -22,7 +23,7 @@ async function run(args: string[], stdin?: string): Promise<{ stdout: string; st
   return { stdout: stdout.trim(), stderr: stderr.trim(), exitCode }
 }
 
-describe('eval CLI', () => {
+heavy('eval CLI', () => {
   test('returns page name', async () => {
     const { stdout, exitCode } = await run(['eval', FIXTURE, '--code', 'return figma.currentPage.name'])
     expect(exitCode).toBe(0)

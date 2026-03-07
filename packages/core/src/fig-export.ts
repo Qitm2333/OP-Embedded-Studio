@@ -59,7 +59,7 @@ export async function exportFigFile(
     const canvasLocalID = localIdCounter.value++
     const canvasGuid = { sessionID: 0, localID: canvasLocalID }
 
-    nodeChanges.push({
+    const canvasNc: KiwiNodeChange = {
       guid: canvasGuid,
       parentIndex: { guid: docGuid, position: fractionalPosition(p) },
       type: 'CANVAS',
@@ -74,7 +74,9 @@ export async function exportFigFile(
       backgroundOpacity: 1,
       backgroundColor: { ...CANVAS_BG_COLOR },
       backgroundEnabled: true
-    })
+    }
+    if (page.internalOnly) canvasNc.internalOnly = true
+    nodeChanges.push(canvasNc)
 
     const children = graph.getChildren(page.id)
     for (let i = 0; i < children.length; i++) {

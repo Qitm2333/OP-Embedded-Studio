@@ -74,6 +74,15 @@ export const COMPONENT_LABEL_ICON_GAP = 4
 export const RULER_TARGET_PIXEL_SPACING = 100
 export const RULER_MAJOR_TOLERANCE = 0.01
 
+export const FLASH_COLOR = SELECTION_COLOR
+export const FLASH_ATTACK_MS = 200
+export const FLASH_HOLD_MS = 400
+export const FLASH_RELEASE_MS = 300
+export const FLASH_STROKE_WIDTH = 2
+export const FLASH_PADDING = 5
+export const FLASH_OVERSHOOT = 30
+export const FLASH_RADIUS = 4
+
 export const TEXT_SELECTION_COLOR = { r: 0.26, g: 0.52, b: 0.96, a: 0.3 }
 export const TEXT_CARET_COLOR = BLACK
 export const TEXT_CARET_WIDTH = 1
@@ -122,3 +131,30 @@ export const AI_MODELS: ModelOption[] = [
 ]
 
 export const DEFAULT_AI_MODEL = AI_MODELS[0].id
+
+export const GOOGLE_FONTS_API_KEY = 'AIzaSyD1tYDR_dUEiV-Tw1vksEhZbUytgKW5pc8'
+
+export const CJK_FALLBACK_FAMILIES_MACOS = [
+  'PingFang SC',
+  'Hiragino Sans',
+  'Apple SD Gothic Neo',
+  'Heiti SC'
+]
+
+export const CJK_FALLBACK_FAMILIES_WINDOWS = [
+  'Microsoft YaHei',
+  'Microsoft JhengHei',
+  'Yu Gothic',
+  'Malgun Gothic',
+  'SimHei'
+]
+
+export const CJK_FALLBACK_FAMILIES_LINUX = [
+  'Noto Sans CJK SC',
+  'Noto Sans CJK JP',
+  'Noto Sans CJK KR',
+  'WenQuanYi Micro Hei',
+  'Droid Sans Fallback'
+]
+
+export const CJK_GOOGLE_FONT = 'Noto Sans SC'

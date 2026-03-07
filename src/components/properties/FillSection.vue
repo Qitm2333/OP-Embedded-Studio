@@ -18,18 +18,13 @@ import ScrubInput from '@/components/ScrubInput.vue'
 import { useNodeProps } from '@/composables/use-node-props'
 import { useMultiProps } from '@/composables/use-multi-props'
 import { DEFAULT_SHAPE_FILL } from '@/constants'
-import { colorToHexRaw } from '@/engine/color'
-import type { Fill, Variable, Color } from '@/engine/scene-graph'
+import { colorToCSS, colorToHexRaw } from '@open-pencil/core'
+import type { Fill, Variable, Color } from '@open-pencil/core'
 
 const { store } = useNodeProps()
-const { nodes, isMulti, active, activeNode } = useMultiProps()
+const { nodes, isMulti, active, activeNode, isArrayMixed } = useMultiProps()
 
-const fillsAreMixed = computed(() => {
-  if (!isMulti.value) return false
-  const all = nodes.value
-  const first = JSON.stringify(all[0].fills)
-  return all.some((n) => JSON.stringify(n.fills) !== first)
-})
+const fillsAreMixed = computed(() => isArrayMixed('fills'))
 
 const colorVariables = computed(() => store.graph.getVariablesByType('COLOR'))
 
@@ -57,7 +52,7 @@ function unbindVariable(index: number) {
 function resolvedSwatchStyle(variable: Variable): string {
   const color = store.graph.resolveColorVariable(variable.id)
   if (!color) return 'background: #000'
-  return `background: rgb(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)})`
+  return `background: ${colorToCSS(color)}`
 }
 
 function updateFill(index: number, fill: Fill) {
@@ -177,7 +172,7 @@ const filteredVariables = computed(() => {
         v-if="colorVariables.length > 0 && fill.type === 'SOLID' && !getBoundVariable(i)"
       >
         <PopoverTrigger
-          class="cursor-pointer border-none bg-transparent p-0 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-surface"
+          class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
           title="Apply variable"
         >
           <icon-lucide-link class="size-3.5" />
@@ -217,7 +212,7 @@ const filteredVariables = computed(() => {
       </PopoverRoot>
 
       <button
-        class="cursor-pointer border-none bg-transparent p-0 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-surface"
+        class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
         @click="toggleVisibility(i)"
       >
         <icon-lucide-eye v-if="fill.visible" class="size-3.5" />

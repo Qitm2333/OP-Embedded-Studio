@@ -1,7 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 
-import { SceneGraph, type SceneNode } from '../../src/engine/scene-graph'
-import { computeLayout, computeAllLayouts, setTextMeasurer } from '../../src/engine/layout'
+import { SceneGraph, type SceneNode, computeLayout, computeAllLayouts, setTextMeasurer } from '@open-pencil/core'
 
 function pageId(graph: SceneGraph) {
   return graph.getPages()[0].id
@@ -466,6 +465,90 @@ describe('Auto Layout', () => {
       expect(children[1].y).toBe(100)
       // Third child should be right after first (no gap for absolute)
       expect(children[2].x).toBe(60)
+    })
+  })
+
+  describe('hidden children', () => {
+    test('hidden children collapse to zero size in auto layout', () => {
+      const graph = new SceneGraph()
+      const frame = autoFrame(graph, pageId(graph), {
+        width: 300,
+        height: 100,
+        itemSpacing: 10,
+      })
+      rect(graph, frame.id, 50, 50, { visible: false })
+      rect(graph, frame.id, 80, 40)
+      rect(graph, frame.id, 50, 50, { visible: false })
+
+      computeLayout(graph, frame.id)
+
+      const children = graph.getChildren(frame.id)
+      expect(children[0].width).toBe(0)
+      expect(children[0].height).toBe(0)
+      expect(children[1].x).toBe(0)
+      expect(children[1].width).toBe(80)
+      expect(children[2].width).toBe(0)
+      expect(children[2].height).toBe(0)
+    })
+
+    test('hidden children do not consume spacing', () => {
+      const graph = new SceneGraph()
+      const frame = autoFrame(graph, pageId(graph), {
+        width: 400,
+        height: 100,
+        itemSpacing: 20,
+      })
+      rect(graph, frame.id, 50, 50, { visible: false })
+      rect(graph, frame.id, 100, 50)
+      rect(graph, frame.id, 100, 50)
+
+      computeLayout(graph, frame.id)
+
+      const children = graph.getChildren(frame.id)
+      expect(children[1].x).toBe(0)
+      expect(children[2].x).toBe(120)
+    })
+
+    test('hug frame ignores hidden children for sizing', () => {
+      const graph = new SceneGraph()
+      const frame = autoFrame(graph, pageId(graph), {
+        primaryAxisSizing: 'HUG',
+        counterAxisSizing: 'HUG',
+      })
+      rect(graph, frame.id, 200, 200, { visible: false })
+      rect(graph, frame.id, 50, 30)
+
+      computeLayout(graph, frame.id)
+
+      const f = graph.getNode(frame.id)!
+      expect(f.width).toBe(50)
+      expect(f.height).toBe(30)
+    })
+
+    test('hidden nested auto-layout children collapse', () => {
+      const graph = new SceneGraph()
+      const outer = autoFrame(graph, pageId(graph), {
+        width: 300,
+        height: 100,
+        itemSpacing: 16,
+      })
+      const inner = autoFrame(graph, outer.id, {
+        primaryAxisSizing: 'FIXED',
+        counterAxisSizing: 'FIXED',
+        width: 50,
+        height: 50,
+        visible: false,
+      })
+      rect(graph, inner.id, 30, 30)
+      rect(graph, outer.id, 80, 40)
+
+      computeLayout(graph, outer.id)
+
+      const children = graph.getChildren(outer.id)
+      const innerNode = graph.getNode(inner.id)!
+      expect(innerNode.width).toBe(0)
+      expect(innerNode.height).toBe(0)
+      expect(children[1].x).toBe(0)
     })
   })
 

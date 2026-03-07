@@ -31,7 +31,7 @@ const isComponentType = computed(() => {
   <div
     v-if="multiCount > 1"
     data-test-id="design-panel-multi"
-    class="flex-1 overflow-x-hidden overflow-y-auto pb-4"
+    class="flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin pb-4"
   >
     <div
       data-test-id="design-multi-header"
@@ -51,7 +51,7 @@ const isComponentType = computed(() => {
   <div
     v-else-if="node"
     data-test-id="design-panel-single"
-    class="flex-1 overflow-x-hidden overflow-y-auto pb-4"
+    class="flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin pb-4"
   >
     <div
       data-test-id="design-node-header"
@@ -98,7 +98,7 @@ const isComponentType = computed(() => {
   <div
     v-else
     data-test-id="design-panel-empty"
-    class="flex-1 overflow-x-hidden overflow-y-auto pb-4"
+    class="flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin pb-4"
   >
     <PageSection />
     <VariablesSection @open-dialog="variablesOpen = true" />

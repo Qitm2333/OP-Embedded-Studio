@@ -11,11 +11,11 @@ import {
   DEFAULT_TEXT_WIDTH,
   DEFAULT_TEXT_HEIGHT
 } from '@/constants'
-import { computeSelectionBounds, computeSnap } from '@/engine/snap'
+import { computeSelectionBounds, computeSnap } from '@open-pencil/core'
 
-import type { NodeType, SceneNode } from '@/engine/scene-graph'
 import type { EditorStore, Tool } from '@/stores/editor'
 import type { Rect } from '@/types'
+import type { NodeType, SceneNode } from '@open-pencil/core'
 
 type HandlePosition = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
 
@@ -151,7 +151,7 @@ function getHandlePositions(
     s: { x: mx, y: y2 },
     sw: { x: x1, y: y2 },
     w: { x: x1, y: my }
-  } as Record<HandlePosition, { x: number; y: number }>
+  } satisfies Record<HandlePosition, { x: number; y: number }>
 }
 
 function unrotate(
@@ -224,11 +224,8 @@ function hitTestRotationHandle(
 export function useCanvasInput(
   canvasRef: Ref<HTMLCanvasElement | null>,
   store: EditorStore,
-  hitTestSectionTitle: (cx: number, cy: number) => import('@/engine/scene-graph').SceneNode | null,
-  hitTestComponentLabel: (
-    cx: number,
-    cy: number
-  ) => import('@/engine/scene-graph').SceneNode | null,
+  hitTestSectionTitle: (cx: number, cy: number) => import('@open-pencil/core').SceneNode | null,
+  hitTestComponentLabel: (cx: number, cy: number) => import('@open-pencil/core').SceneNode | null,
   onCursorMove?: (cx: number, cy: number) => void
 ) {
   const drag = ref<DragState | null>(null)
@@ -561,7 +558,9 @@ export function useCanvasInput(
       cursorOverride.value = cursor
 
       const hit =
-        hitTestSectionTitle(cx, cy) ?? hitTestComponentLabel(cx, cy) ?? store.graph.hitTest(cx, cy)
+        hitTestSectionTitle(cx, cy) ??
+        hitTestComponentLabel(cx, cy) ??
+        store.graph.hitTest(cx, cy, store.state.currentPageId)
       store.setHoveredNode(hit && !store.state.selectedIds.has(hit.id) ? hit.id : null)
     }
 
@@ -1090,8 +1089,6 @@ export function useCanvasInput(
     })
   }
 
-  // Touch support for iOS/mobile: single-finger pan, two-finger pinch-zoom
-  const isTouchDevice = matchMedia('(pointer: coarse)').matches
   let activeTouches: Touch[] = []
   let pinchStartDist = 0
   let pinchStartZoom = 0
@@ -1102,14 +1099,31 @@ export function useCanvasInput(
     return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
   }
 
+  let touchAsMouse = false
+
+  function syntheticMouse(type: string, t: Touch): MouseEvent {
+    return new MouseEvent(type, {
+      clientX: t.clientX,
+      clientY: t.clientY,
+      screenX: t.screenX,
+      screenY: t.screenY,
+      button: 0,
+      buttons: 1,
+      bubbles: true
+    })
+  }
+
   function onTouchStart(e: TouchEvent) {
-    if (!isTouchDevice) return
     e.preventDefault()
     activeTouches = Array.from(e.touches)
     const canvas = canvasRef.value
     if (!canvas) return
 
     if (activeTouches.length === 2) {
+      if (touchAsMouse) {
+        onMouseUp()
+        touchAsMouse = false
+      }
       drag.value = null
       const [a, b] = activeTouches
       pinchStartDist = touchDist(a, b)
@@ -1119,18 +1133,24 @@ export function useCanvasInput(
       pinchMidY = (a.clientY + b.clientY) / 2 - rect.top
     } else if (activeTouches.length === 1) {
       const t = activeTouches[0]
-      drag.value = {
-        type: 'pan',
-        startScreenX: t.clientX,
-        startScreenY: t.clientY,
-        startPanX: store.state.panX,
-        startPanY: store.state.panY
+      const tool = store.state.activeTool
+      if (tool === 'HAND') {
+        touchAsMouse = false
+        drag.value = {
+          type: 'pan',
+          startScreenX: t.clientX,
+          startScreenY: t.clientY,
+          startPanX: store.state.panX,
+          startPanY: store.state.panY
+        }
+      } else {
+        touchAsMouse = true
+        onMouseDown(syntheticMouse('mousedown', t))
       }
     }
   }
 
   function onTouchMove(e: TouchEvent) {
-    if (!isTouchDevice) return
     e.preventDefault()
     activeTouches = Array.from(e.touches)
     const canvas = canvasRef.value
@@ -1160,31 +1180,41 @@ export function useCanvasInput(
       pinchMidX = newMidX
       pinchMidY = newMidY
       store.requestRepaint()
-    } else if (activeTouches.length === 1 && drag.value?.type === 'pan') {
+    } else if (activeTouches.length === 1) {
       const t = activeTouches[0]
-      const d = drag.value
-      store.state.panX = d.startPanX + (t.clientX - d.startScreenX)
-      store.state.panY = d.startPanY + (t.clientY - d.startScreenY)
-      store.requestRepaint()
+      if (touchAsMouse) {
+        onMouseMove(syntheticMouse('mousemove', t))
+      } else if (drag.value?.type === 'pan') {
+        const d = drag.value
+        store.state.panX = d.startPanX + (t.clientX - d.startScreenX)
+        store.state.panY = d.startPanY + (t.clientY - d.startScreenY)
+        store.requestRepaint()
+      }
     }
   }
 
   function onTouchEnd(e: TouchEvent) {
-    if (!isTouchDevice) return
     e.preventDefault()
     activeTouches = Array.from(e.touches)
 
     if (activeTouches.length === 0) {
-      drag.value = null
+      if (touchAsMouse) {
+        onMouseUp()
+        touchAsMouse = false
+      } else {
+        drag.value = null
+      }
       pinchStartDist = 0
     } else if (activeTouches.length === 1) {
       const t = activeTouches[0]
-      drag.value = {
-        type: 'pan',
-        startScreenX: t.clientX,
-        startScreenY: t.clientY,
-        startPanX: store.state.panX,
-        startPanY: store.state.panY
+      if (!touchAsMouse) {
+        drag.value = {
+          type: 'pan',
+          startScreenX: t.clientX,
+          startScreenY: t.clientY,
+          startPanX: store.state.panX,
+          startPanY: store.state.panY
+        }
       }
       pinchStartDist = 0
     }

@@ -172,43 +172,52 @@ export function encodeVectorNetworkBlob(network: VectorNetwork): Uint8Array {
   return new Uint8Array(buf)
 }
 
-export function vectorNetworkToPath(ck: CanvasKit, network: VectorNetwork): Path {
-  const path = new ck.Path()
+export function vectorNetworkToPath(ck: CanvasKit, network: VectorNetwork): Path[] {
   const { vertices, segments, regions } = network
 
   if (regions.length > 0) {
+    const paths: Path[] = []
     for (const region of regions) {
+      const regionPath = new ck.Path()
       for (const loop of region.loops) {
-        addLoopToPath(path, loop, segments, vertices)
+        addLoopToPath(regionPath, loop, segments, vertices)
       }
-      path.setFillType(region.windingRule === 'EVENODD' ? ck.FillType.EvenOdd : ck.FillType.Winding)
+      regionPath.setFillType(
+        region.windingRule === 'EVENODD' ? ck.FillType.EvenOdd : ck.FillType.Winding
+      )
+      paths.push(regionPath)
     }
-  } else {
-    // No regions — draw all segments as open paths
-    const visited = new Set<number>()
-    const chains = buildChains(segments, vertices.length)
+    return paths
+  }
 
-    for (const chain of chains) {
-      if (chain.length === 0) continue
-      const firstSeg = segments[chain[0]]
-      path.moveTo(vertices[firstSeg.start].x, vertices[firstSeg.start].y)
+  // No regions — draw all segments as open paths, tracking direction
+  const path = new ck.Path()
+  const visited = new Set<number>()
+  const chains = buildChains(segments, vertices.length)
 
-      for (const segIdx of chain) {
-        visited.add(segIdx)
-        addSegmentToPath(path, segments[segIdx], vertices)
-      }
-    }
+  for (const chain of chains) {
+    if (chain.length === 0) continue
+    // Determine starting vertex by tracing chain direction
+    let current = findChainStart(chain, segments)
+    path.moveTo(vertices[current].x, vertices[current].y)
 
-    // Any remaining disconnected segments
-    for (let i = 0; i < segments.length; i++) {
-      if (visited.has(i)) continue
-      const seg = segments[i]
-      path.moveTo(vertices[seg.start].x, vertices[seg.start].y)
-      addSegmentToPath(path, seg, vertices)
+    for (const segIdx of chain) {
+      visited.add(segIdx)
+      const seg = segments[segIdx]
+      const forward = seg.start === current
+      addSegmentDirected(path, seg, vertices, forward)
+      current = forward ? seg.end : seg.start
     }
   }
 
-  return path
+  for (let i = 0; i < segments.length; i++) {
+    if (visited.has(i)) continue
+    const seg = segments[i]
+    path.moveTo(vertices[seg.start].x, vertices[seg.start].y)
+    addSegmentDirected(path, seg, vertices, true)
+  }
+
+  return [path]
 }
 
 function addLoopToPath(
@@ -219,11 +228,12 @@ function addLoopToPath(
 ): void {
   if (loop.length === 0) return
 
+  // Region loops have pre-oriented segments — always draw forward
   const firstSeg = segments[loop[0]]
   path.moveTo(vertices[firstSeg.start].x, vertices[firstSeg.start].y)
 
   for (const segIdx of loop) {
-    addSegmentToPath(path, segments[segIdx], vertices)
+    addSegmentDirected(path, segments[segIdx], vertices, true)
   }
 
   const lastSeg = segments[loop[loop.length - 1]]
@@ -232,19 +242,37 @@ function addLoopToPath(
   }
 }
 
-function addSegmentToPath(path: Path, seg: VectorSegment, vertices: VectorVertex[]): void {
-  const start = vertices[seg.start]
-  const end = vertices[seg.end]
+function addSegmentDirected(
+  path: Path,
+  seg: VectorSegment,
+  vertices: VectorVertex[],
+  forward: boolean
+): void {
+  const p0 = forward ? vertices[seg.start] : vertices[seg.end]
+  const p3 = forward ? vertices[seg.end] : vertices[seg.start]
   const ts = seg.tangentStart
   const te = seg.tangentEnd
 
   const isLine = ts.x === 0 && ts.y === 0 && te.x === 0 && te.y === 0
   if (isLine) {
-    path.lineTo(end.x, end.y)
+    path.lineTo(p3.x, p3.y)
+  } else if (forward) {
+    path.cubicTo(p0.x + ts.x, p0.y + ts.y, p3.x + te.x, p3.y + te.y, p3.x, p3.y)
   } else {
-    // Cubic bezier: control points are tangent offsets from start/end
-    path.cubicTo(start.x + ts.x, start.y + ts.y, end.x + te.x, end.y + te.y, end.x, end.y)
+    // Reversed cubic: swap control points
+    path.cubicTo(p0.x + te.x, p0.y + te.y, p3.x + ts.x, p3.y + ts.y, p3.x, p3.y)
   }
+}
+
+function findChainStart(chain: number[], segments: VectorSegment[]): number {
+  if (chain.length < 2) return segments[chain[0]].start
+
+  const first = segments[chain[0]]
+  const second = segments[chain[1]]
+  // The shared vertex between first and second is the "end" of the first
+  // segment in this chain — so the start is the other vertex.
+  if (first.start === second.start || first.start === second.end) return first.end
+  return first.start
 }
 
 function buildChains(segments: VectorSegment[], _vertexCount: number): number[][] {
@@ -330,4 +358,59 @@ export function computeVectorBounds(network: VectorNetwork): {
   }
 
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+}
+
+const CMD_CLOSE = 0
+const CMD_MOVE_TO = 1
+const CMD_LINE_TO = 2
+const CMD_CUBIC_TO = 4
+
+export function geometryBlobToPath(
+  ck: CanvasKit,
+  blob: Uint8Array,
+  windingRule: WindingRule
+): Path {
+  const path = new ck.Path()
+  if (!blob || !(blob.buffer instanceof ArrayBuffer)) return path
+  const dv = new DataView(blob.buffer, blob.byteOffset, blob.byteLength)
+  let o = 0
+
+  while (o < blob.length) {
+    const cmd = blob[o++]
+    switch (cmd) {
+      case CMD_CLOSE:
+        path.close()
+        break
+      case CMD_MOVE_TO: {
+        const x = dv.getFloat32(o, true)
+        const y = dv.getFloat32(o + 4, true)
+        o += 8
+        path.moveTo(x, y)
+        break
+      }
+      case CMD_LINE_TO: {
+        const x = dv.getFloat32(o, true)
+        const y = dv.getFloat32(o + 4, true)
+        o += 8
+        path.lineTo(x, y)
+        break
+      }
+      case CMD_CUBIC_TO: {
+        const x1 = dv.getFloat32(o, true)
+        const y1 = dv.getFloat32(o + 4, true)
+        const x2 = dv.getFloat32(o + 8, true)
+        const y2 = dv.getFloat32(o + 12, true)
+        const x = dv.getFloat32(o + 16, true)
+        const y = dv.getFloat32(o + 20, true)
+        o += 24
+        path.cubicTo(x1, y1, x2, y2, x, y)
+        break
+      }
+      default:
+        return path
+    }
+  }
+
+  path.setFillType(windingRule === 'EVENODD' ? ck.FillType.EvenOdd : ck.FillType.Winding)
+  return path
 }

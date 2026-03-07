@@ -18,10 +18,10 @@ import {
 
 import HsvColorArea from './HsvColorArea.vue'
 import ScrubInput from './ScrubInput.vue'
-import { colorToHexRaw, colorToRgba255, parseColor } from '@/engine/color'
+import { colorToCSS, colorToHexRaw, parseColor } from '@open-pencil/core'
 
 import type { Color } from '@/types'
-import type { Fill, GradientStop, GradientTransform } from '@/engine/scene-graph'
+import type { Fill, GradientStop, GradientTransform } from '@open-pencil/core'
 
 type FillCategory = 'SOLID' | 'GRADIENT' | 'IMAGE'
 type GradientSubtype =
@@ -172,29 +172,20 @@ function updateStopOpacity(index: number, value: string) {
   emit('update', { ...props.fill, gradientStops: stops })
 }
 
+function gradientStops(stops: GradientStop[]): string {
+  return stops.map((s) => `${colorToCSS(s.color)} ${s.position * 100}%`).join(', ')
+}
+
 const swatchBackground = computed(() => {
   if (isGradient.value && props.fill.gradientStops?.length) {
-    const stops = props.fill.gradientStops
-      .map((s) => {
-        const rgba = colorToRgba255(s.color)
-        return `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${s.color.a}) ${s.position * 100}%`
-      })
-      .join(', ')
-    return `linear-gradient(to right, ${stops})`
+    return `linear-gradient(to right, ${gradientStops(props.fill.gradientStops)})`
   }
-  const rgba = colorToRgba255(props.fill.color)
-  return `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${props.fill.color.a})`
+  return colorToCSS(props.fill.color)
 })
 
 const gradientBarBackground = computed(() => {
   if (!props.fill.gradientStops?.length) return ''
-  const stops = props.fill.gradientStops
-    .map((s) => {
-      const rgba = colorToRgba255(s.color)
-      return `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${s.color.a}) ${s.position * 100}%`
-    })
-    .join(', ')
-  return `linear-gradient(to right, ${stops})`
+  return `linear-gradient(to right, ${gradientStops(props.fill.gradientStops)})`
 })
 
 const gradientStopBarRef = ref<HTMLDivElement | null>(null)
@@ -222,8 +213,7 @@ function onStopBarPointerUp() {
 }
 
 function stopSwatchColor(stop: GradientStop) {
-  const rgba = colorToRgba255(stop.color)
-  return `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${stop.color.a})`
+  return colorToCSS(stop.color)
 }
 </script>
 

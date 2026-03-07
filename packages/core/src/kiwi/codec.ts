@@ -210,6 +210,7 @@ export interface Effect {
 }
 
 export interface NodeChange {
+  [key: string]: unknown
   guid: GUID
   phase?: 'CREATED' | 'REMOVED'
   parentIndex?: ParentIndex
@@ -254,6 +255,8 @@ export interface NodeChange {
   frameMaskDisabled?: boolean
   // Vector
   vectorData?: unknown
+  fillGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
+  strokeGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
   // Text
   fontSize?: number
   fontWeight?: number
@@ -294,6 +297,7 @@ export interface FigmaMessage {
   ackID?: number
   reconnectSequenceNumber?: number
   nodeChanges?: NodeChange[]
+  blobs?: Array<{ bytes: Uint8Array }>
 }
 
 /**

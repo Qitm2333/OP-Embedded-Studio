@@ -1,4 +1,3 @@
-import { weightToStyle } from '@open-pencil/core'
 import { shallowReactive, shallowRef, computed, watch } from 'vue'
 
 import {
@@ -10,41 +9,44 @@ import {
   CANVAS_BG_COLOR,
   ZOOM_DIVISOR,
   ZOOM_SCALE_MIN,
-  ZOOM_SCALE_MAX,
-  DEFAULT_FONT_FAMILY
+  ZOOM_SCALE_MAX
 } from '@/constants'
+import { loadFont } from '@/engine/fonts'
 import {
-  parseFigmaClipboard,
+  collectFontKeys,
+  computeLayout,
+  computeAllLayouts,
+  computeVectorBounds,
+  exportFigFile,
   importClipboardNodes,
   figmaNodesBounds,
+  parseFigmaClipboard,
   parseOpenPencilClipboard,
   buildFigmaClipboardHTML,
   buildOpenPencilClipboardHTML,
-  prefetchFigmaSchema
-} from '@/engine/clipboard'
-import { exportFigFile } from '@/engine/fig-export'
-import { loadFont } from '@/engine/fonts'
-import { computeLayout, computeAllLayouts, setTextMeasurer } from '@/engine/layout'
-import { renderNodesToImage } from '@/engine/render-image'
-import { SceneGraph } from '@/engine/scene-graph'
-import { TextEditor } from '@/engine/text-editor'
-import { UndoManager } from '@/engine/undo'
-import { computeVectorBounds } from '@/engine/vector'
-import { readFigFile } from '@/kiwi/fig-file'
+  prefetchFigmaSchema,
+  renderNodesToImage,
+  renderNodesToSVG,
+  SceneGraph,
+  setTextMeasurer,
+  TextEditor,
+  UndoManager
+} from '@open-pencil/core'
+import { readFigFile } from '@open-pencil/core'
 
-import type { ExportFormat } from '@/engine/render-image'
+import type { Color, Rect } from '@/types'
 import type {
-  SceneNode,
-  NodeType,
+  ExportFormat,
   Fill,
   LayoutMode,
-  VectorVertex,
-  VectorSegment,
+  NodeType,
+  SceneNode,
+  SnapGuide,
+  VectorNetwork,
   VectorRegion,
-  VectorNetwork
-} from '@/engine/scene-graph'
-import type { SnapGuide } from '@/engine/snap'
-import type { Color, Rect } from '@/types'
+  VectorSegment,
+  VectorVertex
+} from '@open-pencil/core'
 
 export type Tool =
   | 'SELECT'
@@ -129,7 +131,7 @@ export function createEditorStore() {
   let lastWriteTime = 0
   let unwatchFile: (() => void) | null = null
   let _ck: import('canvaskit-wasm').CanvasKit | null = null
-  let _renderer: import('@/engine/renderer').SkiaRenderer | null = null
+  let _renderer: import('@open-pencil/core').SkiaRenderer | null = null
   let _textEditor: TextEditor | null = null
 
   prefetchFigmaSchema()
@@ -182,7 +184,7 @@ export function createEditorStore() {
       y: number
       selection?: string[]
     }>,
-    showUI: matchMedia('(min-width: 768px)').matches,
+    showUI: true,
     documentName: 'Untitled' as string,
     panX: 0,
     pageColor: { ...CANVAS_BG_COLOR } as Color,
@@ -190,7 +192,13 @@ export function createEditorStore() {
     zoom: 1,
     renderVersion: 0,
     sceneVersion: 0,
-    loading: false
+    loading: false,
+    activeRibbonTab: 'panels' as 'panels' | 'code' | 'ai',
+    panelMode: 'design' as 'layers' | 'design',
+    actionToast: null as string | null,
+    mobileDrawerSnap: 'closed' as 'closed' | 'half' | 'full',
+    clipboardHtml: '',
+    autosaveEnabled: true
   })
 
   const AUTOSAVE_DELAY = 3000
@@ -199,10 +207,12 @@ export function createEditorStore() {
     () => state.sceneVersion,
     (version) => {
       if (version === savedVersion) return
+      if (!state.autosaveEnabled) return
       if (!fileHandle && !filePath) return
       clearTimeout(autosaveTimer)
       autosaveTimer = setTimeout(async () => {
         if (state.sceneVersion === savedVersion) return
+        if (!state.autosaveEnabled) return
         try {
           await writeFile(await buildFigFile())
         } catch {
@@ -240,6 +250,22 @@ export function createEditorStore() {
     state.renderVersion++
   }
 
+  let flashRafId = 0
+  function flashNodes(nodeIds: string[]) {
+    if (!_renderer) return
+    for (const id of nodeIds) _renderer.flashNode(id)
+    if (!flashRafId) pumpFlashes()
+  }
+
+  function pumpFlashes() {
+    if (!_renderer?.hasActiveFlashes) {
+      flashRafId = 0
+      return
+    }
+    state.renderVersion++
+    flashRafId = requestAnimationFrame(pumpFlashes)
+  }
+
   function isTopLevel(parentId: string | null): boolean {
     return !parentId || parentId === graph.rootId || parentId === state.currentPageId
   }
@@ -274,6 +300,7 @@ export function createEditorStore() {
       state.pageColor = { ...CANVAS_BG_COLOR }
     }
 
+    void loadFontsForNodes(graph.getChildren(pageId).map((n) => n.id))
     requestRender()
   }
 
@@ -587,7 +614,7 @@ export function createEditorStore() {
       state.panY = 0
       state.zoom = 1
       state.pageColor = { ...CANVAS_BG_COLOR }
-      loadFontsForNodes(graph.getChildren(firstPage?.id ?? graph.rootId).map((n) => n.id))
+      await loadFontsForNodes(graph.getChildren(firstPage?.id ?? graph.rootId).map((n) => n.id))
       requestRender()
       startWatchingFile()
     } catch (e) {
@@ -599,7 +626,7 @@ export function createEditorStore() {
 
   function setCanvasKit(
     ck: import('canvaskit-wasm').CanvasKit,
-    renderer: import('@/engine/renderer').SkiaRenderer
+    renderer: import('@open-pencil/core').SkiaRenderer
   ) {
     _ck = ck
     _renderer = renderer
@@ -806,6 +833,21 @@ export function createEditorStore() {
 
   async function exportSelection(scale: number, format: ExportFormat) {
     const ids = [...state.selectedIds]
+
+    if (format === 'SVG') {
+      const nodeIds = ids.length > 0 ? ids : graph.getChildren(state.currentPageId).map((n) => n.id)
+      const svgStr = renderNodesToSVG(graph, state.currentPageId, nodeIds)
+      if (!svgStr) {
+        console.error('Export failed: renderNodesToSVG returned null')
+        return
+      }
+      const svgData = new TextEncoder().encode(svgStr)
+      const node = ids.length === 1 ? graph.getNode(ids[0]) : undefined
+      const fileName = `${node?.name ?? 'Export'}.svg`
+      await saveExportedFile(svgData, fileName, 'SVG', '.svg', 'image/svg+xml')
+      return
+    }
+
     const data = await renderExportImage(ids, scale, format)
     if (!data) {
       console.error(
@@ -818,7 +860,16 @@ export function createEditorStore() {
     const baseName = node?.name ?? 'Export'
     const ext = exportImageExtension(format)
     const fileName = `${baseName}@${scale}x${ext}`
+    await saveExportedFile(new Uint8Array(data), fileName, format, ext, exportImageMime(format))
+  }
 
+  async function saveExportedFile(
+    data: Uint8Array,
+    fileName: string,
+    format: string,
+    ext: string,
+    mime: string
+  ) {
     if (IS_TAURI) {
       const { save } = await import('@tauri-apps/plugin-dialog')
       const path = await save({
@@ -837,8 +888,8 @@ export function createEditorStore() {
           suggestedName: fileName,
           types: [
             {
-              description: `${format} image`,
-              accept: { [exportImageMime(format)]: [ext] }
+              description: `${format} file`,
+              accept: { [mime]: [ext] }
             }
           ]
         })
@@ -851,7 +902,7 @@ export function createEditorStore() {
       }
     }
 
-    downloadBlob(new Uint8Array(data), fileName, exportImageMime(format))
+    downloadBlob(data, fileName, mime)
   }
 
   function runLayoutForNode(id: string) {
@@ -896,10 +947,9 @@ export function createEditorStore() {
   function updateNodeWithUndo(id: string, changes: Partial<SceneNode>, label = 'Update') {
     const node = graph.getNode(id)
     if (!node) return
-    const previous: Partial<SceneNode> = {}
-    for (const key of Object.keys(changes) as (keyof SceneNode)[]) {
-      ;(previous as Record<string, unknown>)[key] = node[key]
-    }
+    const previous = Object.fromEntries(
+      (Object.keys(changes) as (keyof SceneNode)[]).map((key) => [key, node[key]])
+    ) as Partial<SceneNode>
     graph.updateNode(id, changes)
     runLayoutForNode(id)
     syncIfInsideComponent(id)
@@ -957,12 +1007,11 @@ export function createEditorStore() {
     if (mode !== 'NONE') computeLayout(graph, id)
     runLayoutForNode(id)
 
-    const finalState: Partial<SceneNode> = {}
     const updated = graph.getNode(id)
     if (!updated) return
-    for (const key of Object.keys(previous) as (keyof SceneNode)[]) {
-      ;(finalState as Record<string, unknown>)[key] = updated[key]
-    }
+    const finalState = Object.fromEntries(
+      (Object.keys(previous) as (keyof SceneNode)[]).map((key) => [key, updated[key]])
+    ) as Partial<SceneNode>
 
     undo.push({
       label: mode === 'NONE' ? 'Remove auto layout' : 'Add auto layout',
@@ -1474,6 +1523,11 @@ export function createEditorStore() {
     requestRender()
   }
 
+  function toggleProfiler() {
+    _renderer?.profiler.toggle()
+    requestRepaint()
+  }
+
   function toggleVisibility() {
     for (const id of state.selectedIds) {
       const node = graph.getNode(id)
@@ -1696,35 +1750,13 @@ export function createEditorStore() {
     return result
   }
 
-  function loadFontsForNodes(nodeIds: string[]) {
-    const fontKeys = new Set<string>()
-    const collect = (id: string) => {
-      const node = graph.getNode(id)
-      if (!node) return
-      if (node.type === 'TEXT') {
-        const family = node.fontFamily || DEFAULT_FONT_FAMILY
-        fontKeys.add(`${family}\0${weightToStyle(node.fontWeight || 400, node.italic)}`)
-        for (const run of node.styleRuns) {
-          const f = run.style.fontFamily ?? family
-          const w = run.style.fontWeight ?? node.fontWeight ?? 400
-          const i = run.style.italic ?? node.italic
-          fontKeys.add(`${f}\0${weightToStyle(w, i)}`)
-        }
-      }
-      for (const childId of node.childIds) collect(childId)
-    }
-    for (const id of nodeIds) collect(id)
-
-    const toLoad = [...fontKeys]
-      .map((k) => k.split('\0') as [string, string])
-      .filter(([family]) => family !== DEFAULT_FONT_FAMILY)
+  async function loadFontsForNodes(nodeIds: string[]) {
+    const toLoad = collectFontKeys(graph, nodeIds)
     if (toLoad.length === 0) return
 
-    const promises = toLoad.map(([family, style]) => loadFont(family, style))
-    Promise.all(promises).then(() => {
-      computeAllLayouts(graph)
-      requestRender()
-    })
+    await Promise.all(toLoad.map(([family, style]) => loadFont(family, style)))
+    computeAllLayouts(graph, state.currentPageId)
+    requestRender()
   }
 
   function pasteFromHTML(html: string) {
@@ -1752,7 +1784,7 @@ export function createEditorStore() {
           figma.blobs
         )
         if (created.length > 0) {
-          computeAllLayouts(graph)
+          computeAllLayouts(graph, state.currentPageId)
           state.selectedIds = new Set(created)
 
           const allNodes = collectSubtrees(graph, created)
@@ -1766,18 +1798,18 @@ export function createEditorStore() {
                   childIds: []
                 })
               }
-              computeAllLayouts(graph)
+              computeAllLayouts(graph, pageId)
               state.selectedIds = new Set(created)
               requestRender()
             },
             inverse: () => {
               for (const id of [...created].reverse()) graph.deleteNode(id)
-              computeAllLayouts(graph)
+              computeAllLayouts(graph, pageId)
               state.selectedIds = prevSelection
               requestRender()
             }
           })
-          loadFontsForNodes(created)
+          void loadFontsForNodes(created)
           requestRender()
         }
       }
@@ -1870,6 +1902,23 @@ export function createEditorStore() {
     requestRender()
   }
 
+  function mobileCopy() {
+    const transfer = new DataTransfer()
+    writeCopyData(transfer)
+    state.clipboardHtml = transfer.getData('text/html')
+  }
+
+  function mobileCut() {
+    mobileCopy()
+    deleteSelected()
+  }
+
+  function mobilePaste() {
+    if (state.clipboardHtml) {
+      pasteFromHTML(state.clipboardHtml)
+    }
+  }
+
   function commitMove(originals: Map<string, { x: number; y: number }>) {
     const finals = new Map<string, { x: number; y: number }>()
     for (const [id] of originals) {
@@ -1940,10 +1989,9 @@ export function createEditorStore() {
   function commitNodeUpdate(nodeId: string, previous: Partial<SceneNode>, label = 'Update') {
     const node = graph.getNode(nodeId)
     if (!node) return
-    const current: Partial<SceneNode> = {}
-    for (const key of Object.keys(previous) as (keyof SceneNode)[]) {
-      ;(current as Record<string, unknown>)[key] = node[key]
-    }
+    const current = Object.fromEntries(
+      (Object.keys(previous) as (keyof SceneNode)[]).map((key) => [key, node[key]])
+    ) as Partial<SceneNode>
     undo.push({
       label,
       forward: () => {
@@ -2041,6 +2089,7 @@ export function createEditorStore() {
     layerTree,
     requestRender,
     requestRepaint,
+    flashNodes,
     setTool,
     select,
     clearSelection,
@@ -2078,6 +2127,7 @@ export function createEditorStore() {
     goToMainComponent,
     bringToFront,
     sendToBack,
+    toggleProfiler,
     toggleVisibility,
     toggleLock,
     moveToPage,
@@ -2087,6 +2137,9 @@ export function createEditorStore() {
     duplicateSelected,
     writeCopyData,
     pasteFromHTML,
+    mobileCopy,
+    mobileCut,
+    mobilePaste,
     deleteSelected,
     commitMove,
     commitResize,

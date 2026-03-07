@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, nextTick } from 'vue'
+import { computed, ref } from 'vue'
 
+import { useInlineRename } from '@/composables/use-inline-rename'
 import { useEditorStore } from '@/stores/editor'
 
 const store = useEditorStore()
 
 const DIVIDER_RE = /^[-–—*\s]+$/
+const pageInputRefs = new Map<string, HTMLInputElement>()
 
 function isDivider(page: { name: string; childIds: string[] }) {
   return page.childIds.length === 0 && DIVIDER_RE.test(page.name)
@@ -16,30 +18,22 @@ const pages = computed(() => {
   return store.graph.getPages()
 })
 
-const editingPageId = ref<string | null>(null)
+const rename = useInlineRename((id, name) => store.renamePage(id, name))
+const activeRenameId = ref<string | null>(null)
 
-function startRename(pageId: string) {
-  editingPageId.value = pageId
-  nextTick(() => {
-    const input = document.querySelector<HTMLInputElement>('[data-page-edit]')
-    input?.focus()
-    input?.select()
-  })
+function setPageInputRef(pageId: string, el: HTMLInputElement | null) {
+  if (el) pageInputRefs.set(pageId, el)
+  else pageInputRefs.delete(pageId)
+
+  if (el && activeRenameId.value === pageId) {
+    activeRenameId.value = null
+    void rename.focusInput(el)
+  }
 }
 
-function commitRename(pageId: string, input: HTMLInputElement) {
-  if (editingPageId.value !== pageId) return
-  const value = input.value.trim()
-  if (value && value !== store.graph.getNode(pageId)?.name) {
-    store.renamePage(pageId, value)
-  }
-  editingPageId.value = null
-}
-
-function onKeydown(e: KeyboardEvent, pageId: string) {
-  if (e.key === 'Enter' || e.key === 'Escape') {
-    ;(e.target as HTMLInputElement).blur()
-  }
+function startRename(pg: { id: string; name: string }) {
+  rename.start(pg.id, pg.name)
+  activeRenameId.value = pg.id
 }
 </script>
 
@@ -58,21 +52,21 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
         +
       </button>
     </div>
-    <div class="overflow-x-hidden overflow-y-auto px-1 pb-1">
+    <div class="overflow-x-hidden overflow-y-auto scrollbar-thin px-1 pb-1">
       <div v-for="pg in pages" :key="pg.id">
         <input
-          v-if="editingPageId === pg.id"
-          data-page-edit
+          v-if="rename.editingId.value === pg.id"
+          :ref="(el) => setPageInputRef(pg.id, el as HTMLInputElement | null)"
           data-test-id="pages-item-input"
           class="w-full rounded border border-accent bg-input px-2 py-1 text-xs text-surface outline-none"
           :value="pg.name"
-          @blur="commitRename(pg.id, $event.target as HTMLInputElement)"
-          @keydown="onKeydown($event, pg.id)"
+          @blur="rename.commit(pg.id, $event.target as HTMLInputElement)"
+          @keydown="rename.onKeydown"
         />
         <div
           v-else-if="isDivider(pg)"
           class="my-1 flex items-center px-2"
-          @dblclick="startRename(pg.id)"
+          @dblclick="startRename(pg)"
         >
           <div class="h-px flex-1 bg-border" />
         </div>
@@ -86,7 +80,7 @@ function onKeydown(e: KeyboardEvent, pageId: string) {
               : 'bg-transparent text-muted hover:bg-hover hover:text-surface'
           "
           @click="store.switchPage(pg.id)"
-          @dblclick="startRename(pg.id)"
+          @dblclick="startRename(pg)"
         >
           <icon-lucide-file class="size-3 shrink-0" />
           <span class="truncate">{{ pg.name }}</span>

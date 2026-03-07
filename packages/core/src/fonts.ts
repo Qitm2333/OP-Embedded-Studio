@@ -1,5 +1,14 @@
 import type { CanvasKit, TypefaceFontProvider } from 'canvaskit-wasm'
 
+import {
+  DEFAULT_FONT_FAMILY,
+  CJK_FALLBACK_FAMILIES_MACOS,
+  CJK_FALLBACK_FAMILIES_WINDOWS,
+  CJK_FALLBACK_FAMILIES_LINUX,
+  CJK_GOOGLE_FONT
+} from './constants'
+import type { SceneGraph } from './scene-graph'
+
 export interface FontInfo {
   family: string
   fullName: string
@@ -50,6 +59,55 @@ const BUNDLED_FONTS: Record<string, string> = {
   'Inter|Regular': '/Inter-Regular.ttf'
 }
 
+import { GOOGLE_FONTS_API_KEY } from './constants'
+
+const googleFontsCache = new Map<string, Record<string, string>>()
+const googleFontsFailed = new Set<string>()
+
+async function fetchGoogleFontFiles(family: string): Promise<Record<string, string> | null> {
+  if (googleFontsCache.has(family)) return googleFontsCache.get(family)!
+  if (googleFontsFailed.has(family)) return null
+
+  const url = `https://www.googleapis.com/webfonts/v1/webfonts?family=${encodeURIComponent(family)}&key=${GOOGLE_FONTS_API_KEY}`
+  const response = await fetch(url)
+  if (!response.ok) {
+    googleFontsFailed.add(family)
+    return null
+  }
+
+  const data = (await response.json()) as { items?: Array<{ files?: Record<string, string> }> }
+  const files = data.items?.[0]?.files
+  if (!files) {
+    googleFontsFailed.add(family)
+    return null
+  }
+
+  googleFontsCache.set(family, files)
+  return files
+}
+
+function styleToVariant(style: string): string {
+  const weight = styleToWeight(style)
+  const italic = style.toLowerCase().includes('italic')
+  if (weight === 400 && !italic) return 'regular'
+  if (weight === 400 && italic) return 'italic'
+  return italic ? `${weight}italic` : `${weight}`
+}
+
+async function fetchGoogleFont(family: string, style: string): Promise<ArrayBuffer | null> {
+  const files = await fetchGoogleFontFiles(family)
+  if (!files) return null
+
+  const variant = styleToVariant(style)
+  const ttfUrl = files[variant] ?? files['regular']
+  if (!ttfUrl) return null
+
+  const response = await fetch(ttfUrl)
+  if (!response.ok) return null
+
+  return response.arrayBuffer()
+}
+
 export async function loadFont(family: string, style = 'Regular'): Promise<ArrayBuffer | null> {
   const cacheKey = `${family}|${style}`
   if (loadedFamilies.has(cacheKey)) {
@@ -70,8 +128,23 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
         const blob: Blob = await match.blob()
         const buffer = await blob.arrayBuffer()
 
+        if (registerFontInCanvasKit(family, buffer)) {
+          loadedFamilies.set(cacheKey, buffer)
+          registerFontInBrowser(family, style, buffer)
+          return buffer
+        }
+      }
+    } catch {
+      /* fall through to Google Fonts */
+    }
+  }
+
+  // Try Google Fonts
+  if (typeof fetch !== 'undefined') {
+    try {
+      const buffer = await fetchGoogleFont(family, style)
+      if (buffer && registerFontInCanvasKit(family, buffer)) {
         loadedFamilies.set(cacheKey, buffer)
-        registerFontInCanvasKit(family, buffer)
         registerFontInBrowser(family, style, buffer)
         return buffer
       }
@@ -87,10 +160,11 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
       const response = await fetch(bundledUrl)
       const buffer = await response.arrayBuffer()
 
-      loadedFamilies.set(cacheKey, buffer)
-      registerFontInCanvasKit(family, buffer)
-      registerFontInBrowser(family, style, buffer)
-      return buffer
+      if (registerFontInCanvasKit(family, buffer)) {
+        loadedFamilies.set(cacheKey, buffer)
+        registerFontInBrowser(family, style, buffer)
+        return buffer
+      }
     } catch {
       /* no bundled font available */
     }
@@ -99,9 +173,14 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
   return null
 }
 
-function registerFontInCanvasKit(family: string, data: ArrayBuffer) {
-  if (!fontProvider) return
-  fontProvider.registerFont(data, family)
+function registerFontInCanvasKit(family: string, data: ArrayBuffer): boolean {
+  if (!fontProvider || data.byteLength < 4) return false
+  try {
+    fontProvider.registerFont(data, family)
+    return true
+  } catch {
+    return false
+  }
 }
 
 function registerFontInBrowser(family: string, style: string, data: ArrayBuffer) {
@@ -112,7 +191,9 @@ function registerFontInBrowser(family: string, style: string, data: ArrayBuffer)
     weight: String(weight),
     style: italic
   })
-  face.load().then(() => document.fonts.add(face))
+  face.load().then(() => document.fonts.add(face)).catch(() => {
+    console.warn(`Failed to load font "${family}" (${style})`)
+  })
 }
 
 export function styleToWeight(style: string): number {
@@ -141,6 +222,87 @@ export function markFontLoaded(family: string, style: string, data: ArrayBuffer)
 
 export function isFontLoaded(family: string): boolean {
   return [...loadedFamilies.keys()].some((k) => k.startsWith(`${family}|`))
+}
+
+export function collectFontKeys(graph: SceneGraph, nodeIds: string[]): Array<[string, string]> {
+  const fontKeys = new Set<string>()
+  const collect = (id: string) => {
+    const node = graph.getNode(id)
+    if (!node) return
+    if (node.type === 'TEXT') {
+      const family = node.fontFamily || DEFAULT_FONT_FAMILY
+      fontKeys.add(`${family}\0${weightToStyle(node.fontWeight || 400, node.italic)}`)
+      for (const run of node.styleRuns) {
+        const f = run.style.fontFamily ?? family
+        const w = run.style.fontWeight ?? node.fontWeight ?? 400
+        const i = run.style.italic ?? node.italic
+        fontKeys.add(`${f}\0${weightToStyle(w, i)}`)
+      }
+    }
+    for (const childId of node.childIds) collect(childId)
+  }
+  for (const id of nodeIds) collect(id)
+
+  return [...fontKeys]
+    .map((k) => k.split('\0') as [string, string])
+    .filter(([family]) => family !== DEFAULT_FONT_FAMILY)
+}
+
+let cjkFallbackFamily: string | null = null
+let cjkFallbackPromise: Promise<string | null> | null = null
+
+function getCJKCandidates(): string[] {
+  if (typeof navigator === 'undefined') return [...CJK_FALLBACK_FAMILIES_LINUX]
+  const ua = navigator.userAgent
+  if (ua.includes('Mac')) return CJK_FALLBACK_FAMILIES_MACOS
+  if (ua.includes('Windows')) return CJK_FALLBACK_FAMILIES_WINDOWS
+  return CJK_FALLBACK_FAMILIES_LINUX
+}
+
+async function tryLoadLocalFont(family: string): Promise<ArrayBuffer | null> {
+  if (typeof window === 'undefined' || !window.queryLocalFonts) return null
+  try {
+    const fonts = await window.queryLocalFonts()
+    const match = fonts.find((f: FontInfo) => f.family === family)
+    if (!match) return null
+    const blob: Blob = await match.blob()
+    const buffer = await blob.arrayBuffer()
+    if (!registerFontInCanvasKit(family, buffer)) return null
+    const cacheKey = `${family}|Regular`
+    loadedFamilies.set(cacheKey, buffer)
+    registerFontInBrowser(family, 'Regular', buffer)
+    return buffer
+  } catch {
+    return null
+  }
+}
+
+export async function ensureCJKFallback(): Promise<string | null> {
+  if (cjkFallbackFamily) return cjkFallbackFamily
+  if (cjkFallbackPromise) return cjkFallbackPromise
+
+  cjkFallbackPromise = (async () => {
+    for (const family of getCJKCandidates()) {
+      if (await tryLoadLocalFont(family)) {
+        cjkFallbackFamily = family
+        return family
+      }
+    }
+
+    const data = await loadFont(CJK_GOOGLE_FONT, 'Regular')
+    if (data) {
+      cjkFallbackFamily = CJK_GOOGLE_FONT
+      return CJK_GOOGLE_FONT
+    }
+
+    return null
+  })()
+
+  return cjkFallbackPromise
+}
+
+export function getCJKFallbackFamily(): string | null {
+  return cjkFallbackFamily
 }
 
 export function weightToStyle(weight: number, italic = false): string {

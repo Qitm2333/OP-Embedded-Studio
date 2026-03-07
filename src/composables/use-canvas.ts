@@ -1,8 +1,8 @@
-import { useRafFn, useResizeObserver } from '@vueuse/core'
+import { useBreakpoints, useRafFn, useResizeObserver } from '@vueuse/core'
 import { onMounted, onUnmounted, type Ref } from 'vue'
 
-import { getCanvasKit, getGpuBackend } from '@/engine/canvaskit'
-import { SkiaRenderer } from '@/engine/renderer'
+import { getCanvasKit, getGpuBackend } from '@open-pencil/core'
+import { SkiaRenderer } from '@open-pencil/core'
 
 import type { EditorStore } from '@/stores/editor'
 import type { CanvasKit } from 'canvaskit-wasm'
@@ -118,7 +118,8 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
       }
     }
 
-    renderer = new SkiaRenderer(ck, surface)
+    const glCtx = (canvas.getContext('webgl2') ?? null) as WebGL2RenderingContext | null
+    renderer = new SkiaRenderer(ck, surface, glCtx)
     store.setCanvasKit(ck, renderer)
     renderer.loadFonts().then(() => renderNow())
     renderNow()
@@ -126,17 +127,23 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
   }
 
   const params = new URLSearchParams(window.location.search)
-  const showRulers = !params.has('no-rulers')
+  const noRulersParam = params.has('no-rulers')
+  const breakpoints = useBreakpoints({ mobile: 768 })
+  const isMobile = breakpoints.smaller('mobile')
+
+  function showRulers() {
+    return !noRulersParam && !isMobile.value
+  }
 
   function renderNow() {
-    if (!renderer) return
+    if (!renderer || destroyed) return
     renderer.dpr = window.devicePixelRatio || 1
     renderer.panX = store.state.panX
     renderer.panY = store.state.panY
     renderer.zoom = store.state.zoom
     renderer.viewportWidth = canvasRef.value?.clientWidth ?? 0
     renderer.viewportHeight = canvasRef.value?.clientHeight ?? 0
-    renderer.showRulers = showRulers
+    renderer.showRulers = showRulers()
     renderer.pageColor = store.state.pageColor
     renderer.pageId = store.state.currentPageId
     renderer.render(

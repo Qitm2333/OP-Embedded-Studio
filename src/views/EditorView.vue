@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { provide } from 'vue'
-import { useEventListener, useUrlSearchParams } from '@vueuse/core'
-import { useRoute, useRouter } from 'vue-router'
+import { useBreakpoints, useEventListener, useUrlSearchParams } from '@vueuse/core'
+import { useRoute } from 'vue-router'
+import { useHead } from '@unhead/vue'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 
 import { useKeyboard } from '@/composables/use-keyboard'
 import { useMenu } from '@/composables/use-menu'
 import { useCollab, COLLAB_KEY } from '@/composables/use-collab'
-import { toast } from '@/composables/use-toast'
 import { createDemoShapes } from '@/demo'
 import { useEditorStore } from '@/stores/editor'
 import { createTab, activeTab } from '@/stores/tabs'
@@ -15,16 +15,18 @@ import { createTab, activeTab } from '@/stores/tabs'
 import CollabPanel from '@/components/CollabPanel.vue'
 import EditorCanvas from '@/components/EditorCanvas.vue'
 import LayersPanel from '@/components/LayersPanel.vue'
+import MobileDrawer from '@/components/MobileDrawer.vue'
+import MobileHud from '@/components/MobileHud.vue'
 import PropertiesPanel from '@/components/PropertiesPanel.vue'
 import SafariBanner from '@/components/SafariBanner.vue'
 import TabBar from '@/components/TabBar.vue'
 import Toolbar from '@/components/Toolbar.vue'
 
 const route = useRoute()
-const router = useRouter()
-
 const firstTab = createTab()
 const store = useEditorStore()
+const breakpoints = useBreakpoints({ mobile: 768 })
+const isMobile = breakpoints.smaller('mobile')
 useKeyboard()
 useMenu()
 const collab = useCollab(firstTab.store)
@@ -41,36 +43,21 @@ useEventListener(
 
 const params = useUrlSearchParams('history')
 const showChrome = !('no-chrome' in params)
-if (!('test' in params)) {
+if (route.meta.demo && !('test' in params)) {
   createDemoShapes(firstTab.store)
 }
 
-const pendingRoomId = (route.params.roomId as string) || null
-
-function onShare() {
-  const roomId = collab.shareCurrentDoc()
-  router.push(`/share/${roomId}`)
-  navigator.clipboard.writeText(`${window.location.origin}/share/${roomId}`)
-  toast.show('Link copied to clipboard')
-}
-
-function onJoin(roomId: string) {
-  collab.connect(roomId)
-  router.push(`/share/${roomId}`)
-}
-
-function onDisconnect() {
-  collab.disconnect()
-  router.push('/')
-}
+useHead({ title: route.meta.demo ? 'Demo' : undefined })
 </script>
 
 <template>
   <div data-test-id="editor-root" class="flex h-screen w-screen flex-col">
     <SafariBanner />
     <TabBar />
+
+    <!-- Desktop layout -->
     <SplitterGroup
-      v-if="showChrome && store.state.showUI"
+      v-if="!isMobile && showChrome && store.state.showUI"
       :key="activeTab?.id"
       direction="horizontal"
       class="flex-1 overflow-hidden"
@@ -95,21 +82,37 @@ function onDisconnect() {
         <div
           class="flex shrink-0 items-center justify-between border-b border-border px-1.5 py-1.5"
         >
-          <CollabPanel
-            :state="collab.state.value"
-            :peers="collab.remotePeers.value"
-            :pending-room-id="pendingRoomId"
-            :following-peer="collab.followingPeer.value"
-            @share="onShare"
-            @join="onJoin"
-            @disconnect="onDisconnect"
-            @update:name="collab.setLocalName"
-            @follow="collab.followPeer"
-          />
+          <CollabPanel />
         </div>
         <PropertiesPanel />
       </SplitterPanel>
     </SplitterGroup>
+
+    <!-- Mobile layout -->
+    <div
+      v-else-if="isMobile && showChrome && store.state.showUI"
+      :key="'mobile-' + activeTab?.id"
+      class="flex flex-1 overflow-hidden"
+    >
+      <div class="relative flex min-w-0 flex-1">
+        <EditorCanvas />
+        <MobileHud
+          :collab-state="collab.state.value"
+          :collab-peers="collab.remotePeers.value"
+          :pending-room-id="pendingRoomId"
+          :following-peer="collab.followingPeer.value"
+          @share="onShare"
+          @join="onJoin"
+          @disconnect="onDisconnect"
+          @update:collab-name="collab.setLocalName"
+          @follow="collab.followPeer"
+        />
+        <Toolbar />
+      </div>
+      <MobileDrawer />
+    </div>
+
+    <!-- Collapsed UI (showUI=false) -->
     <div
       v-else-if="showChrome"
       :key="'collapsed-' + activeTab?.id"
@@ -117,8 +120,8 @@ function onDisconnect() {
     >
       <div class="relative flex min-w-0 flex-1">
         <EditorCanvas />
-        <Toolbar />
         <div
+          v-if="!isMobile"
           class="absolute left-7 top-7 z-10 flex items-center gap-2 rounded-lg border border-border bg-panel px-2 py-1 shadow-sm"
         >
           <img src="/favicon-32.png" class="size-4" alt="OpenPencil" />
@@ -136,6 +139,8 @@ function onDisconnect() {
         </div>
       </div>
     </div>
+
+    <!-- Bare canvas (no chrome, e.g. ?no-chrome) -->
     <div v-else :key="'bare-' + activeTab?.id" class="flex flex-1 overflow-hidden">
       <div class="relative flex min-w-0 flex-1">
         <EditorCanvas />

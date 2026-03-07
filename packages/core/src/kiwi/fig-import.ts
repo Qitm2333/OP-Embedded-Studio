@@ -1,6 +1,9 @@
+import type { VariableType, VariableValue } from '../scene-graph'
 import { SceneGraph } from '../scene-graph'
 
 import { guidToString, nodeChangeToProps, sortChildren } from './kiwi-convert'
+import { populateAndApplyOverrides } from './instance-overrides'
+import type { InstanceNodeChange } from './instance-overrides'
 
 import type { NodeChange } from './codec'
 
@@ -54,6 +57,7 @@ export function importNodeChanges(
   }
 
   const created = new Set<string>()
+  const guidToNodeId = new Map<string, string>()
 
   function createSceneNode(ncId: string, graphParentId: string) {
     if (created.has(ncId)) return
@@ -66,6 +70,7 @@ export function importNodeChanges(
     if (nodeType === 'DOCUMENT' || nodeType === 'VARIABLE') return
 
     const node = graph.createNode(nodeType, graphParentId, props)
+    guidToNodeId.set(ncId, node.id)
 
     for (const childId of getChildren(ncId)) {
       createSceneNode(childId, node.id)
@@ -100,8 +105,8 @@ export function importNodeChanges(
         })
       }
 
-      let type: import('../scene-graph').VariableType = 'FLOAT'
-      let value: import('../scene-graph').VariableValue = 0
+      let type: VariableType = 'FLOAT'
+      let value: VariableValue = 0
       const dt = varData.dataType
       const v = varData.value
 
@@ -167,6 +172,20 @@ export function importNodeChanges(
   }
 
   importVariables()
+
+  // Remap componentId from original Figma GUIDs to imported node IDs
+  for (const node of graph.getAllNodes()) {
+    if (node.type !== 'INSTANCE' || !node.componentId) continue
+    const remapped = guidToNodeId.get(node.componentId)
+    if (remapped) node.componentId = remapped
+  }
+
+  populateAndApplyOverrides(
+    graph,
+    changeMap as unknown as Map<string, InstanceNodeChange>,
+    guidToNodeId,
+    blobs
+  )
 
   // Ensure at least one page exists
   if (graph.getPages(true).length === 0) {

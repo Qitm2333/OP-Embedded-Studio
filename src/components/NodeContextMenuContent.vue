@@ -9,8 +9,11 @@ import {
   ContextMenuSubContent,
   ContextMenuPortal
 } from 'reka-ui'
+import { selectionToJSX, renderNodesToSVG } from '@open-pencil/core'
 
 import { useEditorStore } from '@/stores/editor'
+import { menuContent, menuItem, menuSeparator } from '@/components/ui/menu'
+import { toast } from '@/composables/use-toast'
 
 const store = useEditorStore()
 
@@ -61,12 +64,48 @@ const isLocked = computed(() => {
   return singleNode.value.locked
 })
 
-const itemClass =
-  'flex w-full cursor-pointer select-none items-center justify-between gap-6 rounded px-2 py-1.5 text-xs text-surface outline-none data-[highlighted]:bg-hover data-[disabled]:cursor-default data-[disabled]:text-muted'
-const componentItemClass =
-  'flex w-full cursor-pointer select-none items-center justify-between gap-6 rounded px-2 py-1.5 text-xs text-[#9747ff] outline-none data-[highlighted]:bg-[#9747ff]/12 data-[disabled]:cursor-default data-[disabled]:text-[#9747ff]/40'
-const menuClass =
-  'z-50 min-w-56 rounded-lg border border-border bg-panel p-1 shadow-[0_8px_30px_rgb(0_0_0/0.4)] animate-in fade-in zoom-in-95'
+function selectedIds(): string[] {
+  return [...store.state.selectedIds]
+}
+
+async function copyAsText() {
+  const ids = selectedIds()
+  const names = ids.map((id) => store.graph.getNode(id)?.name ?? id).join('\n')
+  await navigator.clipboard.writeText(names)
+  toast.show('Copied as text')
+}
+
+async function copyAsSVG() {
+  const ids = selectedIds()
+  const svg = renderNodesToSVG(store.graph, store.state.currentPageId, ids)
+  if (!svg) return
+  await navigator.clipboard.writeText(svg)
+  toast.show('Copied as SVG')
+}
+
+async function copyAsPNG() {
+  const ids = selectedIds()
+  const data = await store.renderExportImage(ids, 2, 'PNG')
+  if (!data) return
+  const blob = new Blob([data], { type: 'image/png' })
+  await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+  toast.show('Copied as PNG')
+}
+
+function copyAsJSX() {
+  const ids = selectedIds()
+  const jsx = selectionToJSX(ids, store.graph)
+  if (!jsx) return
+  navigator.clipboard.writeText(jsx)
+  toast.show('Copied as JSX')
+}
+
+const itemClass = menuItem()
+const componentItemClass = menuItem({ tone: 'component' })
+const menuClass = menuContent({
+  class: 'min-w-56 shadow-[0_8px_30px_rgb(0_0_0/0.4)] animate-in fade-in zoom-in-95'
+})
+const separatorClass = menuSeparator({ class: 'my-1' })
 </script>
 
 <template>
@@ -116,7 +155,7 @@ const menuClass =
       <span class="text-[11px] text-muted">⌫</span>
     </ContextMenuItem>
 
-    <ContextMenuSeparator class="my-1 h-px bg-border" />
+    <ContextMenuSeparator :class="separatorClass" />
 
     <ContextMenuSub v-if="otherPages.length > 0 && hasSelection">
       <ContextMenuSubTrigger data-test-id="context-move-to-page" :class="itemClass">
@@ -156,7 +195,7 @@ const menuClass =
       <span class="text-[11px] text-muted">[</span>
     </ContextMenuItem>
 
-    <ContextMenuSeparator class="my-1 h-px bg-border" />
+    <ContextMenuSeparator :class="separatorClass" />
 
     <ContextMenuItem
       data-test-id="context-group"
@@ -186,7 +225,7 @@ const menuClass =
       <span class="text-[11px] text-muted">⇧A</span>
     </ContextMenuItem>
 
-    <ContextMenuSeparator class="my-1 h-px bg-border" />
+    <ContextMenuSeparator :class="separatorClass" />
 
     <ContextMenuItem
       data-test-id="context-create-component"
@@ -233,7 +272,7 @@ const menuClass =
     </ContextMenuItem>
 
     <template v-if="hasSelection">
-      <ContextMenuSeparator class="my-1 h-px bg-border" />
+      <ContextMenuSeparator :class="separatorClass" />
 
       <ContextMenuItem
         data-test-id="context-toggle-visibility"
@@ -252,16 +291,47 @@ const menuClass =
         <span class="text-[11px] text-muted">⇧⌘L</span>
       </ContextMenuItem>
 
-      <ContextMenuSeparator class="my-1 h-px bg-border" />
+      <ContextMenuSeparator :class="separatorClass" />
 
-      <ContextMenuItem
-        data-test-id="context-export-png"
-        :class="itemClass"
-        @select="store.exportSelection(1, 'PNG')"
-      >
-        <span>Export as PNG</span>
-        <span class="text-[11px] text-muted">⇧⌘E</span>
-      </ContextMenuItem>
+      <ContextMenuSub>
+        <ContextMenuSubTrigger data-test-id="context-copy-paste-as" :class="itemClass">
+          <span>Copy/Paste as</span>
+          <span class="text-sm text-muted">›</span>
+        </ContextMenuSubTrigger>
+        <ContextMenuPortal>
+          <ContextMenuSubContent :class="menuClass">
+            <ContextMenuItem
+              data-test-id="context-copy-as-text"
+              :class="itemClass"
+              @select="copyAsText"
+            >
+              Copy as text
+            </ContextMenuItem>
+            <ContextMenuItem
+              data-test-id="context-copy-as-svg"
+              :class="itemClass"
+              @select="copyAsSVG"
+            >
+              Copy as SVG
+            </ContextMenuItem>
+            <ContextMenuItem
+              data-test-id="context-copy-as-png"
+              :class="itemClass"
+              @select="copyAsPNG"
+            >
+              <span>Copy as PNG</span>
+              <span class="text-[11px] text-muted">⇧⌘C</span>
+            </ContextMenuItem>
+            <ContextMenuItem
+              data-test-id="context-copy-as-jsx"
+              :class="itemClass"
+              @select="copyAsJSX"
+            >
+              Copy as JSX
+            </ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuPortal>
+      </ContextMenuSub>
     </template>
   </ContextMenuContent>
 </template>

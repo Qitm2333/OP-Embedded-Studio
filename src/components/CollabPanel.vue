@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   PopoverRoot,
   PopoverTrigger,
@@ -12,36 +13,31 @@ import {
   TooltipProvider
 } from 'reka-ui'
 
-import type { CollabState, RemotePeer } from '@/composables/use-collab'
+import { colorToCSS } from '@open-pencil/core'
+import { useCollabInjected } from '@/composables/use-collab'
 import { toast } from '@/composables/use-toast'
-import type { Color } from '@/types'
+import { initials } from '@/utils/text'
 
-const props = defineProps<{
-  state: CollabState
-  peers: RemotePeer[]
-  pendingRoomId?: string | null
-  followingPeer?: number | null
-}>()
-
-const emit = defineEmits<{
-  share: []
-  join: [roomId: string]
-  disconnect: []
-  'update:name': [name: string]
-  follow: [clientId: number | null]
-}>()
+const route = useRoute()
+const router = useRouter()
+const collab = useCollabInjected()
 
 const joinInput = ref('')
-const nameDraft = ref(props.state.localName)
+const nameDraft = ref(collab.state.value.localName)
 const copied = ref(false)
-const popoverOpen = ref(!!props.pendingRoomId)
+const pendingRoomId = (route.params.roomId as string) || null
+const popoverOpen = ref(!!pendingRoomId)
+
+const state = computed(() => collab.state.value)
+const peers = computed(() => collab.remotePeers.value)
+const followingPeer = computed(() => collab.followingPeer.value)
 
 const shareUrl = computed(() => {
-  if (!props.state.roomId) return ''
-  return `${window.location.origin}/share/${props.state.roomId}`
+  if (!state.value.roomId) return ''
+  return `${window.location.origin}/share/${state.value.roomId}`
 })
 
-const isJoining = computed(() => !!props.pendingRoomId && !props.state.connected)
+const isJoining = computed(() => !!pendingRoomId && !state.value.connected)
 
 function copyLink() {
   if (!shareUrl.value) return
@@ -55,32 +51,26 @@ function copyLink() {
 
 function onShare() {
   if (!nameDraft.value.trim()) return
-  emit('update:name', nameDraft.value.trim())
-  emit('share')
+  collab.setLocalName(nameDraft.value.trim())
+  const roomId = collab.shareCurrentDoc()
+  router.push(`/share/${roomId}`)
+  navigator.clipboard.writeText(`${window.location.origin}/share/${roomId}`)
+  toast.show('Link copied to clipboard')
   popoverOpen.value = false
 }
 
 function onJoin() {
-  const roomId = props.pendingRoomId || joinInput.value.trim().replace(/.*\/share\//, '')
+  const roomId = pendingRoomId || joinInput.value.trim().replace(/.*\/share\//, '')
   if (!roomId || !nameDraft.value.trim()) return
-  emit('update:name', nameDraft.value.trim())
-  emit('join', roomId)
+  collab.setLocalName(nameDraft.value.trim())
+  collab.connect(roomId)
+  router.push(`/share/${roomId}`)
   popoverOpen.value = false
 }
 
-function colorToCSS(c: Color): string {
-  return `rgb(${Math.round(c.r * 255)}, ${Math.round(c.g * 255)}, ${Math.round(c.b * 255)})`
-}
-
-function initials(name: string): string {
-  return (
-    name
-      .split(' ')
-      .map((w) => w[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || '?'
-  )
+function onDisconnect() {
+  collab.disconnect()
+  router.push('/')
 }
 </script>
 
@@ -120,7 +110,7 @@ function initials(name: string): string {
                   : 'border-panel'
               "
               :style="{ background: colorToCSS(peer.color) }"
-              @click="emit('follow', followingPeer === peer.clientId ? null : peer.clientId)"
+              @click="collab.followPeer(followingPeer === peer.clientId ? null : peer.clientId)"
             >
               {{ initials(peer.name) }}
             </div>
@@ -199,7 +189,7 @@ function initials(name: string): string {
             <button
               data-test-id="collab-disconnect"
               class="flex h-7 w-full cursor-pointer items-center justify-center rounded border border-border bg-transparent text-xs text-muted hover:bg-hover hover:text-surface"
-              @click="emit('disconnect')"
+              @click="onDisconnect"
             >
               Disconnect
             </button>

@@ -42,7 +42,7 @@ export async function openFileDialog() {
   input.accept = '.fig'
   input.addEventListener('change', () => {
     const file = input.files?.[0]
-    if (file) openFileInNewTab(file)
+    if (file) void openFileInNewTab(file)
   })
   input.click()
 }
