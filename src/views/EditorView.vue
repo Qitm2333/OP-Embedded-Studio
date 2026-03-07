@@ -69,7 +69,7 @@ useHead({ title: route.meta.demo ? 'Demo' : undefined })
       <SplitterPanel :default-size="18" :min-size="10" :max-size="30" class="flex">
         <LayersPanel />
       </SplitterPanel>
-      <SplitterResizeHandle class="group relative z-10 -mx-1 w-2 cursor-col-resize">
+      <SplitterResizeHandle data-test-id="left-splitter-handle" class="group relative z-10 -mx-1 w-2 cursor-col-resize">
         <div class="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2" />
       </SplitterResizeHandle>
       <SplitterPanel :default-size="64" :min-size="30" class="flex">

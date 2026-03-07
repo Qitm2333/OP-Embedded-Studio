@@ -230,6 +230,7 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
 
       <div class="mt-2 grid grid-cols-2 gap-1.5">
         <ScrubInput
+          data-test-id="layout-gap-input"
           icon="Gap"
           :model-value="Math.round(node.itemSpacing)"
           :min="0"
@@ -239,6 +240,7 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
 
         <template v-if="hasUniformPadding() && !showIndividualPadding">
           <ScrubInput
+            data-test-id="layout-uniform-padding-input"
             icon="Pad"
             :model-value="Math.round(node.paddingTop)"
             :min="0"
@@ -313,6 +315,7 @@ function setAlignment(primary: LayoutAlign, counter: LayoutCounterAlign) {
     <label class="flex cursor-pointer items-center gap-2 text-xs text-surface">
       <input
         type="checkbox"
+        data-test-id="clip-content-checkbox"
         class="accent-accent"
         :checked="node.clipsContent"
         @change="

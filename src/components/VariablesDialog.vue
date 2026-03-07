@@ -447,6 +447,7 @@ const table = useVueTable({
                   <icon-lucide-search class="size-3 text-muted" />
                   <input
                     v-model="searchTerm"
+                    data-test-id="variables-search-input"
                     class="w-24 border-none bg-transparent text-xs text-surface outline-none placeholder:text-muted"
                     placeholder="Search"
                   />
@@ -516,6 +517,7 @@ const table = useVueTable({
                     <tr
                       v-for="row in table.getRowModel().rows"
                       :key="row.id"
+                      data-test-id="variable-row"
                       class="group border-b border-border/30 hover:bg-hover/50"
                     >
                       <td
