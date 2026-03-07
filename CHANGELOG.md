@@ -13,12 +13,8 @@
 
 ### Improvements
 
-- Refactor mobile drawer tabs to use reka-ui `TabsRoot`/`TabsList`/`TabsTrigger`/`TabsContent` instead of hand-rolled role/aria attributes
-- Refactor inline rename to use element refs instead of `document.querySelector` — shared `useInlineRename` composable with generic type param, `cancel()` for Escape (discards instead of committing), ref-callback focus pattern
-- Refactor layout width/height sizing dropdowns to use `AppSelect` — removes ~80 lines of manual dropdown state and `onClickOutside` handlers
-- Add shared UI style primitives (`src/components/ui/`) with tailwind-variants: `menuContent`/`menuItem`/`menuSeparator`, `selectTrigger`/`selectContent`/`selectItem`, `uiButton`, `panelSurface` — reduces class duplication across menus, context menus, selects, and buttons
-- Use `useBreakpoints` for canvas ruler visibility instead of manual `matchMedia` listener
-- Use `useEventListener` for global error handlers in toast with idempotent guard
+- Refactor mobile drawer tabs, layout sizing dropdowns, and inline rename to use Reka UI primitives
+- Add shared UI style helpers with tailwind-variants for menus, selects, buttons, and surfaces
 - Split tools into domain files (read, create, modify, structure, variables, vector, analyze) — easier to navigate and extend
 - Replace inline type definitions with named types (`Color`, `Vector`, `SceneNode`) across the codebase
 - Split 3200-line `renderer.ts` into `packages/core/src/renderer/` with 10 focused files (scene, overlays, fills, strokes, shapes, effects, rulers, labels)
