@@ -73,6 +73,16 @@ Starts on port 3100 (override with `PORT` env var). Endpoints:
 5. **Structure** — `reparent_node`, `group_nodes`, `clone_node`, `delete_node`
 6. **Save** — `save_file` to write back to `.fig`
 
+## AI Agent Skill
+
+Install the OpenPencil skill for your AI coding agent:
+
+```sh
+npx skills add open-pencil/skills@open-pencil
+```
+
+Works with Claude Code, Cursor, Windsurf, Codex, and any agent that supports [skills](https://skills.sh).
+
 ## Tools (75)
 
 ### Document

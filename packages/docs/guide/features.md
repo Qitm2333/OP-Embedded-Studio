@@ -336,6 +336,8 @@ Built-in AI assistant accessible via the AI tab in the properties panel or <kbd>
 
 **MCP server** (`packages/mcp/`) exposes all tools for external AI coding tools. Two transports: stdio for Claude Code/Cursor/Windsurf (`openpencil-mcp`), HTTP with Hono + Streamable HTTP for scripts and CI (`openpencil-mcp-http`). Adds 3 file management tools (`open_file`, `save_file`, `new_document`) on top of the 87 core tools, for 90 total. Runs on Bun and Node.js. See [MCP Tools reference](/reference/mcp-tools).
 
+**AI agent skill** — install with `npx skills add open-pencil/skills@open-pencil`. Teaches AI coding agents (Claude Code, Cursor, Windsurf, Codex) to use the CLI, MCP tools, JSX rendering, eval, and the app's automation bridge. Source: [open-pencil/skills](https://github.com/open-pencil/skills).
+
 **CLI-to-app RPC bridge** — when the desktop app is running, CLI commands automatically connect to it via WebSocket instead of requiring a .fig file. Run `bun open-pencil tree` to inspect the live document, or `bun open-pencil export` to render the current canvas.
 
 Tested with Playwright using mock transport for CI (chat), bun:test for tool execution (MCP).

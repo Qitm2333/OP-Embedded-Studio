@@ -145,6 +145,16 @@ Security defaults for HTTP transport:
 
 90 tools: create shapes, set fills/strokes/layout, variables, vectors, boolean ops, viewport, find nodes, open/save `.fig` files, render JSX to design nodes.
 
+## AI Agent Skill
+
+Teach your AI coding agent to use OpenPencil — inspect designs, export assets, analyze tokens, modify .fig files:
+
+```sh
+npx skills add open-pencil/skills@open-pencil
+```
+
+Works with Claude Code, Cursor, Windsurf, Codex, and any agent that supports [skills](https://skills.sh).
+
 ## Scripts
 
 | Command | Description |

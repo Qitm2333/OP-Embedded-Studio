@@ -154,6 +154,8 @@ Programistyczne tworzenie designu przez buildery TreeNode. Propsy shorthand w st
 
 Wbudowany asystent AI przez <kbd>⌘</kbd><kbd>J</kbd>. **87 narzędzi** w `packages/core/src/tools/` obejmujących: odczyt, tworzenie, modyfikację, manipulację węzłów, CRUD zmiennych, narzędzia wektorowe, kontrolę viewportu i `eval`. **Serwer MCP** udostępnia 90 narzędzi łącznie (87 core + 3 zarządzanie plikami) dla zewnętrznych narzędzi kodowania AI.
 
+**AI agent skill** — `npx skills add open-pencil/skills@open-pencil` — teaches AI coding agents to use the CLI, MCP tools, and automation bridge. Source: [open-pencil/skills](https://github.com/open-pencil/skills).
+
 ## Eksport SVG
 
 Eksportuje wybrane węzły jako PNG, JPG, WEBP lub SVG. CLI: `bun open-pencil export --format svg file.fig`.

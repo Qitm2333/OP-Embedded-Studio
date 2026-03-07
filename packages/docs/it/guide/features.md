@@ -154,6 +154,8 @@ Creazione programmabile via TreeNode builder. Props shorthand stile Tailwind.
 
 Assistente IA integrato via <kbd>⌘</kbd><kbd>J</kbd>. **87 strumenti** in `packages/core/src/tools/` che coprono lettura, creazione, modifica, manipolazione nodi, CRUD variabili, strumenti vettoriali, controllo viewport e `eval`. **Server MCP** espone 90 strumenti totali (87 core + 3 gestione file) per strumenti di codifica IA esterni.
 
+**AI agent skill** — `npx skills add open-pencil/skills@open-pencil` — teaches AI coding agents to use the CLI, MCP tools, and automation bridge. Source: [open-pencil/skills](https://github.com/open-pencil/skills).
+
 ## Export SVG
 
 Esporta i nodi selezionati come PNG, JPG, WEBP o SVG. CLI: `bun open-pencil export --format svg file.fig`.

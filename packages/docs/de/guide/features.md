@@ -227,6 +227,8 @@ Ein HUD-Overlay zeigt Frame-Timing, GPU-Phasen und Frame-Budget. Zugänglich üb
 
 Integrierter KI-Assistent über den KI-Tab oder <kbd>⌘</kbd><kbd>J</kbd>. Kommuniziert direkt mit OpenRouter. **87 Werkzeuge** für Lesen, Erstellen, Ändern und Organisieren von Design-Elementen. **MCP-Server** für externe KI-Coding-Tools.
 
+**AI agent skill** — `npx skills add open-pencil/skills@open-pencil` — teaches AI coding agents to use the CLI, MCP tools, and automation bridge. Source: [open-pencil/skills](https://github.com/open-pencil/skills).
+
 ## @open-pencil/core & CLI
 
 Die Engine ist in `packages/core/` extrahiert. CLI bietet headless .fig-Dateioperationen:

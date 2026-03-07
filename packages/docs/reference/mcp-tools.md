@@ -81,7 +81,17 @@ Server starts on port 3100 (override with `PORT` env var). Endpoints:
 5. **Structure** — `reparent_node`, `group_nodes`, `clone_node`, `delete_node`
 6. **Save** — `save_file` to write back to `.fig`
 
-## Tools (78)
+## AI Agent Skill
+
+Teach your AI coding agent to use OpenPencil tools:
+
+```sh
+npx skills add open-pencil/skills@open-pencil
+```
+
+Works with Claude Code, Cursor, Windsurf, Codex, and any agent that supports [skills](https://skills.sh). The skill covers the CLI, MCP tools, JSX rendering, eval, and the running app's automation bridge.
+
+## Tools (90)
 
 ### Document
 
@@ -104,6 +114,8 @@ Server starts on port 3100 (override with `PORT` env var). Endpoints:
 | `list_pages` | List all pages |
 | `list_variables` | List design variables |
 | `list_collections` | List variable collections |
+| `list_fonts` | List fonts used in the current page |
+| `page_bounds` | Get bounding box of all objects on the current page |
 | `node_bounds` | Get bounding box of a node |
 | `node_ancestors` | Get ancestor chain of a node |
 | `node_children` | Get direct children of a node |
@@ -145,6 +157,8 @@ Server starts on port 3100 (override with `PORT` env var). Endpoints:
 | `set_blend` | Set blend mode |
 | `set_locked` | Lock or unlock a node |
 | `set_stroke_align` | Set stroke alignment (inside/center/outside) |
+| `set_text_properties` | Set text layout: alignment, auto-resize, text case, decoration, truncation |
+| `set_layout_child` | Configure auto-layout child: sizing, grow, alignment, absolute positioning |
 | `node_move` | Move a node to a new position |
 | `node_resize` | Resize a node |
 | `node_replace_with` | Replace a node with another node |
@@ -161,6 +175,7 @@ Server starts on port 3100 (override with `PORT` env var). Endpoints:
 | `select_nodes` | Select nodes by ID |
 | `group_nodes` | Group nodes |
 | `ungroup_node` | Ungroup a group |
+| `flatten_nodes` | Flatten nodes into a single vector |
 | `boolean_union` | Boolean union of two or more nodes |
 | `boolean_subtract` | Boolean subtraction |
 | `boolean_intersect` | Boolean intersection |
@@ -175,6 +190,21 @@ Server starts on port 3100 (override with `PORT` env var). Endpoints:
 | `path_scale` | Scale a vector path |
 | `path_flip` | Flip a vector path horizontally or vertically |
 | `path_move` | Translate a vector path |
+
+### Export
+
+| Tool | Description |
+|------|-------------|
+| `export_image` | Export nodes as PNG, JPG, or WEBP. Returns base64-encoded image data |
+| `export_svg` | Export nodes as SVG markup |
+
+### Viewport
+
+| Tool | Description |
+|------|-------------|
+| `viewport_get` | Get current viewport position and zoom level |
+| `viewport_set` | Set viewport position and zoom |
+| `viewport_zoom_to_fit` | Zoom viewport to fit specified nodes |
 
 ### Variables
 

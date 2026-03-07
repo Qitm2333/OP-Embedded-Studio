@@ -168,6 +168,8 @@ Asistente IA integrado accesible vía la pestaña IA o <kbd>⌘</kbd><kbd>J</kbd
 
 **87 herramientas** definidas en `packages/core/src/tools/`, cubriendo: operaciones de lectura, creación, modificación, manipulación de nodos, CRUD de variables, herramientas de rutas vectoriales, control de viewport y un escape hatch `eval`. Las herramientas están conectadas al chat IA (schemas valibot), servidor MCP (schemas zod) y CLI (comando `eval`).
 
+**AI agent skill** — `npx skills add open-pencil/skills@open-pencil` — teaches AI coding agents to use the CLI, MCP tools, and automation bridge. Source: [open-pencil/skills](https://github.com/open-pencil/skills).
+
 **Servidor MCP** (`packages/mcp/`) expone todas las herramientas para herramientas de codificación IA externas. Dos transportes: stdio y HTTP con Hono. Añade 3 herramientas de gestión de archivos sobre las 87 herramientas core (= 90 en total).
 
 ## Exportación SVG
