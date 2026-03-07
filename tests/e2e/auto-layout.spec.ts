@@ -68,7 +68,7 @@ test('gap ScrubInput sets itemSpacing', async () => {
   await canvas.dragScrubInput(page.locator('[data-test-id="layout-gap-input"]'), 40)
 
   const after = await getNodeById(page, frameId)
-  expect(after!.itemSpacing).toBeGreaterThan(initialSpacing)
+  expect(after!.itemSpacing).toBeGreaterThan(initialSpacing + 5)
   canvas.assertNoErrors()
 })
 

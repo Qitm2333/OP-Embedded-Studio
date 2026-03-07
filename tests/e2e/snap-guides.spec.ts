@@ -30,7 +30,11 @@ async function createRects() {
   await canvas.waitForRender()
 }
 
-test('edge snap guide visual appears during drag', async () => {
+// Snap guide visual tests compare the canvas at a snap position vs a non-snap position
+// during the same drag. The snap position produces a guide line overlay; non-snap does not.
+// Skipped on Linux CI due to X11 Alt+drag interference and rendering differences.
+
+test('edge snap guide: canvas differs at snap vs non-snap position', async () => {
   test.skip(process.platform === 'linux', 'Snap guide visual tests skipped on Linux CI')
 
   await createRects()
@@ -38,22 +42,27 @@ test('edge snap guide visual appears during drag', async () => {
   const box = await page.locator('canvas').boundingBox()
   if (!box) throw new Error('No canvas')
 
-  const baseline = await canvas.screenshotCanvas()
-
+  // drag to a non-snap position first, capture screenshot
   await page.mouse.move(box.x + 340, box.y + 140)
   await page.mouse.down()
-  await page.mouse.move(box.x + 182, box.y + 140, { steps: 30 })
+  await page.mouse.move(box.x + 250, box.y + 140, { steps: 15 })
+  const nonSnapShot = await canvas.screenshotCanvas()
 
-  const midDrag = await canvas.screenshotCanvas()
+  // continue drag to edge-snap position (right edge of rect B aligns with left edge of rect A at x=180)
+  await page.mouse.move(box.x + 182, box.y + 140, { steps: 15 })
+  const snapShot = await canvas.screenshotCanvas()
 
   await page.mouse.up()
 
-  const changed = Buffer.compare(baseline, midDrag) !== 0
-  expect.soft(changed, 'Snap guide did not appear — guide may not have rendered').toBeTruthy()
+  // At snap position the guide line overlay should make the canvas visually different
+  expect(
+    Buffer.compare(nonSnapShot, snapShot),
+    'Canvas should differ at snap position due to guide line overlay'
+  ).not.toBe(0)
   canvas.assertNoErrors()
 })
 
-test('center snap guide visual appears during drag', async () => {
+test('center snap guide: canvas differs at snap vs non-snap position', async () => {
   test.skip(process.platform === 'linux', 'Snap guide visual tests skipped on Linux CI')
 
   await createRects()
@@ -61,17 +70,21 @@ test('center snap guide visual appears during drag', async () => {
   const box = await page.locator('canvas').boundingBox()
   if (!box) throw new Error('No canvas')
 
-  const baseline = await canvas.screenshotCanvas()
-
+  // drag to a non-snap position first
   await page.mouse.move(box.x + 340, box.y + 140)
   await page.mouse.down()
-  await page.mouse.move(box.x + 220, box.y + 140, { steps: 30 })
+  await page.mouse.move(box.x + 260, box.y + 140, { steps: 15 })
+  const nonSnapShot = await canvas.screenshotCanvas()
 
-  const midDrag = await canvas.screenshotCanvas()
+  // continue drag to center-snap position (center of rect B aligns with center of rect A)
+  await page.mouse.move(box.x + 220, box.y + 140, { steps: 15 })
+  const snapShot = await canvas.screenshotCanvas()
 
   await page.mouse.up()
 
-  const changed = Buffer.compare(baseline, midDrag) !== 0
-  expect.soft(changed, 'Snap guide did not appear — guide may not have rendered').toBeTruthy()
+  expect(
+    Buffer.compare(nonSnapShot, snapShot),
+    'Canvas should differ at snap position due to center guide line overlay'
+  ).not.toBe(0)
   canvas.assertNoErrors()
 })

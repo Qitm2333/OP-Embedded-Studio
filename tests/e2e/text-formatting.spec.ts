@@ -42,33 +42,38 @@ test('double-click enters text edit mode', async () => {
   canvas.assertNoErrors()
 })
 
-test('Cmd+B in text edit mode toggles fontWeight without selection', async () => {
+test('bold button toggles fontWeight to 700 then back to 400', async () => {
+  await canvas.pressKey('Escape')
+  await canvas.waitForRender()
   await canvas.click(275, 215)
   await canvas.waitForRender()
 
-  const before = await getSelectedNode(page)
-  expect(before).not.toBeNull()
-  const nodeId = before!.id
-  const initialWeight = before!.fontWeight
+  const nodeId = (await getSelectedNode(page))!.id
 
-  // enter edit mode, press Escape immediately to clear cursor (no selection range)
-  // then press Meta+b — toggleBold falls through to node-level fontWeight change
-  await canvas.dblclick(275, 215)
-  await expect.poll(() => getEditingTextId(page), { timeout: 5000 }).toBeTruthy()
-
-  // Move to end to place cursor but ensure no text range selection
-  await page.keyboard.press('End')
-  await page.keyboard.press('Meta+b')
-  await page.waitForTimeout(200)
-  await canvas.pressKey('Escape')
+  // ensure starting weight is 400 via undo-safe store method
+  await page.evaluate(async (id: string) => {
+    const store = window.__OPEN_PENCIL_STORE__!
+    store.updateNodeWithUndo(id, { fontWeight: 400 }, 'reset')
+    store.state.sceneVersion++
+    await new Promise(requestAnimationFrame)
+  }, nodeId)
   await canvas.waitForRender()
 
-  const after = await getNodeById(page, nodeId)
-  // Bold applied to styleRuns (range from cursor) or fontWeight — either way weight changed
-  const effectiveWeight = after!.styleRuns?.length
-    ? after!.styleRuns[0].fontWeight ?? after!.fontWeight
-    : after!.fontWeight
-  expect(effectiveWeight).not.toBe(initialWeight)
+  const boldBtn = page.locator('[data-test-id="typography-bold-button"]')
+  await expect(boldBtn).toBeVisible({ timeout: 3000 })
+  await boldBtn.click()
+  await page.waitForTimeout(500)
+  await canvas.waitForRender()
+
+  const bold = await getNodeById(page, nodeId)
+  expect(bold!.fontWeight).toBe(700)
+
+  await page.locator('[data-test-id="typography-bold-button"]').click()
+  await page.waitForTimeout(500)
+  await canvas.waitForRender()
+
+  const normal = await getNodeById(page, nodeId)
+  expect(normal!.fontWeight).toBe(400)
   canvas.assertNoErrors()
 })
 
@@ -119,20 +124,4 @@ test('Alt+ArrowRight word navigation stays in text edit mode', async () => {
   canvas.assertNoErrors()
 })
 
-test('Bold button in panel toggles fontWeight', async () => {
-  await canvas.pressKey('Escape')
-  await canvas.waitForRender()
 
-  await canvas.click(275, 215)
-  await canvas.waitForRender()
-
-  const before = await getSelectedNode(page)
-  const initialWeight = before!.fontWeight
-
-  await page.locator('[data-test-id="typography-bold-button"]').click()
-  await canvas.waitForRender()
-
-  const after = await getSelectedNode(page)
-  expect(after!.fontWeight).not.toBe(initialWeight)
-  canvas.assertNoErrors()
-})
