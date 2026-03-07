@@ -1,4 +1,4 @@
-import { useRafFn, useResizeObserver } from '@vueuse/core'
+import { useBreakpoints, useRafFn, useResizeObserver } from '@vueuse/core'
 import { onMounted, onUnmounted, type Ref } from 'vue'
 
 import { getCanvasKit, getGpuBackend } from '@open-pencil/core'
@@ -128,12 +128,12 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
 
   const params = new URLSearchParams(window.location.search)
   const noRulersParam = params.has('no-rulers')
-  const mobileQuery = matchMedia('(max-width: 767px)')
-  let showRulers = !noRulersParam && !mobileQuery.matches
-  mobileQuery.addEventListener('change', (e) => {
-    showRulers = !noRulersParam && !e.matches
-    dirty = true
-  })
+  const breakpoints = useBreakpoints({ mobile: 768 })
+  const isMobile = breakpoints.smaller('mobile')
+
+  function showRulers() {
+    return !noRulersParam && !isMobile.value
+  }
 
   function renderNow() {
     if (!renderer || destroyed) return
@@ -143,7 +143,7 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
     renderer.zoom = store.state.zoom
     renderer.viewportWidth = canvasRef.value?.clientWidth ?? 0
     renderer.viewportHeight = canvasRef.value?.clientHeight ?? 0
-    renderer.showRulers = showRulers
+    renderer.showRulers = showRulers()
     renderer.pageColor = store.state.pageColor
     renderer.pageId = store.state.currentPageId
     renderer.render(

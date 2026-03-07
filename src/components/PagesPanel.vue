@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import { useInlineRename } from '@/composables/use-inline-rename'
 import { useEditorStore } from '@/stores/editor'
@@ -7,6 +7,7 @@ import { useEditorStore } from '@/stores/editor'
 const store = useEditorStore()
 
 const DIVIDER_RE = /^[-–—*\s]+$/
+const pageInputRefs = new Map<string, HTMLInputElement>()
 
 function isDivider(page: { name: string; childIds: string[] }) {
   return page.childIds.length === 0 && DIVIDER_RE.test(page.name)
@@ -18,9 +19,21 @@ const pages = computed(() => {
 })
 
 const rename = useInlineRename((id, name) => store.renamePage(id, name))
+const activeRenameId = ref<string | null>(null)
+
+function setPageInputRef(pageId: string, el: HTMLInputElement | null) {
+  if (el) pageInputRefs.set(pageId, el)
+  else pageInputRefs.delete(pageId)
+
+  if (el && activeRenameId.value === pageId) {
+    activeRenameId.value = null
+    void rename.focusInput(el)
+  }
+}
 
 function startRename(pg: { id: string; name: string }) {
-  rename.start(pg.id, pg.name, '[data-page-edit]')
+  rename.start(pg.id, pg.name)
+  activeRenameId.value = pg.id
 }
 </script>
 
@@ -43,7 +56,7 @@ function startRename(pg: { id: string; name: string }) {
       <div v-for="pg in pages" :key="pg.id">
         <input
           v-if="rename.editingId.value === pg.id"
-          data-page-edit
+          :ref="(el) => setPageInputRef(pg.id, el as HTMLInputElement | null)"
           data-test-id="pages-item-input"
           class="w-full rounded border border-accent bg-input px-2 py-1 text-xs text-surface outline-none"
           :value="pg.name"

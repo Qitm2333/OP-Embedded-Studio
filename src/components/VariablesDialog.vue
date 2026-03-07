@@ -43,14 +43,25 @@ watch(collections, (cols) => {
 })
 
 const editingCollectionId = ref<string | null>(null)
+const collectionInputRefs = new Map<string, HTMLInputElement>()
+const pendingCollectionFocusId = ref<string | null>(null)
+
+function setCollectionInputRef(id: string, el: HTMLInputElement | null) {
+  if (el) collectionInputRefs.set(id, el)
+  else collectionInputRefs.delete(id)
+
+  if (el && pendingCollectionFocusId.value === id) {
+    pendingCollectionFocusId.value = null
+    void nextTick(() => {
+      el.focus()
+      el.select()
+    })
+  }
+}
 
 function startRenameCollection(id: string) {
   editingCollectionId.value = id
-  nextTick(() => {
-    const input = document.querySelector<HTMLInputElement>('[data-collection-edit]')
-    input?.focus()
-    input?.select()
-  })
+  pendingCollectionFocusId.value = id
 }
 
 function commitRenameCollection(id: string, input: HTMLInputElement) {
@@ -412,7 +423,7 @@ const table = useVueTable({
                 <template v-for="col in collections" :key="col.id">
                   <input
                     v-if="editingCollectionId === col.id"
-                    data-collection-edit
+                    :ref="(el) => setCollectionInputRef(col.id, el as HTMLInputElement | null)"
                     class="w-24 rounded border border-accent bg-input px-2 py-0.5 text-xs text-surface outline-none"
                     :value="col.name"
                     @blur="commitRenameCollection(col.id, $event.target as HTMLInputElement)"
