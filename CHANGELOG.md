@@ -39,6 +39,9 @@
 - Mobile UI cleanup: extract shared `colorToCSS` util to core, `initials` to `src/utils/text`, `toolIcons` to `src/utils/tools`; replace hand-rolled dropdowns with reka-ui Popover/DropdownMenu; narrow `mobileDrawerSnap` type to string union; move magic numbers to constants; disable PWA service worker in dev mode
 - 83 new E2E tests (57 → 140): design panel, code panel, components, copy/paste, multi-page, text editing, keyboard shortcuts, context menu
 - 150 new unit tests (588 → 738): color, undo, snap, vector, style-runs, text-editor
+- 48 new E2E tests across 9 spec files: canvas manipulation (marquee, alt-drag, resize, rotation, hover), toolbar (pen tool, flyouts), properties panel (scrub inputs, corner radius, fills, alignment, flip, clip), text formatting (bold, italic, word navigation), auto-layout (gap, padding, alignment grid), panels (resize, persistence, hide/show), variables dialog (search, rename, color picker), export (add/remove rows, format selector, preview). Add `tests/helpers/store.ts` for typed store access via `window.__OPEN_PENCIL_STORE__`
+- 26 new mutation unit tests in `tests/engine/mutation.test.ts`: `toggleBoldInRange` partial/idempotency/immutability, `applyStyleToRange` split/merge, `removeStyleFromRange` edge cases, `vectorNetworkBlob` negative coords/precision/determinism, `SceneGraph + UndoManager` integration (LIFO order, redo stack clearing, batch, multi-field restore). Discovered and documented `handleMirroring` not persisted in blob format
+- Add `data-test-id` attributes to `AppearanceSection` (corner radius, independent corners), `LayoutSection` (clip content, gap, uniform padding), `TypographySection` (bold button), `VariablesDialog` (search input, variable rows), `EditorView` (left splitter handle)
 
 ## 0.7.0 — 2026-03-05
 
