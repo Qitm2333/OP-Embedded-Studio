@@ -142,6 +142,7 @@ export {
 } from './kiwi-serialize'
 
 export {
+  createElement,
   renderTree,
   renderJSX,
   renderTreeNode,
@@ -163,6 +164,7 @@ export {
   Page as PageNode,
   INTRINSIC_ELEMENTS,
   isTreeNode,
+  resolveToTree,
   node,
   type TreeNode,
   type BaseProps,

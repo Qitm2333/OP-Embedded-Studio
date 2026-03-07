@@ -122,11 +122,12 @@ export function startAutomationBridge() {
   })
 
   app.post('/rpc', async (c) => {
-    const body = await c.req.json().catch(() => null)
+    let body = await c.req.json().catch(() => null)
     if (!body || typeof body !== 'object') {
       return c.json({ error: 'Invalid request body' }, 400)
     }
     try {
+      body = await preprocessRpc(body as Record<string, unknown>)
       const result = await sendToBrowser(body as Record<string, unknown>)
       return c.json({ ok: true, result })
     } catch (e) {
@@ -139,6 +140,31 @@ export function startAutomationBridge() {
 
   console.log(`[automation] HTTP  http://127.0.0.1:${AUTOMATION_HTTP_PORT}`)
   console.log(`[automation] WS    ws://127.0.0.1:${AUTOMATION_WS_PORT}`)
+}
+
+async function jsxToTree(jsx: string): Promise<unknown> {
+  // Dynamic import hidden from esbuild's static analysis — this file is bundled
+  // as part of the Vite config, and esbuild can't resolve workspace packages.
+  // At runtime (inside configureServer), the import resolves normally via Vite.
+  const pkg = '@open-pencil' + '/core'
+  const { buildComponent, resolveToTree, createElement } = await import(/* @vite-ignore */ pkg)
+  const Component = await buildComponent(jsx)
+  const element = createElement(Component, null)
+  return resolveToTree(element)
+}
+
+async function preprocessRpc(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+  if (body.command !== 'tool') return body
+  const args = body.args as { name?: string; args?: Record<string, unknown> } | undefined
+  if (args?.name !== 'render' || !args.args?.jsx) return body
+  const tree = await jsxToTree(args.args.jsx as string)
+  return {
+    ...body,
+    args: {
+      ...args,
+      args: { ...args.args, jsx: undefined, tree }
+    }
+  }
 }
 
 function isBunRuntime(): boolean {

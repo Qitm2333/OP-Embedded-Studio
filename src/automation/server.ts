@@ -4,7 +4,7 @@
  * Connects to the bridge via WebSocket, receives RPC requests,
  * executes them against the live EditorStore, and sends results back.
  */
-import { ALL_TOOLS, AUTOMATION_WS_PORT, FigmaAPI, executeRpcCommand } from '@open-pencil/core'
+import { ALL_TOOLS, AUTOMATION_WS_PORT, FigmaAPI, executeRpcCommand, renderTreeNode } from '@open-pencil/core'
 
 import type { EditorStore } from '@/stores/editor'
 import type { ExportFormat } from '@open-pencil/core'
@@ -62,6 +62,19 @@ export function connectAutomation(getStore: () => EditorStore) {
       const toolName = (args as { name?: string })?.name
       const toolArgs = (args as { args?: Record<string, unknown> })?.args ?? {}
       if (!toolName) throw new Error('Missing "name" in args')
+
+      if (toolName === 'render' && toolArgs.tree) {
+        const tree = toolArgs.tree as Parameters<typeof renderTreeNode>[1]
+        const result = renderTreeNode(store.graph, tree, {
+          parentId: (toolArgs.parent_id as string) ?? store.state.currentPageId,
+          x: toolArgs.x as number | undefined,
+          y: toolArgs.y as number | undefined
+        })
+        store.requestRender()
+        store.flashNodes([result.id])
+        return { ok: true, result: { id: result.id, name: result.name, type: result.type, children: result.childIds } }
+      }
+
       const def = ALL_TOOLS.find((t) => t.name === toolName)
       if (!def) throw new Error(`Unknown tool: ${toolName}`)
       const figma = makeFigma()
