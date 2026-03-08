@@ -33,8 +33,8 @@ Paths in OpenPencil use vector networks — a more flexible model than simple po
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Pen tool | P | P |
-| Commit open path | Escape | Escape |
+| Pen tool | <kbd>P</kbd> | <kbd>P</kbd> |
+| Commit open path | <kbd>Escape</kbd> | Escape |
 
 ## Tips
 

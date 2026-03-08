@@ -10,11 +10,11 @@ The bottom toolbar provides tools for creating shapes, frames, and sections. Sel
 
 | Tool | Shortcut | Description |
 |------|----------|-------------|
-| Rectangle | R | Draws a rectangle |
-| Ellipse | O | Draws an ellipse |
-| Line | L | Draws a line |
-| Frame | F | Draws a frame (container for other nodes) |
-| Section | S | Draws a section (auto-adopts overlapping siblings) |
+| Rectangle | <kbd>R</kbd> | Draws a rectangle |
+| Ellipse | <kbd>O</kbd> | Draws an ellipse |
+| Line | <kbd>L</kbd> | Draws a line |
+| Frame | <kbd>F</kbd> | Draws a frame (container for other nodes) |
+| Section | <kbd>S</kbd> | Draws a section (auto-adopts overlapping siblings) |
 
 ## Shapes Flyout
 
@@ -82,12 +82,12 @@ Click **+** to add an effect. Each effect row is collapsible with inline control
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Rectangle tool | R | R |
-| Ellipse tool | O | O |
-| Line tool | L | L |
-| Frame tool | F | F |
-| Section tool | S | S |
-| Constrain to square/circle | <kbd>Shift</kbd> + <kbd>drag</kbd> | <kbd>Shift</kbd> + <kbd>drag</kbd> |
+| Rectangle tool | <kbd>R</kbd> | <kbd>R</kbd> |
+| Ellipse tool | <kbd>O</kbd> | <kbd>O</kbd> |
+| Line tool | <kbd>L</kbd> | <kbd>L</kbd> |
+| Frame tool | <kbd>F</kbd> | <kbd>F</kbd> |
+| Section tool | <kbd>S</kbd> | <kbd>S</kbd> |
+| Constrain to square/circle | <kbd>Shift</kbd> + drag | <kbd>Shift</kbd> + drag |
 
 ## Tips
 

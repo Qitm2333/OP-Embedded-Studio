@@ -34,8 +34,8 @@ Pfade verwenden das Vektornetzwerk-Datenmodell statt einfacher Punktlisten. Vekt
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Stiftwerkzeug | P | P |
-| Offenen Pfad bestätigen | Escape | Escape |
+| Stiftwerkzeug | <kbd>P</kbd> | <kbd>P</kbd> |
+| Offenen Pfad bestätigen | <kbd>Escape</kbd> | Escape |
 
 ## Tipps
 

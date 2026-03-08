@@ -31,5 +31,5 @@ Los trazados en OpenPencil usan redes vectoriales — un modelo más flexible qu
 
 | Acción | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Herramienta pluma | P | P |
-| Confirmar trazado abierto | Escape | Escape |
+| Herramienta pluma | <kbd>P</kbd> | <kbd>P</kbd> |
+| Confirmar trazado abierto | <kbd>Escape</kbd> | Escape |

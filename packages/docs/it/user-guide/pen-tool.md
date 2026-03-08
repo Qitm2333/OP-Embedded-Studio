@@ -22,5 +22,5 @@ I percorsi in OpenPencil usano reti vettoriali — un modello più flessibile de
 
 | Azione | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Strumento penna | P | P |
-| Conferma percorso | Escape | Escape |
+| Strumento penna | <kbd>P</kbd> | <kbd>P</kbd> |
+| Conferma percorso | <kbd>Escape</kbd> | Escape |

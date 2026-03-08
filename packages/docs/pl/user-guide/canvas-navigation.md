@@ -9,7 +9,7 @@ Płótno to Twoja nieskończona przestrzeń robocza.
 
 ## Przesuwanie
 
-- **Spacja + przeciąganie** — przytrzymaj Spację i przeciągnij
+- <kbd>Spacja</kbd> + przeciąganie — przytrzymaj <kbd>Spację</kbd> i przeciągnij
 - **Środkowy przycisk myszy** — naciśnij i przeciągnij
 - **Trackpad dwoma palcami** — przesuń dwoma palcami
 
@@ -24,8 +24,8 @@ Naciśnij <kbd>H</kbd>, aby aktywować narzędzie rączka. Przełącz na inne na
 
 | Akcja | Mac | Windows / Linux |
 |-------|-----|-----------------|
-| Przesuwanie | Spacja + przeciąganie | Spacja + przeciąganie |
-| Narzędzie rączka | H | H |
+| Przesuwanie | <kbd>Spacja</kbd> + przeciąganie | Spacja + przeciąganie |
+| Narzędzie rączka | <kbd>H</kbd> | <kbd>H</kbd> |
 | Powiększ | <kbd>⌘</kbd><kbd>+</kbd> | <kbd>Ctrl</kbd> + <kbd>+</kbd> |
 | Pomniejsz | <kbd>⌘</kbd><kbd>−</kbd> | <kbd>Ctrl</kbd> + <kbd>−</kbd> |
 | Zoom 100% | <kbd>⌘</kbd><kbd>0</kbd> | <kbd>Ctrl</kbd> + <kbd>0</kbd> |

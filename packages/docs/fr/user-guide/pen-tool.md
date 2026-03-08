@@ -22,5 +22,5 @@ Les tracés dans OpenPencil utilisent des réseaux vectoriels — un modèle plu
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Pen tool | P | P |
-| Commit | Escape | Escape |
+| Pen tool | <kbd>P</kbd> | <kbd>P</kbd> |
+| Commit | <kbd>Escape</kbd> | Escape |

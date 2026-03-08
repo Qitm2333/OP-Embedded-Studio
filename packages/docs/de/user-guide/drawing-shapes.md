@@ -11,11 +11,11 @@ Die untere Werkzeugleiste bietet Werkzeuge zum Erstellen von Formen, Frames und 
 
 | Werkzeug | Kürzel | Beschreibung |
 |----------|--------|--------------|
-| Rechteck | R | Zeichnet ein Rechteck |
-| Ellipse | O | Zeichnet eine Ellipse |
-| Linie | L | Zeichnet eine Linie |
-| Frame | F | Zeichnet einen Frame (Container) |
-| Sektion | S | Zeichnet eine Sektion (übernimmt überlappende Geschwister) |
+| Rechteck | <kbd>R</kbd> | Zeichnet ein Rechteck |
+| Ellipse | <kbd>O</kbd> | Zeichnet eine Ellipse |
+| Linie | <kbd>L</kbd> | Zeichnet eine Linie |
+| Frame | <kbd>F</kbd> | Zeichnet einen Frame (Container) |
+| Sektion | <kbd>S</kbd> | Zeichnet eine Sektion (übernimmt überlappende Geschwister) |
 
 ## Formen-Flyout
 
@@ -71,9 +71,9 @@ Verfügbar für Rechtecke, Frames, Komponenten und Instanzen. Jede Ecke einzeln 
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Rechteck | R | R |
-| Ellipse | O | O |
-| Linie | L | L |
-| Frame | F | F |
-| Sektion | S | S |
+| Rechteck | <kbd>R</kbd> | <kbd>R</kbd> |
+| Ellipse | <kbd>O</kbd> | <kbd>O</kbd> |
+| Linie | <kbd>L</kbd> | <kbd>L</kbd> |
+| Frame | <kbd>F</kbd> | <kbd>F</kbd> |
+| Sektion | <kbd>S</kbd> | <kbd>S</kbd> |
 | Quadrat/Kreis erzwingen | <kbd>Shift</kbd> + <kbd>Ziehen</kbd> | <kbd>Shift</kbd> + <kbd>Ziehen</kbd> |

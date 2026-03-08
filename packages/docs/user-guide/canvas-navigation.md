@@ -10,7 +10,7 @@ The canvas is your infinite workspace. You can pan and zoom freely to navigate y
 
 Move the visible area of the canvas without affecting any objects.
 
-- **Space + drag** — hold Space and drag anywhere on the canvas
+- <kbd>Space</kbd> + drag — hold Space and drag anywhere on the canvas
 - **Middle mouse drag** — press and drag the middle mouse button
 - **Two-finger trackpad** — swipe with two fingers on a trackpad
 
@@ -32,8 +32,8 @@ Pinch-to-zoom on UI panels (layers, properties) is prevented so it doesn't accid
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Pan | Space + drag | Space + drag |
-| Hand tool | H | H |
+| Pan | <kbd>Space</kbd> + drag | <kbd>Space</kbd> + drag |
+| Hand tool | <kbd>H</kbd> | <kbd>H</kbd> |
 | Zoom in | <kbd>⌘</kbd><kbd>+</kbd> | <kbd>Ctrl</kbd> + <kbd>+</kbd> |
 | Zoom out | <kbd>⌘</kbd><kbd>−</kbd> | <kbd>Ctrl</kbd> + <kbd>−</kbd> |
 | Zoom to 100% | <kbd>⌘</kbd><kbd>0</kbd> | <kbd>Ctrl</kbd> + <kbd>0</kbd> |

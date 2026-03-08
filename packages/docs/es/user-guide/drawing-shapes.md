@@ -6,11 +6,11 @@ description: Crear rectángulos, elipses, líneas, marcos y secciones en OpenPen
 
 | Herramienta | Atajo | Descripción |
 |-------------|-------|-------------|
-| Rectángulo | R | Dibuja un rectángulo |
-| Elipse | O | Dibuja una elipse |
-| Línea | L | Dibuja una línea |
-| Marco | F | Dibuja un marco (contenedor) |
-| Sección | S | Dibuja una sección |
+| Rectángulo | <kbd>R</kbd> | Dibuja un rectángulo |
+| Elipse | <kbd>O</kbd> | Dibuja una elipse |
+| Línea | <kbd>L</kbd> | Dibuja una línea |
+| Marco | <kbd>F</kbd> | Dibuja un marco (contenedor) |
+| Sección | <kbd>S</kbd> | Dibuja una sección |
 
 ## Formas adicionales
 **Polígono** y **Estrella** en el menú desplegable de formas.

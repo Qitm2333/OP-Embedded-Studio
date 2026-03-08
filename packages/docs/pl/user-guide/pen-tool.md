@@ -24,5 +24,5 @@ Click the first point to close into a loop.
 
 | Akcja | Mac | Windows / Linux |
 |-------|-----|-----------------|
-| Narzędzie pióro | P | P |
-| Zatwierdź | Escape | Escape |
+| Narzędzie pióro | <kbd>P</kbd> | <kbd>P</kbd> |
+| Zatwierdź | <kbd>Escape</kbd> | Escape |

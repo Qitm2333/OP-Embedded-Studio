@@ -11,13 +11,13 @@ Der Canvas ist Ihr unendlicher Arbeitsbereich. Sie können frei schwenken und zo
 
 Verschieben Sie den sichtbaren Bereich des Canvas, ohne Objekte zu beeinflussen.
 
-- **Leertaste + Ziehen** — Leertaste halten und irgendwo auf dem Canvas ziehen
+- <kbd>Leertaste</kbd> + Ziehen — <kbd>Leertaste</kbd> halten und irgendwo auf dem Canvas ziehen
 - **Mittlere Maustaste ziehen** — mittlere Maustaste drücken und ziehen
 - **Zwei-Finger-Trackpad** — mit zwei Fingern auf dem Trackpad wischen
 
 ## Handwerkzeug
 
-Drücken Sie <kbd>H</kbd>, um das Handwerkzeug für kontinuierliches Schwenken zu aktivieren. Jedes Ziehen auf dem Canvas schwenkt den Viewport, ohne die Leertaste halten zu müssen. Wechseln Sie zu einem anderen Werkzeug (z.B. <kbd>V</kbd> für Auswahl), um zu deaktivieren.
+Drücken Sie <kbd>H</kbd>, um das Handwerkzeug für kontinuierliches Schwenken zu aktivieren. Jedes Ziehen auf dem Canvas schwenkt den Viewport, ohne die <kbd>Leertaste</kbd> halten zu müssen. Wechseln Sie zu einem anderen Werkzeug (z.B. <kbd>V</kbd> für Auswahl), um zu deaktivieren.
 
 ## Zoomen
 
@@ -31,8 +31,8 @@ Hinein- und Herauszoomen, zentriert auf Ihre Cursorposition.
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Schwenken | Leertaste + Ziehen | Leertaste + Ziehen |
-| Handwerkzeug | H | H |
+| Schwenken | <kbd>Leertaste</kbd> + Ziehen | Leertaste + Ziehen |
+| Handwerkzeug | <kbd>H</kbd> | <kbd>H</kbd> |
 | Hineinzoomen | <kbd>⌘</kbd><kbd>+</kbd> | <kbd>Strg</kbd> + <kbd>+</kbd> |
 | Herauszoomen | <kbd>⌘</kbd><kbd>−</kbd> | <kbd>Strg</kbd> + <kbd>−</kbd> |
 | Zoom auf 100% | <kbd>⌘</kbd><kbd>0</kbd> | Strg + 0 |

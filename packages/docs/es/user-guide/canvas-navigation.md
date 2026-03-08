@@ -9,7 +9,7 @@ El lienzo es tu espacio de trabajo infinito.
 
 ## Panorámica
 
-- **Espacio + arrastrar** — mantén Espacio y arrastra
+- <kbd>Espacio</kbd> + arrastrar — mantén <kbd>Espacio</kbd> y arrastra
 - **Botón central del ratón** — pulsa y arrastra
 - **Trackpad con dos dedos** — desliza con dos dedos
 
@@ -24,8 +24,8 @@ Pulsa <kbd>H</kbd> para activar la herramienta mano. Cambia a otra herramienta (
 
 | Acción | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Panorámica | Espacio + arrastrar | Espacio + arrastrar |
-| Herramienta mano | H | H |
+| Panorámica | <kbd>Espacio</kbd> + arrastrar | Espacio + arrastrar |
+| Herramienta mano | <kbd>H</kbd> | <kbd>H</kbd> |
 | Zoom adelante | <kbd>⌘</kbd><kbd>+</kbd> | <kbd>Ctrl</kbd> + <kbd>+</kbd> |
 | Zoom atrás | <kbd>⌘</kbd><kbd>−</kbd> | <kbd>Ctrl</kbd> + <kbd>−</kbd> |
 | Zoom 100% | <kbd>⌘</kbd><kbd>0</kbd> | <kbd>Ctrl</kbd> + <kbd>0</kbd> |

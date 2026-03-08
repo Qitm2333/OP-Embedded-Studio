@@ -6,11 +6,11 @@ description: Créer des rectangles, ellipses, lignes, cadres et sections dans Op
 
 | Outil | Raccourci | Description |
 |-------|-----------|-------------|
-| Rectangle | R | Dessine un rectangle |
-| Ellipse | O | Dessine une ellipse |
-| Ligne | L | Dessine une ligne |
-| Cadre | F | Dessine un cadre (conteneur) |
-| Section | S | Dessine une section |
+| Rectangle | <kbd>R</kbd> | Dessine un rectangle |
+| Ellipse | <kbd>O</kbd> | Dessine une ellipse |
+| Ligne | <kbd>L</kbd> | Dessine une ligne |
+| Cadre | <kbd>F</kbd> | Dessine un cadre (conteneur) |
+| Section | <kbd>S</kbd> | Dessine une section |
 
 ## Formes supplémentaires
 **Polygone** et **Étoile** dans le menu déroulant des formes.

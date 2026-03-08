@@ -37,7 +37,7 @@ The pages panel shows all pages in the document.
 - **Switch page** — click a page tab to make it active. The canvas switches to that page and restores its viewport position.
 - **Add page** — click the add button to create a new page
 - **Delete page** — remove the current page
-- **Rename page** — double-click the page name for inline editing. Pressing Enter or Escape, or clicking away, commits the rename.
+- **Rename page** — double-click the page name for inline editing. Pressing <kbd>Enter</kbd> or <kbd>Escape</kbd>, or clicking away, commits the rename.
 
 Each page has its own canvas and viewport state.
 

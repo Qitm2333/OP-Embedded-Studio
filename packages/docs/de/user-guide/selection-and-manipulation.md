@@ -60,7 +60,7 @@ Fahren Sie knapp außerhalb eines Eckgriffs, um den Drehungscursor zu sehen. Zie
 | Duplizieren | <kbd>⌘</kbd><kbd>D</kbd> | Strg + D |
 | Duplizieren + bewegen | <kbd>⌥</kbd> + Ziehen | <kbd>Alt</kbd> + <kbd>Ziehen</kbd> |
 | Löschen | <kbd>⌫</kbd> / Entf | Rücktaste / Entf |
-| 1 px verschieben | Pfeiltasten | Pfeiltasten |
+| 1 px verschieben | <kbd>Pfeiltasten</kbd> | Pfeiltasten |
 | 10 px verschieben | <kbd>⇧</kbd> + Pfeiltasten | <kbd>Shift</kbd> + <kbd>Pfeiltasten</kbd> |
 | Nach vorne | ] | ] |
 | Nach hinten | [ | [ |

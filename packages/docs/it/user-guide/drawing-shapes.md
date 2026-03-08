@@ -6,11 +6,11 @@ description: Creare rettangoli, ellissi, linee, frame e sezioni in OpenPencil.
 
 | Strumento | Scorciatoia | Descrizione |
 |-----------|-------------|-------------|
-| Rettangolo | R | Disegna un rettangolo |
-| Ellisse | O | Disegna un'ellisse |
-| Linea | L | Disegna una linea |
-| Frame | F | Disegna un frame (contenitore) |
-| Sezione | S | Disegna una sezione |
+| Rettangolo | <kbd>R</kbd> | Disegna un rettangolo |
+| Ellisse | <kbd>O</kbd> | Disegna un'ellisse |
+| Linea | <kbd>L</kbd> | Disegna una linea |
+| Frame | <kbd>F</kbd> | Disegna un frame (contenitore) |
+| Sezione | <kbd>S</kbd> | Disegna una sezione |
 
 ## Forme aggiuntive
 **Poligono** e **Stella** nel flyout delle forme.

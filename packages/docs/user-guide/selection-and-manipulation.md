@@ -67,9 +67,9 @@ Drawing a section on the canvas automatically adopts overlapping sibling nodes a
 |--------|-----|-----------------|
 | Select all | <kbd>⌘</kbd><kbd>A</kbd> | <kbd>Ctrl</kbd> + <kbd>A</kbd> |
 | Duplicate | <kbd>⌘</kbd><kbd>D</kbd> | <kbd>Ctrl</kbd> + <kbd>D</kbd> |
-| Duplicate + move | <kbd>⌥</kbd> + drag | <kbd>Alt</kbd> + <kbd>drag</kbd> |
+| Duplicate + move | <kbd>⌥</kbd> + drag | <kbd>Alt</kbd> + drag |
 | Delete | <kbd>⌫</kbd> / Delete | <kbd>Backspace</kbd> / Delete |
-| Nudge 1 px | Arrow keys | Arrow keys |
+| Nudge 1 px | <kbd>Arrow keys</kbd> | Arrow keys |
 | Nudge 10 px | <kbd>⇧</kbd> + Arrow keys | <kbd>Shift</kbd> + <kbd>Arrow</kbd> keys |
 | Bring to front | ] | ] |
 | Send to back | [ | [ |
