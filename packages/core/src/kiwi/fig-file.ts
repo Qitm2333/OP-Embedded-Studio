@@ -45,7 +45,12 @@ function parseFigKiwiContainer(data: Uint8Array): FigKiwiPayload | null {
 }
 
 export async function parseFigFile(buffer: ArrayBuffer): Promise<SceneGraph> {
-  const zip = unzipSync(new Uint8Array(buffer))
+  const zip = unzipSync(new Uint8Array(buffer), {
+    filter: (file) =>
+      file.name === 'canvas.fig' ||
+      file.name === 'canvas' ||
+      (file.name.startsWith('images/') && file.name !== 'images/'),
+  })
   const entries = Object.keys(zip)
 
   let canvasData: Uint8Array | null = null
