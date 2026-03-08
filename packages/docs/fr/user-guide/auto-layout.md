@@ -4,7 +4,7 @@ description: Mise en page auto basée sur flexbox dans OpenPencil.
 ---
 # Mise en page auto
 
-**⇧ A** pour activer/désactiver ou envelopper la sélection.
+<kbd>⇧</kbd><kbd>A</kbd> pour activer/désactiver ou envelopper la sélection.
 
 ## Direction
 - **Horizontale** — de gauche à droite

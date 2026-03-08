@@ -16,7 +16,7 @@ description: Creare rettangoli, ellissi, linee, frame e sezioni in OpenPencil.
 **Poligono** e **Stella** nel flyout delle forme.
 
 ## Disegno vincolato
-**Shift** durante il trascinamento: rettangolo → quadrato, ellisse → cerchio, linea → 0°/45°/90°.
+<kbd>Shift</kbd> durante il trascinamento: rettangolo → quadrato, ellisse → cerchio, linea → 0°/45°/90°.
 
 ## Proprietà
 - **Riempimento** — colore solido, gradiente (lineare, radiale, angolare, diamante), immagine

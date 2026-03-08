@@ -16,7 +16,7 @@ description: Crear rectángulos, elipses, líneas, marcos y secciones en OpenPen
 **Polígono** y **Estrella** en el menú desplegable de formas.
 
 ## Dibujo restringido
-**Shift** al arrastrar: rectángulo → cuadrado, elipse → círculo, línea → 0°/45°/90°.
+<kbd>Shift</kbd> al arrastrar: rectángulo → cuadrado, elipse → círculo, línea → 0°/45°/90°.
 
 ## Propiedades
 - **Relleno** — color sólido, gradiente (lineal, radial, angular, diamante), imagen

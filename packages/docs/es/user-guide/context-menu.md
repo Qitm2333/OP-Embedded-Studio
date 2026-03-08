@@ -14,23 +14,23 @@ El submenú **Copiar como** ofrece estos formatos:
 |--------|-----|-----------------|
 | Copiar como texto | — | — |
 | Copiar como SVG | — | — |
-| Copiar como PNG | ⇧ ⌘ C | Shift + Ctrl + C |
+| Copiar como PNG | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>C</kbd> |
 | Copiar como JSX | — | — |
 
 ## Portapapeles
-Copiar (⌘C), Cortar (⌘X), Pegar (⌘V), Duplicar (⌘D), Eliminar (⌫)
+Copiar (<kbd>⌘</kbd><kbd>C</kbd>), Cortar (<kbd>⌘</kbd><kbd>X</kbd>), Pegar (<kbd>⌘</kbd><kbd>V</kbd>), Duplicar (<kbd>⌘</kbd><kbd>D</kbd>), Eliminar (⌫)
 
 ## Orden Z
 **]** al frente · **[** al fondo
 
 ## Agrupación
-Agrupar (⌘G), Desagrupar (⇧⌘G), Añadir auto-layout (⇧A)
+Agrupar (<kbd>⌘</kbd><kbd>G</kbd>), Desagrupar (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>G</kbd>), Añadir auto-layout (<kbd>⇧</kbd><kbd>A</kbd>)
 
 ## Componentes
-Crear componente (⌥⌘K), Crear conjunto (⇧⌘K), Crear instancia, Ir al componente principal, Desenlazar instancia (⌥⌘B). Acciones en morado.
+Crear componente (<kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd>), Crear conjunto (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd>), Crear instancia, Ir al componente principal, Desenlazar instancia (<kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd>). Acciones en morado.
 
 ## Visibilidad y bloqueo
-Ocultar/Mostrar (⇧⌘H), Bloquear/Desbloquear (⇧⌘L)
+Ocultar/Mostrar (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd>), Bloquear/Desbloquear (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd>)
 
 ## Mover a página
 Submenú con todas las páginas excepto la actual.

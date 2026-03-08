@@ -15,17 +15,17 @@ El lienzo es tu espacio de trabajo infinito.
 
 ## Herramienta mano
 
-Pulsa **H** para activar la herramienta mano. Cambia a otra herramienta (ej. **V**) para desactivar.
+Pulsa <kbd>H</kbd> para activar la herramienta mano. Cambia a otra herramienta (ej. **V**) para desactivar.
 
 ## Zoom
 
-- **Ctrl + scroll** (o **⌘ + scroll** en Mac) — zoom adelante/atrás
+- <kbd>Ctrl</kbd> + scroll (o <kbd>⌘</kbd> + scroll en Mac) — zoom adelante/atrás
 - **Gesto de pellizco** — pellizca en el trackpad
 
 | Acción | Mac | Windows / Linux |
 |--------|-----|-----------------|
 | Panorámica | Espacio + arrastrar | Espacio + arrastrar |
 | Herramienta mano | H | H |
-| Zoom adelante | ⌘ + | Ctrl + + |
-| Zoom atrás | ⌘ - | Ctrl + - |
-| Zoom 100% | ⌘ 0 | Ctrl + 0 |
+| Zoom adelante | <kbd>⌘</kbd><kbd>+</kbd> | <kbd>Ctrl</kbd> + <kbd>+</kbd> |
+| Zoom atrás | <kbd>⌘</kbd><kbd>−</kbd> | <kbd>Ctrl</kbd> + <kbd>−</kbd> |
+| Zoom 100% | <kbd>⌘</kbd><kbd>0</kbd> | <kbd>Ctrl</kbd> + <kbd>0</kbd> |

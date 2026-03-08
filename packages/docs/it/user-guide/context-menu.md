@@ -14,23 +14,23 @@ Il sottomenu **Copia come** offre questi formati:
 |--------|-----|-----------------|
 | Copia come testo | — | — |
 | Copia come SVG | — | — |
-| Copia come PNG | ⇧ ⌘ C | Shift + Ctrl + C |
+| Copia come PNG | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>C</kbd> |
 | Copia come JSX | — | — |
 
 ## Appunti
-Copia (⌘C), Taglia (⌘X), Incolla (⌘V), Duplica (⌘D), Elimina (⌫)
+Copia (<kbd>⌘</kbd><kbd>C</kbd>), Taglia (<kbd>⌘</kbd><kbd>X</kbd>), Incolla (<kbd>⌘</kbd><kbd>V</kbd>), Duplica (<kbd>⌘</kbd><kbd>D</kbd>), Elimina (⌫)
 
 ## Ordine Z
 **]** porta in primo piano · **[** manda in fondo
 
 ## Raggruppamento
-Raggruppa (⌘G), Separa (⇧⌘G), Aggiungi auto-layout (⇧A)
+Raggruppa (<kbd>⌘</kbd><kbd>G</kbd>), Separa (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>G</kbd>), Aggiungi auto-layout (<kbd>⇧</kbd><kbd>A</kbd>)
 
 ## Componenti
-Crea componente (⌥⌘K), Crea set componenti (⇧⌘K), Crea istanza, Vai al componente principale, Separa istanza (⌥⌘B). Azioni in viola.
+Crea componente (<kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd>), Crea set componenti (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd>), Crea istanza, Vai al componente principale, Separa istanza (<kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd>). Azioni in viola.
 
 ## Visibilità e blocco
-Nascondi/Mostra (⇧⌘H), Blocca/Sblocca (⇧⌘L)
+Nascondi/Mostra (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd>), Blocca/Sblocca (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd>)
 
 ## Sposta in pagina
 Sottomenu con tutte le pagine tranne quella corrente.

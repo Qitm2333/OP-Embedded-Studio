@@ -16,7 +16,7 @@ Drzewo hierarchii po lewej. Rozwijanie/zwijanie, przeciąganie aby zmienić kole
 Każda strona ma własny niezależny stan widoku.
 
 ## Panel właściwości
-Trzy zakładki: **Design** (właściwości kontekstowe), **Kod** (JSX / Tailwind CSS v4), **AI** (chat ⌘ J).
+Trzy zakładki: **Design** (właściwości kontekstowe), **Kod** (JSX / Tailwind CSS v4), **AI** (chat <kbd>⌘</kbd><kbd>J</kbd>).
 
 Design: wygląd, wypełnienie, obrys, efekty, typografia, layout, eksport.
 

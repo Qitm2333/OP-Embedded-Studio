@@ -16,7 +16,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 | Ebenen-Panel (linke Seitenleiste) | ✅ | Baumansicht mit Auf-/Zuklappen, Drag-Neuordnung, Sichtbarkeits-Toggle; skalierbare Breite |
 | Seiten-Panel | ✅ | Seiten hinzufügen, löschen, umbenennen; Viewport-Zustand pro Seite |
 | Eigenschafts-Panel (rechte Seitenleiste) | ✅ | Abschnitte: Darstellung, Füllung, Kontur, Effekte, Typografie, Layout, Position; skalierbare Breite |
-| Zoom & Schwenken | ✅ | Strg+Scroll, Pinch, ⌘+/⌘−/⌘0, Leertaste+Ziehen, mittlere Maustaste, Hand-Werkzeug (H) |
+| Zoom & Schwenken | ✅ | Strg+Scroll, Pinch, <kbd>⌘</kbd><kbd>+</kbd> / <kbd>⌘</kbd><kbd>−</kbd> / <kbd>⌘</kbd><kbd>0</kbd>, Leertaste+Ziehen, mittlere Maustaste, Hand-Werkzeug (H) |
 | Canvas-Lineale | ✅ | Oben/links Lineale mit Auswahl-Bändern und Koordinaten-Badges |
 | Canvas-Hintergrundfarbe | ✅ | Pro-Seite-Hintergrund über Eigenschafts-Panel |
 | Canvas-Hilfslinien | 🔲 | Figma unterstützt ziehbare Hilfslinien von Linealen |
@@ -36,7 +36,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 |----------|--------|-------------|
 | Formwerkzeuge (Rechteck, Ellipse, Linie, Polygon, Stern) | ✅ | Alle Grundformtypen; Polygonseitenzahl und Stern-Innenradius konfigurierbar |
 | Frames | ✅ | Inhalt beschneiden, unabhängiges Koordinatensystem |
-| Gruppen | ✅ | ⌘G zum Gruppieren, ⇧⌘G zum Entgruppieren |
+| Gruppen | ✅ | <kbd>⌘</kbd><kbd>G</kbd> zum Gruppieren, <kbd>⇧</kbd><kbd>⌘</kbd><kbd>G</kbd> zum Entgruppieren |
 | Sektionen | ✅ | Titel-Pills, automatische Übernahme überlappender Knoten, luminanzadaptiver Text |
 | Bogen-Werkzeug (Bögen, Halbkreise, Ringe) | ✅ | arcData mit Start-/Endwinkel und Innenradius |
 | Bleistift (Freihand-Werkzeug) | 🔲 | Figmas Freihand-Zeichenwerkzeug |
@@ -46,9 +46,9 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 | Ausrichtung & Position | ✅ | Position, Drehung, Abmessungen im Panel |
 | Objekte kopieren & einfügen | ✅ | Standard-Zwischenablage + Figma-Kiwi-Binärformat |
 | Ebenen proportional skalieren | 🟡 | Umschalt-Resize hält Proportionen; kein dediziertes Scale-Werkzeug (K) |
-| Ebenen sperren/entsperren | ✅ | ⇧⌘L schaltet Sperre um |
-| Ebenensichtbarkeit umschalten | ✅ | Augen-Icon im Panel + ⇧⌘H-Kürzel |
-| Ebenen umbenennen | ✅ | Doppelklick-Inline-Umbenennen; Enter/Escape/Blur zum Bestätigen |
+| Ebenen sperren/entsperren | ✅ | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd> schaltet Sperre um |
+| Ebenensichtbarkeit umschalten | ✅ | Augen-Icon im Panel + <kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd>-Kürzel |
+| Ebenen umbenennen | ✅ | Doppelklick-Inline-Umbenennen; <kbd>Enter</kbd>/<kbd>Escape</kbd>/Blur zum Bestätigen |
 | Nach vorne / Nach hinten | ✅ | ] und [ Tastaturkürzel; auch im Kontextmenü |
 | Auf Seite verschieben | ✅ | Knoten zwischen Seiten verschieben via Kontextmenü |
 | Einschränkungen (responsives Resize) | 🔲 | Kanten/Mitte fixieren für Eltern-Resize-Verhalten |
@@ -79,7 +79,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 
 | Funktion | Status | Anmerkungen |
 |----------|--------|-------------|
-| Textwerkzeug & Inline-Bearbeitung | ✅ | Canvas-native Bearbeitung, Phantom-Textarea, Style-Runs (⌘B/I/U, S-Button) |
+| Textwerkzeug & Inline-Bearbeitung | ✅ | Canvas-native Bearbeitung, Phantom-Textarea, Style-Runs (<kbd>⌘</kbd><kbd>B</kbd> / <kbd>I</kbd> / <kbd>U</kbd>, S-Button) |
 | Textrendering (Paragraph API) | ✅ | CanvasKit Paragraph für Formgebung, Zeilenumbrüche, Metriken |
 | Schriftladung (Systemschriften) | ✅ | Inter Standard, font-kit in Tauri mit OnceLock-Cache, queryLocalFonts im Browser |
 | Schriftfamilie & -stärke | ✅ | FontPicker mit virtuellem Scrollen, Suche, CSS-Vorschau |
@@ -138,11 +138,11 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 | Funktion | Status | Anmerkungen |
 |----------|--------|-------------|
 | Horizontaler & vertikaler Fluss | ✅ | Yoga-WASM-Flexbox-Engine |
-| Auto Layout umschalten (⇧A) | ✅ | Auf Frame umschalten oder Auswahl umhüllen |
+| Auto Layout umschalten (<kbd>⇧</kbd><kbd>A</kbd>) | ✅ | Auf Frame umschalten oder Auswahl umhüllen |
 | Gap (Abstand zwischen Kindern) | ✅ | Konfigurierbar im Panel |
 | Padding (einheitlich & pro Seite) | ✅ | Alle vier Seiten unabhängig |
-| Justify Content | ✅ | Start, Center, End, Space-Between |
-| Align Items | ✅ | Start, Center, End, Stretch |
+| Justify Content | ✅ | Start, Center, <kbd>End</kbd>, Space-Between |
+| Align Items | ✅ | Start, Center, <kbd>End</kbd>, Stretch |
 | Kindgröße (fix, füllen, anpassen) | ✅ | Größenmodi pro Kind |
 | Wrap | ✅ | Flex-Wrap für mehrzeiliges Layout |
 | Grid-Auto-Layout-Fluss | 🔲 | Figmas rasterbasiertes Auto-Layout |
@@ -154,8 +154,8 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 
 | Funktion | Status | Anmerkungen |
 |----------|--------|-------------|
-| Komponenten erstellen | 🟡 | ⌥⌘K erstellt aus Frame/Gruppe; noch kein Komponenten-Eigenschafts-UI |
-| Komponenten-Sets | 🟡 | ⇧⌘K kombiniert Komponenten; gestrichelter violetter Rand; keine Varianten-Eigenschaftsbearbeitung |
+| Komponenten erstellen | 🟡 | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> erstellt aus Frame/Gruppe; noch kein Komponenten-Eigenschafts-UI |
+| Komponenten-Sets | 🟡 | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> kombiniert Komponenten; gestrichelter violetter Rand; keine Varianten-Eigenschaftsbearbeitung |
 | Komponenteninstanzen | 🟡 | Instanz aus Kontextmenü erstellen; Live-Sync; kein Override-Bearbeitungs-UI |
 | Varianten | 🔲 | Variantenwechsel und eigenschaftsbasierte Auswahl |
 | Komponenteneigenschaften | 🔲 | Boolesche, Text-, Instanztausch-Eigenschaften |
@@ -164,7 +164,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 | Variablensammlungen & Modi | 🟡 | Sammlungen, Modi, activeMode-Wechsel funktionieren; kein Variablen-Theming-UI |
 | Stile (Farbe, Text, Effekt, Layout) | 🔲 | Wiederverwendbare benannte Stil-Presets |
 | Bibliotheken (veröffentlichen, teilen, aktualisieren) | 🔲 | Geteilte Komponenten-/Stil-Bibliotheken |
-| Instanz ablösen | ✅ | ⌥⌘B wandelt Instanz in Frame um |
+| Instanz ablösen | ✅ | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> wandelt Instanz in Frame um |
 | Zur Hauptkomponente navigieren | ✅ | Zur Quellkomponente navigieren, seitenübergreifend |
 
 ## Prototyping
@@ -189,7 +189,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 |----------|--------|-------------|
 | .fig-Datei-Import | ✅ | Vollständiger Kiwi-Codec: 194 Definitionen, ~390 Felder pro NodeChange |
 | .fig-Datei-Export | ✅ | Kiwi-Encoding + Zstd-Kompression + Miniatur-Generierung |
-| Speichern / Speichern unter | ✅ | ⌘S / ⇧⌘S; native Dialoge (Tauri), File System Access API (Chrome/Edge), Download-Fallback (Safari) |
+| Speichern / Speichern unter | ✅ | <kbd>⌘</kbd><kbd>S</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>; native Dialoge (Tauri), File System Access API (Chrome/Edge), Download-Fallback (Safari) |
 | Figma-Zwischenablage (Einfügen) | ✅ | Kiwi-Binär aus Figma-Zwischenablage dekodieren |
 | Figma-Zwischenablage (Kopieren) | ✅ | Kiwi-Binär kodieren, das Figma lesen kann |
 | Sketch-Datei-Import | 🔲 | .sketch-Datei-Parsing |
@@ -211,7 +211,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 | Echtzeit-Multiplayer | ✅ | P2P via Trystero + Yjs CRDT, Cursor, Folgemodus; kein Server |
 | Cursor-Chat | 🔲 | Inline-Chat-Blasen am Cursor |
 | Branching & Merging | 🔲 | Versions-Branches für Design-Dateien |
-| Entwicklermodus (Inspizieren) | 🟡 | Code-Tab zeigt JSX; keine CSS-Eigenschaften oder Handoff-Specs |
+| Entwicklermodus (Inspizieren) | 🟡 | Code-<kbd>Tab</kbd> zeigt JSX; keine CSS-Eigenschaften oder Handoff-Specs |
 | Code Connect | 🔲 | Design-Komponenten mit Code verknüpfen |
 | Code-Snippets | 🟡 | JSX-Export mit Hervorhebung und Kopieren; keine CSS/Swift/Kotlin-Snippets |
 | Figma für VS Code | 🔲 | Editor-Plugin-Integration |

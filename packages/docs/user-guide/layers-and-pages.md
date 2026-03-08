@@ -24,7 +24,7 @@ Click the eye icon next to any layer to hide or show it on the canvas. Hidden no
 
 ### Rename
 
-Double-click a layer name to rename it inline. Press **Enter** or click away to commit, **Escape** to cancel.
+Double-click a layer name to rename it inline. Press <kbd>Enter</kbd> or click away to commit, <kbd>Escape</kbd> to cancel.
 
 ### Selection Sync
 
@@ -68,13 +68,13 @@ Displays the selected node as code with syntax highlighting, line numbers, and a
 
 ### AI Tab
 
-An AI chat interface (also toggled with **⌘ J**) that can create and modify design elements via natural language. Supports multiple AI models through OpenRouter.
+An AI chat interface (also toggled with <kbd>⌘</kbd><kbd>J</kbd>) that can create and modify design elements via natural language. Supports multiple AI models through OpenRouter.
 
 ## Keyboard Shortcuts
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Toggle AI chat | ⌘ J | Ctrl + J |
+| Toggle AI chat | <kbd>⌘</kbd><kbd>J</kbd> | <kbd>Ctrl</kbd> + <kbd>J</kbd> |
 
 ## Mobile Layout
 

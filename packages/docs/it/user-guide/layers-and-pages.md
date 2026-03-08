@@ -16,7 +16,7 @@ Albero gerarchico sulla sinistra. Espandi/comprimi, trascina per riordinare, att
 Ogni pagina ha il suo viewport indipendente.
 
 ## Pannello proprietà
-Tre tab: **Design** (proprietà contestuali), **Codice** (JSX / Tailwind CSS v4), **IA** (chat ⌘ J).
+Tre tab: **Design** (proprietà contestuali), **Codice** (JSX / Tailwind CSS v4), **IA** (chat <kbd>⌘</kbd><kbd>J</kbd>).
 
 Design: aspetto, riempimento, contorno, effetti, tipografia, layout, esportazione.
 

@@ -17,8 +17,8 @@ Seleziona un nodo e usa la sezione Export nel pannello proprietà.
 
 | Metodo | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Scorciatoia tastiera | ⇧ ⌘ E | Shift + Ctrl + E |
-| Menu contestuale | Tasto destro → Esporta… | Tasto destro → Esporta… |
+| Scorciatoia tastiera | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>E</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>E</kbd> |
+| Menu contestuale | Tasto destro <kbd>→</kbd> Esporta… | Tasto destro <kbd>→</kbd> Esporta… |
 | Pannello proprietà | Pulsante "Esporta" | Pulsante "Esporta" |
 
 ## Copia come
@@ -29,16 +29,16 @@ Il menu contestuale **Copia come** offre formati aggiuntivi:
 |--------|-----|-----------------|
 | Copia come testo | — | — |
 | Copia come SVG | — | — |
-| Copia come PNG | ⇧ ⌘ C | Shift + Ctrl + C |
+| Copia come PNG | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>C</kbd> |
 | Copia come JSX | — | — |
 
 ## Operazioni file .fig
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Apri | ⌘ O | Ctrl + O |
-| Salva | ⌘ S | Ctrl + S |
-| Salva come | ⇧ ⌘ S | Shift + Ctrl + S |
+| Apri | <kbd>⌘</kbd><kbd>O</kbd> | <kbd>Ctrl</kbd> + <kbd>O</kbd> |
+| Salva | <kbd>⌘</kbd><kbd>S</kbd> | <kbd>Ctrl</kbd> + <kbd>S</kbd> |
+| Salva come | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 
 Compatibilità round-trip con Figma.
 

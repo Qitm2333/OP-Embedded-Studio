@@ -9,7 +9,7 @@ Das Stiftwerkzeug erstellt Vektorpfade mit einem Vektornetzwerk-Datenmodell, kom
 
 ## Aktivieren
 
-Drücken Sie **P**, um das Stiftwerkzeug zu aktivieren.
+Drücken Sie <kbd>P</kbd>, um das Stiftwerkzeug zu aktivieren.
 
 ## Punkte setzen
 
@@ -24,7 +24,7 @@ Klicken Sie auf den **ersten Punkt** des Pfades, um ihn zu einer Schleife zu sch
 
 ## Offene Pfade
 
-Drücken Sie **Escape**, um den aktuellen Pfad als offenen Pfad zu bestätigen. Offene Pfade werden nur als Konturen gerendert.
+Drücken Sie <kbd>Escape</kbd>, um den aktuellen Pfad als offenen Pfad zu bestätigen. Offene Pfade werden nur als Konturen gerendert.
 
 ## Vektornetzwerke
 

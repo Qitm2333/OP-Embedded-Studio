@@ -9,7 +9,7 @@ description: Apprenez à utiliser OpenPencil — navigation canvas, dessin, text
 OpenPencil est un éditeur de design open-source, compatible Figma — entièrement local, IA-natif et programmable.
 
 ::: tip Raccourcis multiplateforme
-**⌘** = Command (Ctrl sur Windows/Linux), **⌥** = Option (Alt), **⇧** = Shift.
+<kbd>⌘</kbd> = Command (Ctrl sur Windows/Linux), <kbd>⌥</kbd> = Option (Alt), <kbd>⇧</kbd> = Shift.
 :::
 
 ## Prise en main

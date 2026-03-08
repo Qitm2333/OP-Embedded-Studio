@@ -16,7 +16,7 @@ description: Créer des rectangles, ellipses, lignes, cadres et sections dans Op
 **Polygone** et **Étoile** dans le menu déroulant des formes.
 
 ## Dessin contraint
-**Shift** pendant le glissement : rectangle → carré, ellipse → cercle, ligne → 0°/45°/90°.
+<kbd>Shift</kbd> pendant le glissement : rectangle → carré, ellipse → cercle, ligne → 0°/45°/90°.
 
 ## Propriétés
 - **Remplissage** — couleur unie, dégradé (linéaire, radial, angulaire, diamant), image

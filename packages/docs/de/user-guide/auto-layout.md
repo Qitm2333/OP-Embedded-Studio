@@ -9,8 +9,8 @@ Auto-Layout verwendet Yoga (Flexbox-Engine), um Kinder automatisch innerhalb ein
 
 ## Auto-Layout aktivieren
 
-- Wählen Sie einen Frame und drücken Sie **⇧ A** (Shift + A), um Auto-Layout ein-/auszuschalten
-- Wählen Sie lose Knoten und drücken Sie **⇧ A**, um sie in einen neuen Auto-Layout-Frame zu wickeln
+- Wählen Sie einen Frame und drücken Sie <kbd>⇧</kbd><kbd>A</kbd> (<kbd>Shift</kbd> + <kbd>A</kbd>), um Auto-Layout ein-/auszuschalten
+- Wählen Sie lose Knoten und drücken Sie <kbd>⇧</kbd><kbd>A</kbd>, um sie in einen neuen Auto-Layout-Frame zu wickeln
 
 Beim Umschließen werden Knoten nach visueller Position sortiert.
 
@@ -60,7 +60,7 @@ Innerhalb eines Auto-Layout-Frames können Sie ein Kind ziehen, um es unter Gesc
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Auto-Layout umschalten | ⇧ A | Shift + A |
+| Auto-Layout umschalten | <kbd>⇧</kbd><kbd>A</kbd> | <kbd>Shift</kbd> + <kbd>A</kbd> |
 
 ## Tipps
 

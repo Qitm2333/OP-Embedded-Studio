@@ -26,7 +26,7 @@ Das Formen-Flyout enthält zusätzliche Formen:
 
 ## Proportionales Zeichnen
 
-Halten Sie **Shift** beim Ziehen:
+Halten Sie <kbd>Shift</kbd> beim Ziehen:
 
 - Rechteck → Quadrat
 - Ellipse → Kreis
@@ -76,4 +76,4 @@ Verfügbar für Rechtecke, Frames, Komponenten und Instanzen. Jede Ecke einzeln 
 | Linie | L | L |
 | Frame | F | F |
 | Sektion | S | S |
-| Quadrat/Kreis erzwingen | Shift + Ziehen | Shift + Ziehen |
+| Quadrat/Kreis erzwingen | <kbd>Shift</kbd> + <kbd>Ziehen</kbd> | <kbd>Shift</kbd> + <kbd>Ziehen</kbd> |

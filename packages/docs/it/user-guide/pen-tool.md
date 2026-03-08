@@ -15,7 +15,7 @@ description: Percorsi vettoriali con curve di Bézier in OpenPencil.
 Click the first point to close into a loop.
 
 ## Percorsi aperti
-**Escape** to commit as open path.
+<kbd>Escape</kbd> to commit as open path.
 
 ## Reti vettoriali
 Vector network data model, compatible with Figma `vectorNetworkBlob`.

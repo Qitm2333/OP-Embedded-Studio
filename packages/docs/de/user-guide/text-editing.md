@@ -9,7 +9,7 @@ Erstellen Sie Textknoten und bearbeiten Sie sie direkt auf dem Canvas mit voller
 
 ## Text erstellen
 
-Drücken Sie **T**, um das Textwerkzeug zu aktivieren, dann klicken Sie auf den Canvas. Ein leerer Textknoten erscheint mit blinkendem Cursor — tippen Sie sofort los.
+Drücken Sie <kbd>T</kbd>, um das Textwerkzeug zu aktivieren, dann klicken Sie auf den Canvas. Ein leerer Textknoten erscheint mit blinkendem Cursor — tippen Sie sofort los.
 
 ## Inline-Bearbeitung
 
@@ -19,12 +19,12 @@ Doppelklicken Sie auf einen vorhandenen Textknoten, um den Inline-Bearbeitungsmo
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Links/rechts | ← / → | ← / → |
-| Hoch/runter | ↑ / ↓ | ↑ / ↓ |
-| Wortweise | ⌥ ← / ⌥ → | Strg + ← / Strg + → |
-| Zeilenanfang/-ende | ⌘ ← / ⌘ → | Pos1 / Ende |
+| Links/rechts | <kbd>←</kbd> / <kbd>→</kbd> | <kbd>←</kbd> / <kbd>→</kbd> |
+| Hoch/runter | <kbd>↑</kbd> / <kbd>↓</kbd> | <kbd>↑</kbd> / <kbd>↓</kbd> |
+| Wortweise | <kbd>⌥</kbd><kbd>←</kbd> / <kbd>⌥</kbd><kbd>→</kbd> | Strg + <kbd>←</kbd> / Strg + <kbd>→</kbd> |
+| Zeilenanfang/-ende | <kbd>⌘</kbd><kbd>←</kbd> / <kbd>⌘</kbd><kbd>→</kbd> | Pos1 / Ende |
 
-Halten Sie **Shift** mit jeder Bewegungstaste, um die Auswahl zu erweitern.
+Halten Sie <kbd>Shift</kbd> mit jeder Bewegungstaste, um die Auswahl zu erweitern.
 
 ## Textauswahl
 
@@ -37,9 +37,9 @@ Halten Sie **Shift** mit jeder Bewegungstaste, um die Auswahl zu erweitern.
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Fett | ⌘ B | Strg + B |
-| Kursiv | ⌘ I | Strg + I |
-| Unterstrichen | ⌘ U | Strg + U |
+| Fett | <kbd>⌘</kbd><kbd>B</kbd> | Strg + B |
+| Kursiv | <kbd>⌘</kbd><kbd>I</kbd> | Strg + I |
+| Unterstrichen | <kbd>⌘</kbd><kbd>U</kbd> | Strg + U |
 
 Durchgestrichen ist über den **S**-Schalter im Typografie-Bereich verfügbar.
 
@@ -47,11 +47,11 @@ Durchgestrichen ist über den **S**-Schalter im Typografie-Bereich verfügbar.
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Wort vor Cursor löschen | ⌥ ⌫ | Strg + Rücktaste |
-| Bis Zeilenanfang löschen | ⌘ ⌫ | — |
-| Ausschneiden | ⌘ X | Strg + X |
-| Kopieren | ⌘ C | Strg + C |
-| Einfügen | ⌘ V | Strg + V |
+| Wort vor Cursor löschen | <kbd>⌥</kbd><kbd>⌫</kbd> | Strg + Rücktaste |
+| Bis Zeilenanfang löschen | <kbd>⌘</kbd><kbd>⌫</kbd> | — |
+| Ausschneiden | <kbd>⌘</kbd><kbd>X</kbd> | Strg + X |
+| Kopieren | <kbd>⌘</kbd><kbd>C</kbd> | Strg + C |
+| Einfügen | <kbd>⌘</kbd><kbd>V</kbd> | Strg + V |
 
 ## Schriftauswahl
 

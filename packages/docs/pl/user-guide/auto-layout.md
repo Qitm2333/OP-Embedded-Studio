@@ -4,7 +4,7 @@ description: Auto-layout oparty na flexbox w OpenPencil.
 ---
 # Auto-layout
 
-**⇧ A** aby włączyć/wyłączyć lub opakować zaznaczenie.
+<kbd>⇧</kbd><kbd>A</kbd> aby włączyć/wyłączyć lub opakować zaznaczenie.
 
 ## Kierunek
 - **Poziomy** — od lewej do prawej

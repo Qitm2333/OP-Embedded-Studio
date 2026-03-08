@@ -8,7 +8,7 @@ description: Creating and editing text with rich formatting, fonts, and inline e
 Create text nodes and edit them directly on the canvas with full rich text support.
 ## Creating Text
 
-Press **T** to activate the text tool, then click on the canvas. An empty text node appears with a blinking cursor — start typing immediately.
+Press <kbd>T</kbd> to activate the text tool, then click on the canvas. An empty text node appears with a blinking cursor — start typing immediately.
 
 ## Inline Editing
 
@@ -20,12 +20,12 @@ Text is rendered directly on the canvas using CanvasKit's Paragraph API — ther
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Move left/right | ← / → | ← / → |
-| Move up/down | ↑ / ↓ | ↑ / ↓ |
-| Move by word | ⌥ ← / ⌥ → | Ctrl + ← / Ctrl + → |
-| Move to line start/end | ⌘ ← / ⌘ → | Home / End |
+| Move left/right | <kbd>←</kbd> / <kbd>→</kbd> | <kbd>←</kbd> / <kbd>→</kbd> |
+| Move up/down | <kbd>↑</kbd> / <kbd>↓</kbd> | <kbd>↑</kbd> / <kbd>↓</kbd> |
+| Move by word | <kbd>⌥</kbd><kbd>←</kbd> / <kbd>⌥</kbd><kbd>→</kbd> | <kbd>Ctrl</kbd> + <kbd>←</kbd> / <kbd>Ctrl</kbd> + <kbd>→</kbd> |
+| Move to line start/end | <kbd>⌘</kbd><kbd>←</kbd> / <kbd>⌘</kbd><kbd>→</kbd> | <kbd>Home</kbd> / <kbd>End</kbd> |
 
-Hold **Shift** with any movement key to extend the selection.
+Hold <kbd>Shift</kbd> with any movement key to extend the selection.
 
 ## Text Selection
 
@@ -40,11 +40,11 @@ Apply formatting to selected text, or toggle the style for the entire node when 
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Bold | ⌘ B | Ctrl + B |
-| Italic | ⌘ I | Ctrl + I |
-| Underline | ⌘ U | Ctrl + U |
+| Bold | <kbd>⌘</kbd><kbd>B</kbd> | <kbd>Ctrl</kbd> + <kbd>B</kbd> |
+| Italic | <kbd>⌘</kbd><kbd>I</kbd> | <kbd>Ctrl</kbd> + <kbd>I</kbd> |
+| Underline | <kbd>⌘</kbd><kbd>U</kbd> | <kbd>Ctrl</kbd> + <kbd>U</kbd> |
 
-Strikethrough is available via the **S** toggle button in the Typography section of the properties panel (no keyboard shortcut — ⌘ S is used for Save).
+Strikethrough is available via the **S** toggle button in the Typography section of the properties panel (no keyboard shortcut — <kbd>⌘</kbd><kbd>S</kbd> is used for Save).
 
 Formatting is stored as style runs (per-character styles). When you type between a bold and regular segment, the new text inherits the style of the preceding segment.
 
@@ -54,11 +54,11 @@ The **B / I / U / S** toggle buttons in the Typography section of the properties
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Delete word before cursor | ⌥ ⌫ | Ctrl + Backspace |
-| Delete to line start | ⌘ ⌫ | — |
-| Cut | ⌘ X | Ctrl + X |
-| Copy | ⌘ C | Ctrl + C |
-| Paste | ⌘ V | Ctrl + V |
+| Delete word before cursor | <kbd>⌥</kbd><kbd>⌫</kbd> | <kbd>Ctrl</kbd> + <kbd>Backspace</kbd> |
+| Delete to line start | <kbd>⌘</kbd><kbd>⌫</kbd> | — |
+| Cut | <kbd>⌘</kbd><kbd>X</kbd> | <kbd>Ctrl</kbd> + <kbd>X</kbd> |
+| Copy | <kbd>⌘</kbd><kbd>C</kbd> | <kbd>Ctrl</kbd> + <kbd>C</kbd> |
+| Paste | <kbd>⌘</kbd><kbd>V</kbd> | <kbd>Ctrl</kbd> + <kbd>V</kbd> |
 
 ## Font Picker
 

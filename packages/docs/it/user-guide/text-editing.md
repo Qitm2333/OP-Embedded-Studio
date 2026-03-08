@@ -5,7 +5,7 @@ description: Creare e modificare testo con formattazione rich in OpenPencil.
 # Modifica testo
 
 ## Creare testo
-Premi **T**, poi clicca sul canvas. Inizia a digitare immediatamente.
+Premi <kbd>T</kbd>, poi clicca sul canvas. Inizia a digitare immediatamente.
 
 ## Modifica inline
 Doppio click su un nodo testo per entrare in modalità modifica. Clicca fuori per confermare.
@@ -13,19 +13,19 @@ Doppio click su un nodo testo per entrare in modalità modifica. Clicca fuori pe
 ## Navigazione cursore
 | Azione | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Sinistra/destra | ← / → | ← / → |
-| Su/giù | ↑ / ↓ | ↑ / ↓ |
-| Per parola | ⌥ ← / ⌥ → | Ctrl + ← / Ctrl + → |
-| Inizio/fine riga | ⌘ ← / ⌘ → | Home / End |
+| Sinistra/destra | <kbd>←</kbd> / <kbd>→</kbd> | <kbd>←</kbd> / <kbd>→</kbd> |
+| Su/giù | <kbd>↑</kbd> / <kbd>↓</kbd> | <kbd>↑</kbd> / <kbd>↓</kbd> |
+| Per parola | <kbd>⌥</kbd><kbd>←</kbd> / <kbd>⌥</kbd><kbd>→</kbd> | <kbd>Ctrl</kbd> + <kbd>←</kbd> / <kbd>Ctrl</kbd> + <kbd>→</kbd> |
+| Inizio/fine riga | <kbd>⌘</kbd><kbd>←</kbd> / <kbd>⌘</kbd><kbd>→</kbd> | <kbd>Home</kbd> / <kbd>End</kbd> |
 
-**Shift** estende la selezione.
+<kbd>Shift</kbd> estende la selezione.
 
 ## Formattazione rich text
 | Azione | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Grassetto | ⌘ B | Ctrl + B |
-| Corsivo | ⌘ I | Ctrl + I |
-| Sottolineato | ⌘ U | Ctrl + U |
+| Grassetto | <kbd>⌘</kbd><kbd>B</kbd> | <kbd>Ctrl</kbd> + <kbd>B</kbd> |
+| Corsivo | <kbd>⌘</kbd><kbd>I</kbd> | <kbd>Ctrl</kbd> + <kbd>I</kbd> |
+| Sottolineato | <kbd>⌘</kbd><kbd>U</kbd> | <kbd>Ctrl</kbd> + <kbd>U</kbd> |
 
 ## Selettore font
 Ricerca, anteprima e scroll virtuale. Font di sistema su desktop (Tauri), Local Font Access API nel browser.

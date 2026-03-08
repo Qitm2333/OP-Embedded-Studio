@@ -16,7 +16,7 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 | Panneau des calques (barre latérale gauche) | ✅ | Vue en arbre avec expansion/réduction, réordonnancement par glissement, toggle de visibilité ; largeur redimensionnable |
 | Panneau des pages | ✅ | Ajouter, supprimer, renommer des pages ; état viewport par page |
 | Panneau de propriétés (barre latérale droite) | ✅ | Sections : Apparence, Remplissage, Contour, Effets, Typographie, Layout, Position ; largeur redimensionnable |
-| Zoom et défilement | ✅ | Ctrl+scroll, pinch, ⌘+/⌘−/⌘0, espace+glisser, souris milieu, outil main (H) |
+| Zoom et défilement | ✅ | <kbd>Ctrl</kbd> + scroll, pinch, <kbd>⌘</kbd><kbd>+</kbd> / <kbd>⌘</kbd><kbd>−</kbd> / <kbd>⌘</kbd><kbd>0</kbd>, espace+glisser, souris milieu, outil main (H) |
 | Règles du canevas | ✅ | Règles haut/gauche avec bandes de sélection et badges de coordonnées |
 | Couleur de fond du canevas | ✅ | Fond par page via le panneau de propriétés |
 | Guides du canevas | 🔲 | Figma supporte des guides glissables depuis les règles |
@@ -36,7 +36,7 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 |---------------|--------|-------|
 | Outils de forme (Rectangle, Ellipse, Ligne, Polygone, Étoile) | ✅ | Tous les types de forme de base ; côtés du polygone et rayon intérieur de l'étoile configurables |
 | Frames | ✅ | Découpe du contenu, système de coordonnées indépendant |
-| Groupes | ✅ | ⌘G pour grouper, ⇧⌘G pour dégrouper |
+| Groupes | ✅ | <kbd>⌘</kbd><kbd>G</kbd> pour grouper, <kbd>⇧</kbd><kbd>⌘</kbd><kbd>G</kbd> pour dégrouper |
 | Sections | ✅ | Pilules de titre, auto-adoption des nœuds superposés, texte adaptatif à la luminance |
 | Outil arc (arcs, demi-cercles, anneaux) | ✅ | arcData avec angle début/fin et rayon intérieur |
 | Outil crayon (main levée) | 🔲 | Outil de dessin à main levée de Figma |
@@ -46,8 +46,8 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 | Alignement et position | ✅ | Position, rotation, dimensions dans le panneau |
 | Copier et coller des objets | ✅ | Presse-papiers standard + format binaire Kiwi de Figma |
 | Mettre à l'échelle proportionnellement | 🟡 | Shift-redimensionner contraint les proportions ; pas d'outil Scale dédié (K) |
-| Verrouiller et déverrouiller des calques | ✅ | ⇧⌘L toggle le verrouillage |
-| Basculer la visibilité | ✅ | Icône œil dans le panneau + raccourci ⇧⌘H |
+| Verrouiller et déverrouiller des calques | ✅ | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd> toggle le verrouillage |
+| Basculer la visibilité | ✅ | Icône œil dans le panneau + raccourci <kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd> |
 | Renommer des calques | ✅ | Double-clic renommage inline ; Entrée/Échap/clic pour valider |
 | Mettre au premier plan / Envoyer en arrière | ✅ | Raccourcis ] et [ ; aussi dans le menu contextuel |
 | Déplacer vers une page | ✅ | Déplacer les nœuds entre pages via menu contextuel |
@@ -79,7 +79,7 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 
 | Fonctionnalité | Statut | Notes |
 |---------------|--------|-------|
-| Outil texte et édition en ligne | ✅ | Édition native sur canevas, textarea phantom, style runs (⌘B/I/U, bouton S) |
+| Outil texte et édition en ligne | ✅ | Édition native sur canevas, textarea phantom, style runs (<kbd>⌘</kbd><kbd>B</kbd> / <kbd>I</kbd> / <kbd>U</kbd>, bouton S) |
 | Rendu de texte (Paragraph API) | ✅ | CanvasKit Paragraph pour le façonnage, les sauts de ligne, les métriques |
 | Chargement de polices (polices système) | ✅ | Inter par défaut, font-kit dans Tauri avec cache OnceLock, queryLocalFonts dans le navigateur |
 | Famille et graisse de police | ✅ | FontPicker avec défilement virtuel, recherche, aperçu CSS |
@@ -138,7 +138,7 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 | Fonctionnalité | Statut | Notes |
 |---------------|--------|-------|
 | Flux horizontal et vertical | ✅ | Moteur flexbox Yoga WASM |
-| Basculer auto layout (⇧A) | ✅ | Basculer sur un frame ou envelopper la sélection |
+| Basculer auto layout (<kbd>⇧</kbd><kbd>A</kbd>) | ✅ | Basculer sur un frame ou envelopper la sélection |
 | Gap (espacement entre enfants) | ✅ | Configurable dans le panneau de propriétés |
 | Padding (uniforme et par côté) | ✅ | Les quatre côtés indépendamment |
 | Justify content | ✅ | Start, center, end, space-between |
@@ -154,8 +154,8 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 
 | Fonctionnalité | Statut | Notes |
 |---------------|--------|-------|
-| Créer des composants | 🟡 | ⌥⌘K crée depuis frame/groupe ; pas d'UI de propriétés de composant encore |
-| Ensembles de composants | 🟡 | ⇧⌘K combine des composants ; bordure pointillée violette ; pas d'édition de propriétés de variante |
+| Créer des composants | 🟡 | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> crée depuis frame/groupe ; pas d'UI de propriétés de composant encore |
+| Ensembles de composants | 🟡 | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> combine des composants ; bordure pointillée violette ; pas d'édition de propriétés de variante |
 | Instances de composants | 🟡 | Créer instance depuis menu contextuel ; sync en direct ; pas d'UI d'édition de surcharges |
 | Variantes | 🔲 | Changement de variante et sélection par propriétés |
 | Propriétés de composant | 🔲 | Propriétés booléennes, texte, échange d'instance |
@@ -164,7 +164,7 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 | Collections et modes de variables | 🟡 | Collections, modes, changement activeMode fonctionnent ; pas d'UI de thématisation |
 | Styles (couleur, texte, effet, layout) | 🔲 | Presets de style réutilisables nommés |
 | Bibliothèques (publier, partager, mettre à jour) | 🔲 | Bibliothèques partagées de composants/styles |
-| Détacher une instance | ✅ | ⌥⌘B convertit une instance en frame |
+| Détacher une instance | ✅ | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> convertit une instance en frame |
 | Aller au composant principal | ✅ | Naviguer vers le composant source, cross-page |
 
 ## Prototypage
@@ -189,7 +189,7 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 |---------------|--------|-------|
 | Import de fichier .fig | ✅ | Codec Kiwi complet : 194 définitions, ~390 champs par NodeChange |
 | Export de fichier .fig | ✅ | Encodage Kiwi + compression Zstd + génération de miniature |
-| Enregistrer / Enregistrer sous | ✅ | ⌘S / ⇧⌘S ; dialogues natifs (Tauri), File System Access API (Chrome/Edge), téléchargement (Safari) |
+| Enregistrer / Enregistrer sous | ✅ | <kbd>⌘</kbd><kbd>S</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> ; dialogues natifs (Tauri), File System Access API (Chrome/Edge), téléchargement (Safari) |
 | Presse-papiers Figma (coller) | ✅ | Décoder binaire Kiwi du presse-papiers Figma |
 | Presse-papiers Figma (copier) | ✅ | Encoder binaire Kiwi lisible par Figma |
 | Import de fichier Sketch | 🔲 | Analyse de fichiers .sketch |

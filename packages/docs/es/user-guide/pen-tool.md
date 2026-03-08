@@ -15,7 +15,7 @@ description: Trazados vectoriales con curvas de Bézier in OpenPencil.
 Click the first point to close into a loop.
 
 ## Trazados abiertos
-**Escape** to commit as open path.
+<kbd>Escape</kbd> to commit as open path.
 
 ## Redes vectoriales
 Vector network data model, compatible with Figma `vectorNetworkBlob`.

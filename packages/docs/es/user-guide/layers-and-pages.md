@@ -16,7 +16,7 @@ description: Gestionar capas, páginas y panel de propiedades en OpenPencil.
 Cada página tiene su propio estado de viewport.
 
 ## Panel de propiedades
-Tres pestañas: **Diseño** (propiedades contextuales), **Código** (JSX / Tailwind CSS v4), **IA** (chat ⌘ J).
+Tres pestañas: **Diseño** (propiedades contextuales), **Código** (JSX / Tailwind CSS v4), **IA** (chat <kbd>⌘</kbd><kbd>J</kbd>).
 
 Diseño: apariencia, relleno, trazo, efectos, tipografía, layout, exportación.
 

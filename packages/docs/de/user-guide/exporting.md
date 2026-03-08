@@ -23,8 +23,8 @@ Sie können mehrere Export-Einstellungen hinzufügen. Eine Live-Vorschau mit Sch
 
 | Methode | Mac | Windows / Linux |
 |---------|-----|-----------------|
-| Tastenkürzel | ⇧ ⌘ E | Shift + Strg + E |
-| Kontextmenü | Rechtsklick → Exportieren… | Rechtsklick → Exportieren… |
+| Tastenkürzel | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>E</kbd> | <kbd>Shift</kbd> + <kbd>Strg</kbd> + E |
+| Kontextmenü | Rechtsklick <kbd>→</kbd> Exportieren… | Rechtsklick <kbd>→</kbd> Exportieren… |
 | Eigenschaftspanel | Klick auf „Exportieren" | Klick auf „Exportieren" |
 
 ## Als kopieren
@@ -35,7 +35,7 @@ Das Kontextmenü bietet **Als kopieren** mit mehreren Zwischenablage-Formaten:
 |--------|-----|-----------------|
 | Als Text kopieren | — | — |
 | Als SVG kopieren | — | — |
-| Als PNG kopieren | ⇧ ⌘ C | Shift + Strg + C |
+| Als PNG kopieren | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> | <kbd>Shift</kbd> + <kbd>Strg</kbd> + C |
 | Als JSX kopieren | — | — |
 
 ## .fig-Dateioperationen
@@ -46,14 +46,14 @@ OpenPencil verwendet das .fig-Format — dasselbe Binärformat wie Figma.
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Datei öffnen | ⌘ O | Strg + O |
+| Datei öffnen | <kbd>⌘</kbd><kbd>O</kbd> | Strg + O |
 
 ### Dateien speichern
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Speichern | ⌘ S | Strg + S |
-| Speichern unter | ⇧ ⌘ S | Shift + Strg + S |
+| Speichern | <kbd>⌘</kbd><kbd>S</kbd> | Strg + S |
+| Speichern unter | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> | <kbd>Shift</kbd> + <kbd>Strg</kbd> + S |
 
 - **Speichern** überschreibt die aktuelle Datei ohne Dialog
 - **Speichern unter** öffnet einen Speicherdialog
@@ -66,11 +66,11 @@ Aus OpenPencil exportierte Dateien können in Figma geöffnet werden und umgekeh
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Auswahl exportieren | ⇧ ⌘ E | Shift + Strg + E |
-| Als PNG kopieren | ⇧ ⌘ C | Shift + Strg + C |
-| Datei öffnen | ⌘ O | Strg + O |
-| Speichern | ⌘ S | Strg + S |
-| Speichern unter | ⇧ ⌘ S | Shift + Strg + S |
+| Auswahl exportieren | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>E</kbd> | <kbd>Shift</kbd> + <kbd>Strg</kbd> + E |
+| Als PNG kopieren | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> | <kbd>Shift</kbd> + <kbd>Strg</kbd> + C |
+| Datei öffnen | <kbd>⌘</kbd><kbd>O</kbd> | Strg + O |
+| Speichern | <kbd>⌘</kbd><kbd>S</kbd> | Strg + S |
+| Speichern unter | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> | <kbd>Shift</kbd> + <kbd>Strg</kbd> + S |
 
 ## Tipps
 

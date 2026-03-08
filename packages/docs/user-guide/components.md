@@ -8,7 +8,7 @@ description: Creating reusable components, instances, component sets, overrides,
 Components are reusable design elements. Edit the main component and all its instances update automatically.
 ## Creating a Component
 
-Select a frame or group and press **⌥ ⌘ K** (Ctrl + Alt + K). The node converts to a COMPONENT type in place.
+Select a frame or group and press <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd>). The node converts to a COMPONENT type in place.
 
 If you select multiple nodes, they're wrapped in a new component positioned at their bounding box.
 
@@ -16,7 +16,7 @@ Components display a purple label with a diamond icon above them.
 
 ## Component Sets
 
-Select two or more components and press **⇧ ⌘ K** (Shift + Ctrl + K) to combine them into a component set — a container with a dashed purple border and 40 px padding around its children. Component sets are useful for grouping variants (e.g., button states).
+Select two or more components and press <kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> (<kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>K</kbd>) to combine them into a component set — a container with a dashed purple border and 40 px padding around its children. Component sets are useful for grouping variants (e.g., button states).
 
 ## Creating Instances
 
@@ -26,7 +26,7 @@ Instance creation is available only through the context menu — there's no tool
 
 ## Detaching an Instance
 
-Select an instance and press **⌥ ⌘ B** (Ctrl + Alt + B) to detach it. The instance becomes a regular frame with no link to the original component. All overrides are baked in.
+Select an instance and press <kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> (<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>B</kbd>) to detach it. The instance becomes a regular frame with no link to the original component. All overrides are baked in.
 
 ## Go to Main Component
 
@@ -74,9 +74,9 @@ Components and instances are opaque containers — clicking on a child selects t
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Create component | ⌥ ⌘ K | Ctrl + Alt + K |
-| Create component set | ⇧ ⌘ K | Shift + Ctrl + K |
-| Detach instance | ⌥ ⌘ B | Ctrl + Alt + B |
+| Create component | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> | <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd> |
+| Create component set | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>K</kbd> |
+| Detach instance | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> | <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>B</kbd> |
 
 ## Tips
 

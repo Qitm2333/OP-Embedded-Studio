@@ -17,8 +17,8 @@ Sélectionnez un nœud et utilisez la section Export dans le panneau de proprié
 
 | Méthode | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Raccourci clavier | ⇧ ⌘ E | Shift + Ctrl + E |
-| Menu contextuel | Clic droit → Exporter… | Clic droit → Exporter… |
+| Raccourci clavier | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>E</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>E</kbd> |
+| Menu contextuel | Clic droit <kbd>→</kbd> Exporter… | Clic droit <kbd>→</kbd> Exporter… |
 | Panneau propriétés | Bouton "Exporter" | Bouton "Exporter" |
 
 ## Copier en tant que
@@ -29,16 +29,16 @@ Le menu contextuel **Copier en tant que** offre des formats supplémentaires :
 |--------|-----|-----------------|
 | Copier en tant que texte | — | — |
 | Copier en tant que SVG | — | — |
-| Copier en tant que PNG | ⇧ ⌘ C | Shift + Ctrl + C |
+| Copier en tant que PNG | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>C</kbd> |
 | Copier en tant que JSX | — | — |
 
 ## Opérations de fichier .fig
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Ouvrir | ⌘ O | Ctrl + O |
-| Enregistrer | ⌘ S | Ctrl + S |
-| Enregistrer sous | ⇧ ⌘ S | Shift + Ctrl + S |
+| Ouvrir | <kbd>⌘</kbd><kbd>O</kbd> | <kbd>Ctrl</kbd> + <kbd>O</kbd> |
+| Enregistrer | <kbd>⌘</kbd><kbd>S</kbd> | <kbd>Ctrl</kbd> + <kbd>S</kbd> |
+| Enregistrer sous | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 
 Compatibilité aller-retour avec Figma.
 

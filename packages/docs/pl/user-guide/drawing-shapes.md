@@ -16,7 +16,7 @@ description: Tworzenie prostokątów, elips, linii, ramek i sekcji w OpenPencil.
 **Wielokąt** i **Gwiazda** w menu rozwijanym kształtów.
 
 ## Rysowanie z ograniczeniami
-**Shift** podczas przeciągania: prostokąt → kwadrat, elipsa → koło, linia → 0°/45°/90°.
+<kbd>Shift</kbd> podczas przeciągania: prostokąt → kwadrat, elipsa → koło, linia → 0°/45°/90°.
 
 ## Właściwości
 - **Wypełnienie** — kolor, gradient (liniowy, radialny, kątowy, diamentowy), obraz

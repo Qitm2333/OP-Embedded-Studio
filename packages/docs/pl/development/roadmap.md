@@ -24,7 +24,7 @@ Komponenty, instancje, nadpisania, zestawy komponentów, zmienne (COLOR/FLOAT/ST
 - @open-pencil/core wyodrębniony do packages/core/ (zero zależności DOM)
 - @open-pencil/cli z headless operacjami .fig (info, tree, find, export, analyze, eval)
 - Polecenie `eval` z API Plugin kompatybilnym z Figmą
-- Chat AI: bezpośrednie połączenie OpenRouter, 87 narzędzi w `packages/core/src/tools/`, ⌘J
+- Chat AI: bezpośrednie połączenie OpenRouter, 87 narzędzi w `packages/core/src/tools/`, <kbd>⌘</kbd><kbd>J</kbd>
 - 49 dodatkowych narzędzi AI/MCP przeniesionych z figma-use (75 łącznie)
 - Serwer MCP (@open-pencil/mcp): stdio + HTTP, 87 narzędzi core + 3 zarządzanie plikami
 - Ujednolicone definicje narzędzi: zdefiniuj raz w `packages/core/src/tools/`, adaptuj dla chatu AI (valibot), MCP (zod), CLI (eval)
@@ -44,7 +44,7 @@ Komponenty, instancje, nadpisania, zestawy komponentów, zmienne (COLOR/FLOAT/ST
 - Tryb śledzenia: klik na avatar peera aby śledzić viewport
 - Lokalna persystencja przez y-indexeddb
 - Renderowanie efektów: cień rzucany, cień wewnętrzny, rozmycie warstwy/tła/pierwszego planu
-- Karty multi-plikowe: ⌘N/⌘T nowa karta, ⌘W zamknij, ⌘O otwórz
+- Karty multi-plikowe: <kbd>⌘</kbd><kbd>N</kbd>/<kbd>⌘</kbd><kbd>T</kbd> nowa karta, <kbd>⌘</kbd><kbd>W</kbd> zamknij, <kbd>⌘</kbd><kbd>O</kbd> otwórz
 - Podpisywanie kodu Apple i notaryzacja dla macOS
 - Buildy Linux (x64) dodane do CI
 - Strona dokumentacji VitePress z i18n (6 języków)

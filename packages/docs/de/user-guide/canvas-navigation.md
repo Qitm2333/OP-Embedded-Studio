@@ -17,13 +17,13 @@ Verschieben Sie den sichtbaren Bereich des Canvas, ohne Objekte zu beeinflussen.
 
 ## Handwerkzeug
 
-Drücken Sie **H**, um das Handwerkzeug für kontinuierliches Schwenken zu aktivieren. Jedes Ziehen auf dem Canvas schwenkt den Viewport, ohne die Leertaste halten zu müssen. Wechseln Sie zu einem anderen Werkzeug (z.B. **V** für Auswahl), um zu deaktivieren.
+Drücken Sie <kbd>H</kbd>, um das Handwerkzeug für kontinuierliches Schwenken zu aktivieren. Jedes Ziehen auf dem Canvas schwenkt den Viewport, ohne die Leertaste halten zu müssen. Wechseln Sie zu einem anderen Werkzeug (z.B. <kbd>V</kbd> für Auswahl), um zu deaktivieren.
 
 ## Zoomen
 
 Hinein- und Herauszoomen, zentriert auf Ihre Cursorposition.
 
-- **Strg + Scrollen** (oder **⌘ + Scrollen** auf Mac) — nach oben scrollen zum Hineinzoomen, nach unten zum Herauszoomen
+- <kbd>Strg</kbd> + Scrollen (oder <kbd>⌘</kbd> + Scrollen auf Mac) — nach oben scrollen zum Hineinzoomen, nach unten zum Herauszoomen
 - **Pinch-Geste** — auf dem Trackpad zusammenziehen zum Zoomen
 - **Tastenkürzel** — siehe Tabelle unten
 
@@ -33,9 +33,9 @@ Hinein- und Herauszoomen, zentriert auf Ihre Cursorposition.
 |--------|-----|-----------------|
 | Schwenken | Leertaste + Ziehen | Leertaste + Ziehen |
 | Handwerkzeug | H | H |
-| Hineinzoomen | ⌘ + | Strg + + |
-| Herauszoomen | ⌘ - | Strg + - |
-| Zoom auf 100% | ⌘ 0 | Strg + 0 |
+| Hineinzoomen | <kbd>⌘</kbd><kbd>+</kbd> | <kbd>Strg</kbd> + <kbd>+</kbd> |
+| Herauszoomen | <kbd>⌘</kbd><kbd>−</kbd> | <kbd>Strg</kbd> + <kbd>−</kbd> |
+| Zoom auf 100% | <kbd>⌘</kbd><kbd>0</kbd> | Strg + 0 |
 
 ## Tipps
 

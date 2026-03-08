@@ -16,7 +16,7 @@ Comparación característica por característica de las capacidades de Figma Des
 | Panel de capas (barra lateral izquierda) | ✅ | Vista de árbol con expandir/colapsar, reordenamiento por arrastre, toggle de visibilidad; ancho redimensionable |
 | Panel de páginas | ✅ | Añadir, eliminar, renombrar páginas; estado de viewport por página |
 | Panel de propiedades (barra lateral derecha) | ✅ | Secciones: Apariencia, Relleno, Trazo, Efectos, Tipografía, Layout, Posición; ancho redimensionable |
-| Zoom y pan | ✅ | Ctrl+scroll, pinch, ⌘+/⌘−/⌘0, espacio+arrastrar, ratón medio, herramienta mano (H) |
+| Zoom y pan | ✅ | <kbd>Ctrl</kbd> + scroll, pinch, <kbd>⌘</kbd><kbd>+</kbd> / <kbd>⌘</kbd><kbd>−</kbd> / <kbd>⌘</kbd><kbd>0</kbd>, espacio+arrastrar, ratón medio, herramienta mano (H) |
 | Reglas del canvas | ✅ | Reglas superior/izquierda con bandas de selección y badges de coordenadas |
 | Color de fondo del canvas | ✅ | Fondo por página vía panel de propiedades |
 | Guías del canvas | 🔲 | Figma soporta guías arrastrables desde las reglas |
@@ -36,7 +36,7 @@ Comparación característica por característica de las capacidades de Figma Des
 |---------------|--------|-------|
 | Herramientas de forma (Rectángulo, Elipse, Línea, Polígono, Estrella) | ✅ | Todos los tipos de forma básicos; lados del polígono y radio interior de estrella configurables |
 | Frames | ✅ | Recorte de contenido, sistema de coordenadas independiente |
-| Grupos | ✅ | ⌘G para agrupar, ⇧⌘G para desagrupar |
+| Grupos | ✅ | <kbd>⌘</kbd><kbd>G</kbd> para agrupar, <kbd>⇧</kbd><kbd>⌘</kbd><kbd>G</kbd> para desagrupar |
 | Secciones | ✅ | Píldoras de título, auto-adopción de nodos superpuestos, texto adaptativo a luminancia |
 | Herramienta de arco (arcos, semicírculos, anillos) | ✅ | arcData con ángulo inicio/fin y radio interior |
 | Herramienta de lápiz (mano alzada) | 🔲 | Herramienta de dibujo a mano alzada de Figma |
@@ -46,9 +46,9 @@ Comparación característica por característica de las capacidades de Figma Des
 | Alineación y posición | ✅ | Posición, rotación, dimensiones en el panel de propiedades |
 | Copiar y pegar objetos | ✅ | Portapapeles estándar + formato binario Kiwi de Figma |
 | Escalar capas proporcionalmente | 🟡 | Shift-redimensionar mantiene proporciones; sin herramienta Scale dedicada (K) |
-| Bloquear y desbloquear capas | ✅ | ⇧⌘L alterna bloqueo; nodos bloqueados no se pueden seleccionar/mover |
-| Alternar visibilidad de capa | ✅ | Icono de ojo en panel de capas + atajo ⇧⌘H |
-| Renombrar capas | ✅ | Doble clic para renombrar inline; Enter/Escape/clic para confirmar |
+| Bloquear y desbloquear capas | ✅ | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd> alterna bloqueo; nodos bloqueados no se pueden seleccionar/mover |
+| Alternar visibilidad de capa | ✅ | Icono de ojo en panel de capas + atajo <kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd> |
+| Renombrar capas | ✅ | Doble clic para renombrar inline; <kbd>Enter</kbd>/<kbd>Escape</kbd>/clic para confirmar |
 | Traer al frente / Enviar al fondo | ✅ | Atajos ] y [; también en menú contextual |
 | Mover a página | ✅ | Mover nodos entre páginas vía menú contextual |
 | Restricciones (redimensionamiento responsivo) | 🔲 | Fijar bordes/centro para comportamiento de resize del padre |
@@ -79,7 +79,7 @@ Comparación característica por característica de las capacidades de Figma Des
 
 | Característica | Estado | Notas |
 |---------------|--------|-------|
-| Herramienta de texto y edición inline | ✅ | Edición nativa en canvas, textarea fantasma, cursor/selección/selección de palabra, arrastre, doble/triple clic, style runs (⌘B/I/U, botón S) |
+| Herramienta de texto y edición inline | ✅ | Edición nativa en canvas, textarea fantasma, cursor/selección/selección de palabra, arrastre, doble/triple clic, style runs (<kbd>⌘</kbd><kbd>B</kbd> / <kbd>I</kbd> / <kbd>U</kbd>, botón S) |
 | Renderizado de texto (Paragraph API) | ✅ | CanvasKit Paragraph para shaping, saltos de línea, métricas |
 | Carga de fuentes (fuentes del sistema) | ✅ | Inter por defecto, font-kit en Tauri con cache OnceLock, queryLocalFonts en navegador |
 | Familia y peso de fuente | ✅ | FontPicker con scroll virtual, búsqueda, vista previa CSS |
@@ -138,7 +138,7 @@ Comparación característica por característica de las capacidades de Figma Des
 | Característica | Estado | Notas |
 |---------------|--------|-------|
 | Flujo horizontal y vertical | ✅ | Motor flexbox Yoga WASM |
-| Alternar auto layout (⇧A) | ✅ | Alternar en frame o envolver selección |
+| Alternar auto layout (<kbd>⇧</kbd><kbd>A</kbd>) | ✅ | Alternar en frame o envolver selección |
 | Gap (espaciado entre hijos) | ✅ | Configurable en panel de propiedades |
 | Padding (uniforme y por lado) | ✅ | Los cuatro lados independientemente |
 | Justify content | ✅ | Start, center, end, space-between |
@@ -154,8 +154,8 @@ Comparación característica por característica de las capacidades de Figma Des
 
 | Característica | Estado | Notas |
 |---------------|--------|-------|
-| Crear componentes | 🟡 | ⌥⌘K crea desde frame/grupo o envuelve selección; sin UI de propiedades de componente aún |
-| Conjuntos de componentes | 🟡 | ⇧⌘K combina componentes; borde punteado púrpura; sin edición de propiedades de variante |
+| Crear componentes | 🟡 | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> crea desde frame/grupo o envuelve selección; sin UI de propiedades de componente aún |
+| Conjuntos de componentes | 🟡 | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> combina componentes; borde punteado púrpura; sin edición de propiedades de variante |
 | Instancias de componentes | 🟡 | Crear instancia desde menú contextual con clonación de hijos y mapeo componentId; sync en vivo; sin UI de edición de overrides |
 | Variantes | 🔲 | Cambio de variante y selección por propiedades |
 | Propiedades de componente | 🔲 | Propiedades booleanas, texto, intercambio de instancia |
@@ -164,7 +164,7 @@ Comparación característica por característica de las capacidades de Figma Des
 | Colecciones y modos de variables | 🟡 | Colecciones, modos, cambio activeMode funcionan; sin UI de theming por variable |
 | Estilos (color, texto, efecto, layout) | 🔲 | Presets de estilo reutilizables con nombre |
 | Bibliotecas (publicar, compartir, actualizar) | 🔲 | Bibliotecas compartidas de componentes/estilos |
-| Desacoplar instancia | ✅ | ⌥⌘B convierte instancia en frame |
+| Desacoplar instancia | ✅ | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> convierte instancia en frame |
 | Ir al componente principal | ✅ | Navegar al componente fuente, cross-page |
 
 ## Prototipado
@@ -189,7 +189,7 @@ Comparación característica por característica de las capacidades de Figma Des
 |---------------|--------|-------|
 | Import de archivo .fig | ✅ | Codec Kiwi completo: 194 definiciones, ~390 campos por NodeChange |
 | Export de archivo .fig | ✅ | Codificación Kiwi + compresión Zstd + generación de miniatura |
-| Guardar / Guardar como | ✅ | ⌘S / ⇧⌘S; diálogos nativos (Tauri), File System Access API (Chrome/Edge), fallback de descarga (Safari) |
+| Guardar / Guardar como | ✅ | <kbd>⌘</kbd><kbd>S</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>; diálogos nativos (Tauri), File System Access API (Chrome/Edge), fallback de descarga (Safari) |
 | Portapapeles de Figma (pegar) | ✅ | Decodificar binario Kiwi del portapapeles de Figma |
 | Portapapeles de Figma (copiar) | ✅ | Codificar binario Kiwi que Figma puede leer |
 | Import de archivo Sketch | 🔲 | Parseo de archivos .sketch |

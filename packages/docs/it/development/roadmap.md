@@ -24,7 +24,7 @@ Componenti, istanze, override, set di componenti, variabili (COLOR/FLOAT/STRING/
 - @open-pencil/core estratto in packages/core/ (nessuna dipendenza DOM)
 - @open-pencil/cli con operazioni headless .fig (info, tree, find, export, analyze, eval)
 - Comando `eval` con API Plugin compatibile Figma
-- Chat IA: connessione diretta OpenRouter, 87 strumenti in `packages/core/src/tools/`, ⌘J
+- Chat IA: connessione diretta OpenRouter, 87 strumenti in `packages/core/src/tools/`, <kbd>⌘</kbd><kbd>J</kbd>
 - 49 strumenti IA/MCP aggiuntivi portati da figma-use (75 in totale)
 - Server MCP (@open-pencil/mcp): stdio + HTTP, 87 strumenti core + 3 gestione file
 - Definizioni strumenti unificate: definire una volta in `packages/core/src/tools/`, adattare per chat IA (valibot), MCP (zod), CLI (eval)
@@ -44,7 +44,7 @@ Componenti, istanze, override, set di componenti, variabili (COLOR/FLOAT/STRING/
 - Modalità segui: clic sull'avatar di un peer per seguire il suo viewport
 - Persistenza locale via y-indexeddb
 - Rendering effetti: ombra portata, ombra interna, sfocatura livello/sfondo/primo piano
-- Schede multi-file: ⌘N/⌘T nuova scheda, ⌘W chiudi, ⌘O apri
+- Schede multi-file: <kbd>⌘</kbd><kbd>N</kbd>/<kbd>⌘</kbd><kbd>T</kbd> nuova scheda, <kbd>⌘</kbd><kbd>W</kbd> chiudi, <kbd>⌘</kbd><kbd>O</kbd> apri
 - Firma codice Apple e notarizzazione per macOS
 - Build Linux (x64) aggiunti al CI
 - Sito documentazione VitePress con i18n (6 lingue)

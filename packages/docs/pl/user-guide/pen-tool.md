@@ -15,7 +15,7 @@ description: Ścieżki wektorowe z krzywymi Béziera in OpenPencil.
 Click the first point to close into a loop.
 
 ## Otwarte ścieżki
-**Escape** to commit as open path.
+<kbd>Escape</kbd> to commit as open path.
 
 ## Sieci wektorowe
 Vector network data model, compatible with Figma `vectorNetworkBlob`.

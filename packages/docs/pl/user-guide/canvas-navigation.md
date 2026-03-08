@@ -15,17 +15,17 @@ Płótno to Twoja nieskończona przestrzeń robocza.
 
 ## Narzędzie rączka
 
-Naciśnij **H**, aby aktywować narzędzie rączka. Przełącz na inne narzędzie (np. **V**), aby dezaktywować.
+Naciśnij <kbd>H</kbd>, aby aktywować narzędzie rączka. Przełącz na inne narzędzie (np. **V**), aby dezaktywować.
 
 ## Powiększanie
 
-- **Ctrl + scroll** (lub **⌘ + scroll** na Mac) — powiększanie/pomniejszanie
+- <kbd>Ctrl</kbd> + scroll (lub <kbd>⌘</kbd> + scroll na Mac) — powiększanie/pomniejszanie
 - **Gest szczypania** — szczyp na trackpadzie
 
 | Akcja | Mac | Windows / Linux |
 |-------|-----|-----------------|
 | Przesuwanie | Spacja + przeciąganie | Spacja + przeciąganie |
 | Narzędzie rączka | H | H |
-| Powiększ | ⌘ + | Ctrl + + |
-| Pomniejsz | ⌘ - | Ctrl + - |
-| Zoom 100% | ⌘ 0 | Ctrl + 0 |
+| Powiększ | <kbd>⌘</kbd><kbd>+</kbd> | <kbd>Ctrl</kbd> + <kbd>+</kbd> |
+| Pomniejsz | <kbd>⌘</kbd><kbd>−</kbd> | <kbd>Ctrl</kbd> + <kbd>−</kbd> |
+| Zoom 100% | <kbd>⌘</kbd><kbd>0</kbd> | <kbd>Ctrl</kbd> + <kbd>0</kbd> |

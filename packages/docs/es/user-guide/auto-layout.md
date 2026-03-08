@@ -4,7 +4,7 @@ description: Auto-layout basado en flexbox en OpenPencil.
 ---
 # Auto-layout
 
-**⇧ A** para activar/desactivar o envolver la selección.
+<kbd>⇧</kbd><kbd>A</kbd> para activar/desactivar o envolver la selección.
 
 ## Dirección
 - **Horizontal** — de izquierda a derecha

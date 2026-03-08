@@ -16,7 +16,7 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 | Panel warstw (lewy panel boczny) | ✅ | Widok drzewa z rozwijaniem/zwijaniem, zmianą kolejności, przełącznikiem widoczności; zmienna szerokość |
 | Panel stron | ✅ | Dodaj, usuń, zmień nazwę stron; stan viewportu per strona |
 | Panel właściwości (prawy panel boczny) | ✅ | Sekcje: Wygląd, Wypełnienie, Obrys, Efekty, Typografia, Layout, Pozycja; zmienna szerokość |
-| Zoom i panorama | ✅ | Ctrl+scroll, pinch, ⌘+/⌘−/⌘0, spacja+przeciągnij, środkowy przycisk myszy, narzędzie ręki (H) |
+| Zoom i panorama | ✅ | <kbd>Ctrl</kbd> + scroll, pinch, <kbd>⌘</kbd><kbd>+</kbd> / <kbd>⌘</kbd><kbd>−</kbd> / <kbd>⌘</kbd><kbd>0</kbd>, spacja+przeciągnij, środkowy przycisk myszy, narzędzie ręki (H) |
 | Linijki canvasu | ✅ | Linijki góra/lewo z pasmami zaznaczenia i badge'ami współrzędnych |
 | Kolor tła canvasu | ✅ | Tło per strona przez panel właściwości |
 | Prowadnice canvasu | 🔲 | Figma obsługuje przeciągane prowadnice z linijek |
@@ -36,7 +36,7 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 |---------|--------|-------|
 | Narzędzia kształtów (Prostokąt, Elipsa, Linia, Wielokąt, Gwiazda) | ✅ | Wszystkie podstawowe typy kształtów; boki wielokąta i promień wewnętrzny gwiazdy konfigurowalne |
 | Ramki | ✅ | Przycinanie zawartości, niezależny układ współrzędnych |
-| Grupy | ✅ | ⌘G grupowanie, ⇧⌘G rozgrupowanie |
+| Grupy | ✅ | <kbd>⌘</kbd><kbd>G</kbd> grupowanie, <kbd>⇧</kbd><kbd>⌘</kbd><kbd>G</kbd> rozgrupowanie |
 | Sekcje | ✅ | Pigułki tytułu, auto-adopcja nakładających się węzłów, tekst adaptacyjny do luminancji |
 | Narzędzie łuku (łuki, półkola, pierścienie) | ✅ | arcData z kątem początkowym/końcowym i promieniem wewnętrznym |
 | Narzędzie ołówka (odręczne) | 🔲 | Narzędzie rysowania odręcznego Figmy |
@@ -46,9 +46,9 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 | Wyrównanie i pozycja | ✅ | Pozycja, rotacja, wymiary w panelu |
 | Kopiuj i wklej obiekty | ✅ | Standardowy schowek + format binarny Kiwi Figmy |
 | Skaluj warstwy proporcjonalnie | 🟡 | Shift-zmiana rozmiaru utrzymuje proporcje; brak dedykowanego narzędzia Scale (K) |
-| Zablokuj i odblokuj warstwy | ✅ | ⇧⌘L przełącza blokadę |
-| Przełącz widoczność warstwy | ✅ | Ikona oka w panelu + skrót ⇧⌘H |
-| Zmień nazwę warstw | ✅ | Dwuklik - zmiana nazwy inline; Enter/Escape/blur aby zatwierdzić |
+| Zablokuj i odblokuj warstwy | ✅ | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd> przełącza blokadę |
+| Przełącz widoczność warstwy | ✅ | Ikona oka w panelu + skrót <kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd> |
+| Zmień nazwę warstw | ✅ | Dwuklik - zmiana nazwy inline; <kbd>Enter</kbd>/<kbd>Escape</kbd>/blur aby zatwierdzić |
 | Przenieś na wierzch / Wyślij na spód | ✅ | Skróty ] i [; też w menu kontekstowym |
 | Przenieś na stronę | ✅ | Przenoszenie węzłów między stronami przez menu kontekstowe |
 | Ograniczenia (responsywna zmiana rozmiaru) | 🔲 | Przypięcie krawędzi/centrum dla zachowania resize rodzica |
@@ -79,7 +79,7 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 
 | Funkcja | Status | Uwagi |
 |---------|--------|-------|
-| Narzędzie tekstowe i edycja inline | ✅ | Natywna edycja na canvasie, phantom textarea, style run (⌘B/I/U, przycisk S) |
+| Narzędzie tekstowe i edycja inline | ✅ | Natywna edycja na canvasie, phantom textarea, style run (<kbd>⌘</kbd><kbd>B</kbd> / <kbd>I</kbd> / <kbd>U</kbd>, przycisk S) |
 | Renderowanie tekstu (Paragraph API) | ✅ | CanvasKit Paragraph do kształtowania, łamania linii, metryk |
 | Ładowanie czcionek (czcionki systemowe) | ✅ | Inter domyślny, font-kit w Tauri z cache OnceLock, queryLocalFonts w przeglądarce |
 | Rodzina i grubość czcionki | ✅ | FontPicker z wirtualnym scrollem, wyszukiwaniem, podglądem CSS |
@@ -138,7 +138,7 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 | Funkcja | Status | Uwagi |
 |---------|--------|-------|
 | Przepływ poziomy i pionowy | ✅ | Silnik flexbox Yoga WASM |
-| Przełącz auto layout (⇧A) | ✅ | Przełącz na ramce lub owijaj zaznaczenie |
+| Przełącz auto layout (<kbd>⇧</kbd><kbd>A</kbd>) | ✅ | Przełącz na ramce lub owijaj zaznaczenie |
 | Gap (odstęp między dziećmi) | ✅ | Konfigurowalny w panelu właściwości |
 | Padding (jednolity i per strona) | ✅ | Wszystkie cztery strony niezależnie |
 | Justify content | ✅ | Start, center, end, space-between |
@@ -154,8 +154,8 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 
 | Funkcja | Status | Uwagi |
 |---------|--------|-------|
-| Tworzenie komponentów | 🟡 | ⌥⌘K tworzy z ramki/grupy; brak UI właściwości komponentu jeszcze |
-| Zestawy komponentów | 🟡 | ⇧⌘K łączy komponenty; przerywana fioletowa ramka; brak edycji właściwości wariantów |
+| Tworzenie komponentów | 🟡 | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> tworzy z ramki/grupy; brak UI właściwości komponentu jeszcze |
+| Zestawy komponentów | 🟡 | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> łączy komponenty; przerywana fioletowa ramka; brak edycji właściwości wariantów |
 | Instancje komponentów | 🟡 | Tworzenie instancji z menu kontekstowego; sync na żywo; brak UI edycji nadpisań |
 | Warianty | 🔲 | Przełączanie wariantów i selekcja po właściwościach |
 | Właściwości komponentu | 🔲 | Właściwości boolean, tekst, zamiana instancji |
@@ -164,7 +164,7 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 | Kolekcje i tryby zmiennych | 🟡 | Kolekcje, tryby, zmiana activeMode działają; brak UI tematyzacji |
 | Style (kolor, tekst, efekt, layout) | 🔲 | Presety stylów wielokrotnego użytku |
 | Biblioteki (publikuj, udostępniaj, aktualizuj) | 🔲 | Współdzielone biblioteki komponentów/stylów |
-| Odłącz instancję | ✅ | ⌥⌘B konwertuje instancję na ramkę |
+| Odłącz instancję | ✅ | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> konwertuje instancję na ramkę |
 | Przejdź do głównego komponentu | ✅ | Nawigacja do komponentu źródłowego, cross-page |
 
 ## Prototypowanie
@@ -189,7 +189,7 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 |---------|--------|-------|
 | Import pliku .fig | ✅ | Pełny kodek Kiwi: 194 definicje, ~390 pól per NodeChange |
 | Eksport pliku .fig | ✅ | Kodowanie Kiwi + kompresja Zstd + generowanie miniatur |
-| Zapisz / Zapisz jako | ✅ | ⌘S / ⇧⌘S; natywne dialogi (Tauri), File System Access API (Chrome/Edge), fallback pobierania (Safari) |
+| Zapisz / Zapisz jako | ✅ | <kbd>⌘</kbd><kbd>S</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>; natywne dialogi (Tauri), File System Access API (Chrome/Edge), fallback pobierania (Safari) |
 | Schowek Figmy (wklej) | ✅ | Dekodowanie binarnego Kiwi ze schowka Figmy |
 | Schowek Figmy (kopiuj) | ✅ | Kodowanie binarnego Kiwi czytelnego przez Figmę |
 | Import pliku Sketch | 🔲 | Parsowanie plików .sketch |

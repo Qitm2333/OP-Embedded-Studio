@@ -27,7 +27,7 @@ Polygon and Star have no keyboard shortcut — access them from the shapes flyou
 
 ## Constrained Drawing
 
-Hold **Shift** while dragging to constrain the shape:
+Hold <kbd>Shift</kbd> while dragging to constrain the shape:
 
 - Rectangle → square (equal width and height)
 - Ellipse → circle
@@ -87,7 +87,7 @@ Click **+** to add an effect. Each effect row is collapsible with inline control
 | Line tool | L | L |
 | Frame tool | F | F |
 | Section tool | S | S |
-| Constrain to square/circle | Shift + drag | Shift + drag |
+| Constrain to square/circle | <kbd>Shift</kbd> + <kbd>drag</kbd> | <kbd>Shift</kbd> + <kbd>drag</kbd> |
 
 ## Tips
 
