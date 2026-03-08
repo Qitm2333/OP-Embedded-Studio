@@ -851,3 +851,81 @@ describe('edge cases', () => {
     expect(overflows).toBe(0)
   })
 })
+
+describe('variable roundtrip', () => {
+  test('variables and collections survive export → re-import', async () => {
+    await initCodec()
+
+    const graph = new SceneGraph()
+    const col = graph.createCollection('Design Tokens')
+    graph.createVariable('color/primary', 'COLOR', col.id, { r: 0.23, g: 0.51, b: 0.96, a: 1 })
+    graph.createVariable('spacing/base', 'FLOAT', col.id, 8)
+    graph.createVariable('visible', 'BOOLEAN', col.id, true)
+    graph.createVariable('label', 'STRING', col.id, 'Hello')
+
+    const exported = await exportFigFile(graph)
+    const reimported = await parseFigFile(exported.buffer as ArrayBuffer)
+
+    expect(reimported.variables.size).toBe(4)
+    expect(reimported.variableCollections.size).toBe(1)
+
+    const reimportedCol = [...reimported.variableCollections.values()][0]
+    expect(reimportedCol.name).toBe('Design Tokens')
+    expect(reimportedCol.variableIds).toHaveLength(4)
+
+    const vars = [...reimported.variables.values()]
+    const colorVar = vars.find((v) => v.name === 'color/primary')!
+    expect(colorVar.type).toBe('COLOR')
+    const colorVal = Object.values(colorVar.valuesByMode)[0] as { r: number; g: number; b: number; a: number }
+    expect(colorVal.r).toBeCloseTo(0.23, 1)
+
+    const floatVar = vars.find((v) => v.name === 'spacing/base')!
+    expect(floatVar.type).toBe('FLOAT')
+    expect(Object.values(floatVar.valuesByMode)[0]).toBe(8)
+
+    const boolVar = vars.find((v) => v.name === 'visible')!
+    expect(boolVar.type).toBe('BOOLEAN')
+    expect(Object.values(boolVar.valuesByMode)[0]).toBe(true)
+
+    const strVar = vars.find((v) => v.name === 'label')!
+    expect(strVar.type).toBe('STRING')
+    expect(Object.values(strVar.valuesByMode)[0]).toBe('Hello')
+  })
+
+  test('variable bindings survive export → re-import', async () => {
+    await initCodec()
+
+    const graph = new SceneGraph()
+    const col = graph.createCollection('Tokens')
+    const floatVar = graph.createVariable('radius', 'FLOAT', col.id, 12)
+
+    const page = graph.getPages()[0]
+    const rect = graph.createNode('RECTANGLE', page.id, {
+      name: 'Bound Rect',
+      width: 100,
+      height: 100,
+      cornerRadius: 12,
+    })
+    graph.bindVariable(rect.id, 'cornerRadius', floatVar.id)
+
+    const exported = await exportFigFile(graph)
+    const reimported = await parseFigFile(exported.buffer as ArrayBuffer)
+
+    const reimportedRect = [...reimported.getAllNodes()].find((n) => n.name === 'Bound Rect')!
+    expect(reimportedRect).toBeDefined()
+    expect(Object.keys(reimportedRect.boundVariables)).toContain('cornerRadius')
+  })
+
+  test('material3.fig variables survive round-trip', async () => {
+    const buf = readFileSync(resolve(FIXTURES, 'material3.fig'))
+    const original = await parseFigFile(buf.buffer as ArrayBuffer)
+
+    const exported = await exportFigFile(original)
+    const reimported = await parseFigFile(exported.buffer as ArrayBuffer)
+
+    expect(reimported.variables.size).toBe(original.variables.size)
+    expect(reimported.variableCollections.size).toBeGreaterThanOrEqual(
+      [...original.variableCollections.values()].filter((c) => c.variableIds.length > 0).length
+    )
+  })
+})

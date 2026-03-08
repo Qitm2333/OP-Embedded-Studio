@@ -4,6 +4,7 @@ import { deflateSync, inflateSync } from 'fflate'
 
 import { weightToStyle } from './fonts'
 import { encodeVectorNetworkBlob } from './vector'
+import { stringToGuid } from './kiwi/kiwi-convert'
 
 import type { NodeChange, Paint } from './kiwi/codec'
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from './scene-graph'
@@ -160,16 +161,40 @@ function exportTextData(node: SceneNode): NodeChange['textData'] {
   }
 }
 
+const BOUND_VARIABLE_FIELD_MAP: Record<string, string> = {
+  cornerRadius: 'CORNER_RADIUS',
+  topLeftRadius: 'RECTANGLE_TOP_LEFT_CORNER_RADIUS',
+  topRightRadius: 'RECTANGLE_TOP_RIGHT_CORNER_RADIUS',
+  bottomLeftRadius: 'RECTANGLE_BOTTOM_LEFT_CORNER_RADIUS',
+  bottomRightRadius: 'RECTANGLE_BOTTOM_RIGHT_CORNER_RADIUS',
+  strokeWeight: 'STROKE_WEIGHT',
+  itemSpacing: 'STACK_SPACING',
+  paddingLeft: 'STACK_PADDING_LEFT',
+  paddingTop: 'STACK_PADDING_TOP',
+  paddingRight: 'STACK_PADDING_RIGHT',
+  paddingBottom: 'STACK_PADDING_BOTTOM',
+  counterAxisSpacing: 'STACK_COUNTER_SPACING',
+  visible: 'VISIBLE',
+  opacity: 'OPACITY',
+  width: 'WIDTH',
+  height: 'HEIGHT',
+  fontSize: 'FONT_SIZE',
+  letterSpacing: 'LETTER_SPACING',
+  lineHeight: 'LINE_HEIGHT'
+}
+
 export function sceneNodeToKiwi(
   node: SceneNode,
   parentGuid: { sessionID: number; localID: number },
   childIndex: number,
   localIdCounter: { value: number },
   graph: SceneGraph,
-  blobs: Uint8Array[]
+  blobs: Uint8Array[],
+  nodeIdToGuid?: Map<string, { sessionID: number; localID: number }>
 ): KiwiNodeChange[] {
   const localID = localIdCounter.value++
   const guid = { sessionID: 1, localID }
+  nodeIdToGuid?.set(node.id, guid)
   const sx = node.flipX ? -1 : 1
   const cos = Math.cos((node.rotation * Math.PI) / 180)
   const sin = Math.sin((node.rotation * Math.PI) / 180)
@@ -321,10 +346,31 @@ export function sceneNodeToKiwi(
     })
   }
 
+  if (Object.keys(node.boundVariables).length > 0) {
+    const entries: Array<{ variableData: { value: { alias: { guid: { sessionID: number; localID: number } } }; dataType: string; resolvedDataType: string }; variableField: string }> = []
+    for (const [field, varId] of Object.entries(node.boundVariables)) {
+      const kiwiField = BOUND_VARIABLE_FIELD_MAP[field]
+      if (!kiwiField) continue
+      const variable = graph.variables.get(varId)
+      if (!variable) continue
+      const varGuid = stringToGuid(varId)
+      const resolvedType = variable.type === 'COLOR' ? 'COLOR' : variable.type === 'BOOLEAN' ? 'BOOLEAN' : variable.type === 'STRING' ? 'STRING' : 'FLOAT'
+      entries.push({
+        variableData: {
+          value: { alias: { guid: varGuid } },
+          dataType: 'ALIAS',
+          resolvedDataType: resolvedType
+        },
+        variableField: kiwiField
+      })
+    }
+    if (entries.length > 0) nc.variableConsumptionMap = { entries }
+  }
+
   const result: KiwiNodeChange[] = [nc]
   const children = graph.getChildren(node.id)
   for (let i = 0; i < children.length; i++) {
-    result.push(...sceneNodeToKiwi(children[i], guid, i, localIdCounter, graph, blobs))
+    result.push(...sceneNodeToKiwi(children[i], guid, i, localIdCounter, graph, blobs, nodeIdToGuid))
   }
 
   return result

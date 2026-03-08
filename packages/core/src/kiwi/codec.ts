@@ -289,6 +289,14 @@ export interface NodeChange {
   // Constraints
   horizontalConstraint?: string
   verticalConstraint?: string
+  // Variables
+  variableData?: { value?: { boolValue?: boolean; textValue?: string; floatValue?: number; colorValue?: { r: number; g: number; b: number; a: number }; alias?: { guid: GUID } }; dataType?: string; resolvedDataType?: string }
+  variableConsumptionMap?: { entries?: Array<{ nodeField?: number; variableData?: { value?: { alias?: { guid: GUID }; colorValue?: { r: number; g: number; b: number; a: number }; boolValue?: boolean; textValue?: string; floatValue?: number }; dataType?: string; resolvedDataType?: string }; variableField?: string }> }
+  variableSetModes?: Array<{ id: GUID; name: string; sortPosition?: string }>
+  variableSetID?: { guid: GUID }
+  variableResolvedType?: string
+  variableDataValues?: { entries?: Array<{ modeID: GUID; variableData: { value?: { boolValue?: boolean; textValue?: string; floatValue?: number; colorValue?: { r: number; g: number; b: number; a: number }; alias?: { guid: GUID } }; dataType?: string; resolvedDataType?: string } }> }
+  variableScopes?: string[]
 }
 
 export interface FigmaMessage {

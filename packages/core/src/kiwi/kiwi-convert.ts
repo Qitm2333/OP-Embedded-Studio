@@ -39,6 +39,11 @@ export function guidToString(guid: GUID): string {
   return `${guid.sessionID}:${guid.localID}`
 }
 
+export function stringToGuid(str: string): GUID {
+  const [session, local] = str.split(':')
+  return { sessionID: parseInt(session, 10), localID: parseInt(local, 10) }
+}
+
 const convertColor = normalizeColor
 
 function imageHashToString(hash: Record<string, number>): string {
