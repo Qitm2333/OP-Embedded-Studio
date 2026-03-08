@@ -227,6 +227,17 @@ export function importClipboardNodes(
     if (ourId) graph.deleteNode(ourId)
   }
 
+  // Detach orphaned instances whose components weren't in the paste data.
+  // Without the component, children can't be populated — convert to FRAME
+  // so the node at least renders its own fills/strokes/layout.
+  for (const [, ourId] of created) {
+    const node = graph.getNode(ourId)
+    if (!node || node.type !== 'INSTANCE') continue
+    if (node.childIds.length === 0 && !graph.getNode(node.componentId)) {
+      graph.updateNode(ourId, { type: 'FRAME', componentId: '' })
+    }
+  }
+
   return createdIds
 }
 
