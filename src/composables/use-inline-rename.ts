@@ -1,8 +1,11 @@
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, type Ref } from 'vue'
+import { onClickOutside } from '@vueuse/core'
 
 export function useInlineRename<T extends string>(onCommit: (id: T, newName: string) => void) {
   const editingId = ref<T | null>(null)
+  const inputRef: Ref<HTMLInputElement | null> = ref(null)
   let originalName = ''
+  let cleanupOutsideClick: (() => void) | undefined
 
   function start(id: T, currentName: string) {
     editingId.value = id
@@ -10,6 +13,12 @@ export function useInlineRename<T extends string>(onCommit: (id: T, newName: str
   }
 
   async function focusInput(input: HTMLInputElement | null) {
+    if (input === inputRef.value) return
+    inputRef.value = input
+    cleanupOutsideClick?.()
+    if (input) {
+      cleanupOutsideClick = onClickOutside(inputRef, () => input.blur())
+    }
     await nextTick()
     input?.focus()
     input?.select()
@@ -22,10 +31,16 @@ export function useInlineRename<T extends string>(onCommit: (id: T, newName: str
       onCommit(id, value)
     }
     editingId.value = null
+    inputRef.value = null
+    cleanupOutsideClick?.()
+    cleanupOutsideClick = undefined
   }
 
   function cancel() {
     editingId.value = null
+    inputRef.value = null
+    cleanupOutsideClick?.()
+    cleanupOutsideClick = undefined
   }
 
   function onKeydown(e: KeyboardEvent) {

@@ -152,6 +152,40 @@ test('rename page via store', async () => {
   canvas.assertNoErrors()
 })
 
+test('double-click page to rename', async () => {
+  const item = pageItems().first()
+  await item.dblclick()
+
+  const input = page.locator('[data-test-id="pages-item-input"]')
+  await expect(input).toBeVisible()
+  await input.fill('My Page')
+  await input.press('Enter')
+
+  await canvas.waitForRender()
+  const pages = await getPages()
+  expect(pages.some((p) => p.name === 'My Page')).toBe(true)
+
+  canvas.assertNoErrors()
+})
+
+test('clicking outside page rename input commits', async () => {
+  const item = pageItems().first()
+  await item.dblclick()
+
+  const input = page.locator('[data-test-id="pages-item-input"]')
+  await expect(input).toBeVisible()
+  await input.fill('Outside Click Page')
+
+  await page.mouse.click(500, 400)
+  await canvas.waitForRender()
+
+  await expect(input).not.toBeVisible()
+  const pages = await getPages()
+  expect(pages.some((p) => p.name === 'Outside Click Page')).toBe(true)
+
+  canvas.assertNoErrors()
+})
+
 test('cannot delete the last page', async () => {
   // Delete until 1 remains
   let pages = await getPages()

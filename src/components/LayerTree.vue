@@ -279,18 +279,33 @@ function updateDropTarget(ev: PointerEvent) {
             :data-node-id="item.value.id"
             :data-level="item.level"
           >
-            <TreeItem v-slot="{ isExpanded }" v-bind="item.bind" as-child @select="onSelect">
+            <TreeItem
+              v-slot="{ isExpanded }"
+              v-bind="item.bind"
+              as-child
+              @select="onSelect"
+              @toggle="(e: CustomEvent) => { if (e.detail.originalEvent?.type === 'click') e.preventDefault() }"
+            >
               <div
                 v-if="rename.editingId.value === item.value.id"
                 class="flex w-full items-center gap-1 py-1"
                 :style="{ paddingLeft: `${8 + (item.level - 1) * 16}px` }"
               >
-                <span class="w-4 shrink-0" />
+                <span
+                  v-if="item.hasChildren"
+                  class="flex w-4 shrink-0 cursor-pointer items-center justify-center text-muted transition-transform hover:text-surface"
+                  :class="isExpanded ? 'rotate-90' : 'rotate-0'"
+                  @click.stop="toggleExpand(item.value.id)"
+                >
+                  <icon-lucide-chevron-right class="size-3" />
+                </span>
+                <span v-else class="w-4 shrink-0" />
                 <component
                   :is="nodeIcons[item.value.type] ?? IconSquare"
                   class="size-3 shrink-0 opacity-70"
                 />
                 <input
+                  :ref="(el) => { if (el) rename.focusInput(el as HTMLInputElement) }"
                   data-layer-edit
                   data-test-id="layers-item-input"
                   class="min-w-0 flex-1 rounded border border-accent bg-input px-1 py-0 text-xs text-surface outline-none"

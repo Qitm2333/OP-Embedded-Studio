@@ -156,3 +156,57 @@ test('ungrouping updates layers', async () => {
 
   canvas.assertNoErrors()
 })
+
+test('double-click layer to rename', async () => {
+  await canvas.drawRect(900, 600, 50, 50)
+  await canvas.waitForRender()
+
+  const row = layerRows().filter({ hasText: 'Rectangle' }).first()
+  await row.dblclick()
+
+  const input = page.locator('[data-test-id="layers-item-input"]')
+  await expect(input).toBeVisible()
+  await input.fill('Renamed Layer')
+  await input.press('Enter')
+
+  await canvas.waitForRender()
+  const names = await getLayerNames()
+  expect(names).toContain('Renamed Layer')
+
+  canvas.assertNoErrors()
+})
+
+test('clicking outside rename input commits', async () => {
+  const row = layerRows().filter({ hasText: 'Renamed Layer' }).first()
+  await row.dblclick()
+
+  const input = page.locator('[data-test-id="layers-item-input"]')
+  await expect(input).toBeVisible()
+  await input.fill('After Outside Click')
+
+  await page.mouse.click(500, 400)
+  await canvas.waitForRender()
+
+  await expect(input).not.toBeVisible()
+  const names = await getLayerNames()
+  expect(names).toContain('After Outside Click')
+
+  canvas.assertNoErrors()
+})
+
+test('double-click does not toggle tree expand', async () => {
+  const rowCountBefore = await layerRows().count()
+
+  const containerRow = layerRows().filter({ hasText: 'Components' }).first()
+  await containerRow.dblclick()
+  await canvas.waitForRender()
+
+  const input = page.locator('[data-test-id="layers-item-input"]')
+  await expect(input).toBeVisible()
+  await input.press('Escape')
+
+  const rowCountAfter = await layerRows().count()
+  expect(rowCountAfter).toBe(rowCountBefore)
+
+  canvas.assertNoErrors()
+})

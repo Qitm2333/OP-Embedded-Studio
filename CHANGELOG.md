@@ -8,6 +8,11 @@
 - JSX and Tailwind CSS export for grid layouts — `grid grid-cols-N`, `gap-x-*`/`gap-y-*`, child `col-start-*`/`row-start-*`/`col-span-*`/`row-span-*`
 - Multi-provider AI support — connect to Anthropic, OpenAI, Google AI, or any OpenAI-compatible endpoint directly, in addition to OpenRouter. Per-provider API key storage, provider settings popover, automatic migration from single OpenRouter key
 
+### Fixes
+
+- Double-click on layer tree no longer toggles expand/collapse — use the chevron instead
+- Page rename input matches layer rename styling
+
 ### Improvements
 
 - Compact layout controls — icon-based gap (↔/↕) and padding (T/R/B/L) inputs instead of text labels
