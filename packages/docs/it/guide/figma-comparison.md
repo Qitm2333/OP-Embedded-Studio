@@ -126,7 +126,7 @@ Confronto funzionalità per funzionalità delle capacità di Figma Design con lo
 | Sfocatura sfondo | ✅ | Sfocare contenuto dietro il livello |
 | Sfocatura primo piano | ✅ | Sfocatura in primo piano |
 | Spessore contorno | ✅ | Configurabile nel pannello proprietà |
-| Estremità contorno (round, square, arrow) | ✅ | NONE, ROUND, SQUARE, ARROW_LINES, ARROW_EQUILATERAL |
+| Estremità contorno (round, square, arrow) | ✅ | `NONE`, `ROUND`, `SQUARE`, `ARROW_LINES`, `ARROW_EQUILATERAL` |
 | Giunzione contorno (miter, bevel, round) | ✅ | Tutti e tre i tipi di giunzione |
 | Pattern tratteggio | ✅ | Pattern contorno dash-on/dash-off |
 | Raggio angolo | ✅ | Raggio uniforme e per angolo con toggle indipendente |
@@ -160,7 +160,7 @@ Confronto funzionalità per funzionalità delle capacità di Figma Design con lo
 | Varianti | 🔲 | Cambio variante e selezione per proprietà |
 | Proprietà componente | 🔲 | Proprietà booleane, testo, scambio istanza |
 | Propagazione override | ✅ | Modifiche al componente principale propagate; override preservati |
-| Variabili (colore, numero, stringa, booleano) | 🟡 | COLOR con UI completa; FLOAT/STRING/BOOLEAN definiti senza UI di modifica |
+| Variabili (colore, numero, stringa, booleano) | 🟡 | `COLOR` con UI completa; `FLOAT`/STRING/BOOLEAN definiti senza UI di modifica |
 | Collezioni e modi variabili | 🟡 | Collezioni, modi, cambio activeMode funzionano; nessuna UI tematizzazione |
 | Stili (colore, testo, effetto, layout) | 🔲 | Preset stile riutilizzabili nominati |
 | Librerie (pubblicare, condividere, aggiornare) | 🔲 | Librerie condivise componenti/stili |
@@ -187,7 +187,7 @@ Confronto funzionalità per funzionalità delle capacità di Figma Design con lo
 
 | Funzionalità | Stato | Note |
 |-------------|-------|------|
-| Import file .fig | ✅ | Codec Kiwi completo: 194 definizioni, ~390 campi per NodeChange |
+| Import file .fig | ✅ | Codec Kiwi completo: 194 definizioni, ~390 campi per `NodeChange` |
 | Export file .fig | ✅ | Codifica Kiwi + compressione Zstd + generazione miniatura |
 | Salva / Salva con nome | ✅ | <kbd>⌘</kbd><kbd>S</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>; dialoghi nativi (Tauri), File System Access API (Chrome/Edge), download fallback (Safari) |
 | Appunti Figma (incolla) | ✅ | Decodificare binario Kiwi dagli appunti Figma |

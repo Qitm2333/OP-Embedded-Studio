@@ -87,7 +87,7 @@ bun add -g @open-pencil/mcp
 }
 ```
 
-Consulta il [riferimento strumenti MCP](/it/reference/mcp-tools) per l'elenco completo degli strumenti.
+Consulta il [riferimento strumenti MCP](/programmable/mcp-server) per l'elenco completo degli strumenti.
 
 ## CLI
 

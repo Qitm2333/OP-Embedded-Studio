@@ -2,7 +2,7 @@
 
 ## Przegląd systemu
 
-```mermaid
+`mermaid
 graph TB
     subgraph Tauri["Tauri v2 Shell"]
         subgraph Editor["Editor (Web)"]
@@ -22,7 +22,7 @@ graph TB
         MCP["MCP Server (90 tools, stdio+HTTP)"]
         Collab["P2P Collab (Trystero + Yjs)"]
     end
-```
+`
 
 ## Układ edytora
 
@@ -62,7 +62,7 @@ Yoga od Mety zapewnia obliczanie layoutu CSS flexbox. Cienki adapter mapuje nazw
 
 ### Format pliku (Kiwi binarny)
 
-Wykorzystuje binarny kodek Kiwi Figmy z 194 definicjami wiadomości/enum/struct. Import: parsowanie nagłówka → dekompresja Zstd → dekodowanie Kiwi → NodeChange[] → graf sceny. Eksport odwraca proces z generowaniem miniatur.
+Wykorzystuje binarny kodek Kiwi Figmy z 194 definicjami wiadomości/enum/struct. Import: parsowanie nagłówka → dekompresja Zstd → dekodowanie Kiwi → `NodeChange`[] → graf sceny. Eksport odwraca proces z generowaniem miniatur.
 
 Zobacz [Referencja formatu pliku](/reference/file-format) dla szczegółów.
 

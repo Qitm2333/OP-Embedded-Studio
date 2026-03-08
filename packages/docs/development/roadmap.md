@@ -4,7 +4,7 @@
 
 ### Phase 1: Core Engine ✅
 
-SceneGraph, Skia rendering, basic shapes, selection, zoom/pan, undo/redo.
+`SceneGraph`, Skia rendering, basic shapes, selection, zoom/pan, undo/redo.
 
 **Delivered:**
 - Scene graph with flat Map storage and parent-child tree
@@ -77,7 +77,7 @@ Components, instances, overrides, variables, collections, modes, image export.
 - Resizable left/right panels via reka-ui Splitter (persistent layout)
 - @/ import alias, shared types module (src/types.ts, src/global.d.ts)
 - Codebase lint-clean: 0 oxlint warnings, 0 tsgo type errors
-- Variables: COLOR type with collections, modes, bindings, FillSection variable picker, .fig import
+- Variables: `COLOR` type with collections, modes, bindings, FillSection variable picker, .fig import
 - Variables dialog: TanStack Table with resizable columns, mode columns, collection tabs with rename, search, demo collections (Primitives/Semantic/Spacing), undo/redo for all variable operations
 - Image export: PNG/JPG/WEBP with ExportSection (scale, format, live preview), <kbd>⇧</kbd><kbd>⌘</kbd><kbd>E</kbd> shortcut, context menu
 - Canvas-native text editing: TextEditor class in core, phantom textarea, cursor/selection/word boundaries on canvas, caret blinking, selection highlights
@@ -92,7 +92,7 @@ Components, instances, overrides, variables, collections, modes, image export.
 
 **Remaining (deferred to Phase 6):**
 - Variant switching
-- Variable types: FLOAT, STRING, BOOLEAN editing UI
+- Variable types: `FLOAT`, `STRING`, `BOOLEAN` editing UI
 - Variable-driven theming
 
 ### Phase 5: AI Integration & Tooling ✅
@@ -146,7 +146,7 @@ Real-time collaboration, prototyping, comments, desktop distribution.
 - Prototyping (frame connections, transitions, animations)
 - Comments (pin, threads, resolve)
 - PWA support
-- Variant switching, FLOAT/STRING/BOOLEAN variable UI, variable-driven theming
+- Variant switching, `FLOAT`/STRING/BOOLEAN variable UI, variable-driven theming
 - Full Figma compatibility test suite
 
 ## Timeline

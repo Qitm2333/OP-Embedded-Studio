@@ -1,4 +1,4 @@
-# Tipi di nodo
+# Node Types
 
 The scene graph supports 28 node types from Figma's Kiwi schema. Each node is identified by a GUID (`sessionID:localID`) and has a parent reference via `parentIndex`. The OpenPencil engine's `NodeType` union currently uses 17 of these types.
 
@@ -8,41 +8,41 @@ The scene graph supports 28 node types from Figma's Kiwi schema. Each node is id
 
 | Type | ID | Description | Engine |
 |------|----|-------------|--------|
-| DOCUMENT | 1 | Root node, one per file | — |
-| CANVAS | 2 | Page | ✅ |
-| GROUP | 3 | Group container | ✅ |
-| FRAME | 4 | Primary container (artboard), supports auto-layout | ✅ |
-| BOOLEAN_OPERATION | 5 | Union/subtract/intersect/exclude result | |
-| VECTOR | 6 | Freeform vector path | ✅ |
-| STAR | 7 | Star shape | ✅ |
-| LINE | 8 | Line | ✅ |
-| ELLIPSE | 9 | Ellipse/circle, supports arc data | ✅ |
-| RECTANGLE | 10 | Rectangle | ✅ |
-| REGULAR_POLYGON | 11 | Regular polygon (3–12 sides, engine uses `POLYGON`) | ✅ |
-| ROUNDED_RECTANGLE | 12 | Rectangle with smooth corners | ✅ |
-| TEXT | 13 | Text with rich formatting | ✅ |
-| SLICE | 14 | Export region | |
-| SYMBOL | 15 | Component (main, engine uses `COMPONENT`) | ✅ |
-| INSTANCE | 16 | Component instance | ✅ |
-| STICKY | 17 | FigJam sticky note | |
-| SHAPE_WITH_TEXT | 18 | FigJam shape | ✅ |
-| CONNECTOR | 19 | Connector line between nodes | ✅ |
-| CODE_BLOCK | 20 | FigJam code block | |
-| WIDGET | 21 | Plugin widget | |
-| STAMP | 22 | FigJam stamp | |
-| MEDIA | 23 | Video/GIF | |
-| HIGHLIGHT | 24 | FigJam highlight | |
-| SECTION | 25 | Canvas section (organizational, top-level only) | ✅ |
-| SECTION_OVERLAY | 26 | Section overlay | |
-| WASHI_TAPE | 27 | FigJam washi tape | |
-| VARIABLE | 28 | Variable definition node | |
-| COMPONENT_SET | — | Variant group container (synthetic, mapped from SYMBOL) | ✅ |
+| `DOCUMENT` | 1 | Root node, one per file | — |
+| `CANVAS` | 2 | Page | ✅ |
+| `GROUP` | 3 | Group container | ✅ |
+| `FRAME` | 4 | Primary container (artboard), supports auto-layout | ✅ |
+| `BOOLEAN_OPERATION` | 5 | Union/subtract/intersect/exclude result | |
+| `VECTOR` | 6 | Freeform vector path | ✅ |
+| `STAR` | 7 | Star shape | ✅ |
+| `LINE` | 8 | Line | ✅ |
+| `ELLIPSE` | 9 | Ellipse/circle, supports arc data | ✅ |
+| `RECTANGLE` | 10 | Rectangle | ✅ |
+| `REGULAR_POLYGON` | 11 | Regular polygon (3–12 sides, engine uses `POLYGON`) | ✅ |
+| `ROUNDED_RECTANGLE` | 12 | Rectangle with smooth corners | ✅ |
+| `TEXT` | 13 | Text with rich formatting | ✅ |
+| `SLICE` | 14 | Export region | |
+| `SYMBOL` | 15 | Component (main, engine uses `COMPONENT`) | ✅ |
+| `INSTANCE` | 16 | Component instance | ✅ |
+| `STICKY` | 17 | FigJam sticky note | |
+| `SHAPE_WITH_TEXT` | 18 | FigJam shape | ✅ |
+| `CONNECTOR` | 19 | Connector line between nodes | ✅ |
+| `CODE_BLOCK` | 20 | FigJam code block | |
+| `WIDGET` | 21 | Plugin widget | |
+| `STAMP` | 22 | FigJam stamp | |
+| `MEDIA` | 23 | Video/GIF | |
+| `HIGHLIGHT` | 24 | FigJam highlight | |
+| `SECTION` | 25 | Canvas section (organizational, top-level only) | ✅ |
+| `SECTION_OVERLAY` | 26 | Section overlay | |
+| `WASHI_TAPE` | 27 | FigJam washi tape | |
+| `VARIABLE` | 28 | Variable definition node | |
+| `COMPONENT_SET` | — | Variant group container (synthetic, mapped from `SYMBOL`) | ✅ |
 
 ### Engine NodeType Union (17 types)
 
 The engine's `NodeType` uses simplified names. Some differ from the Kiwi schema:
 - `COMPONENT` → Kiwi `SYMBOL` (ID 15)
-- `COMPONENT_SET` → variant group container (no dedicated Kiwi ID, mapped from SYMBOL with variants)
+- `COMPONENT_SET` → variant group container (no dedicated Kiwi ID, mapped from `SYMBOL` with variants)
 - `POLYGON` → Kiwi `REGULAR_POLYGON` (ID 11)
 
 ```typescript
@@ -81,14 +81,14 @@ Document
 
 ## Core Properties
 
-Every node carries these fields (subset of NodeChange):
+Every node carries these fields (subset of `NodeChange`):
 
 ### Identity & Tree
 
 - `guid` — unique identifier (`sessionID:localID`)
 - `type` — node type enum
 - `name` — display name
-- `phase` — CREATED or REMOVED
+- `phase` — `CREATED` or `REMOVED`
 - `parentIndex` — parent GUID + position string for z-ordering
 
 ### Transform
@@ -103,14 +103,14 @@ Every node carries these fields (subset of NodeChange):
 - `strokePaints[]` — stroke colors
 - `effects[]` — shadows, blurs
 - `opacity` — 0–1
-- `blendMode` — NORMAL, MULTIPLY, SCREEN, etc.
+- `blendMode` — `NORMAL`, `MULTIPLY`, `SCREEN`, etc.
 
 ### Stroke
 
 - `strokeWeight` — stroke thickness
-- `strokeAlign` — inside / center / outside
-- `strokeCap` — butt / round / square
-- `strokeJoin` — miter / bevel / round
+- `strokeAlign` — `INSIDE` / `CENTER` / `OUTSIDE`
+- `strokeCap` — `NONE` / `ROUND` / `SQUARE` / `ARROW_LINES` / `ARROW_EQUILATERAL`
+- `strokeJoin` — `MITER` / `BEVEL` / `ROUND`
 - `dashPattern[]` — dash/gap lengths
 
 ### Corners

@@ -4,7 +4,7 @@
 
 ### Phase 1 : Moteur Core ✅
 
-SceneGraph, rendu Skia, formes de base, sélection, zoom/pan, annuler/rétablir, guides d'alignement.
+`SceneGraph`, rendu Skia, formes de base, sélection, zoom/pan, annuler/rétablir, guides d'alignement.
 
 ### Phase 2 : UI Éditeur + Layout ✅
 
@@ -16,7 +16,7 @@ Import/export .fig, codec Kiwi, presse-papiers, outil plume, réseaux vectoriels
 
 ### Phase 4 : Composants + Variables ✅
 
-Composants, instances, surcharges, jeux de composants, variables (COLOR/FLOAT/STRING/BOOLEAN), collections, modes, export d'images, menu contextuel, formatage de texte riche.
+Composants, instances, surcharges, jeux de composants, variables (`COLOR`/FLOAT/STRING/BOOLEAN), collections, modes, export d'images, menu contextuel, formatage de texte riche.
 
 ### Phase 5 : Intégration IA & Outils ✅
 
@@ -53,7 +53,7 @@ Composants, instances, surcharges, jeux de composants, variables (COLOR/FLOAT/ST
 - Prototypage (connexions de frames, transitions, animations)
 - Commentaires (pin, fils, résoudre)
 - Support PWA
-- Changement de variantes, UI variables FLOAT/STRING/BOOLEAN, theming par variables
+- Changement de variantes, UI variables `FLOAT`/STRING/BOOLEAN, theming par variables
 
 ## Calendrier
 

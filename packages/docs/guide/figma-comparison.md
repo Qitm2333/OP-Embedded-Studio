@@ -126,7 +126,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Background blur | ✅ | Blur content behind layer |
 | Foreground blur | ✅ | Blur in foreground |
 | Stroke weight | ✅ | Configurable in properties panel |
-| Stroke cap (round, square, arrow) | ✅ | NONE, ROUND, SQUARE, ARROW_LINES, ARROW_EQUILATERAL |
+| Stroke cap (round, square, arrow) | ✅ | `NONE`, `ROUND`, `SQUARE`, `ARROW_LINES`, `ARROW_EQUILATERAL` |
 | Stroke join (miter, bevel, round) | ✅ | All three join types |
 | Dash patterns | ✅ | Dash-on/dash-off stroke pattern |
 | Stroke alignment | ✅ | Inside/Center/Outside with clip-based rendering matching Figma behavior |
@@ -162,7 +162,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Variants | 🔲 | Variant switching and property-based selection |
 | Component properties | 🔲 | Boolean, text, instance swap properties |
 | Override propagation | ✅ | Changes to main component propagate to all instances; overrides preserved |
-| Variables (color, number, string, boolean) | 🟡 | COLOR full UI (dialog, TanStack Table, inline editing, undo/redo, demo collections); FLOAT/STRING/BOOLEAN defined but no editing UI |
+| Variables (color, number, string, boolean) | 🟡 | `COLOR` full UI (dialog, TanStack Table, inline editing, undo/redo, demo collections); `FLOAT`/STRING/BOOLEAN defined but no editing UI |
 | Variable collections & modes | 🟡 | Collections, modes, activeMode switching work; no variable-driven theming UI yet |
 | Styles (color, text, effect, layout) | 🔲 | Reusable named style presets |
 | Libraries (publish, share, update) | 🔲 | Shared component/style libraries |
@@ -189,8 +189,8 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| .fig file import | ✅ | Full Kiwi codec: 194 definitions, ~390 fields per NodeChange |
-| .fig file export | ✅ | Kiwi encoding + Zstd compression + thumbnail generation; COMPONENT/COMPONENT_SET mapped to SYMBOL for round-trip |
+| .fig file import | ✅ | Full Kiwi codec: 194 definitions, ~390 fields per `NodeChange` |
+| .fig file export | ✅ | Kiwi encoding + Zstd compression + thumbnail generation; `COMPONENT`/COMPONENT_SET mapped to `SYMBOL` for round-trip |
 | Save / Save As | ✅ | <kbd>⌘</kbd><kbd>S</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>; native dialogs (Tauri), File System Access API (Chrome/Edge), download fallback (Safari) |
 | Figma clipboard (paste) | ✅ | Decode Kiwi binary from Figma clipboard |
 | Figma clipboard (copy) | ✅ | Encode Kiwi binary that Figma can read |

@@ -1,71 +1,94 @@
-# Formato file
+# File Format
 
-## Struttura file .fig
+## .fig File Structure
 
-```
-┌─────────────────────────────────┐
-│ Magic header: "fig-kiwi" (8B)   │
-│ Version (4B uint32 LE)          │
-│ Schema length (4B uint32 LE)    │
-│ Compressed Kiwi schema          │
-│ Message length (4B uint32 LE)   │
-│ Compressed Kiwi message         │  ← NodeChange[] (entire document)
-│ Blob data                       │  ← Images, vector networks, fonts
-└─────────────────────────────────┘
-```
+A `.fig` file is a ZIP archive containing a Kiwi-encoded binary message:
 
-## Pipeline di importazione
-
-```
-.fig file → Parse header → Decompress Zstd → Decode Kiwi schema
-  → Decode Message → NodeChange[] → Build SceneGraph
-  → Resolve blob refs → Render on canvas
+```mermaid
+block-beta
+  columns 1
+  A["Magic header: <code>fig-kiwi</code> (8 bytes)"]
+  B["Version (4 bytes, uint32 LE)"]
+  C["Schema length (4 bytes, uint32 LE)"]
+  D["Compressed Kiwi schema"]
+  E["Message length (4 bytes, uint32 LE)"]
+  F["Compressed Kiwi message — NodeChange[]"]
+  G["Blob data — images, vector networks, fonts"]
 ```
 
-## Pipeline di esportazione
+## Import Pipeline
 
-```
-SceneGraph → NodeChange[] → Kiwi encode → Compress (Zstd/deflate)
-  → Build ZIP (header + schema + message + thumbnail.png)
-  → Write .fig file
+```mermaid
+flowchart LR
+  A[".fig file"] --> B["Parse header"]
+  B --> C["Decompress Zstd"]
+  C --> D["Decode Kiwi schema"]
+  D --> E["Decode message"]
+  E --> F["NodeChange[]"]
+  F --> G["Build SceneGraph"]
+  G --> H["Resolve blob refs"]
+  H --> I["Render"]
 ```
 
-Export uses <kbd>⌘</kbd><kbd>S</kbd> (Save) and <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> (Save As) with native OS dialogs on the desktop app. The exported file includes a `thumbnail.png` required by Figma for file preview. Compression uses Zstd via Tauri Rust command on desktop, with deflate fallback in the browser. The ZIP archive is assembled in Rust on desktop for correct Zstd frame headers (content size included).
+## Export Pipeline
+
+```mermaid
+flowchart LR
+  A["SceneGraph"] --> B["NodeChange[]"]
+  B --> C["Kiwi encode"]
+  C --> D["Compress"]
+  D --> E["Build ZIP"]
+  E --> F[".fig file"]
+```
+
+Export uses <kbd>⌘</kbd><kbd>S</kbd> (Save) and <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> (Save As) with native OS dialogs on the desktop app. The exported file includes a `thumbnail.png` required by Figma for file preview.
+
+Compression uses Zstd via Tauri Rust command on desktop, with deflate fallback in the browser.
 
 ## Kiwi Binary Codec
 
-The codec handles Figma's 194-definition Kiwi schema with NodeChange as the central type (~390 fields). Key components:
+The codec handles Figma's 194-definition Kiwi schema with `NodeChange` as the central type (~390 fields). Key components:
 
-- **kiwi-schema** — vendored from evanw/kiwi, patched for ESM and sparse field IDs
-- **codec.ts** — encode/decode Messages using the Kiwi schema
-- **protocol.ts** — wire format parsing and message type detection
-- **schema.ts** — 194 message/enum/struct definitions
+| Module | Purpose |
+|--------|---------|
+| `kiwi-schema` | Kiwi parser (from [evanw/kiwi](https://github.com/nicolo-ribaudo/kiwi)), patched for ESM and sparse field IDs |
+| `codec.ts` | Encode/decode messages using the Kiwi schema |
+| `protocol.ts` | Wire format parsing and message type detection |
+| `schema.ts` | 194 message/enum/struct definitions |
 
 ### Sparse Field IDs
 
-Figma's schema uses non-contiguous field IDs (e.g., 1, 2, 5, 10 with gaps). The vendored kiwi-schema parser is patched to handle this correctly.
+Figma's schema uses non-contiguous field IDs (e.g. 1, 2, 5, 10 with gaps). The kiwi-schema parser handles this correctly.
 
 ### Compression
 
-.fig files use Zstd compression for both the schema and message payloads. Decompression uses the `fzstd` library. For export, Zstd compression is offloaded to a Tauri Rust command on the desktop app (better performance, correct frame headers). In the browser, deflate via `fflate` is used as a fallback. Clipboard encoding also uses `fflate`.
+`.fig` files use Zstd compression for both the schema and message payloads. Decompression uses the `fzstd` library. For export, Zstd compression is offloaded to a Tauri Rust command on the desktop app (better performance, correct frame headers). In the browser, deflate via `fflate` is used as a fallback.
 
 ## Supported Formats
 
 | Format | Import | Export |
 |--------|--------|--------|
-| .fig (Figma) | ✅ | ✅ |
-| .svg | Planned | Planned |
-| .png | Planned | Planned |
-| .pdf | — | Planned |
-
-See [Roadmap](/development/roadmap) for planned format support timeline.
+| `.fig` (Figma) | ✅ | ✅ |
+| `.svg` | Planned | Planned |
+| `.png` | Planned | Planned |
+| `.pdf` | — | Planned |
 
 ## Clipboard Format
 
 Copy/paste uses the same Kiwi binary encoding:
 
-1. **Copy** — encode selected NodeChange[] to Kiwi binary, compress, write to clipboard as `application/x-figma-design` MIME type
-2. **Paste** — read clipboard, decompress, decode Kiwi binary, create nodes in scene graph
-3. **Synchronous** — encoding happens in the copy event handler (not async Clipboard API) to ensure browser compatibility
+```mermaid
+flowchart LR
+  subgraph Copy
+    A["Selected nodes"] --> B["Encode NodeChange[]"]
+    B --> C["Compress"]
+    C --> D["Clipboard<br/><code>application/x-figma-design</code>"]
+  end
+  subgraph Paste
+    D --> E["Decompress"]
+    E --> F["Decode Kiwi"]
+    F --> G["Create nodes"]
+  end
+```
 
 This enables bidirectional clipboard between OpenPencil and Figma.

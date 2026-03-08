@@ -126,7 +126,7 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 | Flou d'arrière-plan | ✅ | Flouter le contenu derrière le calque |
 | Flou de premier plan | ✅ | Flou au premier plan |
 | Épaisseur du contour | ✅ | Configurable dans le panneau de propriétés |
-| Extrémité du contour (round, square, arrow) | ✅ | NONE, ROUND, SQUARE, ARROW_LINES, ARROW_EQUILATERAL |
+| Extrémité du contour (round, square, arrow) | ✅ | `NONE`, `ROUND`, `SQUARE`, `ARROW_LINES`, `ARROW_EQUILATERAL` |
 | Jointure du contour (miter, bevel, round) | ✅ | Les trois types de jointure |
 | Motifs de tirets | ✅ | Motif de contour dash-on/dash-off |
 | Rayon de coin | ✅ | Rayon uniforme et par coin avec toggle indépendant |
@@ -160,7 +160,7 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 | Variantes | 🔲 | Changement de variante et sélection par propriétés |
 | Propriétés de composant | 🔲 | Propriétés booléennes, texte, échange d'instance |
 | Propagation des surcharges | ✅ | Changements du composant principal propagés ; surcharges préservées |
-| Variables (couleur, nombre, chaîne, booléen) | 🟡 | COLOR avec UI complète ; FLOAT/STRING/BOOLEAN définis sans UI d'édition |
+| Variables (couleur, nombre, chaîne, booléen) | 🟡 | `COLOR` avec UI complète ; `FLOAT`/STRING/BOOLEAN définis sans UI d'édition |
 | Collections et modes de variables | 🟡 | Collections, modes, changement activeMode fonctionnent ; pas d'UI de thématisation |
 | Styles (couleur, texte, effet, layout) | 🔲 | Presets de style réutilisables nommés |
 | Bibliothèques (publier, partager, mettre à jour) | 🔲 | Bibliothèques partagées de composants/styles |
@@ -187,7 +187,7 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 
 | Fonctionnalité | Statut | Notes |
 |---------------|--------|-------|
-| Import de fichier .fig | ✅ | Codec Kiwi complet : 194 définitions, ~390 champs par NodeChange |
+| Import de fichier .fig | ✅ | Codec Kiwi complet : 194 définitions, ~390 champs par `NodeChange` |
 | Export de fichier .fig | ✅ | Encodage Kiwi + compression Zstd + génération de miniature |
 | Enregistrer / Enregistrer sous | ✅ | <kbd>⌘</kbd><kbd>S</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> ; dialogues natifs (Tauri), File System Access API (Chrome/Edge), téléchargement (Safari) |
 | Presse-papiers Figma (coller) | ✅ | Décoder binaire Kiwi du presse-papiers Figma |

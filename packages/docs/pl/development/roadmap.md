@@ -4,7 +4,7 @@
 
 ### Faza 1: Silnik Core ✅
 
-SceneGraph, renderowanie Skia, podstawowe kształty, selekcja, zoom/pan, cofnij/ponów, linie wyrównania.
+`SceneGraph`, renderowanie Skia, podstawowe kształty, selekcja, zoom/pan, cofnij/ponów, linie wyrównania.
 
 ### Faza 2: UI Edytora + Layout ✅
 
@@ -16,7 +16,7 @@ Import/eksport .fig, kodek Kiwi, schowek, narzędzie pióra, sieci wektorowe, gr
 
 ### Faza 4: Komponenty + Zmienne ✅
 
-Komponenty, instancje, nadpisania, zestawy komponentów, zmienne (COLOR/FLOAT/STRING/BOOLEAN), kolekcje, tryby, eksport obrazów, menu kontekstowe, formatowanie tekstu bogatego.
+Komponenty, instancje, nadpisania, zestawy komponentów, zmienne (`COLOR`/FLOAT/STRING/BOOLEAN), kolekcje, tryby, eksport obrazów, menu kontekstowe, formatowanie tekstu bogatego.
 
 ### Faza 5: Integracja AI i Narzędzia ✅
 
@@ -53,7 +53,7 @@ Komponenty, instancje, nadpisania, zestawy komponentów, zmienne (COLOR/FLOAT/ST
 - Prototypowanie (połączenia ramek, przejścia, animacje)
 - Komentarze (pin, wątki, rozwiązywanie)
 - Wsparcie PWA
-- Przełączanie wariantów, UI zmiennych FLOAT/STRING/BOOLEAN, theming przez zmienne
+- Przełączanie wariantów, UI zmiennych `FLOAT`/STRING/BOOLEAN, theming przez zmienne
 
 ## Harmonogram
 

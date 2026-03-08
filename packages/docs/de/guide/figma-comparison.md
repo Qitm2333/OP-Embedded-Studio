@@ -126,7 +126,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 | Hintergrund-Unschärfe | ✅ | Inhalt hinter der Ebene unscharf |
 | Vordergrund-Unschärfe | ✅ | Unschärfe im Vordergrund |
 | Konturstärke | ✅ | Konfigurierbar im Eigenschafts-Panel |
-| Kontur-Endung (Rund, Quadrat, Pfeil) | ✅ | NONE, ROUND, SQUARE, ARROW_LINES, ARROW_EQUILATERAL |
+| Kontur-Endung (Rund, Quadrat, Pfeil) | ✅ | `NONE`, `ROUND`, `SQUARE`, `ARROW_LINES`, `ARROW_EQUILATERAL` |
 | Kontur-Verbindung (Gehrung, Abschrägung, Rund) | ✅ | Alle drei Verbindungstypen |
 | Strichmuster | ✅ | Strich-An/Strich-Aus-Muster |
 | Eckenradius | ✅ | Einheitlicher und pro-Ecke-Radius mit unabhängigem Toggle |
@@ -160,7 +160,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 | Varianten | 🔲 | Variantenwechsel und eigenschaftsbasierte Auswahl |
 | Komponenteneigenschaften | 🔲 | Boolesche, Text-, Instanztausch-Eigenschaften |
 | Override-Propagation | ✅ | Änderungen an Hauptkomponente werden propagiert; Overrides erhalten |
-| Variablen (Farbe, Zahl, String, Boolean) | 🟡 | COLOR mit vollem UI; FLOAT/STRING/BOOLEAN definiert ohne Bearbeitungs-UI |
+| Variablen (Farbe, Zahl, String, Boolean) | 🟡 | `COLOR` mit vollem UI; `FLOAT`/STRING/BOOLEAN definiert ohne Bearbeitungs-UI |
 | Variablensammlungen & Modi | 🟡 | Sammlungen, Modi, activeMode-Wechsel funktionieren; kein Variablen-Theming-UI |
 | Stile (Farbe, Text, Effekt, Layout) | 🔲 | Wiederverwendbare benannte Stil-Presets |
 | Bibliotheken (veröffentlichen, teilen, aktualisieren) | 🔲 | Geteilte Komponenten-/Stil-Bibliotheken |
@@ -187,7 +187,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 
 | Funktion | Status | Anmerkungen |
 |----------|--------|-------------|
-| .fig-Datei-Import | ✅ | Vollständiger Kiwi-Codec: 194 Definitionen, ~390 Felder pro NodeChange |
+| .fig-Datei-Import | ✅ | Vollständiger Kiwi-Codec: 194 Definitionen, ~390 Felder pro `NodeChange` |
 | .fig-Datei-Export | ✅ | Kiwi-Encoding + Zstd-Kompression + Miniatur-Generierung |
 | Speichern / Speichern unter | ✅ | <kbd>⌘</kbd><kbd>S</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>; native Dialoge (Tauri), File System Access API (Chrome/Edge), Download-Fallback (Safari) |
 | Figma-Zwischenablage (Einfügen) | ✅ | Kiwi-Binär aus Figma-Zwischenablage dekodieren |

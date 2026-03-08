@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble du système
 
-```mermaid
+`mermaid
 graph TB
     subgraph Tauri["Tauri v2 Shell"]
         subgraph Editor["Editor (Web)"]
@@ -22,7 +22,7 @@ graph TB
         MCP["MCP Server (90 tools, stdio+HTTP)"]
         Collab["P2P Collab (Trystero + Yjs)"]
     end
-```
+`
 
 ## Disposition de l'éditeur
 
@@ -62,7 +62,7 @@ Yoga de Meta fournit le calcul de layout CSS flexbox. Un adaptateur fin mappe le
 
 ### Format de fichier (Kiwi binaire)
 
-Réutilise le codec binaire Kiwi de Figma avec 194 définitions de message/enum/struct. Import : analyser l'en-tête → décompresser Zstd → décoder Kiwi → NodeChange[] → graphe de scène. L'export inverse le processus avec génération de miniature.
+Réutilise le codec binaire Kiwi de Figma avec 194 définitions de message/enum/struct. Import : analyser l'en-tête → décompresser Zstd → décoder Kiwi → `NodeChange`[] → graphe de scène. L'export inverse le processus avec génération de miniature.
 
 Voir la [Référence du format de fichier](/reference/file-format) pour plus de détails.
 

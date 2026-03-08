@@ -2,7 +2,7 @@
 
 ## Обзор системы
 
-```mermaid
+`mermaid
 graph TB
     subgraph Tauri["Tauri v2 Shell"]
         subgraph Editor["Editor (Web)"]
@@ -22,7 +22,7 @@ graph TB
         MCP["MCP Server (90 tools, stdio+HTTP)"]
         Collab["P2P Collab (Trystero + Yjs)"]
     end
-```
+`
 
 ## Макет редактора
 
@@ -62,7 +62,7 @@ Yoga от Meta обеспечивает вычисление макета CSS fl
 
 ### Формат файлов (Kiwi Binary)
 
-Использует бинарный кодек Kiwi от Figma с 194 определениями message/enum/struct. Импорт: разбор заголовка → декомпрессия Zstd → декодирование Kiwi → NodeChange[] → граф сцены. Экспорт выполняет обратный процесс с генерацией миниатюры.
+Использует бинарный кодек Kiwi от Figma с 194 определениями message/enum/struct. Импорт: разбор заголовка → декомпрессия Zstd → декодирование Kiwi → `NodeChange`[] → граф сцены. Экспорт выполняет обратный процесс с генерацией миниатюры.
 
 См. [справочник формата файлов](/reference/file-format) для подробностей.
 

@@ -2,7 +2,7 @@
 
 ## Systemübersicht
 
-```mermaid
+`mermaid
 graph TB
     subgraph Tauri["Tauri v2 Shell"]
         subgraph Editor["Editor (Web)"]
@@ -22,7 +22,7 @@ graph TB
         MCP["MCP Server (90 tools, stdio+HTTP)"]
         Collab["P2P Collab (Trystero + Yjs)"]
     end
-```
+`
 
 ## Editor-Layout
 
@@ -62,7 +62,7 @@ Metas Yoga bietet CSS-Flexbox-Layout-Berechnung. Ein dünner Adapter mappt Figma
 
 ### Dateiformat (Kiwi-Binär)
 
-Verwendet Figmas Kiwi-Binär-Codec mit 194 Message-/Enum-/Struct-Definitionen. Import: Header parsen → Zstd-Dekompression → Kiwi-Dekodierung → NodeChange[] → Szenengraph. Export kehrt den Prozess um, inklusive Thumbnail-Generierung.
+Verwendet Figmas Kiwi-Binär-Codec mit 194 Message-/Enum-/Struct-Definitionen. Import: Header parsen → Zstd-Dekompression → Kiwi-Dekodierung → `NodeChange`[] → Szenengraph. Export kehrt den Prozess um, inklusive Thumbnail-Generierung.
 
 Siehe [Dateiformat-Referenz](/reference/file-format) für Details.
 

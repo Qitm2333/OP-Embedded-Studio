@@ -126,7 +126,7 @@ Comparación característica por característica de las capacidades de Figma Des
 | Desenfoque de fondo | ✅ | Desenfocar contenido detrás de la capa |
 | Desenfoque de primer plano | ✅ | Desenfoque en primer plano |
 | Grosor de trazo | ✅ | Configurable en panel de propiedades |
-| Cap de trazo (round, square, arrow) | ✅ | NONE, ROUND, SQUARE, ARROW_LINES, ARROW_EQUILATERAL |
+| Cap de trazo (round, square, arrow) | ✅ | `NONE`, `ROUND`, `SQUARE`, `ARROW_LINES`, `ARROW_EQUILATERAL` |
 | Join de trazo (miter, bevel, round) | ✅ | Los tres tipos de join |
 | Patrones de guiones | ✅ | Patrón de trazo dash-on/dash-off |
 | Radio de esquina | ✅ | Radio uniforme y por esquina con toggle independiente |
@@ -160,7 +160,7 @@ Comparación característica por característica de las capacidades de Figma Des
 | Variantes | 🔲 | Cambio de variante y selección por propiedades |
 | Propiedades de componente | 🔲 | Propiedades booleanas, texto, intercambio de instancia |
 | Propagación de overrides | ✅ | Cambios en componente principal se propagan; overrides preservados |
-| Variables (color, número, string, booleano) | 🟡 | COLOR con UI completa; FLOAT/STRING/BOOLEAN definidos sin UI de edición |
+| Variables (color, número, string, booleano) | 🟡 | `COLOR` con UI completa; `FLOAT`/STRING/BOOLEAN definidos sin UI de edición |
 | Colecciones y modos de variables | 🟡 | Colecciones, modos, cambio activeMode funcionan; sin UI de theming por variable |
 | Estilos (color, texto, efecto, layout) | 🔲 | Presets de estilo reutilizables con nombre |
 | Bibliotecas (publicar, compartir, actualizar) | 🔲 | Bibliotecas compartidas de componentes/estilos |
@@ -187,7 +187,7 @@ Comparación característica por característica de las capacidades de Figma Des
 
 | Característica | Estado | Notas |
 |---------------|--------|-------|
-| Import de archivo .fig | ✅ | Codec Kiwi completo: 194 definiciones, ~390 campos por NodeChange |
+| Import de archivo .fig | ✅ | Codec Kiwi completo: 194 definiciones, ~390 campos por `NodeChange` |
 | Export de archivo .fig | ✅ | Codificación Kiwi + compresión Zstd + generación de miniatura |
 | Guardar / Guardar como | ✅ | <kbd>⌘</kbd><kbd>S</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>; diálogos nativos (Tauri), File System Access API (Chrome/Edge), fallback de descarga (Safari) |
 | Portapapeles de Figma (pegar) | ✅ | Decodificar binario Kiwi del portapapeles de Figma |

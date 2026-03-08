@@ -4,7 +4,7 @@
 
 ### Phase 1: Core-Engine ✅
 
-SceneGraph, Skia-Rendering, Grundformen, Auswahl, Zoom/Pan, Rückgängig/Wiederherstellen, Fanglinien.
+`SceneGraph`, Skia-Rendering, Grundformen, Auswahl, Zoom/Pan, Rückgängig/Wiederherstellen, Fanglinien.
 
 ### Phase 2: Editor-UI + Layout ✅
 
@@ -16,7 +16,7 @@ Vue 3 + Reka UI Panels, Eigenschaften, Ebenen, Werkzeugleiste, Yoga Auto-Layout,
 
 ### Phase 4: Komponenten + Variablen ✅
 
-Komponenten, Instanzen, Overrides, Komponenten-Sets, Variablen (COLOR/FLOAT/STRING/BOOLEAN), Sammlungen, Modi, Bildexport, Kontextmenü, Rich-Text-Formatierung.
+Komponenten, Instanzen, Overrides, Komponenten-Sets, Variablen (`COLOR`/FLOAT/STRING/BOOLEAN), Sammlungen, Modi, Bildexport, Kontextmenü, Rich-Text-Formatierung.
 
 ### Phase 5: KI-Integration & Werkzeuge ✅
 
@@ -55,7 +55,7 @@ Komponenten, Instanzen, Overrides, Komponenten-Sets, Variablen (COLOR/FLOAT/STRI
 - Prototyping (Frame-Verbindungen, Übergänge, Animationen)
 - Kommentare (Pin, Threads, Auflösen)
 - PWA-Unterstützung
-- Varianten-Switching, FLOAT/STRING/BOOLEAN Variable UI, variablengesteuertes Theming
+- Varianten-Switching, `FLOAT`/STRING/BOOLEAN Variable UI, variablengesteuertes Theming
 
 ## Zeitplan
 

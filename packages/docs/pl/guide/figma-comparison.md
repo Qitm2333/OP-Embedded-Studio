@@ -126,7 +126,7 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 | Rozmycie tła | ✅ | Rozmycie zawartości za warstwą |
 | Rozmycie pierwszego planu | ✅ | Rozmycie na pierwszym planie |
 | Grubość obrysu | ✅ | Konfigurowalny w panelu właściwości |
-| Zakończenie obrysu (round, square, arrow) | ✅ | NONE, ROUND, SQUARE, ARROW_LINES, ARROW_EQUILATERAL |
+| Zakończenie obrysu (round, square, arrow) | ✅ | `NONE`, `ROUND`, `SQUARE`, `ARROW_LINES`, `ARROW_EQUILATERAL` |
 | Złączenie obrysu (miter, bevel, round) | ✅ | Wszystkie trzy typy złączeń |
 | Wzory przerywane | ✅ | Wzór obrysu dash-on/dash-off |
 | Promień narożnika | ✅ | Jednolity i per narożnik z niezależnym przełącznikiem |
@@ -160,7 +160,7 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 | Warianty | 🔲 | Przełączanie wariantów i selekcja po właściwościach |
 | Właściwości komponentu | 🔲 | Właściwości boolean, tekst, zamiana instancji |
 | Propagacja nadpisań | ✅ | Zmiany w głównym komponencie propagowane; nadpisania zachowane |
-| Zmienne (kolor, liczba, string, boolean) | 🟡 | COLOR z pełnym UI; FLOAT/STRING/BOOLEAN zdefiniowane bez UI edycji |
+| Zmienne (kolor, liczba, string, boolean) | 🟡 | `COLOR` z pełnym UI; `FLOAT`/STRING/BOOLEAN zdefiniowane bez UI edycji |
 | Kolekcje i tryby zmiennych | 🟡 | Kolekcje, tryby, zmiana activeMode działają; brak UI tematyzacji |
 | Style (kolor, tekst, efekt, layout) | 🔲 | Presety stylów wielokrotnego użytku |
 | Biblioteki (publikuj, udostępniaj, aktualizuj) | 🔲 | Współdzielone biblioteki komponentów/stylów |
@@ -187,7 +187,7 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 
 | Funkcja | Status | Uwagi |
 |---------|--------|-------|
-| Import pliku .fig | ✅ | Pełny kodek Kiwi: 194 definicje, ~390 pól per NodeChange |
+| Import pliku .fig | ✅ | Pełny kodek Kiwi: 194 definicje, ~390 pól per `NodeChange` |
 | Eksport pliku .fig | ✅ | Kodowanie Kiwi + kompresja Zstd + generowanie miniatur |
 | Zapisz / Zapisz jako | ✅ | <kbd>⌘</kbd><kbd>S</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>; natywne dialogi (Tauri), File System Access API (Chrome/Edge), fallback pobierania (Safari) |
 | Schowek Figmy (wklej) | ✅ | Dekodowanie binarnego Kiwi ze schowka Figmy |
