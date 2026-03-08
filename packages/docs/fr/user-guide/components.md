@@ -5,19 +5,19 @@ description: Composants réutilisables, instances, surcharges et synchronisation
 # Composants
 
 ## Créer un composant
-<kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd>) — convertit cadre/groupe en COMPONENT. Étiquette violette avec diamant.
+<kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd>) — convertit un cadre ou un groupe en composant réutilisable. Une étiquette violette avec un losange apparaît au-dessus.
 
 ## Jeux de composants
-<kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> — combine 2+ composants avec bordure violette en pointillés.
+<kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> — combine deux composants ou plus dans un conteneur avec une bordure violette en pointillés.
 
 ## Créer des instances
-Clic droit → **Créer une instance**. Apparaît 40 px à droite.
+Clic droit → **Créer une instance**. L'instance apparaît à droite du composant source.
 
 ## Détacher une instance
 <kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> — devient un cadre sans lien.
 
 ## Synchronisation live
-Modifier un composant met à jour toutes ses instances. Propriétés synchronisées : dimensions, remplissages, contours, effets, opacité, rayons des coins, mise en page.
+Modifier un composant met à jour automatiquement toutes ses instances. Les propriétés synchronisées incluent les dimensions, les couleurs, les contours, les effets, l'opacité, les coins arrondis et la mise en page.
 
 ## Surcharges
 Les instances peuvent surcharger des propriétés sans rompre le lien.

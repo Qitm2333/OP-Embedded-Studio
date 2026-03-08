@@ -60,8 +60,8 @@ Die Schriftauswahl im Typografie-Bereich bietet Suchfilter, Schriftvorschau und 
 ## Schriftquellen
 
 - **Standardschrift** — Inter wird automatisch geladen
-- **Desktop (Tauri)** — Systemschriften via Rust font-kit
-- **Browser** — via Local Font Access API (Chrome/Edge)
+- **Desktop** — Systemschriften werden automatisch erkannt
+- **Browser** — Systemschriften werden in Chrome und Edge unterstützt
 
 ## Tipps
 

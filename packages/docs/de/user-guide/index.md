@@ -31,6 +31,6 @@ In diesem Handbuch verwenden Tastenkürzel Mac-Notation: <kbd>⌘</kbd> = Comman
 
 ## Erweiterte Funktionen
 
-- [Auto-Layout](./auto-layout) — Flexbox-basierte automatische Positionierung mit Yoga
+- [Auto-Layout](./auto-layout) — Flexbox-basierte automatische Positionierung
 - [Komponenten](./components) — Wiederverwendbare Komponenten, Instanzen und Overrides
 - [Variablen](./variables) — Design-Variablen, Sammlungen, Modi und Füllbindungen

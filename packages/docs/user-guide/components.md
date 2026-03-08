@@ -8,7 +8,7 @@ description: Creating reusable components, instances, component sets, overrides,
 Components are reusable design elements. Edit the main component and all its instances update automatically.
 ## Creating a Component
 
-Select a frame or group and press <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd>). The node converts to a COMPONENT type in place.
+Select a frame or group and press <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd>). The selection becomes a reusable component.
 
 If you select multiple nodes, they're wrapped in a new component positioned at their bounding box.
 
@@ -50,9 +50,7 @@ Instances can override specific properties without breaking the sync link. When 
 
 ### Overridable Properties
 
-Child-level overrides support: name, text, fontSize, fontWeight, fontFamily, plus all visual and layout properties (fills, strokes, effects, opacity, corner radii, size).
-
-Override keys use the format `childId:propertyName` in the instance's overrides record.
+Child-level overrides support: name, text, font size, font weight, font family, plus all visual and layout properties (fills, strokes, effects, opacity, corner radii, size).
 
 ### New Children
 
@@ -66,9 +64,9 @@ Components and instances are opaque containers — clicking on a child selects t
 
 | Element | Appearance |
 |---------|------------|
-| Component label | Purple (#9747ff) with diamond icon, always visible |
-| Instance label | Purple (#9747ff) with diamond icon, always visible |
-| Component set border | Dashed purple (6 px dash, 4 px gap, 1.5 px width) |
+| Component label | Purple with diamond icon, always visible |
+| Instance label | Purple with diamond icon, always visible |
+| Component set border | Dashed purple outline |
 
 ## Keyboard Shortcuts
 

@@ -28,7 +28,11 @@ Doppio click su un nodo testo per entrare in modalità modifica. Clicca fuori pe
 | Sottolineato | <kbd>⌘</kbd><kbd>U</kbd> | <kbd>Ctrl</kbd> + <kbd>U</kbd> |
 
 ## Selettore font
-Ricerca, anteprima e scroll virtuale. Font di sistema su desktop (Tauri), Local Font Access API nel browser.
+Ricerca, anteprima e scroll virtuale.
+
+## Fonti dei font
+- **App desktop** — tutti i font di sistema disponibili
+- **Browser** — font di sistema disponibili in Chrome e Edge
 
 ## Suggerimenti
 - Input IME (cinese, giapponese, coreano) completamente supportato.

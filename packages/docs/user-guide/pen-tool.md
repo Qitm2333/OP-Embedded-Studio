@@ -27,7 +27,7 @@ Press <kbd>Escape</kbd> to commit the current path as an open path. Open paths r
 
 ## Vector Networks
 
-Under the hood, paths use the vector network data model instead of simple point lists. Vector networks allow more flexible topology (e.g., branching paths) and are encoded in Figma's `vectorNetworkBlob` binary format for .fig file compatibility.
+Paths in OpenPencil use vector networks — a more flexible model than simple point lists that supports branching paths and complex topology. This is the same model Figma uses, so paths round-trip perfectly in .fig files.
 
 ## Keyboard Shortcuts
 

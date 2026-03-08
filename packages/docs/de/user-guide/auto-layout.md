@@ -5,7 +5,7 @@ description: Flexbox-basiertes Auto-Layout in OpenPencil — Richtung, Abstand, 
 
 # Auto-Layout
 
-Auto-Layout verwendet Yoga (Flexbox-Engine), um Kinder automatisch innerhalb eines Frames zu positionieren. Es verwaltet Richtung, Abstände, Ausrichtung und responsive Größenanpassung.
+Auto-Layout positioniert Kinder automatisch innerhalb eines Frames nach Flexbox-Regeln. Es verwaltet Richtung, Abstände, Ausrichtung und responsive Größenanpassung.
 
 ## Auto-Layout aktivieren
 

@@ -18,9 +18,11 @@ Click the first point to close into a loop.
 <kbd>Escape</kbd> to commit as open path.
 
 ## Sieci wektorowe
-Vector network data model, compatible with Figma `vectorNetworkBlob`.
+Ścieżki w OpenPencil korzystają z sieci wektorowych — elastycznego modelu obsługującego rozgałęzione ścieżki i złożoną topologię. Jest to ten sam model, co w Figmie, więc ścieżki zachowują pełną kompatybilność z plikami .fig.
 
-| Action | Mac | Windows / Linux |
-|--------|-----|-----------------|
-| Pen tool | P | P |
-| Commit | Escape | Escape |
+## Skróty klawiszowe
+
+| Akcja | Mac | Windows / Linux |
+|-------|-----|-----------------|
+| Narzędzie pióro | P | P |
+| Zatwierdź | Escape | Escape |

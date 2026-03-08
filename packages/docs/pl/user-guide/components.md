@@ -5,7 +5,7 @@ description: Komponenty wielokrotnego użytku, instancje, nadpisania i synchroni
 # Komponenty
 
 ## Tworzenie komponentu
-<kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd>) — konwertuje ramkę/grupę na COMPONENT. Fioletowa etykieta z diamentem.
+Zaznacz ramkę lub grupę i naciśnij <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd>). Zaznaczenie staje się komponentem wielokrotnego użytku z fioletową etykietą i ikoną diamentu.
 
 ## Zestawy komponentów
 <kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> — łączy 2+ komponenty z fioletową przerywaną ramką.
@@ -20,10 +20,20 @@ Prawy przycisk → **Utwórz instancję**. Pojawia się 40 px na prawo.
 Edycja komponentu aktualizuje wszystkie instancje. Synchronizowane: wymiary, wypełnienia, obrysy, efekty, przezroczystość, promienie narożników, layout.
 
 ## Nadpisania
-Instancje mogą nadpisywać właściwości bez zrywania powiązania.
+Instancje mogą nadpisywać wybrane właściwości bez zrywania powiązania z komponentem głównym. Nadpisana właściwość jest pomijana podczas synchronizacji — pozostałe właściwości nadal aktualizują się z komponentu.
 
 ## Hit testing
 Kliknięcie zaznacza komponent. **Dwuklik** aby wejść i zaznaczyć dzieci.
+
+## Wygląd
+
+| Element | Wygląd |
+|---------|--------|
+| Etykieta komponentu | Fioletowa z ikoną diamentu |
+| Etykieta instancji | Fioletowa z ikoną diamentu |
+| Ramka zestawu | Fioletowa przerywana ramka |
+
+## Skróty klawiszowe
 
 | Akcja | Mac | Windows / Linux |
 |-------|-----|-----------------|

@@ -17,7 +17,7 @@ Knoten werden in einem zusammenklappbaren Baum angezeigt. Klicken Sie auf den Pf
 
 ### Ziehen zum Umordnen
 
-Ziehen Sie Ebenen, um sie umzuordnen. Dies ändert die Z-Reihenfolge im Szenengraphen.
+Ziehen Sie Ebenen, um sie umzuordnen. Ebenen weiter oben in der Liste werden über den anderen gerendert.
 
 ### Sichtbarkeit umschalten
 

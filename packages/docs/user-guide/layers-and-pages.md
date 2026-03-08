@@ -16,7 +16,7 @@ Nodes are shown in a collapsible tree. Click the chevron next to a frame, group,
 
 ### Drag Reorder
 
-Drag layers to reorder them. This changes the node's z-order in the scene graph — nodes higher in the list render on top.
+Drag layers to reorder them. Nodes higher in the list render on top.
 
 ### Visibility Toggle
 

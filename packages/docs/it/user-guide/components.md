@@ -5,7 +5,7 @@ description: Componenti riutilizzabili, istanze, override e sincronizzazione liv
 # Componenti
 
 ## Creare un componente
-<kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd>) — converte frame/gruppo in COMPONENT. Etichetta viola con diamante.
+<kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd>) — converte la selezione in un componente riutilizzabile. I componenti mostrano un'etichetta viola con icona a diamante.
 
 ## Set di componenti
 <kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> — combina 2+ componenti in un set con bordo tratteggiato viola.

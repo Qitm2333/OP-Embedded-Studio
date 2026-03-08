@@ -31,6 +31,6 @@ Throughout this guide, keyboard shortcuts use Mac notation: <kbd>⌘</kbd> = Com
 
 ## Advanced Features
 
-- [Auto Layout](./auto-layout) — flexbox-based automatic positioning with Yoga
+- [Auto Layout](./auto-layout) — flexbox-based automatic positioning
 - [Components](./components) — reusable components, instances, and overrides
 - [Variables](./variables) — design variables, collections, modes, and fill bindings

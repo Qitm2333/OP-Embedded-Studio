@@ -40,7 +40,7 @@ Menu kontekstowe **Kopiuj jako** oferuje dodatkowe formaty:
 | Zapisz | <kbd>⌘</kbd><kbd>S</kbd> | <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 | Zapisz jako | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 
-Kompatybilność round-trip z Figmą.
+Pliki eksportowane z OpenPencil można otwierać w Figmie i odwrotnie.
 
 ## Wskazówki
 

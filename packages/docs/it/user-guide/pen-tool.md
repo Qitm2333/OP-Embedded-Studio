@@ -8,19 +8,19 @@ description: Percorsi vettoriali con curve di Bézier in OpenPencil.
 **P**
 
 ## Posizionare punti
-- **Click** — corner point
-- **Click + drag** — curve point with Bézier tangent handles
+- **Click** — punto angolare (segmento rettilineo)
+- **Click + trascina** — punto curvo con maniglie tangenti di Bézier
 
 ## Chiudere un percorso
-Click the first point to close into a loop.
+Clicca sul primo punto del percorso per chiuderlo in un anello. I percorsi chiusi possono essere riempiti.
 
 ## Percorsi aperti
-<kbd>Escape</kbd> to commit as open path.
+Premi <kbd>Escape</kbd> per confermare il percorso corrente come percorso aperto.
 
 ## Reti vettoriali
-Vector network data model, compatible with Figma `vectorNetworkBlob`.
+I percorsi in OpenPencil usano reti vettoriali — un modello più flessibile delle semplici liste di punti, che supporta percorsi ramificati e topologie complesse. Questo è lo stesso modello usato da Figma, quindi i percorsi si preservano perfettamente nei file .fig.
 
-| Action | Mac | Windows / Linux |
+| Azione | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Pen tool | P | P |
-| Commit | Escape | Escape |
+| Strumento penna | P | P |
+| Conferma percorso | Escape | Escape |

@@ -31,6 +31,6 @@ OpenPencil to open-source'owy edytor graficzny, kompatybilny z Figmą — w peł
 
 ## Zaawansowane
 
-- [Auto-layout](./auto-layout) — automatyczne pozycjonowanie oparte na flexbox
+- [Auto-layout](./auto-layout) — automatyczne pozycjonowanie dzieci w ramce
 - [Komponenty](./components) — komponenty wielokrotnego użytku, instancje i nadpisania
 - [Zmienne](./variables) — zmienne projektowe, kolekcje, tryby

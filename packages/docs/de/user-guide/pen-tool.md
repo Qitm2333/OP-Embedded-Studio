@@ -28,7 +28,7 @@ Drücken Sie <kbd>Escape</kbd>, um den aktuellen Pfad als offenen Pfad zu bestä
 
 ## Vektornetzwerke
 
-Pfade verwenden das Vektornetzwerk-Datenmodell statt einfacher Punktlisten. Vektornetzwerke ermöglichen flexiblere Topologien und werden in Figmas `vectorNetworkBlob`-Binärformat für .fig-Kompatibilität kodiert.
+Pfade verwenden das Vektornetzwerk-Datenmodell statt einfacher Punktlisten. Vektornetzwerke ermöglichen flexiblere Topologien und sind vollständig mit dem .fig-Format kompatibel.
 
 ## Tastenkürzel
 

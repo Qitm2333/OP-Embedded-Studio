@@ -40,7 +40,7 @@ Le menu contextuel **Copier en tant que** offre des formats supplémentaires :
 | Enregistrer | <kbd>⌘</kbd><kbd>S</kbd> | <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 | Enregistrer sous | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 
-Compatibilité aller-retour avec Figma.
+Les fichiers sauvegardés sont compressés et incluent une miniature pour l'aperçu. Compatibilité aller-retour avec Figma.
 
 ## Conseils
 

@@ -18,7 +18,7 @@ Click the first point to close into a loop.
 <kbd>Escape</kbd> to commit as open path.
 
 ## Réseaux vectoriels
-Vector network data model, compatible with Figma `vectorNetworkBlob`.
+Les tracés dans OpenPencil utilisent des réseaux vectoriels — un modèle plus flexible que les listes de points simples, qui prend en charge les tracés ramifiés et les topologies complexes. C'est le même modèle que Figma, les tracés sont donc parfaitement conservés dans les fichiers .fig.
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|

@@ -40,7 +40,7 @@ Das Kontextmenü bietet **Als kopieren** mit mehreren Zwischenablage-Formaten:
 
 ## .fig-Dateioperationen
 
-OpenPencil verwendet das .fig-Format — dasselbe Binärformat wie Figma.
+OpenPencil verwendet das .fig-Format — kompatibel mit Figma. Gespeicherte Dateien werden komprimiert und enthalten ein Vorschaubild.
 
 ### Dateien öffnen
 

@@ -31,6 +31,6 @@ OpenPencil es un editor de diseño open-source, compatible con Figma — complet
 
 ## Funciones avanzadas
 
-- [Auto-layout](./auto-layout) — posicionamiento automático basado en flexbox
+- [Auto-layout](./auto-layout) — posicionamiento automático de hijos usando reglas de flexbox
 - [Componentes](./components) — componentes reutilizables, instancias y overrides
 - [Variables](./variables) — variables de diseño, colecciones, modos

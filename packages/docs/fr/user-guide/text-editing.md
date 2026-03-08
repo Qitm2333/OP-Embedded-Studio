@@ -28,4 +28,4 @@ Double-cliquez sur un nœud texte pour entrer en mode édition. Cliquez à l'ext
 | Souligné | <kbd>⌘</kbd><kbd>U</kbd> | <kbd>Ctrl</kbd> + <kbd>U</kbd> |
 
 ## Sélecteur de police
-Recherche, aperçu et défilement virtuel. Polices système sur desktop (Tauri), Local Font Access API dans le navigateur.
+Recherche, aperçu et défilement virtuel. Les polices système sont disponibles sur l'application de bureau, ainsi que dans Chrome et Edge.

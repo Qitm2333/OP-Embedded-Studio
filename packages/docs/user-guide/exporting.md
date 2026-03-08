@@ -65,7 +65,7 @@ A file picker dialog opens, filtered for .fig files. On the desktop app, this us
 - **Save** overwrites the currently open file without a dialog
 - **Save As** opens a save dialog to choose a new location
 
-The export pipeline encodes the scene graph to Kiwi binary format, compresses it, and writes a ZIP archive with the payload and a thumbnail image.
+Saved files are compressed and include a thumbnail image for preview in file browsers.
 
 ### Round-trip Compatibility
 

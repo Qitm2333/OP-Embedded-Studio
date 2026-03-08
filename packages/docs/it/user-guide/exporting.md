@@ -40,6 +40,8 @@ Il menu contestuale **Copia come** offre formati aggiuntivi:
 | Salva | <kbd>⌘</kbd><kbd>S</kbd> | <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 | Salva come | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 
+I file salvati sono compressi e includono una miniatura per l'anteprima nel file manager.
+
 Compatibilità round-trip con Figma.
 
 ## Suggerimenti

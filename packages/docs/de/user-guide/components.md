@@ -9,7 +9,7 @@ Komponenten sind wiederverwendbare Design-Elemente. Bearbeiten Sie die Hauptkomp
 
 ## Komponente erstellen
 
-Wählen Sie einen Frame oder eine Gruppe und drücken Sie <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (Strg + Alt + K). Der Knoten wird an Ort und Stelle in einen COMPONENT-Typ umgewandelt.
+Wählen Sie einen Frame oder eine Gruppe und drücken Sie <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (Strg + Alt + K). Der Knoten wird zu einer wiederverwendbaren Komponente.
 
 Komponenten zeigen ein lila Label mit Diamant-Symbol.
 
@@ -45,7 +45,7 @@ Instanzen können bestimmte Eigenschaften überschreiben, ohne die Synchronisati
 
 ### Überschreibbare Eigenschaften
 
-Name, Text, fontSize, fontWeight, fontFamily sowie alle visuellen und Layout-Eigenschaften.
+Name, Text, Schriftgröße, Schriftstärke, Schriftfamilie sowie alle visuellen und Layout-Eigenschaften.
 
 ### Neue Kinder
 
@@ -59,8 +59,8 @@ Komponenten und Instanzen sind opake Container — Klicken wählt die Komponente
 
 | Element | Darstellung |
 |---------|------------|
-| Komponenten-Label | Lila (#9747ff) mit Diamant-Symbol |
-| Instanz-Label | Lila (#9747ff) mit Diamant-Symbol |
+| Komponenten-Label | Lila mit Diamant-Symbol |
+| Instanz-Label | Lila mit Diamant-Symbol |
 | Komponenten-Set-Rand | Gestrichelt lila |
 
 ## Tastenkürzel

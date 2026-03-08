@@ -40,7 +40,11 @@ El menú contextual **Copiar como** ofrece formatos adicionales:
 | Guardar | <kbd>⌘</kbd><kbd>S</kbd> | <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 | Guardar como | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 
-Compatibilidad de ida y vuelta con Figma.
+Los archivos guardados se comprimen e incluyen una imagen en miniatura para vista previa.
+
+### Compatibilidad de ida y vuelta
+
+Los archivos exportados desde OpenPencil se pueden abrir en Figma, y viceversa. El formato .fig preserva todos los tipos de nodos, propiedades, rellenos, trazos, efectos, datos vectoriales y configuración de layout.
 
 ## Consejos
 

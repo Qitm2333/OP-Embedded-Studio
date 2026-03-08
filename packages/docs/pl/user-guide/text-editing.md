@@ -28,4 +28,14 @@ Dwuklik na węźle tekstowym, aby wejść w tryb edycji. Kliknij poza, aby zatwi
 | Podkreślenie | <kbd>⌘</kbd><kbd>U</kbd> | <kbd>Ctrl</kbd> + <kbd>U</kbd> |
 
 ## Wybór czcionki
-Wyszukiwanie, podgląd i wirtualne przewijanie. Czcionki systemowe na desktopie (Tauri), Local Font Access API w przeglądarce.
+Otwórz selektor czcionek w sekcji Typografia panelu właściwości. Dostępne funkcje:
+
+- **Wyszukiwanie** — wpisz, aby przefiltrować listę
+- **Podgląd** — każda nazwa czcionki renderowana jest własnym krojem
+- **Przewijanie do aktualnej** — bieżąca czcionka jest podświetlona po otwarciu
+
+## Źródła czcionek
+
+- **Czcionka domyślna** — Inter jest ładowany automatycznie
+- **Aplikacja desktopowa** — dostępne wszystkie czcionki systemowe
+- **Przeglądarka** — czcionki systemowe dostępne w Chrome i Edge

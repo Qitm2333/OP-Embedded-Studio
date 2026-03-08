@@ -1,26 +1,35 @@
 ---
 title: Herramienta pluma
-description: Trazados vectoriales con curvas de Bézier in OpenPencil.
+description: Trazados vectoriales con curvas de Bézier en OpenPencil.
 ---
 # Herramienta pluma
 
+La herramienta pluma crea trazados vectoriales usando un modelo de redes vectoriales, compatible con el formato .fig de Figma.
+
 ## Activación
-**P**
+
+Pulsa <kbd>P</kbd> para activar la herramienta pluma.
 
 ## Colocar puntos
-- **Click** — corner point
-- **Click + drag** — curve point with Bézier tangent handles
+
+- **Clic** — punto de esquina (segmento recto)
+- **Clic + arrastrar** — punto de curva con manejadores de tangente Bézier — la dirección y longitud del arrastre controlan la forma de la curva
 
 ## Cerrar un trazado
-Click the first point to close into a loop.
+
+Haz clic en el **primer punto** del trazado para cerrarlo en un bucle. Los trazados cerrados se pueden rellenar.
 
 ## Trazados abiertos
-<kbd>Escape</kbd> to commit as open path.
+
+Pulsa <kbd>Escape</kbd> para confirmar el trazado actual como trazado abierto. Los trazados abiertos se renderizan solo como trazos — no se rellenan.
 
 ## Redes vectoriales
-Vector network data model, compatible with Figma `vectorNetworkBlob`.
 
-| Action | Mac | Windows / Linux |
+Los trazados en OpenPencil usan redes vectoriales — un modelo más flexible que las listas simples de puntos que soporta trazados ramificados y topología compleja. Es el mismo modelo que usa Figma, así que los trazados se mantienen perfectamente al abrir y guardar archivos .fig.
+
+## Atajos de teclado
+
+| Acción | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Pen tool | P | P |
-| Commit | Escape | Escape |
+| Herramienta pluma | P | P |
+| Confirmar trazado abierto | Escape | Escape |
