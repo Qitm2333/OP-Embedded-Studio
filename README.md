@@ -8,6 +8,16 @@ Open-source design editor. Opens Figma files, built-in AI, fully programmable.
 
 ![OpenPencil](packages/docs/public/screenshot.png)
 
+## Installation
+
+**macOS (Homebrew):**
+
+```sh
+brew install open-pencil/tap/open-pencil
+```
+
+Or download from the [releases page](https://github.com/open-pencil/open-pencil/releases/latest), or [use the web app](https://app.openpencil.dev) — no install needed.
+
 ## What it does
 
 - **Opens .fig files** — read and write native Figma files, copy & paste nodes between apps
@@ -172,16 +182,6 @@ OpenPencil is the alternative: open source (MIT), reads .fig files natively, eve
 - CI tools — design linting, code export, visual regression in pipelines
 - Windows code signing (Azure certificates for properly signed binaries)
 - Experimental WebGPU/Graphite rendering backend
-
-## Installation
-
-**macOS (Homebrew):**
-
-```sh
-brew install open-pencil/tap/open-pencil
-```
-
-Or download from the [releases page](https://github.com/open-pencil/open-pencil/releases/latest), or [use the web app](https://app.openpencil.dev) — no install needed.
 
 ## Contributing
 
