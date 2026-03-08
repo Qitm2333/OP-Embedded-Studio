@@ -18,7 +18,7 @@ import { colorToHex8, rgba255ToColor } from '@open-pencil/core'
 
 import type { Color } from '@/types'
 
-const props = defineProps<{
+const { color } = defineProps<{
   color: Color
 }>()
 
@@ -26,7 +26,7 @@ const emit = defineEmits<{
   update: [color: Color]
 }>()
 
-const hexWithAlpha = computed(() => colorToHex8(props.color))
+const hexWithAlpha = computed(() => colorToHex8(color))
 
 const rekaColor = computed(() => normalizeColor(hexWithAlpha.value))
 

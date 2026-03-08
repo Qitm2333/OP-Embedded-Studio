@@ -14,7 +14,7 @@ import { AI_PROVIDERS, useAIChat } from '@/composables/use-chat'
 
 const { providerID, providerDef } = useAIChat()
 
-defineProps<{
+const { triggerClass, itemClass, testId } = defineProps<{
   triggerClass?: string
   itemClass?: string
   testId?: string

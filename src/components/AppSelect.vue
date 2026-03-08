@@ -13,7 +13,7 @@ import {
 
 import { selectContent, selectItem, selectTrigger } from '@/components/ui/select'
 
-defineProps<{
+const { options, placeholder } = defineProps<{
   options: { value: T; label: string }[]
   placeholder?: string
 }>()

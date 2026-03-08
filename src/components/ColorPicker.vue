@@ -7,7 +7,7 @@ import HsvColorArea from './HsvColorArea.vue'
 
 import type { Color } from '@/types'
 
-const props = defineProps<{
+const { color } = defineProps<{
   color: Color
 }>()
 
@@ -15,7 +15,7 @@ const emit = defineEmits<{
   update: [color: Color]
 }>()
 
-const swatchColor = computed(() => colorToCSS(props.color))
+const swatchColor = computed(() => colorToCSS(color))
 </script>
 
 <template>

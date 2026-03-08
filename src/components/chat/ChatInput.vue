@@ -23,7 +23,7 @@ import { useAIChat } from '@/composables/use-chat'
 
 const { providerID, providerDef, modelID, customModelID } = useAIChat()
 
-const props = defineProps<{
+const { status } = defineProps<{
   status: 'ready' | 'submitted' | 'streaming' | 'error'
 }>()
 
@@ -34,7 +34,7 @@ const emit = defineEmits<{
 
 const input = ref('')
 
-const isStreaming = computed(() => props.status === 'streaming' || props.status === 'submitted')
+const isStreaming = computed(() => status === 'streaming' || status === 'submitted')
 const isCustomProvider = computed(() => providerID.value === 'openai-compatible')
 
 const selectedModelName = computed(() => {

@@ -4,13 +4,10 @@ import { colorToHexRaw, parseColor } from '@open-pencil/core'
 
 import type { Color } from '@/types'
 
-const props = withDefaults(
-  defineProps<{
-    color: Color
-    editable?: boolean
-  }>(),
-  { editable: false }
-)
+const { color, editable = false } = defineProps<{
+  color: Color
+  editable?: boolean
+}>()
 
 const emit = defineEmits<{
   update: [color: Color]
@@ -18,8 +15,8 @@ const emit = defineEmits<{
 
 function onHexChange(e: Event) {
   const hex = (e.target as HTMLInputElement).value
-  const color = parseColor(hex.startsWith('#') ? hex : `#${hex}`)
-  emit('update', { ...color, a: props.color.a })
+  const parsed = parseColor(hex.startsWith('#') ? hex : `#${hex}`)
+  emit('update', { ...parsed, a: color.a })
 }
 </script>
 
