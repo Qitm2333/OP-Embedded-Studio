@@ -1,16 +1,16 @@
 ---
 layout: home
-title: OpenPencil — Editor di Design IA-Nativo
-description: Alternativa open-source a Figma. Completamente locale, IA-nativa, programmabile.
+title: OpenPencil — Editor di Design Open Source
+description: Alternativa open source a Figma. Apre file .fig, AI integrata, completamente programmabile.
 
 hero:
   name: OpenPencil
-  text: Editor di design IA-nativo
-  tagline: Alternativa open-source a Figma. Completamente locale, IA-nativa, programmabile.
+  text: Editor di Design Open Source
+  tagline: Apre file Figma. AI integrata. Completamente programmabile. Gratis per sempre.
   actions:
     - theme: brand
-      text: Prova online
-      link: https://app.openpencil.dev
+      text: Prova Online
+      link: https://app.openpencil.dev/demo
     - theme: alt
       text: Scarica
       link: https://github.com/open-pencil/open-pencil/releases/latest
@@ -19,19 +19,22 @@ hero:
       link: https://github.com/open-pencil/open-pencil
 
 features:
-  - icon: 📖
-    title: Open Source
-    details: Licenza MIT. Leggi e modifica tutto — l'editor, il motore, il codec dei file.
   - icon: 📂
     title: Compatibile con Figma
-    details: Apre file .fig nativamente. Copia/incolla tra le app. Codec Kiwi con fedeltà round-trip.
-  - icon: 🤖
-    title: IA-nativo
-    details: Chat integrata con uso degli strumenti. Porta la tua chiave API — nessun abbonamento, nessun vendor lock-in.
-  - icon: 🖥️
-    title: Nessun abbonamento
-    details: Nessun account, nessun server, nessun internet necessario. Gratuito per sempre. App desktop ~5 MB.
+    details: Apre file .fig nativamente. Copia e incolla tra Figma e OpenPencil. Codec binario Kiwi con fedeltà round-trip.
   - icon: ⚡
     title: Programmabile
-    details: CLI headless per ispezione ed esportazione .fig. Ogni operazione è scriptabile. Renderer JSX.
+    details: CLI headless per ispezionare, esportare e analizzare file .fig. Figma Plugin API tramite eval. Esportazione Tailwind CSS. Output JSON per CI.
+  - icon: 🤖
+    title: AI Nativa
+    details: Chat integrata con 90 strumenti — crea forme, imposta stili, gestisci layout, analizza token. Server MCP per Claude Code, Cursor, Windsurf.
+  - icon: 📖
+    title: Open Source
+    details: Licenza MIT. Leggi e modifica tutto — l'editor, il motore, il codec dei file, la CLI.
+  - icon: 🖥️
+    title: Gratuito e Locale
+    details: Nessun account, nessun server, nessuna connessione richiesta. App desktop da ~7 MB tramite Homebrew, oppure usa l'app web.
+  - icon: 👥
+    title: Collaborazione in Tempo Reale
+    details: P2P tramite WebRTC — nessun server. Condividi un link, modifica insieme con cursori live e modalità segui.
 ---
