@@ -1,48 +1,48 @@
-# Типы узлов
+# Node Types
 
-Граф сцены поддерживает 28 типов узлов из Kiwi-схемы Figma. Каждый узел идентифицируется GUID (`sessionID:localID`) и содержит ссылку на родителя через `parentIndex`. Объединение `NodeType` движка OpenPencil использует 17 из этих типов.
+The scene graph supports 28 node types from Figma's Kiwi schema. Each node is identified by a GUID (`sessionID:localID`) and has a parent reference via `parentIndex`. The OpenPencil engine's `NodeType` union currently uses 17 of these types.
 
-## Таблица типов
+## Type Table
 
-28 типов из схемы Figma + 1 синтетический тип движка. Типы, отмеченные ✅, входят в объединение `NodeType` движка (всего 17).
+28 Figma schema types + 1 synthetic engine type. Types marked ✅ are in the engine's `NodeType` union (17 total).
 
-| Тип | ID | Описание | Движок |
-|-----|----|----------|--------|
-| DOCUMENT | 1 | Корневой узел, один на файл | — |
-| CANVAS | 2 | Страница | ✅ |
-| GROUP | 3 | Контейнер-группа | ✅ |
-| FRAME | 4 | Основной контейнер (артборд), поддерживает auto-layout | ✅ |
-| BOOLEAN_OPERATION | 5 | Результат union/subtract/intersect/exclude | |
-| VECTOR | 6 | Свободный векторный путь | ✅ |
-| STAR | 7 | Звезда | ✅ |
-| LINE | 8 | Линия | ✅ |
-| ELLIPSE | 9 | Эллипс/круг, поддерживает данные дуги | ✅ |
-| RECTANGLE | 10 | Прямоугольник | ✅ |
-| REGULAR_POLYGON | 11 | Правильный многоугольник (3–12 сторон, в движке используется `POLYGON`) | ✅ |
-| ROUNDED_RECTANGLE | 12 | Прямоугольник со сглаженными углами | ✅ |
-| TEXT | 13 | Текст с форматированием | ✅ |
-| SLICE | 14 | Область экспорта | |
-| SYMBOL | 15 | Компонент (основной, в движке используется `COMPONENT`) | ✅ |
-| INSTANCE | 16 | Экземпляр компонента | ✅ |
-| STICKY | 17 | Стикер FigJam | |
-| SHAPE_WITH_TEXT | 18 | Фигура FigJam | ✅ |
-| CONNECTOR | 19 | Соединительная линия между узлами | ✅ |
-| CODE_BLOCK | 20 | Блок кода FigJam | |
-| WIDGET | 21 | Виджет плагина | |
-| STAMP | 22 | Штамп FigJam | |
-| MEDIA | 23 | Видео/GIF | |
-| HIGHLIGHT | 24 | Выделение FigJam | |
-| SECTION | 25 | Секция холста (организационная, только верхний уровень) | ✅ |
-| SECTION_OVERLAY | 26 | Оверлей секции | |
-| WASHI_TAPE | 27 | Васи-тейп FigJam | |
-| VARIABLE | 28 | Узел определения переменной | |
-| COMPONENT_SET | — | Контейнер группы вариантов (синтетический, отображается из SYMBOL) | ✅ |
+| Type | ID | Description | Engine |
+|------|----|-------------|--------|
+| `DOCUMENT` | 1 | Root node, one per file | — |
+| `CANVAS` | 2 | Page | ✅ |
+| `GROUP` | 3 | Group container | ✅ |
+| `FRAME` | 4 | Primary container (artboard), supports auto-layout | ✅ |
+| `BOOLEAN_OPERATION` | 5 | Union/subtract/intersect/exclude result | |
+| `VECTOR` | 6 | Freeform vector path | ✅ |
+| `STAR` | 7 | Star shape | ✅ |
+| `LINE` | 8 | Line | ✅ |
+| `ELLIPSE` | 9 | Ellipse/circle, supports arc data | ✅ |
+| `RECTANGLE` | 10 | Rectangle | ✅ |
+| `REGULAR_POLYGON` | 11 | Regular polygon (3–12 sides, engine uses `POLYGON`) | ✅ |
+| `ROUNDED_RECTANGLE` | 12 | Rectangle with smooth corners | ✅ |
+| `TEXT` | 13 | Text with rich formatting | ✅ |
+| `SLICE` | 14 | Export region | |
+| `SYMBOL` | 15 | Component (main, engine uses `COMPONENT`) | ✅ |
+| `INSTANCE` | 16 | Component instance | ✅ |
+| `STICKY` | 17 | FigJam sticky note | |
+| `SHAPE_WITH_TEXT` | 18 | FigJam shape | ✅ |
+| `CONNECTOR` | 19 | Connector line between nodes | ✅ |
+| `CODE_BLOCK` | 20 | FigJam code block | |
+| `WIDGET` | 21 | Plugin widget | |
+| `STAMP` | 22 | FigJam stamp | |
+| `MEDIA` | 23 | Video/GIF | |
+| `HIGHLIGHT` | 24 | FigJam highlight | |
+| `SECTION` | 25 | Canvas section (organizational, top-level only) | ✅ |
+| `SECTION_OVERLAY` | 26 | Section overlay | |
+| `WASHI_TAPE` | 27 | FigJam washi tape | |
+| `VARIABLE` | 28 | Variable definition node | |
+| `COMPONENT_SET` | — | Variant group container (synthetic, mapped from `SYMBOL`) | ✅ |
 
-### Объединение NodeType движка (17 типов)
+### Engine NodeType Union (17 types)
 
-Движок использует упрощённые имена. Некоторые отличаются от Kiwi-схемы:
+The engine's `NodeType` uses simplified names. Some differ from the Kiwi schema:
 - `COMPONENT` → Kiwi `SYMBOL` (ID 15)
-- `COMPONENT_SET` → контейнер группы вариантов (нет выделенного Kiwi ID, отображается из SYMBOL с вариантами)
+- `COMPONENT_SET` → variant group container (no dedicated Kiwi ID, mapped from `SYMBOL` with variants)
 - `POLYGON` → Kiwi `REGULAR_POLYGON` (ID 11)
 
 ```typescript
@@ -54,81 +54,81 @@ type NodeType =
   | 'CONNECTOR' | 'SHAPE_WITH_TEXT'
 ```
 
-## Иерархия узлов
+## Node Hierarchy
 
 ```
 Document
-├── Canvas (Страница 1)
-│   ├── Section (только верхний уровень, плашка с названием, авто-захват соседей)
+├── Canvas (Page 1)
+│   ├── Section (top-level only, title pill, auto-adopts siblings)
 │   │   ├── Frame
-│   │   │   └── ...дочерние элементы
+│   │   │   └── ...children
 │   │   └── Rectangle
 │   ├── Frame
 │   │   ├── Rectangle
 │   │   ├── Text
-│   │   └── Frame (вложенный)
+│   │   └── Frame (nested)
 │   │       ├── Ellipse
-│   │       └── Instance (→ ссылается на Component)
+│   │       └── Instance (→ references Component)
 │   ├── Component
-│   │   └── ...дочерние элементы
+│   │   └── ...children
 │   ├── Group
-│   │   └── ...дочерние элементы
+│   │   └── ...children
 │   └── BooleanOperation
-│       └── ...операнды
-└── Canvas (Страница 2)
+│       └── ...operand shapes
+└── Canvas (Page 2)
     └── ...
 ```
 
-## Основные свойства
+## Core Properties
 
-Каждый узел содержит следующие поля (подмножество NodeChange):
+Every node carries these fields (subset of `NodeChange`):
 
-### Идентификация и дерево
+### Identity & Tree
 
-- `guid` — уникальный идентификатор (`sessionID:localID`)
-- `type` — перечисление типа узла
-- `name` — отображаемое имя
-- `phase` — CREATED или REMOVED
-- `parentIndex` — GUID родителя + строка позиции для z-упорядочивания
+- `guid` — unique identifier (`sessionID:localID`)
+- `type` — node type enum
+- `name` — display name
+- `phase` — `CREATED` or `REMOVED`
+- `parentIndex` — parent GUID + position string for z-ordering
 
-### Трансформация
+### Transform
 
-- `size` — вектор ширины/высоты
-- `transform` — аффинная матрица 2×3
-- `rotation` — градусы
+- `size` — width/height vector
+- `transform` — 2×3 affine matrix
+- `rotation` — degrees
 
-### Внешний вид
+### Appearance
 
-- `fillPaints[]` — заливки цветом/градиентом/изображением
-- `strokePaints[]` — цвета обводки
-- `effects[]` — тени, размытия
+- `fillPaints[]` — fill colors/gradients/images
+- `strokePaints[]` — stroke colors
+- `effects[]` — shadows, blurs
 - `opacity` — 0–1
-- `blendMode` — NORMAL, MULTIPLY, SCREEN и др.
+- `blendMode` — `NORMAL`, `MULTIPLY`, `SCREEN`, etc.
 
-### Обводка
+### Stroke
 
-- `strokeWeight` — толщина обводки
-- `strokeAlign` — inside / center / outside
-- `strokeCap` — butt / round / square
-- `strokeJoin` — miter / bevel / round
-- `dashPattern[]` — длины штрихов/промежутков
+- `strokeWeight` — stroke thickness
+- `strokeAlign` — `INSIDE` / `CENTER` / `OUTSIDE`
+- `strokeCap` — `NONE` / `ROUND` / `SQUARE` / `ARROW_LINES` / `ARROW_EQUILATERAL`
+- `strokeJoin` — `MITER` / `BEVEL` / `ROUND`
+- `dashPattern[]` — dash/gap lengths
 
-### Углы
+### Corners
 
-- `cornerRadius` — единый радиус
-- `cornerSmoothing` — степень сквиркла (0–1)
-- Индивидуальные радиусы углов, когда `rectangleCornerRadiiIndependent` равно true
+- `cornerRadius` — uniform radius
+- `cornerSmoothing` — squircle amount (0–1)
+- Per-corner radii when `rectangleCornerRadiiIndependent` is true
 
-### Видимость
+### Visibility
 
-- `visible` — показать/скрыть
-- `locked` — предотвратить редактирование
+- `visible` — show/hide
+- `locked` — prevent editing
 
-## Свойства отдельных типов
+## Type-Specific Properties
 
 ### Text
 
-`fontSize`, `fontName`, `lineHeight`, `letterSpacing`, `textAlignHorizontal`, `textAlignVertical`, `textAutoResize`, `textData` (символы, переопределения стилей, базовые линии, глифы)
+`fontSize`, `fontName`, `lineHeight`, `letterSpacing`, `textAlignHorizontal`, `textAlignVertical`, `textAutoResize`, `textData` (characters, style overrides, baselines, glyphs)
 
 ### Vector
 
@@ -156,9 +156,9 @@ interface Fill {
   opacity: number           // 0–1
   visible: boolean
   blendMode?: BlendMode
-  gradientStops?: GradientStop[]     // для градиентов
-  gradientTransform?: GradientTransform  // матрица 2×3
-  imageHash?: string        // для заливок изображением
+  gradientStops?: GradientStop[]     // for gradients
+  gradientTransform?: GradientTransform  // 2×3 matrix
+  imageHash?: string        // for image fills
   imageScaleMode?: 'FILL' | 'FIT' | 'CROP' | 'TILE'
   imageTransform?: GradientTransform
 }

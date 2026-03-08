@@ -9,23 +9,23 @@ Płótno to Twoja nieskończona przestrzeń robocza.
 
 ## Przesuwanie
 
-- **Spacja + przeciąganie** — przytrzymaj Spację i przeciągnij
+- <kbd>Spacja</kbd> + przeciąganie — przytrzymaj <kbd>Spację</kbd> i przeciągnij
 - **Środkowy przycisk myszy** — naciśnij i przeciągnij
 - **Trackpad dwoma palcami** — przesuń dwoma palcami
 
 ## Narzędzie rączka
 
-Naciśnij **H**, aby aktywować narzędzie rączka. Przełącz na inne narzędzie (np. **V**), aby dezaktywować.
+Naciśnij <kbd>H</kbd>, aby aktywować narzędzie rączka. Przełącz na inne narzędzie (np. **V**), aby dezaktywować.
 
 ## Powiększanie
 
-- **Ctrl + scroll** (lub **⌘ + scroll** na Mac) — powiększanie/pomniejszanie
+- <kbd>Ctrl</kbd> + scroll (lub <kbd>⌘</kbd> + scroll na Mac) — powiększanie/pomniejszanie
 - **Gest szczypania** — szczyp na trackpadzie
 
 | Akcja | Mac | Windows / Linux |
 |-------|-----|-----------------|
-| Przesuwanie | Spacja + przeciąganie | Spacja + przeciąganie |
-| Narzędzie rączka | H | H |
-| Powiększ | ⌘ + | Ctrl + + |
-| Pomniejsz | ⌘ - | Ctrl + - |
-| Zoom 100% | ⌘ 0 | Ctrl + 0 |
+| Przesuwanie | <kbd>Spacja</kbd> + przeciąganie | Spacja + przeciąganie |
+| Narzędzie rączka | <kbd>H</kbd> | <kbd>H</kbd> |
+| Powiększ | <kbd>⌘</kbd><kbd>+</kbd> | <kbd>Ctrl</kbd> + <kbd>+</kbd> |
+| Pomniejsz | <kbd>⌘</kbd><kbd>−</kbd> | <kbd>Ctrl</kbd> + <kbd>−</kbd> |
+| Zoom 100% | <kbd>⌘</kbd><kbd>0</kbd> | <kbd>Ctrl</kbd> + <kbd>0</kbd> |

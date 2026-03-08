@@ -6,29 +6,29 @@ description: Zaznaczanie, przesuwanie, skalowanie, obracanie i organizowanie wę
 
 ## Zaznaczanie
 - **Kliknięcie** na węzeł, aby go zaznaczyć
-- **Shift + kliknięcie** aby dodać/usunąć z zaznaczenia
+- <kbd>Shift</kbd> + kliknięcie aby dodać/usunąć z zaznaczenia
 - **Przeciąganie prostokąta** — przeciągnij na pustym płótnie
-- **⌘ A** — zaznacz wszystko
+- <kbd>⌘</kbd><kbd>A</kbd> — zaznacz wszystko
 - **Kliknięcie na puste płótno** — odznacz wszystko
 
 ## Przesuwanie
 - **Przeciąganie** zaznaczonego węzła
-- **Strzałki** — przesuń o 1 px · **Shift + strzałki** — 10 px
+- **Strzałki** — przesuń o 1 px · <kbd>Shift</kbd> + strzałki — 10 px
 
 ## Skalowanie
-8 uchwytów. **Shift + przeciąganie** zachowuje proporcje.
+8 uchwytów. <kbd>Shift</kbd> + przeciąganie zachowuje proporcje.
 
 ## Obracanie
-Najedź blisko rogu. **Shift** przyciąga do 15°.
+Najedź blisko rogu. <kbd>Shift</kbd> przyciąga do 15°.
 
 ## Duplikowanie
-- **Alt + przeciąganie** — duplikuj i przesuń · **⌘ D** — duplikuj w miejscu
+- <kbd>Alt</kbd> + przeciąganie — duplikuj i przesuń · <kbd>⌘</kbd><kbd>D</kbd> — duplikuj w miejscu
 
 ## Usuwanie
-**Backspace** lub **Delete**
+<kbd>Backspace</kbd> lub <kbd>Delete</kbd>
 
 ## Kolejność Z
 **]** na wierzch · **[** na spód
 
 ## Widoczność i blokada
-**⇧ ⌘ H** widoczność · **⇧ ⌘ L** blokada
+<kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd> widoczność · <kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd> blokada

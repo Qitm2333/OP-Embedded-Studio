@@ -4,7 +4,7 @@
 
 ### Fase 1: Motor Core ✅
 
-SceneGraph, renderizado Skia, formas básicas, selección, zoom/pan, deshacer/rehacer, guías de ajuste.
+`SceneGraph`, renderizado Skia, formas básicas, selección, zoom/pan, deshacer/rehacer, guías de ajuste.
 
 ### Fase 2: UI del Editor + Layout ✅
 
@@ -16,7 +16,7 @@ Importación/exportación .fig, codec Kiwi, portapapeles, herramienta de pluma, 
 
 ### Fase 4: Componentes + Variables ✅
 
-Componentes, instancias, overrides, conjuntos de componentes, variables (COLOR/FLOAT/STRING/BOOLEAN), colecciones, modos, exportación de imágenes, menú contextual, formateo de texto enriquecido.
+Componentes, instancias, overrides, conjuntos de componentes, variables (`COLOR`/FLOAT/STRING/BOOLEAN), colecciones, modos, exportación de imágenes, menú contextual, formateo de texto enriquecido.
 
 ### Fase 5: Integración IA & Herramientas ✅
 
@@ -24,7 +24,7 @@ Componentes, instancias, overrides, conjuntos de componentes, variables (COLOR/F
 - @open-pencil/core extraído a packages/core/ (sin dependencias DOM)
 - @open-pencil/cli con operaciones headless .fig (info, tree, find, export, analyze, eval)
 - Comando `eval` con API Plugin compatible con Figma
-- Chat IA: conexión directa OpenRouter, 87 herramientas en `packages/core/src/tools/`, ⌘J
+- Chat IA: conexión directa OpenRouter, 87 herramientas en `packages/core/src/tools/`, <kbd>⌘</kbd><kbd>J</kbd>
 - 49 herramientas IA/MCP adicionales portadas de figma-use (75 en total)
 - Servidor MCP (@open-pencil/mcp): stdio + HTTP, 87 herramientas core + 3 de gestión de archivos
 - Definiciones de herramientas unificadas: definir una vez en `packages/core/src/tools/` (por dominio), adaptar para chat IA (valibot), MCP (zod), CLI (eval)
@@ -44,7 +44,7 @@ Componentes, instancias, overrides, conjuntos de componentes, variables (COLOR/F
 - Modo seguimiento: clic en avatar del par para seguir su viewport
 - Persistencia local vía y-indexeddb
 - Renderizado de efectos: sombra paralela, sombra interior, desenfoque de capa/fondo/primer plano
-- Pestañas multi-archivo: ⌘N/⌘T nueva pestaña, ⌘W cerrar, ⌘O abrir
+- Pestañas multi-archivo: <kbd>⌘</kbd><kbd>N</kbd>/<kbd>⌘</kbd><kbd>T</kbd> nueva pestaña, <kbd>⌘</kbd><kbd>W</kbd> cerrar, <kbd>⌘</kbd><kbd>O</kbd> abrir
 - Firma de código Apple y notarización para macOS
 - Builds Linux (x64) añadidos al CI
 - Sitio de documentación VitePress con i18n (6 idiomas)
@@ -53,7 +53,7 @@ Componentes, instancias, overrides, conjuntos de componentes, variables (COLOR/F
 - Prototipado (conexiones de frames, transiciones, animaciones)
 - Comentarios (pin, hilos, resolver)
 - Soporte PWA
-- Cambio de variantes, UI de variables FLOAT/STRING/BOOLEAN, theming por variables
+- Cambio de variantes, UI de variables `FLOAT`/STRING/BOOLEAN, theming por variables
 
 ## Cronograma
 

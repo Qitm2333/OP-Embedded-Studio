@@ -2,7 +2,7 @@
 
 ## Обзор системы
 
-```mermaid
+`mermaid
 graph TB
     subgraph Tauri["Tauri v2 Shell"]
         subgraph Editor["Editor (Web)"]
@@ -22,7 +22,7 @@ graph TB
         MCP["MCP Server (90 tools, stdio+HTTP)"]
         Collab["P2P Collab (Trystero + Yjs)"]
     end
-```
+`
 
 ## Макет редактора
 
@@ -62,7 +62,7 @@ Yoga от Meta обеспечивает вычисление макета CSS fl
 
 ### Формат файлов (Kiwi Binary)
 
-Использует бинарный кодек Kiwi от Figma с 194 определениями message/enum/struct. Импорт: разбор заголовка → декомпрессия Zstd → декодирование Kiwi → NodeChange[] → граф сцены. Экспорт выполняет обратный процесс с генерацией миниатюры.
+Использует бинарный кодек Kiwi от Figma с 194 определениями message/enum/struct. Импорт: разбор заголовка → декомпрессия Zstd → декодирование Kiwi → `NodeChange`[] → граф сцены. Экспорт выполняет обратный процесс с генерацией миниатюры.
 
 См. [справочник формата файлов](/reference/file-format) для подробностей.
 
@@ -108,7 +108,7 @@ Headless CLI уже поддерживает `analyze colors/typography/spacing/
 
 ### Макет CSS Grid
 
-Yoga WASM пока поддерживает только flexbox. CSS Grid находится в разработке в [facebook/yoga#1893](https://github.com/facebook/yoga/pull/1893). OpenPencil адаптирует его после выхода релиза Yoga.
+CSS Grid поддерживается через [форк Yoga](https://github.com/open-pencil/yoga/tree/grid). Выберите фрейм, нажмите на иконку сетки для переключения с flex на grid. Настройте колонки и строки (fr, фиксированные px, auto), зазоры между ними и отступы с каждой стороны.
 
 ### Подпись кода для Windows
 

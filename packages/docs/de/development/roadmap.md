@@ -4,7 +4,7 @@
 
 ### Phase 1: Core-Engine ✅
 
-SceneGraph, Skia-Rendering, Grundformen, Auswahl, Zoom/Pan, Rückgängig/Wiederherstellen, Fanglinien.
+`SceneGraph`, Skia-Rendering, Grundformen, Auswahl, Zoom/Pan, Rückgängig/Wiederherstellen, Fanglinien.
 
 ### Phase 2: Editor-UI + Layout ✅
 
@@ -16,7 +16,7 @@ Vue 3 + Reka UI Panels, Eigenschaften, Ebenen, Werkzeugleiste, Yoga Auto-Layout,
 
 ### Phase 4: Komponenten + Variablen ✅
 
-Komponenten, Instanzen, Overrides, Komponenten-Sets, Variablen (COLOR/FLOAT/STRING/BOOLEAN), Sammlungen, Modi, Bildexport, Kontextmenü, Rich-Text-Formatierung.
+Komponenten, Instanzen, Overrides, Komponenten-Sets, Variablen (`COLOR`/FLOAT/STRING/BOOLEAN), Sammlungen, Modi, Bildexport, Kontextmenü, Rich-Text-Formatierung.
 
 ### Phase 5: KI-Integration & Werkzeuge ✅
 
@@ -24,7 +24,7 @@ Komponenten, Instanzen, Overrides, Komponenten-Sets, Variablen (COLOR/FLOAT/STRI
 - @open-pencil/core extrahiert in packages/core/ (keine DOM-Abhängigkeiten)
 - @open-pencil/cli mit headless .fig-Operationen (info, tree, find, export, analyze, node, pages, variables, eval)
 - `eval`-Befehl mit Figma-kompatibler Plugin API für Headless-Skripting
-- KI-Chat: OpenRouter-Direktverbindung, 87 Werkzeuge in `packages/core/src/tools/`, Modellauswahl, ⌘J
+- KI-Chat: OpenRouter-Direktverbindung, 87 Werkzeuge in `packages/core/src/tools/`, Modellauswahl, <kbd>⌘</kbd><kbd>J</kbd>
 - 49 zusätzliche KI/MCP-Werkzeuge portiert von figma-use (75 gesamt)
 - MCP-Server (@open-pencil/mcp): stdio + HTTP, 87 Core-Tools + 3 Dateiverwaltungs-Tools
 - Vereinheitlichte Werkzeugdefinitionen: einmal in `packages/core/src/tools/` definieren, für KI-Chat (valibot), MCP (zod), CLI (eval) adaptieren
@@ -46,7 +46,7 @@ Komponenten, Instanzen, Overrides, Komponenten-Sets, Variablen (COLOR/FLOAT/STRI
 - Folgemodus: Klick auf Peer-Avatar zum Viewport-Folgen
 - Lokale Persistenz über y-indexeddb
 - Effekt-Rendering: Schlagschatten, innerer Schatten, Ebenen-/Hintergrund-/Vordergrund-Unschärfe
-- Multi-Datei-Tabs: ⌘N/⌘T neuer Tab, ⌘W schließen, ⌘O öffnen
+- Multi-Datei-Tabs: <kbd>⌘</kbd><kbd>N</kbd>/<kbd>⌘</kbd><kbd>T</kbd> neuer Tab, <kbd>⌘</kbd><kbd>W</kbd> schließen, <kbd>⌘</kbd><kbd>O</kbd> öffnen
 - Apple Code-Signierung und Notarisierung für macOS
 - Linux-Builds (x64) in CI hinzugefügt
 - VitePress-Dokumentationsseite mit i18n (6 Sprachen)
@@ -55,7 +55,7 @@ Komponenten, Instanzen, Overrides, Komponenten-Sets, Variablen (COLOR/FLOAT/STRI
 - Prototyping (Frame-Verbindungen, Übergänge, Animationen)
 - Kommentare (Pin, Threads, Auflösen)
 - PWA-Unterstützung
-- Varianten-Switching, FLOAT/STRING/BOOLEAN Variable UI, variablengesteuertes Theming
+- Varianten-Switching, `FLOAT`/STRING/BOOLEAN Variable UI, variablengesteuertes Theming
 
 ## Zeitplan
 

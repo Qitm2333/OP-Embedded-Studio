@@ -14,23 +14,23 @@ Podmenu **Kopiuj jako** oferuje następujące formaty:
 |-------|-----|-----------------|
 | Kopiuj jako tekst | — | — |
 | Kopiuj jako SVG | — | — |
-| Kopiuj jako PNG | ⇧ ⌘ C | Shift + Ctrl + C |
+| Kopiuj jako PNG | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>C</kbd> |
 | Kopiuj jako JSX | — | — |
 
 ## Schowek
-Kopiuj (⌘C), Wytnij (⌘X), Wklej (⌘V), Duplikuj (⌘D), Usuń (⌫)
+Kopiuj (<kbd>⌘</kbd><kbd>C</kbd>), Wytnij (<kbd>⌘</kbd><kbd>X</kbd>), Wklej (<kbd>⌘</kbd><kbd>V</kbd>), Duplikuj (<kbd>⌘</kbd><kbd>D</kbd>), Usuń (⌫)
 
 ## Kolejność Z
 **]** na wierzch · **[** na spód
 
 ## Grupowanie
-Grupuj (⌘G), Rozgrupuj (⇧⌘G), Dodaj auto-layout (⇧A)
+Grupuj (<kbd>⌘</kbd><kbd>G</kbd>), Rozgrupuj (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>G</kbd>), Dodaj auto-layout (<kbd>⇧</kbd><kbd>A</kbd>)
 
 ## Komponenty
-Utwórz komponent (⌥⌘K), Utwórz zestaw (⇧⌘K), Utwórz instancję, Przejdź do głównego komponentu, Odłącz instancję (⌥⌘B). Akcje w kolorze fioletowym.
+Utwórz komponent (<kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd>), Utwórz zestaw (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd>), Utwórz instancję, Przejdź do głównego komponentu, Odłącz instancję (<kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd>). Akcje w kolorze fioletowym.
 
 ## Widoczność i blokada
-Ukryj/Pokaż (⇧⌘H), Zablokuj/Odblokuj (⇧⌘L)
+Ukryj/Pokaż (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd>), Zablokuj/Odblokuj (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd>)
 
 ## Przenieś na stronę
 Podmenu ze wszystkimi stronami oprócz bieżącej.

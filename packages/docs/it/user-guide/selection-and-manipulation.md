@@ -6,29 +6,29 @@ description: Selezionare, spostare, ridimensionare, ruotare e organizzare nodi i
 
 ## Selezionare
 - **Click** su un nodo per selezionarlo
-- **Shift + click** per aggiungere/rimuovere dalla selezione
+- <kbd>Shift</kbd> + click per aggiungere/rimuovere dalla selezione
 - **Trascinamento marquee** — trascina sul canvas vuoto per la selezione rettangolare
-- **⌘ A** — seleziona tutto
+- <kbd>⌘</kbd><kbd>A</kbd> — seleziona tutto
 - **Click su canvas vuoto** — deseleziona tutto
 
 ## Spostare
 - **Trascinamento** del nodo selezionato
-- **Frecce** — sposta di 1 px · **Shift + frecce** — 10 px
+- **Frecce** — sposta di 1 px · <kbd>Shift</kbd> + frecce — 10 px
 
 ## Ridimensionare
-8 maniglie (4 angoli + 4 punti medi). **Shift + trascinamento** mantiene le proporzioni.
+8 maniglie (4 angoli + 4 punti medi). <kbd>Shift</kbd> + trascinamento mantiene le proporzioni.
 
 ## Ruotare
-Passa vicino a un angolo per il cursore di rotazione. **Shift** scatta a incrementi di 15°.
+Passa vicino a un angolo per il cursore di rotazione. <kbd>Shift</kbd> scatta a incrementi di 15°.
 
 ## Duplicare
-- **Alt + trascinamento** — duplica e sposta · **⌘ D** — duplica sul posto
+- <kbd>Alt</kbd> + trascinamento — duplica e sposta · <kbd>⌘</kbd><kbd>D</kbd> — duplica sul posto
 
 ## Eliminare
-**Backspace** o **Canc**
+<kbd>Backspace</kbd> o **Canc**
 
 ## Ordine Z
 **]** porta in primo piano · **[** manda in fondo
 
 ## Visibilità e blocco
-**⇧ ⌘ H** visibilità · **⇧ ⌘ L** blocco
+<kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd> visibilità · <kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd> blocco

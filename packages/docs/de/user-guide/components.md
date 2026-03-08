@@ -9,13 +9,13 @@ Komponenten sind wiederverwendbare Design-Elemente. Bearbeiten Sie die Hauptkomp
 
 ## Komponente erstellen
 
-Wählen Sie einen Frame oder eine Gruppe und drücken Sie **⌥ ⌘ K** (Strg + Alt + K). Der Knoten wird an Ort und Stelle in einen COMPONENT-Typ umgewandelt.
+Wählen Sie einen Frame oder eine Gruppe und drücken Sie <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (Strg + Alt + K). Der Knoten wird zu einer wiederverwendbaren Komponente.
 
 Komponenten zeigen ein lila Label mit Diamant-Symbol.
 
 ## Komponenten-Sets
 
-Wählen Sie zwei oder mehr Komponenten und drücken Sie **⇧ ⌘ K** (Shift + Strg + K), um sie zu einem Komponenten-Set zu kombinieren — ein Container mit gestricheltem lila Rand.
+Wählen Sie zwei oder mehr Komponenten und drücken Sie <kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> (Shift + Strg + K), um sie zu einem Komponenten-Set zu kombinieren — ein Container mit gestricheltem lila Rand.
 
 ## Instanzen erstellen
 
@@ -23,7 +23,7 @@ Rechtsklick auf eine Komponente → **Instanz erstellen**. Die Instanz erscheint
 
 ## Instanz lösen
 
-Wählen Sie eine Instanz und drücken Sie **⌥ ⌘ B** (Strg + Alt + B). Die Instanz wird zu einem regulären Frame ohne Verbindung zur Komponente.
+Wählen Sie eine Instanz und drücken Sie <kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> (Strg + Alt + B). Die Instanz wird zu einem regulären Frame ohne Verbindung zur Komponente.
 
 ## Zur Hauptkomponente
 
@@ -45,7 +45,7 @@ Instanzen können bestimmte Eigenschaften überschreiben, ohne die Synchronisati
 
 ### Überschreibbare Eigenschaften
 
-Name, Text, fontSize, fontWeight, fontFamily sowie alle visuellen und Layout-Eigenschaften.
+Name, Text, Schriftgröße, Schriftstärke, Schriftfamilie sowie alle visuellen und Layout-Eigenschaften.
 
 ### Neue Kinder
 
@@ -59,17 +59,17 @@ Komponenten und Instanzen sind opake Container — Klicken wählt die Komponente
 
 | Element | Darstellung |
 |---------|------------|
-| Komponenten-Label | Lila (#9747ff) mit Diamant-Symbol |
-| Instanz-Label | Lila (#9747ff) mit Diamant-Symbol |
+| Komponenten-Label | Lila mit Diamant-Symbol |
+| Instanz-Label | Lila mit Diamant-Symbol |
 | Komponenten-Set-Rand | Gestrichelt lila |
 
 ## Tastenkürzel
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Komponente erstellen | ⌥ ⌘ K | Strg + Alt + K |
-| Komponenten-Set erstellen | ⇧ ⌘ K | Shift + Strg + K |
-| Instanz lösen | ⌥ ⌘ B | Strg + Alt + B |
+| Komponente erstellen | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> | Strg + <kbd>Alt</kbd> + <kbd>K</kbd> |
+| Komponenten-Set erstellen | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> | <kbd>Shift</kbd> + <kbd>Strg</kbd> + K |
+| Instanz lösen | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> | Strg + <kbd>Alt</kbd> + <kbd>B</kbd> |
 
 ## Tipps
 

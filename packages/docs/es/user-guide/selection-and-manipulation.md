@@ -6,23 +6,23 @@ description: Seleccionar, mover, redimensionar, rotar y organizar nodos en OpenP
 
 ## Seleccionar
 - **Clic** en un nodo para seleccionarlo
-- **Shift + clic** para añadir/quitar de la selección
+- <kbd>Shift</kbd> + clic para añadir/quitar de la selección
 - **Arrastre de marquesina** — arrastra en el lienzo vacío
-- **⌘ A** — seleccionar todo
+- <kbd>⌘</kbd><kbd>A</kbd> — seleccionar todo
 - **Clic en lienzo vacío** — deseleccionar todo
 
 ## Mover
 - **Arrastrar** el nodo seleccionado
-- **Flechas** — mover 1 px · **Shift + flechas** — 10 px
+- **Flechas** — mover 1 px · <kbd>Shift</kbd> + flechas — 10 px
 
 ## Redimensionar
-8 controles. **Shift + arrastrar** mantiene proporciones.
+8 controles. <kbd>Shift</kbd> + arrastrar mantiene proporciones.
 
 ## Rotar
-Pasa cerca de una esquina. **Shift** ajusta a 15°.
+Pasa cerca de una esquina. <kbd>Shift</kbd> ajusta a 15°.
 
 ## Duplicar
-- **Alt + arrastrar** — duplicar y mover · **⌘ D** — duplicar en su lugar
+- <kbd>Alt</kbd> + arrastrar — duplicar y mover · <kbd>⌘</kbd><kbd>D</kbd> — duplicar en su lugar
 
 ## Eliminar
 **Retroceso** o **Supr**
@@ -31,4 +31,4 @@ Pasa cerca de una esquina. **Shift** ajusta a 15°.
 **]** traer al frente · **[** enviar al fondo
 
 ## Visibilidad y bloqueo
-**⇧ ⌘ H** visibilidad · **⇧ ⌘ L** bloqueo
+<kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd> visibilidad · <kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd> bloqueo

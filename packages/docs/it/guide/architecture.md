@@ -2,7 +2,7 @@
 
 ## Panoramica del Sistema
 
-```mermaid
+`mermaid
 graph TB
     subgraph Tauri["Tauri v2 Shell"]
         subgraph Editor["Editor (Web)"]
@@ -22,7 +22,7 @@ graph TB
         MCP["MCP Server (90 tools, stdio+HTTP)"]
         Collab["P2P Collab (Trystero + Yjs)"]
     end
-```
+`
 
 ## Layout dell'Editor
 
@@ -62,7 +62,7 @@ Yoga di Meta fornisce il calcolo del layout CSS flexbox. Un adattatore sottile m
 
 ### Formato File (Kiwi Binary)
 
-Riutilizza il codec binario Kiwi di Figma con 194 definizioni di messaggio/enum/struct. Importazione: analizza l'header → decompressione Zstd → decodifica Kiwi → NodeChange[] → scene graph. L'esportazione inverte il processo con generazione di miniature.
+Riutilizza il codec binario Kiwi di Figma con 194 definizioni di messaggio/enum/struct. Importazione: analizza l'header → decompressione Zstd → decodifica Kiwi → `NodeChange`[] → scene graph. L'esportazione inverte il processo con generazione di miniature.
 
 Consulta il [riferimento Formato File](/it/reference/file-format) per i dettagli.
 
@@ -108,7 +108,7 @@ Transizioni frame-to-frame, trigger di interazione (clic, hover, trascinamento),
 
 ### Layout CSS Grid
 
-Yoga WASM attualmente supporta solo flexbox. CSS Grid è in fase di sviluppo upstream in [facebook/yoga#1893](https://github.com/facebook/yoga/pull/1893). OpenPencil lo adotterà non appena la release di Yoga sarà disponibile.
+CSS Grid è supportato tramite un [fork di Yoga](https://github.com/open-pencil/yoga/tree/grid) con PR grid cherry-picked dall'upstream. Seleziona un frame, clicca sull'icona griglia per passare da flex a grid. Configura track colonne/righe (fr, px fissi, auto), gap colonne e righe, e padding per lato.
 
 ### Firma del Codice per Windows
 

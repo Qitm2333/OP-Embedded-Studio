@@ -14,23 +14,23 @@ Le sous-menu **Copier en tant que** offre ces formats :
 |--------|-----|-----------------|
 | Copier en tant que texte | — | — |
 | Copier en tant que SVG | — | — |
-| Copier en tant que PNG | ⇧ ⌘ C | Shift + Ctrl + C |
+| Copier en tant que PNG | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>C</kbd> |
 | Copier en tant que JSX | — | — |
 
 ## Presse-papiers
-Copier (⌘C), Couper (⌘X), Coller (⌘V), Dupliquer (⌘D), Supprimer (⌫)
+Copier (<kbd>⌘</kbd><kbd>C</kbd>), Couper (<kbd>⌘</kbd><kbd>X</kbd>), Coller (<kbd>⌘</kbd><kbd>V</kbd>), Dupliquer (<kbd>⌘</kbd><kbd>D</kbd>), Supprimer (⌫)
 
 ## Ordre Z
 **]** au premier plan · **[** à l'arrière-plan
 
 ## Groupement
-Grouper (⌘G), Dégrouper (⇧⌘G), Ajouter mise en page auto (⇧A)
+Grouper (<kbd>⌘</kbd><kbd>G</kbd>), Dégrouper (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>G</kbd>), Ajouter mise en page auto (<kbd>⇧</kbd><kbd>A</kbd>)
 
 ## Composants
-Créer composant (⌥⌘K), Créer jeu de composants (⇧⌘K), Créer instance, Aller au composant principal, Détacher instance (⌥⌘B). Actions en violet.
+Créer composant (<kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd>), Créer jeu de composants (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd>), Créer instance, Aller au composant principal, Détacher instance (<kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd>). Actions en violet.
 
 ## Visibilité et verrouillage
-Masquer/Afficher (⇧⌘H), Verrouiller/Déverrouiller (⇧⌘L)
+Masquer/Afficher (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd>), Verrouiller/Déverrouiller (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd>)
 
 ## Déplacer vers la page
 Sous-menu avec toutes les pages sauf la page courante.

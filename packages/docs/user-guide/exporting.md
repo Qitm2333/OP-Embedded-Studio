@@ -21,8 +21,8 @@ You can add multiple export settings to export the same node at different scales
 
 | Method | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Keyboard shortcut | ⇧ ⌘ E | Shift + Ctrl + E |
-| Context menu | Right-click → Export… | Right-click → Export… |
+| Keyboard shortcut | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>E</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>E</kbd> |
+| Context menu | Right-click <kbd>→</kbd> Export… | Right-click <kbd>→</kbd> Export… |
 | Properties panel | Click "Export" button | Click "Export" button |
 
 The exported file is saved via a native dialog (desktop) or browser download.
@@ -35,7 +35,7 @@ In addition to file export, you can copy the selection to the clipboard in multi
 |--------|----------------|----------------------|
 | Copy as text | — | — |
 | Copy as SVG | — | — |
-| Copy as PNG | ⇧ ⌘ C | Shift + Ctrl + C |
+| Copy as PNG | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>C</kbd> |
 | Copy as JSX | — | — |
 
 - **Copy as text** — copies visible text content from the selection
@@ -51,7 +51,7 @@ OpenPencil uses the .fig format for full documents — the same binary format as
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Open file | ⌘ O | Ctrl + O |
+| Open file | <kbd>⌘</kbd><kbd>O</kbd> | <kbd>Ctrl</kbd> + <kbd>O</kbd> |
 
 A file picker dialog opens, filtered for .fig files. On the desktop app, this uses the native OS dialog.
 
@@ -59,13 +59,13 @@ A file picker dialog opens, filtered for .fig files. On the desktop app, this us
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Save | ⌘ S | Ctrl + S |
-| Save As | ⇧ ⌘ S | Shift + Ctrl + S |
+| Save | <kbd>⌘</kbd><kbd>S</kbd> | <kbd>Ctrl</kbd> + <kbd>S</kbd> |
+| Save As | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 
 - **Save** overwrites the currently open file without a dialog
 - **Save As** opens a save dialog to choose a new location
 
-The export pipeline encodes the scene graph to Kiwi binary format, compresses it, and writes a ZIP archive with the payload and a thumbnail image.
+Saved files are compressed and include a thumbnail image for preview in file browsers.
 
 ### Round-trip Compatibility
 
@@ -75,11 +75,11 @@ Files exported from OpenPencil can be opened in Figma, and vice versa. The .fig 
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Export selection | ⇧ ⌘ E | Shift + Ctrl + E |
-| Copy as PNG | ⇧ ⌘ C | Shift + Ctrl + C |
-| Open file | ⌘ O | Ctrl + O |
-| Save | ⌘ S | Ctrl + S |
-| Save As | ⇧ ⌘ S | Shift + Ctrl + S |
+| Export selection | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>E</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>E</kbd> |
+| Copy as PNG | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>C</kbd> |
+| Open file | <kbd>⌘</kbd><kbd>O</kbd> | <kbd>Ctrl</kbd> + <kbd>O</kbd> |
+| Save | <kbd>⌘</kbd><kbd>S</kbd> | <kbd>Ctrl</kbd> + <kbd>S</kbd> |
+| Save As | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 
 ## Tips
 

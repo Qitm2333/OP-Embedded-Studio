@@ -9,23 +9,23 @@ Le canevas est votre espace de travail infini.
 
 ## Panoramique
 
-- **Espace + glisser** — maintenez Espace et glissez
+- <kbd>Espace</kbd> + glisser — maintenez <kbd>Espace</kbd> et glissez
 - **Bouton central de la souris** — cliquez et glissez
 - **Trackpad à deux doigts** — glissez avec deux doigts
 
 ## Outil main
 
-Appuyez sur **H** pour activer l'outil main. Changez d'outil (ex. **V**) pour désactiver.
+Appuyez sur <kbd>H</kbd> pour activer l'outil main. Changez d'outil (ex. **V**) pour désactiver.
 
 ## Zoom
 
-- **Ctrl + molette** (ou **⌘ + molette** sur Mac) — zoom avant/arrière
+- <kbd>Ctrl</kbd> + molette (ou <kbd>⌘</kbd> + molette sur Mac) — zoom avant/arrière
 - **Geste de pincement** — pincez sur le trackpad
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Panoramique | Espace + glisser | Espace + glisser |
-| Outil main | H | H |
-| Zoom avant | ⌘ + | Ctrl + + |
-| Zoom arrière | ⌘ - | Ctrl + - |
-| Zoom 100% | ⌘ 0 | Ctrl + 0 |
+| Panoramique | <kbd>Espace</kbd> + glisser | Espace + glisser |
+| Outil main | <kbd>H</kbd> | <kbd>H</kbd> |
+| Zoom avant | <kbd>⌘</kbd><kbd>+</kbd> | <kbd>Ctrl</kbd> + <kbd>+</kbd> |
+| Zoom arrière | <kbd>⌘</kbd><kbd>−</kbd> | <kbd>Ctrl</kbd> + <kbd>−</kbd> |
+| Zoom 100% | <kbd>⌘</kbd><kbd>0</kbd> | <kbd>Ctrl</kbd> + <kbd>0</kbd> |

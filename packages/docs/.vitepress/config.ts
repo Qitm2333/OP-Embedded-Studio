@@ -25,8 +25,21 @@ interface SidebarLabels {
   figmaMatrix: string
 }
 
+interface ProgrammableLabels {
+  cli: string
+  inspecting: string
+  exporting: string
+  analyzing: string
+  scripting: string
+  jsxRenderer: string
+  mcpServer: string
+  aiChat: string
+  collaboration: string
+}
+
 interface NavLabels {
   userGuide: string
+  programmable: string
   reference: string
   development: string
   openApp: string
@@ -52,7 +65,6 @@ const userGuideSidebar = (prefix: string, l: SidebarLabels): DefaultTheme.Sideba
     text: l.organizing,
     items: [
       { text: l.layers, link: `${prefix}/user-guide/layers-and-pages` },
-      { text: l.contextMenu, link: `${prefix}/user-guide/context-menu` },
       { text: l.exporting, link: `${prefix}/user-guide/exporting` },
     ],
   },
@@ -63,6 +75,34 @@ const userGuideSidebar = (prefix: string, l: SidebarLabels): DefaultTheme.Sideba
       { text: l.components, link: `${prefix}/user-guide/components` },
       { text: l.variables, link: `${prefix}/user-guide/variables` },
     ],
+  },
+]
+
+const programmableSidebar = (prefix: string, p: ProgrammableLabels): DefaultTheme.SidebarItem[] => [
+  {
+    text: p.aiChat,
+    link: `${prefix}/programmable/ai-chat`,
+  },
+  {
+    text: p.collaboration,
+    link: `${prefix}/programmable/collaboration`,
+  },
+  {
+    text: p.jsxRenderer,
+    link: `${prefix}/programmable/jsx-renderer`,
+  },
+  {
+    text: p.cli,
+    items: [
+      { text: p.inspecting, link: `${prefix}/programmable/cli/inspecting` },
+      { text: p.exporting, link: `${prefix}/programmable/cli/exporting` },
+      { text: p.analyzing, link: `${prefix}/programmable/cli/analyzing` },
+      { text: p.scripting, link: `${prefix}/programmable/cli/scripting` },
+    ],
+  },
+  {
+    text: p.mcpServer,
+    link: `${prefix}/programmable/mcp-server`,
   },
 ]
 
@@ -80,16 +120,16 @@ const guideSidebar = (prefix: string, l: SidebarLabels): DefaultTheme.SidebarIte
   },
 ]
 
-const referenceSidebar = (prefix: string, label: string): DefaultTheme.SidebarItem[] => [
+const referenceSidebar = (prefix: string, label: string, l: SidebarLabels): DefaultTheme.SidebarItem[] => [
   {
     text: label,
     items: [
       { text: 'Keyboard Shortcuts', link: `${prefix}/reference/keyboard-shortcuts` },
+      { text: l.contextMenu, link: `${prefix}/user-guide/context-menu` },
+      { text: 'CLI', link: `${prefix}/reference/cli` },
       { text: 'Node Types', link: `${prefix}/reference/node-types` },
-      { text: 'MCP Tools', link: `${prefix}/reference/mcp-tools` },
       { text: 'Scene Graph', link: `${prefix}/reference/scene-graph` },
       { text: 'File Format', link: `${prefix}/reference/file-format` },
-      { text: 'Eval Command', link: `${prefix}/eval-command` },
     ],
   },
 ]
@@ -106,20 +146,31 @@ const developmentSidebar = (prefix: string, label: string): DefaultTheme.Sidebar
   },
 ]
 
+const EN_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Inspecting Files', exporting: 'Exporting', analyzing: 'Analyzing Designs', scripting: 'Scripting', jsxRenderer: 'JSX Renderer', mcpServer: 'MCP Server', aiChat: 'AI Chat', collaboration: 'Collaboration' }
+const DE_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Dateien inspizieren', exporting: 'Exportieren', analyzing: 'Designs analysieren', scripting: 'Skripte', jsxRenderer: 'JSX-Renderer', mcpServer: 'MCP-Server', aiChat: 'KI-Chat', collaboration: 'Zusammenarbeit' }
+const IT_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Ispezione file', exporting: 'Esportazione', analyzing: 'Analisi design', scripting: 'Scripting', jsxRenderer: 'Renderer JSX', mcpServer: 'Server MCP', aiChat: 'Chat IA', collaboration: 'Collaborazione' }
+const FR_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Inspecter les fichiers', exporting: 'Exporter', analyzing: 'Analyser les designs', scripting: 'Scripts', jsxRenderer: 'Moteur JSX', mcpServer: 'Serveur MCP', aiChat: 'Chat IA', collaboration: 'Collaboration' }
+const ES_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Inspeccionar archivos', exporting: 'Exportar', analyzing: 'Analizar diseños', scripting: 'Scripts', jsxRenderer: 'Renderizador JSX', mcpServer: 'Servidor MCP', aiChat: 'Chat IA', collaboration: 'Colaboración' }
+const PL_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Inspekcja plików', exporting: 'Eksportowanie', analyzing: 'Analiza projektów', scripting: 'Skrypty', jsxRenderer: 'Renderer JSX', mcpServer: 'Serwer MCP', aiChat: 'Czat AI', collaboration: 'Współpraca' }
+const RU_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Инспекция файлов', exporting: 'Экспорт', analyzing: 'Анализ дизайна', scripting: 'Скрипты', jsxRenderer: 'JSX-рендерер', mcpServer: 'MCP-сервер', aiChat: 'ИИ-чат', collaboration: 'Совместная работа' }
+
 const localeThemeConfig = (
   prefix: string,
   nav: NavLabels,
   sidebar: SidebarLabels,
+  prog: ProgrammableLabels,
 ): DefaultTheme.Config => ({
   nav: [
     { text: nav.userGuide, link: `${prefix}/user-guide/` },
+    { text: nav.programmable, link: `${prefix}/programmable/` },
     { text: nav.reference, link: `${prefix}/reference/keyboard-shortcuts` },
     { text: nav.development, link: `${prefix}/development/contributing` },
     { text: nav.openApp, link: 'https://app.openpencil.dev' },
   ],
   sidebar: {
     [`${prefix}/user-guide/`]: userGuideSidebar(prefix, sidebar),
-    [`${prefix}/reference/`]: referenceSidebar(prefix, nav.reference),
+    [`${prefix}/programmable/`]: programmableSidebar(prefix, prog),
+    [`${prefix}/reference/`]: referenceSidebar(prefix, nav.reference, sidebar),
     [`${prefix}/`]: [
       ...guideSidebar(prefix, sidebar),
       ...developmentSidebar(prefix, nav.development),
@@ -251,37 +302,37 @@ export default defineConfig({
       label: 'Deutsch',
       lang: 'de',
       description: 'Open-Source, KI-nativer Design-Editor. Figma-Alternative.',
-      themeConfig: localeThemeConfig('/de', { userGuide: 'Benutzerhandbuch', reference: 'Referenz', development: 'Entwicklung', openApp: 'App öffnen' }, DE),
+      themeConfig: localeThemeConfig('/de', { userGuide: 'Benutzerhandbuch', programmable: 'KI & Automatisierung', reference: 'Referenz', development: 'Entwicklung', openApp: 'App öffnen' }, DE, DE_PROG),
     },
     it: {
       label: 'Italiano',
       lang: 'it',
       description: 'Editor di design open-source, IA-nativo. Alternativa a Figma.',
-      themeConfig: localeThemeConfig('/it', { userGuide: 'Guida utente', reference: 'Riferimento', development: 'Sviluppo', openApp: 'Apri app' }, IT),
+      themeConfig: localeThemeConfig('/it', { userGuide: 'Guida utente', programmable: 'IA & Automazione', reference: 'Riferimento', development: 'Sviluppo', openApp: 'Apri app' }, IT, IT_PROG),
     },
     fr: {
       label: 'Français',
       lang: 'fr',
       description: 'Éditeur de design open-source, IA-natif. Alternative à Figma.',
-      themeConfig: localeThemeConfig('/fr', { userGuide: 'Guide utilisateur', reference: 'Référence', development: 'Développement', openApp: "Ouvrir l'app" }, FR),
+      themeConfig: localeThemeConfig('/fr', { userGuide: 'Guide utilisateur', programmable: 'IA & Automatisation', reference: 'Référence', development: 'Développement', openApp: "Ouvrir l'app" }, FR, FR_PROG),
     },
     es: {
       label: 'Español',
       lang: 'es',
       description: 'Editor de diseño open-source, IA-nativo. Alternativa a Figma.',
-      themeConfig: localeThemeConfig('/es', { userGuide: 'Guía del usuario', reference: 'Referencia', development: 'Desarrollo', openApp: 'Abrir app' }, ES),
+      themeConfig: localeThemeConfig('/es', { userGuide: 'Guía del usuario', programmable: 'IA & Automatización', reference: 'Referencia', development: 'Desarrollo', openApp: 'Abrir app' }, ES, ES_PROG),
     },
     pl: {
       label: 'Polski',
       lang: 'pl',
       description: "Open-source'owy edytor graficzny z natywnym AI. Alternatywa dla Figmy.",
-      themeConfig: localeThemeConfig('/pl', { userGuide: 'Podręcznik', reference: 'Referencja', development: 'Rozwój', openApp: 'Otwórz app' }, PL),
+      themeConfig: localeThemeConfig('/pl', { userGuide: 'Podręcznik', programmable: 'AI i automatyzacja', reference: 'Referencja', development: 'Rozwój', openApp: 'Otwórz app' }, PL, PL_PROG),
     },
     ru: {
       label: 'Русский',
       lang: 'ru',
       description: 'Дизайн-редактор с открытым исходным кодом. Альтернатива Figma с встроенным ИИ.',
-      themeConfig: localeThemeConfig('/ru', { userGuide: 'Руководство', reference: 'Справочник', development: 'Разработка', openApp: 'Открыть приложение' }, RU),
+      themeConfig: localeThemeConfig('/ru', { userGuide: 'Руководство', programmable: 'ИИ и автоматизация', reference: 'Справочник', development: 'Разработка', openApp: 'Открыть приложение' }, RU, RU_PROG),
     },
   },
 
@@ -290,6 +341,7 @@ export default defineConfig({
 
     nav: [
       { text: 'User Guide', link: '/user-guide/' },
+      { text: 'AI & Automation', link: '/programmable/' },
       { text: 'Reference', link: '/reference/keyboard-shortcuts' },
       { text: 'Development', link: '/development/contributing' },
       { text: 'Open App', link: 'https://app.openpencil.dev' },
@@ -297,19 +349,8 @@ export default defineConfig({
 
     sidebar: {
       '/user-guide/': userGuideSidebar('', EN),
-      '/reference/': [
-        {
-          text: 'Reference',
-          items: [
-            { text: 'Keyboard Shortcuts', link: '/reference/keyboard-shortcuts' },
-            { text: 'Node Types', link: '/reference/node-types' },
-            { text: 'MCP Tools', link: '/reference/mcp-tools' },
-            { text: 'Scene Graph', link: '/reference/scene-graph' },
-            { text: 'File Format', link: '/reference/file-format' },
-            { text: 'Eval Command', link: '/eval-command' },
-          ],
-        },
-      ],
+      '/programmable/': programmableSidebar('', EN_PROG),
+      '/reference/': referenceSidebar('', 'Reference', EN),
       '/': [
         ...guideSidebar('', EN),
         {

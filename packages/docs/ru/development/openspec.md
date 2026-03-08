@@ -37,7 +37,7 @@ openspec/
 | editor-ui | Панели Vue 3, панель инструментов, палитра цветов |
 | snap-guides | Привязка к краям/центрам, с учётом поворота |
 | rulers | Линейки на холсте, подсветка выделения |
-| group-ungroup | ⌘G/⇧⌘G, сортировка по позиции |
+| group-ungroup | <kbd>⌘</kbd><kbd>G</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>G</kbd>, сортировка по позиции |
 | desktop-app | Tauri v2, строка меню macOS |
 | testing | Playwright E2E, юнит-тесты bun:test |
 | scrub-input | Ввод чисел перетаскиванием |

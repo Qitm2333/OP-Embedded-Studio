@@ -9,24 +9,24 @@ Il canvas è il tuo spazio di lavoro infinito.
 
 ## Panoramica
 
-- **Spazio + trascinamento** — tieni Spazio e trascina
+- <kbd>Spazio</kbd> + trascinamento — tieni <kbd>Spazio</kbd> e trascina
 - **Pulsante centrale del mouse** — premi e trascina
 - **Trackpad a due dita** — scorri con due dita
 
 ## Strumento mano
 
-Premi **H** per attivare lo strumento mano. Passa a un altro strumento (es. **V**) per disattivare.
+Premi <kbd>H</kbd> per attivare lo strumento mano. Passa a un altro strumento (es. **V**) per disattivare.
 
 ## Zoom
 
-- **Ctrl + scroll** (o **⌘ + scroll** su Mac) — zoom avanti/indietro
+- <kbd>Ctrl</kbd> + scroll (o <kbd>⌘</kbd> + scroll su Mac) — zoom avanti/indietro
 - **Gesto pinch** — pinch sul trackpad
 - Scorciatoie da tastiera — vedi tabella
 
 | Azione | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Panoramica | Spazio + trascinamento | Spazio + trascinamento |
-| Strumento mano | H | H |
-| Zoom avanti | ⌘ + | Ctrl + + |
-| Zoom indietro | ⌘ - | Ctrl + - |
-| Zoom 100% | ⌘ 0 | Ctrl + 0 |
+| Panoramica | <kbd>Spazio</kbd> + trascinamento | Spazio + trascinamento |
+| Strumento mano | <kbd>H</kbd> | <kbd>H</kbd> |
+| Zoom avanti | <kbd>⌘</kbd><kbd>+</kbd> | <kbd>Ctrl</kbd> + <kbd>+</kbd> |
+| Zoom indietro | <kbd>⌘</kbd><kbd>−</kbd> | <kbd>Ctrl</kbd> + <kbd>−</kbd> |
+| Zoom 100% | <kbd>⌘</kbd><kbd>0</kbd> | <kbd>Ctrl</kbd> + <kbd>0</kbd> |

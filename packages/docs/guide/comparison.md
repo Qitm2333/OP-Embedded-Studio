@@ -266,13 +266,13 @@ Open Pencil's approach is simpler and lower overhead. Penpot's approach is more 
 2. **PDF export** — headless Chromium export service for PDF rendering (OpenPencil exports SVG but not PDF yet)
 3. **Plugin system** — full plugin API with sandboxed execution
 4. **Design tokens** — native design token support
-5. **CSS Grid layout** — custom implementation (Open Pencil waiting for Yoga Grid)
+5. **CSS Grid layout** — custom implementation (Open Pencil uses Yoga fork with grid support)
 6. **Self-hosting** — Docker-based deployment for teams
 7. **Maturity** — years of production usage, battle-tested at scale
 
 ## 11. Scripting & Extensibility
 
-OpenPencil ships with an [`eval` command](/eval-command) that provides a Figma-compatible Plugin API for headless scripting — batch operations, automated testing, and AI-driven modifications all run without the GUI. On top of that, **90 AI tools** are available via built-in chat, MCP server (stdio + HTTP), and the CLI — covering read, create, modify, structure, variables, vector path, analyze (color/typography/spacing/clusters), diff, boolean operations, and arrangement. Penpot has a plugin system with sandboxed execution but no headless scripting API or MCP integration.
+OpenPencil ships with an [`eval` command](/programmable/cli/scripting) that provides a Figma-compatible Plugin API for headless scripting — batch operations, automated testing, and AI-driven modifications all run without the GUI. On top of that, **90 AI tools** are available via built-in chat, MCP server (stdio + HTTP), and the CLI — covering read, create, modify, structure, variables, vector path, analyze (color/typography/spacing/clusters), diff, boolean operations, and arrangement. Penpot has a plugin system with sandboxed execution but no headless scripting API or MCP integration.
 
 ## Summary
 
