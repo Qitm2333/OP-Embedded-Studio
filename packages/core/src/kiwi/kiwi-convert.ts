@@ -303,6 +303,7 @@ function convertLineHeight(
   if (!lh) return null
   if (lh.units === 'PIXELS') return lh.value
   if (lh.units === 'PERCENT') return (lh.value / 100) * (fontSize ?? 14)
+  if (lh.units === 'RAW') return lh.value * (fontSize ?? 14)
   return null
 }
 
@@ -344,9 +345,11 @@ function importStyleRuns(nc: NodeChange): StyleRun[] {
       style.italic = override.fontName.style?.toLowerCase().includes('italic') ?? false
     }
     if (override.fontSize !== undefined) style.fontSize = override.fontSize
-    if (override.letterSpacing) style.letterSpacing = override.letterSpacing.value
+    if (override.letterSpacing) {
+      style.letterSpacing = convertLetterSpacing(override.letterSpacing, override.fontSize ?? nc.fontSize)
+    }
     if (override.lineHeight) {
-      const lh = convertLineHeight(override.lineHeight, override.fontSize)
+      const lh = convertLineHeight(override.lineHeight, override.fontSize ?? nc.fontSize)
       if (lh != null) style.lineHeight = lh
     }
     const deco = override.textDecoration as string | undefined

@@ -64,6 +64,10 @@ import { GOOGLE_FONTS_API_KEY } from './constants'
 const googleFontsCache = new Map<string, Record<string, string>>()
 const googleFontsFailed = new Set<string>()
 
+function normalizeFontFamily(family: string): string {
+  return family.replace(/\s+Variable$/i, '')
+}
+
 async function fetchGoogleFontFiles(family: string): Promise<Record<string, string> | null> {
   if (googleFontsCache.has(family)) return googleFontsCache.get(family)!
   if (googleFontsFailed.has(family)) return null
@@ -71,6 +75,13 @@ async function fetchGoogleFontFiles(family: string): Promise<Record<string, stri
   const url = `https://www.googleapis.com/webfonts/v1/webfonts?family=${encodeURIComponent(family)}&key=${GOOGLE_FONTS_API_KEY}`
   const response = await fetch(url)
   if (!response.ok) {
+    const normalized = normalizeFontFamily(family)
+    if (normalized !== family) {
+      const result = await fetchGoogleFontFiles(normalized)
+      if (result) googleFontsCache.set(family, result)
+      else googleFontsFailed.add(family)
+      return result
+    }
     googleFontsFailed.add(family)
     return null
   }
@@ -78,6 +89,13 @@ async function fetchGoogleFontFiles(family: string): Promise<Record<string, stri
   const data = (await response.json()) as { items?: Array<{ files?: Record<string, string> }> }
   const files = data.items?.[0]?.files
   if (!files) {
+    const normalized = normalizeFontFamily(family)
+    if (normalized !== family) {
+      const result = await fetchGoogleFontFiles(normalized)
+      if (result) googleFontsCache.set(family, result)
+      else googleFontsFailed.add(family)
+      return result
+    }
     googleFontsFailed.add(family)
     return null
   }
@@ -121,9 +139,14 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
   if (typeof window !== 'undefined' && window.queryLocalFonts) {
     try {
       const fonts = await window.queryLocalFonts()
+      const normalized = normalizeFontFamily(family)
       const match =
         fonts.find((f: FontInfo) => f.family === family && f.style === style) ??
-        fonts.find((f: FontInfo) => f.family === family)
+        fonts.find((f: FontInfo) => f.family === family) ??
+        (normalized !== family
+          ? (fonts.find((f: FontInfo) => f.family === normalized && f.style === style) ??
+            fonts.find((f: FontInfo) => f.family === normalized))
+          : undefined)
       if (match) {
         const blob: Blob = await match.blob()
         const buffer = await blob.arrayBuffer()
