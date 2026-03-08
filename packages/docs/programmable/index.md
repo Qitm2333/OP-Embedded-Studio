@@ -1,10 +1,10 @@
 ---
 layout: doc
-title: Programmable
-description: Every operation in OpenPencil is scriptable — CLI, Figma Plugin API, JSX renderer, MCP server, AI chat.
+title: AI & Automation
+description: Every operation in OpenPencil is scriptable — AI chat, CLI, JSX renderer, MCP server, real-time collaboration.
 ---
 
-# Programmable
+# AI & Automation
 
 OpenPencil treats design files as data. Every operation available in the editor — creating shapes, setting fills, managing auto-layout, exporting assets — is also available from the terminal, from AI agents, and from code. No plugins to install, no API keys, no waiting list.
 

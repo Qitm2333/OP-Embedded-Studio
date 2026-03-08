@@ -80,6 +80,18 @@ const userGuideSidebar = (prefix: string, l: SidebarLabels): DefaultTheme.Sideba
 
 const programmableSidebar = (prefix: string, p: ProgrammableLabels): DefaultTheme.SidebarItem[] => [
   {
+    text: p.aiChat,
+    link: `${prefix}/programmable/ai-chat`,
+  },
+  {
+    text: p.collaboration,
+    link: `${prefix}/programmable/collaboration`,
+  },
+  {
+    text: p.jsxRenderer,
+    link: `${prefix}/programmable/jsx-renderer`,
+  },
+  {
     text: p.cli,
     items: [
       { text: p.inspecting, link: `${prefix}/programmable/cli/inspecting` },
@@ -89,20 +101,8 @@ const programmableSidebar = (prefix: string, p: ProgrammableLabels): DefaultThem
     ],
   },
   {
-    text: p.jsxRenderer,
-    link: `${prefix}/programmable/jsx-renderer`,
-  },
-  {
     text: p.mcpServer,
     link: `${prefix}/programmable/mcp-server`,
-  },
-  {
-    text: p.aiChat,
-    link: `${prefix}/programmable/ai-chat`,
-  },
-  {
-    text: p.collaboration,
-    link: `${prefix}/programmable/collaboration`,
   },
 ]
 
@@ -301,37 +301,37 @@ export default defineConfig({
       label: 'Deutsch',
       lang: 'de',
       description: 'Open-Source, KI-nativer Design-Editor. Figma-Alternative.',
-      themeConfig: localeThemeConfig('/de', { userGuide: 'Benutzerhandbuch', programmable: 'Programmierbar', reference: 'Referenz', development: 'Entwicklung', openApp: 'App öffnen' }, DE, DE_PROG),
+      themeConfig: localeThemeConfig('/de', { userGuide: 'Benutzerhandbuch', programmable: 'KI & Automatisierung', reference: 'Referenz', development: 'Entwicklung', openApp: 'App öffnen' }, DE, DE_PROG),
     },
     it: {
       label: 'Italiano',
       lang: 'it',
       description: 'Editor di design open-source, IA-nativo. Alternativa a Figma.',
-      themeConfig: localeThemeConfig('/it', { userGuide: 'Guida utente', programmable: 'Programmabile', reference: 'Riferimento', development: 'Sviluppo', openApp: 'Apri app' }, IT, IT_PROG),
+      themeConfig: localeThemeConfig('/it', { userGuide: 'Guida utente', programmable: 'IA & Automazione', reference: 'Riferimento', development: 'Sviluppo', openApp: 'Apri app' }, IT, IT_PROG),
     },
     fr: {
       label: 'Français',
       lang: 'fr',
       description: 'Éditeur de design open-source, IA-natif. Alternative à Figma.',
-      themeConfig: localeThemeConfig('/fr', { userGuide: 'Guide utilisateur', programmable: 'Programmable', reference: 'Référence', development: 'Développement', openApp: "Ouvrir l'app" }, FR, FR_PROG),
+      themeConfig: localeThemeConfig('/fr', { userGuide: 'Guide utilisateur', programmable: 'IA & Automatisation', reference: 'Référence', development: 'Développement', openApp: "Ouvrir l'app" }, FR, FR_PROG),
     },
     es: {
       label: 'Español',
       lang: 'es',
       description: 'Editor de diseño open-source, IA-nativo. Alternativa a Figma.',
-      themeConfig: localeThemeConfig('/es', { userGuide: 'Guía del usuario', programmable: 'Programable', reference: 'Referencia', development: 'Desarrollo', openApp: 'Abrir app' }, ES, ES_PROG),
+      themeConfig: localeThemeConfig('/es', { userGuide: 'Guía del usuario', programmable: 'IA & Automatización', reference: 'Referencia', development: 'Desarrollo', openApp: 'Abrir app' }, ES, ES_PROG),
     },
     pl: {
       label: 'Polski',
       lang: 'pl',
       description: "Open-source'owy edytor graficzny z natywnym AI. Alternatywa dla Figmy.",
-      themeConfig: localeThemeConfig('/pl', { userGuide: 'Podręcznik', programmable: 'Programowalny', reference: 'Referencja', development: 'Rozwój', openApp: 'Otwórz app' }, PL, PL_PROG),
+      themeConfig: localeThemeConfig('/pl', { userGuide: 'Podręcznik', programmable: 'AI i automatyzacja', reference: 'Referencja', development: 'Rozwój', openApp: 'Otwórz app' }, PL, PL_PROG),
     },
     ru: {
       label: 'Русский',
       lang: 'ru',
       description: 'Дизайн-редактор с открытым исходным кодом. Альтернатива Figma с встроенным ИИ.',
-      themeConfig: localeThemeConfig('/ru', { userGuide: 'Руководство', programmable: 'Программируемость', reference: 'Справочник', development: 'Разработка', openApp: 'Открыть приложение' }, RU, RU_PROG),
+      themeConfig: localeThemeConfig('/ru', { userGuide: 'Руководство', programmable: 'ИИ и автоматизация', reference: 'Справочник', development: 'Разработка', openApp: 'Открыть приложение' }, RU, RU_PROG),
     },
   },
 
@@ -340,7 +340,7 @@ export default defineConfig({
 
     nav: [
       { text: 'User Guide', link: '/user-guide/' },
-      { text: 'Programmable', link: '/programmable/' },
+      { text: 'AI & Automation', link: '/programmable/' },
       { text: 'Reference', link: '/reference/keyboard-shortcuts' },
       { text: 'Development', link: '/development/contributing' },
       { text: 'Open App', link: 'https://app.openpencil.dev' },
