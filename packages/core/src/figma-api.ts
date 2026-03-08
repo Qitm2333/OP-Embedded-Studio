@@ -1251,8 +1251,33 @@ export class FigmaAPI {
 
   private _viewport = { x: 0, y: 0, zoom: 1 }
 
-  get viewport(): { center: Vector; zoom: number } {
-    return { center: { x: this._viewport.x, y: this._viewport.y }, zoom: this._viewport.zoom }
+  get viewport(): { center: Vector; zoom: number; scrollAndZoomIntoView: (nodes: readonly { absoluteBoundingBox: Rect }[]) => void } {
+    return {
+      center: { x: this._viewport.x, y: this._viewport.y },
+      zoom: this._viewport.zoom,
+      scrollAndZoomIntoView: (nodes) => {
+        let minX = Infinity
+        let minY = Infinity
+        let maxX = -Infinity
+        let maxY = -Infinity
+        for (const node of nodes) {
+          const b = node.absoluteBoundingBox
+          minX = Math.min(minX, b.x)
+          minY = Math.min(minY, b.y)
+          maxX = Math.max(maxX, b.x + b.width)
+          maxY = Math.max(maxY, b.y + b.height)
+        }
+        if (minX === Infinity) return
+
+        const padding = 80
+        const contentW = maxX - minX + padding * 2
+        const contentH = maxY - minY + padding * 2
+        const viewW = typeof window !== 'undefined' ? window.innerWidth : 1280
+        const viewH = typeof window !== 'undefined' ? window.innerHeight : 720
+        const zoom = Math.min(viewW / contentW, viewH / contentH, 1)
+        this._viewport = { x: (minX + maxX) / 2, y: (minY + maxY) / 2, zoom }
+      }
+    }
   }
 
   set viewport(v: { center: Vector; zoom: number }) {

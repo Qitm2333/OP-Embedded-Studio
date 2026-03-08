@@ -64,7 +64,9 @@ const MENU_ACTIONS: Record<string, () => void> = {
   'create-component': () => store.createComponentFromSelection(),
   'create-component-set': () => store.createComponentSetFromComponents(),
   'detach-instance': () => store.detachInstance(),
+  'zoom-100': () => store.zoomTo100(),
   'zoom-fit': () => store.zoomToFit(),
+  'zoom-selection': () => store.zoomToSelection(),
   export: () => {
     if (store.state.selectedIds.size > 0) store.exportSelection(1, 'PNG')
   }

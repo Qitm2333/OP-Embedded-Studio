@@ -2075,6 +2075,21 @@ export function createEditorStore() {
     requestRepaint()
   }
 
+  function zoomToBounds(minX: number, minY: number, maxX: number, maxY: number) {
+    const padding = 80
+    const w = maxX - minX + padding * 2
+    const h = maxY - minY + padding * 2
+
+    const viewW = window.innerWidth ?? 800
+    const viewH = window.innerHeight ?? 600
+    const zoom = Math.min(viewW / w, viewH / h, 1)
+
+    state.zoom = zoom
+    state.panX = (viewW - w * zoom) / 2 - minX * zoom + padding * zoom
+    state.panY = (viewH - h * zoom) / 2 - minY * zoom + padding * zoom
+    requestRepaint()
+  }
+
   function zoomToFit() {
     const nodes = graph.getChildren(state.currentPageId)
     if (nodes.length === 0) return
@@ -2090,19 +2105,40 @@ export function createEditorStore() {
       maxY = Math.max(maxY, n.y + n.height)
     }
 
-    const padding = 80
-    const w = maxX - minX + padding * 2
-    const h = maxY - minY + padding * 2
+    zoomToBounds(minX, minY, maxX, maxY)
+  }
 
-    // Will be set by canvas composable
-    const viewW = 800
-    const viewH = 600
-    const zoom = Math.min(viewW / w, viewH / h, 1)
+  function zoomTo100() {
+    const viewW = window.innerWidth ?? 800
+    const viewH = window.innerHeight ?? 600
+    const centerX = (-state.panX + viewW / 2) / state.zoom
+    const centerY = (-state.panY + viewH / 2) / state.zoom
 
-    state.zoom = zoom
-    state.panX = (viewW - w * zoom) / 2 - minX * zoom + padding * zoom
-    state.panY = (viewH - h * zoom) / 2 - minY * zoom + padding * zoom
+    state.zoom = 1
+    state.panX = viewW / 2 - centerX
+    state.panY = viewH / 2 - centerY
     requestRepaint()
+  }
+
+  function zoomToSelection() {
+    if (state.selectedIds.size === 0) return
+
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+    for (const id of state.selectedIds) {
+      const n = graph.getNode(id)
+      if (!n) continue
+      const abs = graph.getAbsolutePosition(id)
+      minX = Math.min(minX, abs.x)
+      minY = Math.min(minY, abs.y)
+      maxX = Math.max(maxX, abs.x + n.width)
+      maxY = Math.max(maxY, abs.y + n.height)
+    }
+    if (minX === Infinity) return
+
+    zoomToBounds(minX, minY, maxX, maxY)
   }
 
   return {
@@ -2185,6 +2221,8 @@ export function createEditorStore() {
     applyZoom,
     pan,
     zoomToFit,
+    zoomTo100,
+    zoomToSelection,
     isTopLevel,
     switchPage,
     addPage,

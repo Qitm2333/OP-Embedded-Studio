@@ -65,6 +65,8 @@ export function toolsToAI(
             if (ids.length > 0) options.onFlashNodes(ids)
           }
           return execResult
+        } catch (err) {
+          return { error: err instanceof Error ? err.message : String(err) }
         } finally {
           options.onAfterExecute?.()
         }

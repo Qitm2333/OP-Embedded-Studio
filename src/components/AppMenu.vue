@@ -102,7 +102,9 @@ const editMenu: MenuItem[] = [
 ]
 
 const viewMenu: MenuItem[] = [
-  { label: 'Zoom to fit', shortcut: '⇧1', action: () => store.zoomToFit() },
+  { label: 'Zoom to 100%', shortcut: `${mod}0`, action: () => store.zoomTo100() },
+  { label: 'Zoom to fit', shortcut: `${mod}1`, action: () => store.zoomToFit() },
+  { label: 'Zoom to selection', shortcut: `${mod}2`, action: () => store.zoomToSelection() },
   {
     label: 'Zoom in',
     shortcut: `${mod}=`,

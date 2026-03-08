@@ -59,7 +59,7 @@ export const render = defineTool({
   },
   execute: async (figma, args) => {
     const { renderJSX } = await import('../render/render-jsx.js')
-    const result = await renderJSX(figma.graph, args.jsx, {
+    const result = renderJSX(figma.graph, args.jsx, {
       parentId: args.parent_id ?? figma.currentPageId,
       x: args.x,
       y: args.y

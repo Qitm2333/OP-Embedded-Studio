@@ -197,6 +197,81 @@ test.describe('UI toggles', () => {
   })
 })
 
+test.describe('duplicate', () => {
+  test('⌘D duplicates selection', async () => {
+    await canvas.clearCanvas()
+    await canvas.drawRect(100, 100, 60, 60)
+    await canvas.selectAll()
+    expect(await getSelectedCount()).toBe(1)
+
+    await page.keyboard.press('Meta+d')
+    await canvas.waitForRender()
+
+    const children = await getPageChildren()
+    expect(children).toHaveLength(2)
+  })
+})
+
+test.describe('zoom shortcuts', () => {
+  test('⌘0 zooms to 100%', async () => {
+    await canvas.clearCanvas()
+    await canvas.drawRect(100, 100, 60, 60)
+
+    // Set zoom to something other than 100%
+    await page.evaluate(() => {
+      const store = window.__OPEN_PENCIL_STORE__!
+      store.state.zoom = 2
+    })
+    await canvas.waitForRender()
+
+    await page.keyboard.press('Meta+0')
+    await canvas.waitForRender()
+
+    const zoomAfter = await page.evaluate(() => window.__OPEN_PENCIL_STORE__!.state.zoom)
+    expect(zoomAfter).toBe(1)
+  })
+
+  test('⌘1 zooms to fit', async () => {
+    await page.keyboard.press('Meta+1')
+    await canvas.waitForRender()
+
+    const zoom = await page.evaluate(() => window.__OPEN_PENCIL_STORE__!.state.zoom)
+    expect(zoom).toBeGreaterThan(0)
+    expect(zoom).toBeLessThanOrEqual(1)
+  })
+
+  test('⌘2 zooms to selection', async () => {
+    await canvas.selectAll()
+
+    await page.keyboard.press('Meta+2')
+    await canvas.waitForRender()
+
+    const zoom = await page.evaluate(() => window.__OPEN_PENCIL_STORE__!.state.zoom)
+    expect(zoom).toBeGreaterThan(0)
+    expect(zoom).toBeLessThanOrEqual(1)
+  })
+
+  test('⇧1 zooms to fit (same as ⌘1)', async () => {
+    await page.keyboard.press('Shift+1')
+    await canvas.waitForRender()
+
+    const zoom = await page.evaluate(() => window.__OPEN_PENCIL_STORE__!.state.zoom)
+    expect(zoom).toBeGreaterThan(0)
+    expect(zoom).toBeLessThanOrEqual(1)
+  })
+
+  test('⇧2 zooms to selection (same as ⌘2)', async () => {
+    await canvas.selectAll()
+
+    await page.keyboard.press('Shift+2')
+    await canvas.waitForRender()
+
+    const zoom = await page.evaluate(() => window.__OPEN_PENCIL_STORE__!.state.zoom)
+    expect(zoom).toBeGreaterThan(0)
+    expect(zoom).toBeLessThanOrEqual(1)
+  })
+})
+
 test.describe('undo/redo', () => {
   test('⌘Z undoes last action', async () => {
     await canvas.clearCanvas()
@@ -214,5 +289,49 @@ test.describe('undo/redo', () => {
     await canvas.waitForRender()
 
     expect((await getPageChildren()).length).toBe(1)
+  })
+})
+
+test.describe('auto-layout shortcut', () => {
+  test('⇧A toggles auto-layout on frame', async () => {
+    await canvas.clearCanvas()
+    await canvas.drawRect(100, 100, 200, 200)
+    await canvas.selectAll()
+
+    // Change to frame type for auto-layout
+    await page.evaluate(() => {
+      const store = window.__OPEN_PENCIL_STORE__!
+      const nodes = [...store.state.selectedIds]
+      if (nodes[0]) store.updateNode(nodes[0], { type: 'FRAME' })
+    })
+    await canvas.waitForRender()
+
+    const layoutBefore = await page.evaluate(() => {
+      const store = window.__OPEN_PENCIL_STORE__!
+      const nodes = [...store.state.selectedIds]
+      return store.graph.getNode(nodes[0])?.layoutMode
+    })
+    expect(layoutBefore).toBe('NONE')
+
+    await page.keyboard.press('Shift+a')
+    await canvas.waitForRender()
+
+    const layoutAfter = await page.evaluate(() => {
+      const store = window.__OPEN_PENCIL_STORE__!
+      const nodes = [...store.state.selectedIds]
+      return store.graph.getNode(nodes[0])?.layoutMode
+    })
+    expect(layoutAfter).toBe('VERTICAL')
+
+    // Toggle off
+    await page.keyboard.press('Shift+a')
+    await canvas.waitForRender()
+
+    const layoutFinal = await page.evaluate(() => {
+      const store = window.__OPEN_PENCIL_STORE__!
+      const nodes = [...store.state.selectedIds]
+      return store.graph.getNode(nodes[0])?.layoutMode
+    })
+    expect(layoutFinal).toBe('NONE')
   })
 })

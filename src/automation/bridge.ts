@@ -115,10 +115,10 @@ export function startAutomationBridge(server: ViteServer) {
 
   async function jsxToTree(jsx: string): Promise<unknown> {
     const core = await server.ssrLoadModule('@open-pencil/core')
-    const buildComponent = core.buildComponent as (jsx: string) => Promise<() => unknown>
+    const buildComponent = core.buildComponent as (jsx: string) => () => unknown
     const resolveToTree = core.resolveToTree as (el: unknown) => unknown
     const createElement = core.createElement as (type: unknown, props: unknown) => unknown
-    const Component = await buildComponent(jsx)
+    const Component = buildComponent(jsx)
     const element = createElement(Component, null)
     return resolveToTree(element)
   }

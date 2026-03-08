@@ -34,7 +34,7 @@ const modelValue = defineModel<T>({ required: true })
       <SelectContent
         position="popper"
         :side-offset="2"
-        :class="selectContent({ class: 'max-h-56 min-w-[var(--reka-select-trigger-width)]' })"
+        :class="selectContent({ class: 'max-h-56' })"
       >
         <SelectViewport class="p-0.5">
           <SelectItem
