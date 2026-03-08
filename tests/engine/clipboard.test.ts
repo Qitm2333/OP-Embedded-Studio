@@ -322,6 +322,44 @@ describe('importClipboardNodes', () => {
     }
   })
 
+  it('detaches orphaned instances to FRAME when component is missing', () => {
+    const { graph, pageId } = createGraphWithPage()
+
+    const nodeChanges = [
+      { guid: { sessionID: 0, localID: 0 }, type: 'DOCUMENT', name: 'Doc' },
+      { guid: { sessionID: 0, localID: 1 }, parentIndex: { guid: { sessionID: 0, localID: 0 }, position: '!' }, type: 'CANVAS', name: 'Page' },
+      // Frame containing an instance whose component is NOT in the clipboard
+      { guid: { sessionID: 0, localID: 10 }, parentIndex: { guid: { sessionID: 0, localID: 1 }, position: '!' }, type: 'FRAME', name: 'Card', size: { x: 400, y: 200 }, transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 } },
+      {
+        guid: { sessionID: 0, localID: 11 },
+        parentIndex: { guid: { sessionID: 0, localID: 10 }, position: '!' },
+        type: 'INSTANCE', name: 'Button',
+        size: { x: 120, y: 40 },
+        transform: { m00: 1, m01: 0, m02: 20, m10: 0, m11: 1, m12: 20 },
+        fillPaints: [{ type: 'SOLID', color: { r: 0.2, g: 0.4, b: 1, a: 1 }, opacity: 1, visible: true }],
+        cornerRadius: 8,
+        symbolData: { symbolID: { sessionID: 99, localID: 999 } },
+      },
+    ] as any[]
+
+    const created = importClipboardNodes(nodeChanges, graph, pageId)
+    expect(created).toHaveLength(1)
+
+    const card = graph.getNode(created[0])!
+    const children = graph.getChildren(card.id)
+    expect(children).toHaveLength(1)
+
+    const button = children[0]
+    expect(button.type).toBe('FRAME')
+    expect(button.name).toBe('Button')
+    expect(button.componentId).toBe('')
+    expect(button.fills).toHaveLength(1)
+    expect(button.fills[0].color.b).toBe(1)
+    expect(button.cornerRadius).toBe(8)
+    expect(button.width).toBe(120)
+    expect(button.height).toBe(40)
+  })
+
   it('applies symbolOverrides text to instance children via overrideKey', () => {
     const { graph, pageId } = createGraphWithPage()
 
