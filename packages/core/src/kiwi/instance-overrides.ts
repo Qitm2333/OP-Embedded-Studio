@@ -1,5 +1,6 @@
 import type { SceneGraph, SceneNode, GeometryPath } from '../scene-graph'
 import { guidToString, convertOverrideToProps, resolveGeometryPaths } from './kiwi-convert'
+import { copyFills, copyStrokes, copyEffects, copyStyleRuns, copyGeometryPaths } from '../copy'
 import type { GUID } from './codec'
 
 interface SymbolOverride {
@@ -60,17 +61,37 @@ export function populateAndApplyOverrides(
   guidToNodeId: Map<string, string>,
   blobs: Uint8Array[] = []
 ): void {
-  // Iterative population: cloning creates new instances that themselves need children
-  let populated = 1
-  while (populated > 0) {
-    populated = 0
-    for (const node of graph.getAllNodes()) {
-      if (node.type !== 'INSTANCE' || !node.componentId || node.childIds.length > 0) continue
-      const comp = graph.getNode(node.componentId)
-      if (comp && comp.childIds.length > 0) {
-        graph.populateInstanceChildren(node.id, node.componentId)
-        populated++
+  // Work-queue population: seed with empty instances, then discover newly
+  // cloned nested instances by walking the subtree (avoids full graph scan per round).
+  const populateQueue: string[] = []
+  for (const node of graph.getAllNodes()) {
+    if (node.type === 'INSTANCE' && node.componentId && node.childIds.length === 0) {
+      populateQueue.push(node.id)
+    }
+  }
+
+  function collectEmptyInstances(parentId: string, out: string[]) {
+    const parent = graph.getNode(parentId)
+    if (!parent) return
+    for (const childId of parent.childIds) {
+      const child = graph.getNode(childId)
+      if (!child) continue
+      if (child.type === 'INSTANCE' && child.componentId && child.childIds.length === 0) {
+        out.push(child.id)
+      } else if (child.childIds.length > 0) {
+        collectEmptyInstances(childId, out)
       }
+    }
+  }
+
+  while (populateQueue.length > 0) {
+    const nodeId = populateQueue.pop()!
+    const node = graph.getNode(nodeId)
+    if (!node || node.type !== 'INSTANCE' || !node.componentId || node.childIds.length > 0) continue
+    const comp = graph.getNode(node.componentId)
+    if (comp && comp.childIds.length > 0) {
+      graph.populateInstanceChildren(nodeId, node.componentId)
+      collectEmptyInstances(nodeId, populateQueue)
     }
   }
 
@@ -477,8 +498,8 @@ export function populateAndApplyOverrides(
             if (source.height !== clone.height) cu.height = source.height
             if (source.x !== clone.x) cu.x = source.x
             if (source.y !== clone.y) cu.y = source.y
-            if (source.fillGeometry !== clone.fillGeometry) cu.fillGeometry = structuredClone(source.fillGeometry)
-            if (source.strokeGeometry !== clone.strokeGeometry) cu.strokeGeometry = structuredClone(source.strokeGeometry)
+            if (source.fillGeometry !== clone.fillGeometry) cu.fillGeometry = copyGeometryPaths(source.fillGeometry)
+            if (source.strokeGeometry !== clone.strokeGeometry) cu.strokeGeometry = copyGeometryPaths(source.strokeGeometry)
             if (Object.keys(cu).length > 0) graph.updateNode(cloneId, cu)
           }
           queue.push(cloneId)
@@ -530,10 +551,10 @@ export function populateAndApplyOverrides(
     if (source.text !== undefined && source.text !== target.text) updates.text = source.text
     if (source.visible !== undefined && source.visible !== target.visible) updates.visible = source.visible
     if (source.opacity !== undefined && source.opacity !== target.opacity) updates.opacity = source.opacity
-    if (source.fills !== undefined && source.fills !== target.fills) updates.fills = structuredClone(source.fills)
-    if (source.strokes !== undefined && source.strokes !== target.strokes) updates.strokes = structuredClone(source.strokes)
-    if (source.effects !== undefined && source.effects !== target.effects) updates.effects = structuredClone(source.effects)
-    if (source.styleRuns !== undefined && source.styleRuns !== target.styleRuns) updates.styleRuns = structuredClone(source.styleRuns)
+    if (source.fills !== undefined && source.fills !== target.fills) updates.fills = copyFills(source.fills)
+    if (source.strokes !== undefined && source.strokes !== target.strokes) updates.strokes = copyStrokes(source.strokes)
+    if (source.effects !== undefined && source.effects !== target.effects) updates.effects = copyEffects(source.effects)
+    if (source.styleRuns !== undefined && source.styleRuns !== target.styleRuns) updates.styleRuns = copyStyleRuns(source.styleRuns)
     if (source.layoutGrow !== undefined && source.layoutGrow !== target.layoutGrow) updates.layoutGrow = source.layoutGrow
     if (source.textAutoResize !== undefined && source.textAutoResize !== target.textAutoResize) updates.textAutoResize = source.textAutoResize
     if (source.locked !== undefined && source.locked !== target.locked) updates.locked = source.locked
