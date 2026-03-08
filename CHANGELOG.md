@@ -15,6 +15,12 @@
 - Double-click on layer tree no longer toggles expand/collapse — use the chevron instead
 - Page rename input matches layer rename styling
 
+### Performance
+
+- Replace `structuredClone` with typed copy helpers for fills, strokes, effects, and style runs (~24× faster in hot paths)
+- Filter .fig unzip to only decompress canvas and image entries, skipping metadata cruft
+- Instance population uses a work queue instead of repeated full graph scans
+
 ### Improvements
 
 - Compact layout controls — icon-based gap (↔/↕) and padding (T/R/B/L) inputs instead of text labels
