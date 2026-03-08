@@ -4,41 +4,30 @@
 
 A `.fig` file is a ZIP archive containing a Kiwi-encoded binary message:
 
-```mermaid
-block-beta
-  columns 1
-  A["Magic header: <code>fig-kiwi</code> (8 bytes)"]
-  B["Version (4 bytes, uint32 LE)"]
-  C["Schema length (4 bytes, uint32 LE)"]
-  D["Compressed Kiwi schema"]
-  E["Message length (4 bytes, uint32 LE)"]
-  F["Compressed Kiwi message — NodeChange[]"]
-  G["Blob data — images, vector networks, fonts"]
-```
+| Offset | Content |
+|--------|---------|
+| 0 | Magic header `fig-kiwi` (8 bytes) |
+| 8 | Version (4 bytes, uint32 LE) |
+| 12 | Schema length (4 bytes, uint32 LE) |
+| 16 | Compressed Kiwi schema |
+| … | Message length (4 bytes, uint32 LE) |
+| … | Compressed Kiwi message — `NodeChange[]` (entire document) |
+| … | Blob data — images, vector networks, fonts |
 
 ## Import Pipeline
 
-```mermaid
-flowchart LR
-  A[".fig file"] --> B["Parse header"]
-  B --> C["Decompress Zstd"]
-  C --> D["Decode Kiwi schema"]
-  D --> E["Decode message"]
-  E --> F["NodeChange[]"]
-  F --> G["Build SceneGraph"]
-  G --> H["Resolve blob refs"]
-  H --> I["Render"]
+```
+.fig file → parse header → decompress Zstd → decode Kiwi schema
+  → decode message → NodeChange[] → build SceneGraph
+  → resolve blob refs → render on canvas
 ```
 
 ## Export Pipeline
 
-```mermaid
-flowchart LR
-  A["SceneGraph"] --> B["NodeChange[]"]
-  B --> C["Kiwi encode"]
-  C --> D["Compress"]
-  D --> E["Build ZIP"]
-  E --> F[".fig file"]
+```
+SceneGraph → NodeChange[] → Kiwi encode → compress (Zstd/deflate)
+  → build ZIP (header + schema + message + thumbnail.png)
+  → write .fig file
 ```
 
 Export uses <kbd>⌘</kbd><kbd>S</kbd> (Save) and <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> (Save As) with native OS dialogs on the desktop app. The exported file includes a `thumbnail.png` required by Figma for file preview.
@@ -77,18 +66,7 @@ Figma's schema uses non-contiguous field IDs (e.g. 1, 2, 5, 10 with gaps). The k
 
 Copy/paste uses the same Kiwi binary encoding:
 
-```mermaid
-flowchart LR
-  subgraph Copy
-    A["Selected nodes"] --> B["Encode NodeChange[]"]
-    B --> C["Compress"]
-    C --> D["Clipboard<br/><code>application/x-figma-design</code>"]
-  end
-  subgraph Paste
-    D --> E["Decompress"]
-    E --> F["Decode Kiwi"]
-    F --> G["Create nodes"]
-  end
-```
+1. **Copy** — encode selected `NodeChange[]` to Kiwi binary, compress, write to clipboard as `application/x-figma-design` MIME type
+2. **Paste** — read clipboard, decompress, decode Kiwi binary, create nodes in scene graph
 
-This enables bidirectional clipboard between OpenPencil and Figma.
+Encoding happens synchronously in the copy event handler (not async Clipboard API) for browser compatibility. This enables bidirectional clipboard between OpenPencil and Figma.
