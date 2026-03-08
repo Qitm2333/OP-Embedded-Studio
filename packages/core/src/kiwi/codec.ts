@@ -291,10 +291,24 @@ export interface NodeChange {
   textAutoResize?: string
   textData?: {
     characters: string
-    lines?: unknown[]
+    lines?: Array<{ lineType?: string; styleId?: number; indentationLevel?: number }>
     characterStyleIDs?: number[]
     styleOverrideTable?: NodeChange[]
   }
+  derivedTextData?: {
+    layoutSize?: { x: number; y: number }
+    fontMetaData?: Array<{
+      key: { family: string; style: string; postscript?: string }
+      fontLineHeight: number
+      fontDigest?: Uint8Array | Record<string, number>
+      fontStyle?: string
+      fontWeight?: number
+    }>
+    truncationStartIndex?: number
+    truncatedHeight?: number
+  }
+  textUserLayoutVersion?: number
+  textDecoration?: string
   lineHeight?: { value: number; units: string }
   letterSpacing?: { value: number; units: string }
   // Symbol/Instance

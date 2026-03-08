@@ -1,7 +1,7 @@
 import { zipSync, deflateSync } from 'fflate'
 
 import { CANVAS_BG_COLOR, IS_TAURI } from './constants'
-import { sceneNodeToKiwi, fractionalPosition, buildFigKiwi } from './kiwi-serialize'
+import { sceneNodeToKiwi, fractionalPosition, buildFigKiwi, buildFontDigestMap } from './kiwi-serialize'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { stringToGuid } from './kiwi/kiwi-convert'
 import { renderThumbnail } from './render-image'
@@ -82,6 +82,7 @@ export async function exportFigFile(
   const blobs: Uint8Array[] = []
   const pages = graph.getPages(true)
   const nodeIdToGuid = new Map<string, { sessionID: number; localID: number }>()
+  const fontDigestMap = await buildFontDigestMap(graph)
   let internalCanvasGuid: { sessionID: number; localID: number } | null = null
 
   for (let p = 0; p < pages.length; p++) {
@@ -113,7 +114,7 @@ export async function exportFigFile(
     const children = graph.getChildren(page.id)
     for (let i = 0; i < children.length; i++) {
       nodeChanges.push(
-        ...sceneNodeToKiwi(children[i], canvasGuid, i, localIdCounter, graph, blobs, nodeIdToGuid)
+        ...sceneNodeToKiwi(children[i], canvasGuid, i, localIdCounter, graph, blobs, nodeIdToGuid, fontDigestMap)
       )
     }
   }

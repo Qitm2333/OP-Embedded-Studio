@@ -83,6 +83,7 @@ export {
   initFontService,
   getFontProvider,
   isFontLoaded,
+  getLoadedFontData,
   markFontLoaded,
   ensureNodeFont,
   ensureCJKFallback,

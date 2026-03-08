@@ -11,6 +11,7 @@
 ### Fixes
 
 - Serialize variables, collections, and bindings to `.fig` files — previously lost on save (#65)
+- Text nodes created via MCP now render in Figma — emit `derivedTextData` with font metadata and layout size (#64)
 - Double-click on layer tree no longer toggles expand/collapse — use the chevron instead
 - Page rename input matches layer rename styling
 

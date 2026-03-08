@@ -224,6 +224,10 @@ export function isFontLoaded(family: string): boolean {
   return [...loadedFamilies.keys()].some((k) => k.startsWith(`${family}|`))
 }
 
+export function getLoadedFontData(family: string, style: string): ArrayBuffer | null {
+  return loadedFamilies.get(`${family}|${style}`) ?? null
+}
+
 export function collectFontKeys(graph: SceneGraph, nodeIds: string[]): Array<[string, string]> {
   const fontKeys = new Set<string>()
   const collect = (id: string) => {

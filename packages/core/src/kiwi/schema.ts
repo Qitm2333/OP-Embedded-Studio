@@ -899,6 +899,17 @@ message Decoration {
   uint styleID = 2;
 }
 
+message DerivedTextData {
+  Vector layoutSize = 1;
+  Baseline[] baselines = 2;
+  Glyph[] glyphs = 3;
+  Decoration[] decorations = 4;
+  FontMetaData[] fontMetaData = 6;
+  HyperlinkBox[] hyperlinkBoxes = 7;
+  int truncationStartIndex = 8;
+  float truncatedHeight = 9;
+}
+
 message VectorData {
   uint vectorNetworkBlob = 1;
   Vector normalizedSize = 2;
@@ -1487,6 +1498,7 @@ message NodeChange {
   VariableResolvedDataType variableResolvedType = 314;
   VariableDataValues variableDataValues = 315;
   VariableScope[] variableScopes = 353;
+  DerivedTextData derivedTextData = 359;
   uint gridRowCount = 435;
   uint gridColumnCount = 436;
   float gridRowGap = 437;
