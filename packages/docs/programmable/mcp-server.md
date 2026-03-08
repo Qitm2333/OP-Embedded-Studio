@@ -126,7 +126,7 @@ Works with Claude Code, Cursor, Windsurf, Codex, and any agent that supports [sk
 
 | Tool | Description |
 |------|-------------|
-| `create_shape` | Create a shape (FRAME, RECTANGLE, ELLIPSE, TEXT, LINE, STAR, POLYGON, SECTION) |
+| `create_shape` | Create a shape (`FRAME`, `RECTANGLE`, `ELLIPSE`, `TEXT`, `LINE`, `STAR`, `POLYGON`, `SECTION`) |
 | `create_vector` | Create a vector node from a path string |
 | `create_slice` | Create an export slice |
 | `create_page` | Create a new page |
@@ -149,7 +149,7 @@ Works with Claude Code, Cursor, Windsurf, Codex, and any agent that supports [sk
 | `set_opacity` | Set opacity (0–1) |
 | `set_radius` | Set corner radius (uniform or per-corner) |
 | `set_minmax` | Set min/max width and height constraints |
-| `set_text` | Set text content of a TEXT node |
+| `set_text` | Set text content of a `TEXT` node |
 | `set_font` | Set font family and weight |
 | `set_font_range` | Set font properties on a character range |
 | `set_text_resize` | Set text auto-resize mode (fixed/auto-width/auto-height) |

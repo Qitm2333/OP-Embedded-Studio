@@ -16,7 +16,7 @@ Arborescence hiérarchique à gauche. Déplier/replier, glisser pour réordonner
 Chaque page a son propre état de viewport.
 
 ## Panneau propriétés
-Trois onglets : **Design** (propriétés contextuelles), **Code** (JSX / Tailwind CSS v4), **IA** (chat ⌘ J).
+Trois onglets : **Design** (propriétés contextuelles), **Code** (JSX / Tailwind CSS v4), **IA** (chat <kbd>⌘</kbd><kbd>J</kbd>).
 
 Design : apparence, remplissage, contour, effets, typographie, mise en page, exportation.
 

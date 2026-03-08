@@ -6,17 +6,17 @@ description: Tworzenie prostokątów, elips, linii, ramek i sekcji w OpenPencil.
 
 | Narzędzie | Skrót | Opis |
 |-----------|-------|------|
-| Prostokąt | R | Rysuje prostokąt |
-| Elipsa | O | Rysuje elipsę |
-| Linia | L | Rysuje linię |
-| Ramka | F | Rysuje ramkę (kontener) |
-| Sekcja | S | Rysuje sekcję |
+| Prostokąt | <kbd>R</kbd> | Rysuje prostokąt |
+| Elipsa | <kbd>O</kbd> | Rysuje elipsę |
+| Linia | <kbd>L</kbd> | Rysuje linię |
+| Ramka | <kbd>F</kbd> | Rysuje ramkę (kontener) |
+| Sekcja | <kbd>S</kbd> | Rysuje sekcję |
 
 ## Dodatkowe kształty
 **Wielokąt** i **Gwiazda** w menu rozwijanym kształtów.
 
 ## Rysowanie z ograniczeniami
-**Shift** podczas przeciągania: prostokąt → kwadrat, elipsa → koło, linia → 0°/45°/90°.
+<kbd>Shift</kbd> podczas przeciągania: prostokąt → kwadrat, elipsa → koło, linia → 0°/45°/90°.
 
 ## Właściwości
 - **Wypełnienie** — kolor, gradient (liniowy, radialny, kątowy, diamentowy), obraz

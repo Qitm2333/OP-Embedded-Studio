@@ -11,12 +11,12 @@ description: Gestionar capas, páginas y panel de propiedades en OpenPencil.
 - **Cambiar página** — clic en una pestaña
 - **Añadir** — botón añadir
 - **Eliminar** — eliminar página actual
-- **Renombrar** — doble clic en el nombre; Enter o clic fuera para confirmar, Escape para cancelar
+- **Renombrar** — doble clic en el nombre; <kbd>Enter</kbd> o clic fuera para confirmar, <kbd>Escape</kbd> para cancelar
 
 Cada página tiene su propio estado de viewport.
 
 ## Panel de propiedades
-Tres pestañas: **Diseño** (propiedades contextuales), **Código** (JSX / Tailwind CSS v4), **IA** (chat ⌘ J).
+Tres pestañas: **Diseño** (propiedades contextuales), **Código** (JSX / Tailwind CSS v4), **IA** (chat <kbd>⌘</kbd><kbd>J</kbd>).
 
 Diseño: apariencia, relleno, trazo, efectos, tipografía, layout, exportación.
 

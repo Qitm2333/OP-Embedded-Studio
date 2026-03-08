@@ -1,8 +1,8 @@
-# Граф сцены
+# Scene Graph
 
-## Представление в памяти
+## In-Memory Representation
 
-Узлы хранятся в плоском `Map<string, Node>` с ключами-GUID. Древовидная структура поддерживается через ссылки `parentIndex`. Это обеспечивает O(1) поиск по ID и эффективный обход.
+Nodes live in a flat `Map<string, Node>` keyed by `GUID` string. The tree structure is maintained via `parentIndex` references. This gives O(1) lookup by ID and efficient traversal.
 
 ```typescript
 interface SceneGraph {
@@ -29,38 +29,38 @@ interface SceneGraph {
 }
 ```
 
-## Страницы
+## Pages
 
-Документы поддерживают несколько страниц (узлы CANVAS как прямые потомки корня DOCUMENT). Каждая страница имеет собственное дерево дочерних элементов и независимое состояние области просмотра (panX, panY, zoom, pageColor). Редактор отслеживает `currentPageId` и отрисовывает только дочерние элементы активной страницы.
+Documents support multiple pages (`CANVAS` nodes as direct children of the `DOCUMENT` root). Each page has its own child tree and independent viewport state (panX, panY, zoom, pageColor). The editor tracks `currentPageId` and renders only the active page's children.
 
-## Секции
+## Sections
 
-Узлы SECTION — это организационные контейнеры верхнего уровня (только прямые потомки CANVAS). Они не могут вкладываться во фреймы или группы. Создание секции автоматически захватывает перекрывающихся соседей. Секции отображают плашку с заголовком, цвет текста которой адаптируется в зависимости от яркости фона.
+`SECTION` nodes are top-level organizational containers (direct children of `CANVAS` only). They cannot nest inside frames or groups. Creating a section auto-adopts overlapping siblings. Sections display a title pill with luminance-adaptive text color.
 
-## Состояние наведения
+## Hover State
 
-Состояние редактора отслеживает `hoveredNodeId` — узел, находящийся под курсором. Отрисовщик рисует контур наведения, повторяющий форму объекта (по фактической геометрии для эллипсов, скруглённых прямоугольников, векторов), для визуальной обратной связи перед выделением.
+The editor state tracks `hoveredNodeId` — the node currently under the cursor. The renderer draws a shape-aware hover outline (following actual geometry for ellipses, rounded rects, vectors) for visual feedback before selection.
 
-## Отмена/повтор
+## Undo/Redo
 
-Система использует паттерн **обратных команд** Figma. Каждая запись отмены содержит прямые изменения и их автоматически вычисленную инверсию:
+The system uses Figma's **inverse command** pattern. Each undo entry contains the forward changes and their automatically-computed inverse:
 
-| Операция | Прямое действие | Обратное действие |
-|----------|-----------------|-------------------|
-| Создание узла | `{guid, phase: CREATED, ...props}` | `{guid, phase: REMOVED}` |
-| Удаление узла | `{guid, phase: REMOVED}` | `{guid, phase: CREATED, ...allProps}` |
-| Изменение свойства | `{guid, fill: "#F00"}` | `{guid, fill: "#00F"}` |
-| Перемещение узла | `{guid, parentIndex: newParent}` | `{guid, parentIndex: oldParent}` |
+| Operation | Forward | Inverse |
+|-----------|---------|---------|
+| Create node | `{guid, phase: CREATED, ...props}` | `{guid, phase: REMOVED}` |
+| Delete node | `{guid, phase: REMOVED}` | `{guid, phase: CREATED, ...allProps}` |
+| Change prop | `{guid, fill: "#F00"}` | `{guid, fill: "#00F"}` |
+| Move node | `{guid, parentIndex: newParent}` | `{guid, parentIndex: oldParent}` |
 
-Перед применением любого изменения создаётся снимок затронутых полей. Этот снимок становится обратным действием.
+Before applying any change, affected fields are snapshotted. The snapshot becomes the inverse.
 
-**Группировка** — такие операции, как перетаскивание, генерируют сотни изменений позиции в секунду. Они объединяются в одну запись отмены с помощью дебаунса. `beginBatch`/`commitBatch` оборачивает многоступенчатые операции.
+**Batching** — operations like drag-to-move produce hundreds of position changes per second. These are debounced into a single undo entry. `beginBatch`/`commitBatch` wraps multi-step operations.
 
-## Движок компоновки (Yoga)
+## Layout Engine (Yoga)
 
-Свойства auto-layout Figma отображаются на Yoga flexbox:
+Figma's auto-layout properties map to Yoga flexbox:
 
-| Свойство Figma | Эквивалент Yoga |
+| Figma Property | Yoga Equivalent |
 |---|---|
 | `stackMode: HORIZONTAL` | `flexDirection: row` |
 | `stackMode: VERTICAL` | `flexDirection: column` |
@@ -73,27 +73,27 @@ interface SceneGraph {
 | `stackChildAlignSelf` | `alignSelf` |
 | `stackPositioning: ABSOLUTE` | `position: absolute` |
 
-## Проверка попадания (Hit Testing)
+## Hit Testing
 
-Для заданной точки в координатах холста граф сцены возвращает самый верхний видимый узел в этой позиции. Алгоритм:
+Given a point in canvas coordinates, the scene graph returns the topmost visible node at that position. The algorithm:
 
-1. Обход видимых узлов в обратном z-порядке (сверху вниз)
-2. Преобразование точки проверки в локальную систему координат каждого узла
-3. Проверка, находится ли точка в пределах границ узла (с учётом поворота)
-4. Возврат первого совпадения
+1. Traverse visible nodes in reverse z-order (top to bottom)
+2. Transform the test point into each node's local coordinate system
+3. Check if the point is within the node's bounds (including rotation)
+4. Return the first match
 
-Для выделения рамкой `getNodesInRect` возвращает все узлы, чьи границы пересекаются с заданным прямоугольником.
+For marquee selection, `getNodesInRect` returns all nodes whose bounds intersect the given rectangle.
 
-## Расширенные типы заливок
+## Extended Fill Types
 
-Заливки поддерживают шесть типов: SOLID, GRADIENT_LINEAR, GRADIENT_RADIAL, GRADIENT_ANGULAR, GRADIENT_DIAMOND и IMAGE. Градиентные заливки содержат `gradientStops` (пары цвет + позиция) и `gradientTransform` (матрица 2×3). Заливки изображением ссылаются на бинарные данные через `imageHash` с режимами масштабирования (FILL, FIT, CROP, TILE).
+Fills support six types: `SOLID`, `GRADIENT_LINEAR`, `GRADIENT_RADIAL`, `GRADIENT_ANGULAR`, `GRADIENT_DIAMOND`, and `IMAGE`. Gradient fills carry `gradientStops` (color + position pairs) and a `gradientTransform` (2×3 matrix). Image fills reference blob data via `imageHash` with scale modes (`FILL`, `FIT`, `CROP`, `TILE`).
 
-## Расширенные свойства обводки
+## Extended Stroke Properties
 
-Обводки поддерживают `cap` (NONE, ROUND, SQUARE, ARROW_LINES, ARROW_EQUILATERAL), `join` (MITER, BEVEL, ROUND) и `dashPattern` (массив длин штрихов/промежутков) в дополнение к базовым свойствам color, weight, opacity, visible и align.
+Strokes support `cap` (`NONE`, `ROUND`, `SQUARE`, `ARROW_LINES`, `ARROW_EQUILATERAL`), `join` (`MITER`, `BEVEL`, `ROUND`), and `dashPattern` (array of dash/gap lengths) in addition to the base `color`, `weight`, `opacity`, `visible`, and `align` properties.
 
-## Система координат
+## Coordinate System
 
-Узлы хранят позицию и размер относительно родителя. Чтобы получить абсолютные (холстовые) координаты, нужно пройти вверх по цепочке родителей, применяя трансформации. Отрисовщик использует это для корректного позиционирования вложенных фреймов.
+Nodes store position and size relative to their parent. To get absolute (canvas) coordinates, walk up the parent chain applying transforms. The renderer uses this to draw nested frames with correct positioning.
 
-Поворот хранится в градусах и применяется как часть аффинной матрицы 2×3. Направляющие привязки и проверка попадания учитывают поворот при вычислении визуальных границ.
+Rotation is stored in degrees and applied as part of the 2×3 transform matrix. Snap guides and hit testing account for rotation when computing visual bounds.

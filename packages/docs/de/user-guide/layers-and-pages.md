@@ -17,7 +17,7 @@ Knoten werden in einem zusammenklappbaren Baum angezeigt. Klicken Sie auf den Pf
 
 ### Ziehen zum Umordnen
 
-Ziehen Sie Ebenen, um sie umzuordnen. Dies ändert die Z-Reihenfolge im Szenengraphen.
+Ziehen Sie Ebenen, um sie umzuordnen. Ebenen weiter oben in der Liste werden über den anderen gerendert.
 
 ### Sichtbarkeit umschalten
 
@@ -25,7 +25,7 @@ Klicken Sie auf das Auge-Symbol neben einer Ebene, um sie auf dem Canvas ein- od
 
 ### Umbenennen
 
-Doppelklicken Sie auf einen Ebenennamen, um ihn inline umzubenennen. **Enter** oder Klick außerhalb bestätigt, **Escape** bricht ab.
+Doppelklicken Sie auf einen Ebenennamen, um ihn inline umzubenennen. <kbd>Enter</kbd> oder Klick außerhalb bestätigt, <kbd>Escape</kbd> bricht ab.
 
 ### Auswahl-Synchronisation
 
@@ -64,10 +64,10 @@ Zeigt den ausgewählten Knoten als JSX-Code mit Syntaxhervorhebung.
 
 ### KI-Tab
 
-KI-Chat-Interface (auch mit **⌘ J** umschaltbar).
+KI-Chat-Interface (auch mit <kbd>⌘</kbd><kbd>J</kbd> umschaltbar).
 
 ## Tastenkürzel
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| KI-Chat umschalten | ⌘ J | Strg + J |
+| KI-Chat umschalten | <kbd>⌘</kbd><kbd>J</kbd> | Strg + J |

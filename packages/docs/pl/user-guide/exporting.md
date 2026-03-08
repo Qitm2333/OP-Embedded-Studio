@@ -17,8 +17,8 @@ Wybierz węzeł i użyj sekcji Eksport w panelu właściwości.
 
 | Metoda | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Skrót klawiszowy | ⇧ ⌘ E | Shift + Ctrl + E |
-| Menu kontekstowe | Prawy klik → Eksportuj… | Prawy klik → Eksportuj… |
+| Skrót klawiszowy | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>E</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>E</kbd> |
+| Menu kontekstowe | Prawy klik <kbd>→</kbd> Eksportuj… | Prawy klik <kbd>→</kbd> Eksportuj… |
 | Panel właściwości | Przycisk "Eksportuj" | Przycisk "Eksportuj" |
 
 ## Kopiuj jako
@@ -29,18 +29,18 @@ Menu kontekstowe **Kopiuj jako** oferuje dodatkowe formaty:
 |--------|-----|-----------------|
 | Kopiuj jako tekst | — | — |
 | Kopiuj jako SVG | — | — |
-| Kopiuj jako PNG | ⇧ ⌘ C | Shift + Ctrl + C |
+| Kopiuj jako PNG | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>C</kbd> |
 | Kopiuj jako JSX | — | — |
 
 ## Operacje na plikach .fig
 
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Otwórz | ⌘ O | Ctrl + O |
-| Zapisz | ⌘ S | Ctrl + S |
-| Zapisz jako | ⇧ ⌘ S | Shift + Ctrl + S |
+| Otwórz | <kbd>⌘</kbd><kbd>O</kbd> | <kbd>Ctrl</kbd> + <kbd>O</kbd> |
+| Zapisz | <kbd>⌘</kbd><kbd>S</kbd> | <kbd>Ctrl</kbd> + <kbd>S</kbd> |
+| Zapisz jako | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 
-Kompatybilność round-trip z Figmą.
+Pliki eksportowane z OpenPencil można otwierać w Figmie i odwrotnie.
 
 ## Wskazówki
 

@@ -9,7 +9,7 @@ description: Lernen Sie OpenPencil kennen — Canvas-Navigation, Zeichnen, Text,
 OpenPencil ist ein Open-Source, Figma-kompatibler Design-Editor — vollständig lokal, KI-nativ und programmierbar. Dieses Handbuch behandelt alles, was Sie für die effektive Nutzung des Editors wissen müssen.
 
 ::: tip Plattformübergreifende Tastenkürzel
-In diesem Handbuch verwenden Tastenkürzel Mac-Notation: **⌘** = Command (Strg unter Windows/Linux), **⌥** = Option (Alt), **⇧** = Shift.
+In diesem Handbuch verwenden Tastenkürzel Mac-Notation: <kbd>⌘</kbd> = <kbd>Command</kbd> (<kbd>Strg</kbd> unter Windows/Linux), <kbd>⌥</kbd> = <kbd>Option</kbd> (<kbd>Alt</kbd>), <kbd>⇧</kbd> = <kbd>Shift</kbd>.
 :::
 
 ## Erste Schritte
@@ -31,6 +31,6 @@ In diesem Handbuch verwenden Tastenkürzel Mac-Notation: **⌘** = Command (Strg
 
 ## Erweiterte Funktionen
 
-- [Auto-Layout](./auto-layout) — Flexbox-basierte automatische Positionierung mit Yoga
+- [Auto-Layout](./auto-layout) — Flexbox-basierte automatische Positionierung
 - [Komponenten](./components) — Wiederverwendbare Komponenten, Instanzen und Overrides
 - [Variablen](./variables) — Design-Variablen, Sammlungen, Modi und Füllbindungen

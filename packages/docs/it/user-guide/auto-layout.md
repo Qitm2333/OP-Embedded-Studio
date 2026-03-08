@@ -4,7 +4,9 @@ description: Auto-layout basato su flexbox in OpenPencil.
 ---
 # Auto-layout
 
-**⇧ A** per attivare/disattivare o avvolgere la selezione in un frame auto-layout.
+L'auto-layout posiziona i figli automaticamente all'interno di un frame usando regole flexbox. Gestisce direzione, spaziatura, allineamento e dimensionamento responsivo.
+
+<kbd>⇧</kbd><kbd>A</kbd> per attivare/disattivare o avvolgere la selezione in un frame auto-layout.
 
 ## Direzione
 - **Orizzontale** — da sinistra a destra

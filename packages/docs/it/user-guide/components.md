@@ -5,16 +5,16 @@ description: Componenti riutilizzabili, istanze, override e sincronizzazione liv
 # Componenti
 
 ## Creare un componente
-**⌥ ⌘ K** (Ctrl+Alt+K) — converte frame/gruppo in COMPONENT. Etichetta viola con diamante.
+<kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd>) — converte la selezione in un componente riutilizzabile. I componenti mostrano un'etichetta viola con icona a diamante.
 
 ## Set di componenti
-**⇧ ⌘ K** — combina 2+ componenti in un set con bordo tratteggiato viola.
+<kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> — combina 2+ componenti in un set con bordo tratteggiato viola.
 
 ## Creare istanze
 Click destro → **Crea istanza**. Appare 40 px a destra.
 
 ## Separare un'istanza
-**⌥ ⌘ B** — diventa un frame senza collegamento.
+<kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> — diventa un frame senza collegamento.
 
 ## Sincronizzazione live
 Modificare un componente aggiorna tutte le istanze. Proprietà sincronizzate: dimensioni, riempimenti, contorni, effetti, opacità, raggi angoli, layout.
@@ -27,6 +27,6 @@ Click seleziona il componente. **Doppio click** per entrare e selezionare i figl
 
 | Azione | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Crea componente | ⌥ ⌘ K | Ctrl + Alt + K |
-| Crea set | ⇧ ⌘ K | Shift + Ctrl + K |
-| Separa istanza | ⌥ ⌘ B | Ctrl + Alt + B |
+| Crea componente | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> | <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd> |
+| Crea set | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>K</kbd> | <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>K</kbd> |
+| Separa istanza | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> | <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>B</kbd> |

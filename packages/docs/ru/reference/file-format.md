@@ -1,71 +1,72 @@
-# Формат файлов
+# File Format
 
-## Структура .fig файла
+## .fig File Structure
 
-```
-┌─────────────────────────────────┐
-│ Магический заголовок: "fig-kiwi" (8Б)   │
-│ Версия (4Б uint32 LE)          │
-│ Длина схемы (4Б uint32 LE)     │
-│ Сжатая Kiwi-схема              │
-│ Длина сообщения (4Б uint32 LE) │
-│ Сжатое Kiwi-сообщение          │  ← NodeChange[] (весь документ)
-│ Бинарные данные                 │  ← Изображения, векторные сети, шрифты
-└─────────────────────────────────┘
-```
+A `.fig` file is a ZIP archive containing a Kiwi-encoded binary message:
 
-## Конвейер импорта
+| Offset | Content |
+|--------|---------|
+| 0 | Magic header `fig-kiwi` (8 bytes) |
+| 8 | Version (4 bytes, uint32 LE) |
+| 12 | Schema length (4 bytes, uint32 LE) |
+| 16 | Compressed Kiwi schema |
+| … | Message length (4 bytes, uint32 LE) |
+| … | Compressed Kiwi message — `NodeChange[]` (entire document) |
+| … | Blob data — images, vector networks, fonts |
 
-```
-.fig файл → Парсинг заголовка → Декомпрессия Zstd → Декодирование Kiwi-схемы
-  → Декодирование сообщения → NodeChange[] → Построение SceneGraph
-  → Разрешение ссылок на блобы → Отрисовка на холсте
-```
-
-## Конвейер экспорта
+## Import Pipeline
 
 ```
-SceneGraph → NodeChange[] → Kiwi-кодирование → Сжатие (Zstd/deflate)
-  → Сборка ZIP (заголовок + схема + сообщение + thumbnail.png)
-  → Запись .fig файла
+.fig file → parse header → decompress Zstd → decode Kiwi schema
+  → decode message → NodeChange[] → build SceneGraph
+  → resolve blob refs → render on canvas
 ```
 
-Экспорт выполняется через <kbd>⌘</kbd><kbd>S</kbd> (Сохранить) и <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> (Сохранить как) с нативными диалоговыми окнами ОС в десктопном приложении. Экспортированный файл включает `thumbnail.png`, необходимый Figma для предпросмотра. Сжатие использует Zstd через Tauri Rust-команду на десктопе, с fallback на deflate в браузере. ZIP-архив собирается на Rust в десктопном варианте для корректных заголовков Zstd-фреймов (с указанием размера содержимого).
+## Export Pipeline
 
-## Бинарный кодек Kiwi
+```
+SceneGraph → NodeChange[] → Kiwi encode → compress (Zstd/deflate)
+  → build ZIP (header + schema + message + thumbnail.png)
+  → write .fig file
+```
 
-Кодек обрабатывает 194-определённую Kiwi-схему Figma с NodeChange в качестве центрального типа (~390 полей). Основные компоненты:
+Export uses <kbd>⌘</kbd><kbd>S</kbd> (Save) and <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd> (Save As) with native OS dialogs on the desktop app. The exported file includes a `thumbnail.png` required by Figma for file preview.
 
-- **kiwi-schema** — вендорённый из evanw/kiwi, с патчем для ESM и разреженных ID полей
-- **codec.ts** — кодирование/декодирование сообщений с использованием Kiwi-схемы
-- **protocol.ts** — парсинг проводного формата и определение типа сообщения
-- **schema.ts** — 194 определения message/enum/struct
+Compression uses Zstd via Tauri Rust command on desktop, with deflate fallback in the browser.
 
-### Разреженные ID полей
+## Kiwi Binary Codec
 
-Схема Figma использует непоследовательные ID полей (например, 1, 2, 5, 10 с пропусками). Вендорённый парсер kiwi-schema пропатчен для корректной обработки этого случая.
+The codec handles Figma's 194-definition Kiwi schema with `NodeChange` as the central type (~390 fields). Key components:
 
-### Сжатие
+| Module | Purpose |
+|--------|---------|
+| `kiwi-schema` | Kiwi parser (from [evanw/kiwi](https://github.com/nicolo-ribaudo/kiwi)), patched for ESM and sparse field IDs |
+| `codec.ts` | Encode/decode messages using the Kiwi schema |
+| `protocol.ts` | Wire format parsing and message type detection |
+| `schema.ts` | 194 message/enum/struct definitions |
 
-Файлы .fig используют Zstd-сжатие для полезных данных схемы и сообщения. Декомпрессия выполняется библиотекой `fzstd`. При экспорте Zstd-сжатие делегируется Tauri Rust-команде в десктопном приложении (лучшая производительность, корректные заголовки фреймов). В браузере в качестве fallback используется deflate через `fflate`. Кодирование буфера обмена также использует `fflate`.
+### Sparse Field IDs
 
-## Поддерживаемые форматы
+Figma's schema uses non-contiguous field IDs (e.g. 1, 2, 5, 10 with gaps). The kiwi-schema parser handles this correctly.
 
-| Формат | Импорт | Экспорт |
-|--------|--------|---------|
-| .fig (Figma) | ✅ | ✅ |
-| .svg | Планируется | Планируется |
-| .png | Планируется | Планируется |
-| .pdf | — | Планируется |
+### Compression
 
-Подробнее о сроках поддержки форматов см. [Дорожная карта](/ru/development/roadmap).
+`.fig` files use Zstd compression for both the schema and message payloads. Decompression uses the `fzstd` library. For export, Zstd compression is offloaded to a Tauri Rust command on the desktop app (better performance, correct frame headers). In the browser, deflate via `fflate` is used as a fallback.
 
-## Формат буфера обмена
+## Supported Formats
 
-Копирование/вставка использует то же бинарное Kiwi-кодирование:
+| Format | Import | Export |
+|--------|--------|--------|
+| `.fig` (Figma) | ✅ | ✅ |
+| `.svg` | Planned | Planned |
+| `.png` | Planned | Planned |
+| `.pdf` | — | Planned |
 
-1. **Копирование** — кодирование выбранных NodeChange[] в бинарный Kiwi, сжатие, запись в буфер обмена с MIME-типом `application/x-figma-design`
-2. **Вставка** — чтение буфера обмена, декомпрессия, декодирование бинарного Kiwi, создание узлов в графе сцены
-3. **Синхронность** — кодирование происходит в обработчике события копирования (не через асинхронный Clipboard API) для совместимости с браузерами
+## Clipboard Format
 
-Это обеспечивает двусторонний обмен через буфер обмена между OpenPencil и Figma.
+Copy/paste uses the same Kiwi binary encoding:
+
+1. **Copy** — encode selected `NodeChange[]` to Kiwi binary, compress, write to clipboard as `application/x-figma-design` MIME type
+2. **Paste** — read clipboard, decompress, decode Kiwi binary, create nodes in scene graph
+
+Encoding happens synchronously in the copy event handler (not async Clipboard API) for browser compatibility. This enables bidirectional clipboard between OpenPencil and Figma.

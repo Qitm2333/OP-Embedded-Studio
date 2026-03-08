@@ -1,8 +1,8 @@
-# Grafo de escena
+# Scene Graph
 
-## Representación en memoria
+## In-Memory Representation
 
-Los nodos viven en un Map plano `Map<string, Node>` keyed by GUID string. La estructura de árbol se mantiene via `parentIndex` references. This gives Búsqueda O(1) by ID and efficient traversal.
+Nodes live in a flat `Map<string, Node>` keyed by `GUID` string. The tree structure is maintained via `parentIndex` references. This gives O(1) lookup by ID and efficient traversal.
 
 ```typescript
 interface SceneGraph {
@@ -31,11 +31,11 @@ interface SceneGraph {
 
 ## Pages
 
-Documents support multiple pages (CANVAS nodes as direct children of the DOCUMENT root). Each page has its own child tree and independent viewport state (panX, panY, zoom, pageColor). The editor tracks `currentPageId` and renders only the active page's children.
+Documents support multiple pages (`CANVAS` nodes as direct children of the `DOCUMENT` root). Each page has its own child tree and independent viewport state (panX, panY, zoom, pageColor). The editor tracks `currentPageId` and renders only the active page's children.
 
 ## Sections
 
-SECTION nodes are top-level organizational containers (direct children of CANVAS only). They cannot nest inside frames or groups. Creating a section auto-adopts overlapping siblings. Sections display a title pill with luminance-adaptive text color.
+`SECTION` nodes are top-level organizational containers (direct children of `CANVAS` only). They cannot nest inside frames or groups. Creating a section auto-adopts overlapping siblings. Sections display a title pill with luminance-adaptive text color.
 
 ## Hover State
 
@@ -86,11 +86,11 @@ For marquee selection, `getNodesInRect` returns all nodes whose bounds intersect
 
 ## Extended Fill Types
 
-Fills support six types: SOLID, GRADIENT_LINEAR, GRADIENT_RADIAL, GRADIENT_ANGULAR, GRADIENT_DIAMOND, and IMAGE. Gradient fills carry `gradientStops` (color + position pairs) and a `gradientTransform` (2×3 matrix). Image fills reference blob data via `imageHash` with scale modes (FILL, FIT, CROP, TILE).
+Fills support six types: `SOLID`, `GRADIENT_LINEAR`, `GRADIENT_RADIAL`, `GRADIENT_ANGULAR`, `GRADIENT_DIAMOND`, and `IMAGE`. Gradient fills carry `gradientStops` (color + position pairs) and a `gradientTransform` (2×3 matrix). Image fills reference blob data via `imageHash` with scale modes (`FILL`, `FIT`, `CROP`, `TILE`).
 
 ## Extended Stroke Properties
 
-Strokes support `cap` (NONE, ROUND, SQUARE, ARROW_LINES, ARROW_EQUILATERAL), `join` (MITER, BEVEL, ROUND), and `dashPattern` (array of dash/gap lengths) in addition to the base color, weight, opacity, visible, and align properties.
+Strokes support `cap` (`NONE`, `ROUND`, `SQUARE`, `ARROW_LINES`, `ARROW_EQUILATERAL`), `join` (`MITER`, `BEVEL`, `ROUND`), and `dashPattern` (array of dash/gap lengths) in addition to the base `color`, `weight`, `opacity`, `visible`, and `align` properties.
 
 ## Coordinate System
 

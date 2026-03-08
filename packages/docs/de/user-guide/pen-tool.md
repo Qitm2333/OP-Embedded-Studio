@@ -9,7 +9,7 @@ Das Stiftwerkzeug erstellt Vektorpfade mit einem Vektornetzwerk-Datenmodell, kom
 
 ## Aktivieren
 
-Drücken Sie **P**, um das Stiftwerkzeug zu aktivieren.
+Drücken Sie <kbd>P</kbd>, um das Stiftwerkzeug zu aktivieren.
 
 ## Punkte setzen
 
@@ -24,18 +24,18 @@ Klicken Sie auf den **ersten Punkt** des Pfades, um ihn zu einer Schleife zu sch
 
 ## Offene Pfade
 
-Drücken Sie **Escape**, um den aktuellen Pfad als offenen Pfad zu bestätigen. Offene Pfade werden nur als Konturen gerendert.
+Drücken Sie <kbd>Escape</kbd>, um den aktuellen Pfad als offenen Pfad zu bestätigen. Offene Pfade werden nur als Konturen gerendert.
 
 ## Vektornetzwerke
 
-Pfade verwenden das Vektornetzwerk-Datenmodell statt einfacher Punktlisten. Vektornetzwerke ermöglichen flexiblere Topologien und werden in Figmas `vectorNetworkBlob`-Binärformat für .fig-Kompatibilität kodiert.
+Pfade verwenden das Vektornetzwerk-Datenmodell statt einfacher Punktlisten. Vektornetzwerke ermöglichen flexiblere Topologien und sind vollständig mit dem .fig-Format kompatibel.
 
 ## Tastenkürzel
 
 | Aktion | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Stiftwerkzeug | P | P |
-| Offenen Pfad bestätigen | Escape | Escape |
+| Stiftwerkzeug | <kbd>P</kbd> | <kbd>P</kbd> |
+| Offenen Pfad bestätigen | <kbd>Escape</kbd> | Escape |
 
 ## Tipps
 

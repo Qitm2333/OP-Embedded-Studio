@@ -2,7 +2,7 @@
 
 ## System Overview
 
-```mermaid
+`mermaid
 graph TB
     subgraph Tauri["Tauri v2 Shell"]
         subgraph Editor["Editor (Web)"]
@@ -22,7 +22,7 @@ graph TB
         MCP["MCP Server (90 tools, stdio+HTTP)"]
         Collab["P2P Collab (Trystero + Yjs)"]
     end
-```
+`
 
 ## Editor Layout
 
@@ -62,7 +62,7 @@ Meta's Yoga provides CSS flexbox layout computation. A thin adapter maps Figma p
 
 ### File Format (Kiwi Binary)
 
-Reuses Figma's Kiwi binary codec with 194 message/enum/struct definitions. Import: parse header → Zstd decompress → Kiwi decode → NodeChange[] → scene graph. Export reverses the process with thumbnail generation.
+Reuses Figma's Kiwi binary codec with 194 message/enum/struct definitions. Import: parse header → Zstd decompress → Kiwi decode → `NodeChange`[] → scene graph. Export reverses the process with thumbnail generation.
 
 See [File Format Reference](/reference/file-format) for details.
 

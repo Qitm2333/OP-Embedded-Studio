@@ -5,7 +5,7 @@ description: Créer et modifier du texte avec formatage riche dans OpenPencil.
 # Édition de texte
 
 ## Créer du texte
-Appuyez sur **T**, puis cliquez sur le canevas. Commencez à taper immédiatement.
+Appuyez sur <kbd>T</kbd>, puis cliquez sur le canevas. Commencez à taper immédiatement.
 
 ## Édition en ligne
 Double-cliquez sur un nœud texte pour entrer en mode édition. Cliquez à l'extérieur pour confirmer.
@@ -13,19 +13,19 @@ Double-cliquez sur un nœud texte pour entrer en mode édition. Cliquez à l'ext
 ## Navigation du curseur
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Gauche/droite | ← / → | ← / → |
-| Haut/bas | ↑ / ↓ | ↑ / ↓ |
-| Par mot | ⌥ ← / ⌥ → | Ctrl + ← / Ctrl + → |
-| Début/fin de ligne | ⌘ ← / ⌘ → | Début / Fin |
+| Gauche/droite | <kbd>←</kbd> / <kbd>→</kbd> | <kbd>←</kbd> / <kbd>→</kbd> |
+| Haut/bas | <kbd>↑</kbd> / <kbd>↓</kbd> | <kbd>↑</kbd> / <kbd>↓</kbd> |
+| Par mot | <kbd>⌥</kbd><kbd>←</kbd> / <kbd>⌥</kbd><kbd>→</kbd> | <kbd>Ctrl</kbd> + <kbd>←</kbd> / <kbd>Ctrl</kbd> + <kbd>→</kbd> |
+| Début/fin de ligne | <kbd>⌘</kbd><kbd>←</kbd> / <kbd>⌘</kbd><kbd>→</kbd> | Début / Fin |
 
-**Shift** étend la sélection.
+<kbd>Shift</kbd> étend la sélection.
 
 ## Formatage riche
 | Action | Mac | Windows / Linux |
 |--------|-----|-----------------|
-| Gras | ⌘ B | Ctrl + B |
-| Italique | ⌘ I | Ctrl + I |
-| Souligné | ⌘ U | Ctrl + U |
+| Gras | <kbd>⌘</kbd><kbd>B</kbd> | <kbd>Ctrl</kbd> + <kbd>B</kbd> |
+| Italique | <kbd>⌘</kbd><kbd>I</kbd> | <kbd>Ctrl</kbd> + <kbd>I</kbd> |
+| Souligné | <kbd>⌘</kbd><kbd>U</kbd> | <kbd>Ctrl</kbd> + <kbd>U</kbd> |
 
 ## Sélecteur de police
-Recherche, aperçu et défilement virtuel. Polices système sur desktop (Tauri), Local Font Access API dans le navigateur.
+Recherche, aperçu et défilement virtuel. Les polices système sont disponibles sur l'application de bureau, ainsi que dans Chrome et Edge.

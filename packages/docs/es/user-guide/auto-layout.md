@@ -4,7 +4,12 @@ description: Auto-layout basado en flexbox en OpenPencil.
 ---
 # Auto-layout
 
-**⇧ A** para activar/desactivar o envolver la selección.
+El auto-layout posiciona los hijos automáticamente dentro de un marco usando reglas de flexbox. Controla la dirección, el espaciado, la alineación y el dimensionamiento responsivo.
+
+## Activar auto-layout
+
+- Selecciona un marco y pulsa <kbd>⇧</kbd><kbd>A</kbd> (<kbd>Shift</kbd> + <kbd>A</kbd>) para activar o desactivar el auto-layout
+- Selecciona nodos sueltos (sin marco padre) y pulsa <kbd>⇧</kbd><kbd>A</kbd> para envolverlos en un nuevo marco con auto-layout
 
 ## Dirección
 - **Horizontal** — de izquierda a derecha

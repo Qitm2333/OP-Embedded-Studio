@@ -4,7 +4,9 @@ description: Mise en page auto basée sur flexbox dans OpenPencil.
 ---
 # Mise en page auto
 
-**⇧ A** pour activer/désactiver ou envelopper la sélection.
+La mise en page auto positionne automatiquement les enfants dans un cadre selon les règles flexbox. Elle gère la direction, l'espacement, l'alignement et le dimensionnement adaptatif.
+
+<kbd>⇧</kbd><kbd>A</kbd> pour activer/désactiver ou envelopper la sélection.
 
 ## Direction
 - **Horizontale** — de gauche à droite

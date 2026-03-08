@@ -4,7 +4,9 @@ description: Auto-layout oparty na flexbox w OpenPencil.
 ---
 # Auto-layout
 
-**⇧ A** aby włączyć/wyłączyć lub opakować zaznaczenie.
+Auto-layout automatycznie pozycjonuje dzieci wewnątrz ramki, stosując reguły flexbox. Obsługuje kierunek, odstępy, wyrównanie i responsywne rozmiary.
+
+<kbd>⇧</kbd><kbd>A</kbd> aby włączyć/wyłączyć lub opakować zaznaczenie.
 
 ## Kierunek
 - **Poziomy** — od lewej do prawej
