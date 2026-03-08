@@ -209,6 +209,31 @@ export interface Effect {
   blendMode?: string
 }
 
+export interface VariableAnyValue {
+  boolValue?: boolean
+  textValue?: string
+  floatValue?: number
+  colorValue?: Color
+  alias?: { guid: GUID }
+}
+
+export interface VariableDataEntry {
+  value?: VariableAnyValue
+  dataType?: string
+  resolvedDataType?: string
+}
+
+export interface VariableConsumptionEntry {
+  nodeField?: number
+  variableData?: VariableDataEntry
+  variableField?: string
+}
+
+export interface VariableDataValuesEntry {
+  modeID: GUID
+  variableData: VariableDataEntry
+}
+
 export interface NodeChange {
   [key: string]: unknown
   guid: GUID
@@ -290,12 +315,12 @@ export interface NodeChange {
   horizontalConstraint?: string
   verticalConstraint?: string
   // Variables
-  variableData?: { value?: { boolValue?: boolean; textValue?: string; floatValue?: number; colorValue?: { r: number; g: number; b: number; a: number }; alias?: { guid: GUID } }; dataType?: string; resolvedDataType?: string }
-  variableConsumptionMap?: { entries?: Array<{ nodeField?: number; variableData?: { value?: { alias?: { guid: GUID }; colorValue?: { r: number; g: number; b: number; a: number }; boolValue?: boolean; textValue?: string; floatValue?: number }; dataType?: string; resolvedDataType?: string }; variableField?: string }> }
+  variableData?: VariableDataEntry
+  variableConsumptionMap?: { entries?: VariableConsumptionEntry[] }
   variableSetModes?: Array<{ id: GUID; name: string; sortPosition?: string }>
   variableSetID?: { guid: GUID }
   variableResolvedType?: string
-  variableDataValues?: { entries?: Array<{ modeID: GUID; variableData: { value?: { boolValue?: boolean; textValue?: string; floatValue?: number; colorValue?: { r: number; g: number; b: number; a: number }; alias?: { guid: GUID } }; dataType?: string; resolvedDataType?: string } }> }
+  variableDataValues?: { entries?: VariableDataValuesEntry[] }
   variableScopes?: string[]
 }
 

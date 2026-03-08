@@ -1,7 +1,12 @@
 import type { VariableType, VariableValue } from '../scene-graph'
 import { SceneGraph } from '../scene-graph'
 
-import { guidToString, nodeChangeToProps, sortChildren } from './kiwi-convert'
+import {
+  guidToString,
+  nodeChangeToProps,
+  sortChildren,
+  VARIABLE_BINDING_FIELDS_INVERSE
+} from './kiwi-convert'
 import { populateAndApplyOverrides } from './instance-overrides'
 import type { InstanceNodeChange } from './instance-overrides'
 
@@ -78,18 +83,13 @@ export function importNodeChanges(
   }
 
   function importVariables() {
-    const modeGuidToId = new Map<string, string>()
-
     for (const [id, nc] of changeMap) {
       if (nc.type !== 'VARIABLE_SET') continue
 
-      const modes = (nc.variableSetModes ?? []).map(
-        (m: { id?: { sessionID: number; localID: number }; name?: string }) => {
-          const modeId = m.id ? guidToString(m.id) : 'default'
-          if (m.id) modeGuidToId.set(modeId, modeId)
-          return { modeId, name: m.name ?? 'Mode' }
-        }
-      )
+      const modes = (nc.variableSetModes ?? []).map((m) => {
+        const modeId = m.id ? guidToString(m.id) : 'default'
+        return { modeId, name: m.name ?? 'Mode' }
+      })
       if (modes.length === 0) modes.push({ modeId: 'default', name: 'Default' })
 
       graph.addCollection({
@@ -104,8 +104,7 @@ export function importNodeChanges(
     for (const [id, nc] of changeMap) {
       if (nc.type !== 'VARIABLE') continue
 
-      const setIdObj = nc.variableSetID as { guid?: { sessionID: number; localID: number } } | undefined
-      const collectionId = setIdObj?.guid ? guidToString(setIdObj.guid) : (parentMap.get(id) ?? '')
+      const collectionId = nc.variableSetID?.guid ? guidToString(nc.variableSetID.guid) : (parentMap.get(id) ?? '')
 
       if (!graph.variableCollections.has(collectionId)) {
         const parentNc = changeMap.get(collectionId)
@@ -118,34 +117,32 @@ export function importNodeChanges(
         })
       }
 
-      const resolvedType = nc.variableResolvedType as string | undefined
       let type: VariableType = 'FLOAT'
+      const resolvedType = nc.variableResolvedType
       if (resolvedType === 'COLOR') type = 'COLOR'
       else if (resolvedType === 'BOOLEAN') type = 'BOOLEAN'
       else if (resolvedType === 'STRING') type = 'STRING'
 
       const valuesByMode: Record<string, VariableValue> = {}
-      const dataValues = nc.variableDataValues as { entries?: Array<{ modeID?: { sessionID: number; localID: number }; variableData?: { value?: Record<string, unknown>; dataType?: string; resolvedDataType?: string } }> } | undefined
 
-      if (dataValues?.entries) {
-        for (const entry of dataValues.entries) {
-          const modeId = entry.modeID ? guidToString(entry.modeID) : 'default'
+      if (nc.variableDataValues?.entries) {
+        for (const entry of nc.variableDataValues.entries) {
+          const modeId = guidToString(entry.modeID)
           const vd = entry.variableData
-          if (!vd?.value) continue
+          if (!vd.value) continue
 
           const dt = vd.dataType ?? vd.resolvedDataType
           if (dt === 'COLOR' && vd.value.colorValue) {
-            const c = vd.value.colorValue as { r: number; g: number; b: number; a: number }
+            const c = vd.value.colorValue
             valuesByMode[modeId] = { r: c.r, g: c.g, b: c.b, a: c.a }
           } else if (dt === 'BOOLEAN') {
-            valuesByMode[modeId] = (vd.value.boolValue as boolean) ?? false
+            valuesByMode[modeId] = vd.value.boolValue ?? false
           } else if (dt === 'STRING') {
-            valuesByMode[modeId] = (vd.value.textValue as string) ?? ''
-          } else if (dt === 'ALIAS' && vd.value.alias) {
-            const alias = vd.value.alias as { guid?: { sessionID: number; localID: number } }
-            if (alias.guid) valuesByMode[modeId] = { aliasId: guidToString(alias.guid) }
+            valuesByMode[modeId] = vd.value.textValue ?? ''
+          } else if (dt === 'ALIAS' && vd.value.alias?.guid) {
+            valuesByMode[modeId] = { aliasId: guidToString(vd.value.alias.guid) }
           } else {
-            valuesByMode[modeId] = (vd.value.floatValue as number) ?? 0
+            valuesByMode[modeId] = vd.value.floatValue ?? 0
           }
         }
       }
@@ -169,41 +166,17 @@ export function importNodeChanges(
   }
 
   function importVariableBindings() {
-    const fieldMap: Record<string, string> = {
-      CORNER_RADIUS: 'cornerRadius',
-      RECTANGLE_TOP_LEFT_CORNER_RADIUS: 'topLeftRadius',
-      RECTANGLE_TOP_RIGHT_CORNER_RADIUS: 'topRightRadius',
-      RECTANGLE_BOTTOM_LEFT_CORNER_RADIUS: 'bottomLeftRadius',
-      RECTANGLE_BOTTOM_RIGHT_CORNER_RADIUS: 'bottomRightRadius',
-      STROKE_WEIGHT: 'strokeWeight',
-      STACK_SPACING: 'itemSpacing',
-      STACK_PADDING_LEFT: 'paddingLeft',
-      STACK_PADDING_TOP: 'paddingTop',
-      STACK_PADDING_RIGHT: 'paddingRight',
-      STACK_PADDING_BOTTOM: 'paddingBottom',
-      STACK_COUNTER_SPACING: 'counterAxisSpacing',
-      VISIBLE: 'visible',
-      OPACITY: 'opacity',
-      WIDTH: 'width',
-      HEIGHT: 'height',
-      FONT_SIZE: 'fontSize',
-      LETTER_SPACING: 'letterSpacing',
-      LINE_HEIGHT: 'lineHeight'
-    }
-
     for (const [ncId, nc] of changeMap) {
-      const consumption = nc.variableConsumptionMap as { entries?: Array<{ variableData?: { value?: { alias?: { guid?: { sessionID: number; localID: number } } } }; variableField?: string }> } | undefined
-      if (!consumption?.entries?.length) continue
+      if (!nc.variableConsumptionMap?.entries?.length) continue
 
       const nodeId = guidToNodeId.get(ncId)
       if (!nodeId) continue
 
-      for (const entry of consumption.entries) {
-        const alias = entry.variableData?.value?.alias
-        if (!alias?.guid) continue
-        const variableId = guidToString(alias.guid)
-        const field = fieldMap[entry.variableField ?? '']
-        if (field) graph.bindVariable(nodeId, field, variableId)
+      for (const entry of nc.variableConsumptionMap.entries) {
+        const varGuid = entry.variableData?.value?.alias?.guid
+        if (!varGuid) continue
+        const field = VARIABLE_BINDING_FIELDS_INVERSE[entry.variableField ?? '']
+        if (field) graph.bindVariable(nodeId, field, guidToString(varGuid))
       }
     }
   }

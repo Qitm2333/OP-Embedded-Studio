@@ -4,9 +4,9 @@ import { deflateSync, inflateSync } from 'fflate'
 
 import { weightToStyle } from './fonts'
 import { encodeVectorNetworkBlob } from './vector'
-import { stringToGuid } from './kiwi/kiwi-convert'
+import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi/kiwi-convert'
 
-import type { NodeChange, Paint } from './kiwi/codec'
+import type { NodeChange, Paint, VariableConsumptionEntry } from './kiwi/codec'
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from './scene-graph'
 
 type KiwiNodeChange = NodeChange & Record<string, unknown>
@@ -159,28 +159,6 @@ function exportTextData(node: SceneNode): NodeChange['textData'] {
     characterStyleIDs: charIds,
     styleOverrideTable: overrideTable
   }
-}
-
-const BOUND_VARIABLE_FIELD_MAP: Record<string, string> = {
-  cornerRadius: 'CORNER_RADIUS',
-  topLeftRadius: 'RECTANGLE_TOP_LEFT_CORNER_RADIUS',
-  topRightRadius: 'RECTANGLE_TOP_RIGHT_CORNER_RADIUS',
-  bottomLeftRadius: 'RECTANGLE_BOTTOM_LEFT_CORNER_RADIUS',
-  bottomRightRadius: 'RECTANGLE_BOTTOM_RIGHT_CORNER_RADIUS',
-  strokeWeight: 'STROKE_WEIGHT',
-  itemSpacing: 'STACK_SPACING',
-  paddingLeft: 'STACK_PADDING_LEFT',
-  paddingTop: 'STACK_PADDING_TOP',
-  paddingRight: 'STACK_PADDING_RIGHT',
-  paddingBottom: 'STACK_PADDING_BOTTOM',
-  counterAxisSpacing: 'STACK_COUNTER_SPACING',
-  visible: 'VISIBLE',
-  opacity: 'OPACITY',
-  width: 'WIDTH',
-  height: 'HEIGHT',
-  fontSize: 'FONT_SIZE',
-  letterSpacing: 'LETTER_SPACING',
-  lineHeight: 'LINE_HEIGHT'
 }
 
 export function sceneNodeToKiwi(
@@ -347,9 +325,9 @@ export function sceneNodeToKiwi(
   }
 
   if (Object.keys(node.boundVariables).length > 0) {
-    const entries: Array<{ variableData: { value: { alias: { guid: { sessionID: number; localID: number } } }; dataType: string; resolvedDataType: string }; variableField: string }> = []
+    const entries: VariableConsumptionEntry[] = []
     for (const [field, varId] of Object.entries(node.boundVariables)) {
-      const kiwiField = BOUND_VARIABLE_FIELD_MAP[field]
+      const kiwiField = VARIABLE_BINDING_FIELDS[field]
       if (!kiwiField) continue
       const variable = graph.variables.get(varId)
       if (!variable) continue

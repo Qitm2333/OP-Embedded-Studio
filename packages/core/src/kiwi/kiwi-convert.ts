@@ -44,6 +44,32 @@ export function stringToGuid(str: string): GUID {
   return { sessionID: parseInt(session, 10), localID: parseInt(local, 10) }
 }
 
+export const VARIABLE_BINDING_FIELDS: Record<string, string> = {
+  cornerRadius: 'CORNER_RADIUS',
+  topLeftRadius: 'RECTANGLE_TOP_LEFT_CORNER_RADIUS',
+  topRightRadius: 'RECTANGLE_TOP_RIGHT_CORNER_RADIUS',
+  bottomLeftRadius: 'RECTANGLE_BOTTOM_LEFT_CORNER_RADIUS',
+  bottomRightRadius: 'RECTANGLE_BOTTOM_RIGHT_CORNER_RADIUS',
+  strokeWeight: 'STROKE_WEIGHT',
+  itemSpacing: 'STACK_SPACING',
+  paddingLeft: 'STACK_PADDING_LEFT',
+  paddingTop: 'STACK_PADDING_TOP',
+  paddingRight: 'STACK_PADDING_RIGHT',
+  paddingBottom: 'STACK_PADDING_BOTTOM',
+  counterAxisSpacing: 'STACK_COUNTER_SPACING',
+  visible: 'VISIBLE',
+  opacity: 'OPACITY',
+  width: 'WIDTH',
+  height: 'HEIGHT',
+  fontSize: 'FONT_SIZE',
+  letterSpacing: 'LETTER_SPACING',
+  lineHeight: 'LINE_HEIGHT'
+}
+
+export const VARIABLE_BINDING_FIELDS_INVERSE: Record<string, string> = Object.fromEntries(
+  Object.entries(VARIABLE_BINDING_FIELDS).map(([k, v]) => [v, k])
+)
+
 const convertColor = normalizeColor
 
 function imageHashToString(hash: Record<string, number>): string {

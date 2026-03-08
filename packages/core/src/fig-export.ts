@@ -82,11 +82,14 @@ export async function exportFigFile(
   const blobs: Uint8Array[] = []
   const pages = graph.getPages(true)
   const nodeIdToGuid = new Map<string, { sessionID: number; localID: number }>()
+  let internalCanvasGuid: { sessionID: number; localID: number } | null = null
 
   for (let p = 0; p < pages.length; p++) {
     const page = pages[p]
     const canvasLocalID = localIdCounter.value++
     const canvasGuid = { sessionID: 0, localID: canvasLocalID }
+
+    if (page.internalOnly) internalCanvasGuid = canvasGuid
 
     const canvasNc: KiwiNodeChange = {
       guid: canvasGuid,
@@ -116,14 +119,7 @@ export async function exportFigFile(
   }
 
   if (graph.variableCollections.size > 0) {
-    const hasInternalPage = pages.some((p) => p.internalOnly)
-    let internalCanvasGuid: { sessionID: number; localID: number }
-
-    if (hasInternalPage) {
-      const internalPage = pages.find((p) => p.internalOnly)!
-      const idx = pages.indexOf(internalPage)
-      internalCanvasGuid = { sessionID: 0, localID: idx + 2 }
-    } else {
+    if (!internalCanvasGuid) {
       const internalLocalID = localIdCounter.value++
       internalCanvasGuid = { sessionID: 0, localID: internalLocalID }
       nodeChanges.push({
