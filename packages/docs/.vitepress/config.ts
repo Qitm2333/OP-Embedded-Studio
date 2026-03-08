@@ -139,9 +139,11 @@ const ES: SidebarLabels = { gettingAround: 'Orientación', creatingContent: 'Cre
 
 const PL: SidebarLabels = { gettingAround: 'Nawigacja', creatingContent: 'Tworzenie treści', organizing: 'Organizacja', advanced: 'Zaawansowane', canvasNav: 'Nawigacja po płótnie', selection: 'Zaznaczanie i edycja', shapes: 'Rysowanie kształtów', text: 'Edycja tekstu', pen: 'Narzędzie pióro', layers: 'Warstwy i strony', contextMenu: 'Menu kontekstowe', exporting: 'Eksportowanie', autoLayout: 'Auto-layout', components: 'Komponenty', variables: 'Zmienne', guide: 'Przewodnik', gettingStarted: 'Rozpoczęcie pracy', features: 'Funkcje', architecture: 'Architektura', techStack: 'Stack technologiczny', comparison: 'Porównanie', figmaMatrix: 'Matryca funkcji Figma' }
 
+const RU: SidebarLabels = { gettingAround: 'Навигация', creatingContent: 'Создание контента', organizing: 'Организация', advanced: 'Продвинутые функции', canvasNav: 'Навигация по холсту', selection: 'Выделение и редактирование', shapes: 'Рисование фигур', text: 'Редактирование текста', pen: 'Инструмент «Перо»', layers: 'Слои и страницы', contextMenu: 'Контекстное меню', exporting: 'Экспорт', autoLayout: 'Авто-раскладка', components: 'Компоненты', variables: 'Переменные', guide: 'Руководство', gettingStarted: 'Начало работы', features: 'Возможности', architecture: 'Архитектура', techStack: 'Технологии', comparison: 'Сравнение', figmaMatrix: 'Матрица функций Figma' }
+
 const BASE = 'https://openpencil.dev'
 
-const LOCALE_PREFIXES = ['de', 'fr', 'es', 'it', 'pl'] as const
+const LOCALE_PREFIXES = ['de', 'fr', 'es', 'it', 'pl', 'ru'] as const
 
 const LOCALES: Record<string, { hreflang: string; ogLocale: string; prefix: string }> = {
   en: { hreflang: 'en', ogLocale: 'en_US', prefix: '' },
@@ -150,6 +152,7 @@ const LOCALES: Record<string, { hreflang: string; ogLocale: string; prefix: stri
   es: { hreflang: 'es', ogLocale: 'es_ES', prefix: '/es' },
   it: { hreflang: 'it', ogLocale: 'it_IT', prefix: '/it' },
   pl: { hreflang: 'pl', ogLocale: 'pl_PL', prefix: '/pl' },
+  ru: { hreflang: 'ru', ogLocale: 'ru_RU', prefix: '/ru' },
 }
 
 export default defineConfig({
@@ -273,6 +276,12 @@ export default defineConfig({
       lang: 'pl',
       description: "Open-source'owy edytor graficzny z natywnym AI. Alternatywa dla Figmy.",
       themeConfig: localeThemeConfig('/pl', { userGuide: 'Podręcznik', reference: 'Referencja', development: 'Rozwój', openApp: 'Otwórz app' }, PL),
+    },
+    ru: {
+      label: 'Русский',
+      lang: 'ru',
+      description: 'Дизайн-редактор с открытым исходным кодом. Альтернатива Figma с встроенным ИИ.',
+      themeConfig: localeThemeConfig('/ru', { userGuide: 'Руководство', reference: 'Справочник', development: 'Разработка', openApp: 'Открыть приложение' }, RU),
     },
   },
 
