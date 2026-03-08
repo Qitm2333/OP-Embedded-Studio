@@ -126,6 +126,7 @@ const referenceSidebar = (prefix: string, label: string, l: SidebarLabels): Defa
     items: [
       { text: 'Keyboard Shortcuts', link: `${prefix}/reference/keyboard-shortcuts` },
       { text: l.contextMenu, link: `${prefix}/user-guide/context-menu` },
+      { text: 'CLI', link: `${prefix}/reference/cli` },
       { text: 'Node Types', link: `${prefix}/reference/node-types` },
       { text: 'Scene Graph', link: `${prefix}/reference/scene-graph` },
       { text: 'File Format', link: `${prefix}/reference/file-format` },
