@@ -9,7 +9,7 @@ description: Learn how to use OpenPencil — canvas navigation, drawing, text, c
 OpenPencil is an open-source, Figma-compatible design editor — fully local, AI-native, and programmable. This guide covers everything you need to know to use the editor effectively.
 
 ::: tip Cross-platform shortcuts
-Throughout this guide, keyboard shortcuts use Mac notation: <kbd>⌘</kbd> = Command (Ctrl on Windows/Linux), <kbd>⌥</kbd> = Option (Alt), <kbd>⇧</kbd> = Shift.
+Throughout this guide, keyboard shortcuts use Mac notation: <kbd>⌘</kbd> = <kbd>Command</kbd> (<kbd>Ctrl</kbd> on Windows/Linux), <kbd>⌥</kbd> = <kbd>Option</kbd> (<kbd>Alt</kbd>), <kbd>⇧</kbd> = <kbd>Shift</kbd>.
 :::
 
 ## Getting Around

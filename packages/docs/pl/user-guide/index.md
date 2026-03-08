@@ -9,7 +9,7 @@ description: Naucz się korzystać z OpenPencil — nawigacja po płótnie, ryso
 OpenPencil to open-source'owy edytor graficzny, kompatybilny z Figmą — w pełni lokalny, natywnie AI i programowalny.
 
 ::: tip Skróty klawiszowe
-<kbd>⌘</kbd> = Command (Ctrl na Windows/Linux), <kbd>⌥</kbd> = Option (Alt), <kbd>⇧</kbd> = Shift.
+<kbd>⌘</kbd> = <kbd>Command</kbd> (<kbd>Ctrl</kbd> na Windows/Linux), <kbd>⌥</kbd> = <kbd>Option</kbd> (<kbd>Alt</kbd>), <kbd>⇧</kbd> = <kbd>Shift</kbd>.
 :::
 
 ## Nawigacja
