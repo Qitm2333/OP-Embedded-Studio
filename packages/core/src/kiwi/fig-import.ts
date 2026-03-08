@@ -1,7 +1,12 @@
 import type { VariableType, VariableValue } from '../scene-graph'
 import { SceneGraph } from '../scene-graph'
 
-import { guidToString, nodeChangeToProps, sortChildren } from './kiwi-convert'
+import {
+  guidToString,
+  nodeChangeToProps,
+  sortChildren,
+  VARIABLE_BINDING_FIELDS_INVERSE
+} from './kiwi-convert'
 import { populateAndApplyOverrides } from './instance-overrides'
 import type { InstanceNodeChange } from './instance-overrides'
 
@@ -67,7 +72,7 @@ export function importNodeChanges(
     if (!nc) return
 
     const { nodeType, ...props } = nodeChangeToProps(nc, blobs)
-    if (nodeType === 'DOCUMENT' || nodeType === 'VARIABLE') return
+    if (nodeType === 'DOCUMENT' || nodeType === 'VARIABLE' || nc.type === 'VARIABLE_SET') return
 
     const node = graph.createNode(nodeType, graphParentId, props)
     guidToNodeId.set(ncId, node.id)
@@ -79,26 +84,33 @@ export function importNodeChanges(
 
   function importVariables() {
     for (const [id, nc] of changeMap) {
-      if (nc.type !== 'VARIABLE') continue
-      const varData = (
-        nc as unknown as {
-          variableData?: {
-            value?: { boolValue?: boolean; textValue?: string; floatValue?: number }
-            dataType?: string
-          }
-        }
-      ).variableData
-      if (!varData) continue
+      if (nc.type !== 'VARIABLE_SET') continue
 
-      const parentId = parentMap.get(id) ?? ''
-      const parentNc = changeMap.get(parentId)
-      const collectionName = parentNc?.name ?? 'Variables'
-      const collectionId = parentId
+      const modes = (nc.variableSetModes ?? []).map((m) => {
+        const modeId = m.id ? guidToString(m.id) : 'default'
+        return { modeId, name: m.name ?? 'Mode' }
+      })
+      if (modes.length === 0) modes.push({ modeId: 'default', name: 'Default' })
+
+      graph.addCollection({
+        id,
+        name: nc.name ?? 'Variables',
+        modes,
+        defaultModeId: modes[0].modeId,
+        variableIds: []
+      })
+    }
+
+    for (const [id, nc] of changeMap) {
+      if (nc.type !== 'VARIABLE') continue
+
+      const collectionId = nc.variableSetID?.guid ? guidToString(nc.variableSetID.guid) : (parentMap.get(id) ?? '')
 
       if (!graph.variableCollections.has(collectionId)) {
+        const parentNc = changeMap.get(collectionId)
         graph.addCollection({
           id: collectionId,
-          name: collectionName,
+          name: parentNc?.name ?? 'Variables',
           modes: [{ modeId: 'default', name: 'Default' }],
           defaultModeId: 'default',
           variableIds: []
@@ -106,19 +118,39 @@ export function importNodeChanges(
       }
 
       let type: VariableType = 'FLOAT'
-      let value: VariableValue = 0
-      const dt = varData.dataType
-      const v = varData.value
+      const resolvedType = nc.variableResolvedType
+      if (resolvedType === 'COLOR') type = 'COLOR'
+      else if (resolvedType === 'BOOLEAN') type = 'BOOLEAN'
+      else if (resolvedType === 'STRING') type = 'STRING'
 
-      if (dt === 'BOOLEAN' || dt === '0') {
-        type = 'BOOLEAN'
-        value = v?.boolValue ?? false
-      } else if (dt === 'STRING' || dt === '2') {
-        type = 'STRING'
-        value = v?.textValue ?? ''
-      } else {
-        type = 'FLOAT'
-        value = v?.floatValue ?? 0
+      const valuesByMode: Record<string, VariableValue> = {}
+
+      if (nc.variableDataValues?.entries) {
+        for (const entry of nc.variableDataValues.entries) {
+          const modeId = guidToString(entry.modeID)
+          const vd = entry.variableData
+          if (!vd.value) continue
+
+          const dt = vd.dataType ?? vd.resolvedDataType
+          if (dt === 'COLOR' && vd.value.colorValue) {
+            const c = vd.value.colorValue
+            valuesByMode[modeId] = { r: c.r, g: c.g, b: c.b, a: c.a }
+          } else if (dt === 'BOOLEAN') {
+            valuesByMode[modeId] = vd.value.boolValue ?? false
+          } else if (dt === 'STRING') {
+            valuesByMode[modeId] = vd.value.textValue ?? ''
+          } else if (dt === 'ALIAS' && vd.value.alias?.guid) {
+            valuesByMode[modeId] = { aliasId: guidToString(vd.value.alias.guid) }
+          } else {
+            valuesByMode[modeId] = vd.value.floatValue ?? 0
+          }
+        }
+      }
+
+      if (Object.keys(valuesByMode).length === 0) {
+        const col = graph.variableCollections.get(collectionId)
+        const defaultMode = col?.defaultModeId ?? 'default'
+        valuesByMode[defaultMode] = type === 'BOOLEAN' ? false : type === 'STRING' ? '' : type === 'COLOR' ? { r: 0, g: 0, b: 0, a: 1 } : 0
       }
 
       graph.addVariable({
@@ -126,10 +158,26 @@ export function importNodeChanges(
         name: nc.name ?? 'Variable',
         type,
         collectionId,
-        valuesByMode: { default: value },
+        valuesByMode,
         description: '',
         hiddenFromPublishing: false
       })
+    }
+  }
+
+  function importVariableBindings() {
+    for (const [ncId, nc] of changeMap) {
+      if (!nc.variableConsumptionMap?.entries?.length) continue
+
+      const nodeId = guidToNodeId.get(ncId)
+      if (!nodeId) continue
+
+      for (const entry of nc.variableConsumptionMap.entries) {
+        const varGuid = entry.variableData?.value?.alias?.guid
+        if (!varGuid) continue
+        const field = VARIABLE_BINDING_FIELDS_INVERSE[entry.variableField ?? '']
+        if (field) graph.bindVariable(nodeId, field, guidToString(varGuid))
+      }
     }
   }
 
@@ -172,6 +220,7 @@ export function importNodeChanges(
   }
 
   importVariables()
+  importVariableBindings()
 
   // Remap componentId from original Figma GUIDs to imported node IDs
   for (const node of graph.getAllNodes()) {

@@ -209,6 +209,31 @@ export interface Effect {
   blendMode?: string
 }
 
+export interface VariableAnyValue {
+  boolValue?: boolean
+  textValue?: string
+  floatValue?: number
+  colorValue?: Color
+  alias?: { guid: GUID }
+}
+
+export interface VariableDataEntry {
+  value?: VariableAnyValue
+  dataType?: string
+  resolvedDataType?: string
+}
+
+export interface VariableConsumptionEntry {
+  nodeField?: number
+  variableData?: VariableDataEntry
+  variableField?: string
+}
+
+export interface VariableDataValuesEntry {
+  modeID: GUID
+  variableData: VariableDataEntry
+}
+
 export interface NodeChange {
   [key: string]: unknown
   guid: GUID
@@ -289,6 +314,14 @@ export interface NodeChange {
   // Constraints
   horizontalConstraint?: string
   verticalConstraint?: string
+  // Variables
+  variableData?: VariableDataEntry
+  variableConsumptionMap?: { entries?: VariableConsumptionEntry[] }
+  variableSetModes?: Array<{ id: GUID; name: string; sortPosition?: string }>
+  variableSetID?: { guid: GUID }
+  variableResolvedType?: string
+  variableDataValues?: { entries?: VariableDataValuesEntry[] }
+  variableScopes?: string[]
 }
 
 export interface FigmaMessage {

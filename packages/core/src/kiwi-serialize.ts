@@ -4,8 +4,9 @@ import { deflateSync, inflateSync } from 'fflate'
 
 import { weightToStyle } from './fonts'
 import { encodeVectorNetworkBlob } from './vector'
+import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi/kiwi-convert'
 
-import type { NodeChange, Paint } from './kiwi/codec'
+import type { NodeChange, Paint, VariableConsumptionEntry } from './kiwi/codec'
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from './scene-graph'
 
 type KiwiNodeChange = NodeChange & Record<string, unknown>
@@ -166,10 +167,12 @@ export function sceneNodeToKiwi(
   childIndex: number,
   localIdCounter: { value: number },
   graph: SceneGraph,
-  blobs: Uint8Array[]
+  blobs: Uint8Array[],
+  nodeIdToGuid?: Map<string, { sessionID: number; localID: number }>
 ): KiwiNodeChange[] {
   const localID = localIdCounter.value++
   const guid = { sessionID: 1, localID }
+  nodeIdToGuid?.set(node.id, guid)
   const sx = node.flipX ? -1 : 1
   const cos = Math.cos((node.rotation * Math.PI) / 180)
   const sin = Math.sin((node.rotation * Math.PI) / 180)
@@ -321,10 +324,31 @@ export function sceneNodeToKiwi(
     })
   }
 
+  if (Object.keys(node.boundVariables).length > 0) {
+    const entries: VariableConsumptionEntry[] = []
+    for (const [field, varId] of Object.entries(node.boundVariables)) {
+      const kiwiField = VARIABLE_BINDING_FIELDS[field]
+      if (!kiwiField) continue
+      const variable = graph.variables.get(varId)
+      if (!variable) continue
+      const varGuid = stringToGuid(varId)
+      const resolvedType = variable.type === 'COLOR' ? 'COLOR' : variable.type === 'BOOLEAN' ? 'BOOLEAN' : variable.type === 'STRING' ? 'STRING' : 'FLOAT'
+      entries.push({
+        variableData: {
+          value: { alias: { guid: varGuid } },
+          dataType: 'ALIAS',
+          resolvedDataType: resolvedType
+        },
+        variableField: kiwiField
+      })
+    }
+    if (entries.length > 0) nc.variableConsumptionMap = { entries }
+  }
+
   const result: KiwiNodeChange[] = [nc]
   const children = graph.getChildren(node.id)
   for (let i = 0; i < children.length; i++) {
-    result.push(...sceneNodeToKiwi(children[i], guid, i, localIdCounter, graph, blobs))
+    result.push(...sceneNodeToKiwi(children[i], guid, i, localIdCounter, graph, blobs, nodeIdToGuid))
   }
 
   return result
