@@ -7,17 +7,13 @@ description: Browse node trees, search by name or type, and dig into properties 
 
 The CLI lets you explore `.fig` files without opening the editor. Every command also works on the live app — just omit the file argument.
 
-## Install
-
+::: tip Install
 ```sh
 bun add -g @open-pencil/cli
-```
-
-Or with Homebrew:
-
-```sh
+# or
 brew install open-pencil/tap/open-pencil
 ```
+:::
 
 ## Document Info
 

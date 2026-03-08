@@ -24,7 +24,7 @@ Real-time multiplayer editing over peer-to-peer WebRTC. No server, no account. S
 
 ## JSX Renderer
 
-Describe UI as JSX — the same syntax LLMs already know from React. A single `render` call can create an entire component tree with frames, text, auto-layout, fills, and strokes. Compact, declarative, and diffable.
+Describe UI as JSX — the same syntax LLMs already know from React. A single call can create an entire component tree with frames, text, auto-layout, fills, and strokes. Compact, declarative, and diffable.
 
 Going the other direction, export any selection back to JSX with Tailwind classes — useful for handing off to development or feeding designs back into an LLM.
 

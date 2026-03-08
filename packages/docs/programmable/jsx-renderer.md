@@ -20,11 +20,7 @@ The `render` tool (available in AI chat, MCP, and CLI eval) accepts JSX:
 </Frame>
 ```
 
-In the CLI:
-
-```sh
-open-pencil eval design.fig -c 'figma.render(`<Frame w={200} h={100} bg="#3B82F6" rounded={8} />`)' -w
-```
+In the MCP server and AI chat, the `render` tool accepts JSX strings directly. In the CLI, use the `export` command to go the other direction — [exporting designs as JSX](./cli/exporting).
 
 ## Elements
 
