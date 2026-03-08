@@ -1,4 +1,5 @@
 import { defineConfig, type DefaultTheme } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
 interface SidebarLabels {
   gettingAround: string
@@ -206,7 +207,7 @@ const LOCALES: Record<string, { hreflang: string; ogLocale: string; prefix: stri
   ru: { hreflang: 'ru', ogLocale: 'ru_RU', prefix: '/ru' },
 }
 
-export default defineConfig({
+export default withMermaid(defineConfig({
   title: 'OpenPencil',
   description: 'Open-source, AI-native design editor. Figma alternative built from scratch with full .fig file compatibility.',
   cleanUrls: true,
@@ -375,4 +376,4 @@ export default defineConfig({
       message: 'Released under the MIT License.',
     },
   },
-})
+}))
