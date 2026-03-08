@@ -11,6 +11,7 @@
 
     "typescript/no-explicit-any": "warn",
     "typescript/no-non-null-assertion": "warn",
+    "typescript/no-floating-promises": "warn",
 
     "import/no-cycle": "error",
     "import/no-self-import": "error",

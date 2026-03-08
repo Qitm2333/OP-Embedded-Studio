@@ -17,7 +17,7 @@ The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files 
 
 ## Commands
 
-- `bun run check` — lint + typecheck (run before committing)
+- `bun run check` — type-aware lint + typecheck via oxlint + tsgo (run before committing)
 - `bun run test:dupes` — jscpd copy-paste detection across all TS sources
 - `bun run format` — oxfmt with import sorting
 - `bun test ./tests/engine` — unit tests
@@ -64,7 +64,7 @@ The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files 
 Run all quality gates (see [Code quality](#code-quality) for the self-review checklist):
 
 ```sh
-bun run check          # oxlint + typecheck
+bun run check          # oxlint + tsgo type-aware lint & typecheck
 bun run format         # oxfmt
 bun run test:dupes     # jscpd < 3%
 bun run test:unit      # bun:test
@@ -143,7 +143,7 @@ When adding features, update `CHANGELOG.md` (Unreleased section) and `README.md`
 Before submitting a PR, run the full quality gate and do a self-review:
 
 ```sh
-bun run check          # oxlint + typecheck — zero errors required
+bun run check          # oxlint + tsgo type-aware lint & typecheck — zero errors required
 bun run format         # oxfmt with import sorting
 bun run test:dupes     # jscpd — must stay under 3% duplication
 bun run test:unit      # bun:test
