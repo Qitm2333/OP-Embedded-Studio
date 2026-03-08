@@ -68,7 +68,7 @@ const MENU_ACTIONS: Record<string, () => void> = {
   'zoom-fit': () => store.zoomToFit(),
   'zoom-selection': () => store.zoomToSelection(),
   export: () => {
-    if (store.state.selectedIds.size > 0) store.exportSelection(1, 'PNG')
+    if (store.state.selectedIds.size > 0) void store.exportSelection(1, 'PNG')
   }
 }
 
@@ -77,8 +77,8 @@ export function useMenu() {
 
   let unlisten: (() => void) | undefined
 
-  import('@tauri-apps/api/event').then(({ listen }) => {
-    listen<string>('menu-event', (event) => {
+  void import('@tauri-apps/api/event').then(({ listen }) => {
+    void listen<string>('menu-event', (event) => {
       const action = MENU_ACTIONS[event.payload]
       if (action) action()
     }).then((fn) => {

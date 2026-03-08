@@ -13,7 +13,7 @@ const head = createHead()
 createApp(App).use(router).use(head).mount('#app')
 
 if (!IS_TAURI) {
-  import('virtual:pwa-register').then(({ registerSW }) => {
+  void import('virtual:pwa-register').then(({ registerSW }) => {
     registerSW({ immediate: true })
   })
 }

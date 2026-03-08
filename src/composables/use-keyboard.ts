@@ -93,7 +93,7 @@ export function useKeyboard() {
   whenever(mod('shift+keyh'), () => store.toggleVisibility())
   whenever(mod('shift+keyl'), () => store.toggleLock())
   whenever(mod('shift+keye'), () => {
-    if (store.state.selectedIds.size > 0) store.exportSelection(1, 'PNG')
+    if (store.state.selectedIds.size > 0) void store.exportSelection(1, 'PNG')
   })
   whenever(mod('shift+keys'), () => store.saveFigFileAs())
   whenever(mod('shift+keyg'), () => store.ungroupSelected())

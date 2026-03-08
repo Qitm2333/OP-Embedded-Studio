@@ -101,7 +101,7 @@ export function startAutomationBridge(server: ViteServer) {
     authToken = null
 
     ws.on('message', (raw) => {
-      handleBrowserMessage(typeof raw === 'string' ? raw : raw.toString('utf-8'))
+      handleBrowserMessage(typeof raw === 'string' ? raw : Buffer.from(raw as Buffer).toString('utf-8'))
     })
 
     ws.on('close', () => {
@@ -174,7 +174,7 @@ export function startAutomationBridge(server: ViteServer) {
     }
   })
 
-  startServer(app)
+  void startServer(app)
 
   console.log(`[automation] HTTP  http://127.0.0.1:${AUTOMATION_HTTP_PORT}`)
   console.log(`[automation] WS    ws://127.0.0.1:${AUTOMATION_WS_PORT}`)

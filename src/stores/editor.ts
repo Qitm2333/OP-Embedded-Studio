@@ -134,7 +134,7 @@ export function createEditorStore() {
   let _renderer: import('@open-pencil/core').SkiaRenderer | null = null
   let _textEditor: TextEditor | null = null
 
-  prefetchFigmaSchema()
+  void prefetchFigmaSchema()
 
   function downloadBlob(data: Uint8Array, filename: string, mime: string) {
     const blob = new Blob([data.buffer as ArrayBuffer], { type: mime })
@@ -616,7 +616,7 @@ export function createEditorStore() {
       state.pageColor = { ...CANVAS_BG_COLOR }
       await loadFontsForNodes(graph.getChildren(firstPage?.id ?? graph.rootId).map((n) => n.id))
       requestRender()
-      startWatchingFile()
+      void startWatchingFile()
     } catch (e) {
       console.error('Failed to open .fig file:', e)
     } finally {
@@ -666,7 +666,7 @@ export function createEditorStore() {
           .pop()
           ?.replace(/\.fig$/i, '') ?? 'Untitled'
       await writeFile(data)
-      startWatchingFile()
+      void startWatchingFile()
       return
     }
 
@@ -685,7 +685,7 @@ export function createEditorStore() {
         filePath = null
         state.documentName = handle.name.replace(/\.fig$/i, '')
         await writeFile(data)
-        startWatchingFile()
+        void startWatchingFile()
         return
       } catch (e) {
         if ((e as Error).name === 'AbortError') return
@@ -770,7 +770,7 @@ export function createEditorStore() {
         (event) => {
           if (typeof event.type !== 'object' || !('modify' in event.type)) return
           if (Date.now() - lastWriteTime < WATCH_DEBOUNCE_MS) return
-          reloadFromDisk()
+          void reloadFromDisk()
         },
         { delayMs: 500 }
       )
@@ -787,7 +787,7 @@ export function createEditorStore() {
           if (file.lastModified > lastModified) {
             lastModified = file.lastModified
             if (Date.now() - lastWriteTime < WATCH_DEBOUNCE_MS) return
-            reloadFromDisk()
+            void reloadFromDisk()
           }
         } catch {
           clearInterval(interval)
@@ -1799,7 +1799,7 @@ export function createEditorStore() {
       return
     }
 
-    parseFigmaClipboard(html).then((figma) => {
+    void parseFigmaClipboard(html).then((figma) => {
       if (figma) {
         const bounds = figmaNodesBounds(figma.nodes)
         const viewCenterX = (-state.panX + window.innerWidth / 2) / state.zoom

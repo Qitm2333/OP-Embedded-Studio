@@ -38,7 +38,7 @@ async function getTauriFonts(): Promise<TauriFontFamily[]> {
 
 export function preloadFonts(): void {
   if (IS_TAURI) {
-    getTauriFonts().then(registerFontFaces)
+    void getTauriFonts().then(registerFontFaces)
   }
 }
 
