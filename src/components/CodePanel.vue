@@ -84,17 +84,17 @@ watch(jsxCode, () => {
         <div class="p-3">
           <div v-for="(html, i) in highlightedLines" :key="i" class="flex text-xs leading-5">
             <span
-              class="mr-3 shrink-0 select-none text-right text-muted/40"
+              class="mr-3 shrink-0 text-right text-muted/40 select-none"
               style="min-width: 1.5em"
               >{{ i + 1 }}</span
             >
             <pre
-              class="m-0 min-w-0 flex-1 whitespace-pre-wrap break-words"
+              class="m-0 min-w-0 flex-1 break-words whitespace-pre-wrap"
             ><code v-html="html" /></pre>
           </div>
         </div>
       </ScrollAreaViewport>
-      <ScrollAreaScrollbar orientation="vertical" class="flex w-1.5 touch-none select-none p-px">
+      <ScrollAreaScrollbar orientation="vertical" class="flex w-1.5 touch-none p-px select-none">
         <ScrollAreaThumb class="relative flex-1 rounded-full bg-white/10" />
       </ScrollAreaScrollbar>
     </ScrollAreaRoot>

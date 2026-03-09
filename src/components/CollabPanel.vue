@@ -143,7 +143,7 @@ function onDisconnect() {
             state.connected
               ? 'bg-green-600 text-white hover:bg-green-700'
               : isJoining
-                ? 'bg-amber-600 text-white animate-pulse'
+                ? 'animate-pulse bg-amber-600 text-white'
                 : 'bg-accent text-white hover:bg-accent/90'
           "
         >

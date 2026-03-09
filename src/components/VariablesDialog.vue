@@ -389,7 +389,7 @@ const table = useVueTable({
       <DialogOverlay class="fixed inset-0 z-40 bg-black/50" />
       <DialogContent
         data-test-id="variables-dialog"
-        class="fixed left-1/2 top-1/2 z-50 flex h-[75vh] w-[800px] max-w-[90vw] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-panel shadow-2xl outline-none"
+        class="fixed top-1/2 left-1/2 z-50 flex h-[75vh] w-[800px] max-w-[90vw] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-panel shadow-2xl outline-none"
       >
         <div v-if="collections.length === 0" class="flex flex-1 flex-col">
           <div class="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
@@ -433,7 +433,7 @@ const table = useVueTable({
                     v-else
                     :value="col.id"
                     data-test-id="variables-collection-tab"
-                    class="cursor-pointer whitespace-nowrap rounded border-none px-2.5 py-1 text-xs text-muted data-[state=active]:bg-hover data-[state=active]:text-surface"
+                    class="cursor-pointer rounded border-none px-2.5 py-1 text-xs whitespace-nowrap text-muted data-[state=active]:bg-hover data-[state=active]:text-surface"
                     @dblclick="startRenameCollection(col.id)"
                   >
                     {{ col.name }}
@@ -499,7 +499,7 @@ const table = useVueTable({
                         <!-- Resize handle -->
                         <div
                           v-if="header.column.getCanResize()"
-                          class="absolute top-0 right-0 h-full w-1 cursor-col-resize select-none touch-none"
+                          class="absolute top-0 right-0 h-full w-1 cursor-col-resize touch-none select-none"
                           :class="
                             header.column.getIsResizing()
                               ? 'bg-accent'

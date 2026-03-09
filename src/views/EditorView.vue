@@ -128,7 +128,7 @@ useHead({ title: route.meta.demo ? 'Demo' : undefined })
         <EditorCanvas />
         <div
           v-if="!isMobile"
-          class="absolute left-7 top-7 z-10 flex items-center gap-2 rounded-lg border border-border bg-panel px-2 py-1 shadow-sm"
+          class="absolute top-7 left-7 z-10 flex items-center gap-2 rounded-lg border border-border bg-panel px-2 py-1 shadow-sm"
         >
           <img src="/favicon-32.png" class="size-4" alt="OpenPencil" />
           <span data-test-id="editor-document-name" class="text-xs text-surface">{{

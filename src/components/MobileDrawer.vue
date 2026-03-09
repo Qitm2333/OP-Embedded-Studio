@@ -112,7 +112,7 @@ const drawerTransition = {
 <template>
   <motion.div
     data-test-id="mobile-drawer"
-    class="fixed inset-x-0 bottom-0 z-30 flex touch-none flex-col rounded-t-3xl bg-panel shadow-[0_-2px_10px_rgba(0,0,0,0.3)] pb-[env(safe-area-inset-bottom)]"
+    class="fixed inset-x-0 bottom-0 z-30 flex touch-none flex-col rounded-t-3xl bg-panel pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_10px_rgba(0,0,0,0.3)]"
     :animate="{ height: `${targetHeight}px` }"
     :transition="drawerTransition"
     @pan="onPan"
@@ -127,7 +127,7 @@ const drawerTransition = {
           <TabsTrigger
             data-test-id="mobile-ribbon-layers"
             value="layers"
-            class="flex h-full cursor-pointer items-center justify-center gap-1.5 px-4 text-xs outline-none transition-colors select-none data-[state=active]:text-accent"
+            class="flex h-full cursor-pointer items-center justify-center gap-1.5 px-4 text-xs transition-colors outline-none select-none data-[state=active]:text-accent"
             @click="toggleTab('layers')"
           >
             <icon-lucide-layers class="size-4" />
@@ -136,7 +136,7 @@ const drawerTransition = {
           <TabsTrigger
             data-test-id="mobile-ribbon-design"
             value="design"
-            class="flex h-full cursor-pointer items-center justify-center gap-1.5 px-4 text-xs outline-none transition-colors select-none data-[state=active]:text-accent"
+            class="flex h-full cursor-pointer items-center justify-center gap-1.5 px-4 text-xs transition-colors outline-none select-none data-[state=active]:text-accent"
             @click="toggleTab('design')"
           >
             <icon-lucide-sliders-horizontal class="size-4" />
@@ -147,7 +147,7 @@ const drawerTransition = {
           <TabsTrigger
             data-test-id="mobile-ribbon-code"
             value="code"
-            class="flex h-full cursor-pointer items-center justify-center px-3 outline-none transition-colors select-none data-[state=active]:text-accent"
+            class="flex h-full cursor-pointer items-center justify-center px-3 transition-colors outline-none select-none data-[state=active]:text-accent"
             @click="toggleTab('code')"
           >
             <icon-lucide-code class="size-4" />
@@ -156,7 +156,7 @@ const drawerTransition = {
           <TabsTrigger
             data-test-id="mobile-ribbon-ai"
             value="ai"
-            class="flex h-full cursor-pointer items-center justify-center px-3 outline-none transition-colors select-none data-[state=active]:text-accent"
+            class="flex h-full cursor-pointer items-center justify-center px-3 transition-colors outline-none select-none data-[state=active]:text-accent"
             @click="toggleTab('ai')"
           >
             <icon-lucide-sparkles class="size-4" />
@@ -169,7 +169,7 @@ const drawerTransition = {
           <div data-test-id="mobile-drawer-layers" class="flex h-full flex-col">
             <PagesPanel />
             <div class="border-t border-border" />
-            <header class="shrink-0 px-3 py-2 text-[11px] uppercase tracking-wider text-muted">
+            <header class="shrink-0 px-3 py-2 text-[11px] tracking-wider text-muted uppercase">
               Layers
             </header>
             <LayerTree class="min-h-0 flex-1" />

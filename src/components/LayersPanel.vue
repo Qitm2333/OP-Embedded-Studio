@@ -30,7 +30,7 @@ import PagesPanel from './PagesPanel.vue'
       <SplitterPanel :default-size="70" :min-size="20" class="flex flex-col overflow-hidden">
         <header
           data-test-id="layers-header"
-          class="shrink-0 px-3 py-2 text-[11px] uppercase tracking-wider text-muted"
+          class="shrink-0 px-3 py-2 text-[11px] tracking-wider text-muted uppercase"
         >
           Layers
         </header>

@@ -85,7 +85,7 @@ function partKey(part: UIMessagePart, index: number): string {
               </CollapsibleTrigger>
               <CollapsibleContent
                 v-if="toolState(part) !== 'pending'"
-                class="overflow-hidden text-[10px] data-[state=closed]:collapsible-up data-[state=open]:collapsible-down"
+                class="data-[state=closed]:collapsible-up data-[state=open]:collapsible-down overflow-hidden text-[10px]"
               >
                 <pre class="mt-1 overflow-x-auto rounded bg-input p-2 text-muted">{{
                   part.state === 'output-error' && part.errorText
@@ -113,7 +113,7 @@ function partKey(part: UIMessagePart, index: number): string {
       <div
         v-else-if="message.role === 'user'"
         data-test-id="chat-text-bubble"
-        class="whitespace-pre-wrap rounded-xl rounded-br-md bg-accent px-3 py-2 text-xs leading-relaxed text-white"
+        class="rounded-xl rounded-br-md bg-accent px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap text-white"
       >
         {{
           message.parts

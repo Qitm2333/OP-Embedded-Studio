@@ -308,7 +308,7 @@ function updateDropTarget(ev: PointerEvent) {
 <template>
   <ContextMenuRoot :modal="false">
     <ContextMenuTrigger as-child @contextmenu="onLayerRightClick">
-      <div ref="listRef" class="relative flex-1 overflow-y-auto scrollbar-thin px-1">
+      <div ref="listRef" class="relative scrollbar-thin flex-1 overflow-y-auto px-1">
         <TreeRoot
           :key="treeKey"
           v-slot="{ flattenItems }"

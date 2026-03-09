@@ -113,12 +113,12 @@ function onKeydown(e: KeyboardEvent) {
 <template>
   <div
     data-test-id="scrub-input"
-    class="flex min-w-0 flex-1 items-center rounded border border-border bg-input h-[26px] focus-within:border-accent"
+    class="flex h-[26px] min-w-0 flex-1 items-center rounded border border-border bg-input focus-within:border-accent"
     :style="{ cursor: editing ? 'auto' : 'ew-resize' }"
     @pointerdown="!editing && startScrub($event)"
   >
     <span
-      class="flex shrink-0 select-none items-center justify-center self-stretch px-[5px] text-muted [&>*]:pointer-events-none"
+      class="flex shrink-0 items-center justify-center self-stretch px-[5px] text-muted select-none [&>*]:pointer-events-none"
     >
       <slot name="icon">
         <span v-if="icon" class="text-[11px] leading-none">{{ icon }}</span>
@@ -141,7 +141,7 @@ function onKeydown(e: KeyboardEvent) {
     />
     <span
       v-else
-      class="flex flex-1 select-none items-center truncate pr-1.5 text-xs overflow-hidden"
+      class="flex flex-1 items-center truncate overflow-hidden pr-1.5 text-xs select-none"
     >
       <span v-if="isMixed" class="flex-1 text-muted">{{ placeholder }}</span>
       <template v-else>

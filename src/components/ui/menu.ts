@@ -6,12 +6,12 @@ const content = tv({
 })
 
 const item = tv({
-  base: 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none select-none data-[highlighted]:bg-hover data-[disabled]:cursor-default data-[disabled]:text-muted/50',
+  base: 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none select-none data-[disabled]:cursor-default data-[disabled]:text-muted/50 data-[highlighted]:bg-hover',
   variants: {
     tone: {
       default: 'text-surface',
       component:
-        'text-[#9747ff] data-[highlighted]:bg-[#9747ff]/12 data-[disabled]:text-[#9747ff]/40'
+        'text-[#9747ff] data-[disabled]:text-[#9747ff]/40 data-[highlighted]:bg-[#9747ff]/12'
     },
     justify: {
       between: 'justify-between gap-6',

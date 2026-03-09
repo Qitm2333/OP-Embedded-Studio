@@ -8,7 +8,7 @@ const button = tv({
       ghost: 'bg-transparent text-muted hover:bg-hover hover:text-surface',
       accent: 'bg-accent text-white hover:bg-accent/90',
       panel: 'bg-panel/70 text-surface backdrop-blur-xl',
-      panelAccent: 'bg-panel/70 text-accent border-accent/20 backdrop-blur-xl'
+      panelAccent: 'border-accent/20 bg-panel/70 text-accent backdrop-blur-xl'
     },
     shape: {
       square: 'rounded',

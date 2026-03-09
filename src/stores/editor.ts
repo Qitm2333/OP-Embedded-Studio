@@ -1090,7 +1090,7 @@ export function createEditorStore() {
     const parentAbs = isTopLevel(parentId) ? { x: 0, y: 0 } : graph.getAbsolutePosition(parentId)
 
     const direction: LayoutMode =
-      nodes.length <= 1 ? 'VERTICAL' : (maxX - minX >= maxY - minY ? 'HORIZONTAL' : 'VERTICAL')
+      nodes.length <= 1 || maxY - minY > maxX - minX ? 'VERTICAL' : 'HORIZONTAL'
 
     const frame = graph.createNode('FRAME', parentId, {
       name: 'Frame',

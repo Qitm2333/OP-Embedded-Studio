@@ -42,7 +42,7 @@ function handleStop() {
 </script>
 
 <template>
-  <div data-test-id="chat-panel" class="flex min-w-0 flex-1 select-text flex-col overflow-hidden">
+  <div data-test-id="chat-panel" class="flex min-w-0 flex-1 flex-col overflow-hidden select-text">
     <ProviderSetup v-if="!isConfigured" />
 
     <template v-else>
@@ -92,7 +92,7 @@ function handleStop() {
             <div ref="messagesEnd" />
           </div>
         </ScrollAreaViewport>
-        <ScrollAreaScrollbar orientation="vertical" class="flex w-1.5 touch-none select-none p-px">
+        <ScrollAreaScrollbar orientation="vertical" class="flex w-1.5 touch-none p-px select-none">
           <ScrollAreaThumb class="relative flex-1 rounded-full bg-muted/30" />
         </ScrollAreaScrollbar>
       </ScrollAreaRoot>

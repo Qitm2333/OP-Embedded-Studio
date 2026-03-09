@@ -40,7 +40,7 @@ function startRename(pg: { id: string; name: string }) {
 <template>
   <div data-test-id="pages-panel" class="flex min-h-0 flex-1 flex-col">
     <div class="flex shrink-0 items-center justify-between px-3 py-1.5">
-      <span data-test-id="pages-header" class="text-[11px] uppercase tracking-wider text-muted"
+      <span data-test-id="pages-header" class="text-[11px] tracking-wider text-muted uppercase"
         >Pages</span
       >
       <button
@@ -52,7 +52,7 @@ function startRename(pg: { id: string; name: string }) {
         +
       </button>
     </div>
-    <div class="overflow-x-hidden overflow-y-auto scrollbar-thin px-1 pb-1">
+    <div class="scrollbar-thin overflow-x-hidden overflow-y-auto px-1 pb-1">
       <div v-for="pg in pages" :key="pg.id">
         <div
           v-if="rename.editingId.value === pg.id"

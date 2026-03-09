@@ -205,7 +205,7 @@ const topMenus = [
       </button>
     </div>
     <div v-if="!IS_TAURI" class="flex items-center px-1 pb-1">
-      <MenubarRoot class="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
+      <MenubarRoot class="scrollbar-none flex items-center gap-0.5 overflow-x-auto">
         <MenubarMenu v-for="menu in topMenus" :key="menu.label">
           <MenubarTrigger
             :data-test-id="`menubar-${menu.label.toLowerCase()}`"

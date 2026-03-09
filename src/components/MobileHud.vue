@@ -132,7 +132,7 @@ const onlineCount = computed(() => collabPeers.length + 1)
             align="center"
             class="z-50 w-56 rounded-xl border border-border bg-panel p-3 shadow-xl"
           >
-            <div class="mb-2 text-[11px] uppercase tracking-wider text-muted">In this room</div>
+            <div class="mb-2 text-[11px] tracking-wider text-muted uppercase">In this room</div>
             <div class="flex flex-col gap-2">
               <div class="flex items-center gap-2">
                 <div
@@ -187,7 +187,7 @@ const onlineCount = computed(() => collabPeers.length + 1)
           :key="store.state.actionToast"
           class="flex h-8 items-center rounded-full border border-accent/20 bg-panel/70 px-3 shadow-md backdrop-blur-xl"
         >
-          <span class="whitespace-nowrap text-xs text-accent">{{ store.state.actionToast }}</span>
+          <span class="text-xs whitespace-nowrap text-accent">{{ store.state.actionToast }}</span>
         </div>
       </Transition>
     </div>

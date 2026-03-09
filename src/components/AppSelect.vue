@@ -41,7 +41,7 @@ const modelValue = defineModel<T>({ required: true })
             v-for="opt in options"
             :key="String(opt.value)"
             :value="opt.value"
-            :class="selectItem({ class: 'rounded py-1.5 pl-6 pr-2 text-xs' })"
+            :class="selectItem({ class: 'rounded py-1.5 pr-2 pl-6 text-xs' })"
           >
             <SelectItemIndicator class="absolute left-1.5 inline-flex items-center justify-center">
               <icon-lucide-check class="size-3 text-accent" />

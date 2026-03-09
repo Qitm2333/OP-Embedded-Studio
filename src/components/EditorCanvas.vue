@@ -46,7 +46,7 @@ const cursor = computed(() => {
   <CanvasContextMenu>
     <div
       data-test-id="canvas-area"
-      class="canvas-area relative flex-1 min-w-0 min-h-0 overflow-hidden"
+      class="canvas-area relative min-h-0 min-w-0 flex-1 overflow-hidden"
     >
       <canvas
         ref="canvasRef"
