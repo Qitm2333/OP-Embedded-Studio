@@ -1,11 +1,11 @@
 ---
 title: Auto-Layout
-description: Flexbox-basiertes Auto-Layout in OpenPencil — Richtung, Abstand, Polsterung, Ausrichtung und Kindgröße.
+description: Flex- und Grid-Layout in OpenPencil — Richtung, Abstand, Polsterung, Ausrichtung, Kindgröße und CSS-Grid-Tracks.
 ---
 
 # Auto-Layout
 
-Auto-Layout positioniert Kinder automatisch innerhalb eines Frames nach Flexbox-Regeln. Es verwaltet Richtung, Abstände, Ausrichtung und responsive Größenanpassung.
+Auto-Layout positioniert Kinder automatisch innerhalb eines Frames. Es unterstützt zwei Modi: **Flex** (horizontaler/vertikaler Fluss) und **Grid** (Zeilen und Spalten mit Track-Größen).
 
 ## Auto-Layout aktivieren
 
@@ -62,7 +62,36 @@ Innerhalb eines Auto-Layout-Frames können Sie ein Kind ziehen, um es unter Gesc
 |--------|-----|-----------------|
 | Auto-Layout umschalten | <kbd>⇧</kbd><kbd>A</kbd> | <kbd>Shift</kbd> + <kbd>A</kbd> |
 
+## CSS Grid
+
+Grid-Layout ordnet Kinder in Zeilen und Spalten mit expliziter Track-Größe an.
+
+### Grid aktivieren
+
+Wählen Sie einen Frame mit aktiviertem Auto-Layout und klicken Sie auf das Grid-Symbol in der Layout-Werkzeugleiste, um von Flex zu Grid zu wechseln.
+
+### Track-Größen
+
+Definieren Sie Spalten- und Zeilen-Tracks mit drei Größenmodi:
+
+- **fr** — proportionale Einheit, teilt verfügbaren Platz proportional
+- **px** — feste Pixelgröße
+- **auto** — passt sich dem Inhalt an
+
+### Grid-Abstände
+
+Setzen Sie separate horizontale (Spalten-) und vertikale (Zeilen-) Abstände zwischen Zellen.
+
+### Kind-Positionierung
+
+Kinder werden automatisch in Grid-Zellen in Zeilenreihenfolge platziert. Sie können die Platzierung mit Spalten-/Zeilen-Start und Span-Werten in den Layout-Eigenschaften des Kindes überschreiben.
+
+### JSX- und Tailwind-Export
+
+Grid-Layouts werden als JSX mit Tailwind-Klassen exportiert: `grid grid-cols-3`, `gap-x-4 gap-y-2`, `col-start-2 row-span-2`.
+
 ## Tipps
 
 - Verschachteln Sie Auto-Layout-Frames für komplexe responsive Layouts.
 - Verwenden Sie „Füllen", damit ein Kind den restlichen Platz einnimmt, wie `flex-grow: 1` in CSS.
+- Verwenden Sie Grid für Dashboard-Layouts, Galerien und Formulare — alles mit zweidimensionaler Struktur.

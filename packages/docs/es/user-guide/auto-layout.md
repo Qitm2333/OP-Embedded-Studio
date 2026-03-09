@@ -1,10 +1,10 @@
 ---
 title: Auto-layout
-description: Auto-layout basado en flexbox en OpenPencil.
+description: Layout flex y grid en OpenPencil — dirección, espaciado, padding, alineación, dimensionamiento y tracks CSS Grid.
 ---
 # Auto-layout
 
-El auto-layout posiciona los hijos automáticamente dentro de un marco usando reglas de flexbox. Controla la dirección, el espaciado, la alineación y el dimensionamiento responsivo.
+El auto-layout posiciona los hijos automáticamente dentro de un marco. Soporta dos modos: **flex** (flujo horizontal/vertical) y **grid** (filas y columnas con dimensionamiento de tracks).
 
 ## Activar auto-layout
 
@@ -27,3 +27,31 @@ El auto-layout posiciona los hijos automáticamente dentro de un marco usando re
 - **Fijo** — ancho/alto explícito
 - **Rellenar** — se expande en el espacio disponible
 - **Ajustar** — se reduce al contenido
+
+## CSS Grid
+
+El layout grid organiza los hijos en filas y columnas con dimensionamiento explícito de tracks.
+
+### Activar Grid
+
+Selecciona un marco con auto-layout activado y haz clic en el icono de cuadrícula en la barra de herramientas de layout para cambiar de flex a grid.
+
+### Dimensionamiento de tracks
+
+Define tracks de columnas y filas con tres modos:
+
+- **fr** — unidad fraccional, divide el espacio disponible proporcionalmente
+- **px** — tamaño fijo en píxeles
+- **auto** — se ajusta al contenido
+
+### Espaciado del grid
+
+Establece gaps horizontales (columnas) y verticales (filas) separados entre celdas.
+
+### Posicionamiento de hijos
+
+Los hijos se colocan en las celdas del grid automáticamente en orden de fila. Puedes sobrescribir la ubicación con valores de inicio de columna/fila y span en las propiedades de layout del hijo.
+
+### Exportación JSX y Tailwind
+
+Los layouts grid se exportan como JSX con clases Tailwind: `grid grid-cols-3`, `gap-x-4 gap-y-2`, `col-start-2 row-span-2`.

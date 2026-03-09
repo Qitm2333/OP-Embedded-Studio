@@ -28,7 +28,7 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 | Miniatures personnalisées | 🔲 | Miniature générée à l'export, mais pas de sélecteur personnalisé |
 | Réglages de valeur de nudge | 🔲 | Défaut 1px/10px ; Figma permet des valeurs personnalisées |
 | Menu de l'app (mode navigateur) | ✅ | Menus Fichier, Édition, Affichage, Objet, Texte, Disposition ; Tauri utilise les menus natifs |
-| Outils IA | 🟡 | 90 outils via OpenRouter + serveur MCP ; pas d'images générées par IA ni de recherche IA encore |
+| Outils IA | 🟡 | 90+ outils via Anthropic, OpenAI, Google AI, OpenRouter + serveur MCP ; pas d'images générées par IA ni de recherche IA encore |
 
 ## Calques et formes
 
@@ -215,7 +215,7 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 | Code Connect | 🔲 | Lier composants de design au code |
 | Extraits de code | 🟡 | Export JSX avec coloration et copie ; pas d'extraits CSS/Swift/Kotlin |
 | Figma for VS Code | 🔲 | Intégration plugin éditeur |
-| Serveur MCP | ✅ | @open-pencil/mcp avec transports stdio + HTTP ; 87 outils core + 3 gestion de fichiers = 90 total |
+| Serveur MCP | ✅ | @open-pencil/mcp avec transports stdio + HTTP ; 90+ outils core + 3 gestion de fichiers = 90+ total |
 | Outils CLI | ✅ | CLI headless : info, tree, find, export, analyze, node, pages, variables, eval ; serveur MCP |
 
 ## Figma Draw

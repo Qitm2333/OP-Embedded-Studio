@@ -1,6 +1,6 @@
 ---
 title: AI Chat
-description: Built-in AI assistant with 87 tools for creating and modifying designs.
+description: Built-in AI assistant with 90+ tools for creating and modifying designs.
 ---
 
 # AI Chat
@@ -11,24 +11,40 @@ Press <kbd>⌘</kbd><kbd>J</kbd> (<kbd>Ctrl</kbd> + <kbd>J</kbd>) to open the AI
 
 1. Open the AI chat panel (<kbd>⌘</kbd><kbd>J</kbd>)
 2. Click the settings icon
-3. Enter your OpenRouter API key
-4. Choose a model (Claude, GPT-4, Gemini, etc.)
+3. Choose a provider and enter your API key
+4. Select a model
 
-No backend, no subscription — your key talks directly to OpenRouter.
+### Supported Providers
+
+| Provider | Models | Setup |
+|----------|--------|-------|
+| **OpenRouter** | Claude, GPT-4, Gemini, DeepSeek, and others | API key from [openrouter.ai](https://openrouter.ai) |
+| **Anthropic** | Claude 3.5 Sonnet, Claude 3 Opus, etc. | API key from [console.anthropic.com](https://console.anthropic.com) |
+| **OpenAI** | GPT-4o, GPT-4, etc. | API key from [platform.openai.com](https://platform.openai.com) |
+| **Google AI** | Gemini 2.0, Gemini 1.5, etc. | API key from [aistudio.google.dev](https://aistudio.google.dev) |
+| **OpenAI-compatible** | Any endpoint with OpenAI API format | Custom base URL + key. Supports Completions and Responses API toggle. |
+| **Anthropic-compatible** | Any endpoint with Anthropic API format | Custom base URL + key |
+
+No backend, no subscription — your key talks directly to the provider.
 
 ## What It Can Do
 
-The assistant has 87 tools across these categories:
+The assistant has 90+ tools across these categories:
 
 - **Create** — frames, shapes, text, components, pages. Renders JSX for complex layouts.
 - **Style** — fills, strokes, effects, opacity, corner radius, blend modes.
-- **Layout** — auto-layout, alignment, spacing, sizing.
+- **Layout** — auto-layout, grid, alignment, spacing, sizing.
 - **Components** — create components, instances, component sets. Manage overrides.
 - **Variables** — create/edit variables, collections, modes. Bind to fills.
-- **Query** — find nodes, read properties, list pages, fonts, selection.
+- **Query** — find nodes, XPath selectors, read properties, list pages, fonts, selection.
+- **Inspect** — `get_jsx` for JSX roundtrip view, `diff_jsx` for structural diffs, `describe` for semantic role and design issue detection.
 - **Analyze** — color palette, typography audit, spacing consistency, cluster detection.
-- **Export** — PNG, SVG, JSX with Tailwind classes.
+- **Export** — PNG, SVG, JSX with Tailwind classes. Vision-based verification via `export_image`.
 - **Vector** — boolean operations, path manipulation.
+
+## Visual Verification
+
+The assistant can verify its work visually. After creating or modifying designs, it uses `export_image` to capture a screenshot and checks the result against the original request. This catches layout issues, missing elements, and color mismatches that text-only responses would miss.
 
 ## Example Prompts
 
@@ -38,10 +54,13 @@ The assistant has 87 tools across these categories:
 - "Change the background of the selected frame to a gradient from blue to purple"
 - "Export the selected frame as SVG"
 - "Find all text nodes with font size less than 12"
+- "Describe the selected component — what role does it look like?"
+- "Show me the JSX for this frame"
 
 ## Tips
 
 - Select nodes before asking — the assistant knows what's selected.
 - Be specific about colors, sizes, and positions for precise results.
 - The assistant can modify multiple nodes in one message.
-- Use "undo" in the editor if you don't like the result.
+- Use "undo" in the editor if you don't like the result — AI mutations support full undo.
+- All layout is recomputed automatically after each tool execution.

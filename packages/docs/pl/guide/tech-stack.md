@@ -12,7 +12,13 @@
 | **Format pliku** | Kiwi binarny + Zstd | Własny format Figmy — kompaktowy, szybkie parsowanie, kompatybilny z .fig |
 | **Współpraca** | Trystero + Yjs | P2P WebRTC przez sygnalizację MQTT, sync CRDT, persystencja y-indexeddb |
 | **Kolor** | culori | Konwersje przestrzeni kolorów (HSV, RGB, hex) |
-| **AI/MCP** | MCP SDK + Hono | 87 narzędzi dla kodowania AI, transporty stdio + HTTP |
+| **AI/MCP** | MCP SDK + Hono | 90+ narzędzi dla kodowania AI, transporty stdio + HTTP |
+| **JSX Transform** | Sucrase | 201 KB JSX → JS, synchroniczny, kompatybilny z przeglądarką |
+| **Zdarzenia** | nanoevents | 108 bajtów, typowany emitter zdarzeń dla mutacji SceneGraph |
+| **JSX Transform** | Sucrase | 201 KB JSX → JS, synchroniczny, kompatybilny z przeglądarką |
+| **Zdarzenia** | nanoevents | 108 bajtów, typowany emitter zdarzeń dla mutacji SceneGraph |
+| **JSX Transform** | Sucrase | Lightweight (201 KB) JSX → JS, synchronous, browser-compatible |
+| **Events** | nanoevents | 108 bytes, typed event emitter for SceneGraph mutations |
 | **Desktop** | Tauri v2 | ~5 MB natywna aplikacja (vs ~100 MB Electrona), backend Rust |
 | **Build** | Vite 7 | Szybki HMR, natywne moduły ES |
 | **Testowanie** | Playwright + bun:test | Regresja wizualna (E2E) + szybkie testy jednostkowe |
@@ -26,7 +32,9 @@
 {
   "canvaskit-wasm": "^0.40.0",
   "vue": "^3.5.29",
-  "yoga-layout": "^3.2.1",
+  "yoga-layout": "npm:@open-pencil/yoga-layout@3.3.0-grid.2",
+  "nanoevents": "^9.1.0",
+  "sucrase": "^3.35.1",
   "reka-ui": "^2.8.2",
   "tailwindcss": "^4.2.1",
   "culori": "^4.0.2",
@@ -60,4 +68,4 @@ Yoga jest utrzymywana przez Metę, przetestowana na miliardach urządzeń React 
 
 | Technologia | Cel | Faza |
 |-----------|---------|-------|
-| CSS Grid w Yoga | Auto layout oparty na siatce | ✅ Obsługiwane przez [fork Yoga](https://github.com/open-pencil/yoga/tree/grid) |
+| CSS Grid w Yoga | Auto layout oparty na siatce | ✅ Obsługiwane przez [fork Yoga](https://github.com/open-pencil/yoga/tree/grid) (`@open-pencil/yoga-layout`) |

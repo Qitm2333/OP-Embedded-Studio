@@ -12,7 +12,11 @@
 | **Формат файлов** | Kiwi binary + Zstd | Собственный формат Figma — компактный, быстрый парсинг, совместимость с .fig |
 | **Совместная работа** | Trystero + Yjs | P2P WebRTC через MQTT, CRDT-синхронизация, сохранение в y-indexeddb |
 | **Цвет** | culori | Конвертация цветовых пространств (HSV, RGB, hex) |
-| **ИИ/MCP** | MCP SDK + Hono | 87 инструментов для ИИ-кодинга, транспорты stdio + HTTP |
+| **ИИ/MCP** | MCP SDK + Hono | 90+ инструментов для ИИ-кодинга, транспорты stdio + HTTP |
+| **JSX-трансформ** | Sucrase | 201 КБ JSX → JS, синхронный, работает в браузере |
+| **События** | nanoevents | 108 байт, типизированный эмиттер событий для мутаций SceneGraph |
+| **JSX-трансформ** | Sucrase | 201 КБ JSX → JS, синхронный, работает в браузере |
+| **События** | nanoevents | 108 байт, типизированный эмиттер событий для мутаций SceneGraph |
 | **Десктоп** | Tauri v2 | ~5 МБ нативное приложение (против ~100 МБ у Electron), бэкенд на Rust |
 | **Сборка** | Vite 7 | Быстрый HMR, нативные ES-модули |
 | **Тестирование** | Playwright + bun:test | Визуальная регрессия (E2E) + быстрые модульные тесты |
@@ -26,7 +30,9 @@
 {
   "canvaskit-wasm": "^0.40.0",
   "vue": "^3.5.29",
-  "yoga-layout": "^3.2.1",
+  "yoga-layout": "npm:@open-pencil/yoga-layout@3.3.0-grid.2",
+  "nanoevents": "^9.1.0",
+  "sucrase": "^3.35.1",
   "reka-ui": "^2.8.2",
   "tailwindcss": "^4.2.1",
   "culori": "^4.0.2",
@@ -60,4 +66,4 @@ Yoga поддерживается Meta, проверен на миллиарда
 
 | Технология | Назначение | Этап |
 |-----------|---------|-------|
-| CSS Grid в Yoga | Макет на основе сетки | ✅ Поддерживается через [форк Yoga](https://github.com/open-pencil/yoga/tree/grid) |
+| CSS Grid в Yoga | Макет на основе сетки | ✅ Включено через [форк Yoga](https://github.com/open-pencil/yoga/tree/grid) (`@open-pencil/yoga-layout`) |

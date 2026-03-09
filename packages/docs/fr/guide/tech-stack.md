@@ -12,7 +12,11 @@
 | **Format de fichier** | Kiwi binaire + Zstd | Format propre de Figma — compact, parsing rapide, compatible .fig |
 | **Collaboration** | Trystero + Yjs | P2P WebRTC via signalisation MQTT, sync CRDT, persistance y-indexeddb |
 | **Couleur** | culori | Conversions d'espaces colorimétriques (HSV, RGB, hex) |
-| **IA/MCP** | MCP SDK + Hono | 87 outils pour le codage IA, transports stdio + HTTP |
+| **IA/MCP** | MCP SDK + Hono | 90+ outils pour le codage IA, transports stdio + HTTP |
+| **Transform JSX** | Sucrase | 201 Ko JSX → JS, synchrone, compatible navigateur |
+| **Événements** | nanoevents | 108 octets, émetteur typé pour les mutations du SceneGraph |
+| **Transform JSX** | Sucrase | 201 Ko JSX → JS, synchrone, compatible navigateur |
+| **Événements** | nanoevents | 108 octets, émetteur typé pour les mutations du SceneGraph |
 | **Desktop** | Tauri v2 | ~5 Mo app native (vs ~100 Mo d'Electron), backend Rust |
 | **Build** | Vite 7 | HMR rapide, modules ES natifs |
 | **Test** | Playwright + bun:test | Régression visuelle (E2E) + tests unitaires rapides |
@@ -26,7 +30,9 @@
 {
   "canvaskit-wasm": "^0.40.0",
   "vue": "^3.5.29",
-  "yoga-layout": "^3.2.1",
+  "yoga-layout": "npm:@open-pencil/yoga-layout@3.3.0-grid.2",
+  "nanoevents": "^9.1.0",
+  "sucrase": "^3.35.1",
   "reka-ui": "^2.8.2",
   "tailwindcss": "^4.2.1",
   "culori": "^4.0.2",
@@ -60,4 +66,4 @@ Yoga est maintenu par Meta, éprouvé sur des milliards d'appareils React Native
 
 | Technologie | Objectif | Phase |
 |-----------|---------|-------|
-| CSS Grid dans Yoga | Auto layout basé sur une grille | ✅ Supporté via [fork Yoga](https://github.com/open-pencil/yoga/tree/grid) |
+| CSS Grid dans Yoga | Auto layout basé sur une grille | ✅ Livré via [fork Yoga](https://github.com/open-pencil/yoga/tree/grid) (`@open-pencil/yoga-layout`) |

@@ -45,11 +45,13 @@ Der Renderer ist in fokussierte Module in `packages/core/src/renderer/` aufgetei
 
 Flache `Map<string, Node>` mit GUID-Strings als Schlüssel. Baumstruktur über `parentIndex`-Referenzen. Bietet O(1)-Lookup, effiziente Traversierung, Hit-Testing und rechteckige Bereichsabfragen für Marquee-Selektion.
 
+Der Graph emittiert typisierte Events über nanoevents: `node:created`, `node:updated`, `node:deleted`, `node:reparented`, `node:reordered`. Subsysteme abonnieren diese anstelle manueller Verdrahtung — der Editor nutzt sie für Render-Invalidierung und Microtask-gebatchte Komponenten-Instanz-Synchronisation, das Collab-System für Yjs-Propagierung.
+
 Siehe [Szenengraph-Referenz](/reference/scene-graph) für Interna.
 
 ### Layout-Engine (Yoga WASM)
 
-Metas Yoga bietet CSS-Flexbox-Layout-Berechnung. Ein dünner Adapter mappt Figma-Eigenschaftsnamen auf Yoga-Äquivalente:
+Metas Yoga bietet CSS-Flexbox- und Grid-Layout-Berechnung über einen [Fork](https://github.com/open-pencil/yoga/tree/grid) mit CSS-Grid-Unterstützung. Ein dünner Adapter mappt Figma-Eigenschaftsnamen auf Yoga-Äquivalente:
 
 | Figma-Eigenschaft | Yoga-Äquivalent |
 |---|---|
@@ -70,11 +72,11 @@ Siehe [Dateiformat-Referenz](/reference/file-format) für Details.
 
 Werkzeuge werden einmal in `packages/core/src/tools/` definiert, aufgeteilt nach Domäne: read, create, modify, structure, variables, vector, analyze. Jedes Werkzeug hat typisierte Parameter und eine `execute(figma, args)`-Funktion. Adapter konvertieren sie für:
 
-- **KI-Chat** — valibot-Schemas, verbunden mit OpenRouter
+- **KI-Chat** — valibot-Schemas, Multi-Provider (Anthropic, OpenAI, Google AI, OpenRouter, kompatible Endpunkte)
 - **MCP-Server** — zod-Schemas, stdio + HTTP-Transporte
 - **CLI** — verfügbar über den `eval`-Befehl
 
-87 Core-Werkzeuge + 3 MCP-Dateiverwaltungswerkzeuge = 90 insgesamt.
+90+ Core-Werkzeuge + 3 MCP-Dateiverwaltungswerkzeuge. Enthält XPath-Abfrage (`query_nodes`), JSX-Inspektion (`get_jsx`, `diff_jsx`), semantische Beschreibung (`describe`) und visionsbasierte Überprüfung (`export_image` gibt Bilder an das Modell zurück).
 
 ### Rückgängig/Wiederherstellen
 
@@ -105,10 +107,6 @@ Die headless CLI unterstützt bereits `analyze colors/typography/spacing/cluster
 ### Prototyping
 
 Frame-zu-Frame-Übergänge, Interaktions-Trigger (Klick, Hover, Ziehen), Overlay-Verwaltung und Vollbild-Vorschaumodus.
-
-### CSS Grid Layout
-
-CSS Grid wird über einen [Yoga-Fork](https://github.com/open-pencil/yoga/tree/grid) mit Cherry-Picked Grid-PRs aus dem Upstream unterstützt. Wählen Sie einen Frame aus und klicken Sie auf das Grid-Symbol, um von Flex zu Grid zu wechseln. Konfigurieren Sie Spalten-/Zeilen-Tracks (fr, feste px, auto), Spalten- und Zeilenabstände und Padding pro Seite.
 
 ### Windows Code Signing
 

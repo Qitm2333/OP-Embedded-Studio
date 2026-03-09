@@ -28,7 +28,7 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 | Niestandardowe miniatury | 🔲 | Miniatura generowana przy eksporcie, ale bez selektora |
 | Ustawienia wartości nudge | 🔲 | Domyślnie 1px/10px; Figma pozwala na wartości niestandardowe |
 | Menu aplikacji (tryb przeglądarkowy) | ✅ | Menu Plik, Edycja, Widok, Obiekt, Tekst, Rozmieszczenie; Tauri używa natywnych menu |
-| Narzędzia AI | 🟡 | 90 narzędzi przez OpenRouter + serwer MCP; bez obrazów generowanych przez AI ani wyszukiwania AI jeszcze |
+| Narzędzia AI | 🟡 | 90+ narzędzi przez Anthropic, OpenAI, Google AI, OpenRouter + serwer MCP; bez obrazów generowanych przez AI ani wyszukiwania AI jeszcze |
 
 ## Warstwy i kształty
 
@@ -215,7 +215,7 @@ Porównanie funkcja po funkcji możliwości Figma Design z aktualnym stanem impl
 | Code Connect | 🔲 | Łączenie komponentów projektowych z kodem |
 | Fragmenty kodu | 🟡 | Eksport JSX z podświetlaniem i kopiowaniem; brak fragmentów CSS/Swift/Kotlin |
 | Figma for VS Code | 🔲 | Integracja z pluginem edytora |
-| Serwer MCP | ✅ | @open-pencil/mcp z transportami stdio + HTTP; 87 narzędzi core + 3 zarządzanie plikami = 90 total |
+| Serwer MCP | ✅ | @open-pencil/mcp z transportami stdio + HTTP; 87 narzędzi core + 3 zarządzanie plikami = 90+ total |
 | Narzędzia CLI | ✅ | Headless CLI: info, tree, find, export, analyze, node, pages, variables, eval; serwer MCP |
 
 ## Figma Draw

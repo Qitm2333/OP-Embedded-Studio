@@ -28,7 +28,7 @@ Comparación característica por característica de las capacidades de Figma Des
 | Miniaturas personalizadas | 🔲 | Miniatura generada en export, pero sin selector de miniatura personalizada |
 | Configuración de valores de nudge | 🔲 | Por defecto 1px/10px; Figma permite valores personalizados |
 | Menú de app (modo navegador) | ✅ | Menús Archivo, Editar, Ver, Objeto, Texto, Organizar; Tauri usa menús nativos |
-| Herramientas IA | 🟡 | 90 herramientas vía OpenRouter + servidor MCP; sin imágenes generadas por IA ni búsqueda IA aún |
+| Herramientas IA | 🟡 | 90+ herramientas vía Anthropic, OpenAI, Google AI, OpenRouter + servidor MCP; sin imágenes generadas por IA ni búsqueda IA aún |
 
 ## Capas y formas
 
@@ -215,7 +215,7 @@ Comparación característica por característica de las capacidades de Figma Des
 | Code Connect | 🔲 | Vincular componentes de diseño a código |
 | Fragmentos de código | 🟡 | Export JSX con resaltado y copia; sin fragmentos CSS/Swift/Kotlin |
 | Figma for VS Code | 🔲 | Integración con plugin de editor |
-| Servidor MCP | ✅ | @open-pencil/mcp con transportes stdio + HTTP; 87 herramientas core + 3 de gestión de archivos = 90 total |
+| Servidor MCP | ✅ | @open-pencil/mcp con transportes stdio + HTTP; 87 herramientas core + 3 de gestión de archivos = 90+ total |
 | Herramientas CLI | ✅ | CLI headless: info, tree, find, export, analyze, node, pages, variables, eval; servidor MCP |
 
 ## Figma Draw

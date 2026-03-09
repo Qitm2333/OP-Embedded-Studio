@@ -16,7 +16,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 | Layers panel (left sidebar) | ✅ | Tree view with expand/collapse, drag reorder, visibility toggle; resizable width |
 | Pages panel | ✅ | Add, delete, rename pages; per-page viewport state |
 | Properties panel (right sidebar) | ✅ | Sections: Appearance, Fill, Stroke, Effects, Typography, Layout, Position; resizable width |
-| Zoom & pan | ✅ | <kbd>Ctrl</kbd> + scroll, pinch, <kbd>⌘</kbd><kbd>+</kbd> / <kbd>⌘</kbd><kbd>−</kbd> / <kbd>⌘</kbd><kbd>0</kbd>, <kbd>Space</kbd> + drag, middle mouse, hand tool (<kbd>H</kbd>) |
+| Zoom & pan | ✅ | <kbd>Ctrl</kbd> + scroll, pinch, <kbd>⌘</kbd><kbd>+</kbd> / <kbd>⌘</kbd><kbd>−</kbd> / <kbd>⌘</kbd><kbd>0</kbd> (100%) / <kbd>⌘</kbd><kbd>1</kbd> (fit) / <kbd>⌘</kbd><kbd>2</kbd> (selection), <kbd>Space</kbd> + drag, middle mouse, hand tool (<kbd>H</kbd>) |
 | Canvas rulers | ✅ | Top/left rulers with selection highlight bands and coordinate badges |
 | Canvas background color | ✅ | Per-page background via properties panel |
 | Canvas guides | 🔲 | Figma supports draggable guides from rulers |

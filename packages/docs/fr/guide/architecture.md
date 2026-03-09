@@ -45,11 +45,13 @@ Le renderer est découpé en modules spécialisés dans `packages/core/src/rende
 
 `Map<string, Node>` plat indexé par des chaînes GUID. Structure en arbre via des références `parentIndex`. Fournit une recherche O(1), un parcours efficace, du hit testing et des requêtes par zone rectangulaire pour la sélection par marquise.
 
+Le graphe émet des événements typés via nanoevents : `node:created`, `node:updated`, `node:deleted`, `node:reparented`, `node:reordered`. Les sous-systèmes s'y abonnent au lieu d'un câblage manuel — l'éditeur les utilise pour l'invalidation du rendu et la synchronisation d'instances de composants batchée par microtâche, le système de collaboration pour la propagation Yjs.
+
 Voir la [Référence du graphe de scène](/reference/scene-graph) pour les détails internes.
 
 ### Moteur de layout (Yoga WASM)
 
-Yoga de Meta fournit le calcul de layout CSS flexbox. Un adaptateur fin mappe les noms de propriétés Figma vers les équivalents Yoga :
+Yoga de Meta fournit le calcul de layout CSS flexbox et grid via un [fork](https://github.com/open-pencil/yoga/tree/grid) avec support CSS Grid. Un adaptateur fin mappe les noms de propriétés Figma vers les équivalents Yoga :
 
 | Propriété Figma | Équivalent Yoga |
 |---|---|
@@ -70,11 +72,11 @@ Voir la [Référence du format de fichier](/reference/file-format) pour plus de 
 
 Les outils sont définis une seule fois dans `packages/core/src/tools/`, découpés par domaine : read, create, modify, structure, variables, vector, analyze. Chaque outil a des paramètres typés et une fonction `execute(figma, args)`. Les adaptateurs les convertissent pour :
 
-- **Chat IA** — schémas valibot, connecté à OpenRouter
+- **Chat IA** — schémas valibot, multi-fournisseur (Anthropic, OpenAI, Google AI, OpenRouter, endpoints compatibles)
 - **Serveur MCP** — schémas zod, transports stdio + HTTP
 - **CLI** — accessible via la commande `eval`
 
-87 outils core + 3 outils de gestion de fichiers MCP = 90 au total.
+90+ outils core + 3 outils de gestion de fichiers MCP. Inclut requête XPath (`query_nodes`), inspection JSX (`get_jsx`, `diff_jsx`), description sémantique (`describe`) et vérification visuelle (`export_image` renvoie des images au modèle).
 
 ### Annuler/Rétablir
 
@@ -105,10 +107,6 @@ Le CLI headless supporte déjà `analyze colors/typography/spacing/clusters`. Pr
 ### Prototypage
 
 Transitions frame-à-frame, déclencheurs d'interaction (clic, survol, glissement), gestion des overlays et mode aperçu plein écran.
-
-### Layout CSS Grid
-
-CSS Grid est supporté via un [fork de Yoga](https://github.com/open-pencil/yoga/tree/grid) avec des PRs grid cherry-picked de l'upstream. Sélectionnez un frame, cliquez sur l'icône grille pour passer de flex à grid. Configurez les tracks colonnes/lignes (fr, px fixes, auto), les gaps colonnes et lignes, et le padding par côté.
 
 ### Signature de code Windows
 

@@ -65,13 +65,15 @@ CLI: `open-pencil export design.fig -f jsx --style tailwind`
 
 ## Chat AI
 
-Premi <kbd>⌘</kbd><kbd>J</kbd> per aprire l'assistente AI. 87 strumenti che possono creare forme, impostare stili, gestire layout, lavorare con componenti e variabili, eseguire operazioni booleane, analizzare token di design ed esportare risorse. Porta la tua chiave API OpenRouter.
+Premi <kbd>⌘</kbd><kbd>J</kbd> per aprire l'assistente AI. 90+ strumenti che possono creare forme, impostare stili, gestire layout, lavorare con componenti e variabili, eseguire operazioni booleane, analizzare token di design ed esportare risorse. Connetti Anthropic, OpenAI, Google AI, OpenRouter o qualsiasi endpoint compatibile.
 
-Le chiamate agli strumenti vengono mostrate come voci di timeline comprimibili. Selettore modello con Claude, Gemini, GPT, DeepSeek e altri.
+Le chiamate agli strumenti vengono mostrate come voci comprimibili. Verifica visiva — l'assistente renderizza il suo lavoro e lo confronta con la tua richiesta. Supporto completo per l'annullamento di tutte le mutazioni AI.
+
+Vedi [Chat AI](/programmable/ai-chat) per configurazione e dettagli sui provider.
 
 ## Server MCP
 
-Connetti Claude Code, Cursor, Windsurf o qualsiasi client MCP per leggere e scrivere file `.fig` in modalità headless. 90 strumenti (87 core + 3 gestione file). Due trasporti: stdio e HTTP.
+Connetti Claude Code, Cursor, Windsurf o qualsiasi client MCP per leggere e scrivere file `.fig` in modalità headless. 90+ strumenti. Due trasporti: stdio e HTTP.
 
 ```sh
 bun add -g @open-pencil/mcp

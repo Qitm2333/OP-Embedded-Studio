@@ -21,7 +21,7 @@ Or download from the [releases page](https://github.com/open-pencil/open-pencil/
 ## What it does
 
 - **Opens .fig files** — read and write native Figma files, copy & paste nodes between apps
-- **AI builds designs** — describe what you want in chat, 90 tools create and modify nodes. Bring your own API key
+- **AI builds designs** — describe what you want in chat, 90+ tools create and modify nodes. Connect Anthropic, OpenAI, Google AI, OpenRouter, or any compatible endpoint
 - **Fully programmable** — headless CLI, Figma Plugin API via `eval`, MCP server for AI agents
 - **Real-time collaboration** — P2P via WebRTC, no server, no account. Cursors, presence, follow mode
 - **Auto layout & CSS Grid** — flex and grid layout via Yoga WASM, with gap, padding, alignment, track sizing
@@ -187,13 +187,14 @@ OpenPencil is the alternative: open source (MIT), reads .fig files natively, eve
 
 ## Roadmap
 
-- 100% .fig compatibility — full rendering parity with Figma
+- Prototyping — frame transitions, interaction triggers, overlay management, preview mode
 - Shader effects (SkSL) — custom visual effects via GPU shaders
-- Skewing and OkHCL color support
 - Raster tile caching — instant zoom/pan for complex documents
-- Component libraries — publish, share, and consume design systems
+- Component libraries — publish, share, and consume design systems across files
 - CI tools — design linting, code export, visual regression in pipelines
-- Windows code signing (Azure certificates for properly signed binaries)
+- Grid child positioning UI — column/row span controls, grid overlay on canvas
+- Skewing and OkHCL color support
+- Windows code signing (Azure Authenticode certificates)
 - Experimental WebGPU/Graphite rendering backend
 
 ## Contributing
@@ -233,12 +234,12 @@ tests/            E2E (188 tests) + unit (764 tests)
 | Layer | Tech |
 |-------|------|
 | Rendering | Skia (CanvasKit WASM) |
-| Layout | Yoga WASM |
+| Layout | Yoga WASM (flex + grid via [fork](https://github.com/open-pencil/yoga/tree/grid)) |
 | UI | Vue 3, Reka UI, Tailwind CSS 4 |
 | File format | Kiwi binary + Zstd + ZIP |
 | Collaboration | Trystero (WebRTC P2P) + Yjs (CRDT) |
 | Desktop | Tauri v2 |
-| AI/MCP | OpenRouter, @modelcontextprotocol/sdk, Hono |
+| AI/MCP | Multi-provider (Anthropic, OpenAI, Google AI, OpenRouter), MCP SDK, Hono |
 
 ### Desktop builds
 

@@ -68,8 +68,10 @@ Full Figma-compatible shortcut map. ✅ = implemented.
 | <kbd>⌘</kbd><kbd>=</kbd> | Zoom In | ✅ |
 | <kbd>⌘</kbd><kbd>-</kbd> | Zoom Out | ✅ |
 | <kbd>⌘</kbd><kbd>0</kbd> | Zoom to 100% | ✅ |
-| <kbd>⌘</kbd><kbd>1</kbd> | Zoom to Fit | 🔲 |
-| <kbd>⌘</kbd><kbd>2</kbd> | Zoom to Selection | 🔲 |
+| <kbd>⌘</kbd><kbd>1</kbd> | Zoom to Fit | ✅ |
+| <kbd>⌘</kbd><kbd>2</kbd> | Zoom to Selection | ✅ |
+| <kbd>⇧</kbd><kbd>1</kbd> | Zoom to Fit (alt) | ✅ |
+| <kbd>⇧</kbd><kbd>2</kbd> | Zoom to Selection (alt) | ✅ |
 | <kbd>⌘</kbd><kbd>J</kbd> | Toggle AI Chat | ✅ |
 
 ## Object

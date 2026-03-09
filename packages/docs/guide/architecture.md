@@ -45,11 +45,13 @@ The renderer is split into focused modules in `packages/core/src/renderer/`: sce
 
 Flat `Map<string, Node>` keyed by GUID strings. Tree structure via `parentIndex` references. Provides O(1) lookup, efficient traversal, hit testing, and rectangular area queries for marquee selection.
 
+The graph emits typed events via nanoevents: `node:created`, `node:updated`, `node:deleted`, `node:reparented`, `node:reordered`. Subsystems subscribe to these instead of manual call-site wiring — the editor uses them for render invalidation and microtask-batched component instance sync, while the collab system uses them for Yjs propagation.
+
 See [Scene Graph Reference](/reference/scene-graph) for internals.
 
 ### Layout Engine (Yoga WASM)
 
-Meta's Yoga provides CSS flexbox layout computation. A thin adapter maps Figma property names to Yoga equivalents:
+Meta's Yoga provides CSS flexbox and grid layout computation via a [fork](https://github.com/open-pencil/yoga/tree/grid) with CSS Grid support. A thin adapter maps Figma property names to Yoga equivalents:
 
 | Figma Property | Yoga Equivalent |
 |---|---|
@@ -70,11 +72,11 @@ See [File Format Reference](/reference/file-format) for details.
 
 Tools are defined once in `packages/core/src/tools/`, split by domain: read, create, modify, structure, variables, vector, analyze. Each tool has typed params and an `execute(figma, args)` function. Adapters convert them for:
 
-- **AI chat** — valibot schemas, wired to OpenRouter
+- **AI chat** — valibot schemas, multi-provider (Anthropic, OpenAI, Google AI, OpenRouter, compatible endpoints)
 - **MCP server** — zod schemas, stdio + HTTP transports
 - **CLI** — available via the `eval` command
 
-87 core tools + 3 MCP file management tools = 90 total.
+90+ core tools + 3 MCP file management tools. Includes XPath query (`query_nodes`), JSX inspection (`get_jsx`, `diff_jsx`), semantic description (`describe`), and vision-based verification (`export_image` returns images to the model).
 
 ### Undo/Redo
 
@@ -105,10 +107,6 @@ The headless CLI already supports `analyze colors/typography/spacing/clusters`. 
 ### Prototyping
 
 Frame-to-frame transitions, interaction triggers (click, hover, drag), overlay management, and fullscreen preview mode.
-
-### CSS Grid Layout
-
-CSS Grid is supported via a [Yoga fork](https://github.com/open-pencil/yoga/tree/grid) with cherry-picked grid PRs from upstream. Select a frame, click the grid icon to switch from flex to grid. Configure column/row tracks (fr, fixed px, auto), column and row gaps, and per-side padding.
 
 ### Windows Code Signing
 

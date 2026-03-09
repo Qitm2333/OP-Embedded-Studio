@@ -1066,7 +1066,7 @@ Components, instances, component sets with live sync and override preservation. 
 
 ### Phase 5: AI integration ✅
 
-In-app AI chat (⌘J) with OpenRouter, 10 tools, streaming responses with tool call timeline. JSX renderer. Code panel with JSX export.
+In-app AI chat (⌘J) with multi-provider support (Anthropic, OpenAI, Google AI, OpenRouter, compatible endpoints), 90+ tools, streaming responses with tool call timeline, visual verification via export_image. JSX renderer with sucrase. Code panel with JSX/Tailwind export.
 
 ### Phase 6: Collaboration ✅
 
@@ -1078,14 +1078,17 @@ Tauri v2 desktop app (macOS, Windows, Linux). Web app at app.openpencil.dev. CLI
 
 ### What's next
 
-- **Multi-file / tabs** — open multiple documents in tabs within a single window
-- **More AI providers** — Anthropic API, Claude Code subscription, Gemini, local models via Ollama
-- **Code signing** — Apple & Azure certificates for properly signed desktop binaries
-- **.fig compatibility** — improving import/export fidelity across a larger set of real-world files
-- **Port all figma-use tools** — bring the full 118-tool set from [figma-use](https://github.com/dannote/figma-use) into the editor (currently 26/118) for complete AI agent design capabilities
+- **Prototyping** — frame transitions, interaction triggers (click, hover, drag), overlay management, fullscreen preview mode
+- **Shader effects (SkSL)** — custom visual effects via GPU shaders
+- **Raster tile caching** — instant zoom/pan for complex documents
+- **Component libraries** — publish, share, and consume design systems across files
 - **CI tools** — design linting, code export, visual regression in pipelines via the headless CLI
-- **Prototyping** — frame transitions, interaction triggers, preview mode
-- **SVG/PDF export** — vector export formats
+- **Windows code signing** — Azure Authenticode certificates for properly signed binaries
+- **Skewing and OkHCL color** — affine transforms and perceptually uniform color space
+- **WebGPU/Graphite rendering** — experimental next-gen rendering backend
+- **.fig compatibility** — improving import/export fidelity across a larger set of real-world files
+- **Port remaining figma-use tools** — bring the full 118-tool set from [figma-use](https://github.com/dannote/figma-use) into the editor (currently 90+/118)
+- **Grid child positioning UI** — column/row span controls in properties panel, grid overlay visualization on canvas
 
 ---
 

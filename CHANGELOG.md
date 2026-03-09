@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.0 — 2026-03-09
 
 ### Features
 
@@ -12,6 +12,8 @@
 - New AI tools: `get_jsx` (JSX roundtrip view), `diff_jsx` (structural diff), `describe` (semantic role, visual style, layout, design issues)
 - AI visual verification — `export_image` returns image content to the model for vision-based review
 - API type toggle (Completions/Responses) for OpenAI-compatible providers
+- Figma zoom shortcuts — ⌘0 (100%), ⌘1 (zoom to fit), ⌘2 (zoom to selection), ⇧1/⇧2 alternatives
+- XPath query tool — `query_nodes` for AI/MCP with attribute selectors, tree traversal, and type filtering
 
 ### Fixes
 
@@ -30,6 +32,9 @@
 - Undo support for auto-layout reorder, layer tree reorder, and drag reparent
 - Page snapshot undo for AI tool mutations
 - Fix collab sync for same-parent reorder — `node:reordered` events now propagated to Yjs peers
+- Fix orphaned instances on clipboard paste — detach to FRAME when component is missing
+- Fix text typography lost on Figma clipboard import — preserve fontFamily, fontWeight, fontSize, lineHeight
+- Fix `copyFill` missing `gradientTransform` and `imageTransform` — gradient fills now round-trip correctly
 
 
 ### Performance
@@ -46,6 +51,8 @@
 - Enhanced AI system prompt with full JSX prop reference and verification workflow
 - Chat panel preserves messages when toggling UI visibility
 - SceneGraph event bus (nanoevents) — `node:created`, `node:updated`, `node:deleted`, `node:reparented`, `node:reordered` events replace monkey-patching in collab sync and manual render invalidation
+- Replace esbuild-wasm (14 MB) with sucrase (201 KB) for JSX transform — `buildComponent()` and `renderJSX()` now synchronous and browser-compatible
+- `useMagicKeys` keyboard shortcut system — replaces tinykeys with VueUse built-in, cross-platform Meta/Control handling, modifier exclusion for combo conflicts
 - Dev-only debug toolbar for copying chat logs
 - Auto-layout icons in layer tree — vertical (rows), horizontal (columns), and grid icons for auto-layout frames; components keep their purple diamond
 - Frame titles on canvas are now draggable — clicking a selected top-level frame's name label starts a drag

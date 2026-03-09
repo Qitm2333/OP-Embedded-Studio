@@ -28,7 +28,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 | Benutzerdefinierte Dateiminiatur | 🔲 | Miniatur beim Export generiert, aber kein benutzerdefinierter Auswähler |
 | Nudge-Wert-Einstellungen | 🔲 | Standard 1px/10px; Figma erlaubt benutzerdefinierte Werte |
 | App-Menü (Browser-Modus) | ✅ | Datei, Bearbeiten, Ansicht, Objekt, Text, Anordnen; Tauri verwendet native Menüs |
-| KI-Werkzeuge | 🟡 | 90 Werkzeuge via OpenRouter + MCP-Server; noch keine KI-generierten Bilder oder KI-Suche |
+| KI-Werkzeuge | 🟡 | 90+ Werkzeuge via Anthropic, OpenAI, Google AI, OpenRouter + MCP-Server; noch keine KI-generierten Bilder oder KI-Suche |
 
 ## Ebenen & Formen
 
