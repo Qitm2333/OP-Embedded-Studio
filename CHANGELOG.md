@@ -42,7 +42,7 @@
 - Event-driven rendering and component sync — `SceneGraph` emits typed events on mutations; `requestRender()` calls reduced from 94 to 22, component instance sync uses microtask batching with deduplication
 - Replace `structuredClone` with typed copy helpers for fills, strokes, effects, and style runs (~24× faster in hot paths)
 - Filter .fig unzip to only decompress canvas and image entries, skipping metadata cruft
-- Instance population uses a work queue instead of repeated full graph scans
+
 
 ### Improvements
 
