@@ -38,10 +38,10 @@ function serializeNodeProps(raw: SceneNode): string {
   lines.push(`size: ${raw.width} ${raw.height}`)
   lines.push(`pos: ${raw.x} ${raw.y}`)
 
-  const solidFill = raw.fills.find((f) => f.type === 'SOLID' && f.visible !== false)
+  const solidFill = raw.fills.find((f) => f.type === 'SOLID' && f.visible)
   if (solidFill) lines.push(`fill: ${colorToHex(solidFill.color)}`)
 
-  const solidStroke = raw.strokes.find((s) => s.visible !== false)
+  const solidStroke = raw.strokes.find((s) => s.visible)
   if (solidStroke) {
     lines.push(`stroke: ${colorToHex(solidStroke.color)}`)
     if (solidStroke.weight) lines.push(`strokeWeight: ${solidStroke.weight}`)
@@ -155,12 +155,12 @@ export const analyzeColors = defineTool({
 
       const boundVars = raw.boundVariables
       for (const fill of raw.fills) {
-        if (fill.type === 'SOLID' && fill.visible !== false) {
+        if (fill.type === 'SOLID' && fill.visible) {
           trackColor(colorMap, fill.color, boundVars?.['fills'] ? String(boundVars['fills']) : null)
         }
       }
       for (const stroke of raw.strokes) {
-        if (stroke.visible !== false) {
+        if (stroke.visible) {
           trackColor(colorMap, stroke.color, boundVars?.['strokes'] ? String(boundVars['strokes']) : null)
         }
       }

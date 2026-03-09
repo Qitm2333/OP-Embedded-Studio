@@ -121,12 +121,39 @@ const noMathRandom = {
   },
 }
 
+const noHandRolledColor = {
+  meta: {
+    docs: {
+      description:
+        'Disallow hand-rolled color conversions — use helpers from color.ts (colorToCSS, colorToHex, parseColor, etc.)',
+    },
+  },
+  create(context) {
+    const file = context.filename ?? context.getFilename?.()
+    if (file?.endsWith('color.ts') || file?.endsWith('color.js')) return {}
+
+    return {
+      TemplateLiteral(node) {
+        const raw = context.sourceCode.getText(node)
+        if (/rgba?\s*\(/.test(raw)) {
+          context.report({
+            node,
+            message: "Use colorToCSS() or colorToHex() from color.ts instead of hand-rolled rgba()/rgb() strings.",
+          })
+        }
+      },
+
+    }
+  },
+}
+
 const plugin = {
   meta: { name: 'open-pencil' },
   rules: {
     'no-inline-named-types': noInlineNamedTypes,
     'no-structuredclone-scene-arrays': noStructuredCloneSceneArrays,
     'no-math-random': noMathRandom,
+    'no-hand-rolled-color': noHandRolledColor,
   },
 }
 

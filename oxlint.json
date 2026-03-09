@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "import", "unicorn", "vue"],
-  "jsPlugins": ["./lint/plugin.ts"],
+  "jsPlugins": ["./lint/plugin.js"],
   "env": {
     "browser": true,
     "es2024": true
@@ -31,6 +31,9 @@
     "typescript/no-unnecessary-condition": "error",
     "typescript/no-unnecessary-type-assertion": "error",
     "typescript/no-unnecessary-type-parameters": "error",
+    "typescript/no-unnecessary-boolean-literal-compare": "error",
+    "typescript/no-unnecessary-template-expression": "error",
+    "typescript/no-unnecessary-type-arguments": "error",
     "typescript/prefer-optional-chain": "error",
     "typescript/prefer-for-of": "error",
 
@@ -42,6 +45,11 @@
     "unicorn/no-instanceof-array": "error",
     "unicorn/no-typeof-undefined": "error",
     "unicorn/no-nested-ternary": "error",
+
+    "unicorn/no-useless-fallback-in-spread": "error",
+    "unicorn/no-length-as-slice-end": "error",
+    "unicorn/no-unnecessary-await": "error",
+    "unicorn/prefer-string-starts-ends-with": "error",
     "unicorn/consistent-existence-index-check": "error",
 
     "vue/no-arrow-functions-in-watch": "error",
@@ -66,7 +74,8 @@
       "Matrix": "m00:number,m01:number,m02:number,m10:number,m11:number,m12:number"
     }],
     "open-pencil/no-structuredclone-scene-arrays": "error",
-    "open-pencil/no-math-random": "error"
+    "open-pencil/no-math-random": "error",
+    "open-pencil/no-hand-rolled-color": "error"
   },
   "overrides": [
     {
