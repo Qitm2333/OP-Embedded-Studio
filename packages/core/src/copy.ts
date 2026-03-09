@@ -14,9 +14,9 @@ import type { Effect, Fill, GeometryPath, GradientStop, Stroke, StyleRun } from 
 
 export function copyFill(f: Fill): Fill {
   const copy: Fill = { ...f, color: { ...f.color } }
-  if (f.gradientStops) {
-    copy.gradientStops = f.gradientStops.map(copyGradientStop)
-  }
+  if (f.gradientStops) copy.gradientStops = f.gradientStops.map(copyGradientStop)
+  if (f.gradientTransform) copy.gradientTransform = { ...f.gradientTransform }
+  if (f.imageTransform) copy.imageTransform = { ...f.imageTransform }
   return copy
 }
 

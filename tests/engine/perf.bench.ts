@@ -3,6 +3,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 import { parseFigFile, exportFigFile, initCodec, SceneGraph } from '@open-pencil/core'
+import { copyFills } from '../../packages/core/src/copy'
 
 const FIXTURES = resolve(import.meta.dir, '../fixtures')
 
@@ -40,9 +41,9 @@ group('SceneGraph operations', () => {
     void nodes.length
   })
 
+  const sampleIds = [...materialGraph.getAllNodes()].slice(0, 1000).map((n) => n.id)
   bench('getNode × 1000 (material3)', () => {
-    const ids = [...materialGraph.getAllNodes()].slice(0, 1000).map((n) => n.id)
-    for (const id of ids) materialGraph.getNode(id)
+    for (const id of sampleIds) materialGraph.getNode(id)
   })
 
   bench('createNode + deleteNode × 100', () => {
@@ -85,13 +86,8 @@ group('structuredClone vs copy (fills)', () => {
     for (let i = 0; i < 10_000; i++) structuredClone(sampleFills)
   })
 
-  bench('manual copy × 10k', () => {
-    for (let i = 0; i < 10_000; i++) {
-      sampleFills.map((f) => ({
-        ...f,
-        color: { ...f.color }
-      }))
-    }
+  bench('copyFills × 10k', () => {
+    for (let i = 0; i < 10_000; i++) copyFills(sampleFills)
   })
 })
 
