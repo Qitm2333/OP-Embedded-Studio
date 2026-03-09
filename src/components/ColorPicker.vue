@@ -1,11 +1,10 @@
 <script setup lang="ts">
+import type { Color } from '@open-pencil/core'
 import { colorToCSS } from '@open-pencil/core'
 import { computed } from 'vue'
 import { PopoverRoot, PopoverTrigger, PopoverPortal, PopoverContent } from 'reka-ui'
 
 import HsvColorArea from './HsvColorArea.vue'
-
-import type { Color } from '@/types'
 
 const { color } = defineProps<{
   color: Color

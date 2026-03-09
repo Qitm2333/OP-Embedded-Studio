@@ -14,8 +14,7 @@ import {
 } from '@/constants'
 
 import type { EditorStore } from '@/stores/editor'
-import type { Color } from '@/types'
-import type { SceneNode } from '@open-pencil/core'
+import type { Color, SceneNode } from '@open-pencil/core'
 import type { Room } from 'trystero'
 
 export interface RemotePeer {

@@ -10,7 +10,8 @@ import {
 } from 'reka-ui'
 
 import { selectContent, selectItem, selectTrigger } from '@/components/ui/select'
-import { AI_PROVIDERS, useAIChat } from '@/composables/use-chat'
+import { AI_PROVIDERS } from '@open-pencil/core'
+import { useAIChat } from '@/composables/use-chat'
 
 const { providerID, providerDef } = useAIChat()
 

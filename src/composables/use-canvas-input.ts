@@ -14,8 +14,7 @@ import {
 import { computeSelectionBounds, computeSnap } from '@open-pencil/core'
 
 import type { EditorStore, Tool } from '@/stores/editor'
-import type { Rect } from '@/types'
-import type { NodeType, SceneNode } from '@open-pencil/core'
+import type { NodeType, Rect, SceneNode } from '@open-pencil/core'
 
 type HandlePosition = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
 

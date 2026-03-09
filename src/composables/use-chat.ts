@@ -15,8 +15,7 @@ import { AI_PROVIDERS, DEFAULT_AI_MODEL, DEFAULT_AI_PROVIDER } from '@open-penci
 import type { AIProviderID } from '@open-pencil/core'
 import type { LanguageModel, UIMessage } from 'ai'
 
-export { AI_PROVIDERS } from '@open-pencil/core'
-export type { AIProviderDef, AIProviderID, ModelOption } from '@open-pencil/core'
+
 
 const STORAGE_PREFIX = 'open-pencil:'
 const LEGACY_KEY_STORAGE = `${STORAGE_PREFIX}openrouter-api-key`

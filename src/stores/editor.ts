@@ -34,12 +34,13 @@ import {
 } from '@open-pencil/core'
 import { readFigFile } from '@open-pencil/core'
 
-import type { Color, Rect } from '@/types'
 import type {
+  Color,
   ExportFormat,
   Fill,
   LayoutMode,
   NodeType,
+  Rect,
   SceneNode,
   SnapGuide,
   VectorNetwork,

@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import ColorPicker from './ColorPicker.vue'
+import type { Color } from '@open-pencil/core'
 import { colorToHexRaw, parseColor } from '@open-pencil/core'
-
-import type { Color } from '@/types'
 
 const { color, editable = false } = defineProps<{
   color: Color

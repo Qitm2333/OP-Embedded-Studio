@@ -1,11 +1,3 @@
-export {
-  initFontService,
-  getFontProvider,
-  ensureNodeFont,
-  ensureCJKFallback,
-  getCJKFallbackFamily
-} from '@open-pencil/core'
-
 import {
   IS_TAURI,
   loadFont as loadFontCore,
