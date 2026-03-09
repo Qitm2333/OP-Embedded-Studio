@@ -29,10 +29,12 @@
 - Fix `export_image` stack overflow on large nodes — chunked base64 encoding
 - Undo support for auto-layout reorder, layer tree reorder, and drag reparent
 - Page snapshot undo for AI tool mutations
+- Fix collab sync for same-parent reorder — `node:reordered` events now propagated to Yjs peers
 
 
 ### Performance
 
+- Event-driven rendering and component sync — `SceneGraph` emits typed events on mutations; `requestRender()` calls reduced from 94 to 22, component instance sync uses microtask batching with deduplication
 - Replace `structuredClone` with typed copy helpers for fills, strokes, effects, and style runs (~24× faster in hot paths)
 - Filter .fig unzip to only decompress canvas and image entries, skipping metadata cruft
 - Instance population uses a work queue instead of repeated full graph scans
@@ -43,6 +45,7 @@
 - AI tools run `computeAllLayouts` after execution — layout updates immediately
 - Enhanced AI system prompt with full JSX prop reference and verification workflow
 - Chat panel preserves messages when toggling UI visibility
+- SceneGraph event bus (nanoevents) — `node:created`, `node:updated`, `node:deleted`, `node:reparented`, `node:reordered` events replace monkey-patching in collab sync and manual render invalidation
 - Dev-only debug toolbar for copying chat logs
 - Auto-layout icons in layer tree — vertical (rows), horizontal (columns), and grid icons for auto-layout frames; components keep their purple diamond
 - Frame titles on canvas are now draggable — clicking a selected top-level frame's name label starts a drag
