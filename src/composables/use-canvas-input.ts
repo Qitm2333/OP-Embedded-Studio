@@ -14,7 +14,7 @@ import {
 import { computeSelectionBounds, computeSnap } from '@open-pencil/core'
 
 import type { EditorStore, Tool } from '@/stores/editor'
-import type { NodeType, Rect, SceneNode } from '@open-pencil/core'
+import type { NodeType, Rect, SceneNode, Vector } from '@open-pencil/core'
 
 type HandlePosition = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
 
@@ -29,7 +29,7 @@ interface DragMove {
   type: 'move'
   startX: number
   startY: number
-  originals: Map<string, { x: number; y: number }>
+  originals: Map<string, Vector>
   duplicated?: boolean
   autoLayoutParentId?: string
   brokeFromAutoLayout?: boolean
@@ -150,7 +150,7 @@ function getHandlePositions(
     s: { x: mx, y: y2 },
     sw: { x: x1, y: y2 },
     w: { x: x1, y: my }
-  } satisfies Record<HandlePosition, { x: number; y: number }>
+  } satisfies Record<HandlePosition, Vector>
 }
 
 function unrotate(
@@ -389,7 +389,7 @@ export function useCanvasInput(
           store.select([hit.id], true)
         }
 
-        const originals = new Map<string, { x: number; y: number }>()
+        const originals = new Map<string, Vector>()
         for (const id of store.state.selectedIds) {
           const n = store.graph.getNode(id)
           if (n) originals.set(id, { x: n.x, y: n.y })
@@ -398,7 +398,7 @@ export function useCanvasInput(
         // Alt+drag → duplicate
         if (e.altKey && store.state.selectedIds.size > 0) {
           const newIds: string[] = []
-          const newOriginals = new Map<string, { x: number; y: number }>()
+          const newOriginals = new Map<string, Vector>()
           for (const id of store.state.selectedIds) {
             const src = store.graph.getNode(id)
             if (!src) continue

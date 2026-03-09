@@ -193,7 +193,7 @@ export interface Paint {
   visible?: boolean
   blendMode?: string
   stops?: { color: Color; position: number }[]
-  transform?: { m00: number; m01: number; m02: number; m10: number; m11: number; m12: number }
+  transform?: Matrix
   image?: { hash: string }
   imageScaleMode?: string
   colorVariableBinding?: VariableBinding
@@ -296,7 +296,7 @@ export interface NodeChange {
     styleOverrideTable?: NodeChange[]
   }
   derivedTextData?: {
-    layoutSize?: { x: number; y: number }
+    layoutSize?: Vector
     fontMetaData?: Array<{
       key: { family: string; style: string; postscript?: string }
       fontLineHeight: number
@@ -504,7 +504,7 @@ export function encodePaintWithVariableBinding(
  * Parse a variable ID string (e.g., "VariableID:38448:122296")
  * Returns sessionID and localID
  */
-export function parseVariableId(variableId: string): { sessionID: number; localID: number } | null {
+export function parseVariableId(variableId: string): GUID | null {
   const match = variableId.match(/VariableID:(\d+):(\d+)/)
   if (!match) return null
   return {
@@ -567,7 +567,7 @@ export function encodeNodeChangeWithVariables(nodeChange: NodeChange): Uint8Arra
 function injectVariableBinding(
   hex: string,
   marker: string,
-  binding: { variableID: { sessionID: number; localID: number } }
+  binding: { variableID: GUID }
 ): string {
   const markerIdx = hex.indexOf(marker)
   if (markerIdx === -1) return hex

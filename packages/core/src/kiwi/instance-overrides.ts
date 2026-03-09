@@ -2,6 +2,7 @@ import type { SceneGraph, SceneNode, GeometryPath } from '../scene-graph'
 import { guidToString, convertOverrideToProps, resolveGeometryPaths } from './kiwi-convert'
 import { copyFills, copyStrokes, copyEffects, copyStyleRuns, copyGeometryPaths } from '../copy'
 import type { GUID } from './codec'
+import type { Matrix, Vector } from '../types'
 
 interface SymbolOverride {
   guidPath?: { guids?: GUID[] }
@@ -27,8 +28,8 @@ interface ComponentPropAssignment {
 
 interface DerivedSymbolOverride {
   guidPath?: { guids?: GUID[] }
-  size?: { x: number; y: number }
-  transform?: { m00: number; m01: number; m02: number; m10: number; m11: number; m12: number }
+  size?: Vector
+  transform?: Matrix
   fillGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
   strokeGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
 }

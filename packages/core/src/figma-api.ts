@@ -13,6 +13,7 @@ import type {
   VariableValue
 } from './scene-graph'
 import type { Rect, Vector } from './types'
+import { copyFills, copyStrokes, copyEffects } from './copy'
 
 const MIXED = Symbol('mixed')
 
@@ -159,7 +160,7 @@ class FigmaNodeProxy {
   // --- Visual ---
 
   get fills(): readonly Fill[] {
-    return Object.freeze(structuredClone(this._raw().fills))
+    return Object.freeze(copyFills(this._raw().fills))
   }
 
   set fills(v: readonly Fill[]) {
@@ -167,7 +168,7 @@ class FigmaNodeProxy {
   }
 
   get strokes(): readonly Stroke[] {
-    return Object.freeze(structuredClone(this._raw().strokes))
+    return Object.freeze(copyStrokes(this._raw().strokes))
   }
 
   set strokes(v: readonly Stroke[]) {
@@ -175,7 +176,7 @@ class FigmaNodeProxy {
   }
 
   get effects(): readonly Effect[] {
-    return Object.freeze(structuredClone(this._raw().effects))
+    return Object.freeze(copyEffects(this._raw().effects))
   }
 
   set effects(v: readonly Effect[]) {
@@ -304,7 +305,7 @@ class FigmaNodeProxy {
   set strokeWeight(v: number) {
     const n = this._raw()
     if (n.strokes.length > 0) {
-      const strokes = structuredClone(n.strokes)
+      const strokes = copyStrokes(n.strokes)
       strokes[0].weight = v
       this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { strokes })
     }
@@ -318,7 +319,7 @@ class FigmaNodeProxy {
   set strokeAlign(v: string) {
     const n = this._raw()
     if (n.strokes.length > 0) {
-      const strokes = structuredClone(n.strokes)
+      const strokes = copyStrokes(n.strokes)
       strokes[0].align = v as Stroke['align']
       this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { strokes })
     }
@@ -1119,9 +1120,9 @@ export class FigmaAPI {
       height: raw.height,
       x: raw.x,
       y: raw.y,
-      fills: structuredClone(raw.fills),
-      strokes: structuredClone(raw.strokes),
-      effects: structuredClone(raw.effects),
+      fills: copyFills(raw.fills),
+      strokes: copyStrokes(raw.strokes),
+      effects: copyEffects(raw.effects),
       cornerRadius: raw.cornerRadius,
       topLeftRadius: raw.topLeftRadius,
       topRightRadius: raw.topRightRadius,
@@ -1239,7 +1240,7 @@ export class FigmaAPI {
       y: first.y,
       width: first.width,
       height: first.height,
-      fills: structuredClone(first.fills)
+      fills: copyFills(first.fills)
     })
     for (const id of nodeIds) {
       this.graph.deleteNode(id)

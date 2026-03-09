@@ -10,6 +10,7 @@ import type { NodeChange } from './kiwi/codec'
 import type { SkiaRenderer } from './renderer'
 import type { SceneGraph, VariableValue } from './scene-graph'
 import type { CanvasKit } from 'canvaskit-wasm'
+import type { GUID } from './types'
 
 const THUMBNAIL_1X1 = Uint8Array.from(
   atob(
@@ -81,9 +82,9 @@ export async function exportFigFile(
 
   const blobs: Uint8Array[] = []
   const pages = graph.getPages(true)
-  const nodeIdToGuid = new Map<string, { sessionID: number; localID: number }>()
+  const nodeIdToGuid = new Map<string, GUID>()
   const fontDigestMap = await buildFontDigestMap(graph)
-  let internalCanvasGuid: { sessionID: number; localID: number } | null = null
+  let internalCanvasGuid: GUID | null = null
 
   for (let p = 0; p < pages.length; p++) {
     const page = pages[p]

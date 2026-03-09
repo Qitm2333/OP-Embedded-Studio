@@ -29,7 +29,7 @@ import {
 import type { SceneNode, SceneGraph } from '../scene-graph'
 import type { SnapGuide } from '../snap'
 import type { TextEditor } from '../text-editor'
-import type { Rect } from '../types'
+import type { Rect, Vector } from '../types'
 import type { Canvas } from 'canvaskit-wasm'
 import type { SkiaRenderer } from './renderer'
 import type { RenderOverlays } from './renderer'
@@ -358,8 +358,8 @@ export function drawGroupBounds(
 export function getRotatedCorners(
   r: SkiaRenderer,
   n: SceneNode,
-  abs: { x: number; y: number }
-): Array<{ x: number; y: number }> {
+  abs: Vector
+): Vector[] {
   const cx = (abs.x + n.width / 2) * r.zoom + r.panX
   const cy = (abs.y + n.height / 2) * r.zoom + r.panY
   const hw = (n.width / 2) * r.zoom

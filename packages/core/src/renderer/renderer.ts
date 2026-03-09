@@ -31,8 +31,7 @@ import { RenderProfiler } from '../profiler'
 import type { SceneNode, SceneGraph, Fill, Stroke } from '../scene-graph'
 import type { SnapGuide } from '../snap'
 import type { TextEditor } from '../text-editor'
-import type { Color } from '../types'
-import type { Rect } from '../types'
+import type { Color, Rect, Vector } from '../types'
 import type { Image as CKImage, Path } from 'canvaskit-wasm'
 import type {
   CanvasKit,
@@ -128,14 +127,14 @@ export interface RenderOverlays {
     direction: 'HORIZONTAL' | 'VERTICAL'
   } | null
   penState?: {
-    vertices: Array<{ x: number; y: number }>
+    vertices: Vector[]
     segments: Array<{
       start: number
       end: number
-      tangentStart: { x: number; y: number }
-      tangentEnd: { x: number; y: number }
+      tangentStart: Vector
+      tangentEnd: Vector
     }>
-    dragTangent: { x: number; y: number } | null
+    dragTangent: Vector | null
     closingToFirst: boolean
     cursorX?: number
     cursorY?: number
@@ -884,7 +883,7 @@ export class SkiaRenderer {
     return stroke.color
   }
 
-  screenToCanvas(sx: number, sy: number): { x: number; y: number } {
+  screenToCanvas(sx: number, sy: number): Vector {
     return {
       x: (sx - this.panX) / this.zoom,
       y: (sy - this.panY) / this.zoom
@@ -970,7 +969,7 @@ export class SkiaRenderer {
     drawGroupBoundsFn(this, canvas, nodes, graph)
   }
 
-  getRotatedCorners(n: SceneNode, abs: { x: number; y: number }): Array<{ x: number; y: number }> {
+  getRotatedCorners(n: SceneNode, abs: Vector): Vector[] {
     return getRotatedCornersFn(this, n, abs)
   }
 

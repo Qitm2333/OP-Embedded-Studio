@@ -2,6 +2,7 @@ import { BLACK, DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from './consta
 import { copyEffects, copyFills, copyStrokes, copyStyleRuns } from './copy'
 
 export type { GUID, Color } from './types'
+import type { Matrix, Vector } from './types'
 
 export type HandleMirroring = 'NONE' | 'ANGLE' | 'ANGLE_AND_LENGTH'
 export type WindingRule = 'NONZERO' | 'EVENODD'
@@ -18,8 +19,8 @@ export interface VectorVertex {
 export interface VectorSegment {
   start: number
   end: number
-  tangentStart: { x: number; y: number }
-  tangentEnd: { x: number; y: number }
+  tangentStart: Vector
+  tangentEnd: Vector
 }
 
 export interface VectorRegion {
@@ -124,7 +125,7 @@ export interface Stroke {
 export interface Effect {
   type: 'DROP_SHADOW' | 'INNER_SHADOW' | 'LAYER_BLUR' | 'BACKGROUND_BLUR' | 'FOREGROUND_BLUR'
   color: Color
-  offset: { x: number; y: number }
+  offset: Vector
   radius: number
   spread: number
   visible: boolean
@@ -452,7 +453,7 @@ export class SceneGraph {
   variableCollections = new Map<string, VariableCollection>()
   activeMode = new Map<string, string>()
   rootId: string
-  private absPosCache = new Map<string, { x: number; y: number }>()
+  private absPosCache = new Map<string, Vector>()
 
   constructor() {
     const root = createDefaultNode('FRAME', {
@@ -659,7 +660,7 @@ export class SceneGraph {
     this.absPosCache.clear()
   }
 
-  getAbsolutePosition(id: string): { x: number; y: number } {
+  getAbsolutePosition(id: string): Vector {
     const cached = this.absPosCache.get(id)
     if (cached) return cached
 

@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "import", "unicorn", "vue"],
+  "jsPlugins": ["./lint/plugin.js"],
   "env": {
     "browser": true,
     "es2024": true
@@ -55,7 +56,17 @@
     "vue/no-multiple-slot-args": "error",
     "vue/define-emits-declaration": "error",
     "vue/define-props-destructuring": "error",
-    "vue/require-typed-ref": "error"
+    "vue/require-typed-ref": "error",
+
+    "open-pencil/no-inline-named-types": ["error", {
+      "Vector": "x:number,y:number",
+      "Color": "a:number,b:number,g:number,r:number",
+      "GUID": "localID:number,sessionID:number",
+      "Rect": "height:number,width:number,x:number,y:number",
+      "Matrix": "m00:number,m01:number,m02:number,m10:number,m11:number,m12:number"
+    }],
+    "open-pencil/no-structuredclone-scene-arrays": "error",
+    "open-pencil/no-math-random": "error"
   },
   "overrides": [
     {

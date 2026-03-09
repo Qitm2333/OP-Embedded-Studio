@@ -8,6 +8,7 @@ import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi/kiwi-convert'
 
 import type { NodeChange, Paint, VariableConsumptionEntry } from './kiwi/codec'
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from './scene-graph'
+import type { GUID } from './types'
 
 const fontDigestCache = new Map<string, Uint8Array>()
 
@@ -248,12 +249,12 @@ function exportTextData(node: SceneNode): NodeChange['textData'] {
 
 export function sceneNodeToKiwi(
   node: SceneNode,
-  parentGuid: { sessionID: number; localID: number },
+  parentGuid: GUID,
   childIndex: number,
   localIdCounter: { value: number },
   graph: SceneGraph,
   blobs: Uint8Array[],
-  nodeIdToGuid?: Map<string, { sessionID: number; localID: number }>,
+  nodeIdToGuid?: Map<string, GUID>,
   fontDigestMap?: Map<string, Uint8Array>
 ): KiwiNodeChange[] {
   const localID = localIdCounter.value++

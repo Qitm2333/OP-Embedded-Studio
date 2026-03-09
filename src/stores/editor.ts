@@ -47,6 +47,7 @@ import type {
   VectorNetwork,
   VectorRegion,
   VectorSegment,
+  Vector,
   VectorVertex
 } from '@open-pencil/core'
 import type { CanvasKit } from 'canvaskit-wasm'
@@ -175,7 +176,7 @@ export function createEditorStore() {
     penState: null as {
       vertices: VectorVertex[]
       segments: VectorSegment[]
-      dragTangent: { x: number; y: number } | null
+      dragTangent: Vector | null
       closingToFirst: boolean
     } | null,
     penCursorX: null as number | null,
@@ -629,10 +630,7 @@ export function createEditorStore() {
     }
   }
 
-  function setCanvasKit(
-    ck: CanvasKit,
-    renderer: SkiaRenderer
-  ) {
+  function setCanvasKit(ck: CanvasKit, renderer: SkiaRenderer) {
     _ck = ck
     _renderer = renderer
     _textEditor = new TextEditor(ck)
@@ -1958,8 +1956,8 @@ export function createEditorStore() {
     }
   }
 
-  function commitMove(originals: Map<string, { x: number; y: number }>) {
-    const finals = new Map<string, { x: number; y: number }>()
+  function commitMove(originals: Map<string, Vector>) {
+    const finals = new Map<string, Vector>()
     for (const [id] of originals) {
       const n = graph.getNode(id)
       if (n) finals.set(id, { x: n.x, y: n.y })

@@ -2,6 +2,7 @@ import { normalizeColor } from '../color'
 import { DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from '../constants'
 import { styleToWeight } from '../fonts'
 import { decodeVectorNetworkBlob } from '../vector'
+import type { Matrix, Vector } from '../types'
 
 import type {
   SceneNode,
@@ -79,14 +80,7 @@ function imageHashToString(hash: Record<string, number>): string {
   return bytes.map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-function convertGradientTransform(t?: {
-  m00: number
-  m01: number
-  m02: number
-  m10: number
-  m11: number
-  m12: number
-}): GradientTransform | undefined {
+function convertGradientTransform(t?: Matrix): GradientTransform | undefined {
   if (!t) return undefined
   return { m00: t.m00, m01: t.m01, m02: t.m02, m10: t.m10, m11: t.m11, m12: t.m12 }
 }
@@ -386,7 +380,7 @@ function resolveVectorNetwork(
   const vectorData = nc.vectorData as
     | {
         vectorNetworkBlob?: number
-        normalizedSize?: { x: number; y: number }
+        normalizedSize?: Vector
         styleOverrideTable?: Array<{ styleID: number; handleMirroring?: string }>
       }
     | undefined
