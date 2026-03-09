@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "import", "unicorn", "vue"],
-  "jsPlugins": ["./lint/plugin.js"],
+  "jsPlugins": ["./lint/plugin.ts"],
   "env": {
     "browser": true,
     "es2024": true
