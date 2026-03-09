@@ -11,8 +11,8 @@ import type * as valibot from 'valibot'
 
 export interface AIAdapterOptions {
   getFigma: () => FigmaAPI
-  onBeforeExecute?: () => void
-  onAfterExecute?: () => void
+  onBeforeExecute?: (def: ToolDef) => void
+  onAfterExecute?: (def: ToolDef) => void
   onFlashNodes?: (nodeIds: string[]) => void
 }
 
@@ -54,11 +54,11 @@ export function toolsToAI(
       shape[key] = paramToValibot(v, param)
     }
 
-    result[def.name] = tool({
+    const toolOpts: Record<string, unknown> = {
       description: def.description,
       inputSchema: valibotSchema(v.object(shape as any)),
       execute: async (args: Record<string, unknown>) => {
-        options.onBeforeExecute?.()
+        options.onBeforeExecute?.(def)
         try {
           const execResult = await def.execute(options.getFigma(), args as any)
           if (def.mutates && options.onFlashNodes) {
@@ -69,10 +69,25 @@ export function toolsToAI(
         } catch (err) {
           return { error: err instanceof Error ? err.message : String(err) }
         } finally {
-          options.onAfterExecute?.()
+          options.onAfterExecute?.(def)
         }
       }
-    })
+    }
+
+    if (def.name === 'export_image') {
+      toolOpts.toModelOutput = ({ output }: { output: unknown }) => {
+        if (output && typeof output === 'object' && 'base64' in output && 'mimeType' in output) {
+          const r = output as { base64: string; mimeType: string }
+          return {
+            type: 'content' as const,
+            value: [{ type: 'media' as const, mediaType: r.mimeType, data: r.base64 }]
+          }
+        }
+        return { type: 'json' as const, value: output as Record<string, unknown> }
+      }
+    }
+
+    result[def.name] = tool(toolOpts)
   }
 
   return result

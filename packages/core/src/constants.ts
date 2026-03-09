@@ -93,6 +93,7 @@ export type AIProviderID =
   | 'openai'
   | 'google'
   | 'openai-compatible'
+  | 'anthropic-compatible'
 
 export interface ModelOption {
   id: string
@@ -173,6 +174,16 @@ export const AI_PROVIDERS: AIProviderDef[] = [
   {
     id: 'openai-compatible',
     name: 'OpenAI-compatible',
+    keyPlaceholder: 'API key',
+    keyURL: '',
+    defaultModel: '',
+    models: [],
+    supportsCustomBaseURL: true,
+    supportsCustomModel: true
+  },
+  {
+    id: 'anthropic-compatible',
+    name: 'Anthropic-compatible',
     keyPlaceholder: 'API key',
     keyURL: '',
     defaultModel: '',

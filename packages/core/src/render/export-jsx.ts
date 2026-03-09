@@ -303,6 +303,49 @@ function collectAppearanceProps(node: SceneNode, props: [string, unknown][]): vo
   }
 }
 
+function collectPositionProps(
+  node: SceneNode,
+  ctx: ReturnType<typeof getNodeContext>,
+  props: [string, unknown][]
+): void {
+  if (ctx.parentIsAutoLayout || ctx.parentIsGrid) return
+  if (node.x !== 0) props.push(['x', node.x])
+  if (node.y !== 0) props.push(['y', node.y])
+}
+
+function collectSizingProps(
+  node: SceneNode,
+  ctx: ReturnType<typeof getNodeContext>,
+  graph: SceneGraph,
+  props: [string, unknown][]
+): void {
+  if (ctx.isGrid) collectGridSizingProps(node, props)
+  else if (ctx.isFlex) collectFlexSizingProps(node, props)
+  else if (node.type === 'TEXT') collectTextSizingProps(node, props)
+  else {
+    if (node.width > 0) props.push(['w', node.width])
+    if (node.height > 0) props.push(['h', node.height])
+  }
+
+  if (!ctx.parentIsAutoLayout) return
+  if (node.layoutGrow > 0) props.push(['grow', node.layoutGrow])
+  if (node.layoutAlignSelf === 'STRETCH') {
+    const parent = node.parentId ? graph.getNode(node.parentId) : null
+    if (parent && (parent.layoutMode === 'HORIZONTAL' || parent.layoutMode === 'VERTICAL')) {
+      const crossDim = parent.layoutMode === 'HORIZONTAL' ? 'h' : 'w'
+      if (!props.some(([k]) => k === crossDim)) props.push([crossDim, 'fill'])
+    }
+  }
+}
+
+function collectTextSizingProps(node: SceneNode, props: [string, unknown][]): void {
+  const autoResize = node.textAutoResize
+  const emitW = autoResize !== 'WIDTH_AND_HEIGHT'
+  const emitH = autoResize === 'NONE' || autoResize === 'TRUNCATE'
+  if (emitW && node.width > 0) props.push(['w', node.width])
+  if (emitH && node.height > 0) props.push(['h', node.height])
+}
+
 function collectTextNodeProps(node: SceneNode, props: [string, unknown][]): void {
   if (node.fontSize !== 14) props.push(['size', node.fontSize])
   if (node.fontFamily && node.fontFamily !== DEFAULT_FONT_FAMILY)
@@ -339,14 +382,8 @@ function collectProps(node: SceneNode, graph: SceneGraph): [string, unknown][] {
 
   if (node.name && node.name !== node.type) props.push(['name', node.name])
 
-  if (ctx.isGrid) collectGridSizingProps(node, props)
-  else if (ctx.isFlex) collectFlexSizingProps(node, props)
-  else {
-    if (node.width > 0) props.push(['w', node.width])
-    if (node.height > 0) props.push(['h', node.height])
-  }
-
-  if (ctx.parentIsAutoLayout && node.layoutGrow > 0) props.push(['grow', node.layoutGrow])
+  collectPositionProps(node, ctx, props)
+  collectSizingProps(node, ctx, graph, props)
   if (ctx.parentIsGrid) collectGridPositionProps(node, props)
   if (ctx.isFlex) collectFlexAlignmentProps(node, props)
   if (ctx.isAutoLayout) collectAutoLayoutPaddingProps(node, props)

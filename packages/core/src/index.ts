@@ -114,7 +114,7 @@ export {
   computeVectorBounds
 } from './vector'
 export { computeSelectionBounds, computeSnap, type SnapGuide } from './snap'
-export { UndoManager } from './undo'
+export { UndoManager, type UndoEntry } from './undo'
 export { TextEditor, type TextCaret, type TextEditorState } from './text-editor'
 export {
   getStyleAt,

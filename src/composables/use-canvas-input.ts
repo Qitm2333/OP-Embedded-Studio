@@ -29,7 +29,7 @@ interface DragMove {
   type: 'move'
   startX: number
   startY: number
-  originals: Map<string, Vector>
+  originals: Map<string, { x: number; y: number; parentId: string }>
   duplicated?: boolean
   autoLayoutParentId?: string
   brokeFromAutoLayout?: boolean
@@ -353,9 +353,12 @@ export function useCanvasInput(
     return false
   }
 
-  function duplicateAndDrag(cx: number, cy: number): Map<string, Vector> {
+  function duplicateAndDrag(
+    cx: number,
+    cy: number
+  ): Map<string, { x: number; y: number; parentId: string }> {
     const newIds: string[] = []
-    const newOriginals = new Map<string, Vector>()
+    const newOriginals = new Map<string, { x: number; y: number; parentId: string }>()
     for (const id of store.state.selectedIds) {
       const src = store.graph.getNode(id)
       if (!src) continue
@@ -370,7 +373,12 @@ export function useCanvasInput(
         rotation: src.rotation
       })
       newIds.push(newId)
-      newOriginals.set(newId, { x: src.x, y: src.y })
+      const newNode = store.graph.getNode(newId)
+      newOriginals.set(newId, {
+        x: src.x,
+        y: src.y,
+        parentId: newNode?.parentId ?? store.state.currentPageId
+      })
     }
     store.select(newIds)
     drag.value = {
@@ -422,10 +430,11 @@ export function useCanvasInput(
       store.select([hit.id], true)
     }
 
-    const originals = new Map<string, Vector>()
+    const originals = new Map<string, { x: number; y: number; parentId: string }>()
     for (const id of store.state.selectedIds) {
       const n = store.graph.getNode(id)
-      if (n) originals.set(id, { x: n.x, y: n.y })
+      if (n)
+        originals.set(id, { x: n.x, y: n.y, parentId: n.parentId ?? store.state.currentPageId })
     }
 
     if (e.altKey && store.state.selectedIds.size > 0) {
@@ -896,14 +905,13 @@ export function useCanvasInput(
     })
 
     if (moved) {
-      store.commitMove(d.originals)
-
       const dropId = store.state.dropTargetId
       if (dropId) {
         store.reparentNodes([...store.state.selectedIds], dropId)
       } else {
         reparentOutsideNodes()
       }
+      store.commitMoveWithReparent(d.originals)
     }
     store.setDropTarget(null)
   }
@@ -1268,8 +1276,12 @@ export function useCanvasInput(
   useEventListener(canvasRef, 'mousemove', onMouseMove)
   useEventListener(canvasRef, 'mouseup', onMouseUp)
   useEventListener(canvasRef, 'mouseleave', () => {
-    onMouseUp()
-    store.setHoveredNode(null)
+    if (!drag.value) {
+      store.setHoveredNode(null)
+    }
+  })
+  useEventListener(window, 'mouseup', () => {
+    if (drag.value) onMouseUp()
   })
   useEventListener(canvasRef, 'wheel', onWheel, { passive: false })
   useEventListener(canvasRef, 'touchstart', onTouchStart, { passive: false })

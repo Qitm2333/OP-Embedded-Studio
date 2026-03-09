@@ -2,7 +2,8 @@ import type { ToolDef } from './schema'
 
 import {
   getSelection, getPageTree, getNode, findNodes, queryNodes, getComponents,
-  listPages, switchPage, getCurrentPage, pageBounds, selectNodes, listFonts
+  listPages, switchPage, getCurrentPage, pageBounds, selectNodes, listFonts,
+  getJsx, diffJsx
 } from './read'
 import {
   createShape, render, createComponent, createInstance,
@@ -34,6 +35,7 @@ import {
   analyzeColors, analyzeTypography, analyzeSpacing, analyzeClusters,
   diffCreate, diffShow, evalCode
 } from './analyze'
+import { describe } from './describe'
 
 export const ALL_TOOLS: ToolDef[] = [
   // Read
@@ -49,6 +51,8 @@ export const ALL_TOOLS: ToolDef[] = [
   pageBounds,
   selectNodes,
   listFonts,
+  getJsx,
+  diffJsx,
   // Create
   createShape,
   render,
@@ -130,6 +134,7 @@ export const ALL_TOOLS: ToolDef[] = [
   analyzeClusters,
   diffCreate,
   diffShow,
+  describe,
   // Eval
   evalCode
 ]

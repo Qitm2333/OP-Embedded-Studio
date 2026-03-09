@@ -2,18 +2,23 @@
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport } from 'reka-ui'
 import { computed, markRaw, nextTick, ref, watch } from 'vue'
 
-import ProviderSetup from '@/components/chat/ProviderSetup.vue'
+import { copyChatLog } from '@/ai/chat-debug'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
+import ProviderSetup from '@/components/chat/ProviderSetup.vue'
 import { useAIChat } from '@/composables/use-chat'
 
 import type { Chat } from '@ai-sdk/vue'
 import type { UIMessage } from 'ai'
 
-const { isConfigured, ensureChat } = useAIChat()
+const IS_DEV = import.meta.env.DEV
 
-const chat = ref<Chat<UIMessage> | null>(null)
+const { isConfigured, ensureChat, resetChat } = useAIChat()
+
+const existing = ensureChat()
+const chat = ref<Chat<UIMessage> | null>(existing ? markRaw(existing) : null)
 const messagesEnd = ref<HTMLDivElement>()
+const debugCopied = ref(false)
 
 const messages = computed(() => chat.value?.messages ?? [])
 const status = computed(() => chat.value?.status ?? 'ready')
@@ -38,6 +43,19 @@ function handleSubmit(text: string) {
 
 function handleStop() {
   chat.value?.stop()
+}
+
+async function handleCopyDebug() {
+  await copyChatLog(messages.value)
+  debugCopied.value = true
+  setTimeout(() => {
+    debugCopied.value = false
+  }, 1500)
+}
+
+function handleClearChat() {
+  chat.value = null
+  resetChat()
 }
 </script>
 
@@ -96,6 +114,28 @@ function handleStop() {
           <ScrollAreaThumb class="relative flex-1 rounded-full bg-muted/30" />
         </ScrollAreaScrollbar>
       </ScrollAreaRoot>
+
+      <!-- Debug toolbar (dev only) -->
+      <div
+        v-if="IS_DEV && messages.length > 0"
+        class="flex shrink-0 items-center gap-1 border-t border-border px-3 py-1"
+      >
+        <button
+          class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
+          @click="handleCopyDebug"
+        >
+          <icon-lucide-clipboard-copy v-if="!debugCopied" class="size-3" />
+          <icon-lucide-check v-else class="size-3 text-green-400" />
+          {{ debugCopied ? 'Copied' : 'Copy log' }}
+        </button>
+        <button
+          class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
+          @click="handleClearChat"
+        >
+          <icon-lucide-trash-2 class="size-3" />
+          Clear
+        </button>
+      </div>
 
       <ChatInput :status="status" @submit="handleSubmit" @stop="handleStop" />
     </template>

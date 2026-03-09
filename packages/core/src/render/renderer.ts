@@ -34,11 +34,11 @@ const ALIGN_MAP: Record<string, 'MIN' | 'MAX' | 'CENTER' | 'SPACE_BETWEEN'> = {
   between: 'SPACE_BETWEEN'
 }
 
-const COUNTER_ALIGN_MAP: Record<string, 'MIN' | 'MAX' | 'CENTER'> = {
+const COUNTER_ALIGN_MAP: Record<string, 'MIN' | 'MAX' | 'CENTER' | 'STRETCH'> = {
   start: 'MIN',
   end: 'MAX',
   center: 'CENTER',
-  stretch: 'MIN'
+  stretch: 'STRETCH'
 }
 
 const TEXT_ALIGN_MAP: Record<string, SceneNode['textAlignHorizontal']> = {
@@ -102,8 +102,11 @@ function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): SceneN
   const nodeType = TYPE_MAP[tree.type]
   if (!nodeType) throw new Error(`Unknown element: <${tree.type}>`)
 
+  const parent = graph.getNode(parentId)
+  const parentLayout = parent?.layoutMode ?? 'NONE'
+
   const isText = nodeType === 'TEXT'
-  const overrides = propsToOverrides(tree.props, isText)
+  const overrides = propsToOverrides(tree.props, isText, parentLayout)
 
   if (isText) {
     const textContent = tree.children.filter((c): c is string => typeof c === 'string').join('')
@@ -124,19 +127,26 @@ function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): SceneN
 
 function applySizeOverrides(
   props: Record<string, unknown>,
-  o: Partial<SceneNode>
+  o: Partial<SceneNode>,
+  parentLayout: SceneNode['layoutMode']
 ): { w: unknown; h: unknown } {
   const w = props.w ?? props.width
   const h = props.h ?? props.height
   if (typeof w === 'number') o.width = w
   if (typeof h === 'number') o.height = h
 
+  const isParentRow = parentLayout === 'HORIZONTAL'
+  const isParentCol = parentLayout === 'VERTICAL'
+
   if (w === 'fill') {
-    o.layoutGrow = 1
-    o.layoutAlignSelf = 'STRETCH'
+    if (isParentRow) o.layoutGrow = 1
+    else if (isParentCol) o.layoutAlignSelf = 'STRETCH'
+    else { o.layoutGrow = 1; o.layoutAlignSelf = 'STRETCH' }
   }
   if (h === 'fill') {
-    o.layoutAlignSelf = 'STRETCH'
+    if (isParentCol) o.layoutGrow = 1
+    else if (isParentRow) o.layoutAlignSelf = 'STRETCH'
+    else o.layoutAlignSelf = 'STRETCH'
   }
 
   if (props.x !== undefined) o.x = props.x as number
@@ -206,23 +216,45 @@ function applyPaddingOverrides(props: Record<string, unknown>, o: Partial<SceneN
   if (props.pl !== undefined) o.paddingLeft = props.pl as number
 }
 
+const PADDING_KEYS = ['p', 'padding', 'px', 'py', 'pt', 'pr', 'pb', 'pl'] as const
+
+function hasPaddingProps(props: Record<string, unknown>): boolean {
+  return PADDING_KEYS.some((k) => props[k] !== undefined)
+}
+
+function applyAutoLayoutSizing(
+  o: Partial<SceneNode>,
+  props: Record<string, unknown>,
+  w: unknown,
+  h: unknown
+): void {
+  const dir = (props.flex as string | undefined) ?? 'col'
+  const isVertical = dir === 'col' || dir === 'column'
+  o.layoutMode = (isVertical ? 'VERTICAL' : 'HORIZONTAL') as LayoutMode
+
+  o.primaryAxisSizing = 'HUG'
+  o.counterAxisSizing = 'HUG'
+
+  const primaryDim = isVertical ? h : w
+  const counterDim = isVertical ? w : h
+
+  if (typeof primaryDim === 'number') o.primaryAxisSizing = 'FIXED'
+  if (typeof counterDim === 'number') o.counterAxisSizing = 'FIXED'
+  if (primaryDim === 'hug') o.primaryAxisSizing = 'HUG'
+  if (counterDim === 'hug') o.counterAxisSizing = 'HUG'
+}
+
 function applyLayoutOverrides(
   props: Record<string, unknown>,
   o: Partial<SceneNode>,
   w: unknown,
-  h: unknown
+  h: unknown,
+  isText: boolean
 ): void {
-  if (props.flex !== undefined) {
-    const dir = props.flex as string
-    o.layoutMode = (dir === 'col' || dir === 'column' ? 'VERTICAL' : 'HORIZONTAL') as LayoutMode
+  const needsAutoLayout = props.flex !== undefined || (!isText && hasPaddingProps(props))
 
-    o.primaryAxisSizing = 'HUG'
-    o.counterAxisSizing = 'HUG'
-
-    if (typeof w === 'number') o.primaryAxisSizing = 'FIXED'
-    if (typeof h === 'number') o.counterAxisSizing = 'FIXED'
-    if (w === 'hug') o.primaryAxisSizing = 'HUG'
-    if (h === 'hug') o.counterAxisSizing = 'HUG'
+  if (needsAutoLayout) {
+    applyAutoLayoutSizing(o, props, w, h)
   }
 
   if (props.gap !== undefined) o.itemSpacing = props.gap as number
@@ -269,9 +301,12 @@ function applyTextOverrides(props: Record<string, unknown>, o: Partial<SceneNode
     o.textAlignHorizontal = TEXT_ALIGN_MAP[props.textAlign as string] ?? 'LEFT'
   }
 
-  o.textAutoResize = props.textAutoResize
-    ? (TEXT_AUTO_RESIZE_MAP[props.textAutoResize as string] ?? 'NONE')
-    : 'HEIGHT'
+  const hasExplicitWidth = (props.w ?? props.width) !== undefined
+  if (props.textAutoResize) {
+    o.textAutoResize = TEXT_AUTO_RESIZE_MAP[props.textAutoResize as string] ?? 'NONE'
+  } else {
+    o.textAutoResize = hasExplicitWidth ? 'HEIGHT' : 'WIDTH_AND_HEIGHT'
+  }
 }
 
 function applyShapeAndEffectOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
@@ -312,14 +347,18 @@ function applyShapeAndEffectOverrides(props: Record<string, unknown>, o: Partial
   }
 }
 
-function propsToOverrides(props: Record<string, unknown>, isText: boolean): Partial<SceneNode> {
+function propsToOverrides(
+  props: Record<string, unknown>,
+  isText: boolean,
+  parentLayout: SceneNode['layoutMode']
+): Partial<SceneNode> {
   const o: Partial<SceneNode> = {}
 
   if (props.name) o.name = props.name as string
 
-  const { w, h } = applySizeOverrides(props, o)
+  const { w, h } = applySizeOverrides(props, o, parentLayout)
   applyVisualOverrides(props, o)
-  applyLayoutOverrides(props, o, w, h)
+  applyLayoutOverrides(props, o, w, h, isText)
   if (isText) applyTextOverrides(props, o)
   applyShapeAndEffectOverrides(props, o)
 

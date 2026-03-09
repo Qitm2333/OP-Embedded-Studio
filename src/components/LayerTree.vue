@@ -176,8 +176,7 @@ function onPointerDown(e: PointerEvent, nodeId: string) {
     if (didMove && dropTarget.value && dragNodeId.value) {
       const { parentId, index } = dropTarget.value
       if (parentId !== dragNodeId.value && !store.graph.isDescendant(parentId, dragNodeId.value)) {
-        store.graph.reorderChild(dragNodeId.value, parentId, index)
-        store.requestRender()
+        store.reorderChildWithUndo(dragNodeId.value, parentId, index)
       }
     } else if (!didMove && dragNodeId.value) {
       store.select([dragNodeId.value])

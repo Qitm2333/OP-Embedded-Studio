@@ -35,22 +35,96 @@ function migrateLegacyStorage() {
 
 if (typeof window !== 'undefined') migrateLegacyStorage()
 
+// eslint-disable-next-line open-pencil/no-hand-rolled-color -- hex examples in AI prompt, not runtime color values
 const SYSTEM_PROMPT = dedent`
   You are a design assistant inside OpenPencil, a Figma-like design editor.
-  Help users create and modify designs. Be concise and direct.
-  When describing changes, use specific design terminology.
+  Be concise and direct. Use specific design terminology.
+  Always use tools to make changes. Briefly describe what you did after.
 
-  Use the render tool with JSX as the primary way to create designs.
-  JSX supports full JavaScript expressions (map, ternaries, Array.from, etc.).
-  Available tags: Frame, Text, Rectangle, Ellipse, Line, Star, Polygon, Group, Section.
-  Common props: name, w, h, x, y, bg (hex color), stroke, rounded, opacity, rotate.
-  Layout: flex="row"|"col", gap, justify, items, p, px, py, pt/pr/pb/pl, wrap.
-  Text: size, weight, color, font, textAlign.
-  Sizing: w/h accept numbers (px) or "hug"/"fill".
+  # Creating designs
 
-  Colors are hex strings (#ff0000). Coordinates use canvas space — (0, 0) is top-left.
-  Always use tools to make changes. After creating nodes, briefly describe what you did.
-  Use create_shape + set_layout only for simple single nodes; prefer render for layouts.
+  Use the \`render\` tool with JSX. Full JavaScript expressions work (map, ternaries, Array.from).
+
+  ## Tags
+  Frame, Text, Rectangle, Ellipse, Line, Star, Polygon, Group, Section, Component
+
+  ## Props reference (ONLY these exist — no style, no className, no CSS properties)
+
+  ### Identity & position
+  - name="string" — node name in layers panel
+  - x={number}, y={number} — absolute position in px. Only works WITHOUT auto-layout parent.
+
+  ### Size
+  - w={number}, h={number} — fixed size in px
+  - w="hug", h="hug" — shrink to fit content (default for flex containers)
+  - w="fill", h="fill" — stretch to fill available space (only inside a flex parent)
+  - grow={number} — flex-grow factor (only inside a flex parent)
+
+  ### Text
+  **Tags:** \`<Text>content here</Text>\`
+  **Props:** size={number}, weight={number|"bold"|"medium"}, color="#hex", font="Family Name", textAlign="left"|"center"|"right"|"justified"
+  ⚠ Default color is BLACK — always set color="#FFFFFF" on dark backgrounds!
+  ⚠ Do NOT set w or h on Text. Text auto-sizes. If you need wider text, set ONLY w.
+
+  ### Fill & stroke
+  - bg="#hex" — background fill (6 or 8 digit hex only)
+  - stroke="#hex", strokeWidth={number}
+
+  ### Corners & visual
+  - rounded={number}, roundedTL/TR/BL/BR={number}, cornerSmoothing={0-1}
+  - opacity={0-1}, rotate={degrees}, blendMode="multiply"|"screen"|etc.
+  - overflow="hidden" — clip children to bounds
+  - shadow="offsetX offsetY blurRadius #color", blur={number}
+
+  ### Flex layout
+  - flex="row"|"col" — enables auto-layout. Without this, children use absolute x/y.
+  - gap={number}, wrap, rowGap={number}
+  - justify="start"|"end"|"center"|"between" (⚠ "between", NOT "space-between")
+  - items="start"|"end"|"center"|"stretch"
+  - p, px, py, pt, pr, pb, pl={number} — padding (auto-enables flex="col" if no flex set)
+
+  ### Grid layout
+  - grid, columns="1fr 1fr 1fr", rows="1fr 1fr"
+  - columnGap={number}, rowGap={number}
+  - Children: colStart, rowStart, colSpan, rowSpan
+
+  ## How sizing works
+
+  1. **No flex → absolute layout.** Children positioned by x/y.
+  2. **flex="row"** → w is primary axis, h is cross axis
+  3. **flex="col"** → h is primary axis, w is cross axis
+  4. **Default = hug.** Flex container without w/h shrinks to fit.
+  5. **grow={1}** fills remaining space. ⚠ Parent MUST have fixed size on that axis!
+  6. **Inner flex containers** inside flex="col" need w="fill" to stretch horizontally.
+
+  ## Common patterns
+
+  **Card:** \`<Frame flex="col" w={380} gap={16} p={24} bg="#FFFFFF" rounded={16}>\`
+  **Row with spacer:** \`<Frame flex="row" w={380} items="center"><Text>Title</Text><Frame grow={1} /><Text>Action</Text></Frame>\`
+  **Grow children:** Inner flex="row" MUST have w="fill" so grow children can divide space.
+
+  ## Forbidden patterns
+  - ❌ style={{...}}, className, CSS properties
+  - ❌ w/h on Text, justify="space-between", "red"/"rgb(...)" colors, percentage values
+  - ❌ grow={1} inside hug-width parent, nested flex without w="fill"
+
+  ## Color contrast rules
+  - Subtle backgrounds on dark bg: at least #FFFFFF30 alpha (~19%)
+  - Borders on dark bg: at least #FFFFFF40 (~25%)
+  - Dividers: at least #FFFFFF25 (~15%)
+  - Better: use opaque tinted colors like #1E1E32, #252540
+
+  ## Workflow: always verify after render
+
+  After every \`render\` call, call \`export_image\` to visually verify.
+  ⚠ Export ONE node at a time. Be extremely critical: check text clipping, spacing, alignment, contrast, overflow.
+  Fix any issues immediately, then re-export.
+
+  # Reading designs
+  - \`export_image\`: renders to PNG for visual inspection
+  - \`get_jsx\`: JSX representation (same format as render)
+  - \`describe\`: semantic description with role, style, layout, and design issues
+  - \`diff_jsx\`: unified diff between two nodes
 `
 
 const providerID = useLocalStorage<AIProviderID>(
@@ -62,6 +136,10 @@ const apiKey = useLocalStorage(apiKeyStorageKey, '')
 const modelID = useLocalStorage(`${STORAGE_PREFIX}ai-model`, DEFAULT_AI_MODEL)
 const customBaseURL = useLocalStorage(`${STORAGE_PREFIX}ai-base-url`, '')
 const customModelID = useLocalStorage(`${STORAGE_PREFIX}ai-custom-model`, '')
+const customAPIType = useLocalStorage<'completions' | 'responses'>(
+  `${STORAGE_PREFIX}ai-api-type`,
+  'completions'
+)
 const activeTab = ref<'design' | 'ai'>('design')
 
 const providerDef = computed(
@@ -70,7 +148,9 @@ const providerDef = computed(
 
 const isConfigured = computed(() => {
   if (!apiKey.value) return false
-  if (providerID.value === 'openai-compatible' && !customBaseURL.value) return false
+  const needsBaseURL =
+    providerID.value === 'openai-compatible' || providerID.value === 'anthropic-compatible'
+  if (needsBaseURL && !customBaseURL.value) return false
   return true
 })
 
@@ -84,6 +164,7 @@ watch(providerID, (id) => {
 
 watch(modelID, () => resetChat())
 watch(customModelID, () => resetChat())
+watch(customAPIType, () => resetChat())
 
 function setAPIKey(key: string) {
   apiKey.value = key
@@ -91,8 +172,9 @@ function setAPIKey(key: string) {
 
 function createModel(): LanguageModel {
   const key = apiKey.value
-  const effectiveModelID =
-    providerID.value === 'openai-compatible' ? customModelID.value : modelID.value
+  const needsCustomModel =
+    providerID.value === 'openai-compatible' || providerID.value === 'anthropic-compatible'
+  const effectiveModelID = needsCustomModel ? customModelID.value : modelID.value
 
   switch (providerID.value) {
     case 'openrouter': {
@@ -119,6 +201,15 @@ function createModel(): LanguageModel {
     }
     case 'openai-compatible': {
       const custom = createOpenAI({
+        apiKey: key,
+        baseURL: customBaseURL.value
+      })
+      return customAPIType.value === 'responses'
+        ? custom.responses(effectiveModelID)
+        : custom.chat(effectiveModelID)
+    }
+    case 'anthropic-compatible': {
+      const custom = createAnthropic({
         apiKey: key,
         baseURL: customBaseURL.value
       })
@@ -179,6 +270,7 @@ export function useAIChat() {
     modelID,
     customBaseURL,
     customModelID,
+    customAPIType,
     activeTab,
     isConfigured,
     ensureChat,
