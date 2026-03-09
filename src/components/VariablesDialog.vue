@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, h } from 'vue'
+import { ref, computed, watch, nextTick, h, type Component } from 'vue'
 import {
   DialogRoot,
   DialogPortal,
@@ -273,14 +273,13 @@ const columns = computed<ColumnDef<Variable>[]>(() => {
     cell: ({ row }) => {
       const v = row.original
       const iconClass = 'size-3.5 shrink-0 text-muted'
-      const iconComponent =
-        v.type === 'COLOR'
-          ? IconPalette
-          : v.type === 'FLOAT'
-            ? IconHash
-            : v.type === 'STRING'
-              ? IconType
-              : IconToggleLeft
+      const VARIABLE_TYPE_ICONS: Record<string, Component> = {
+        COLOR: IconPalette,
+        FLOAT: IconHash,
+        STRING: IconType,
+        BOOLEAN: IconToggleLeft
+      }
+      const iconComponent = VARIABLE_TYPE_ICONS[v.type] ?? IconToggleLeft
       const icon = h(iconComponent, { class: iconClass })
 
       return h('div', { class: 'flex items-center gap-2' }, [

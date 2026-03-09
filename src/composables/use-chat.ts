@@ -126,6 +126,10 @@ function createModel(): LanguageModel {
       })
       return custom(effectiveModelID)
     }
+    default: {
+      const _exhaustive: never = providerID.value
+      throw new Error(`Unknown provider: ${String(_exhaustive)}`)
+    }
   }
 }
 

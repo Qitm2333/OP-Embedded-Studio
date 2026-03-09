@@ -49,7 +49,7 @@ export async function openFileDialog() {
 
 const store = useEditorStore()
 
-const MENU_ACTIONS: Record<string, () => void> = {
+const MENU_ACTIONS: Partial<Record<string, () => void>> = {
   new: () => createTab(),
   open: () => void openFileDialog(),
   close: () => {

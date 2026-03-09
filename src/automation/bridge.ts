@@ -156,7 +156,7 @@ export function startAutomationBridge(server: ViteServer) {
     if (provided !== authToken) {
       return c.json({ error: 'Unauthorized' }, 401)
     }
-    await next()
+    return next()
   })
 
   app.post('/rpc', async (c) => {

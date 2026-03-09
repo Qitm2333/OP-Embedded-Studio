@@ -19,13 +19,19 @@
       }]
     }],
 
+    "no-empty-function": "error",
+
     "typescript/no-explicit-any": "warn",
     "typescript/no-non-null-assertion": "warn",
     "typescript/no-floating-promises": "error",
     "typescript/no-misused-promises": "error",
     "typescript/consistent-type-imports": "error",
+    "typescript/consistent-return": "error",
+    "typescript/no-unnecessary-condition": "error",
     "typescript/no-unnecessary-type-assertion": "error",
+    "typescript/no-unnecessary-type-parameters": "error",
     "typescript/prefer-optional-chain": "error",
+    "typescript/prefer-for-of": "error",
 
     "import/no-cycle": "error",
     "import/no-self-import": "error",
@@ -34,6 +40,8 @@
 
     "unicorn/no-instanceof-array": "error",
     "unicorn/no-typeof-undefined": "error",
+    "unicorn/no-nested-ternary": "error",
+    "unicorn/consistent-existence-index-check": "error",
 
     "vue/no-arrow-functions-in-watch": "error",
     "vue/no-deprecated-destroyed-lifecycle": "error",

@@ -13,7 +13,7 @@ export function useMultiProps() {
   const nodes = computed(() => store.selectedNodes.value)
   const isMulti = computed(() => nodes.value.length > 1)
   const active = computed(() => node.value || isMulti.value)
-  const activeNode = computed(() => node.value ?? nodes.value[0] ?? null)
+  const activeNode = computed(() => node.value ?? (nodes.value[0] as SceneNode | undefined) ?? null)
 
   function merged<K extends keyof SceneNode>(key: K): MixedValue<SceneNode[K]> {
     const all = nodes.value
@@ -36,7 +36,7 @@ export function useMultiProps() {
     store.requestRender()
   }
 
-  function isArrayMixed<K extends keyof SceneNode>(key: K): boolean {
+  function isArrayMixed(key: keyof SceneNode): boolean {
     const all = nodes.value
     if (all.length <= 1) return false
     const first = JSON.stringify(all[0][key])

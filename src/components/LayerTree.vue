@@ -117,7 +117,7 @@ function onLayerRightClick(e: MouseEvent) {
 
 function toggleExpand(id: string) {
   const idx = expanded.value.indexOf(id)
-  if (idx >= 0) {
+  if (idx !== -1) {
     expanded.value = expanded.value.filter((e) => e !== id)
   } else {
     expanded.value = [...expanded.value, id]

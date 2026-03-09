@@ -27,7 +27,7 @@ const hasCornerRadius = computed(() => {
 
 const visibilityState = computed(() => {
   const v = merged('visible')
-  return v === MIXED ? 'mixed' : v ? 'visible' : 'hidden'
+  return v === MIXED ? 'mixed' : (v ? 'visible' : 'hidden')
 })
 
 function toggleVisibility() {

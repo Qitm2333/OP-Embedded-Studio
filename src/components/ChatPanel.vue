@@ -31,7 +31,7 @@ function handleSubmit(text: string) {
     const c = ensureChat()
     if (c) chat.value = markRaw(c)
   }
-  chat.value?.sendMessage({ text }).catch(() => {})
+  chat.value?.sendMessage({ text }).catch(() => { /* user-facing error handled by UI */ })
 }
 
 function handleStop() {

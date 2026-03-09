@@ -31,6 +31,7 @@ async function initWebGPU(ck: CanvasKit): Promise<WebGPUContext | null> {
   const adapter = await navigator.gpu.requestAdapter()
   if (!adapter) return null
   const device = await adapter.requestDevice()
+  // oxlint-disable-next-line typescript/no-unnecessary-condition -- WebGPU CanvasKit API may not exist at runtime
   const deviceContext = asWebGPU(ck).MakeGPUDeviceContext?.(device)
   if (!deviceContext) return null
   return { device, deviceContext }
@@ -51,6 +52,7 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
     if (!canvas || destroyed) return
 
     ck = await getCanvasKit()
+    // oxlint-disable-next-line typescript/no-unnecessary-condition -- async race: destroyed may change during await
     if (destroyed) return
 
     if (getGpuBackend() === 'webgpu') {

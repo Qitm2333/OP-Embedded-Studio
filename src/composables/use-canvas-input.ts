@@ -494,7 +494,7 @@ export function useCanvasInput(
 
       // Check proximity to first vertex for closing
       const first = store.state.penState.vertices[0]
-      if (store.state.penState.vertices.length > 2 && first) {
+      if (store.state.penState.vertices.length > 2) {
         const dist = Math.hypot(cx - first.x, cy - first.y)
         store.penSetClosingToFirst(dist < PEN_CLOSE_THRESHOLD)
       }
@@ -746,26 +746,24 @@ export function useCanvasInput(
       return
     }
 
-    if (d.type === 'marquee') {
-      const minX = Math.min(d.startX, cx)
-      const minY = Math.min(d.startY, cy)
-      const maxX = Math.max(d.startX, cx)
-      const maxY = Math.max(d.startY, cy)
+    const minX = Math.min(d.startX, cx)
+    const minY = Math.min(d.startY, cy)
+    const maxX = Math.max(d.startX, cx)
+    const maxY = Math.max(d.startY, cy)
 
-      const hits: string[] = []
-      for (const node of store.graph.getChildren(store.state.currentPageId)) {
-        if (
-          node.x + node.width > minX &&
-          node.x < maxX &&
-          node.y + node.height > minY &&
-          node.y < maxY
-        ) {
-          hits.push(node.id)
-        }
+    const hits: string[] = []
+    for (const node of store.graph.getChildren(store.state.currentPageId)) {
+      if (
+        node.x + node.width > minX &&
+        node.x < maxX &&
+        node.y + node.height > minY &&
+        node.y < maxY
+      ) {
+        hits.push(node.id)
       }
-      store.select(hits)
-      store.setMarquee({ x: minX, y: minY, width: maxX - minX, height: maxY - minY })
     }
+    store.select(hits)
+    store.setMarquee({ x: minX, y: minY, width: maxX - minX, height: maxY - minY })
   }
 
   function applyResize(d: DragResize, cx: number, cy: number, constrain: boolean) {
@@ -1067,9 +1065,9 @@ export function useCanvasInput(
     const allChildren = store.graph.getChildren(parent.id)
     let realIndex = 0
     let filteredCount = 0
-    for (let i = 0; i < allChildren.length; i++) {
-      if (store.state.selectedIds.has(allChildren[i].id)) continue
-      if (allChildren[i].layoutPositioning === 'ABSOLUTE') {
+    for (const child of allChildren) {
+      if (store.state.selectedIds.has(child.id)) continue
+      if (child.layoutPositioning === 'ABSOLUTE') {
         realIndex++
         continue
       }
@@ -1272,8 +1270,8 @@ export function useCanvasInput(
       const rect = canvas.getBoundingClientRect()
       pendingGesture = {
         scale: ge.scale,
-        sx: (ge.clientX ?? rect.width / 2) - rect.left,
-        sy: (ge.clientY ?? rect.height / 2) - rect.top
+        sx: ge.clientX - rect.left,
+        sy: ge.clientY - rect.top
       }
       if (!gestureRafId) {
         gestureRafId = requestAnimationFrame(flushGesture)

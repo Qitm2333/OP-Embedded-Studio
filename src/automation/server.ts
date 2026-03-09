@@ -39,10 +39,10 @@ export function connectAutomation(getStore: () => EditorStore) {
     const store = getStore()
 
     if (command === 'eval') {
-      const code = (args as { code?: string })?.code
+      const code = (args as { code?: string }).code
       if (!code) throw new Error('Missing "code" in args')
       const figma = makeFigma()
-      const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
+      const AsyncFunction = Object.getPrototypeOf(async function () { /* noop */ }).constructor
       const wrappedCode = code.trim().startsWith('return')
         ? code
         : `return (async () => { ${code} })()`
@@ -53,14 +53,14 @@ export function connectAutomation(getStore: () => EditorStore) {
     }
 
     if (command === 'tool') {
-      const toolName = (args as { name?: string })?.name
-      const toolArgs = (args as { args?: Record<string, unknown> })?.args ?? {}
+      const toolName = (args as { name?: string }).name
+      const toolArgs = (args as { args?: Record<string, unknown> }).args ?? {}
       if (!toolName) throw new Error('Missing "name" in args')
 
       if (toolName === 'render' && toolArgs.tree) {
         const tree = toolArgs.tree as Parameters<typeof renderTreeNode>[1]
         const result = renderTreeNode(store.graph, tree, {
-          parentId: (toolArgs.parent_id as string) ?? store.state.currentPageId,
+          parentId: (toolArgs.parent_id as string | undefined) ?? store.state.currentPageId,
           x: toolArgs.x as number | undefined,
           y: toolArgs.y as number | undefined
         })
@@ -96,7 +96,7 @@ export function connectAutomation(getStore: () => EditorStore) {
       )
       if (!data) throw new Error('Export failed')
       let binary = ''
-      for (let i = 0; i < data.length; i++) binary += String.fromCharCode(data[i])
+      for (const byte of data) binary += String.fromCharCode(byte)
       const base64 = btoa(binary)
       return {
         ok: true,
@@ -113,7 +113,7 @@ export function connectAutomation(getStore: () => EditorStore) {
         nodeIds.length === 1
           ? sceneNodeToJSX(nodeIds[0], store.graph, style)
           : selectionToJSX(nodeIds, store.graph, style)
-      return { ok: true, result: { jsx: jsx ?? '' } }
+      return { ok: true, result: { jsx } }
     }
 
     const result = executeRpcCommand(store.graph, command, args ?? {})

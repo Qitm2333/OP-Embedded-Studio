@@ -85,7 +85,7 @@ export const TOOLS: ToolDef[] = [
   { key: 'HAND', label: 'Hand', shortcut: 'H' }
 ]
 
-export const TOOL_SHORTCUTS: Record<string, Tool> = {
+export const TOOL_SHORTCUTS: Partial<Record<string, Tool>> = {
   v: 'SELECT',
   f: 'FRAME',
   s: 'SECTION',
@@ -612,13 +612,14 @@ export function createEditorStore() {
       state.documentName = file.name.replace(/\.fig$/i, '')
       downloadName = file.name
       state.selectedIds = new Set()
-      const firstPage = graph.getPages()[0]
-      state.currentPageId = firstPage?.id ?? graph.rootId
+      const firstPage = graph.getPages()[0] as SceneNode | undefined
+      const pageId = firstPage?.id ?? graph.rootId
+      state.currentPageId = pageId
       state.panX = 0
       state.panY = 0
       state.zoom = 1
       state.pageColor = { ...CANVAS_BG_COLOR }
-      await loadFontsForNodes(graph.getChildren(firstPage?.id ?? graph.rootId).map((n) => n.id))
+      await loadFontsForNodes(graph.getChildren(pageId).map((n) => n.id))
       requestRender()
       void startWatchingFile()
     } catch (e) {
@@ -1091,7 +1092,7 @@ export function createEditorStore() {
     const parentAbs = isTopLevel(parentId) ? { x: 0, y: 0 } : graph.getAbsolutePosition(parentId)
 
     const direction: LayoutMode =
-      nodes.length <= 1 ? 'VERTICAL' : maxX - minX >= maxY - minY ? 'HORIZONTAL' : 'VERTICAL'
+      nodes.length <= 1 ? 'VERTICAL' : (maxX - minX >= maxY - minY ? 'HORIZONTAL' : 'VERTICAL')
 
     const frame = graph.createNode('FRAME', parentId, {
       name: 'Frame',
@@ -2085,8 +2086,8 @@ export function createEditorStore() {
     const w = maxX - minX + padding * 2
     const h = maxY - minY + padding * 2
 
-    const viewW = window.innerWidth ?? 800
-    const viewH = window.innerHeight ?? 600
+    const viewW = window.innerWidth
+    const viewH = window.innerHeight
     const zoom = Math.min(viewW / w, viewH / h, 1)
 
     state.zoom = zoom
@@ -2114,8 +2115,8 @@ export function createEditorStore() {
   }
 
   function zoomTo100() {
-    const viewW = window.innerWidth ?? 800
-    const viewH = window.innerHeight ?? 600
+    const viewW = window.innerWidth
+    const viewH = window.innerHeight
     const centerX = (-state.panX + viewW / 2) / state.zoom
     const centerY = (-state.panY + viewH / 2) / state.zoom
 
