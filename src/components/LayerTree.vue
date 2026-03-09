@@ -178,6 +178,57 @@ function cleanup() {
   stopUp?.()
 }
 
+interface InsertPosition {
+  parentId: string
+  index: number
+  y: number
+  depth: number
+}
+
+function resolveInsertPosition(
+  row: HTMLElement,
+  rowId: string,
+  rect: DOMRect,
+  listRect: DOMRect,
+  scrollTop: number,
+  edge: 'before' | 'after'
+): InsertPosition | null {
+  const rowNode = store.graph.getNode(rowId)
+  if (!rowNode) return null
+  const parentId = rowNode.parentId ?? store.state.currentPageId
+  const parent = store.graph.getNode(parentId)
+  if (!parent) return null
+
+  const idx = parent.childIds.indexOf(rowId)
+  const level = parseInt(row.dataset.level ?? '0')
+
+  if (edge === 'before') {
+    return {
+      parentId,
+      index: Math.max(0, idx),
+      y: rect.top - listRect.top + scrollTop,
+      depth: level
+    }
+  }
+  return {
+    parentId,
+    index: idx + 1,
+    y: rect.bottom - listRect.top + scrollTop,
+    depth: level
+  }
+}
+
+type DropZone = 'top' | 'mid-container' | 'bottom'
+
+function classifyDropZone(mouseY: number, rect: DOMRect, isContainer: boolean): DropZone {
+  const topZone = rect.top + rect.height * 0.25
+  const bottomZone = rect.top + rect.height * 0.75
+
+  if (mouseY > topZone && mouseY < bottomZone && isContainer) return 'mid-container'
+  if (mouseY <= rect.top + rect.height / 2) return 'top'
+  return 'bottom'
+}
+
 function updateDropTarget(ev: PointerEvent) {
   const list = listRef.value
   if (!list || !dragNodeId.value) return
@@ -186,58 +237,33 @@ function updateDropTarget(ev: PointerEvent) {
   const listRect = list.getBoundingClientRect()
   const mouseY = ev.clientY
 
-  let bestInsertBefore: { parentId: string; index: number; y: number; depth: number } | null = null
+  let bestInsertBefore: InsertPosition | null = null
   let bestInto: { nodeId: string } | null = null
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
     const rowId = row.dataset.nodeId
-    if (!rowId) continue
-    if (rowId === dragNodeId.value) continue
-
-    const rect = row.getBoundingClientRect()
-    const rowMid = rect.top + rect.height / 2
-    const topZone = rect.top + rect.height * 0.25
-    const bottomZone = rect.top + rect.height * 0.75
+    if (!rowId || rowId === dragNodeId.value) continue
 
     const rowNode = store.graph.getNode(rowId)
     if (!rowNode) continue
 
-    if (mouseY > topZone && mouseY < bottomZone && store.graph.isContainer(rowId)) {
+    const rect = row.getBoundingClientRect()
+    const zone = classifyDropZone(mouseY, rect, store.graph.isContainer(rowId))
+
+    if (zone === 'mid-container') {
       bestInto = { nodeId: rowId }
       bestInsertBefore = null
       break
     }
 
-    if (mouseY <= rowMid) {
-      const parentId = rowNode.parentId ?? store.state.currentPageId
-      const parent = store.graph.getNode(parentId)
-      if (parent) {
-        const idx = parent.childIds.indexOf(rowId)
-        const level = parseInt(row.dataset.level ?? '0')
-        bestInsertBefore = {
-          parentId,
-          index: Math.max(0, idx),
-          y: rect.top - listRect.top + list.scrollTop,
-          depth: level
-        }
-      }
+    if (zone === 'top') {
+      bestInsertBefore = resolveInsertPosition(row, rowId, rect, listRect, list.scrollTop, 'before')
       break
     }
 
-    if (i === rows.length - 1 && mouseY > rowMid) {
-      const parentId = rowNode.parentId ?? store.state.currentPageId
-      const parent = store.graph.getNode(parentId)
-      if (parent) {
-        const idx = parent.childIds.indexOf(rowId)
-        const level = parseInt(row.dataset.level ?? '0')
-        bestInsertBefore = {
-          parentId,
-          index: idx + 1,
-          y: rect.bottom - listRect.top + list.scrollTop,
-          depth: level
-        }
-      }
+    if (i === rows.length - 1) {
+      bestInsertBefore = resolveInsertPosition(row, rowId, rect, listRect, list.scrollTop, 'after')
     }
   }
 
@@ -284,7 +310,11 @@ function updateDropTarget(ev: PointerEvent) {
               v-bind="item.bind"
               as-child
               @select="onSelect"
-              @toggle="(e: CustomEvent) => { if (e.detail.originalEvent?.type === 'click') e.preventDefault() }"
+              @toggle="
+                (e: CustomEvent) => {
+                  if (e.detail.originalEvent?.type === 'click') e.preventDefault()
+                }
+              "
             >
               <div
                 v-if="rename.editingId.value === item.value.id"
@@ -305,7 +335,11 @@ function updateDropTarget(ev: PointerEvent) {
                   class="size-3 shrink-0 opacity-70"
                 />
                 <input
-                  :ref="(el) => { if (el) rename.focusInput(el as HTMLInputElement) }"
+                  :ref="
+                    (el) => {
+                      if (el) rename.focusInput(el as HTMLInputElement)
+                    }
+                  "
                   data-layer-edit
                   data-test-id="layers-item-input"
                   class="min-w-0 flex-1 rounded border border-accent bg-input px-1 py-0 text-xs text-surface outline-none"
