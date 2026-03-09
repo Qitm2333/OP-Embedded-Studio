@@ -203,6 +203,9 @@ export function useCollab(store: EditorStore) {
     const unbindReparented = store.graph.emitter.on('node:reparented', (nodeId) =>
       onGraphMutation(nodeId)
     )
+    const unbindReordered = store.graph.emitter.on('node:reordered', (nodeId) =>
+      onGraphMutation(nodeId)
+    )
     const unbindDeleted = store.graph.emitter.on('node:deleted', (id) => {
       if (!suppressGraphSync && ydoc && ynodes) {
         suppressYjsEvents = true
@@ -217,6 +220,7 @@ export function useCollab(store: EditorStore) {
       unbindUpdated()
       unbindCreated()
       unbindReparented()
+      unbindReordered()
       unbindDeleted()
     }
   }

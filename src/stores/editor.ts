@@ -329,12 +329,10 @@ export function createEditorStore() {
       const remaining = graph.getPages()
       switchPage(remaining[newIdx].id)
     }
-    requestRender()
   }
 
   function renamePage(pageId: string, name: string) {
     graph.updateNode(pageId, { name })
-    requestRender()
   }
 
   function setTool(tool: Tool) {
@@ -421,7 +419,6 @@ export function createEditorStore() {
       label: 'Reorder',
       forward: () => {
         doReorderChild(nodeId, parentId, insertIndex)
-        requestRender()
       },
       inverse: () => {
         graph.reorderChild(nodeId, origParentId, origIndex >= 0 ? origIndex : 0)
@@ -432,11 +429,9 @@ export function createEditorStore() {
           computeLayout(graph, parentId)
           runLayoutForNode(parentId)
         }
-        requestRender()
       }
     })
 
-    requestRender()
   }
 
   function reorderChildWithUndo(nodeId: string, newParentId: string, insertIndex: number) {
@@ -457,18 +452,15 @@ export function createEditorStore() {
         graph.reorderChild(nodeId, newParentId, insertIndex)
         runLayoutForNode(newParentId)
         if (origParentId !== newParentId) runLayoutForNode(origParentId)
-        requestRender()
       },
       inverse: () => {
         graph.reorderChild(nodeId, origParentId, origIndex)
         graph.updateNode(nodeId, { x: origX, y: origY })
         runLayoutForNode(origParentId)
         if (origParentId !== newParentId) runLayoutForNode(newParentId)
-        requestRender()
       }
     })
 
-    requestRender()
   }
 
   function reparentNodes(nodeIds: string[], newParentId: string) {
@@ -485,7 +477,6 @@ export function createEditorStore() {
         continue
       graph.reparentNode(id, newParentId)
     }
-    requestRender()
   }
 
   function penAddVertex(x: number, y: number) {
@@ -651,15 +642,12 @@ export function createEditorStore() {
         label: 'Edit text',
         forward: () => {
           graph.updateNode(result.nodeId, { text: newText })
-          requestRender()
         },
         inverse: () => {
           graph.updateNode(result.nodeId, { text: prevText })
-          requestRender()
         }
       })
     }
-    requestRender()
   }
 
   async function openFigFile(file: File, handle?: FileSystemFileHandle, path?: string) {
@@ -992,35 +980,67 @@ export function createEditorStore() {
     }
   }
 
+  // ─── Graph event subscriptions ────────────────────────────────
+  // Microtask-batched component sync: collects mutated node IDs during a
+  // synchronous block, deduplicates to unique ancestor components, then
+  // calls syncInstances once per component in one microtask.
+  let pendingComponentSync: Set<string> | null = null
+
+  function flushComponentSync() {
+    const ids = pendingComponentSync!
+    pendingComponentSync = null
+    const componentIds = new Set<string>()
+    for (const id of ids) {
+      let current = graph.getNode(id)
+      while (current) {
+        if (current.type === 'COMPONENT') {
+          componentIds.add(current.id)
+          break
+        }
+        current = current.parentId ? graph.getNode(current.parentId) : undefined
+      }
+    }
+    for (const compId of componentIds) {
+      graph.syncInstances(compId)
+    }
+    if (componentIds.size > 0) requestRender()
+  }
+
+  function scheduleComponentSync(nodeId: string) {
+    if (!pendingComponentSync) {
+      pendingComponentSync = new Set()
+      queueMicrotask(flushComponentSync)
+    }
+    pendingComponentSync.add(nodeId)
+  }
+
   function onNodeUpdated(id: string, changes: Partial<SceneNode>) {
     if ('vectorNetwork' in changes) {
       _renderer?.invalidateVectorPath(id)
     }
     _renderer?.invalidateNodePicture(id)
+    scheduleComponentSync(id)
+    requestRender()
+  }
+
+  function onNodeStructureChanged(nodeId: string) {
+    scheduleComponentSync(nodeId)
+    requestRender()
   }
 
   function subscribeToGraph() {
     graph.emitter.on('node:updated', onNodeUpdated)
+    graph.emitter.on('node:created', (node) => onNodeStructureChanged(node.id))
+    graph.emitter.on('node:deleted', onNodeStructureChanged)
+    graph.emitter.on('node:reparented', onNodeStructureChanged)
+    graph.emitter.on('node:reordered', onNodeStructureChanged)
   }
 
   subscribeToGraph()
 
-  function syncIfInsideComponent(nodeId: string) {
-    let current = graph.getNode(nodeId)
-    while (current) {
-      if (current.type === 'COMPONENT') {
-        graph.syncInstances(current.id)
-        return
-      }
-      current = current.parentId ? graph.getNode(current.parentId) : undefined
-    }
-  }
-
   function updateNode(id: string, changes: Partial<SceneNode>) {
     graph.updateNode(id, changes)
     runLayoutForNode(id)
-    syncIfInsideComponent(id)
-    requestRender()
   }
 
   function updateNodeWithUndo(id: string, changes: Partial<SceneNode>, label = 'Update') {
@@ -1031,23 +1051,17 @@ export function createEditorStore() {
     ) as Partial<SceneNode>
     graph.updateNode(id, changes)
     runLayoutForNode(id)
-    syncIfInsideComponent(id)
     undo.push({
       label,
       forward: () => {
         graph.updateNode(id, changes)
         runLayoutForNode(id)
-        syncIfInsideComponent(id)
-        requestRender()
       },
       inverse: () => {
         graph.updateNode(id, previous)
         runLayoutForNode(id)
-        syncIfInsideComponent(id)
-        requestRender()
       }
     })
-    requestRender()
   }
 
   function setLayoutMode(id: string, mode: LayoutMode) {
@@ -1128,15 +1142,12 @@ export function createEditorStore() {
         graph.updateNode(id, finalState)
         if (mode !== 'NONE') computeLayout(graph, id)
         runLayoutForNode(id)
-        requestRender()
       },
       inverse: () => {
         graph.updateNode(id, previous)
         runLayoutForNode(id)
-        requestRender()
       }
     })
-    requestRender()
   }
 
   function wrapInAutoLayout() {
@@ -1204,7 +1215,6 @@ export function createEditorStore() {
         computeLayout(graph, f.id)
         runLayoutForNode(f.id)
         state.selectedIds = new Set([f.id])
-        requestRender()
       },
       inverse: () => {
         // Move children back to original parent and delete frame
@@ -1214,10 +1224,8 @@ export function createEditorStore() {
         }
         graph.deleteNode(frameId)
         state.selectedIds = prevSelection
-        requestRender()
       }
     })
-    requestRender()
   }
 
   function groupSelected() {
@@ -1281,7 +1289,6 @@ export function createEditorStore() {
         parent.childIds.splice(firstIndex, 0, g.id)
         for (const n of origPositions) graph.reparentNode(n.id, g.id)
         state.selectedIds = new Set([g.id])
-        requestRender()
       },
       inverse: () => {
         for (const orig of origPositions) {
@@ -1290,10 +1297,8 @@ export function createEditorStore() {
         }
         graph.deleteNode(groupId)
         state.selectedIds = prevSelection
-        requestRender()
       }
     })
-    requestRender()
   }
 
   function createComponentFromSelection() {
@@ -1316,15 +1321,12 @@ export function createEditorStore() {
           forward: () => {
             graph.updateNode(node.id, { type: 'COMPONENT' })
             state.selectedIds = new Set([node.id])
-            requestRender()
           },
           inverse: () => {
             graph.updateNode(node.id, { type: prevType })
             state.selectedIds = prevSelection
-            requestRender()
           }
         })
-        requestRender()
         return
       }
     }
@@ -1381,7 +1383,6 @@ export function createEditorStore() {
         parent.childIds.splice(firstIndex, 0, c.id)
         for (const n of origPositions) graph.reparentNode(n.id, c.id)
         state.selectedIds = new Set([c.id])
-        requestRender()
       },
       inverse: () => {
         for (const orig of origPositions) {
@@ -1390,10 +1391,8 @@ export function createEditorStore() {
         }
         graph.deleteNode(componentId)
         state.selectedIds = prevSelection
-        requestRender()
       }
     })
-    requestRender()
   }
 
   function createComponentSetFromComponents() {
@@ -1457,7 +1456,6 @@ export function createEditorStore() {
         parent.childIds.splice(firstIndex, 0, cs.id)
         for (const n of origPositions) graph.reparentNode(n.id, cs.id)
         state.selectedIds = new Set([cs.id])
-        requestRender()
       },
       inverse: () => {
         for (const orig of origPositions) {
@@ -1466,10 +1464,8 @@ export function createEditorStore() {
         }
         graph.deleteNode(setId)
         state.selectedIds = prevSelection
-        requestRender()
       }
     })
-    requestRender()
   }
 
   function createInstanceFromComponent(componentId: string, x?: number, y?: number) {
@@ -1491,15 +1487,12 @@ export function createEditorStore() {
       forward: () => {
         graph.createInstance(componentId, parentId, { ...instance })
         state.selectedIds = new Set([instanceId])
-        requestRender()
       },
       inverse: () => {
         graph.deleteNode(instanceId)
         state.selectedIds = new Set([componentId])
-        requestRender()
       }
     })
-    requestRender()
     return instanceId
   }
 
@@ -1520,10 +1513,8 @@ export function createEditorStore() {
       },
       inverse: () => {
         graph.updateNode(node.id, { type: 'INSTANCE', componentId: prevComponentId, overrides: {} })
-        requestRender()
       }
     })
-    requestRender()
   }
 
   function goToMainComponent() {
@@ -1590,7 +1581,6 @@ export function createEditorStore() {
         }
         graph.deleteNode(node.id)
         state.selectedIds = new Set(childIds)
-        requestRender()
       },
       inverse: () => {
         const g = graph.createNode('GROUP', parentId, { ...groupSnapshot, childIds: [] })
@@ -1601,10 +1591,8 @@ export function createEditorStore() {
           graph.updateNode(orig.id, { x: orig.x, y: orig.y })
         }
         state.selectedIds = prevSelection
-        requestRender()
       }
     })
-    requestRender()
   }
 
   function bringToFront() {
@@ -1646,7 +1634,6 @@ export function createEditorStore() {
       if (!node) continue
       graph.updateNode(id, { visible: !node.visible })
     }
-    requestRender()
   }
 
   function toggleLock() {
@@ -1655,7 +1642,6 @@ export function createEditorStore() {
       if (!node) continue
       graph.updateNode(id, { locked: !node.locked })
     }
-    requestRender()
   }
 
   function moveToPage(pageId: string) {
@@ -1666,12 +1652,10 @@ export function createEditorStore() {
       graph.reparentNode(id, pageId)
     }
     clearSelection()
-    requestRender()
   }
 
   function renameNode(id: string, name: string) {
     graph.updateNode(id, { name })
-    requestRender()
   }
 
   function createShape(
@@ -1709,17 +1693,14 @@ export function createEditorStore() {
       label: `Create ${type.toLowerCase()}`,
       forward: () => {
         graph.createNode(snapshot.type, pid, snapshot)
-        requestRender()
       },
       inverse: () => {
         graph.deleteNode(id)
         const next = new Set(state.selectedIds)
         next.delete(id)
         state.selectedIds = next
-        requestRender()
       }
     })
-    requestRender()
     return id
   }
 
@@ -1774,17 +1755,14 @@ export function createEditorStore() {
           graph.reparentNode(op.id, sectionId)
           graph.updateNode(op.id, { x: op.newX, y: op.newY })
         }
-        requestRender()
       },
       inverse: () => {
         for (const op of undoOps) {
           graph.reparentNode(op.id, op.oldParent)
           graph.updateNode(op.id, { x: op.oldX, y: op.oldY })
         }
-        requestRender()
       }
     })
-    requestRender()
   }
 
   function selectAll() {
@@ -1821,15 +1799,12 @@ export function createEditorStore() {
             graph.createNode(snapshot.type, parentId, snapshot)
           }
           state.selectedIds = new Set(newIds)
-          requestRender()
         },
         inverse: () => {
           for (const { id } of snapshots) graph.deleteNode(id)
           state.selectedIds = prevSelection
-          requestRender()
         }
       })
-      requestRender()
     }
   }
 
@@ -1912,17 +1887,14 @@ export function createEditorStore() {
               }
               computeAllLayouts(graph, pageId)
               state.selectedIds = new Set(created)
-              requestRender()
             },
             inverse: () => {
               for (const id of [...created].reverse()) graph.deleteNode(id)
               computeAllLayouts(graph, pageId)
               state.selectedIds = prevSelection
-              requestRender()
             }
           })
           void loadFontsForNodes(created)
-          requestRender()
         }
       }
     })
@@ -1965,15 +1937,12 @@ export function createEditorStore() {
             graph.createNode(snapshot.type, pid, snapshot)
           }
           state.selectedIds = new Set(newIds)
-          requestRender()
         },
         inverse: () => {
           for (const { id } of [...created].reverse()) graph.deleteNode(id)
           state.selectedIds = prevSelection
-          requestRender()
         }
       })
-      requestRender()
     }
   }
 
@@ -1997,7 +1966,6 @@ export function createEditorStore() {
       forward: () => {
         for (const { id } of entries) graph.deleteNode(id)
         clearSelection()
-        requestRender()
       },
       inverse: () => {
         for (const { snapshot, parentId, index } of [...entries].reverse()) {
@@ -2007,11 +1975,9 @@ export function createEditorStore() {
           }
         }
         state.selectedIds = prevSelection
-        requestRender()
       }
     })
     clearSelection()
-    requestRender()
   }
 
   function mobileCopy() {
@@ -2037,7 +2003,6 @@ export function createEditorStore() {
       const n = graph.getNode(id)
       if (n) finals.set(id, { x: n.x, y: n.y })
     }
-    for (const [id] of finals) syncIfInsideComponent(id)
     undo.push({
       label: 'Move',
       forward: () => {
@@ -2045,16 +2010,12 @@ export function createEditorStore() {
           graph.updateNode(id, pos)
           runLayoutForNode(id)
         }
-        for (const [id] of finals) syncIfInsideComponent(id)
-        requestRender()
       },
       inverse: () => {
         for (const [id, pos] of originals) {
           graph.updateNode(id, pos)
           runLayoutForNode(id)
         }
-        for (const [id] of originals) syncIfInsideComponent(id)
-        requestRender()
       }
     })
   }
@@ -2067,7 +2028,6 @@ export function createEditorStore() {
       const n = graph.getNode(id)
       if (n) finals.set(id, { x: n.x, y: n.y, parentId: n.parentId ?? state.currentPageId })
     }
-    for (const [id] of finals) syncIfInsideComponent(id)
     undo.push({
       label: 'Move',
       forward: () => {
@@ -2076,8 +2036,6 @@ export function createEditorStore() {
           graph.updateNode(id, { x: pos.x, y: pos.y })
           runLayoutForNode(id)
         }
-        for (const [id] of finals) syncIfInsideComponent(id)
-        requestRender()
       },
       inverse: () => {
         for (const [id, pos] of originals) {
@@ -2085,8 +2043,6 @@ export function createEditorStore() {
           graph.updateNode(id, { x: pos.x, y: pos.y })
           runLayoutForNode(id)
         }
-        for (const [id] of originals) syncIfInsideComponent(id)
-        requestRender()
       }
     })
   }
@@ -2134,20 +2090,15 @@ export function createEditorStore() {
     const node = graph.getNode(nodeId)
     if (!node) return
     const finalRect = { x: node.x, y: node.y, width: node.width, height: node.height }
-    syncIfInsideComponent(nodeId)
     undo.push({
       label: 'Resize',
       forward: () => {
         graph.updateNode(nodeId, finalRect)
         runLayoutForNode(nodeId)
-        syncIfInsideComponent(nodeId)
-        requestRender()
       },
       inverse: () => {
         graph.updateNode(nodeId, origRect)
         runLayoutForNode(nodeId)
-        syncIfInsideComponent(nodeId)
-        requestRender()
       }
     })
   }
@@ -2160,11 +2111,9 @@ export function createEditorStore() {
       label: 'Rotate',
       forward: () => {
         graph.updateNode(nodeId, { rotation: finalRotation })
-        requestRender()
       },
       inverse: () => {
         graph.updateNode(nodeId, { rotation: origRotation })
-        requestRender()
       }
     })
   }
@@ -2180,19 +2129,16 @@ export function createEditorStore() {
       forward: () => {
         graph.updateNode(nodeId, current)
         runLayoutForNode(nodeId)
-        requestRender()
       },
       inverse: () => {
         graph.updateNode(nodeId, previous)
         runLayoutForNode(nodeId)
-        requestRender()
       }
     })
   }
 
   function undoAction() {
     undo.undo()
-    requestRender()
   }
 
   function redoAction() {
