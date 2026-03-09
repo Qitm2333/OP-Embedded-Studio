@@ -8,11 +8,14 @@ import { useInlineRename } from '@/composables/use-inline-rename'
 import IconCircle from '~icons/lucide/circle'
 import IconComponent from '~icons/lucide/diamond'
 import IconComponentSet from '~icons/lucide/component'
+import IconColumns from '~icons/lucide/columns-3'
 import IconFrame from '~icons/lucide/frame'
+import IconGrid from '~icons/lucide/grid-3x3'
 import IconGroup from '~icons/lucide/group'
 
 import IconMinus from '~icons/lucide/minus'
 import IconPenTool from '~icons/lucide/pen-tool'
+import IconRows from '~icons/lucide/rows-3'
 import IconSection from '~icons/lucide/layout-grid'
 import IconSquare from '~icons/lucide/square'
 import IconType from '~icons/lucide/type'
@@ -27,11 +30,12 @@ interface LayerNode {
   id: string
   name: string
   type: string
+  layoutMode: string
   visible: boolean
   children?: LayerNode[]
 }
 
-const nodeIcons: Record<string, typeof IconSquare> = {
+const nodeIcons: Partial<Record<string, typeof IconSquare>> = {
   SECTION: IconSection,
   ELLIPSE: IconCircle,
   FRAME: IconFrame,
@@ -43,6 +47,19 @@ const nodeIcons: Record<string, typeof IconSquare> = {
   TEXT: IconType,
   VECTOR: IconPenTool,
   RECTANGLE: IconSquare
+}
+
+const autoLayoutIcons: Partial<Record<string, typeof IconSquare>> = {
+  VERTICAL: IconRows,
+  HORIZONTAL: IconColumns,
+  GRID: IconGrid
+}
+
+function nodeIcon(node: LayerNode) {
+  if (node.type === 'FRAME' && node.layoutMode !== 'NONE') {
+    return autoLayoutIcons[node.layoutMode] ?? IconFrame
+  }
+  return nodeIcons[node.type] ?? IconSquare
 }
 
 const COMPONENT_TYPES = new Set(['COMPONENT', 'COMPONENT_SET', 'INSTANCE'])
@@ -57,6 +74,7 @@ function buildTree(parentId: string): LayerNode[] {
       id: node.id,
       name: node.name,
       type: node.type,
+      layoutMode: node.layoutMode,
       visible: node.visible,
       children: node.childIds.length > 0 ? buildTree(node.id) : undefined
     }))
@@ -331,7 +349,7 @@ function updateDropTarget(ev: PointerEvent) {
                 </span>
                 <span v-else class="w-4 shrink-0" />
                 <component
-                  :is="nodeIcons[item.value.type] ?? IconSquare"
+                  :is="nodeIcon(item.value)"
                   class="size-3 shrink-0 opacity-70"
                 />
                 <input
@@ -374,7 +392,7 @@ function updateDropTarget(ev: PointerEvent) {
                 </span>
                 <span v-else class="w-4 shrink-0" />
                 <component
-                  :is="nodeIcons[item.value.type] ?? IconSquare"
+                  :is="nodeIcon(item.value)"
                   class="size-3 shrink-0"
                   :class="
                     COMPONENT_TYPES.has(item.value.type)

@@ -225,6 +225,7 @@ export function useCanvasInput(
   store: EditorStore,
   hitTestSectionTitle: (cx: number, cy: number) => SceneNode | null,
   hitTestComponentLabel: (cx: number, cy: number) => SceneNode | null,
+  hitTestFrameTitle: (cx: number, cy: number) => SceneNode | null,
   onCursorMove?: (cx: number, cy: number) => void
 ) {
   const drag = ref<DragState | null>(null)
@@ -352,7 +353,7 @@ export function useCanvasInput(
     return false
   }
 
-  function handleAltDragDuplicate(cx: number, cy: number): Map<string, Vector> {
+  function duplicateAndDrag(cx: number, cy: number): Map<string, Vector> {
     const newIds: string[] = []
     const newOriginals = new Map<string, Vector>()
     for (const id of store.state.selectedIds) {
@@ -404,6 +405,7 @@ export function useCanvasInput(
     if (tryStartResize(sx, sy, cx, cy)) return
 
     const hit =
+      hitTestFrameTitle(cx, cy) ??
       hitTestSectionTitle(cx, cy) ??
       hitTestComponentLabel(cx, cy) ??
       store.graph.hitTest(cx, cy, store.state.currentPageId)
@@ -427,7 +429,7 @@ export function useCanvasInput(
     }
 
     if (e.altKey && store.state.selectedIds.size > 0) {
-      handleAltDragDuplicate(cx, cy)
+      duplicateAndDrag(cx, cy)
       return
     }
 

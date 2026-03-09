@@ -8,6 +8,7 @@ import {
   PARENT_OUTLINE_DASH,
   DEFAULT_FONT_SIZE,
   LABEL_FONT_SIZE,
+  LABEL_OFFSET_Y,
   SIZE_FONT_SIZE,
   SECTION_TITLE_FONT_SIZE,
   SECTION_TITLE_HEIGHT,
@@ -551,6 +552,47 @@ export class SkiaRenderer {
 
     check(pageNode.id, 0, 0)
     return result
+  }
+
+  hitTestFrameTitle(
+    graph: SceneGraph,
+    canvasX: number,
+    canvasY: number,
+    selectedIds: Set<string>
+  ): SceneNode | null {
+    if (!this.labelFont || selectedIds.size !== 1) return null
+
+    const id = [...selectedIds][0]
+    const node = graph.getNode(id)
+    if (!node || node.type !== 'FRAME') return null
+
+    const parent = node.parentId ? graph.getNode(node.parentId) : null
+    const isTopLevel = !parent || parent.type === 'CANVAS' || parent.type === 'SECTION'
+    if (!isTopLevel) return null
+
+    const abs = graph.getAbsolutePosition(id)
+    const font = this.labelFont
+    const glyphIds = font.getGlyphIDs(node.name)
+    const widths = font.getGlyphWidths(glyphIds)
+    let textW = 0
+    for (const w of widths) textW += w
+
+    const labelW = textW / this.zoom
+    const labelH = LABEL_FONT_SIZE / this.zoom
+    const gap = LABEL_OFFSET_Y / this.zoom
+    const labelX = abs.x
+    const labelY = abs.y - gap - labelH
+
+    if (
+      canvasX >= labelX &&
+      canvasX <= labelX + labelW &&
+      canvasY >= labelY &&
+      canvasY <= labelY + labelH
+    ) {
+      return node
+    }
+
+    return null
   }
 
   renderSceneToCanvas(canvas: Canvas, graph: SceneGraph, pageId: string): void {
