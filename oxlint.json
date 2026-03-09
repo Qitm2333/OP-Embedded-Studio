@@ -52,6 +52,7 @@
     "vue/valid-define-emits": "error",
     "vue/valid-define-props": "error",
     "vue/no-required-prop-with-default": "error",
+    "vue/no-multiple-slot-args": "error",
     "vue/define-emits-declaration": "error",
     "vue/define-props-destructuring": "error",
     "vue/require-typed-ref": "error"
