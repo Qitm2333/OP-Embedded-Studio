@@ -8,6 +8,10 @@
 - CSS Grid layout mode — select a frame, click the grid icon in the auto layout toolbar to switch from flex to grid. Configure column/row tracks (fr, fixed px, auto), column and row gaps, and per-side padding. Powered by a [Yoga fork](https://github.com/open-pencil/yoga/tree/grid) with cherry-picked CSS Grid PRs from upstream
 - JSX and Tailwind CSS export for grid layouts — `grid grid-cols-N`, `gap-x-*`/`gap-y-*`, child `col-start-*`/`row-start-*`/`col-span-*`/`row-span-*`
 - Multi-provider AI support — connect to Anthropic, OpenAI, Google AI, or any OpenAI-compatible endpoint directly, in addition to OpenRouter. Per-provider API key storage, provider settings popover, automatic migration from single OpenRouter key
+- Anthropic-compatible provider for custom API endpoints
+- New AI tools: `get_jsx` (JSX roundtrip view), `diff_jsx` (structural diff), `describe` (semantic role, visual style, layout, design issues)
+- AI visual verification — `export_image` returns image content to the model for vision-based review
+- API type toggle (Completions/Responses) for OpenAI-compatible providers
 
 ### Fixes
 
@@ -15,6 +19,16 @@
 - Text nodes created via MCP now render in Figma — emit `derivedTextData` with font metadata and layout size (#64)
 - Double-click on layer tree no longer toggles expand/collapse — use the chevron instead
 - Page rename input matches layer rename styling
+- Fix `w="fill"`/`h="fill"` in JSX renderer — now direction-aware based on parent flex axis
+- Fix text auto-resize defaulting to fixed 100×100 — text without explicit width uses `WIDTH_AND_HEIGHT`
+- Fix `clipsContent` not propagated to Yoga — frames with clip enabled now set `Overflow.Hidden`
+- Fix `COUNTER_ALIGN_MAP` mapping stretch to `MIN` instead of `STRETCH`
+- Fix JSX export omitting x/y for absolute-positioned children
+- Fix JSX export ignoring `textAutoResize` for text sizing
+- Fix drag terminating on mouseleave — drags now continue outside the canvas
+- Fix `export_image` stack overflow on large nodes — chunked base64 encoding
+- Undo support for auto-layout reorder, layer tree reorder, and drag reparent
+- Page snapshot undo for AI tool mutations
 
 
 ### Performance
@@ -25,6 +39,11 @@
 
 ### Improvements
 
+- Padding on a frame auto-enables vertical auto-layout
+- AI tools run `computeAllLayouts` after execution — layout updates immediately
+- Enhanced AI system prompt with full JSX prop reference and verification workflow
+- Chat panel preserves messages when toggling UI visibility
+- Dev-only debug toolbar for copying chat logs
 - Auto-layout icons in layer tree — vertical (rows), horizontal (columns), and grid icons for auto-layout frames; components keep their purple diamond
 - Frame titles on canvas are now draggable — clicking a selected top-level frame's name label starts a drag
 - Compact layout controls — icon-based gap (↔/↕) and padding (T/R/B/L) inputs instead of text labels
