@@ -22,7 +22,7 @@
 
     "no-empty-function": "error",
     "max-lines": ["warn", { "max": 600 }],
-    "complexity": ["warn", { "max": 20 }],
+    "complexity": ["error", { "max": 20 }],
 
     "typescript/no-explicit-any": "warn",
     "typescript/no-non-null-assertion": "warn",
