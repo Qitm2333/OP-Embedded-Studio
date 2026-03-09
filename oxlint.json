@@ -8,13 +8,29 @@
   "rules": {
     "no-unused-vars": "warn",
     "no-console": "off",
+    "no-restricted-imports": ["error", {
+      "paths": [
+        { "name": "@/types", "message": "Import types directly from @open-pencil/core." }
+      ],
+      "patterns": [{
+        "group": ["@/engine/*"],
+        "message": "Import from @open-pencil/core unless the module adds platform-specific logic.",
+        "allowImportNames": ["loadFont", "listFamilies", "preloadFonts"]
+      }]
+    }],
 
     "typescript/no-explicit-any": "warn",
     "typescript/no-non-null-assertion": "warn",
     "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/consistent-type-imports": "error",
+    "typescript/no-unnecessary-type-assertion": "error",
+    "typescript/prefer-optional-chain": "error",
 
     "import/no-cycle": "error",
     "import/no-self-import": "error",
+    "import/no-duplicates": "error",
+    "import/no-mutable-exports": "error",
 
     "unicorn/no-instanceof-array": "error",
     "unicorn/no-typeof-undefined": "error",

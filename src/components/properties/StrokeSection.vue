@@ -15,8 +15,7 @@ import {
   DropdownMenuPortal
 } from 'reka-ui'
 
-import type { Color, Stroke } from '@open-pencil/core'
-import type { SceneNode } from '@open-pencil/core'
+import type { Color, SceneNode, Stroke } from '@open-pencil/core'
 
 type StrokeSides = 'ALL' | 'TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT' | 'CUSTOM'
 

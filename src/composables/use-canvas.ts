@@ -1,8 +1,7 @@
 import { useBreakpoints, useRafFn, useResizeObserver } from '@vueuse/core'
 import { onMounted, onUnmounted, type Ref } from 'vue'
 
-import { getCanvasKit, getGpuBackend } from '@open-pencil/core'
-import { SkiaRenderer } from '@open-pencil/core'
+import { getCanvasKit, getGpuBackend, SkiaRenderer } from '@open-pencil/core'
 
 import type { EditorStore } from '@/stores/editor'
 import type { CanvasKit } from 'canvaskit-wasm'
@@ -118,7 +117,7 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
       }
     }
 
-    const glCtx = (canvas.getContext('webgl2') ?? null) as WebGL2RenderingContext | null
+    const glCtx = (canvas.getContext('webgl2') ?? null)
     renderer = new SkiaRenderer(ck, surface, glCtx)
     store.setCanvasKit(ck, renderer)
     void renderer.loadFonts().then(() => renderNow())

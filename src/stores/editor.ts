@@ -25,6 +25,7 @@ import {
   buildFigmaClipboardHTML,
   buildOpenPencilClipboardHTML,
   prefetchFigmaSchema,
+  readFigFile,
   renderNodesToImage,
   renderNodesToSVG,
   SceneGraph,
@@ -32,7 +33,6 @@ import {
   TextEditor,
   UndoManager
 } from '@open-pencil/core'
-import { readFigFile } from '@open-pencil/core'
 
 import type {
   Color,
@@ -42,12 +42,14 @@ import type {
   NodeType,
   Rect,
   SceneNode,
+  SkiaRenderer,
   SnapGuide,
   VectorNetwork,
   VectorRegion,
   VectorSegment,
   VectorVertex
 } from '@open-pencil/core'
+import type { CanvasKit } from 'canvaskit-wasm'
 
 export type Tool =
   | 'SELECT'
@@ -131,8 +133,8 @@ export function createEditorStore() {
   let autosaveTimer: ReturnType<typeof setTimeout> | undefined
   let lastWriteTime = 0
   let unwatchFile: (() => void) | null = null
-  let _ck: import('canvaskit-wasm').CanvasKit | null = null
-  let _renderer: import('@open-pencil/core').SkiaRenderer | null = null
+  let _ck: CanvasKit | null = null
+  let _renderer: SkiaRenderer | null = null
   let _textEditor: TextEditor | null = null
 
   void prefetchFigmaSchema()
@@ -211,6 +213,7 @@ export function createEditorStore() {
       if (!state.autosaveEnabled) return
       if (!fileHandle && !filePath) return
       clearTimeout(autosaveTimer)
+      // oxlint-disable-next-line typescript/no-misused-promises
       autosaveTimer = setTimeout(async () => {
         if (state.sceneVersion === savedVersion) return
         if (!state.autosaveEnabled) return
@@ -273,7 +276,7 @@ export function createEditorStore() {
 
   function switchPage(pageId: string) {
     const page = graph.getNode(pageId)
-    if (!page || page.type !== 'CANVAS') return
+    if (page?.type !== 'CANVAS') return
 
     // Save current viewport
     pageViewports.set(state.currentPageId, {
@@ -626,8 +629,8 @@ export function createEditorStore() {
   }
 
   function setCanvasKit(
-    ck: import('canvaskit-wasm').CanvasKit,
-    renderer: import('@open-pencil/core').SkiaRenderer
+    ck: CanvasKit,
+    renderer: SkiaRenderer
   ) {
     _ck = ck
     _renderer = renderer
@@ -778,6 +781,7 @@ export function createEditorStore() {
       unwatchFile = () => unwatch()
     } else if (fileHandle) {
       let lastModified = (await fileHandle.getFile()).lastModified
+      // oxlint-disable-next-line typescript/no-misused-promises
       const interval = setInterval(async () => {
         if (!fileHandle) {
           clearInterval(interval)
@@ -1396,7 +1400,7 @@ export function createEditorStore() {
 
   function createInstanceFromComponent(componentId: string, x?: number, y?: number) {
     const component = graph.getNode(componentId)
-    if (!component || component.type !== 'COMPONENT') return null
+    if (component?.type !== 'COMPONENT') return null
 
     const parentId = component.parentId ?? state.currentPageId
     const instance = graph.createInstance(componentId, parentId, {
@@ -1427,7 +1431,7 @@ export function createEditorStore() {
 
   function detachInstance() {
     const node = selectedNode.value
-    if (!node || node.type !== 'INSTANCE') return
+    if (node?.type !== 'INSTANCE') return
 
     const prevComponentId = node.componentId
 
@@ -1475,7 +1479,7 @@ export function createEditorStore() {
 
   function ungroupSelected() {
     const node = selectedNode.value
-    if (!node || node.type !== 'GROUP') return
+    if (node?.type !== 'GROUP') return
 
     const parentId = node.parentId ?? state.currentPageId
     const parent = graph.getNode(parentId)
@@ -1582,7 +1586,7 @@ export function createEditorStore() {
 
   function moveToPage(pageId: string) {
     const targetPage = graph.getNode(pageId)
-    if (!targetPage || targetPage.type !== 'CANVAS') return
+    if (targetPage?.type !== 'CANVAS') return
     const ids = [...state.selectedIds]
     for (const id of ids) {
       graph.reparentNode(id, pageId)
@@ -1647,7 +1651,7 @@ export function createEditorStore() {
 
   function adoptNodesIntoSection(sectionId: string) {
     const section = graph.getNode(sectionId)
-    if (!section || section.type !== 'SECTION') return
+    if (section?.type !== 'SECTION') return
 
     const parentId = section.parentId ?? state.currentPageId
     const siblings = graph.getChildren(parentId)

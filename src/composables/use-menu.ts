@@ -13,9 +13,9 @@ export async function openFileDialog() {
       multiple: false
     })
     if (!path) return
-    const bytes = await readFile(path as string)
-    const file = new File([bytes], (path as string).split('/').pop() ?? 'file.fig')
-    await openFileInNewTab(file, undefined, path as string)
+    const bytes = await readFile(path)
+    const file = new File([bytes], (path).split('/').pop() ?? 'file.fig')
+    await openFileInNewTab(file, undefined, path)
     return
   }
 
@@ -51,12 +51,12 @@ const store = useEditorStore()
 
 const MENU_ACTIONS: Record<string, () => void> = {
   new: () => createTab(),
-  open: () => openFileDialog(),
+  open: () => void openFileDialog(),
   close: () => {
     if (activeTab.value) closeTab(activeTab.value.id)
   },
-  save: () => store.saveFigFile(),
-  'save-as': () => store.saveFigFileAs(),
+  save: () => void store.saveFigFile(),
+  'save-as': () => void store.saveFigFileAs(),
   duplicate: () => store.duplicateSelected(),
   delete: () => store.deleteSelected(),
   group: () => store.groupSelected(),

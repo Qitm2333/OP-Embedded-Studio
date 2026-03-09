@@ -10,7 +10,7 @@ import IconComponent from '~icons/lucide/diamond'
 import IconComponentSet from '~icons/lucide/component'
 import IconFrame from '~icons/lucide/frame'
 import IconGroup from '~icons/lucide/group'
-import IconInstance from '~icons/lucide/diamond'
+
 import IconMinus from '~icons/lucide/minus'
 import IconPenTool from '~icons/lucide/pen-tool'
 import IconSection from '~icons/lucide/layout-grid'
@@ -38,7 +38,7 @@ const nodeIcons: Record<string, typeof IconSquare> = {
   GROUP: IconGroup,
   COMPONENT: IconComponent,
   COMPONENT_SET: IconComponentSet,
-  INSTANCE: IconInstance,
+  INSTANCE: IconComponent,
   LINE: IconMinus,
   TEXT: IconType,
   VECTOR: IconPenTool,

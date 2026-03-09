@@ -223,8 +223,8 @@ function hitTestRotationHandle(
 export function useCanvasInput(
   canvasRef: Ref<HTMLCanvasElement | null>,
   store: EditorStore,
-  hitTestSectionTitle: (cx: number, cy: number) => import('@open-pencil/core').SceneNode | null,
-  hitTestComponentLabel: (cx: number, cy: number) => import('@open-pencil/core').SceneNode | null,
+  hitTestSectionTitle: (cx: number, cy: number) => SceneNode | null,
+  hitTestComponentLabel: (cx: number, cy: number) => SceneNode | null,
   onCursorMove?: (cx: number, cy: number) => void
 ) {
   const drag = ref<DragState | null>(null)

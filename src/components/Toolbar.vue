@@ -26,11 +26,11 @@ import IconLock from '~icons/lucide/lock'
 
 import { menuContent, menuItem } from '@/components/ui/menu'
 import { ACTION_TOAST_DURATION } from '@/constants'
-import { TOOLS, useEditorStore } from '@/stores/editor'
+import { useEditorStore } from '@/stores/editor'
 import { toolIcons } from '@/utils/tools'
 
 import type { Component } from 'vue'
-import type { Tool } from '@/stores/editor'
+import type { Tool , TOOLS} from '@/stores/editor'
 
 const store = useEditorStore()
 const breakpoints = useBreakpoints({ mobile: 768 })

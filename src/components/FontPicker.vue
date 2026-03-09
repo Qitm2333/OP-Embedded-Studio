@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import type {
+  ListboxFilter} from 'reka-ui';
 import {
   ListboxContent,
-  ListboxFilter,
   ListboxItem,
   ListboxRoot,
   ListboxVirtualizer,

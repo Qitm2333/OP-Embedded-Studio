@@ -110,9 +110,9 @@ export function useCollab(store: EditorStore) {
     const [sendSync, getSync] = room.makeAction<Uint8Array>('sync-step1')
     const [sendSyncReply, getSyncReply] = room.makeAction<Uint8Array>('sync-reply')
 
-    sendYjsUpdate = (data, peerId) => (peerId ? sendUpdate(data, peerId) : sendUpdate(data))
-    sendAwareness = (data, peerId) => (peerId ? sendAw(data, peerId) : sendAw(data))
-    sendSyncStep1 = (data, peerId) => (peerId ? sendSync(data, peerId) : sendSync(data))
+    sendYjsUpdate = (data, peerId) => void (peerId ? sendUpdate(data, peerId) : sendUpdate(data))
+    sendAwareness = (data, peerId) => void (peerId ? sendAw(data, peerId) : sendAw(data))
+    sendSyncStep1 = (data, peerId) => void (peerId ? sendSync(data, peerId) : sendSync(data))
 
     getUpdate((data) => {
       if (!ydoc) return
@@ -286,7 +286,7 @@ export function useCollab(store: EditorStore) {
           }
         }
       } else if (event.target.parent === localYnodes) {
-        const nodeId = findNodeIdForYMap(event.target as Y.Map<unknown>)
+        const nodeId = findNodeIdForYMap(event.target)
         if (nodeId) {
           const ynode = localYnodes.get(nodeId)
           if (ynode) applyYnodeToGraph(nodeId, ynode)

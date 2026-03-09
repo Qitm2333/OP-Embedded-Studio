@@ -26,7 +26,7 @@ import IconX from '~icons/lucide/x'
 import ColorInput from './ColorInput.vue'
 import { colorToHexRaw, parseColor } from '@open-pencil/core'
 import { useEditorStore } from '@/stores/editor'
-import type { Variable, Color } from '@open-pencil/core'
+import type { Variable, VariableCollection, VariableValue, Color } from '@open-pencil/core'
 
 const open = defineModel<boolean>('open', { default: false })
 const store = useEditorStore()
@@ -155,7 +155,7 @@ function updateColorValue(variable: Variable, modeId: string, color: Color) {
 
 function commitValueEdit(variable: Variable, modeId: string, newValue: string) {
   const oldValue = structuredClone(variable.valuesByMode[modeId])
-  let parsed: import('@open-pencil/core').VariableValue
+  let parsed: VariableValue
   if (variable.type === 'COLOR') {
     parsed = parseColor(newValue.startsWith('#') ? newValue : `#${newValue}`)
   } else if (variable.type === 'FLOAT') {
@@ -187,7 +187,7 @@ function addVariable() {
   if (!col) return
 
   const id = `var:${Date.now()}`
-  const valuesByMode: Record<string, import('@open-pencil/core').VariableValue> = {}
+  const valuesByMode: Record<string, VariableValue> = {}
   for (const mode of col.modes) {
     valuesByMode[mode.modeId] = { r: 0, g: 0, b: 0, a: 1 }
   }
@@ -218,7 +218,7 @@ function addVariable() {
 
 function addCollection() {
   const id = `col:${Date.now()}`
-  const collection: import('@open-pencil/core').VariableCollection = {
+  const collection: VariableCollection = {
     id,
     name: 'New collection',
     modes: [{ modeId: 'default', name: 'Mode 1' }],

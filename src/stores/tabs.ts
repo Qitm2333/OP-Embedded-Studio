@@ -79,7 +79,7 @@ export async function openFileInNewTab(
 ): Promise<void> {
   const current = activeTab.value
   const isUntouched =
-    current && current.store.state.documentName === 'Untitled' && !current.store.undo.canUndo
+    current?.store.state.documentName === 'Untitled' && !current.store.undo.canUndo
 
   if (isUntouched) {
     await current.store.openFigFile(file, handle, path)
