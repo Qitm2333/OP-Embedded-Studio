@@ -28,9 +28,10 @@ const noInlineNamedTypes = {
         )
         if (!props || props.length < 2) return
 
-        if (props.some((m) => m.optional)) return
+        const required = props.filter((m) => !m.optional)
+        if (required.length < 2) return
 
-        const shape = props
+        const shape = required
           .map((m) => {
             const typeNode = m.typeAnnotation?.typeAnnotation
             let typeName = 'unknown'
