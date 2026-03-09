@@ -151,9 +151,7 @@ const onlineCount = computed(() => collabPeers.length + 1)
                 v-for="peer in collabPeers"
                 :key="peer.clientId"
                 class="flex cursor-pointer items-center gap-2 rounded-md px-0.5 py-0.5 select-none active:bg-hover"
-                @click="
-                  emit('follow', followingPeer === peer.clientId ? null : peer.clientId)
-                "
+                @click="emit('follow', followingPeer === peer.clientId ? null : peer.clientId)"
               >
                 <div
                   class="flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"

@@ -557,8 +557,6 @@ export function nodeChangeToProps(
   let nodeType = mapNodeType(nc.type)
   if (nodeType === 'FRAME' && isComponentSet(nc)) nodeType = 'COMPONENT_SET'
 
-  const dashPattern = nc.dashPattern ?? []
-
   return {
     nodeType,
     name: nc.name ?? nodeType,
@@ -568,7 +566,7 @@ export function nodeChangeToProps(
     locked: nc.locked ?? false,
     blendMode: (nc.blendMode as Fill['blendMode']) ?? 'PASS_THROUGH',
     fills: convertFills(nc.fillPaints),
-    strokes: convertStrokes(nc.strokePaints, nc.strokeWeight, nc.strokeAlign, nc.strokeCap, nc.strokeJoin, dashPattern),
+    strokes: convertStrokes(nc.strokePaints, nc.strokeWeight, nc.strokeAlign, nc.strokeCap, nc.strokeJoin, nc.dashPattern ?? []),
     effects: convertEffects(nc.effects),
     ...convertCornerProps(nc),
     ...convertTextProps(nc),

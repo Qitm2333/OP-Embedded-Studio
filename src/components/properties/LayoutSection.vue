@@ -97,18 +97,14 @@ function commitUniformPadding(_value: number, previous: number) {
 }
 
 const widthSizingOptions = computed(() => {
-  const options: { value: LayoutSizing; label: string }[] = [
-    { value: 'FIXED', label: 'Fixed' }
-  ]
+  const options: { value: LayoutSizing; label: string }[] = [{ value: 'FIXED', label: 'Fixed' }]
   if (isFlex.value) options.push({ value: 'HUG', label: 'Hug' })
   if (isInAutoLayout.value || isFlex.value) options.push({ value: 'FILL', label: 'Fill' })
   return options
 })
 
 const heightSizingOptions = computed(() => {
-  const options: { value: LayoutSizing; label: string }[] = [
-    { value: 'FIXED', label: 'Fixed' }
-  ]
+  const options: { value: LayoutSizing; label: string }[] = [{ value: 'FIXED', label: 'Fixed' }]
   if (isFlex.value) options.push({ value: 'HUG', label: 'Hug' })
   if (isInAutoLayout.value || isFlex.value) options.push({ value: 'FILL', label: 'Fill' })
   return options
@@ -439,10 +435,15 @@ function trackLabel(track: GridTrack): string {
           />
           <button
             class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-transparent text-muted hover:bg-hover hover:text-surface"
-            :title="showIndividualPadding || !hasUniformPadding() ? 'Uniform padding' : 'Per-side padding'"
+            :title="
+              showIndividualPadding || !hasUniformPadding() ? 'Uniform padding' : 'Per-side padding'
+            "
             @click="showIndividualPadding = !showIndividualPadding"
           >
-            <icon-lucide-minus v-if="showIndividualPadding || !hasUniformPadding()" class="size-3" />
+            <icon-lucide-minus
+              v-if="showIndividualPadding || !hasUniformPadding()"
+              class="size-3"
+            />
             <icon-lucide-plus v-else class="size-3" />
           </button>
         </div>

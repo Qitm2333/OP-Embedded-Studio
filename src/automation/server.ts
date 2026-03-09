@@ -122,7 +122,9 @@ export function connectAutomation(getStore: () => EditorStore) {
     return { ok: true, result: { jsx } }
   }
 
-  const commandHandlers: Partial<Record<string, (store: EditorStore, args: unknown) => Promise<unknown>>> = {
+  const commandHandlers: Partial<
+    Record<string, (store: EditorStore, args: unknown) => Promise<unknown>>
+  > = {
     eval: handleEval,
     tool: handleTool,
     export: handleExport,

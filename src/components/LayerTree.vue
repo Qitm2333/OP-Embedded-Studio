@@ -348,10 +348,7 @@ function updateDropTarget(ev: PointerEvent) {
                   <icon-lucide-chevron-right class="size-3" />
                 </span>
                 <span v-else class="w-4 shrink-0" />
-                <component
-                  :is="nodeIcon(item.value)"
-                  class="size-3 shrink-0 opacity-70"
-                />
+                <component :is="nodeIcon(item.value)" class="size-3 shrink-0 opacity-70" />
                 <input
                   :ref="
                     (el) => {

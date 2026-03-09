@@ -1,4 +1,4 @@
-import { computeContentBounds } from './render-image'
+import { computeContentBounds } from '../render-image'
 import {
   round,
   geometryBlobToSVGPath,
@@ -7,7 +7,7 @@ import {
   hasRadius,
   roundedRectPath,
   arcPath
-} from './svg-export-paths'
+} from './paths'
 import {
   nextDefId,
   formatColor,
@@ -16,15 +16,15 @@ import {
   SVG_STROKE_CAP,
   SVG_STROKE_JOIN,
   SVG_BLEND_MODE
-} from './svg-export-defs'
+} from './defs'
 
-export { geometryBlobToSVGPath, vectorNetworkToSVGPaths } from './svg-export-paths'
+export { geometryBlobToSVGPath, vectorNetworkToSVGPaths } from './paths'
 
-import { svg, renderSVGNode } from './svg-node'
+import { svg, renderSVGNode } from '../svg-node'
 
-import type { SVGNode } from './svg-node'
-import type { SceneGraph, SceneNode, Fill, Stroke, CharacterStyleOverride } from './scene-graph'
-import type { SVGExportContext } from './svg-export-defs'
+import type { SVGNode } from '../svg-node'
+import type { SceneGraph, SceneNode, Fill, Stroke, CharacterStyleOverride } from '../scene-graph'
+import type { SVGExportContext } from './defs'
 
 // --- Node rendering ---
 

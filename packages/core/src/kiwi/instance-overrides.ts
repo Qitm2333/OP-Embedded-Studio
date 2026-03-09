@@ -270,6 +270,7 @@ export function populateAndApplyOverrides(
   ) {
     for (const node of graph.getAllNodes()) {
       if (node.type !== 'INSTANCE') continue
+      // Apply assignments from the instance's own kiwi data first
       const ownFigmaId = nodeIdToGuid.get(node.id)
       if (ownFigmaId) {
         const ownAssignments = assignmentSources.get(ownFigmaId)
@@ -278,6 +279,8 @@ export function populateAndApplyOverrides(
         }
       }
 
+      // Also apply from cloned instance sources — after population, cloned
+      // instances have componentId pointing to the original kiwi node
       if (!node.componentId) continue
       const sourceFigmaId = nodeIdToGuid.get(node.componentId)
       if (!sourceFigmaId) continue
@@ -459,6 +462,9 @@ export function populateAndApplyOverrides(
     return { dsdModified, dsdSizeSet }
   }
 
+  // Propagate DSD changes through clone chains — each clone should match
+  // its source for size/position/geometry. Nodes whose size was explicitly
+  // set by DSD keep their own values; others inherit from their source.
   function propagateDsdChanges(dsdModified: Set<string>, dsdSizeSet: Set<string>) {
     if (dsdModified.size === 0) return
 
@@ -643,6 +649,7 @@ export function populateAndApplyOverrides(
         const node = graph.getNode(cloneId)
         if (!node) continue
 
+        // Don't overwrite nodes directly targeted by symbolOverrides
         if (seeds.has(cloneId)) {
           syncQueue.push(cloneId)
           continue

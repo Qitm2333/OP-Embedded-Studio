@@ -17,8 +17,12 @@ function toolDisplayName(part: ToolPart): string {
 }
 
 function hasErrorOutput(part: ToolPart): boolean {
-  return part.state === 'output-available' &&
-    typeof part.output === 'object' && part.output !== null && 'error' in part.output
+  return (
+    part.state === 'output-available' &&
+    typeof part.output === 'object' &&
+    part.output !== null &&
+    'error' in part.output
+  )
 }
 
 function toolState(part: ToolPart): 'pending' | 'done' | 'error' {
@@ -42,10 +46,7 @@ function partKey(part: UIMessagePart, index: number): string {
       <template v-if="message.role === 'assistant'">
         <template v-for="(part, i) in message.parts" :key="partKey(part, i)">
           <!-- Tool call -->
-          <div
-            v-if="isToolUIPart(part)"
-            class="rounded-lg border border-border bg-canvas p-2"
-          >
+          <div v-if="isToolUIPart(part)" class="rounded-lg border border-border bg-canvas p-2">
             <CollapsibleRoot>
               <CollapsibleTrigger
                 class="flex w-full items-center gap-2 rounded px-1 py-0.5 hover:bg-hover"
@@ -62,10 +63,7 @@ function partKey(part: UIMessagePart, index: number): string {
                     v-if="toolState(part) === 'pending'"
                     class="size-3 animate-spin"
                   />
-                  <icon-lucide-check
-                    v-else-if="toolState(part) === 'done'"
-                    class="size-3"
-                  />
+                  <icon-lucide-check v-else-if="toolState(part) === 'done'" class="size-3" />
                   <icon-lucide-triangle-alert v-else class="size-3" />
                 </div>
                 <span class="text-[11px] text-surface">
@@ -106,11 +104,7 @@ function partKey(part: UIMessagePart, index: number): string {
             data-test-id="chat-text-bubble"
             class="rounded-xl rounded-tl-md bg-hover px-3 py-2 text-xs leading-relaxed text-surface"
           >
-            <Markdown
-              :content="part.text"
-              :mermaid="false"
-              class="chat-markdown"
-            />
+            <Markdown :content="part.text" :mermaid="false" class="chat-markdown" />
           </div>
         </template>
       </template>
@@ -121,7 +115,12 @@ function partKey(part: UIMessagePart, index: number): string {
         data-test-id="chat-text-bubble"
         class="whitespace-pre-wrap rounded-xl rounded-br-md bg-accent px-3 py-2 text-xs leading-relaxed text-white"
       >
-        {{ message.parts.filter(isTextUIPart).map((p) => p.text).join('') }}
+        {{
+          message.parts
+            .filter(isTextUIPart)
+            .map((p) => p.text)
+            .join('')
+        }}
       </div>
     </div>
   </div>

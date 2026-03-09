@@ -2,7 +2,17 @@
 import { ref, computed } from 'vue'
 import { useEventListener } from '@vueuse/core'
 
-const { modelValue, min = -Infinity, max = Infinity, step = 1, icon, label, suffix, sensitivity = 1, placeholder = 'Mixed' } = defineProps<{
+const {
+  modelValue,
+  min = -Infinity,
+  max = Infinity,
+  step = 1,
+  icon,
+  label,
+  suffix,
+  sensitivity = 1,
+  placeholder = 'Mixed'
+} = defineProps<{
   modelValue: number | symbol
   min?: number
   max?: number

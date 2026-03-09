@@ -274,7 +274,7 @@ function applyTextOverrides(props: Record<string, unknown>, o: Partial<SceneNode
     : 'HEIGHT'
 }
 
-function applyEffectOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
+function applyShapeAndEffectOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
   if (props.points !== undefined) o.pointCount = props.points as number
   if (props.innerRadius !== undefined) o.starInnerRadius = props.innerRadius as number
   if (props.pointCount !== undefined) o.pointCount = props.pointCount as number
@@ -321,7 +321,7 @@ function propsToOverrides(props: Record<string, unknown>, isText: boolean): Part
   applyVisualOverrides(props, o)
   applyLayoutOverrides(props, o, w, h)
   if (isText) applyTextOverrides(props, o)
-  applyEffectOverrides(props, o)
+  applyShapeAndEffectOverrides(props, o)
 
   return o
 }

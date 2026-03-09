@@ -161,8 +161,6 @@ function importPages(
   created: Set<string>,
   createSceneNode: (ncId: string, graphParentId: string) => void
 ): void {
-  const getChildren = (ncId: string): string[] => childrenMap.get(ncId) ?? []
-
   let docId: string | null = null
   for (const [id, nc] of changeMap) {
     if (nc.type === 'DOCUMENT' || id === '0:0') {
@@ -172,14 +170,14 @@ function importPages(
   }
 
   if (docId) {
-    for (const canvasId of getChildren(docId)) {
+    for (const canvasId of childrenMap.get(docId) ?? []) {
       const canvasNc = changeMap.get(canvasId)
       if (!canvasNc) continue
       if (canvasNc.type === 'CANVAS') {
         const page = graph.addPage(canvasNc.name ?? 'Page')
         if (canvasNc.internalOnly) page.internalOnly = true
         created.add(canvasId)
-        for (const childId of getChildren(canvasId)) {
+        for (const childId of childrenMap.get(canvasId) ?? []) {
           createSceneNode(childId, page.id)
         }
       } else {

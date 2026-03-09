@@ -101,7 +101,9 @@ export function startAutomationBridge(server: ViteServer) {
     authToken = null
 
     ws.on('message', (raw) => {
-      handleBrowserMessage(typeof raw === 'string' ? raw : Buffer.from(raw as Buffer).toString('utf-8'))
+      handleBrowserMessage(
+        typeof raw === 'string' ? raw : Buffer.from(raw as Buffer).toString('utf-8')
+      )
     })
 
     ws.on('close', () => {

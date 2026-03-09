@@ -1,5 +1,5 @@
-import { nextTick, ref, type Ref } from 'vue'
 import { onClickOutside } from '@vueuse/core'
+import { nextTick, ref, type Ref } from 'vue'
 
 export function useInlineRename<T extends string>(onCommit: (id: T, newName: string) => void) {
   const editingId = ref<T | null>(null)

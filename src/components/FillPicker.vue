@@ -87,9 +87,7 @@ function onColorUpdate(color: Color) {
 function setCategory(cat: FillCategory) {
   if (cat === fillCategory.value) return
   if (cat === 'SOLID') {
-    const color = fill.gradientStops?.length
-      ? { ...fill.gradientStops[0].color }
-      : fill.color
+    const color = fill.gradientStops?.length ? { ...fill.gradientStops[0].color } : fill.color
     emit('update', { ...fill, type: 'SOLID', color })
   } else if (cat === 'GRADIENT') {
     const type: GradientSubtype = 'GRADIENT_LINEAR'

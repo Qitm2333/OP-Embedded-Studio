@@ -1,11 +1,11 @@
-import { colorToHex, colorToHex8 } from './color'
-import { round } from './svg-export-paths'
+import { colorToHex, colorToHex8 } from '../color'
+import { round } from './paths'
 
-import { svg } from './svg-node'
+import { svg } from '../svg-node'
 
-import type { SVGNode } from './svg-node'
-import type { SceneGraph, SceneNode, Fill, Effect } from './scene-graph'
-import type { Color } from './types'
+import type { SVGNode } from '../svg-node'
+import type { SceneGraph, SceneNode, Fill, Effect } from '../scene-graph'
+import type { Color } from '../types'
 
 export interface SVGExportContext {
   defs: SVGNode[]

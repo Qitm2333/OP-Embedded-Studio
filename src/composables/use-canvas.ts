@@ -119,7 +119,7 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
       }
     }
 
-    const glCtx = (canvas.getContext('webgl2') ?? null)
+    const glCtx = canvas.getContext('webgl2') ?? null
     renderer = new SkiaRenderer(ck, surface, glCtx)
     store.setCanvasKit(ck, renderer)
     void renderer.loadFonts().then(() => renderNow())

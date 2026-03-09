@@ -14,7 +14,7 @@ export async function openFileDialog() {
     })
     if (!path) return
     const bytes = await readFile(path)
-    const file = new File([bytes], (path).split('/').pop() ?? 'file.fig')
+    const file = new File([bytes], path.split('/').pop() ?? 'file.fig')
     await openFileInNewTab(file, undefined, path)
     return
   }

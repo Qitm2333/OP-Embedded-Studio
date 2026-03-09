@@ -26,10 +26,7 @@ function save() {
 </script>
 
 <template>
-  <div
-    data-test-id="provider-setup"
-    class="flex flex-1 flex-col items-center justify-center px-6"
-  >
+  <div data-test-id="provider-setup" class="flex flex-1 flex-col items-center justify-center px-6">
     <icon-lucide-sparkles class="mb-3 size-7 text-muted" />
     <p class="mb-5 text-center text-xs text-muted">Connect an AI provider to start chatting.</p>
 

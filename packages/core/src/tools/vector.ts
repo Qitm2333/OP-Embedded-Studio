@@ -237,7 +237,7 @@ export const exportSvg = defineTool({
     }
   },
   execute: async (figma, args) => {
-    const { renderNodesToSVG } = await import('../svg-export.js')
+    const { renderNodesToSVG } = await import('../svg-export/index.js')
     const pageId = figma.currentPageId
     const ids =
       args.ids && args.ids.length > 0

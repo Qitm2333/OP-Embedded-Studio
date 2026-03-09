@@ -12,7 +12,10 @@ const store = useEditorStore()
 const collab = useCollabInjected()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 
-const { hitTestSectionTitle, hitTestComponentLabel, hitTestFrameTitle } = useCanvas(canvasRef, store)
+const { hitTestSectionTitle, hitTestComponentLabel, hitTestFrameTitle } = useCanvas(
+  canvasRef,
+  store
+)
 const { cursorOverride } = useCanvasInput(
   canvasRef,
   store,
