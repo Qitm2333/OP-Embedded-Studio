@@ -88,6 +88,7 @@
         "typescript/no-non-null-assertion": "off"
       }
     },
+    
     {
       "files": ["**/kiwi/kiwi-schema/**"],
       "rules": {
@@ -115,12 +116,6 @@
       "files": ["packages/cli/src/commands/**"],
       "rules": {
         "open-pencil/no-raw-console-format": "error"
-      }
-    },
-    {
-      "files": ["packages/core/src/**"],
-      "rules": {
-        "complexity": "warn"
       }
     }
   ],

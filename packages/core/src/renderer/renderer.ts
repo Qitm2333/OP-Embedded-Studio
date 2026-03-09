@@ -802,16 +802,7 @@ export class SkiaRenderer {
     const baseFontSize = node.fontSize || DEFAULT_FONT_SIZE
     const cjkFallback = getCJKFallbackFamily()
 
-    const truncateOpts: { maxLines?: number; ellipsis?: string } = {}
-    if (node.textTruncation === 'ENDING') {
-      if (node.maxLines != null && node.maxLines > 0) {
-        truncateOpts.maxLines = node.maxLines
-      } else if (node.height > 0) {
-        const lineH = node.lineHeight || baseFontSize * 1.2
-        truncateOpts.maxLines = Math.max(1, Math.floor(node.height / lineH))
-      }
-      truncateOpts.ellipsis = '…'
-    }
+    const truncateOpts = this.buildTruncateOpts(node, baseFontSize)
 
     const fontFamilies = (primary: string) =>
       cjkFallback ? [primary, cjkFallback] : [primary]
@@ -835,49 +826,78 @@ export class SkiaRenderer {
     })
 
     const builder = ck.ParagraphBuilder.MakeFromFontProvider(paraStyle, this.fontProvider!)
-    const runs = node.styleRuns
-    const text = node.text
 
-    if (runs.length === 0) {
-      builder.addText(text)
+    if (node.styleRuns.length === 0) {
+      builder.addText(node.text)
     } else {
-      let pos = 0
-      for (const run of runs) {
-        if (pos < run.start) {
-          builder.addText(text.slice(pos, run.start))
-        }
-        const s = run.style
-        builder.pushStyle(
-          new ck.TextStyle({
-            color: baseColor,
-            fontFamilies: fontFamilies(s.fontFamily ?? (node.fontFamily || DEFAULT_FONT_FAMILY)),
-            fontSize: s.fontSize ?? baseFontSize,
-            fontStyle: {
-              weight: { value: (s.fontWeight ?? node.fontWeight) || 400 } as FontWeight,
-              slant: (s.italic ?? node.italic) ? ck.FontSlant.Italic : ck.FontSlant.Upright
-            },
-            letterSpacing: s.letterSpacing ?? (node.letterSpacing || 0),
-            decoration: this.textDecorationValue(s.textDecoration ?? node.textDecoration),
-            heightMultiplier: (s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)
-              ? (s.lineHeight !== undefined ? s.lineHeight : node.lineHeight)! /
-                (s.fontSize ?? baseFontSize)
-              : undefined,
-            halfLeading
-          })
-        )
-        builder.addText(text.slice(run.start, run.start + run.length))
-        builder.pop()
-        pos = run.start + run.length
-      }
-      if (pos < text.length) {
-        builder.addText(text.slice(pos))
-      }
+      this.addStyledRuns(builder, node, baseColor, baseFontSize, fontFamilies, halfLeading)
     }
 
     const paragraph = builder.build()
     paragraph.layout(node.width || 1e6)
     builder.delete()
     return paragraph
+  }
+
+  private buildTruncateOpts(
+    node: SceneNode,
+    baseFontSize: number
+  ): { maxLines?: number; ellipsis?: string } {
+    if (node.textTruncation !== 'ENDING') return {}
+
+    const opts: { maxLines?: number; ellipsis: string } = { ellipsis: '…' }
+    if (node.maxLines != null && node.maxLines > 0) {
+      opts.maxLines = node.maxLines
+    } else if (node.height > 0) {
+      const lineH = node.lineHeight || baseFontSize * 1.2
+      opts.maxLines = Math.max(1, Math.floor(node.height / lineH))
+    }
+    return opts
+  }
+
+  private addStyledRuns(
+    builder: ReturnType<CanvasKit['ParagraphBuilder']['MakeFromFontProvider']>,
+    node: SceneNode,
+    baseColor: Float32Array,
+    baseFontSize: number,
+    fontFamilies: (primary: string) => string[],
+    halfLeading: boolean
+  ): void {
+    const ck = this.ck
+    const text = node.text
+    let pos = 0
+
+    for (const run of node.styleRuns) {
+      if (pos < run.start) {
+        builder.addText(text.slice(pos, run.start))
+      }
+      const s = run.style
+      const runLineHeight = s.lineHeight !== undefined ? s.lineHeight : node.lineHeight
+      const runFontSize = s.fontSize ?? baseFontSize
+
+      builder.pushStyle(
+        new ck.TextStyle({
+          color: baseColor,
+          fontFamilies: fontFamilies(s.fontFamily ?? (node.fontFamily || DEFAULT_FONT_FAMILY)),
+          fontSize: runFontSize,
+          fontStyle: {
+            weight: { value: (s.fontWeight ?? node.fontWeight) || 400 } as FontWeight,
+            slant: (s.italic ?? node.italic) ? ck.FontSlant.Italic : ck.FontSlant.Upright
+          },
+          letterSpacing: s.letterSpacing ?? (node.letterSpacing || 0),
+          decoration: this.textDecorationValue(s.textDecoration ?? node.textDecoration),
+          heightMultiplier: runLineHeight ? runLineHeight / runFontSize : undefined,
+          halfLeading
+        })
+      )
+      builder.addText(text.slice(run.start, run.start + run.length))
+      builder.pop()
+      pos = run.start + run.length
+    }
+
+    if (pos < text.length) {
+      builder.addText(text.slice(pos))
+    }
   }
 
   private textDecorationValue(decoration: string): number {

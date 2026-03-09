@@ -32,12 +32,7 @@ function trackColor(
 
 // ─── Diff helpers ─────────────────────────────────────────────
 
-function serializeNodeProps(raw: SceneNode): string {
-  const lines: string[] = []
-  lines.push(`type: ${raw.type}`)
-  lines.push(`size: ${raw.width} ${raw.height}`)
-  lines.push(`pos: ${raw.x} ${raw.y}`)
-
+function serializePaintProps(raw: SceneNode, lines: string[]): void {
   const solidFill = raw.fills.find((f) => f.type === 'SOLID' && f.visible)
   if (solidFill) lines.push(`fill: ${colorToHex(solidFill.color)}`)
 
@@ -46,9 +41,9 @@ function serializeNodeProps(raw: SceneNode): string {
     lines.push(`stroke: ${colorToHex(solidStroke.color)}`)
     if (solidStroke.weight) lines.push(`strokeWeight: ${solidStroke.weight}`)
   }
+}
 
-  if (raw.opacity !== 1) lines.push(`opacity: ${Math.round(raw.opacity * 100) / 100}`)
-
+function serializeCornerRadii(raw: SceneNode, lines: string[]): void {
   const tl = raw.topLeftRadius
   const tr = raw.topRightRadius
   const br = raw.bottomRightRadius
@@ -60,11 +55,9 @@ function serializeNodeProps(raw: SceneNode): string {
       lines.push(`radii: ${tl} ${tr} ${br} ${bl}`)
     }
   }
+}
 
-  if (raw.blendMode !== 'NORMAL') lines.push(`blendMode: ${raw.blendMode}`)
-  if (raw.rotation !== 0) lines.push(`rotation: ${Math.round(raw.rotation * 100) / 100}`)
-  if (raw.clipsContent) lines.push(`clipsContent: true`)
-
+function serializeEffects(raw: SceneNode, lines: string[]): void {
   for (const effect of raw.effects) {
     const parts: string[] = [effect.type]
     parts.push(`r=${effect.radius}`)
@@ -73,13 +66,34 @@ function serializeNodeProps(raw: SceneNode): string {
     parts.push(`s=${effect.spread}`)
     lines.push(`effect: ${parts.join(' ')}`)
   }
+}
 
-  if (raw.type === 'TEXT') {
-    if (raw.text) lines.push(`text: ${JSON.stringify(raw.text)}`)
-    if (raw.fontSize) lines.push(`fontSize: ${raw.fontSize}`)
-    if (raw.fontFamily) lines.push(`fontFamily: ${raw.fontFamily}`)
-    if (raw.fontWeight) lines.push(`fontWeight: ${raw.fontWeight}`)
-  }
+function serializeTextProps(raw: SceneNode, lines: string[]): void {
+  if (raw.type !== 'TEXT') return
+  if (raw.text) lines.push(`text: ${JSON.stringify(raw.text)}`)
+  if (raw.fontSize) lines.push(`fontSize: ${raw.fontSize}`)
+  if (raw.fontFamily) lines.push(`fontFamily: ${raw.fontFamily}`)
+  if (raw.fontWeight) lines.push(`fontWeight: ${raw.fontWeight}`)
+}
+
+function serializeNodeProps(raw: SceneNode): string {
+  const lines: string[] = []
+  lines.push(`type: ${raw.type}`)
+  lines.push(`size: ${raw.width} ${raw.height}`)
+  lines.push(`pos: ${raw.x} ${raw.y}`)
+
+  serializePaintProps(raw, lines)
+
+  if (raw.opacity !== 1) lines.push(`opacity: ${Math.round(raw.opacity * 100) / 100}`)
+
+  serializeCornerRadii(raw, lines)
+
+  if (raw.blendMode !== 'NORMAL') lines.push(`blendMode: ${raw.blendMode}`)
+  if (raw.rotation !== 0) lines.push(`rotation: ${Math.round(raw.rotation * 100) / 100}`)
+  if (raw.clipsContent) lines.push(`clipsContent: true`)
+
+  serializeEffects(raw, lines)
+  serializeTextProps(raw, lines)
 
   if (!raw.visible) lines.push(`visible: false`)
   if (raw.locked) lines.push(`locked: true`)

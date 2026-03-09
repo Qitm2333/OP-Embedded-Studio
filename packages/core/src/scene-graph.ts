@@ -813,6 +813,48 @@ export class SceneGraph {
     )
   }
 
+  private static containsPoint(
+    px: number,
+    py: number,
+    ax: number,
+    ay: number,
+    node: SceneNode
+  ): boolean {
+    return px >= ax && px <= ax + node.width && py >= ay && py <= ay + node.height
+  }
+
+  private hitTestOpaqueContainer(
+    px: number,
+    py: number,
+    child: SceneNode,
+    childId: string,
+    ax: number,
+    ay: number,
+    deep: boolean
+  ): SceneNode | null {
+    if (!SceneGraph.containsPoint(px, py, ax, ay, child)) return null
+    const childHit = this.hitTestChildren(px, py, childId, ax, ay, deep)
+    if (childHit) return child
+    if (SceneGraph.hasVisibleFillOrStroke(child)) return child
+    return null
+  }
+
+  private hitTestTransparentContainer(
+    px: number,
+    py: number,
+    child: SceneNode,
+    childId: string,
+    ax: number,
+    ay: number,
+    deep: boolean
+  ): SceneNode | null {
+    const deepHit = this.hitTestChildren(px, py, childId, ax, ay, deep)
+    if (deepHit) return deepHit
+    if (child.type === 'GROUP') return null
+    if (SceneGraph.containsPoint(px, py, ax, ay, child) && SceneGraph.hasVisibleFillOrStroke(child)) return child
+    return null
+  }
+
   private hitTestChildren(
     px: number,
     py: number,
@@ -825,12 +867,9 @@ export class SceneGraph {
     if (!parent) return null
 
     if (parent.clipsContent) {
-      if (px < offsetX || px > offsetX + parent.width || py < offsetY || py > offsetY + parent.height) {
-        return null
-      }
+      if (!SceneGraph.containsPoint(px, py, offsetX, offsetY, parent)) return null
     }
 
-    // Reverse order = topmost first
     for (let i = parent.childIds.length - 1; i >= 0; i--) {
       const childId = parent.childIds[i]
       const child = this.nodes.get(childId)
@@ -840,32 +879,18 @@ export class SceneGraph {
       const ay = offsetY + child.y
 
       if (CONTAINER_TYPES.has(child.type)) {
-        // Components/instances: don't recurse unless in deep mode (double-click).
-        // Still check fills — empty instances are click-through like frames.
         if (SceneGraph.OPAQUE_CONTAINER_TYPES.has(child.type) && !deep) {
-          if (px >= ax && px <= ax + child.width && py >= ay && py <= ay + child.height) {
-            const childHit = this.hitTestChildren(px, py, childId, ax, ay, deep)
-            if (childHit) return child
-            if (SceneGraph.hasVisibleFillOrStroke(child)) return child
-          }
+          const hit = this.hitTestOpaqueContainer(px, py, child, childId, ax, ay, deep)
+          if (hit) return hit
           continue
         }
 
-        const deepHit = this.hitTestChildren(px, py, childId, ax, ay, deep)
-        if (deepHit) return deepHit
-
-        // Groups are always click-through (only children are hittable).
-        // Frames/sections without visible fills or strokes are also click-through.
-        if (child.type === 'GROUP') continue
-        if (px >= ax && px <= ax + child.width && py >= ay && py <= ay + child.height) {
-          if (SceneGraph.hasVisibleFillOrStroke(child)) return child
-        }
+        const hit = this.hitTestTransparentContainer(px, py, child, childId, ax, ay, deep)
+        if (hit) return hit
         continue
       }
 
-      if (px >= ax && px <= ax + child.width && py >= ay && py <= ay + child.height) {
-        return child
-      }
+      if (SceneGraph.containsPoint(px, py, ax, ay, child)) return child
     }
     return null
   }
