@@ -35,7 +35,6 @@ export function importNodeChanges(
   const childrenMap = new Map<string, string[]>()
 
   for (const nc of nodeChanges) {
-    if (!nc.guid) continue
     if (nc.phase === 'REMOVED') continue
     const id = guidToString(nc.guid)
     changeMap.set(id, nc)
@@ -87,8 +86,8 @@ export function importNodeChanges(
       if (nc.type !== 'VARIABLE_SET') continue
 
       const modes = (nc.variableSetModes ?? []).map((m) => {
-        const modeId = m.id ? guidToString(m.id) : 'default'
-        return { modeId, name: m.name ?? 'Mode' }
+        const modeId = guidToString(m.id)
+        return { modeId, name: m.name }
       })
       if (modes.length === 0) modes.push({ modeId: 'default', name: 'Default' })
 
@@ -150,7 +149,8 @@ export function importNodeChanges(
       if (Object.keys(valuesByMode).length === 0) {
         const col = graph.variableCollections.get(collectionId)
         const defaultMode = col?.defaultModeId ?? 'default'
-        valuesByMode[defaultMode] = type === 'BOOLEAN' ? false : type === 'STRING' ? '' : type === 'COLOR' ? { r: 0, g: 0, b: 0, a: 1 } : 0
+        const defaultValue = type === 'BOOLEAN' ? false : (type === 'STRING' ? '' : null)
+        valuesByMode[defaultMode] = defaultValue ?? (type === 'COLOR' ? { r: 0, g: 0, b: 0, a: 1 } : 0)
       }
 
       graph.addVariable({

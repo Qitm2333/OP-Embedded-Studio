@@ -1,8 +1,7 @@
 import { DROP_HIGHLIGHT_ALPHA, DROP_HIGHLIGHT_STROKE, SECTION_CORNER_RADIUS } from '../constants'
 import type { SceneNode, SceneGraph } from '../scene-graph'
-import type { Canvas } from 'canvaskit-wasm'
-import type { SkiaRenderer } from './renderer'
-import type { RenderOverlays } from './renderer'
+import type { Canvas, EmbindEnumEntity } from 'canvaskit-wasm'
+import type { SkiaRenderer, RenderOverlays } from './renderer'
 
 export function renderNode(
   r: SkiaRenderer,
@@ -133,7 +132,7 @@ export function renderSection(
   const rrect = r.ck.RRectXY(rect, SECTION_CORNER_RADIUS, SECTION_CORNER_RADIUS)
 
   for (let fi = 0; fi < node.fills.length; fi++) {
-    const fill = node.fills[fi]!
+    const fill = node.fills[fi]
     if (!fill.visible) continue
     r.applyFill(fill, node, graph, fi)
     r.fillPaint.setAlphaf(fill.opacity)
@@ -142,7 +141,7 @@ export function renderSection(
   }
 
   for (let si = 0; si < node.strokes.length; si++) {
-    const stroke = node.strokes[si]!
+    const stroke = node.strokes[si]
     if (!stroke.visible) continue
     const sc = r.resolveStrokeColor(stroke, si, node, graph)
     r.strokePaint.setColor(r.ck.Color4f(sc.r, sc.g, sc.b, sc.a))
@@ -167,7 +166,7 @@ export function renderComponentSet(
   const rrect = r.ck.RRectXY(rect, 5, 5)
 
   for (let fi = 0; fi < node.fills.length; fi++) {
-    const fill = node.fills[fi]!
+    const fill = node.fills[fi]
     if (!fill.visible) continue
     r.applyFill(fill, node, graph, fi)
     r.fillPaint.setAlphaf(fill.opacity)
@@ -235,7 +234,7 @@ export function renderShapeUncached(
   r.renderEffects(canvas, node, rect, hasRadius, 'behind')
 
   for (let fi = 0; fi < node.fills.length; fi++) {
-    const fill = node.fills[fi]!
+    const fill = node.fills[fi]
     if (!fill.visible) continue
     r.applyFill(fill, node, graph, fi)
     r.fillPaint.setAlphaf(fill.opacity)
@@ -247,7 +246,7 @@ export function renderShapeUncached(
   const sg = node.type === 'VECTOR' ? r.getStrokeGeometry(node) : null
   const vectorPaths = !sg && node.type === 'VECTOR' ? r.getVectorPaths(node) : null
   for (let si = 0; si < node.strokes.length; si++) {
-    const stroke = node.strokes[si]!
+    const stroke = node.strokes[si]
     if (!stroke.visible) continue
     const sc = r.resolveStrokeColor(stroke, si, node, graph)
 
@@ -260,12 +259,12 @@ export function renderShapeUncached(
     }
 
     if (vectorPaths) {
-      const capMap: Record<string, import('canvaskit-wasm').EmbindEnumEntity> = {
+      const capMap: Record<string, EmbindEnumEntity> = {
         NONE: r.ck.StrokeCap.Butt,
         ROUND: r.ck.StrokeCap.Round,
         SQUARE: r.ck.StrokeCap.Square
       }
-      const joinMap: Record<string, import('canvaskit-wasm').EmbindEnumEntity> = {
+      const joinMap: Record<string, EmbindEnumEntity> = {
         MITER: r.ck.StrokeJoin.Miter,
         ROUND: r.ck.StrokeJoin.Round,
         BEVEL: r.ck.StrokeJoin.Bevel
@@ -294,7 +293,7 @@ export function renderShapeUncached(
     r.strokePaint.setAlphaf(stroke.opacity)
 
     if (stroke.cap) {
-      const capMap: Record<string, import('canvaskit-wasm').EmbindEnumEntity> = {
+      const capMap: Record<string, EmbindEnumEntity> = {
         NONE: r.ck.StrokeCap.Butt,
         ROUND: r.ck.StrokeCap.Round,
         SQUARE: r.ck.StrokeCap.Square
@@ -302,7 +301,7 @@ export function renderShapeUncached(
       r.strokePaint.setStrokeCap(capMap[stroke.cap] ?? r.ck.StrokeCap.Butt)
     }
     if (stroke.join) {
-      const joinMap: Record<string, import('canvaskit-wasm').EmbindEnumEntity> = {
+      const joinMap: Record<string, EmbindEnumEntity> = {
         MITER: r.ck.StrokeJoin.Miter,
         ROUND: r.ck.StrokeJoin.Round,
         BEVEL: r.ck.StrokeJoin.Bevel

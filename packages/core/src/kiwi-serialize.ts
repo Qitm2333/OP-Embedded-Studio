@@ -13,7 +13,7 @@ import type { GUID } from './types'
 const fontDigestCache = new Map<string, Uint8Array>()
 
 async function computeFontDigest(data: ArrayBuffer): Promise<Uint8Array> {
-  if (typeof crypto !== 'undefined' && crypto.subtle) {
+  if (typeof crypto !== 'undefined') {
     const hash = await crypto.subtle.digest('SHA-1', data)
     return new Uint8Array(hash)
   }
@@ -172,7 +172,7 @@ function buildDerivedTextData(
     const key = `${family}|${style}`
     if (seen.has(key)) return
     seen.add(key)
-    fontMeta!.push({
+    fontMeta.push({
       key: { family, style, postscript: '' },
       fontLineHeight: 1.2,
       fontDigest: digestMap.get(key),
@@ -421,7 +421,8 @@ export function sceneNodeToKiwi(
       const variable = graph.variables.get(varId)
       if (!variable) continue
       const varGuid = stringToGuid(varId)
-      const resolvedType = variable.type === 'COLOR' ? 'COLOR' : variable.type === 'BOOLEAN' ? 'BOOLEAN' : variable.type === 'STRING' ? 'STRING' : 'FLOAT'
+      const typeMap: Record<string, string> = { COLOR: 'COLOR', BOOLEAN: 'BOOLEAN', STRING: 'STRING' }
+      const resolvedType = typeMap[variable.type] ?? 'FLOAT'
       entries.push({
         variableData: {
           value: { alias: { guid: varGuid } },

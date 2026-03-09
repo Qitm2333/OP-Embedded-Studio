@@ -31,8 +31,7 @@ import type { SnapGuide } from '../snap'
 import type { TextEditor } from '../text-editor'
 import type { Rect, Vector } from '../types'
 import type { Canvas } from 'canvaskit-wasm'
-import type { SkiaRenderer } from './renderer'
-import type { RenderOverlays } from './renderer'
+import type { SkiaRenderer, RenderOverlays } from './renderer'
 
 export function drawHoverHighlight(
   r: SkiaRenderer,
@@ -219,7 +218,7 @@ export function drawSelectionLabels(
   const glyphIds = r.sizeFont.getGlyphIDs(sizeText)
   const widths = r.sizeFont.getGlyphWidths(glyphIds)
   let textWidth = 0
-  for (let i = 0; i < widths.length; i++) textWidth += widths[i]
+  for (const w of widths) textWidth += w
   const pillW = textWidth + SIZE_PILL_PADDING_X * 2
   const pillH = SIZE_PILL_HEIGHT
   const pillX = smx - pillW / 2
@@ -737,7 +736,7 @@ export function drawRemoteCursors(
         const glyphIds = font.getGlyphIDs(cursor.name)
         const widths = font.getGlyphWidths(glyphIds)
         let textWidth = 0
-        for (let i = 0; i < widths.length; i++) textWidth += widths[i]
+        for (const w of widths) textWidth += w
 
         r.auxFill.setColor(r.ck.Color4f(cr, g, b, 1))
         const bgRect = r.ck.RRectXY(

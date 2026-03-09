@@ -2,7 +2,7 @@ import { BLACK, DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from './consta
 import { copyEffects, copyFills, copyStrokes, copyStyleRuns } from './copy'
 
 export type { GUID, Color } from './types'
-import type { Matrix, Vector } from './types'
+import type { Matrix, Vector, Color, Rect } from './types'
 
 export type HandleMirroring = 'NONE' | 'ANGLE' | 'ANGLE_AND_LENGTH'
 export type WindingRule = 'NONZERO' | 'EVENODD'
@@ -58,7 +58,6 @@ export type NodeType =
   | 'CONNECTOR'
   | 'SHAPE_WITH_TEXT'
 
-import type { Color, Matrix, Rect } from './types'
 
 export type FillType =
   | 'SOLID'
@@ -526,9 +525,18 @@ export class SceneGraph {
     const collection = this.variableCollections.get(collectionId)
     if (!collection) throw new Error(`Collection "${collectionId}" not found`)
     const id = generateId()
-    const defaultValue =
-      value ??
-      (type === 'COLOR' ? { ...BLACK } : type === 'FLOAT' ? 0 : type === 'BOOLEAN' ? false : '')
+    let defaultValue: VariableValue
+    if (value !== undefined) {
+      defaultValue = value
+    } else if (type === 'COLOR') {
+      defaultValue = { ...BLACK }
+    } else if (type === 'FLOAT') {
+      defaultValue = 0
+    } else if (type === 'BOOLEAN') {
+      defaultValue = false
+    } else {
+      defaultValue = ''
+    }
     const valuesByMode: Record<string, VariableValue> = {}
     for (const mode of collection.modes) {
       valuesByMode[mode.modeId] = structuredClone(defaultValue)
@@ -592,8 +600,7 @@ export class SceneGraph {
     if (!variable) return undefined
     const resolvedModeId = modeId ?? this.getActiveModeId(variable.collectionId)
     const value = variable.valuesByMode[resolvedModeId]
-    if (value === undefined) return undefined
-    if (typeof value === 'object' && value !== null && 'aliasId' in value) {
+    if (typeof value === 'object' && 'aliasId' in value) {
       const seen = visited ?? new Set<string>()
       seen.add(variableId)
       return this.resolveVariable(value.aliasId, undefined, seen)
@@ -603,7 +610,7 @@ export class SceneGraph {
 
   resolveColorVariable(variableId: string): Color | undefined {
     const value = this.resolveVariable(variableId)
-    if (value && typeof value === 'object' && 'r' in value) return value as Color
+    if (value && typeof value === 'object' && 'r' in value) return value
     return undefined
   }
 
@@ -962,10 +969,10 @@ export class SceneGraph {
     'borderLeftWeight'
   ]
 
-  private static copyProp<K extends keyof SceneNode>(
+  private static copyProp(
     target: Partial<SceneNode> | SceneNode,
     source: SceneNode,
-    key: K
+    key: keyof SceneNode
   ): void {
     const val = source[key]
     if (key === 'fills') {
@@ -977,7 +984,7 @@ export class SceneGraph {
     } else if (key === 'styleRuns') {
       ;(target as Record<string, unknown>)[key] = copyStyleRuns(val as StyleRun[])
     } else {
-      target[key] = (Array.isArray(val) ? structuredClone(val) : val) as SceneNode[K]
+      ;(target as Record<string, unknown>)[key] = Array.isArray(val) ? structuredClone(val) : val
     }
   }
 
@@ -987,7 +994,7 @@ export class SceneGraph {
     overrides: Partial<SceneNode> = {}
   ): SceneNode | null {
     const component = this.nodes.get(componentId)
-    if (!component || component.type !== 'COMPONENT') return null
+    if (component?.type !== 'COMPONENT') return null
 
     const props: Partial<SceneNode> = { name: component.name, componentId }
     for (const key of SceneGraph.INSTANCE_SYNC_PROPS) {
@@ -1030,7 +1037,7 @@ export class SceneGraph {
 
   syncInstances(componentId: string): void {
     const component = this.nodes.get(componentId)
-    if (!component || component.type !== 'COMPONENT') return
+    if (component?.type !== 'COMPONENT') return
 
     for (const instance of this.getInstances(componentId)) {
       // Sync instance-level props (unless overridden)
@@ -1112,7 +1119,7 @@ export class SceneGraph {
 
   detachInstance(instanceId: string): void {
     const node = this.nodes.get(instanceId)
-    if (!node || node.type !== 'INSTANCE') return
+    if (node?.type !== 'INSTANCE') return
     node.type = 'FRAME'
     node.componentId = null
     node.overrides = {}

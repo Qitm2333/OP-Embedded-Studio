@@ -88,7 +88,7 @@ export function populateAndApplyOverrides(
   while (populateQueue.length > 0) {
     const nodeId = populateQueue.pop()!
     const node = graph.getNode(nodeId)
-    if (!node || node.type !== 'INSTANCE' || !node.componentId || node.childIds.length > 0) continue
+    if (node?.type !== 'INSTANCE' || !node.componentId || node.childIds.length > 0) continue
     const comp = graph.getNode(node.componentId)
     if (comp && comp.childIds.length > 0) {
       graph.populateInstanceChildren(nodeId, node.componentId)
@@ -245,7 +245,7 @@ export function populateAndApplyOverrides(
 
   function repopulateInstance(nodeId: string, compId: string) {
     const node = graph.getNode(nodeId)
-    if (!node || node.type !== 'INSTANCE') return
+    if (node?.type !== 'INSTANCE') return
 
     for (const childId of [...node.childIds]) graph.deleteNode(childId)
     graph.updateNode(nodeId, { componentId: compId })
@@ -285,7 +285,7 @@ export function populateAndApplyOverrides(
         if (ownAssignments) {
           const valueByDef = new Map<string, ComponentPropAssignment['value']>()
           for (const a of ownAssignments) {
-            if (a.defID) valueByDef.set(guidToString(a.defID), a.value)
+            valueByDef.set(guidToString(a.defID), a.value)
           }
           applyPropAssignments(node.id, valueByDef, propRefsMap)
         }
@@ -303,7 +303,7 @@ export function populateAndApplyOverrides(
 
       const valueByDef = new Map<string, ComponentPropAssignment['value']>()
       for (const a of assignments) {
-        if (a.defID) valueByDef.set(guidToString(a.defID), a.value)
+        valueByDef.set(guidToString(a.defID), a.value)
       }
       applyPropAssignments(node.id, valueByDef, propRefsMap)
     }
@@ -329,7 +329,7 @@ export function populateAndApplyOverrides(
 
         const valueByDef = new Map<string, ComponentPropAssignment['value']>()
         for (const a of ov.componentPropAssignments) {
-          if (a.defID) valueByDef.set(guidToString(a.defID), a.value)
+          valueByDef.set(guidToString(a.defID), a.value)
         }
         applyPropAssignments(targetId, valueByDef, propRefsMap)
       }
@@ -354,7 +354,6 @@ export function populateAndApplyOverrides(
       const refs = findPropRefs(child.componentId, propRefsMap)
       if (refs) {
         for (const ref of refs) {
-          if (!ref.defID) continue
           const val = valueByDef.get(guidToString(ref.defID))
           if (!val) continue
 
@@ -387,7 +386,7 @@ export function populateAndApplyOverrides(
       while (o < scaled.length) {
         const cmd = scaled[o++]
         if (cmd === 0) continue
-        const coords = cmd === 1 || cmd === 2 ? 1 : cmd === 4 ? 3 : -1
+        const coords = cmd === 1 || cmd === 2 ? 1 : (cmd === 4 ? 3 : -1)
         if (coords < 0) {
           console.warn(`scaleGeometryBlobs: unknown path command ${cmd} at offset ${o - 1}`)
           break
@@ -414,8 +413,7 @@ export function populateAndApplyOverrides(
       const nodeId = guidToNodeId.get(ncId)
       if (!nodeId) continue
 
-      for (let i = 0; i < derived.length; i++) {
-        const d = derived[i]
+      for (const d of derived) {
         const guids = d.guidPath?.guids
         if (!guids?.length) continue
 
@@ -549,16 +547,16 @@ export function populateAndApplyOverrides(
 
   function syncNodeProps(source: SceneNode, target: SceneNode) {
     const updates: Partial<SceneNode> = {}
-    if (source.text !== undefined && source.text !== target.text) updates.text = source.text
-    if (source.visible !== undefined && source.visible !== target.visible) updates.visible = source.visible
-    if (source.opacity !== undefined && source.opacity !== target.opacity) updates.opacity = source.opacity
-    if (source.fills !== undefined && source.fills !== target.fills) updates.fills = copyFills(source.fills)
-    if (source.strokes !== undefined && source.strokes !== target.strokes) updates.strokes = copyStrokes(source.strokes)
-    if (source.effects !== undefined && source.effects !== target.effects) updates.effects = copyEffects(source.effects)
-    if (source.styleRuns !== undefined && source.styleRuns !== target.styleRuns) updates.styleRuns = copyStyleRuns(source.styleRuns)
-    if (source.layoutGrow !== undefined && source.layoutGrow !== target.layoutGrow) updates.layoutGrow = source.layoutGrow
-    if (source.textAutoResize !== undefined && source.textAutoResize !== target.textAutoResize) updates.textAutoResize = source.textAutoResize
-    if (source.locked !== undefined && source.locked !== target.locked) updates.locked = source.locked
+    if (source.text !== target.text) updates.text = source.text
+    if (source.visible !== target.visible) updates.visible = source.visible
+    if (source.opacity !== target.opacity) updates.opacity = source.opacity
+    if (source.fills !== target.fills) updates.fills = copyFills(source.fills)
+    if (source.strokes !== target.strokes) updates.strokes = copyStrokes(source.strokes)
+    if (source.effects !== target.effects) updates.effects = copyEffects(source.effects)
+    if (source.styleRuns !== target.styleRuns) updates.styleRuns = copyStyleRuns(source.styleRuns)
+    if (source.layoutGrow !== target.layoutGrow) updates.layoutGrow = source.layoutGrow
+    if (source.textAutoResize !== target.textAutoResize) updates.textAutoResize = source.textAutoResize
+    if (source.locked !== target.locked) updates.locked = source.locked
     if (Object.keys(updates).length > 0) graph.updateNode(target.id, updates)
   }
 

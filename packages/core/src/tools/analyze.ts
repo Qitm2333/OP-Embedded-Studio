@@ -67,10 +67,10 @@ function serializeNodeProps(raw: SceneNode): string {
 
   for (const effect of raw.effects) {
     const parts: string[] = [effect.type]
-    if (effect.radius !== undefined) parts.push(`r=${effect.radius}`)
-    if (effect.color) parts.push(`c=${colorToHex(effect.color)}`)
-    if (effect.offset) parts.push(`x=${effect.offset.x} y=${effect.offset.y}`)
-    if (effect.spread !== undefined) parts.push(`s=${effect.spread}`)
+    parts.push(`r=${effect.radius}`)
+    parts.push(`c=${colorToHex(effect.color)}`)
+    parts.push(`x=${effect.offset.x} y=${effect.offset.y}`)
+    parts.push(`s=${effect.spread}`)
     lines.push(`effect: ${parts.join(' ')}`)
   }
 
@@ -156,12 +156,12 @@ export const analyzeColors = defineTool({
       const boundVars = raw.boundVariables
       for (const fill of raw.fills) {
         if (fill.type === 'SOLID' && fill.visible) {
-          trackColor(colorMap, fill.color, boundVars?.['fills'] ? String(boundVars['fills']) : null)
+          trackColor(colorMap, fill.color, boundVars['fills'] ? String(boundVars['fills']) : null)
         }
       }
       for (const stroke of raw.strokes) {
         if (stroke.visible) {
-          trackColor(colorMap, stroke.color, boundVars?.['strokes'] ? String(boundVars['strokes']) : null)
+          trackColor(colorMap, stroke.color, boundVars['strokes'] ? String(boundVars['strokes']) : null)
         }
       }
       return false
@@ -415,7 +415,7 @@ export const analyzeClusters = defineTool({
 
         let confidence = 100
         if (nodes.length >= 2) {
-          const base = nodes[0]!
+          const base = nodes[0]
           let score = 0
           for (const n of nodes.slice(1)) {
             const sizeDiff = Math.abs(n.width - base.width) + Math.abs(n.height - base.height)
@@ -582,6 +582,7 @@ export const evalCode = defineTool({
     code: { type: 'string', description: 'JavaScript code to execute', required: true }
   },
   execute: async (figma, { code }) => {
+    // eslint-disable-next-line no-empty-function
     const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
     const wrapped = code.trim().startsWith('return') ? code : `return (async () => { ${code} })()`
     const fn = new AsyncFunction('figma', wrapped)

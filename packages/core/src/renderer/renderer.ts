@@ -33,8 +33,9 @@ import type { SceneNode, SceneGraph, Fill, Stroke } from '../scene-graph'
 import type { SnapGuide } from '../snap'
 import type { TextEditor } from '../text-editor'
 import type { Color, Rect, Vector } from '../types'
-import type { Image as CKImage, Path } from 'canvaskit-wasm'
 import type {
+  Image as CKImage,
+  Path,
   CanvasKit,
   Surface,
   Canvas,
@@ -45,7 +46,8 @@ import type {
   TypefaceFontProvider,
   SkPicture,
   ImageFilter,
-  MaskFilter
+  MaskFilter,
+  Paragraph
 } from 'canvaskit-wasm'
 
 import {
@@ -399,7 +401,7 @@ export class SkiaRenderer {
     this.fontsLoaded = true
     this.invalidateAllPictures()
 
-    ensureCJKFallback().then((family) => {
+    void ensureCJKFallback().then((family) => {
       if (family) this.invalidateAllPictures()
     })
   }
@@ -564,7 +566,7 @@ export class SkiaRenderer {
 
     const id = [...selectedIds][0]
     const node = graph.getNode(id)
-    if (!node || node.type !== 'FRAME') return null
+    if (node?.type !== 'FRAME') return null
 
     const parent = node.parentId ? graph.getNode(node.parentId) : null
     const isTopLevel = !parent || parent.type === 'CANVAS' || parent.type === 'SECTION'
@@ -730,7 +732,7 @@ export class SkiaRenderer {
     this.worldViewport = prevViewport
     this.scenePictureVersion = sceneVersion
     this.scenePicturePageId = this.pageId
-    canvas.drawPicture(this.scenePicture!)
+    canvas.drawPicture(this.scenePicture)
   }
 
   invalidateVectorPath(nodeId: string): void {
@@ -794,7 +796,7 @@ export class SkiaRenderer {
     node: SceneNode,
     color?: Float32Array,
     { halfLeading = false }: { halfLeading?: boolean } = {}
-  ): import('canvaskit-wasm').Paragraph {
+  ): Paragraph {
     const ck = this.ck
     const baseColor = color ?? ck.BLACK
     const baseFontSize = node.fontSize || DEFAULT_FONT_SIZE
@@ -969,11 +971,11 @@ export class SkiaRenderer {
     this.penVertexFill.delete()
     this.penVertexStroke.delete()
     this.effectLayerPaint.delete()
-    for (const filter of this.imageFilterCache.values()) filter?.delete()
+    for (const filter of this.imageFilterCache.values()) filter.delete()
     this.imageFilterCache.clear()
-    for (const filter of this.maskFilterCache.values()) filter?.delete()
+    for (const filter of this.maskFilterCache.values()) filter.delete()
     this.maskFilterCache.clear()
-    for (const pic of this.nodePictureCache.values()) pic?.delete()
+    for (const pic of this.nodePictureCache.values()) pic.delete()
     this.nodePictureCache.clear()
     this.scenePicture?.delete()
     this._flashPaint?.delete()

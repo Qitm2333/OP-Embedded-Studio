@@ -110,7 +110,7 @@ const JSX_ENTITY: Record<string, string> = {
 }
 
 function escapeJSXText(text: string): string {
-  return text.replace(/[{}<>&]/g, (c) => JSX_ENTITY[c]!)
+  return text.replace(/[{}<>&]/g, (c) => JSX_ENTITY[c])
 }
 
 function formatProp(key: string, value: unknown): string {
@@ -476,7 +476,7 @@ function collectTailwindClasses(node: SceneNode, graph: SceneGraph): string[] {
       if (shadow) classes.push(`shadow-[${shadow}]`)
     } else if (effect.type === 'LAYER_BLUR' || effect.type === 'FOREGROUND_BLUR') {
       classes.push(`blur-[${effect.radius}px]`)
-    } else if (effect.type === 'BACKGROUND_BLUR') {
+    } else {
       classes.push(`backdrop-blur-[${effect.radius}px]`)
     }
   }

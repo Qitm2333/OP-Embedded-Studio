@@ -92,7 +92,13 @@
       "files": ["**/kiwi/kiwi-schema/**"],
       "rules": {
         "typescript/no-explicit-any": "off",
-        "typescript/no-non-null-assertion": "off"
+        "typescript/no-non-null-assertion": "off",
+        "typescript/prefer-for-of": "off",
+        "typescript/prefer-optional-chain": "off",
+        "typescript/consistent-type-imports": "off",
+        "typescript/no-unnecessary-condition": "off",
+        "import/no-mutable-exports": "off",
+        "complexity": "off"
       }
     },
     {
@@ -109,6 +115,12 @@
       "files": ["packages/cli/src/commands/**"],
       "rules": {
         "open-pencil/no-raw-console-format": "error"
+      }
+    },
+    {
+      "files": ["packages/core/src/**"],
+      "rules": {
+        "complexity": "warn"
       }
     }
   ],
