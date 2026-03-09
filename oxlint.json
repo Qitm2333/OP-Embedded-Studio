@@ -77,7 +77,8 @@
     }],
     "open-pencil/no-structuredclone-scene-arrays": "error",
     "open-pencil/no-math-random": "error",
-    "open-pencil/no-hand-rolled-color": "error"
+    "open-pencil/no-hand-rolled-color": "error",
+    "open-pencil/no-raw-console-format": "off"
   },
   "overrides": [
     {
@@ -102,6 +103,12 @@
       ],
       "rules": {
         "max-lines": "off"
+      }
+    },
+    {
+      "files": ["packages/cli/src/commands/**"],
+      "rules": {
+        "open-pencil/no-raw-console-format": "error"
       }
     }
   ],
