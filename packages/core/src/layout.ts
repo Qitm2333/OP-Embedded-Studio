@@ -370,7 +370,11 @@ function configureChildAsLeaf(yogaChild: YogaNode, child: SceneNode, parent: Sce
       yogaChild.setWidth(est.width)
       yogaChild.setHeight(est.height)
     } else if (child.textAutoResize === 'HEIGHT') {
-      yogaChild.setWidth(child.width)
+      const stretches = child.layoutAlignSelf === 'STRETCH' ||
+        (child.layoutAlignSelf === 'AUTO' && parent.counterAxisAlign === 'STRETCH')
+      if (!(!isRow && stretches)) {
+        yogaChild.setWidth(child.width)
+      }
       yogaChild.setHeight(est.height)
     }
   } else {
@@ -412,8 +416,14 @@ function configureTextLeaf(
       return result
     })
   } else if (autoResize === 'HEIGHT') {
+    const stretchesCross = child.layoutAlignSelf === 'STRETCH' ||
+      (child.layoutAlignSelf === 'AUTO' && parent.counterAxisAlign === 'STRETCH')
+    // Don't set fixed width when text stretches on cross axis (w="fill" in
+    // flex="col" parent) — setWidth blocks Yoga's alignSelf:stretch, leaving
+    // text at 100px default instead of filling the parent.
+    const fillsWidth = !isRow && stretchesCross
     const fixedWidth = child.width
-    if (child.layoutGrow <= 0) {
+    if (child.layoutGrow <= 0 && !fillsWidth) {
       yogaChild.setWidth(fixedWidth)
     }
     yogaChild.setMeasureFunc((width, widthMode, _height, _heightMode) => {

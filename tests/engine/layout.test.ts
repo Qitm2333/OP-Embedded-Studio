@@ -1053,6 +1053,42 @@ describe('Auto Layout', () => {
       expect(updatedText.height).toBeGreaterThan(0)
     })
 
+    test('text with w="fill" in flex="col" stretches to parent width', () => {
+      const graph = new SceneGraph()
+      const pid = pageId(graph)
+
+      const frame = autoFrame(graph, pid, {
+        width: 300,
+        height: 400,
+        layoutMode: 'VERTICAL',
+        primaryAxisSizing: 'FIXED',
+        counterAxisSizing: 'FIXED',
+        paddingLeft: 20,
+        paddingRight: 20,
+      })
+
+      const text = graph.createNode('TEXT', frame.id, {
+        width: 100,
+        height: 20,
+        text: 'This text should fill the parent width',
+        fontSize: 14,
+        textAutoResize: 'HEIGHT' as const,
+        layoutAlignSelf: 'STRETCH' as const,
+      })
+
+      setTextMeasurer((_node, maxWidth) => {
+        const w = maxWidth ?? 260
+        return { width: w, height: 20 }
+      })
+
+      computeAllLayouts(graph)
+      setTextMeasurer(null)
+
+      const updatedText = graph.getNode(text.id)!
+      // Should stretch to 300 - 20 - 20 = 260, NOT stay at 100
+      expect(updatedText.width).toBe(260)
+    })
+
     test('HEIGHT auto-resize text wraps via MeasureFunc when filling parent', () => {
       const graph = new SceneGraph()
       const pid = pageId(graph)
