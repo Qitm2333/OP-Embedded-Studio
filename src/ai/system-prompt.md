@@ -147,6 +147,8 @@ No style={{}}, className, CSS. No named colors or rgb(). No percentage values. N
 ```
 Key rules: bar background uses `grow={1}` (no fixed `w`), `overflow="hidden"` to clip the fill. Fill width is a fraction of the bar — calculate from the score. Label is plain Text with `w`, not a Frame wrapper. Never set `h` on label containers to match the row — let items="center" handle vertical alignment.
 
+**Decorative vs content layers:** Background effects (gradients, bokeh circles, glows, star patterns) must be absolutely positioned with x/y — they are decoration, not content. Only actual content (text, buttons, badges) goes into flex layout. Never put 10+ tiny decorative shapes into a flex container — they eat up all the gap space and squash real content.
+
 **Don't mix `w={N}` and `grow={N}`** on the same node — grow overrides width. Use one or the other.
 
 **Don't wrap Text in Frame just for sizing.** If you need `w={80}` on a label, set it directly: `<Text w={80}>`. Only wrap in Frame when you need padding, background, or nested layout.
