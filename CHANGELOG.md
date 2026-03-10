@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- Grid layout in AI chat — JSX renderer supports `grid`, `columns`, `rows`, `gap` props with child positioning (`colStart`, `rowStart`, `colSpan`, `rowSpan`) and auto-height grids
+- Configurable max output tokens in AI provider settings (default 16384)
+
+### Fixes
+
+- Fix auto-layout overflow in AI-generated designs — text wrapping, min/max constraints, absolute positioning, and FILL sizing now work correctly
+- Fix `layoutAlignSelf` limited to STRETCH — full range supported (CENTER, MAX, MIN, BASELINE)
+- Fix hidden auto-layout children losing their dimensions on layout recompute
+- Fix ProviderSettings popover not visible in AI chat
+- Fix paste/copy/cut intercepted by canvas in AI chat input
+- Strip TypeScript casts from AI-generated JSX (`as any`, `as const`)
+- Fix parsing complex .fig files crashing on missing GUIDs in component overrides
+
 ## 0.9.0 — 2026-03-09
 
 ### Features
