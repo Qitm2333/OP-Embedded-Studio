@@ -19,6 +19,7 @@ import type {
   LayoutMode,
   LayoutSizing,
   LayoutAlign,
+  LayoutAlignSelf,
   LayoutCounterAlign,
   ConstraintType,
   TextAutoResize,
@@ -222,7 +223,6 @@ function mapStackJustify(justify?: string): LayoutAlign {
     case 'MAX':
       return 'MAX'
     case 'SPACE_BETWEEN':
-    case 'SPACE_EVENLY':
       return 'SPACE_BETWEEN'
     default:
       return 'MIN'
@@ -241,6 +241,23 @@ function mapStackCounterAlign(align?: string): LayoutCounterAlign {
       return 'BASELINE'
     default:
       return 'MIN'
+  }
+}
+
+function mapAlignSelf(align?: string): LayoutAlignSelf {
+  switch (align) {
+    case 'MIN':
+      return 'MIN'
+    case 'CENTER':
+      return 'CENTER'
+    case 'MAX':
+      return 'MAX'
+    case 'STRETCH':
+      return 'STRETCH'
+    case 'BASELINE':
+      return 'BASELINE'
+    default:
+      return 'AUTO'
   }
 }
 
@@ -525,7 +542,7 @@ function convertLayoutProps(nc: NodeChange): Pick<SceneNode, 'layoutMode' | 'ite
     counterAxisSpacing: nc.stackCounterSpacing ?? 0,
     layoutPositioning: nc.stackPositioning === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO',
     layoutGrow: nc.stackChildPrimaryGrow ?? 0,
-    layoutAlignSelf: (nc.stackChildAlignSelf as string) === 'STRETCH' ? 'STRETCH' : 'AUTO',
+    layoutAlignSelf: mapAlignSelf(nc.stackChildAlignSelf),
     counterAxisAlignContent: (nc.stackCounterAlignContent as string) === 'SPACE_BETWEEN' ? 'SPACE_BETWEEN' : 'AUTO',
     itemReverseZIndex: (nc.stackReverseZIndex ?? false) as boolean,
     strokesIncludedInLayout: (nc.strokesIncludedInLayout ?? false) as boolean
@@ -679,8 +696,7 @@ function applyOverrideLayout(ov: Record<string, unknown>, updates: Partial<Scene
     updates.counterAxisAlign = mapStackCounterAlign(ov.stackCounterAlignItems as string)
   if (ov.stackChildPrimaryGrow != null) updates.layoutGrow = ov.stackChildPrimaryGrow as number
   if (ov.stackChildAlignSelf != null)
-    updates.layoutAlignSelf =
-      (ov.stackChildAlignSelf as string) === 'STRETCH' ? 'STRETCH' : 'AUTO'
+    updates.layoutAlignSelf = mapAlignSelf(ov.stackChildAlignSelf as string)
   if (ov.stackPositioning != null)
     updates.layoutPositioning =
       (ov.stackPositioning as string) === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO'

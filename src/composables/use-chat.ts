@@ -79,9 +79,10 @@ const SYSTEM_PROMPT = dedent`
   ### Flex layout
   - flex="row"|"col" — enables auto-layout. Without this, children use absolute x/y.
   - gap={number}, wrap, rowGap={number}
-  - justify="start"|"end"|"center"|"between" (⚠ "between", NOT "space-between")
+  - justify="start"|"end"|"center"|"between"|"evenly" (⚠ "between", NOT "space-between")
   - items="start"|"end"|"center"|"stretch"
   - p, px, py, pt, pr, pb, pl={number} — padding (auto-enables flex="col" if no flex set)
+  ⚠ justify/items ONLY work with flex! Always set flex="row" or flex="col" when using justify or items.
 
   ### Grid layout
   - grid, columns="1fr 1fr 1fr", rows="1fr 1fr"
@@ -103,10 +104,21 @@ const SYSTEM_PROMPT = dedent`
   **Row with spacer:** \`<Frame flex="row" w={380} items="center"><Text>Title</Text><Frame grow={1} /><Text>Action</Text></Frame>\`
   **Grow children:** Inner flex="row" MUST have w="fill" so grow children can divide space.
 
+  ## Size limits
+  ⚠ Keep each \`render\` call under ~40 elements. For complex designs, split into multiple calls:
+  1. Render the outer container first (with parent_id of the page)
+  2. Render each major section separately (with parent_id of the container)
+  Use \`map()\` / \`Array.from()\` for repeated items — never duplicate JSX manually.
+
   ## Forbidden patterns
   - ❌ style={{...}}, className, CSS properties
   - ❌ w/h on Text, justify="space-between", "red"/"rgb(...)" colors, percentage values
   - ❌ grow={1} inside hug-width parent, nested flex without w="fill"
+  - ❌ justify/items without flex — always add flex="row" or flex="col" when centering content
+  - ❌ \`as any\`, \`as const\`, TypeScript casts — JSX is parsed by sucrase, not TypeScript
+  - ❌ Template literals for prop values (\`\${x}%\`) — use plain numbers or strings
+  - ❌ Math.random() — use deterministic values
+  - ❌ Giant single render calls (>40 elements) — split into sections
 
   ## Color contrast rules
   - Subtle backgrounds on dark bg: at least #FFFFFF30 alpha (~19%)
@@ -116,15 +128,15 @@ const SYSTEM_PROMPT = dedent`
 
   ## Workflow: always verify after render
 
-  After every \`render\` call, call \`export_image\` to visually verify.
-  ⚠ Export ONE node at a time. Be extremely critical: check text clipping, spacing, alignment, contrast, overflow.
-  Fix any issues immediately, then re-export.
+  After every \`render\` call, call \`describe\` on the created node to verify structure, layout, and styling.
+  Be critical: check for missing props, wrong hierarchy, contrast issues.
+  Fix any issues immediately, then re-describe.
 
   # Reading designs
-  - \`export_image\`: renders to PNG for visual inspection
+  - \`describe\`: semantic description with role, style, layout, and design issues — preferred for verification
   - \`get_jsx\`: JSX representation (same format as render)
-  - \`describe\`: semantic description with role, style, layout, and design issues
   - \`diff_jsx\`: unified diff between two nodes
+  ⚠ Do NOT use \`export_image\` — it is expensive and slow. Use \`describe\` to verify designs instead.
 `
 
 const providerID = useLocalStorage<AIProviderID>(
@@ -140,6 +152,7 @@ const customAPIType = useLocalStorage<'completions' | 'responses'>(
   `${STORAGE_PREFIX}ai-api-type`,
   'completions'
 )
+const maxOutputTokens = useLocalStorage(`${STORAGE_PREFIX}ai-max-output-tokens`, 16384)
 const activeTab = ref<'design' | 'ai'>('design')
 
 const providerDef = computed(
@@ -235,7 +248,9 @@ function createTransport() {
   const agent = new ToolLoopAgent({
     model: createModel(),
     instructions: SYSTEM_PROMPT,
-    tools
+    tools,
+    maxOutputTokens: maxOutputTokens.value,
+    prepareCall: (options) => ({ ...options, maxOutputTokens: maxOutputTokens.value })
   })
 
   return new DirectChatTransport({ agent })
@@ -271,6 +286,7 @@ export function useAIChat() {
     customBaseURL,
     customModelID,
     customAPIType,
+    maxOutputTokens,
     activeTab,
     isConfigured,
     ensureChat,

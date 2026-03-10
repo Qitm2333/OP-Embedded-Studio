@@ -581,8 +581,8 @@ export const setLayoutChild = defineTool({
     grow: { type: 'number', description: 'Flex grow factor (0 = fixed, 1 = grow)', min: 0 },
     align_self: {
       type: 'string',
-      description: 'Self alignment override',
-      enum: ['INHERIT', 'STRETCH']
+      description: 'Self alignment override (cross-axis)',
+      enum: ['INHERIT', 'MIN', 'CENTER', 'MAX', 'STRETCH', 'BASELINE']
     },
     positioning: {
       type: 'string',

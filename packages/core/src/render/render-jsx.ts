@@ -20,7 +20,7 @@ export function buildComponent(jsxString: string): () => unknown {
   `
 
   const result = transform(code, {
-    transforms: ['jsx'],
+    transforms: ['typescript', 'jsx'],
     jsxPragma: 'h',
     production: true
   })

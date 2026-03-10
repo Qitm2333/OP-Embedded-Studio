@@ -2,7 +2,7 @@ import { parseColor, colorToFill } from '../color'
 import { TRANSPARENT } from '../constants'
 import { isTreeNode } from './tree'
 
-import type { SceneGraph, SceneNode, NodeType, LayoutMode, Stroke } from '../scene-graph'
+import type { SceneGraph, SceneNode, NodeType, LayoutMode, GridTrack, Stroke } from '../scene-graph'
 import type { TreeNode } from './tree'
 
 const TYPE_MAP: Partial<Record<string, NodeType>> = {
@@ -27,7 +27,7 @@ const WEIGHT_MAP: Record<string, number> = {
   bold: 700
 }
 
-const ALIGN_MAP: Record<string, 'MIN' | 'MAX' | 'CENTER' | 'SPACE_BETWEEN'> = {
+const ALIGN_MAP: Record<string, SceneNode['primaryAxisAlign']> = {
   start: 'MIN',
   end: 'MAX',
   center: 'CENTER',
@@ -137,20 +137,29 @@ function applySizeOverrides(
 
   const isParentRow = parentLayout === 'HORIZONTAL'
   const isParentCol = parentLayout === 'VERTICAL'
+  const isParentGrid = parentLayout === 'GRID'
 
   if (w === 'fill') {
-    if (isParentRow) o.layoutGrow = 1
+    if (isParentGrid) o.layoutAlignSelf = 'STRETCH'
+    else if (isParentRow) o.layoutGrow = 1
     else if (isParentCol) o.layoutAlignSelf = 'STRETCH'
     else { o.layoutGrow = 1; o.layoutAlignSelf = 'STRETCH' }
   }
   if (h === 'fill') {
-    if (isParentCol) o.layoutGrow = 1
+    if (isParentGrid) o.layoutAlignSelf = 'STRETCH'
+    else if (isParentCol) o.layoutGrow = 1
     else if (isParentRow) o.layoutAlignSelf = 'STRETCH'
     else o.layoutAlignSelf = 'STRETCH'
   }
 
   if (props.x !== undefined) o.x = props.x as number
   if (props.y !== undefined) o.y = props.y as number
+
+  const hasExplicitPosition = props.x !== undefined || props.y !== undefined
+  const isInsideAutoLayout = parentLayout !== 'NONE'
+  if (hasExplicitPosition && isInsideAutoLayout) {
+    o.layoutPositioning = 'ABSOLUTE'
+  }
 
   return { w, h }
 }
@@ -217,9 +226,79 @@ function applyPaddingOverrides(props: Record<string, unknown>, o: Partial<SceneN
 }
 
 const PADDING_KEYS = ['p', 'padding', 'px', 'py', 'pt', 'pr', 'pb', 'pl'] as const
+const AUTO_LAYOUT_TRIGGER_KEYS = [...PADDING_KEYS, 'justify', 'items'] as const
 
 function hasPaddingProps(props: Record<string, unknown>): boolean {
   return PADDING_KEYS.some((k) => props[k] !== undefined)
+}
+
+function hasAutoLayoutTriggerProps(props: Record<string, unknown>): boolean {
+  return AUTO_LAYOUT_TRIGGER_KEYS.some((k) => props[k] !== undefined)
+}
+
+function parseTrack(token: string): GridTrack {
+  if (token.endsWith('fr')) {
+    return { sizing: 'FR', value: parseFloat(token) || 1 }
+  }
+  if (token === 'auto') {
+    return { sizing: 'AUTO', value: 0 }
+  }
+  return { sizing: 'FIXED', value: parseFloat(token) || 0 }
+}
+
+function parseTrackList(value: string): GridTrack[] {
+  return value.trim().split(/\s+/).map(parseTrack)
+}
+
+function applyGridOverrides(
+  props: Record<string, unknown>,
+  o: Partial<SceneNode>,
+  w: unknown,
+  h: unknown
+): void {
+  o.layoutMode = 'GRID'
+
+  if (typeof w === 'number') o.width = w
+  if (typeof h === 'number') o.height = h
+
+  if (typeof props.columns === 'string') {
+    o.gridTemplateColumns = parseTrackList(props.columns)
+  } else if (typeof props.columns === 'number') {
+    o.gridTemplateColumns = Array.from({ length: props.columns }, () => ({ sizing: 'FR' as const, value: 1 }))
+  }
+
+  if (typeof props.rows === 'string') {
+    o.gridTemplateRows = parseTrackList(props.rows)
+  } else if (typeof props.rows === 'number') {
+    o.gridTemplateRows = Array.from({ length: props.rows }, () => ({ sizing: 'FR' as const, value: 1 }))
+  }
+
+  if (typeof props.columnGap === 'number') o.gridColumnGap = props.columnGap
+  if (typeof props.rowGap === 'number') o.gridRowGap = props.rowGap
+  if (typeof props.gap === 'number') {
+    o.gridColumnGap = props.gap
+    o.gridRowGap = props.gap
+  }
+
+  if (props.rows === undefined && typeof h !== 'number') {
+    o.height = 0
+  }
+}
+
+function applyGridChildOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
+  const col = props.colStart ?? props.col
+  const row = props.rowStart ?? props.row
+  const colSpan = (props.colSpan as number | undefined) ?? 1
+  const rowSpan = (props.rowSpan as number | undefined) ?? 1
+
+  if (col !== undefined || row !== undefined) {
+    o.gridPosition = {
+      column: (col as number | undefined) ?? 0,
+      row: (row as number | undefined) ?? 0,
+      columnSpan: colSpan,
+      rowSpan: rowSpan
+    }
+  }
 }
 
 function applyAutoLayoutSizing(
@@ -249,9 +328,21 @@ function applyLayoutOverrides(
   o: Partial<SceneNode>,
   w: unknown,
   h: unknown,
-  isText: boolean
+  isText: boolean,
+  parentLayout: SceneNode['layoutMode']
 ): void {
-  const needsAutoLayout = props.flex !== undefined || (!isText && hasPaddingProps(props))
+  if (props.grid) {
+    applyGridOverrides(props, o, w, h)
+    applyPaddingOverrides(props, o)
+    if (props.grow !== undefined) o.layoutGrow = props.grow as number
+    return
+  }
+
+  if (parentLayout === 'GRID') {
+    applyGridChildOverrides(props, o)
+  }
+
+  const needsAutoLayout = props.flex !== undefined || (!isText && hasAutoLayoutTriggerProps(props))
 
   if (needsAutoLayout) {
     applyAutoLayoutSizing(o, props, w, h)
@@ -279,7 +370,11 @@ function applyLayoutOverrides(
   if (props.maxW !== undefined) o.width = Math.min(o.width ?? Infinity, props.maxW as number)
 }
 
-function applyTextOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
+function applyTextOverrides(
+  props: Record<string, unknown>,
+  o: Partial<SceneNode>,
+  parentLayout: SceneNode['layoutMode']
+): void {
   const fontSize = props.size ?? props.fontSize
   if (typeof fontSize === 'number') o.fontSize = fontSize
 
@@ -301,11 +396,17 @@ function applyTextOverrides(props: Record<string, unknown>, o: Partial<SceneNode
     o.textAlignHorizontal = TEXT_ALIGN_MAP[props.textAlign as string] ?? 'LEFT'
   }
 
-  const hasExplicitWidth = (props.w ?? props.width) !== undefined
+  const w = props.w ?? props.width
+  const hasExplicitWidth = w !== undefined
+  const fillsParent = w === 'fill' || (props.grow as number) > 0
+  const isInsideAutoLayout = parentLayout !== 'NONE'
+
   if (props.textAutoResize) {
     o.textAutoResize = TEXT_AUTO_RESIZE_MAP[props.textAutoResize as string] ?? 'NONE'
+  } else if (hasExplicitWidth || (isInsideAutoLayout && fillsParent)) {
+    o.textAutoResize = 'HEIGHT'
   } else {
-    o.textAutoResize = hasExplicitWidth ? 'HEIGHT' : 'WIDTH_AND_HEIGHT'
+    o.textAutoResize = 'WIDTH_AND_HEIGHT'
   }
 }
 
@@ -358,8 +459,8 @@ function propsToOverrides(
 
   const { w, h } = applySizeOverrides(props, o, parentLayout)
   applyVisualOverrides(props, o)
-  applyLayoutOverrides(props, o, w, h, isText)
-  if (isText) applyTextOverrides(props, o)
+  applyLayoutOverrides(props, o, w, h, isText, parentLayout)
+  if (isText) applyTextOverrides(props, o, parentLayout)
   applyShapeAndEffectOverrides(props, o)
 
   return o
