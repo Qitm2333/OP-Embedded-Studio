@@ -26,6 +26,20 @@ let globalTextMeasurer: TextMeasurer | null = null
 
 const GLYPH_WIDTH_FACTOR = 0.6
 
+// Rough estimate for text size when CanvasKit/font is not available.
+// DO NOT REMOVE: without this, text nodes keep their 100×100 default size
+// and blow up every HUG container. The real MeasureFunc (CanvasKit) overrides
+// this when available — this is only the fallback.
+function estimateTextSize(node: SceneNode): { width: number; height: number } {
+  const fontSize = node.fontSize || 14
+  const text = node.characters || node.text || ''
+  const charWidth = fontSize * GLYPH_WIDTH_FACTOR
+  return {
+    width: Math.ceil(text.length * charWidth),
+    height: Math.ceil(fontSize * 1.2),
+  }
+}
+
 export function setTextMeasurer(measurer: TextMeasurer | null): void {
   globalTextMeasurer = measurer
 }
@@ -333,22 +347,6 @@ function configureChildAsAutoLayout(
   }
 }
 
-// Rough estimate for text size when CanvasKit/font is not available.
-// Uses ~0.6 × fontSize per character as average glyph width.
-// DO NOT REMOVE: without this, text nodes keep their 100×100 default size
-// and blow up every HUG container. The real MeasureFunc (CanvasKit) overrides
-// this when available — this is only the fallback.
-const GLYPH_WIDTH_FACTOR = 0.6
-function estimateTextSize(node: SceneNode): { width: number; height: number } {
-  const fontSize = node.fontSize || 14
-  const text = node.characters || node.text || ''
-  const lineHeight = fontSize * 1.2
-  const charWidth = fontSize * GLYPH_WIDTH_FACTOR
-  const width = Math.ceil(text.length * charWidth)
-  const height = Math.ceil(lineHeight)
-  return { width, height }
-}
-
 function configureChildAsLeaf(yogaChild: YogaNode, child: SceneNode, parent: SceneNode): void {
   const isRow = parent.layoutMode === 'HORIZONTAL'
   const selfOverride = child.layoutAlignSelf !== 'AUTO'
@@ -386,8 +384,6 @@ function configureChildAsLeaf(yogaChild: YogaNode, child: SceneNode, parent: Sce
 
   applyMinMaxConstraints(yogaChild, child)
 }
-
-
 
 function configureTextLeaf(
   yogaChild: YogaNode,
