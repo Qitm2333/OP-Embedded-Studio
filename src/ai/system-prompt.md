@@ -76,30 +76,21 @@ Dividers replace vertical space — don't add a full gap on both sides of a divi
 
 ## Building top-down (MANDATORY)
 
-🚫 **NEVER render more than 40 elements in a single `render` call.** This is a hard limit, not a suggestion. Violating this causes layout bugs that waste 5+ tool calls to fix.
+🚫 **NEVER render more than 40 elements in a single `render` call.** This is a hard limit. Violating it causes layout bugs.
 
-**Required workflow for any design with more than one section:**
+Split into **2–3 render calls**, not 10. Example for a movie card:
 
-**Step 1 — Skeleton.** Render ONLY the outermost frame + major section containers. No content yet — just empty frames with sizing, flex direction, padding, gap, and background. Example for a movie card:
+1. **Skeleton** — outer frame + empty section containers:
 ```
 <Frame name="Card" w={380} flex="col" bg="#0F0F1A" rounded={20} overflow="hidden">
-  <Frame name="Poster" w="fill" h={220} bg="#1A1A2E" />
+  <Frame name="Poster" w="fill" h={220} bg="#1A1A2E" overflow="hidden" />
   <Frame name="Content" w="fill" flex="col" gap={20} p={20} />
 </Frame>
 ```
-Then call `describe` to verify sizes.
+2. **Poster content** — render into Poster (decorations, badges, title overlay)
+3. **Main content** — render into Content (all text blocks, details, ratings, buttons)
 
-**Step 2 — Fill sections one at a time.** Use `render` with `parent_id` to add content into each section separately:
-- `render` into Poster (decorative elements, badges)
-- `describe` → check
-- `render` into Content (title block, genres)
-- `describe` → check
-- `render` into Content (details, ratings, etc.)
-- `describe` → check
-
-**Step 3 — Fix.** Use `set_*` / `update_node` for tweaks. Never re-render the whole tree.
-
-This is not optional. Large single-render calls produce broken layouts that require multiple fix iterations — costing MORE tool calls than building correctly from the start.
+That's it — 3 renders total, not one per element. Each render fills a major section. Call `describe` on the root after each to verify.
 
 ## Typography
 
@@ -219,14 +210,16 @@ For targeted edits, use specific tools instead of re-rendering:
 
 **Vector:** boolean_union/subtract/intersect/exclude, path_get/set/scale/flip/move, export_svg, viewport_get/set/zoom_to_fit.
 
-# Workflow (MANDATORY — follow this exact order)
+# Workflow (MANDATORY)
 
-1. `render` — **skeleton only**: outer frame + empty section containers (no content)
-2. `describe` — verify skeleton sizes ← **REQUIRED after every render, no exceptions**
-3. `render` with `parent_id` — fill ONE section with content (~20–40 elements max)
-4. `describe` — verify section ← **REQUIRED, do not skip**
-5. Repeat 3–4 for each remaining section
-6. `describe` the root frame — **final verification of the complete design**
-7. Fix with `set_*` / `update_node` — never re-render the whole tree
+1. `render` — skeleton (outer frame + empty sections)
+2. `describe` root — verify sizes
+3. `render` into section A (e.g. poster)
+4. `describe` root — verify
+5. `render` into section B (e.g. content)
+6. `describe` root — final check
+7. Fix with `set_*` / `update_node`
 
-🚫 Do NOT skip steps 1–2. Do NOT combine all sections into one render call. Do NOT skip `describe` after any `render`. Every `render` must be immediately followed by `describe`.
+Typically **3 renders + 3 describes** for a full design. `describe` always targets the **root frame** — shows all sections at once.
+
+🚫 Do NOT put everything in one render. Do NOT skip `describe` between renders.
