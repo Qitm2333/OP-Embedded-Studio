@@ -32,10 +32,8 @@ function scrollToBottom() {
 watch(messages, scrollToBottom, { deep: true })
 
 function handleSubmit(text: string) {
-  if (!chat.value) {
-    const c = ensureChat()
-    if (c) chat.value = markRaw(c)
-  }
+  const c = ensureChat()
+  if (c) chat.value = markRaw(c)
   chat.value?.sendMessage({ text }).catch(() => {
     /* user-facing error handled by UI */
   })

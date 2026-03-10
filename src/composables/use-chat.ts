@@ -64,17 +64,25 @@ const isConfigured = computed(() => {
   return true
 })
 
+let transportDirty = false
+
+function markTransportDirty() {
+  transportDirty = true
+}
+
 watch(providerID, (id) => {
   const def = AI_PROVIDERS.find((p) => p.id === id)
   if (def?.defaultModel) {
     modelID.value = def.defaultModel
   }
-  resetChat()
+  markTransportDirty()
 })
 
-watch(modelID, () => resetChat())
-watch(customModelID, () => resetChat())
-watch(customAPIType, () => resetChat())
+watch(modelID, markTransportDirty)
+watch(customModelID, markTransportDirty)
+watch(customAPIType, markTransportDirty)
+watch(apiKey, markTransportDirty)
+watch(customBaseURL, markTransportDirty)
 
 function setAPIKey(key: string) {
   apiKey.value = key
@@ -170,15 +178,19 @@ function createTransport() {
 function ensureChat(): Chat<UIMessage> | null {
   if (!isConfigured.value) return null
   if (!chat) {
-    chat = new Chat<UIMessage>({
-      transport: createTransport()
-    })
+    chat = new Chat<UIMessage>({ transport: createTransport() })
+    transportDirty = false
+  } else if (transportDirty) {
+    const messages = chat.messages
+    chat = new Chat<UIMessage>({ transport: createTransport(), messages })
+    transportDirty = false
   }
   return chat
 }
 
 function resetChat() {
   chat = null
+  transportDirty = false
 }
 
 if (typeof window !== 'undefined') {

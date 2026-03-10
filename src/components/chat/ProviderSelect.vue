@@ -41,7 +41,7 @@ const { triggerClass, itemClass, testId } = defineProps<{
       <SelectContent
         position="popper"
         :side-offset="4"
-        :class="selectContent({ radius: 'lg', padding: 'md' })"
+        :class="selectContent({ radius: 'lg', padding: 'md', class: 'isolate z-[52]' })"
       >
         <SelectViewport>
           <SelectItem

@@ -78,7 +78,16 @@ function clearKey() {
         :collision-padding="16"
         :avoid-collisions="true"
         class="isolate z-[51] w-64 rounded-lg border border-border bg-panel p-3 shadow-lg"
-        @interact-outside="save"
+        @interact-outside="
+          (e: Event) => {
+            const target = e.target as HTMLElement | null
+            if (target?.closest('[role=listbox], [data-reka-popper-content-wrapper]')) {
+              e.preventDefault()
+              return
+            }
+            save()
+          }
+        "
       >
         <div class="flex flex-col gap-2.5">
           <h3 class="text-[11px] font-semibold text-surface">AI Provider</h3>
