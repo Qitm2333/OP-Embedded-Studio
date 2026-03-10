@@ -17,6 +17,7 @@
 - Fix paste/copy/cut intercepted by canvas in AI chat input
 - Strip TypeScript casts from AI-generated JSX (`as any`, `as const`)
 - Fix parsing complex .fig files crashing on missing GUIDs in component overrides
+- Fix headless text layout using 100×100 default size instead of estimated dimensions
 
 ## 0.9.0 — 2026-03-09
 
