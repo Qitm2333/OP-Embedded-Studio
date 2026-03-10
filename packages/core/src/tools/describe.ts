@@ -143,6 +143,32 @@ function detectStructuralIssues(node: SceneNode, gridSize: number, issues: Descr
   if (isContainer && node.fills.length === 0 && node.childIds.length === 0) {
     issues.push({ message: 'Empty frame with no fill' })
   }
+  const isShape = node.type === 'RECTANGLE' || node.type === 'ELLIPSE' ||
+    node.type === 'STAR' || node.type === 'POLYGON' || node.type === 'LINE'
+  const hasVisibleFill = node.fills.some((f) => f.visible)
+  const hasVisibleStroke = node.strokes.some((s) => s.visible)
+  if (isShape && !hasVisibleFill && !hasVisibleStroke) {
+    issues.push({
+      message: `${node.type} "${node.name}" has no fill and no stroke — invisible`,
+      suggestion: 'Add bg="#hex" or stroke="#hex"'
+    })
+  }
+  const ICON_MAX_SIZE = 48
+  const looksLikeIcon = isContainer &&
+    node.width <= ICON_MAX_SIZE && node.height <= ICON_MAX_SIZE &&
+    node.childIds.length > 0
+  if (looksLikeIcon && !hasVisibleFill && !hasVisibleStroke) {
+    const hasVisibleChild = node.childIds.some((id) => {
+      const c = graph.getNode(id)
+      return c && c.visible && (c.fills.some((f) => f.visible) || c.strokes.some((s) => s.visible) || c.type === 'TEXT')
+    })
+    if (!hasVisibleChild) {
+      issues.push({
+        message: `Icon-sized frame "${node.name}" (${node.width}×${node.height}) has no visible content`,
+        suggestion: 'Add bg="#hex" or stroke="#hex" to the icon or its children'
+      })
+    }
+  }
   if (looksLikeButton(node) && node.width < 44) {
     issues.push({ message: `Touch target too small (${node.width}×${node.height})`, suggestion: 'Min 44×44' })
   }
@@ -183,10 +209,133 @@ function detectVisibilityIssues(node: SceneNode, graph: SceneGraph, issues: Desc
   }
 }
 
+const DARK_BG_LUMINANCE = 0.35
+const DEFAULT_TEXT_LUMINANCE = 0.0
+
+function rgbLuminance(c: Color): number {
+  return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b
+}
+
+function detectLayoutIssues(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {
+  const isContainer = node.type === 'FRAME' || node.type === 'COMPONENT' || node.type === 'INSTANCE'
+  if (!isContainer) return
+
+  const isAutoLayout = node.layoutMode !== 'NONE'
+  const isRow = node.layoutMode === 'HORIZONTAL'
+  const children = node.childIds
+    .map((id) => graph.getNode(id))
+    .filter((c): c is SceneNode => c != null && c.visible && c.layoutPositioning !== 'ABSOLUTE')
+
+  if (isAutoLayout) {
+    const primarySizing = node.primaryAxisSizing
+    const primaryDim = isRow ? node.width : node.height
+    const pad = isRow
+      ? node.paddingLeft + node.paddingRight
+      : node.paddingTop + node.paddingBottom
+    const spacing = children.length > 1 ? (children.length - 1) * node.itemSpacing : 0
+    const available = primaryDim - pad - spacing
+
+    // grow inside HUG parent — grow has no effect
+    if (primarySizing === 'HUG') {
+      for (const child of children) {
+        if (child.layoutGrow > 0) {
+          issues.push({
+            message: `"${child.name}" has grow=${child.layoutGrow} but parent "${node.name}" is HUG on ${isRow ? 'horizontal' : 'vertical'} axis`,
+            suggestion: `Set parent to fixed size, or remove grow from "${child.name}"`
+          })
+        }
+      }
+    }
+
+    // Children overflow parent on primary axis (compare actual computed sizes)
+    if (primarySizing === 'FIXED' && !node.clipsContent) {
+      let totalChildren = 0
+      for (const child of children) {
+        totalChildren += isRow ? child.width : child.height
+      }
+      if (totalChildren > available + 1) {
+        issues.push({
+          message: `Children total ${Math.round(totalChildren)}px exceeds available ${Math.round(available)}px on ${isRow ? 'horizontal' : 'vertical'} axis`,
+          suggestion: 'Use grow/fill for flexible sizing, reduce child sizes, or set overflow="hidden"'
+        })
+      }
+    }
+
+    // HUG container where ALL children use fill → collapses
+    const crossHug = node.counterAxisSizing === 'HUG'
+    if (primarySizing === 'HUG' && children.length > 0) {
+      const allGrow = children.every((c) => c.layoutGrow > 0)
+      if (allGrow) {
+        issues.push({
+          message: `"${node.name}" is HUG but all children use grow — no child provides a concrete size`,
+          suggestion: 'Give at least one child a fixed size, or set parent to fixed size'
+        })
+      }
+    }
+    if (crossHug && children.length > 0) {
+      const allStretch = children.every(
+        (c) => c.layoutAlignSelf === 'STRETCH' || (node.counterAxisAlign === 'STRETCH' && c.layoutAlignSelf === 'AUTO')
+      )
+      const noConcreteChild = children.every((c) => {
+        const dim = isRow ? c.height : c.width
+        return dim <= 0
+      })
+      if (allStretch && noConcreteChild) {
+        issues.push({
+          message: `"${node.name}" is HUG on cross axis but all children stretch — no child provides a concrete size`,
+          suggestion: 'Give at least one child a fixed cross-axis size, or set parent cross-axis to fixed'
+        })
+      }
+    }
+  }
+
+  // Text without any fill = invisible
+  for (const childId of node.childIds) {
+    const child = graph.getNode(childId)
+    if (!child || child.type !== 'TEXT' || !child.visible) continue
+    const textFill = child.fills.find((f) => f.visible && f.type === 'SOLID')
+    if (!textFill) {
+      issues.push({
+        message: `"${child.name || child.characters?.slice(0, 20) || 'Text'}" has no color — invisible`,
+        suggestion: 'Add color="#hex" to the Text element'
+      })
+      continue
+    }
+    const textLum = rgbLuminance(textFill.color)
+    if (textLum > DARK_BG_LUMINANCE) continue
+    const bg = findAncestorBackground(child, graph)
+    if (!bg) continue
+    if (rgbLuminance(bg) < DARK_BG_LUMINANCE) {
+      issues.push({
+        message: `"${child.name || child.characters?.slice(0, 20) || 'Text'}" is dark text (${colorToHex(textFill.color)}) on dark background (${colorToHex(bg)})`,
+        suggestion: 'Set an explicit light color on the text'
+      })
+    }
+  }
+
+  // Child with fixed size larger than parent (direct overflow)
+  if (isAutoLayout && !node.clipsContent) {
+    const crossPad = isRow
+      ? node.paddingTop + node.paddingBottom
+      : node.paddingLeft + node.paddingRight
+    const crossAvailable = (isRow ? node.height : node.width) - crossPad
+    for (const child of children) {
+      const childCross = isRow ? child.height : child.width
+      if (childCross > crossAvailable + 1 && child.layoutAlignSelf !== 'STRETCH') {
+        issues.push({
+          message: `"${child.name}" is ${Math.round(childCross)}px on cross axis but parent has ${Math.round(crossAvailable)}px available`,
+          suggestion: 'Reduce child size, use fill sizing, or set overflow="hidden" on parent'
+        })
+      }
+    }
+  }
+}
+
 function detectIssues(node: SceneNode, gridSize: number, graph: SceneGraph): DescribeIssue[] {
   const issues: DescribeIssue[] = []
   detectStructuralIssues(node, gridSize, issues)
   detectVisibilityIssues(node, graph, issues)
+  detectLayoutIssues(node, graph, issues)
   return issues
 }
 

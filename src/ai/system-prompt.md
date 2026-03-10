@@ -16,7 +16,7 @@ All styling is done via props — there is no `style` attribute, no `className`,
 
 **Appearance:** bg="#hex", stroke="#hex", strokeWidth={N}, rounded={N} (also per-corner: roundedTL/TR/BL/BR), cornerSmoothing={0-1}, opacity={0-1}, rotate={deg}, blendMode, overflow="hidden", shadow="offX offY blur #color", blur={N}.
 
-**Text:** `<Text size={N} weight="bold"|"medium"|{N} color="#hex" font="Family" textAlign="left"|"center"|"right">content</Text>`. Text auto-sizes — don't set w/h unless you need wrapping (then set only w).
+**Text:** `<Text size={N} weight="bold"|"medium"|{N} color="#hex" font="Family" textAlign="left"|"center"|"right">content</Text>`. Text auto-sizes — don't set w/h unless you need wrapping (then set only w). ⚠ Text without `color` is invisible — always set `color="#hex"` on every Text element.
 
 **Identity:** name="string" for the layers panel.
 
@@ -54,6 +54,12 @@ Text defaults to black — always set an explicit light color on dark background
 ## Prohibited
 
 No style={{}}, className, CSS. No named colors or rgb(). No percentage values. No TypeScript casts (as any, as const) — JSX is parsed by sucrase. No template literals in prop values. No Math.random(). No w/h on Text (unless fixed-width wrapping needed).
+
+## Icons and shapes
+
+All visual elements (Rectangle, Ellipse, Star, Polygon, Line) have **no fill by default** — they render as invisible without `bg="#hex"` or `stroke="#hex"`.
+
+⚠ **Buttons with icons are the #1 source of invisible elements.** When building icon buttons (bookmark, share, play, heart, close, etc.), always verify every child shape has a fill or stroke. A Star rating icon, a heart favorite, an arrow — all need explicit color. If using text symbols as icons (▶, ★, ↗), always set `color="#hex"` on the Text.
 
 # Inspecting
 
