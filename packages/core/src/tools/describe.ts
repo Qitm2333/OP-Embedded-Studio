@@ -313,6 +313,22 @@ function detectLayoutIssues(node: SceneNode, graph: SceneGraph, issues: Describe
     }
   }
 
+  // Text wider than its fixed-width parent
+  if (isAutoLayout) {
+    const parentAvailableW = isRow
+      ? node.width - node.paddingLeft - node.paddingRight
+      : node.width - node.paddingLeft - node.paddingRight
+    for (const child of children) {
+      if (child.type !== 'TEXT' || !child.visible) continue
+      if (child.textAutoResize === 'WIDTH_AND_HEIGHT' && child.width > parentAvailableW + 1) {
+        issues.push({
+          message: `Text "${(child.characters ?? child.text ?? '').slice(0, 25)}..." is ${Math.round(child.width)}px wide but parent "${node.name}" has ${Math.round(parentAvailableW)}px available`,
+          suggestion: `Add w={${Math.round(parentAvailableW)}} to the Text or use w="fill"`
+        })
+      }
+    }
+  }
+
   // Child with fixed size larger than parent (direct overflow)
   if (isAutoLayout && !node.clipsContent) {
     const crossPad = isRow

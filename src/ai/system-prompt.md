@@ -46,6 +46,10 @@ For dynamic content (variable text length, generated lists), always use flex siz
 
 Absolute-positioned children (layout="none" parent) are unconstrained — they render at x/y regardless of parent bounds. Use overflow="hidden" to clip them.
 
+**Text inside fixed-width containers:** Text without an explicit `w` auto-sizes and can exceed its parent width. When a container has a fixed width, always set `w` on multiword Text children to match the available space, or use `w="fill"`. Calculate: available = parent w − parent horizontal padding. Example: parent `w={156} p={0}` → text `w={156}`.
+
+**Wrap layouts:** In `flex="row" wrap`, each child's fixed width determines the column count. Calculate: columns = floor((parent_available + gap) / (child_w + gap)). Make sure text content fits within child width — if the longest text value is 20 characters at size 14, it needs ~170px. Don't guess widths — count characters × ~0.6 × fontSize.
+
 ## Corner radius
 
 Inner radius = outer radius − padding. A card with `rounded={20} p={12}` → children should use `rounded={8}`. If padding ≥ outer radius, inner radius = 0 (straight corners).
