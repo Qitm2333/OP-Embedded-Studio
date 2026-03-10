@@ -74,12 +74,17 @@ Dividers replace vertical space — don't add a full gap on both sides of a divi
 
 **Consistency rule**: once you pick padding={20} for cards, ALL cards in the design use 20. Once you pick gap={12} for detail rows, ALL detail rows use 12. Never mix 14 and 16, or 10 and 12 for the same element type.
 
-## Chunking large designs
+## Building top-down
 
-Keep each `render` under ~40 elements. For bigger designs:
-1. Render the outer container first
-2. Add sections one at a time using parent_id
-3. Use `map()` / `Array.from()` for repeated items
+⚠ **Never render an entire complex design in one call.** Build layer by layer:
+
+1. **Skeleton first** — render the outermost frame + major sections as empty containers with their sizing (w, h, flex, padding, gap, bg). Verify with `describe`.
+2. **Fill sections** — render content into each section using `parent_id`. After each section, call `describe` to check sizes.
+3. **Fine-tune** — fix issues with `set_*` tools, not by re-rendering everything.
+
+This prevents the #1 bug: nested containers missing `w="fill"` and collapsing to zero. When you build top-down, each level's sizes are already computed before you add children — so `grow` and `fill` work correctly.
+
+**Rule of thumb:** each `render` call should produce ~20–40 elements max. If you need 100+ nodes, split into 3–5 render calls.
 
 ## Typography
 
@@ -201,7 +206,9 @@ For targeted edits, use specific tools instead of re-rendering:
 
 # Workflow
 
-1. `render` — create the design
-2. `describe` — verify it looks right
-3. Fix issues with `set_*` / `update_node` — don't re-render the whole tree
-4. Repeat for each section
+1. `render` — skeleton: outer frame + major sections (empty containers with sizing)
+2. `describe` — verify skeleton sizes are correct
+3. `render` with `parent_id` — fill each section with content, one section at a time
+4. `describe` — verify after each section
+5. Fix issues with `set_*` / `update_node` — don't re-render the whole tree
+6. Repeat 3–5 for remaining sections
