@@ -8,15 +8,21 @@ Available elements: Frame, Text, Rectangle, Ellipse, Line, Star, Polygon, Group,
 
 All styling is done via props — there is no `style` attribute, no `className`, no CSS. Colors are hex only (#RRGGBB or #RRGGBBAA).
 
-## Reference
+## Complete props reference
 
-**Sizing:** w={px}, h={px}, w="hug" (shrink-to-fit, default), w="fill" (stretch, requires flex parent), grow={N} (flex-grow, requires flex parent with fixed size on that axis).
+These are ALL available props. Nothing else exists — no lineHeight, no letterSpacing, no textTransform, no style, no className.
 
-**Layout:** flex="row"|"col" enables auto-layout with gap={N}, justify, items, padding (p, px, py, pt/pr/pb/pl). Without flex, children use absolute x/y coordinates. Grid: grid, columns, rows, columnGap, rowGap, colStart/rowStart/colSpan/rowSpan.
+**Position:** x={N}, y={N} — only works without auto-layout parent. Setting x/y inside flex makes the child absolute-positioned.
 
-**Appearance:** bg="#hex", stroke="#hex", strokeWidth={N}, rounded={N} (also per-corner: roundedTL/TR/BL/BR), cornerSmoothing={0-1}, opacity={0-1}, rotate={deg}, blendMode, overflow="hidden", shadow="offX offY blur #color", blur={N}.
+**Sizing:** w={N}, h={N} (fixed px), w="hug"/h="hug" (shrink-to-fit, default), w="fill"/h="fill" (stretch, requires flex parent), grow={N} (flex-grow, requires flex parent with fixed size on that axis), minW={N}, maxW={N}.
 
-**Text:** `<Text size={N} weight="bold"|"medium"|{N} color="#hex" font="Family" textAlign="left"|"center"|"right">content</Text>`. Text auto-sizes — don't set w/h unless you need wrapping (then set only w). ⚠ Text without `color` is invisible — always set `color="#hex"` on every Text element.
+**Layout:** flex="row"|"col" enables auto-layout. gap={N}, wrap, rowGap={N}. justify="start"|"end"|"center"|"between"|"evenly". items="start"|"end"|"center"|"stretch". Padding: p={N}, px={N}, py={N}, pt/pr/pb/pl={N}. Grid: grid, columns="1fr 1fr", rows="1fr", columnGap={N}, rowGap={N}, colStart={N}, rowStart={N}, colSpan={N}, rowSpan={N}.
+
+**Appearance:** bg="#hex", stroke="#hex", strokeWidth={N}, rounded={N}, roundedTL/TR/BL/BR={N}, cornerSmoothing={0-1}, opacity={0-1}, rotate={deg}, blendMode="multiply"|"screen"|etc, overflow="hidden", shadow="offX offY blur #color", blur={N}.
+
+**Text (only on `<Text>`):** size={N}, weight="bold"|"medium"|{N}, color="#hex", font="Family", textAlign="left"|"center"|"right"|"justified", lineHeight={N} (px), letterSpacing={N} (px), textDecoration="underline"|"strikethrough", textCase="upper"|"lower"|"title", maxLines={N} (truncates with ellipsis), truncate (ellipsis without line limit). ⚠ Text without `color` has no fill — invisible. Always set `color="#hex"`.
+
+**Shapes:** points={N} (Star/Polygon vertex count), innerRadius={N} (Star inner radius ratio).
 
 **Identity:** name="string" for the layers panel.
 
@@ -47,6 +53,20 @@ Inner radius = outer radius − padding. A card with `rounded={20} p={12}` → c
 Size hierarchy: cards/modals 16–24, buttons/inputs 8–12, chips/badges 4–8 or pill (radius = height/2). Stay consistent within each level.
 
 Elements flush against parent edge (no padding on that side) match parent's radius on the touching corners: `roundedTL={20} roundedTR={20} roundedBL={0} roundedBR={0}`.
+
+## Spacing and visual rhythm
+
+**Before rendering, decide the spacing scale and stick to it for the entire design.** Pick values from the 4px grid: 4, 8, 12, 16, 20, 24, 32, 48. Do not invent arbitrary numbers — every gap and padding must come from this set.
+
+Hierarchy of spacing (Gestalt proximity): inside a group < between groups < between sections. If elements within a row use gap={8}, rows should be spaced at 12–16, and sections at 20–32.
+
+Padding scales with element size: chips py={4} px={8}, buttons py={10} px={20}, cards p={16}–{24}, page containers p={24}–{48}. Padding is usually ≥ gap inside the same container.
+
+Vertical padding looks larger than horizontal at equal values. Compensate: buttons py={10} px={20}, cards py={20} px={24}.
+
+Dividers replace vertical space — don't add a full gap on both sides of a divider.
+
+**Consistency rule**: once you pick padding={20} for cards, ALL cards in the design use 20. Once you pick gap={12} for detail rows, ALL detail rows use 12. Never mix 14 and 16, or 10 and 12 for the same element type.
 
 ## Chunking large designs
 
@@ -85,9 +105,7 @@ Subtle UI elements on dark surfaces: at least ~20% alpha for fills, ~25% for bor
 
 ### Line height
 
-- Headings (display, H1–H3): 1.1–1.2× font size — tight
-- Body text, descriptions: 1.4–1.6× — readable
-- Single-line labels, buttons, chips: 1.0–1.2× — compact
+Control with `lineHeight={N}` (in px, not multiplier). Headings: ~1.1–1.2× font size (e.g. size={24} lineHeight={29}). Body text: ~1.4–1.6× (e.g. size={14} lineHeight={21}). Single-line labels and buttons: omit lineHeight (auto).
 
 ### Line length
 
@@ -99,7 +117,7 @@ Space after heading ≈ 0.5–1× heading font size. Space between body paragrap
 
 ### Uppercase
 
-Only for overlines and small labels (10–12px). Always pair with bold/medium weight. Never for body text or headings larger than 13px.
+Only for overlines and small labels (10–12px). Write the text content in uppercase manually — there is no textTransform prop. Always pair with bold/medium weight. Never for body text or headings larger than 13px.
 
 ### Alignment
 

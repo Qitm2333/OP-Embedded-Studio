@@ -359,6 +359,12 @@ function collectTextNodeProps(node: SceneNode, props: [string, unknown][]): void
   if (node.textAlignHorizontal !== 'LEFT') {
     props.push(['textAlign', node.textAlignHorizontal.toLowerCase()])
   }
+  if (node.lineHeight != null) props.push(['lineHeight', node.lineHeight])
+  if (node.letterSpacing !== 0) props.push(['letterSpacing', node.letterSpacing])
+  if (node.textDecoration !== 'NONE') props.push(['textDecoration', node.textDecoration.toLowerCase()])
+  if (node.textCase !== 'ORIGINAL') props.push(['textCase', node.textCase.toLowerCase()])
+  if (node.maxLines != null) props.push(['maxLines', node.maxLines])
+  if (node.textTruncation === 'ENDING' && node.maxLines == null) props.push(['truncate', true])
   const textColor = solidFillColor(node.fills)
   if (textColor) {
     const bgIdx = props.findIndex(([k]) => k === 'bg')

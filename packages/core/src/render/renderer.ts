@@ -388,6 +388,18 @@ function applyTextOverrides(
     o.fills = [colorToFill(props.color)]
   }
 
+  if (props.lineHeight !== undefined) o.lineHeight = props.lineHeight as number
+  if (props.letterSpacing !== undefined) o.letterSpacing = props.letterSpacing as number
+  if (props.textDecoration !== undefined) o.textDecoration = (props.textDecoration as string).toUpperCase() as SceneNode['textDecoration']
+  if (props.textCase !== undefined) o.textCase = (props.textCase as string).toUpperCase() as SceneNode['textCase']
+  if (props.maxLines !== undefined) {
+    o.maxLines = props.maxLines as number
+    o.textTruncation = 'ENDING'
+  }
+  if (props.truncate) {
+    o.textTruncation = 'ENDING'
+  }
+
   if (props.textAlign) {
     o.textAlignHorizontal = TEXT_ALIGN_MAP[props.textAlign as string] ?? 'LEFT'
   }

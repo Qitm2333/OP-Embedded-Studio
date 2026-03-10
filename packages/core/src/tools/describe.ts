@@ -376,6 +376,60 @@ function detectTypographyIssues(node: SceneNode, graph: SceneGraph, issues: Desc
   }
 }
 
+const SPACING_GRID = 4
+
+function detectSpacingIssues(node: SceneNode, graph: SceneGraph, gridSize: number, issues: DescribeIssue[]): void {
+  if (node.layoutMode === 'NONE') return
+
+  const children = node.childIds
+    .map((id) => graph.getNode(id))
+    .filter((c): c is SceneNode => c != null && c.visible && c.layoutPositioning !== 'ABSOLUTE')
+
+  // Padding larger than gap inside same container looks wrong
+  const minPad = Math.min(node.paddingTop, node.paddingRight, node.paddingBottom, node.paddingLeft)
+  if (node.itemSpacing > 0 && minPad > 0 && node.itemSpacing > minPad * 2) {
+    issues.push({
+      message: `Gap ${node.itemSpacing} is much larger than padding ${minPad} in "${node.name}"`,
+      suggestion: 'Gap should usually be ≤ padding'
+    })
+  }
+
+  // Off-grid spacing values
+  const spacingValues = [node.itemSpacing, node.paddingTop, node.paddingRight, node.paddingBottom, node.paddingLeft]
+    .filter((v) => v > 0)
+  for (const v of spacingValues) {
+    if (v % SPACING_GRID !== 0) {
+      const nearest = Math.round(v / SPACING_GRID) * SPACING_GRID
+      issues.push({
+        message: `Spacing value ${v} in "${node.name}" is not on ${SPACING_GRID}px grid`,
+        suggestion: `Use ${nearest}`
+      })
+      break
+    }
+  }
+
+  // Inconsistent padding/gap among sibling containers of similar role
+  const flexChildren = children.filter((c) => c.layoutMode !== 'NONE')
+  if (flexChildren.length >= 2) {
+    const paddings = flexChildren.map((c) => c.paddingTop + c.paddingRight + c.paddingBottom + c.paddingLeft)
+    const gaps = flexChildren.map((c) => c.itemSpacing)
+    const uniquePads = new Set(paddings)
+    const uniqueGaps = new Set(gaps.filter((g) => g > 0))
+    if (uniquePads.size > 2) {
+      issues.push({
+        message: `Inconsistent padding across sibling containers in "${node.name}" (${[...uniquePads].join(', ')})`,
+        suggestion: 'Use the same padding for similar containers'
+      })
+    }
+    if (uniqueGaps.size > 2) {
+      issues.push({
+        message: `Inconsistent gaps across sibling containers in "${node.name}" (${[...uniqueGaps].join(', ')})`,
+        suggestion: 'Use the same gap for similar containers'
+      })
+    }
+  }
+}
+
 function detectIssues(node: SceneNode, gridSize: number, graph: SceneGraph): DescribeIssue[] {
   const issues: DescribeIssue[] = []
   detectStructuralIssues(node, gridSize, issues)
@@ -383,6 +437,7 @@ function detectIssues(node: SceneNode, gridSize: number, graph: SceneGraph): Des
   detectLayoutIssues(node, graph, issues)
   detectRadiusIssues(node, graph, issues)
   detectTypographyIssues(node, graph, issues)
+  detectSpacingIssues(node, graph, gridSize, issues)
   return issues
 }
 
