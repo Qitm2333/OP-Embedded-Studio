@@ -247,6 +247,14 @@ function detectLayoutIssues(node: SceneNode, graph: SceneGraph, issues: Describe
   }
 
   if (isAutoLayout) {
+    // wrap without rowGap — wrapped rows stick together
+    if (node.layoutWrap === 'WRAP' && node.counterAxisSpacing <= 0 && children.length > 1) {
+      issues.push({
+        message: `"${node.name}" uses wrap but has no rowGap — wrapped rows will stick together`,
+        suggestion: 'Add rowGap={8} or similar spacing'
+      })
+    }
+
     const primarySizing = node.primaryAxisSizing
     const primaryDim = isRow ? node.width : node.height
     const pad = isRow

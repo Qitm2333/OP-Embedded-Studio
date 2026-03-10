@@ -16,7 +16,7 @@ These are ALL available props. Nothing else exists — no lineHeight, no letterS
 
 **Sizing:** w={N}, h={N} (fixed px), w="hug"/h="hug" (shrink-to-fit, default), w="fill"/h="fill" (stretch, requires flex parent), grow={N} (flex-grow, requires flex parent with fixed size on that axis), minW={N}, maxW={N}.
 
-**Layout:** flex="row"|"col" enables auto-layout. gap={N}, wrap, rowGap={N}. justify="start"|"end"|"center"|"between"|"evenly". items="start"|"end"|"center"|"stretch". Padding: p={N}, px={N}, py={N}, pt/pr/pb/pl={N}. Grid: grid, columns="1fr 1fr", rows="1fr", columnGap={N}, rowGap={N}, colStart={N}, rowStart={N}, colSpan={N}, rowSpan={N}.
+**Layout:** flex="row"|"col" enables auto-layout. gap={N}, wrap, rowGap={N}. justify="start"|"end"|"center"|"between"|"evenly". items="start"|"end"|"center"|"stretch". Padding: p={N}, px={N}, py={N}, pt/pr/pb/pl={N}. Grid: grid, columns="1fr 1fr", rows="1fr", columnGap={N}, rowGap={N}, colStart={N}, rowStart={N}, colSpan={N}, rowSpan={N}. ⚠ When using `wrap`, always set `rowGap={N}` — without it, wrapped rows have zero spacing and stick together.
 
 **Appearance:** bg="#hex", stroke="#hex", strokeWidth={N}, rounded={N}, roundedTL/TR/BL/BR={N}, cornerSmoothing={0-1}, opacity={0-1}, rotate={deg}, blendMode="multiply"|"screen"|etc, overflow="hidden", shadow="offX offY blur #color", blur={N}.
 

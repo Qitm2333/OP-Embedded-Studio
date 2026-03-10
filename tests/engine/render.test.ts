@@ -741,4 +741,36 @@ describe('text props round-trip', () => {
     expect(jsx).not.toContain('maxLines')
     expect(jsx).not.toContain('truncate')
   })
+
+  it('text w="fill" in flex="col" exports as w="fill" not w={computed}', async () => {
+    const g = createGraph()
+    const result = await renderJSX(g, `
+      <Frame name="Card" flex="col" w={300} p={20}>
+        <Text name="Title" size={22} weight="bold" color="#111" w="fill">Hello World</Text>
+      </Frame>
+    `)
+    const card = g.getNode(result.id)!
+    const title = g.getNode(card.childIds[0]!)!
+    expect(title.layoutAlignSelf).toBe('STRETCH')
+    expect(title.textAutoResize).toBe('HEIGHT')
+    const jsx = sceneNodeToJSX(title.id, g)
+    expect(jsx).toContain('w="fill"')
+    expect(jsx).not.toMatch(/w=\{/)
+  })
+
+  it('text grow={1} in flex="row" exports as grow not w={computed}', async () => {
+    const g = createGraph()
+    const result = await renderJSX(g, `
+      <Frame name="Row" flex="row" w={300}>
+        <Text name="Label" color="#999" w={60}>Label</Text>
+        <Text name="Value" color="#111" w="fill">Some value text</Text>
+      </Frame>
+    `)
+    const row = g.getNode(result.id)!
+    const value = g.getNode(row.childIds[1]!)!
+    expect(value.layoutGrow).toBe(1)
+    const jsx = sceneNodeToJSX(value.id, g)
+    expect(jsx).toContain('grow={1}')
+    expect(jsx).not.toMatch(/\bw=\{\d+\}/)
+  })
 })

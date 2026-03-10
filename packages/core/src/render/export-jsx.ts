@@ -322,7 +322,7 @@ function collectSizingProps(
 ): void {
   if (ctx.isGrid) collectGridSizingProps(node, props)
   else if (ctx.isFlex) collectFlexSizingProps(node, props)
-  else if (node.type === 'TEXT') collectTextSizingProps(node, props)
+  else if (node.type === 'TEXT') collectTextSizingProps(node, graph, props)
   else {
     if (node.width > 0) props.push(['w', node.width])
     if (node.height > 0) props.push(['h', node.height])
@@ -339,10 +339,21 @@ function collectSizingProps(
   }
 }
 
-function collectTextSizingProps(node: SceneNode, props: [string, unknown][]): void {
+function collectTextSizingProps(node: SceneNode, graph: SceneGraph, props: [string, unknown][]): void {
   const autoResize = node.textAutoResize
-  const emitW = autoResize !== 'WIDTH_AND_HEIGHT'
   const emitH = autoResize === 'NONE' || autoResize === 'TRUNCATE'
+  // Don't emit fixed w when text stretches to fill parent — the layoutAlignSelf
+  // check below will emit w="fill" instead. Without this guard, w={computedPx}
+  // gets emitted first and blocks the fill detection.
+  const isFillWidth = node.layoutAlignSelf === 'STRETCH' && (() => {
+    const parent = node.parentId ? graph.getNode(node.parentId) : null
+    return parent && parent.layoutMode === 'VERTICAL'
+  })()
+  const isGrowWidth = node.layoutGrow > 0 && (() => {
+    const parent = node.parentId ? graph.getNode(node.parentId) : null
+    return parent && parent.layoutMode === 'HORIZONTAL'
+  })()
+  const emitW = autoResize !== 'WIDTH_AND_HEIGHT' && !isFillWidth && !isGrowWidth
   if (emitW && node.width > 0) props.push(['w', node.width])
   if (emitH && node.height > 0) props.push(['h', node.height])
 }
