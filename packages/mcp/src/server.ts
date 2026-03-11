@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises'
-import { isAbsolute, relative, resolve } from 'node:path'
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
@@ -193,6 +194,26 @@ export function createServer(version: string, options: CreateServerOptions = {})
     if (!enableEval && tool.name === 'eval') continue
     registerTool(tool)
   }
+
+  let _codegenPrompt: string | null = null
+  register(
+    'get_codegen_prompt',
+    {
+      description: 'Get design-to-code generation guidelines. Call before generating frontend code.',
+      inputSchema: z.object({})
+    },
+    async () => {
+      try {
+        if (!_codegenPrompt) {
+          const corePath = dirname(fileURLToPath(import.meta.resolve('@open-pencil/core')))
+          _codegenPrompt = await readFile(join(corePath, 'tools', 'prompts', 'codegen.md'), 'utf-8')
+        }
+        return ok({ prompt: _codegenPrompt })
+      } catch (e) {
+        return fail(e)
+      }
+    }
+  )
 
   return server
 }

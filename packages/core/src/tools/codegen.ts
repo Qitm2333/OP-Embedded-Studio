@@ -4,7 +4,7 @@ import { defineTool } from './schema'
 
 import type { Color } from '../types'
 import type { FigmaAPI } from '../figma-api'
-import type { Variable, VariableCollection, VariableValue, SceneNode } from '../scene-graph'
+import type { SceneGraph, Variable, VariableCollection, VariableValue, SceneNode } from '../scene-graph'
 
 function slugify(name: string): string {
   return name
@@ -267,7 +267,7 @@ function collectInstanceCounts(
   return counts
 }
 
-function detectPropCandidates(node: SceneNode, graph: import('../scene-graph').SceneGraph): string[] {
+function detectPropCandidates(node: SceneNode, graph: SceneGraph): string[] {
   const props: string[] = []
 
   for (const childId of node.childIds) {
@@ -290,7 +290,7 @@ function detectPropCandidates(node: SceneNode, graph: import('../scene-graph').S
 
 function detectVariants(
   componentNode: SceneNode,
-  graph: import('../scene-graph').SceneGraph
+  graph: SceneGraph
 ): string[] {
   if (componentNode.type !== 'COMPONENT_SET') return []
 
@@ -422,25 +422,4 @@ export const designToComponentMap = defineTool({
   }
 })
 
-let _codegenPrompt: string | null = null
 
-export async function loadCodegenPrompt(): Promise<string> {
-  if (_codegenPrompt) return _codegenPrompt
-  const { readFile } = await import('node:fs/promises')
-  const { dirname, join } = await import('node:path')
-  const { fileURLToPath } = await import('node:url')
-  const __dirname = dirname(fileURLToPath(import.meta.url))
-  _codegenPrompt = await readFile(join(__dirname, 'prompts', 'codegen.md'), 'utf-8')
-  return _codegenPrompt
-}
-
-export const getCodegenPrompt = defineTool({
-  name: 'get_codegen_prompt',
-  description:
-    'Get the design-to-code generation guidelines. Call this before generating frontend code from a Figma design to understand the recommended workflow and patterns.',
-  params: {},
-  execute: async () => {
-    const prompt = await loadCodegenPrompt()
-    return { prompt }
-  }
-})
