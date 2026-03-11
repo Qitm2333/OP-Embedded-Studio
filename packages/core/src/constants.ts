@@ -94,6 +94,7 @@ export type AIProviderID =
   | 'google'
   | 'openai-compatible'
   | 'zai'
+  | 'minimax'
   | 'anthropic-compatible'
 
 export interface ModelOption {
@@ -191,6 +192,20 @@ export const AI_PROVIDERS: AIProviderDef[] = [
       { id: 'glm-4-32b-0414-128k', name: 'GLM-4-32B-0414-128K' },
       { id: 'glm-4.7-flash', name: 'GLM-4.7-Flash', tag: 'Free' },
       { id: 'glm-4.5-flash', name: 'GLM-4.5-Flash', tag: 'Free' }
+    ]
+  },
+  {
+    id: 'minimax',
+    name: 'MiniMax',
+    keyPlaceholder: 'API key',
+    keyURL: 'https://platform.minimax.io/user-center/basic-information/interface-key',
+    defaultModel: 'MiniMax-M2.5',
+    models: [
+      { id: 'MiniMax-M2.5', name: 'MiniMax-M2.5', tag: 'Best' },
+      { id: 'MiniMax-M2.5-highspeed', name: 'MiniMax-M2.5 Highspeed', tag: 'Fast' },
+      { id: 'MiniMax-M2.1', name: 'MiniMax-M2.1' },
+      { id: 'MiniMax-M2.1-highspeed', name: 'MiniMax-M2.1 Highspeed', tag: 'Fast' },
+      { id: 'MiniMax-M2', name: 'MiniMax-M2' }
     ]
   },
   {

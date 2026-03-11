@@ -219,6 +219,13 @@ function createModel(): LanguageModel {
       })
       return zai.chat(effectiveModelID)
     }
+    case 'minimax': {
+      const minimax = createOpenAI({
+        apiKey: key,
+        baseURL: 'https://api.minimax.io/v1'
+      })
+      return minimax.chat(effectiveModelID)
+    }
     case 'openai-compatible': {
       const custom = createOpenAI({
         apiKey: key,
