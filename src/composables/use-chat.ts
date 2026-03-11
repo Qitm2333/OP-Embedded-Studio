@@ -5,11 +5,10 @@ import { Chat } from '@ai-sdk/vue'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { useLocalStorage } from '@vueuse/core'
 import { DirectChatTransport, ToolLoopAgent } from 'ai'
-
 import { computed, ref, watch } from 'vue'
 
-import { createAITools } from '@/ai/tools'
 import SYSTEM_PROMPT from '@/ai/system-prompt.md?raw'
+import { createAITools, recordStepUsage } from '@/ai/tools'
 import { useEditorStore } from '@/stores/editor'
 import { AI_PROVIDERS, DEFAULT_AI_MODEL, DEFAULT_AI_PROVIDER } from '@open-pencil/core'
 
@@ -159,17 +158,44 @@ let overrideTransport: (() => any) | null = null
 
 let chat: Chat<UIMessage> | null = null
 
+const ANTHROPIC_CACHE_CONTROL = {
+  anthropic: { cacheControl: { type: 'ephemeral' } }
+} as const
+
+function supportsAnthropicCaching(): boolean {
+  return (
+    providerID.value === 'anthropic' ||
+    providerID.value === 'anthropic-compatible' ||
+    (providerID.value === 'openrouter' && modelID.value.startsWith('anthropic/'))
+  )
+}
+
 function createTransport() {
   if (overrideTransport) return overrideTransport()
 
   const tools = createAITools(useEditorStore())
+  const cacheProviderOptions = supportsAnthropicCaching() ? ANTHROPIC_CACHE_CONTROL : undefined
 
   const agent = new ToolLoopAgent({
     model: createModel(),
     instructions: SYSTEM_PROMPT,
     tools,
     maxOutputTokens: maxOutputTokens.value,
-    prepareCall: (options) => ({ ...options, maxOutputTokens: maxOutputTokens.value })
+    providerOptions: cacheProviderOptions,
+    prepareCall: (options) => ({
+      ...options,
+      maxOutputTokens: maxOutputTokens.value,
+      providerOptions: cacheProviderOptions
+    }),
+    onStepFinish: ({ usage }) => {
+      recordStepUsage({
+        inputTokens: usage.inputTokens ?? 0,
+        outputTokens: usage.outputTokens ?? 0,
+        cacheReadTokens: usage.inputTokenDetails?.cacheReadTokens ?? 0,
+        cacheWriteTokens: usage.inputTokenDetails?.cacheWriteTokens ?? 0,
+        timestamp: Date.now()
+      })
+    }
   })
 
   return new DirectChatTransport({ agent })

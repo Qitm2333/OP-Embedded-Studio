@@ -1,0 +1,20 @@
+{
+	admin off
+}
+
+:9100 {
+	header {
+		Access-Control-Allow-Origin *
+		Access-Control-Allow-Methods "GET, POST, OPTIONS"
+		Access-Control-Allow-Headers "Content-Type, Authorization, x-api-key, anthropic-version, anthropic-beta"
+	}
+
+	@options method OPTIONS
+	handle @options {
+		respond 204
+	}
+
+	reverse_proxy https://ai-proxy.soldatov.dev {
+		header_up Host ai-proxy.soldatov.dev
+	}
+}

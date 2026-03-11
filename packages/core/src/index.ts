@@ -52,8 +52,8 @@ export {
 } from './scene-graph'
 
 export { FigmaAPI, FigmaNodeProxy, computeImageHash, type FigmaFontName } from './figma-api'
-export { ALL_TOOLS, defineTool, toolsToAI } from './tools'
-export type { ToolDef, ParamDef, ParamType } from './tools'
+export { ALL_TOOLS, defineTool, toolsToAI, buildDebugLog } from './tools'
+export type { ToolDef, ParamDef, ParamType, ToolLogEntry, ToolDebugLog, AIAdapterOptions } from './tools'
 export { executeRpcCommand, ALL_RPC_COMMANDS } from './rpc'
 export { queryByXPath, matchByXPath } from './xpath'
 export type { XPathQueryOptions } from './xpath'

@@ -3,6 +3,7 @@ import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewpor
 import { computed, markRaw, nextTick, ref, watch } from 'vue'
 
 import { copyChatLog } from '@/ai/chat-debug'
+import { clearToolLogEntries } from '@/ai/tools'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
 import ProviderSetup from '@/components/chat/ProviderSetup.vue'
@@ -54,6 +55,7 @@ async function handleCopyDebug() {
 function handleClearChat() {
   chat.value = null
   resetChat()
+  clearToolLogEntries()
 }
 </script>
 

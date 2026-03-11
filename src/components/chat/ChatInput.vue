@@ -35,7 +35,9 @@ const emit = defineEmits<{
 const input = ref('')
 
 const isStreaming = computed(() => status === 'streaming' || status === 'submitted')
-const isCustomProvider = computed(() => providerID.value === 'openai-compatible')
+const isCustomProvider = computed(
+  () => providerID.value === 'openai-compatible' || providerID.value === 'anthropic-compatible'
+)
 
 const selectedModelName = computed(() => {
   if (isCustomProvider.value) return customModelID.value || 'No model'

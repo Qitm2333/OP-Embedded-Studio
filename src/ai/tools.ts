@@ -6,7 +6,36 @@ import { makeFigmaFromStore } from '@/automation/figma-factory'
 import { ALL_TOOLS, computeAllLayouts, toolsToAI } from '@open-pencil/core'
 
 import type { EditorStore } from '@/stores/editor'
-import type { SceneNode } from '@open-pencil/core'
+import type { SceneNode, ToolLogEntry } from '@open-pencil/core'
+
+let _toolLogEntries: ToolLogEntry[] = []
+
+export interface StepUsage {
+  inputTokens: number
+  outputTokens: number
+  cacheReadTokens: number
+  cacheWriteTokens: number
+  timestamp: number
+}
+
+let _stepUsages: StepUsage[] = []
+
+export function getToolLogEntries(): ToolLogEntry[] {
+  return _toolLogEntries
+}
+
+export function getStepUsages(): StepUsage[] {
+  return _stepUsages
+}
+
+export function recordStepUsage(usage: StepUsage): void {
+  _stepUsages.push(usage)
+}
+
+export function clearToolLogEntries(): void {
+  _toolLogEntries = []
+  _stepUsages = []
+}
 
 export function createAITools(store: EditorStore) {
   let beforeSnapshot: Map<string, SceneNode> | null = null
@@ -38,6 +67,9 @@ export function createAITools(store: EditorStore) {
       },
       onFlashNodes: (nodeIds) => {
         store.flashNodes(nodeIds)
+      },
+      onToolLog: (entry) => {
+        _toolLogEntries.push(entry)
       }
     },
     { v, valibotSchema, tool }
