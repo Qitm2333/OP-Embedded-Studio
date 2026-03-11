@@ -379,9 +379,8 @@ function estimateTextSize(node: SceneNode): { width: number; height: number } {
 function configureTextLeaf(
   yogaChild: YogaNode,
   child: SceneNode,
-  parent: SceneNode
+  _parent: SceneNode
 ): void {
-  const isRow = parent.layoutMode === 'HORIZONTAL'
   const autoResize = child.textAutoResize
 
   if (child.layoutGrow > 0) {
@@ -398,7 +397,7 @@ function configureTextLeaf(
       const cached = cache.get(cacheKey)
       if (cached) return cached
 
-      const measured = globalTextMeasurer!(child, maxW)
+      const measured = globalTextMeasurer?.(child, maxW)
       const result = measured ?? { width: child.width, height: child.height }
       cache.set(cacheKey, result)
       return result
@@ -415,7 +414,7 @@ function configureTextLeaf(
       const cached = cache.get(cacheKey)
       if (cached) return cached
 
-      const measured = globalTextMeasurer!(child, constraintW)
+      const measured = globalTextMeasurer?.(child, constraintW)
       const result = { width: constraintW, height: measured?.height ?? child.height }
       cache.set(cacheKey, result)
       return result

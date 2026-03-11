@@ -988,7 +988,8 @@ export function createEditorStore() {
   let pendingComponentSync: Set<string> | null = null
 
   function flushComponentSync() {
-    const ids = pendingComponentSync!
+    const ids = pendingComponentSync
+    if (!ids) return
     pendingComponentSync = null
     const componentIds = new Set<string>()
     for (const id of ids) {

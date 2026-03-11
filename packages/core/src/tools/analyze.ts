@@ -545,13 +545,13 @@ export const diffShow = defineTool({
     const modified: SceneNode = structuredClone(raw)
     if (newProps.fill) {
       modified.fills = [
-        { type: 'SOLID', color: parseColor(String(newProps.fill)), opacity: 1, visible: true }
+        { type: 'SOLID', color: parseColor(newProps.fill as string), opacity: 1, visible: true }
       ]
     }
     if (newProps.stroke) {
       modified.strokes = [
         {
-          color: parseColor(String(newProps.stroke)),
+          color: parseColor(newProps.stroke as string),
           weight: modified.strokes[0]?.weight ?? 1,
           opacity: 1,
           visible: true,
@@ -575,7 +575,7 @@ export const diffShow = defineTool({
     if (newProps.visible !== undefined) modified.visible = Boolean(newProps.visible)
     if (newProps.locked !== undefined) modified.locked = Boolean(newProps.locked)
     if (newProps.rotation !== undefined) modified.rotation = Number(newProps.rotation)
-    if (newProps.text !== undefined) modified.text = String(newProps.text)
+    if (newProps.text !== undefined) modified.text = newProps.text as string
 
     const newContent = serializeNodeProps(modified)
 

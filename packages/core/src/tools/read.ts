@@ -194,14 +194,14 @@ export const listFonts = defineTool({
         if (raw) {
           const key = raw.fontFamily
           if (!fonts.has(key)) fonts.set(key, new Set())
-          fonts.get(key)!.add(raw.fontWeight)
+          fonts.get(key)?.add(raw.fontWeight)
         }
       }
       return false
     })
     let result = [...fonts.entries()].map(([family, weights]) => ({
       family,
-      weights: [...weights].sort()
+      weights: [...weights].sort((a, b) => a - b)
     }))
     if (args.family) {
       const q = args.family.toLowerCase()

@@ -68,7 +68,7 @@ function normalizeFontFamily(family: string): string {
 }
 
 async function fetchGoogleFontFiles(family: string): Promise<Record<string, string> | null> {
-  if (googleFontsCache.has(family)) return googleFontsCache.get(family)!
+  if (googleFontsCache.has(family)) return googleFontsCache.get(family) ?? null
   if (googleFontsFailed.has(family)) return null
 
   const url = `https://www.googleapis.com/webfonts/v1/webfonts?family=${encodeURIComponent(family)}&key=${GOOGLE_FONTS_API_KEY}`

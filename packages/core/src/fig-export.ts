@@ -43,7 +43,11 @@ function variableValueToKiwi(
     return { value: { boolValue: !!value }, dataType: 'BOOLEAN', resolvedDataType: 'BOOLEAN' }
   }
   if (type === 'STRING') {
-    return { value: { textValue: String(value) }, dataType: 'STRING', resolvedDataType: 'STRING' }
+    return {
+      value: { textValue: typeof value === 'string' ? value : JSON.stringify(value) },
+      dataType: 'STRING',
+      resolvedDataType: 'STRING'
+    }
   }
   return { value: { floatValue: Number(value) }, dataType: 'FLOAT', resolvedDataType: 'FLOAT' }
 }

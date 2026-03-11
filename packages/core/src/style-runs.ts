@@ -10,7 +10,7 @@ export function getStyleAt(runs: StyleRun[], index: number): CharacterStyleOverr
 }
 
 function expandRuns(runs: StyleRun[], textLength: number): (CharacterStyleOverride | null)[] {
-  const chars: (CharacterStyleOverride | null)[] = new Array(textLength).fill(null)
+  const chars: (CharacterStyleOverride | null)[] = Array.from({ length: textLength }, (): CharacterStyleOverride | null => null)
   for (const run of runs) {
     for (let i = run.start; i < run.start + run.length && i < textLength; i++) {
       chars[i] = { ...chars[i], ...run.style }
@@ -46,7 +46,7 @@ export function removeStyleFromRange(
 
   for (let i = start; i < end && i < textLength; i++) {
     if (chars[i]) {
-      const copy = { ...chars[i]! }
+      const copy = { ...chars[i] }
       for (const k of keys) delete copy[k]
       chars[i] = Object.keys(copy).length > 0 ? copy : null
     }
@@ -94,7 +94,8 @@ function compactRuns(chars: (CharacterStyleOverride | null)[]): StyleRun[] {
       continue
     }
     const start = i
-    const style = chars[i]!
+    const style = chars[i]
+    if (!style) { i++; continue }
     while (i < chars.length && stylesEqual(chars[i], style)) i++
     result.push({ start, length: i - start, style: { ...style } })
   }

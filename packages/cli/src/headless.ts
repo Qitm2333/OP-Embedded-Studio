@@ -41,7 +41,8 @@ export async function loadFonts(graph: SceneGraph): Promise<void> {
 }
 
 function createRenderer(ckInstance: CanvasKit, width: number, height: number): SkiaRenderer {
-  const surface = ckInstance.MakeSurface(width, height)!
+  const surface = ckInstance.MakeSurface(width, height)
+  if (!surface) throw new Error('Failed to create Skia surface')
   const renderer = new SkiaRenderer(ckInstance, surface)
   renderer.viewportWidth = width
   renderer.viewportHeight = height

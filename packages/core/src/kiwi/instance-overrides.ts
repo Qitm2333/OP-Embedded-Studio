@@ -86,7 +86,8 @@ export function populateAndApplyOverrides(
   }
 
   while (populateQueue.length > 0) {
-    const nodeId = populateQueue.pop()!
+    const nodeId = populateQueue.pop()
+    if (!nodeId) continue
     const node = graph.getNode(nodeId)
     if (node?.type !== 'INSTANCE' || !node.componentId || node.childIds.length > 0) continue
     const comp = graph.getNode(node.componentId)
@@ -247,7 +248,7 @@ export function populateAndApplyOverrides(
     const node = graph.getNode(nodeId)
     if (node?.type !== 'INSTANCE') return
 
-    for (const childId of [...node.childIds]) graph.deleteNode(childId)
+    for (const childId of Array.from(node.childIds)) graph.deleteNode(childId)
     graph.updateNode(nodeId, { componentId: compId })
     const comp = graph.getNode(compId)
     if (comp && comp.childIds.length > 0) {

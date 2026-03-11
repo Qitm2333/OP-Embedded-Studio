@@ -13,8 +13,6 @@ import { compileSchema, encodeBinarySchema } from './kiwi-schema'
 import { isZstdCompressed, getKiwiMessageType } from './protocol'
 import figmaSchema from './schema'
 
-import type { Schema } from './kiwi-schema'
-
 interface CompiledSchema {
   encodeMessage(message: unknown): Uint8Array
   decodeMessage(data: Uint8Array): unknown

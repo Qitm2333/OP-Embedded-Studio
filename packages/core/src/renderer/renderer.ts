@@ -651,7 +651,7 @@ export class SkiaRenderer {
     p.beginPhase('render:scene')
     if (canUsePicture) {
       p.beginPhase('render:drawPicture')
-      canvas.drawPicture(this.scenePicture!)
+      if (this.scenePicture) canvas.drawPicture(this.scenePicture)
       p.endPhase('render:drawPicture')
     } else if (hasVolatileOverlays) {
       this._nodeCount = 0
@@ -831,7 +831,8 @@ export class SkiaRenderer {
       }
     })
 
-    const builder = ck.ParagraphBuilder.MakeFromFontProvider(paraStyle, this.fontProvider!)
+    if (!this.fontProvider) throw new Error('Font provider not initialized')
+    const builder = ck.ParagraphBuilder.MakeFromFontProvider(paraStyle, this.fontProvider)
 
     if (node.styleRuns.length === 0) {
       builder.addText(node.text)

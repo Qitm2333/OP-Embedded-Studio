@@ -1023,13 +1023,10 @@ export class FigmaAPI {
     proxy: FigmaNodeProxy
   ): FigmaNodeProxy & { selection: FigmaNodeProxy[] } {
     if (!this._pageProxies.has(proxy)) {
-      const self = this
       Object.defineProperty(proxy, 'selection', {
-        get() {
-          return self._selection
-        },
-        set(nodes: FigmaNodeProxy[]) {
-          self._selection = nodes
+        get: () => this._selection,
+        set: (nodes: FigmaNodeProxy[]) => {
+          this._selection = nodes
         },
         enumerable: true,
         configurable: true
@@ -1122,7 +1119,7 @@ export class FigmaAPI {
     const raw = this.graph.getNode(node[INTERNAL_ID])
     if (raw?.type !== 'GROUP') return
     const parentId = raw.parentId ?? this._currentPageId
-    for (const childId of [...raw.childIds]) {
+    for (const childId of Array.from(raw.childIds)) {
       this.graph.reparentNode(childId, parentId)
     }
     this.graph.deleteNode(node[INTERNAL_ID])
@@ -1230,8 +1227,8 @@ export class FigmaAPI {
   ): FigmaNodeProxy {
     if (nodeIds.length < 2) throw new Error('Need at least 2 nodes for boolean operation')
     const nodes = nodeIds.map((id) => this.graph.getNode(id))
-    if (nodes.some((n) => !n)) throw new Error('One or more nodes not found')
-    const first = nodes[0]!
+    const first = nodes[0]
+    if (!first || nodes.some((n) => !n)) throw new Error('One or more nodes not found')
     const parentId = first.parentId ?? this._currentPageId
     const group = this.graph.createNode('GROUP', parentId, {
       name: `Boolean ${operation.toLowerCase()}`,

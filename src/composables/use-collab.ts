@@ -224,8 +224,9 @@ export function useCollab(store: EditorStore) {
     const unbindDeleted = store.graph.emitter.on('node:deleted', (id) => {
       if (!suppressGraphSync && ydoc && ynodes) {
         suppressYjsEvents = true
+        const map = ynodes
         ydoc.transact(() => {
-          ynodes!.delete(id)
+          map.delete(id)
         })
         suppressYjsEvents = false
       }

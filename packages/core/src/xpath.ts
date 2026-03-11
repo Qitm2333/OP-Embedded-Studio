@@ -104,6 +104,8 @@ function getAttrs(wrapped: XPathNode): XPathAttr[] {
     if (attrName in node) {
       const value = (node as unknown as Record<string, unknown>)[attrName]
       if (value === undefined || value === null || typeof value === 'symbol') continue
+      const stringValue =
+        typeof value === 'object' ? JSON.stringify(value) : String(value as string | number | boolean)
       attrs.push({
         nodeType: NODE_TYPES.ATTRIBUTE_NODE,
         nodeName: attrName,
@@ -111,7 +113,7 @@ function getAttrs(wrapped: XPathNode): XPathAttr[] {
         localName: attrName,
         namespaceURI: null,
         prefix: null,
-        value: String(value),
+        value: stringValue,
         ownerElement: wrapped
       })
     }
@@ -150,7 +152,7 @@ function createDomFacade(graph: SceneGraph) {
       if (attributeName in sceneNode) {
         const value = (sceneNode as unknown as Record<string, unknown>)[attributeName]
         if (value === undefined || value === null || typeof value === 'symbol') return null
-        return String(value)
+        return typeof value === 'object' ? JSON.stringify(value) : String(value as string | number | boolean)
       }
       return null
     },

@@ -9,12 +9,12 @@ function formatToolPart(part: Record<string, unknown>): string {
     return lines.join('\n')
   }
 
-  const name = String(part.type ?? 'unknown').replace(/^tool-/, '')
-  const state = String(part.state ?? '?')
+  const name = (typeof part.type === 'string' ? part.type : 'unknown').replace(/^tool-/, '')
+  const state = typeof part.state === 'string' ? part.state : '?'
   const lines = [`  [tool] ${name} (${state})`]
   if (part.input) lines.push(`    input: ${JSON.stringify(part.input)}`)
   if (part.output !== undefined) lines.push(`    output: ${JSON.stringify(part.output)}`)
-  if (part.errorText) lines.push(`    error: ${String(part.errorText)}`)
+  if (part.errorText) lines.push(`    error: ${part.errorText as string}`)
   return lines.join('\n')
 }
 
@@ -28,9 +28,11 @@ export function serializeChatLog(messages: UIMessage[]): string {
     for (const part of msg.parts) {
       const p = part as Record<string, unknown>
       if (p.type === 'text') {
-        parts.push(`  ${p.text}`)
+        parts.push(`  ${p.text as string}`)
       } else if (p.type === 'reasoning') {
-        parts.push(`  [reasoning] ${String(p.text ?? p.content ?? '')}`)
+        parts.push(
+          `  [reasoning] ${typeof p.text === 'string' ? p.text : (typeof p.content === 'string' ? p.content : '')}`
+        )
       } else if (
         p.type === 'tool-invocation' ||
         p.toolInvocation ||
@@ -38,7 +40,7 @@ export function serializeChatLog(messages: UIMessage[]): string {
       ) {
         parts.push(formatToolPart(p))
       } else {
-        parts.push(`  [${String(p.type ?? 'unknown')}] ${JSON.stringify(p)}`)
+        parts.push(`  [${typeof p.type === 'string' ? p.type : 'unknown'}] ${JSON.stringify(p)}`)
       }
     }
 

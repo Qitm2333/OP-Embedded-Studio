@@ -236,7 +236,10 @@ const imagePreviewUrl = useObjectUrl(imageBlob)
 watch(
   () => fill.imageHash,
   (hash) => {
-    if (!hash) { imageBlob.value = null; return }
+    if (!hash) {
+      imageBlob.value = null
+      return
+    }
     const data = store.graph.images.get(hash)
     imageBlob.value = data ? new Blob([data]) : null
   },
@@ -245,7 +248,7 @@ watch(
 
 const { open: pickImage, onChange: onFileChange } = useFileDialog({
   accept: 'image/png,image/jpeg,image/webp',
-  multiple: false,
+  multiple: false
 })
 
 onFileChange(async (files) => {

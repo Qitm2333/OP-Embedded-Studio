@@ -584,7 +584,7 @@ export class SceneGraph {
   removeCollection(id: string): void {
     const collection = this.variableCollections.get(id)
     if (collection) {
-      for (const varId of [...collection.variableIds]) {
+      for (const varId of Array.from(collection.variableIds)) {
         this.removeVariable(varId)
       }
     }
