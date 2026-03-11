@@ -33,6 +33,7 @@ function scrollToBottom() {
 watch(messages, scrollToBottom, { deep: true })
 
 function handleSubmit(text: string) {
+  if (status.value === 'streaming' || status.value === 'submitted') return
   const c = ensureChat()
   if (c) chat.value = markRaw(c)
   chat.value?.sendMessage({ text }).catch(() => {

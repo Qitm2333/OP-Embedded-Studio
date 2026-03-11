@@ -123,7 +123,7 @@ function handleSubmit(e: Event) {
           data-test-id="chat-input"
           placeholder="Describe a change…"
           :class="uiInput({ class: 'min-w-0 flex-1 placeholder:text-muted' })"
-          :disabled="status === 'submitted'"
+          :disabled="isStreaming"
           @paste.stop
           @copy.stop
           @cut.stop
