@@ -1,10 +1,11 @@
 import { parseColor } from '../color'
-import { fetchIcon, fetchIcons, searchIconsBatch } from '../iconify'
+import { fetchIcons, searchIconsBatch } from '../iconify'
 import type { SceneNode } from '../scene-graph'
 
 import { defineTool, nodeSummary } from './schema'
 
-import type { FigmaNodeProxy } from '../figma-api'
+import type { FigmaAPI, FigmaNodeProxy } from '../figma-api'
+import type { Color } from '../types'
 import type { Stroke, StrokeCap, StrokeJoin } from '../scene-graph'
 
 export const createShape = defineTool({
@@ -229,89 +230,108 @@ export const fetchIconsTool = defineTool({
   }
 })
 
+import type { IconData } from '../iconify'
+
+function createIconFrame(
+  figma: FigmaAPI,
+  icon: IconData,
+  name: string,
+  size: number,
+  parsedColor: Color,
+  parentId?: string
+): FigmaNodeProxy {
+  const frame = figma.createFrame()
+  frame.name = `Icon / ${name}`
+  frame.resize(size, size)
+  frame.fills = []
+
+  if (parentId) {
+    const parent = figma.getNodeById(parentId)
+    if (parent) parent.appendChild(frame)
+  }
+
+  for (const path of icon.paths) {
+    const vector = figma.createVector()
+    vector.name = 'path'
+    vector.resize(size, size)
+    frame.appendChild(vector)
+
+    figma.graph.updateNode(vector.id, {
+      vectorNetwork: path.vectorNetwork
+    } as Record<string, unknown>)
+
+    if (path.fill) {
+      vector.fills = [{
+        type: 'SOLID',
+        color: path.fill === 'currentColor' ? parsedColor : parseColor(path.fill),
+        opacity: 1,
+        visible: true
+      }]
+    } else {
+      vector.fills = []
+    }
+
+    if (path.stroke) {
+      const strokeColor = path.stroke === 'currentColor' ? parsedColor : parseColor(path.stroke)
+      const stroke: Stroke = {
+        color: strokeColor,
+        weight: path.strokeWidth,
+        opacity: 1,
+        visible: true,
+        align: 'CENTER',
+        cap: STROKE_CAP_MAP[path.strokeCap] ?? 'NONE',
+        join: STROKE_JOIN_MAP[path.strokeJoin] ?? 'MITER'
+      }
+      vector.strokes = [stroke]
+    }
+  }
+
+  return frame
+}
+
 export const insertIcon = defineTool({
   name: 'insert_icon',
   mutates: true,
   description:
-    'Insert a vector icon onto the canvas. If already cached by fetch_icons — instant, no network request. Otherwise fetches on demand.',
+    'Insert one or more vector icons onto the canvas. Pass a single name or multiple names to batch-insert into the same parent. If already cached by fetch_icons — instant, no network request.',
   params: {
-    name: {
-      type: 'string',
-      description: 'Icon name as prefix:name (e.g. lucide:heart, mdi:home)',
+    names: {
+      type: 'string[]',
+      description: 'Icon names as prefix:name (e.g. ["lucide:heart"] or ["lucide:heart","lucide:home","lucide:star"])',
       required: true
     },
     size: { type: 'number', description: 'Icon size in pixels (default: 24)' },
     color: { type: 'color', description: 'Icon color hex (replaces currentColor). Default: #000000' },
-    x: { type: 'number', description: 'X position' },
-    y: { type: 'number', description: 'Y position' },
-    parent_id: { type: 'string', description: 'Parent node ID' }
+    parent_id: { type: 'string', description: 'Parent node ID for all icons' }
   },
   execute: async (figma, args) => {
     const size = args.size ?? 24
     const color = args.color ?? '#000000'
+    const parsedColor = parseColor(color)
 
-    let icon
+    let icons
     try {
-      icon = await fetchIcon(args.name, size)
+      icons = await fetchIcons(args.names, size)
     } catch (e) {
       return { error: (e as Error).message }
     }
 
-    if (icon.paths.length === 0) {
-      return { error: `Icon "${args.name}" has no path data` }
-    }
+    const inserted: { id: string; name: string; icon: string }[] = []
+    const notFound: string[] = []
 
-    const frame = figma.createFrame()
-    frame.name = `Icon / ${args.name}`
-    frame.resize(size, size)
-    frame.fills = []
-    if (args.x !== undefined) frame.x = args.x
-    if (args.y !== undefined) frame.y = args.y
-
-    if (args.parent_id) {
-      const parent = figma.getNodeById(args.parent_id)
-      if (parent) parent.appendChild(frame)
-    }
-
-    const parsedColor = parseColor(color)
-
-    for (const path of icon.paths) {
-      const vector = figma.createVector()
-      vector.name = 'path'
-      vector.resize(size, size)
-      frame.appendChild(vector)
-
-      figma.graph.updateNode(vector.id, {
-        vectorNetwork: path.vectorNetwork
-      } as Record<string, unknown>)
-
-      if (path.fill) {
-        vector.fills = [{
-          type: 'SOLID',
-          color: path.fill === 'currentColor' ? parsedColor : parseColor(path.fill),
-          opacity: 1,
-          visible: true
-        }]
-      } else {
-        vector.fills = []
+    for (const name of args.names) {
+      const icon = icons.get(name)
+      if (!icon || icon.paths.length === 0) {
+        notFound.push(name)
+        continue
       }
-
-      if (path.stroke) {
-        const strokeColor = path.stroke === 'currentColor' ? parsedColor : parseColor(path.stroke)
-        const stroke: Stroke = {
-          color: strokeColor,
-          weight: path.strokeWidth,
-          opacity: 1,
-          visible: true,
-          align: 'CENTER',
-          cap: STROKE_CAP_MAP[path.strokeCap] ?? 'NONE',
-          join: STROKE_JOIN_MAP[path.strokeJoin] ?? 'MITER'
-        }
-        vector.strokes = [stroke]
-      }
+      const frame = createIconFrame(figma, icon, name, size, parsedColor, args.parent_id)
+      inserted.push({ id: frame.id, name: frame.name, icon: name })
     }
 
-    return nodeSummary(frame)
+    const result: Record<string, unknown> = { inserted }
+    if (notFound.length > 0) result.not_found = notFound
+    return result
   }
 })
 

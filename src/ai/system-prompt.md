@@ -189,21 +189,20 @@ Never place vertical dividers outside their row container. Horizontal dividers (
 
 ## Icons
 
-Three tools for Iconify icons (200k+ icons):
+Three tools for Iconify icons (200k+ icons). All batch-friendly — minimize LLM steps:
 
 - `search_icons` — find icons by keyword. Pass multiple queries at once: `queries=["heart","arrow","settings"]`.
-- `fetch_icons` — pre-download icons into cache. Batches by prefix (one HTTP request per set). Pass all names you'll need: `names=["lucide:heart","lucide:home","lucide:star"]`.
-- `insert_icon` — place one icon on the canvas. Instant if already cached by `fetch_icons`.
+- `fetch_icons` — pre-download icons into cache. Batches by prefix (one HTTP request per set). Pass all names you'll need.
+- `insert_icon` — place icons on the canvas. Pass one or many `names`. When icons share the same parent/color/size, batch them: `names=["lucide:heart","lucide:home","lucide:star"]`. Instant if cached by `fetch_icons`.
 
-**Workflow:** search → fetch batch → insert one by one as you build.
+**Workflow:** search → fetch → insert. Each step handles multiple icons in one call.
 
 ```
 1. search_icons(queries=["heart","home","settings","star"])
 2. fetch_icons(names=["lucide:heart","lucide:home","lucide:settings","lucide:star"], size=20)
-3. render skeleton...
-4. insert_icon(name="lucide:heart", parent_id=..., color="#FFF")
-5. insert_icon(name="lucide:home", parent_id=..., color="#FFF")
-   ... (each insert_icon is instant — no network wait)
+3. render skeleton with empty containers...
+4. insert_icon(names=["lucide:heart","lucide:home","lucide:settings"], parent_id=navId, color="#FFF")
+5. insert_icon(names=["lucide:star"], parent_id=footerId, color="#999")
 ```
 
 **Popular icon sets:**

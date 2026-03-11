@@ -388,9 +388,10 @@ function configureChildAsLeaf(yogaChild: YogaNode, child: SceneNode, parent: Sce
 function configureTextLeaf(
   yogaChild: YogaNode,
   child: SceneNode,
-  _parent: SceneNode
+  parent: SceneNode
 ): void {
   const autoResize = child.textAutoResize
+  const isRow = parent.layoutMode === 'HORIZONTAL'
 
   if (child.layoutGrow > 0) {
     yogaChild.setFlexGrow(child.layoutGrow)
