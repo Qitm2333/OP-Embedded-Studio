@@ -1,5 +1,6 @@
 import { shallowReactive, shallowRef, computed, watch } from 'vue'
 
+import { toast } from '@/composables/use-toast'
 import {
   IS_TAURI,
   DEFAULT_SHAPE_FILL,
@@ -19,13 +20,13 @@ import {
   computeVectorBounds,
   exportFigFile,
   importClipboardNodes,
-  figmaNodesBounds,
   parseFigmaClipboard,
   parseOpenPencilClipboard,
   buildFigmaClipboardHTML,
   buildOpenPencilClipboardHTML,
   prefetchFigmaSchema,
   readFigFile,
+  computeImageHash,
   renderNodesToImage,
   renderNodesToSVG,
   SceneGraph,
@@ -182,6 +183,8 @@ export function createEditorStore() {
     } | null,
     penCursorX: null as number | null,
     penCursorY: null as number | null,
+    cursorCanvasX: null as number | null,
+    cursorCanvasY: null as number | null,
     remoteCursors: [] as Array<{
       name: string
       color: Color
@@ -1702,6 +1705,107 @@ export function createEditorStore() {
     return id
   }
 
+  const IMAGE_MAX_DIMENSION = 4096
+  const IMAGE_GAP = 20
+
+  async function placeImageFiles(files: File[], cx: number, cy: number) {
+    if (!_ck) return
+
+    const prepared: Array<{ bytes: Uint8Array; name: string; w: number; h: number }> = []
+    for (const file of files) {
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      const dims = decodeImageDimensions(bytes)
+      if (dims) prepared.push({ bytes, name: file.name, ...dims })
+    }
+    if (!prepared.length) return
+
+    let totalW = 0
+    for (const p of prepared) totalW += p.w
+    totalW += IMAGE_GAP * (prepared.length - 1)
+    const maxH = Math.max(...prepared.map((p) => p.h))
+
+    let curX = cx - totalW / 2
+    const topY = cy - maxH / 2
+    const ids: string[] = []
+    for (const p of prepared) {
+      const id = await placeImageNode(p.bytes, curX, topY, p.w, p.h, p.name)
+      if (id) ids.push(id)
+      curX += p.w + IMAGE_GAP
+    }
+    if (ids.length) {
+      select(ids)
+      requestRender()
+    }
+  }
+
+  function decodeImageDimensions(bytes: Uint8Array): { w: number; h: number } | null {
+    if (!_ck) return null
+    const skImg = _ck.MakeImageFromEncoded(bytes)
+    if (!skImg) return null
+    let w = skImg.width()
+    let h = skImg.height()
+    skImg.delete()
+    if (w > IMAGE_MAX_DIMENSION || h > IMAGE_MAX_DIMENSION) {
+      const ratio = Math.min(IMAGE_MAX_DIMENSION / w, IMAGE_MAX_DIMENSION / h)
+      w = Math.round(w * ratio)
+      h = Math.round(h * ratio)
+    }
+    return { w, h }
+  }
+
+  function storeImage(bytes: Uint8Array): string {
+    const hash = computeImageHash(bytes)
+    graph.images.set(hash, bytes)
+    return hash
+  }
+
+  async function placeImageNode(
+    bytes: Uint8Array,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    name = 'Image'
+  ): Promise<string | null> {
+    const hash = storeImage(bytes)
+
+    const displayName = name.replace(/\.[^.]+$/, '')
+    const pid = state.currentPageId
+    const fill: Fill = {
+      type: 'IMAGE',
+      imageHash: hash,
+      imageScaleMode: 'FILL',
+      color: { r: 0, g: 0, b: 0, a: 0 },
+      opacity: 1,
+      visible: true
+    }
+    const node = graph.createNode('RECTANGLE', pid, {
+      name: displayName,
+      x,
+      y,
+      width: w,
+      height: h,
+      fills: [fill]
+    })
+    const id = node.id
+    const snapshot = { ...node }
+    undo.push({
+      label: 'Place image',
+      forward: () => {
+        graph.images.set(hash, bytes)
+        graph.createNode(snapshot.type, pid, snapshot)
+      },
+      inverse: () => {
+        graph.deleteNode(id)
+        graph.images.delete(hash)
+        const next = new Set(state.selectedIds)
+        next.delete(id)
+        state.selectedIds = next
+      }
+    })
+    return id
+  }
+
   function adoptNodesIntoSection(sectionId: string) {
     const section = graph.getNode(sectionId)
     if (section?.type !== 'SECTION') return
@@ -1823,6 +1927,28 @@ export function createEditorStore() {
     clipboardData.setData('text/plain', names)
   }
 
+  function centerNodesAt(nodeIds: string[], cx: number, cy: number) {
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+    for (const id of nodeIds) {
+      const n = graph.getNode(id)
+      if (!n) continue
+      minX = Math.min(minX, n.x)
+      minY = Math.min(minY, n.y)
+      maxX = Math.max(maxX, n.x + n.width)
+      maxY = Math.max(maxY, n.y + n.height)
+    }
+    if (minX === Infinity) return
+    const dx = cx - (minX + maxX) / 2
+    const dy = cy - (minY + maxY) / 2
+    for (const id of nodeIds) {
+      const n = graph.getNode(id)
+      if (n) graph.updateNode(id, { x: n.x + dx, y: n.y + dy })
+    }
+  }
+
   function collectSubtrees(g: SceneGraph, rootIds: string[]): SceneNode[] {
     const result: SceneNode[] = []
     function walk(id: string) {
@@ -1844,31 +1970,29 @@ export function createEditorStore() {
     requestRender()
   }
 
-  function pasteFromHTML(html: string) {
-    const ownNodes = parseOpenPencilClipboard(html)
-    if (ownNodes) {
-      pasteOpenPencilNodes(ownNodes)
+  function pasteFromHTML(html: string, cursorPos?: Vector) {
+    const own = parseOpenPencilClipboard(html)
+    if (own) {
+      for (const [hash, data] of own.images) graph.images.set(hash, data)
+      pasteOpenPencilNodes(own.nodes, undefined, cursorPos)
       return
     }
 
     void parseFigmaClipboard(html).then((figma) => {
       if (figma) {
-        const bounds = figmaNodesBounds(figma.nodes)
-        const viewCenterX = (-state.panX + window.innerWidth / 2) / state.zoom
-        const viewCenterY = (-state.panY + window.innerHeight / 2) / state.zoom
-        const offsetX = bounds ? viewCenterX - (bounds.x + bounds.w / 2) : 0
-        const offsetY = bounds ? viewCenterY - (bounds.y + bounds.h / 2) : 0
-
         const prevSelection = new Set(state.selectedIds)
         const created = importClipboardNodes(
           figma.nodes,
           graph,
           state.currentPageId,
-          offsetX,
-          offsetY,
+          0,
+          0,
           figma.blobs
         )
         if (created.length > 0) {
+          const cx = cursorPos?.x ?? (-state.panX + window.innerWidth / 2) / state.zoom
+          const cy = cursorPos?.y ?? (-state.panY + window.innerHeight / 2) / state.zoom
+          centerNodesAt(created, cx, cy)
           computeAllLayouts(graph, state.currentPageId)
           state.selectedIds = new Set(created)
 
@@ -1893,26 +2017,58 @@ export function createEditorStore() {
             }
           })
           void loadFontsForNodes(created)
+          warnMissingImages(created)
         }
       }
     })
   }
 
+  function warnMissingImages(nodeIds: string[]) {
+    const allNodes = collectSubtrees(graph, nodeIds)
+    const hasMissing = allNodes.some((n) =>
+      n.fills.some((f) => f.type === 'IMAGE' && f.imageHash && !graph.images.has(f.imageHash))
+    )
+    if (hasMissing) {
+      toast.show(
+        "Some images couldn't be pasted — Figma doesn't include image data in clipboard",
+        'warning'
+      )
+    }
+  }
+
   function pasteOpenPencilNodes(
     nodes: Array<SceneNode & { children?: SceneNode[] }>,
-    parentId?: string
+    parentId?: string,
+    cursorPos?: Vector
   ) {
     const target = parentId ?? state.currentPageId
     const prevSelection = new Set(state.selectedIds)
     const newIds: string[] = []
     const created: Array<{ id: string; parentId: string; snapshot: SceneNode }> = []
 
+    let offsetX = 20
+    let offsetY = 20
+    if (cursorPos && nodes.length > 0) {
+      let minX = Infinity
+      let minY = Infinity
+      let maxX = -Infinity
+      let maxY = -Infinity
+      for (const n of nodes) {
+        minX = Math.min(minX, n.x)
+        minY = Math.min(minY, n.y)
+        maxX = Math.max(maxX, n.x + n.width)
+        maxY = Math.max(maxY, n.y + n.height)
+      }
+      offsetX = cursorPos.x - (minX + maxX) / 2
+      offsetY = cursorPos.y - (minY + maxY) / 2
+    }
+
     function createTree(src: SceneNode & { children?: SceneNode[] }, pid: string, isTop: boolean) {
       const { id: _srcId, parentId: _srcParent, childIds: _srcChildren, ...rest } = src
       const node = graph.createNode(src.type, pid, {
         ...rest,
-        x: src.x + (isTop ? 20 : 0),
-        y: src.y + (isTop ? 20 : 0)
+        x: src.x + (isTop ? offsetX : 0),
+        y: src.y + (isTop ? offsetY : 0)
       })
       created.push({ id: node.id, parentId: pid, snapshot: { ...node } })
       if (isTop) newIds.push(node.id)
@@ -2297,6 +2453,8 @@ export function createEditorStore() {
     moveToPage,
     renameNode,
     createShape,
+    storeImage,
+    placeImageFiles,
     adoptNodesIntoSection,
     duplicateSelected,
     writeCopyData,

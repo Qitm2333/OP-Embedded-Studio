@@ -1,6 +1,7 @@
 import { useBreakpoints, useEventListener, useMagicKeys, whenever } from '@vueuse/core'
 import { computed } from 'vue'
 
+import { extractImageFilesFromClipboard } from '@/composables/use-canvas-drop'
 import { useAIChat } from '@/composables/use-chat'
 import { TOOL_SHORTCUTS, useEditorStore } from '@/stores/editor'
 import { closeTab, createTab, activeTab as activeTabRef } from '@/stores/tabs'
@@ -73,8 +74,20 @@ export function useKeyboard() {
   useEventListener(window, 'paste', (e: ClipboardEvent) => {
     if (isEditing(e)) return
     e.preventDefault()
+
+    const { cursorCanvasX: ccx, cursorCanvasY: ccy } = store.state
+    const cursorPos = ccx != null && ccy != null ? { x: ccx, y: ccy } : undefined
+
+    const imageFiles = extractImageFilesFromClipboard(e)
+    if (imageFiles.length) {
+      const cx = cursorPos?.x ?? (-store.state.panX + window.innerWidth / 2) / store.state.zoom
+      const cy = cursorPos?.y ?? (-store.state.panY + window.innerHeight / 2) / store.state.zoom
+      void store.placeImageFiles(imageFiles, cx, cy)
+      return
+    }
+
     const html = e.clipboardData?.getData('text/html') ?? ''
-    if (html) store.pasteFromHTML(html)
+    if (html) store.pasteFromHTML(html, cursorPos)
   })
 
   const keys = useMagicKeys({
