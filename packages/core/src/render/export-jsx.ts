@@ -347,11 +347,11 @@ function collectTextSizingProps(node: SceneNode, graph: SceneGraph, props: [stri
   // gets emitted first and blocks the fill detection.
   const isFillWidth = node.layoutAlignSelf === 'STRETCH' && (() => {
     const parent = node.parentId ? graph.getNode(node.parentId) : null
-    return parent && parent.layoutMode === 'VERTICAL'
+    return parent?.layoutMode === 'VERTICAL'
   })()
   const isGrowWidth = node.layoutGrow > 0 && (() => {
     const parent = node.parentId ? graph.getNode(node.parentId) : null
-    return parent && parent.layoutMode === 'HORIZONTAL'
+    return parent?.layoutMode === 'HORIZONTAL'
   })()
   const emitW = autoResize !== 'WIDTH_AND_HEIGHT' && !isFillWidth && !isGrowWidth
   if (emitW && node.width > 0) props.push(['w', node.width])

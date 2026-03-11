@@ -224,7 +224,7 @@ const ARG_TO_NODE_PROP: Record<string, string> = {
 }
 
 /** Args that are parameters to the tool, not node properties to track */
-const SKIP_ARGS: Record<string, Set<string>> = {
+const SKIP_ARGS: Partial<Record<string, Set<string>>> = {
   set_effects: new Set(['type', 'color', 'offset_x', 'offset_y', 'radius', 'spread']),
   set_fill: new Set(['type', 'color']),
   set_stroke: new Set(['type', 'color']),

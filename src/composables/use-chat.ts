@@ -195,8 +195,8 @@ function createTransport() {
       recordStepUsage({
         inputTokens: usage.inputTokens ?? 0,
         outputTokens: usage.outputTokens ?? 0,
-        cacheReadTokens: usage.inputTokenDetails?.cacheReadTokens ?? 0,
-        cacheWriteTokens: usage.inputTokenDetails?.cacheWriteTokens ?? 0,
+        cacheReadTokens: usage.inputTokenDetails.cacheReadTokens ?? 0,
+        cacheWriteTokens: usage.inputTokenDetails.cacheWriteTokens ?? 0,
         timestamp: Date.now()
       })
     }

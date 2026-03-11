@@ -32,7 +32,7 @@ const GLYPH_WIDTH_FACTOR = 0.6
 // this when available — this is only the fallback.
 function estimateTextSize(node: SceneNode): { width: number; height: number } {
   const fontSize = node.fontSize || 14
-  const text = node.characters || node.text || ''
+  const text = node.text || ''
   const charWidth = fontSize * GLYPH_WIDTH_FACTOR
   return {
     width: Math.ceil(text.length * charWidth),

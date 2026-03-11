@@ -103,9 +103,9 @@ function formatDiagnostics(log: ToolDebugLog): string {
     sections.push('⚠ NO-OP MUTATIONS (tool succeeded but node unchanged):')
     for (const entry of log.noopMutations) {
       sections.push(`  ${entry.tool} on ${String(entry.args.id)}`)
-      sections.push(`    unchanged: ${entry.unchangedProps!.join(', ')}`)
-      if (entry.nodeBefore) {
-        for (const prop of entry.unchangedProps!) {
+      sections.push(`    unchanged: ${entry.unchangedProps?.join(', ')}`)
+      if (entry.nodeBefore && entry.unchangedProps) {
+        for (const prop of entry.unchangedProps) {
           sections.push(`    ${prop} = ${JSON.stringify(entry.nodeBefore[prop])}`)
         }
       }
@@ -141,7 +141,7 @@ function formatMessageStats(messages: UIMessage[]): string {
     for (const part of msg.parts) {
       const p = part as Record<string, unknown>
       if (p.type === 'text') {
-        totalTextLength += String(p.text ?? '').length
+        totalTextLength += typeof p.text === 'string' ? p.text.length : 0
       } else if (
         p.type === 'tool-invocation' ||
         p.type === 'dynamic-tool' ||

@@ -21,11 +21,11 @@ function toCamelCase(name: string): string {
 }
 
 function isColor(value: VariableValue): value is Color {
-  return typeof value === 'object' && value !== null && 'r' in value && 'g' in value && 'b' in value
+  return typeof value === 'object' && 'r' in value && 'g' in value && 'b' in value
 }
 
 function isAlias(value: VariableValue): value is { aliasId: string } {
-  return typeof value === 'object' && value !== null && 'aliasId' in value
+  return typeof value === 'object' && 'aliasId' in value
 }
 
 function resolveValue(
@@ -57,7 +57,7 @@ interface TokenEntry {
   name: string
   cssVar: string
   type: string
-  values: Record<string, string>
+  values: Partial<Record<string, string>>
 }
 
 function buildTokens(
@@ -102,11 +102,11 @@ function renderCSS(
 ): string {
   if (tokens.length === 0) return '/* No design tokens found */\n'
 
-  const defaultModeId = modes[0]?.id
+  const defaultModeId = modes[0]?.id ?? ''
   const lines: string[] = [':root {']
 
   for (const t of tokens) {
-    const val = t.values[defaultModeId ?? ''] ?? Object.values(t.values)[0] ?? ''
+    const val = t.values[defaultModeId] ?? Object.values(t.values)[0] ?? ''
     lines.push(`  ${t.cssVar}: ${val};`)
   }
   lines.push('}')
@@ -130,14 +130,14 @@ function renderTailwindTheme(
   tokens: TokenEntry[],
   modes: { id: string; name: string }[]
 ): string {
-  const defaultModeId = modes[0]?.id
+  const defaultModeId = modes[0]?.id ?? ''
   const colors: Record<string, string> = {}
   const spacing: Record<string, string> = {}
   const other: Record<string, string> = {}
 
   for (const t of tokens) {
     const key = toCamelCase(t.name)
-    const val = t.values[defaultModeId ?? ''] ?? Object.values(t.values)[0] ?? ''
+    const val = t.values[defaultModeId] ?? Object.values(t.values)[0] ?? ''
     if (t.type === 'COLOR') colors[key] = val
     else if (t.type === 'FLOAT') spacing[key] = `${val}px`
     else other[key] = val

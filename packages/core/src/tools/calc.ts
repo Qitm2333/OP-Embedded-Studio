@@ -5,16 +5,16 @@ import { defineTool } from './schema'
  * Supports: + - * / % ** ( ) and Math.min/max/floor/ceil/round/abs/sqrt/pow
  */
 
-const MATH_FUNCTIONS: Record<string, (...args: number[]) => number> = {
-  'Math.min': (...args) => Math.min(...args),
-  'Math.max': (...args) => Math.max(...args),
-  'Math.floor': (n) => Math.floor(n),
-  'Math.ceil': (n) => Math.ceil(n),
-  'Math.round': (n) => Math.round(n),
-  'Math.abs': (n) => Math.abs(n),
-  'Math.sqrt': (n) => Math.sqrt(n),
-  'Math.pow': (base, exp) => Math.pow(base, exp),
-}
+const MATH_FUNCTIONS = new Map<string, (...args: number[]) => number>([
+  ['Math.min', (...args) => Math.min(...args)],
+  ['Math.max', (...args) => Math.max(...args)],
+  ['Math.floor', (n) => Math.floor(n)],
+  ['Math.ceil', (n) => Math.ceil(n)],
+  ['Math.round', (n) => Math.round(n)],
+  ['Math.abs', (n) => Math.abs(n)],
+  ['Math.sqrt', (n) => Math.sqrt(n)],
+  ['Math.pow', (base, exp) => Math.pow(base, exp)],
+])
 
 class Parser {
   private pos = 0
@@ -104,7 +104,7 @@ class Parser {
       this.pos++
     }
     const name = this.input.slice(start, this.pos)
-    const fn = MATH_FUNCTIONS[name]
+    const fn = MATH_FUNCTIONS.get(name)
     if (!fn) throw new Error(`Unknown function: ${name}`)
 
     this.skipWhitespace()
@@ -186,7 +186,7 @@ export const calc = defineTool({
       }
       return { expr, result }
     } catch (e) {
-      return { error: `${e instanceof Error ? e.message : String(e)}` }
+      return { error: e instanceof Error ? e.message : String(e) }
     }
   }
 })
