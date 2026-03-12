@@ -103,11 +103,7 @@ function handleClearChat() {
             <ChatMessage v-for="msg in messages" :key="msg.id" :message="msg" />
 
             <!-- Thinking indicator: shown when AI is working but no visible activity -->
-            <div
-              v-if="isThinking"
-              data-test-id="chat-typing-indicator"
-              class="flex gap-2"
-            >
+            <div v-if="isThinking" data-test-id="chat-typing-indicator" class="flex gap-2">
               <div
                 class="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted/20 text-[10px] font-bold text-muted"
               >

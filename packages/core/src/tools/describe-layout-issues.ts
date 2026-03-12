@@ -29,6 +29,14 @@ interface LayoutContext {
   issues: DescribeIssue[]
 }
 
+function isEffectivelyFilling(node: SceneNode, isRow: boolean, graph: SceneGraph): boolean {
+  const parent = node.parentId ? graph.getNode(node.parentId) : undefined
+  if (!parent) return false
+  const parentDim = isRow ? parent.width : parent.height
+  const nodeDim = isRow ? node.width : node.height
+  return parentDim > 0 && Math.abs(nodeDim - parentDim) < 2
+}
+
 function checkAlignmentIssues(ctx: LayoutContext): void {
   const { node, isRow, children, issues } = ctx
 
@@ -39,7 +47,8 @@ function checkAlignmentIssues(ctx: LayoutContext): void {
     })
   }
 
-  if (node.primaryAxisAlign === 'SPACE_BETWEEN' && node.primaryAxisSizing === 'HUG') {
+  if (node.primaryAxisAlign === 'SPACE_BETWEEN' && node.primaryAxisSizing === 'HUG'
+    && !isEffectivelyFilling(node, isRow, ctx.graph)) {
     issues.push({
       message: `justify="between" on "${node.name}" with HUG sizing — no effect when parent shrinks to fit`,
       suggestion: 'Set a fixed size or use w="fill"'
@@ -93,7 +102,7 @@ function checkDividerOrientation(ctx: LayoutContext): void {
 }
 
 function checkGrowInHug(ctx: LayoutContext): void {
-  const { node, isRow, children, issues } = ctx
+  const { node, children, issues } = ctx
   if (node.primaryAxisSizing !== 'HUG') return
   for (const child of children) {
     if (child.layoutGrow > 0) {
@@ -108,6 +117,8 @@ function checkGrowInHug(ctx: LayoutContext): void {
 function checkGrowSizeConflict(ctx: LayoutContext): void {
   for (const child of ctx.children) {
     if (child.layoutGrow > 0 && child.layoutMode === 'NONE') {
+      const mainSizing = ctx.isRow ? child.primaryAxisSizing : child.counterAxisSizing
+      if (mainSizing === 'FILL') continue
       const fixedDim = ctx.isRow ? child.width : child.height
       if (fixedDim > 0 && fixedDim !== 100) {
         ctx.issues.push({
@@ -271,23 +282,13 @@ function checkFillWithoutFlex(ctx: LayoutContext): void {
   }
 }
 
-function checkAbsoluteInFlex(ctx: LayoutContext): void {
-  const { node, graph, issues } = ctx
-  if (node.layoutMode === 'NONE') return
-  for (const childId of node.childIds) {
-    const child = graph.getNode(childId)
-    if (!child?.visible || child.layoutPositioning !== 'ABSOLUTE') continue
-    if (child.type === 'TEXT' || CONTAINER_TYPES.has(child.type)) {
-      issues.push({
-        message: `"${child.name}" is absolutely positioned inside flex "${node.name}" — excluded from layout flow`,
-        suggestion: 'Remove x/y to return to flex flow, or wrap in a separate absolute container'
-      })
-    }
-  }
+function checkAbsoluteInFlex(_ctx: LayoutContext): void {
+  // Absolute children in flex are intentional (selection handles, decorative overlays).
+  // Not reported — describe summary already shows "positioned: ABSOLUTE".
 }
 
 function checkNestedFlexWithoutFill(ctx: LayoutContext): void {
-  const { node, isRow, graph, children, issues } = ctx
+  const { node, isRow, children, issues } = ctx
   if (node.layoutMode === 'NONE') return
   for (const child of children) {
     if (child.layoutMode === 'NONE') continue

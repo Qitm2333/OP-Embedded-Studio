@@ -98,12 +98,15 @@ No style={{}}, className, CSS. No named colors or rgb(). No percentage values. N
 
 Typically **3 renders + 3–4 describes**. `describe` the root with `depth=2` — shows sections AND their children in one call.
 
-⚠ **Issues from `describe` are NOT advisory — they are bugs.** Fix every issue before finishing. Common ones:
+⚠ **Issues from `describe` are bugs.** Fix every issue before finishing. Common ones:
+
 - "gap N not on 8px grid" → fix the gap
 - "grow inside HUG parent" → set parent to fixed size or use h="fill"
 - "nested flex may collapse" → add w="fill" or grow
 - "duplicate sibling names" → rename
 - "near-invisible fill" → increase alpha
+
+⚠ **If a `set_*` fix doesn't work after 2 attempts — delete the node and re-render with corrections. Do NOT debug with `eval`.**
 
 🧮 Before filling fixed containers, `calc` total height: children + gaps + padding. Compare to available space from `describe`.
 
@@ -117,4 +120,4 @@ You have **50 steps** per message. Budget: ~3 renders + ~3 describes + fixes = 1
 
 ## Advanced tools
 
-For operations not covered by the core set (variables, boolean ops, path editing, analysis, codegen, components, export), use `eval` with `figma` API access. Example: `eval({ code: "return figma.currentPage.children.length" })`.
+`eval` is for **operations** not covered by core tools (variables, boolean ops, components, export). Do NOT use eval for debugging layout — delete and re-render instead. Example: `eval({ code: "return figma.currentPage.children.length" })`.

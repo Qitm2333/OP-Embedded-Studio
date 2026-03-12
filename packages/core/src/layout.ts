@@ -316,12 +316,14 @@ function configureChildAsAutoLayout(
   const widthSizing = isChildRow ? child.primaryAxisSizing : child.counterAxisSizing
   const heightSizing = isChildRow ? child.counterAxisSizing : child.primaryAxisSizing
 
+  // Main axis: width for row parent, height for col parent — use grow for FILL
+  // Cross axis: height for row parent, width for col parent — use stretch for FILL
   if (isParentRow) {
-    setSizing(yogaChild, 'width', widthSizing, child.width, child.layoutGrow)
-    setSizing(yogaChild, 'height', heightSizing, child.height, 0)
+    setMainAxisSizing(yogaChild, 'width', widthSizing, child.width, child.layoutGrow)
+    setCrossAxisSizing(yogaChild, 'height', heightSizing, child.height)
   } else {
-    setSizing(yogaChild, 'width', widthSizing, child.width, 0)
-    setSizing(yogaChild, 'height', heightSizing, child.height, child.layoutGrow)
+    setCrossAxisSizing(yogaChild, 'width', widthSizing, child.width)
+    setMainAxisSizing(yogaChild, 'height', heightSizing, child.height, child.layoutGrow)
   }
 
   const selfAlign = mapAlignSelf(child.layoutAlignSelf)
@@ -465,7 +467,7 @@ function configureNonTextLeaf(
   }
 }
 
-function setSizing(
+function setMainAxisSizing(
   yogaNode: YogaNode,
   axis: 'width' | 'height',
   sizing: string,
@@ -490,6 +492,25 @@ function setSizing(
       yogaNode.setFlexGrow(1)
       yogaNode.setFlexShrink(1)
       yogaNode.setFlexBasis(0)
+      break
+  }
+}
+
+function setCrossAxisSizing(
+  yogaNode: YogaNode,
+  axis: 'width' | 'height',
+  sizing: string,
+  fixedValue: number
+): void {
+  switch (sizing) {
+    case 'FIXED':
+      if (axis === 'width') yogaNode.setWidth(fixedValue)
+      else yogaNode.setHeight(fixedValue)
+      break
+    case 'HUG':
+      break
+    case 'FILL':
+      yogaNode.setAlignSelf(Align.Stretch)
       break
   }
 }

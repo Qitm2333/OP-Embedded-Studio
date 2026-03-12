@@ -274,7 +274,7 @@ function detectSpacingIssues(node: SceneNode, graph: SceneGraph, gridSize: numbe
   }
 
   const flexChildren = children.filter((c) => c.layoutMode !== 'NONE')
-  if (flexChildren.length >= 2) {
+  if (flexChildren.length >= 3) {
     const paddings = flexChildren.map((c) => c.paddingTop + c.paddingRight + c.paddingBottom + c.paddingLeft)
     const gaps = flexChildren.map((c) => c.itemSpacing)
     if (new Set(paddings).size > 2) {

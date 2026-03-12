@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 
-import { SceneGraph, type SceneNode, type GridTrack, computeLayout, computeAllLayouts, setTextMeasurer } from '@open-pencil/core'
+import { SceneGraph, type SceneNode, type GridTrack, computeLayout, computeAllLayouts, setTextMeasurer, FigmaAPI } from '@open-pencil/core'
 
 function pageId(graph: SceneGraph) {
   return graph.getPages()[0].id
@@ -1927,6 +1927,56 @@ describe('Grid Layout', () => {
       const children = graph.getChildren(frame.id)
       expect(children[0].width).toBe(200)
       expect(children[0].height).toBe(200)
+    })
+  })
+
+  describe('layoutSizingVertical with cross-axis children', () => {
+    test('HORIZONTAL children in VERTICAL parent respect FIXED height after layout', () => {
+      const graph = new SceneGraph()
+      const api = new FigmaAPI(graph)
+
+      const root = api.createFrame()
+      root.layoutMode = 'VERTICAL'
+      root.resize(375, 812)
+      api.currentPage.appendChild(root)
+
+      const statusBar = api.createFrame()
+      statusBar.layoutMode = 'HORIZONTAL'
+      root.appendChild(statusBar)
+      statusBar.layoutSizingHorizontal = 'FILL'
+      statusBar.layoutSizingVertical = 'FIXED'
+      statusBar.resize(375, 44)
+
+      const toolbar = api.createFrame()
+      toolbar.layoutMode = 'HORIZONTAL'
+      root.appendChild(toolbar)
+      toolbar.layoutSizingHorizontal = 'FILL'
+      toolbar.layoutSizingVertical = 'FIXED'
+      toolbar.resize(375, 52)
+
+      const canvas = api.createFrame()
+      root.appendChild(canvas)
+      canvas.layoutSizingHorizontal = 'FILL'
+      canvas.layoutSizingVertical = 'FILL'
+
+      const panel = api.createFrame()
+      panel.layoutMode = 'VERTICAL'
+      root.appendChild(panel)
+      panel.layoutSizingHorizontal = 'FILL'
+      panel.layoutSizingVertical = 'FIXED'
+      panel.resize(375, 220)
+
+      computeAllLayouts(graph)
+
+      const sb = graph.getNode(statusBar.id)!
+      const tb = graph.getNode(toolbar.id)!
+      const cv = graph.getNode(canvas.id)!
+      const pn = graph.getNode(panel.id)!
+
+      expect(sb.height).toBe(44)
+      expect(tb.height).toBe(52)
+      expect(pn.height).toBe(220)
+      expect(cv.height).toBe(812 - 44 - 52 - 220)
     })
   })
 })
