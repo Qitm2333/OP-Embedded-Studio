@@ -354,7 +354,14 @@ export function parseOpenPencilClipboard(
   if (!match) return null
 
   try {
-    const decoded = JSON.parse(new TextDecoder().decode(Uint8Array.fromBase64(match[1])))
+    const raw = Uint8Array.fromBase64(match[1])
+    let bytes: Uint8Array
+    try {
+      bytes = inflateSync(raw)
+    } catch {
+      bytes = raw
+    }
+    const decoded = JSON.parse(new TextDecoder().decode(bytes))
     if (decoded.format === 'openpencil/v1' && Array.isArray(decoded.nodes)) {
       restoreTextPictures(decoded.nodes)
       const images = new Map<string, Uint8Array>()
@@ -417,7 +424,8 @@ export function buildOpenPencilClipboardHTML(
     nodes: nodeTree,
     images
   }
-  return `<!--(openpencil)${new TextEncoder().encode(JSON.stringify(data)).toBase64()}(/openpencil)-->`
+  const compressed = deflateSync(new TextEncoder().encode(JSON.stringify(data)))
+  return `<!--(openpencil)${compressed.toBase64()}(/openpencil)-->`
 }
 
 function collectNodeTree(

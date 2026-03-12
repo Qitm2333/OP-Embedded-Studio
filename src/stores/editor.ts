@@ -1929,7 +1929,7 @@ export function createEditorStore() {
     const internalHtml = buildOpenPencilClipboardHTML(nodes, graph, textPicBuilder)
     const figmaHtml = buildFigmaClipboardHTML(nodes, graph)
 
-    const html = figmaHtml ? figmaHtml + internalHtml : internalHtml
+    const html = figmaHtml ? internalHtml + figmaHtml : internalHtml
     clipboardData.setData('text/html', html)
     clipboardData.setData('text/plain', names)
   }
