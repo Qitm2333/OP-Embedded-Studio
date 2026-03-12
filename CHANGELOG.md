@@ -9,7 +9,7 @@
 - Add instance index (`componentId → Set<nodeId>`) — `getInstances()` is O(1) instead of scanning all nodes
 - Defer graph event subscription until after layout computation during file open — eliminates redundant `syncInstances` calls
 - Cache label collection (sections/components) per scene mutation instead of walking the full tree every frame
-- Non-blocking font loading — files render immediately, fonts load in background
+- Blocking font loading — fonts load before first render to ensure correct glyphs
 
 ### Features
 
@@ -20,6 +20,8 @@
 
 ### Fixes
 
+- Fix text rendering with wrong fonts on file open — all font weights (including default family) are now loaded before the first render
+- Fix `weightToStyle` mapping: weight 400 now correctly maps to "Regular" instead of "Medium"
 - Fix detached ArrayBuffer crash when switching pages after saving — export worker now copies image buffers before transferring
 - Show warning toast when fonts fail to load, error toast when file open fails
 - Fix FillPicker crash when selecting image fills (missing `ref` import from #92)
