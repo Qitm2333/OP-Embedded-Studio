@@ -328,6 +328,7 @@ function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
   }
   if (node.layoutPositioning === 'ABSOLUTE') nc.stackPositioning = 'ABSOLUTE'
   if (node.layoutGrow > 0) nc.stackChildPrimaryGrow = node.layoutGrow
+  if (node.layoutAlignSelf !== 'AUTO') nc.stackChildAlignSelf = node.layoutAlignSelf
 }
 
 function serializeGeometry(node: SceneNode, nc: KiwiNodeChange, blobs: Uint8Array[]): void {
@@ -448,9 +449,23 @@ export function sceneNodeToKiwi(
 
   if (node.type === 'TEXT') serializeTextProps(node, nc, fontDigestMap)
 
-  if (node.type === 'FRAME' || node.type === 'GROUP') {
-    nc.frameMaskDisabled = node.type === 'GROUP'
-    if (node.clipsContent) nc.clipsContent = true
+  nc.frameMaskDisabled = !node.clipsContent
+  if (node.clipsContent) nc.clipsContent = true
+
+  if (node.horizontalConstraint !== 'MIN') nc.horizontalConstraint = node.horizontalConstraint
+  if (node.verticalConstraint !== 'MIN') nc.verticalConstraint = node.verticalConstraint
+
+  if (node.strokeCap !== 'NONE') nc.strokeCap = node.strokeCap
+  if (node.strokeJoin !== 'MITER') nc.strokeJoin = node.strokeJoin
+  if (node.strokeMiterLimit !== 28.96) nc.miterLimit = node.strokeMiterLimit
+  if (node.dashPattern.length > 0) nc.dashPattern = node.dashPattern
+
+  if (node.arcData) {
+    nc.arcData = {
+      startingAngle: node.arcData.startingAngle,
+      endingAngle: node.arcData.endingAngle,
+      innerRadius: node.arcData.innerRadius
+    }
   }
 
   serializeLayoutProps(node, nc)
