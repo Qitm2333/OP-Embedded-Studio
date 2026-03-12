@@ -175,6 +175,7 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
   }
 
   const { pause } = useRafFn(() => {
+    if (store.state.loading) return
     const versionChanged = store.state.renderVersion !== lastRenderVersion
     const selectionChanged = store.state.selectedIds !== lastSelectedIds
     if (dirty || versionChanged || selectionChanged) {

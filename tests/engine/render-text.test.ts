@@ -4,7 +4,7 @@ import type { SceneNode } from '../../packages/core/src/scene-graph'
 import type { SkiaRenderer } from '../../packages/core/src/renderer/renderer'
 import { initCanvasKit } from '../../packages/cli/src/headless'
 import { SceneGraph, SkiaRenderer as SkiaRendererClass } from '@open-pencil/core'
-import { initFontService, setCJKFallbackFamily } from '../../packages/core/src/fonts'
+import { initFontService, setCJKFallbackFamily, markFontLoaded } from '../../packages/core/src/fonts'
 
 function createMockCanvas() {
   return {
@@ -60,15 +60,14 @@ describe('renderText', () => {
     expect(r._paragraph.delete).toHaveBeenCalledTimes(1)
   })
 
-  test('uses buildParagraph when fonts loaded but node font NOT available', () => {
+  test('falls back to drawText when fonts loaded but node font NOT available', () => {
     const r = createMockRenderer({ isNodeFontLoaded: mock(() => false) })
     const canvas = createMockCanvas()
 
     renderText(r, canvas as never, textNode())
 
-    expect(r.buildParagraph).toHaveBeenCalledTimes(1)
-    expect(canvas.drawParagraph).toHaveBeenCalledTimes(1)
-    expect(canvas.drawText).not.toHaveBeenCalled()
+    expect(r.buildParagraph).not.toHaveBeenCalled()
+    expect(canvas.drawText).toHaveBeenCalledTimes(1)
   })
 
   test('prefers textPicture when node font is NOT available and textPicture exists', () => {
@@ -83,25 +82,25 @@ describe('renderText', () => {
     expect(canvas.drawText).not.toHaveBeenCalled()
   })
 
-  test('uses buildParagraph even with textPicture when node font IS loaded', () => {
+  test('prefers textPicture even when node font IS loaded', () => {
     const r = createMockRenderer({ isNodeFontLoaded: mock(() => true) })
     const canvas = createMockCanvas()
     const node = textNode({ textPicture: new Uint8Array([1, 2, 3]) })
 
     renderText(r, canvas as never, node)
 
-    expect(r.buildParagraph).toHaveBeenCalledTimes(1)
-    expect(canvas.drawParagraph).toHaveBeenCalledTimes(1)
-    expect(canvas.drawPicture).not.toHaveBeenCalled()
+    expect(canvas.drawPicture).toHaveBeenCalledTimes(1)
+    expect(r.buildParagraph).not.toHaveBeenCalled()
   })
 
-  test('never uses drawText when fonts are loaded (CJK safety)', () => {
+  test('uses drawText when fonts loaded but node font not available and no textPicture', () => {
     const r = createMockRenderer({ isNodeFontLoaded: mock(() => false) })
     const canvas = createMockCanvas()
 
     renderText(r, canvas as never, textNode())
 
-    expect(canvas.drawText).not.toHaveBeenCalled()
+    expect(canvas.drawText).toHaveBeenCalledTimes(1)
+    expect(r.buildParagraph).not.toHaveBeenCalled()
   })
 
   test('falls back to drawText only when fonts are NOT loaded', () => {
@@ -127,13 +126,14 @@ describe('renderText', () => {
 })
 
 describe('renderText headless visual', () => {
-  test('renders CJK text via fallback font when node font is unavailable', async () => {
+  test('renders CJK text via fallback font through paragraph shaper', async () => {
     const ck = await initCanvasKit()
     const fontProvider = ck.TypefaceFontProvider.Make()
     initFontService(ck, fontProvider)
 
     const interData = await Bun.file('public/Inter-Regular.ttf').arrayBuffer()
     fontProvider.registerFont(interData, 'Inter')
+    markFontLoaded('Inter', 'Regular', interData)
 
     const notoPath = new URL('../../tests/fixtures/fonts/NotoSansSC-Regular.ttf', import.meta.url).pathname
     const notoData = await Bun.file(notoPath).arrayBuffer()
@@ -144,7 +144,7 @@ describe('renderText headless visual', () => {
     const page = graph.getPages()[0]
     const node = graph.createNode('TEXT', page.id, {
       text: '你好世界',
-      fontFamily: 'UnavailableFont',
+      fontFamily: 'Inter',
       fontSize: 32,
       fontWeight: 400,
       width: 200,

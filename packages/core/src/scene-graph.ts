@@ -746,6 +746,12 @@ export class SceneGraph {
     return node
   }
 
+  static TEXT_PICTURE_KEYS: ReadonlySet<string> = new Set([
+    'text', 'fontSize', 'fontFamily', 'fontWeight', 'italic',
+    'textAlignHorizontal', 'textAlignVertical', 'lineHeight',
+    'letterSpacing', 'textDecoration', 'textCase', 'styleRuns', 'fills',
+  ])
+
   updateNode(id: string, changes: Partial<SceneNode>): void {
     const node = this.nodes.get(id)
     if (!node) return
@@ -760,6 +766,9 @@ export class SceneGraph {
         }
         set.add(id)
       }
+    }
+    if (node.type === 'TEXT' && node.textPicture && Object.keys(changes).some((k) => SceneGraph.TEXT_PICTURE_KEYS.has(k))) {
+      node.textPicture = null
     }
     Object.assign(node, changes)
     this.emitter.emit('node:updated', id, changes)

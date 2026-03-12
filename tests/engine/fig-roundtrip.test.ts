@@ -1000,7 +1000,7 @@ describe('text node export', () => {
 
     const families = textNc.derivedTextData.fontMetaData.map((m: any) => m.key.style)
     expect(families).toContain('Bold')
-    expect(families).toContain('Medium')
+    expect(families).toContain('Regular')
   })
 
   test('material3.fig text nodes have derivedTextData after round-trip', async () => {

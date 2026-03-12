@@ -275,9 +275,7 @@ export function collectFontKeys(graph: SceneGraph, nodeIds: string[]): Array<[st
   }
   for (const id of nodeIds) collect(id)
 
-  return [...fontKeys]
-    .map((k) => k.split('\0') as [string, string])
-    .filter(([family]) => family !== DEFAULT_FONT_FAMILY)
+  return [...fontKeys].map((k) => k.split('\0') as [string, string])
 }
 
 let cjkFallbackFamily: string | null = null
@@ -346,6 +344,7 @@ export function weightToStyle(weight: number, italic = false): string {
   if (weight <= 100) label = 'Thin'
   else if (weight <= 200) label = 'ExtraLight'
   else if (weight <= 300) label = 'Light'
+  else if (weight <= 400) label = 'Regular'
   else if (weight <= 500) label = 'Medium'
   else if (weight <= 600) label = 'SemiBold'
   else if (weight <= 700) label = 'Bold'

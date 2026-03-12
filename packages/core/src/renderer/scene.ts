@@ -536,18 +536,18 @@ export function renderText(r: SkiaRenderer, canvas: Canvas, node: SceneNode): vo
   const text = node.text
   if (!text) return
 
-  if (r.fontsLoaded && r.fontProvider) {
-    if (node.textPicture && !r.isNodeFontLoaded(node)) {
-      const pic = r.ck.MakePicture(node.textPicture)
-      if (pic) {
-        canvas.drawPicture(pic)
-        pic.delete()
-      }
-    } else {
-      const paragraph = r.buildParagraph(node, r.fillPaint.getColor(), { halfLeading: true })
-      canvas.drawParagraph(paragraph, 0, 0)
-      paragraph.delete()
+  if (node.textPicture) {
+    const pic = r.ck.MakePicture(node.textPicture)
+    if (pic) {
+      canvas.drawPicture(pic)
+      pic.delete()
+      return
     }
+  }
+  if (r.fontsLoaded && r.fontProvider && r.isNodeFontLoaded(node)) {
+    const paragraph = r.buildParagraph(node, r.fillPaint.getColor(), { halfLeading: true })
+    canvas.drawParagraph(paragraph, 0, 0)
+    paragraph.delete()
   } else if (r.textFont) {
     canvas.drawText(text, 0, node.fontSize || r.DEFAULT_FONT_SIZE, r.fillPaint, r.textFont)
   }

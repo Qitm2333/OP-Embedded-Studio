@@ -277,7 +277,7 @@ export function createEditorStore() {
     return !parentId || parentId === graph.rootId || parentId === state.currentPageId
   }
 
-  function switchPage(pageId: string) {
+  async function switchPage(pageId: string) {
     const page = graph.getNode(pageId)
     if (page?.type !== 'CANVAS') return
 
@@ -307,7 +307,7 @@ export function createEditorStore() {
       state.pageColor = { ...CANVAS_BG_COLOR }
     }
 
-    void loadFontsForNodes(graph.getChildren(pageId).map((n) => n.id))
+    await loadFontsForNodes(graph.getChildren(pageId).map((n) => n.id))
     requestRender()
   }
 
@@ -315,7 +315,7 @@ export function createEditorStore() {
     const pages = graph.getPages()
     const pageName = name ?? `Page ${pages.length + 1}`
     const page = graph.addPage(pageName)
-    switchPage(page.id)
+    void switchPage(page.id)
     return page.id
   }
 
@@ -328,7 +328,7 @@ export function createEditorStore() {
     if (state.currentPageId === pageId) {
       const newIdx = Math.min(idx, pages.length - 2)
       const remaining = graph.getPages()
-      switchPage(remaining[newIdx].id)
+      void switchPage(remaining[newIdx].id)
     }
   }
 
@@ -676,8 +676,8 @@ export function createEditorStore() {
       state.panY = 0
       state.zoom = 1
       state.pageColor = { ...CANVAS_BG_COLOR }
+      await loadFontsForNodes(graph.getChildren(pageId).map((n) => n.id))
       requestRender()
-      void loadFontsForNodes(graph.getChildren(pageId).map((n) => n.id))
       void startWatchingFile()
     } catch (e) {
       console.error('Failed to open .fig file:', e)
@@ -1535,7 +1535,7 @@ export function createEditorStore() {
       current = current.parentId ? graph.getNode(current.parentId) : undefined
     }
     if (current && current.id !== state.currentPageId) {
-      switchPage(current.id)
+      void switchPage(current.id)
     }
 
     state.selectedIds = new Set([main.id])
@@ -1975,7 +1975,6 @@ export function createEditorStore() {
       )
     }
     computeAllLayouts(graph, state.currentPageId)
-    requestRender()
   }
 
   function pasteFromHTML(html: string, cursorPos?: Vector) {

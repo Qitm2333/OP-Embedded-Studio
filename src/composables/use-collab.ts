@@ -492,7 +492,7 @@ export function useCollab(store: EditorStore) {
     }
     const cursor = peerState.cursor as { x: number; y: number; pageId: string; zoom?: number }
     if (cursor.pageId !== store.state.currentPageId) {
-      store.switchPage(cursor.pageId)
+      void store.switchPage(cursor.pageId)
     }
     const canvas = document.querySelector('canvas')
     if (!canvas) return
