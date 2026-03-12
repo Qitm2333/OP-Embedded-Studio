@@ -62,7 +62,7 @@ export const render = defineTool({
   },
   execute: async (figma, args) => {
     const { renderJSX } = await import('../render/render-jsx.js')
-    const result = renderJSX(figma.graph, args.jsx, {
+    const result = await renderJSX(figma.graph, args.jsx, {
       parentId: args.parent_id ?? figma.currentPageId,
       x: args.x,
       y: args.y
@@ -360,13 +360,13 @@ export const searchIconsTool = defineTool({
       description: 'Search keywords (e.g. ["heart", "arrow", "settings"])',
       required: true
     },
-    limit: { type: 'number', description: 'Max results per query (default: 20)' },
+    limit: { type: 'number', description: 'Max results per query (default: 5)' },
     prefix: { type: 'string', description: 'Filter by icon set prefix (e.g. "lucide", "mdi")' }
   },
   execute: async (_figma, args) => {
     try {
       const results = await searchIconsBatch(args.queries, {
-        limit: args.limit ?? 20,
+        limit: args.limit ?? 5,
         prefix: args.prefix
       })
       const output: Record<string, { icons: string[]; total: number }> = {}

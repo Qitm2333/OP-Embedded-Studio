@@ -1,8 +1,11 @@
 import { parseColor, colorToFill } from '../color'
 import { TRANSPARENT } from '../constants'
+import { fetchIcons } from '../iconify'
 import { isTreeNode } from './tree'
 
+import type { IconData } from '../iconify'
 import type { SceneGraph, SceneNode, NodeType, LayoutMode, GridTrack, Stroke } from '../scene-graph'
+import type { Color } from '../types'
 import type { TreeNode } from './tree'
 
 const TYPE_MAP: Partial<Record<string, NodeType>> = {
@@ -78,14 +81,14 @@ export interface RenderResult {
   childIds: string[]
 }
 
-export function renderTree(
+export async function renderTree(
   graph: SceneGraph,
   tree: TreeNode,
   options: RenderOptions = {}
-): RenderResult {
+): Promise<RenderResult> {
   const parentId = options.parentId ?? graph.getPages()[0].id
 
-  const result = renderNode(graph, tree, parentId)
+  const result = await renderNode(graph, tree, parentId)
 
   if (options.x !== undefined) graph.updateNode(result.id, { x: options.x })
   if (options.y !== undefined) graph.updateNode(result.id, { y: options.y })
@@ -98,7 +101,99 @@ export function renderTree(
   }
 }
 
-function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): SceneNode {
+async function renderIconNode(
+  graph: SceneGraph,
+  tree: TreeNode,
+  parentId: string
+): Promise<SceneNode> {
+  const props = tree.props
+  const iconName = props.name as string | undefined
+  if (!iconName) throw new Error('<Icon> requires a name prop (e.g. name="lucide:heart")')
+
+  const size = (props.size as number | undefined) ?? 24
+  const colorHex = (props.color as string | undefined) ?? '#000000'
+  const parsedColor = parseColor(colorHex)
+
+  const icons = await fetchIcons([iconName], size)
+  const icon = icons.get(iconName)
+  if (!icon || icon.paths.length === 0) {
+    throw new Error(`Icon "${iconName}" not found`)
+  }
+
+  return createIconNode(graph, icon, iconName, size, parsedColor, parentId, props)
+}
+
+function createIconNode(
+  graph: SceneGraph,
+  icon: IconData,
+  iconName: string,
+  size: number,
+  color: Color,
+  parentId: string,
+  props: Record<string, unknown>
+): SceneNode {
+  const parent = graph.getNode(parentId)
+  const parentLayout = parent?.layoutMode ?? 'NONE'
+  const overrides: Partial<SceneNode> = {
+    name: (props.label as string | undefined) ?? `Icon / ${iconName}`,
+    width: size,
+    height: size,
+    fills: []
+  }
+  const { w, h } = applySizeOverrides(props, overrides, parentLayout)
+  if (typeof w !== 'number') overrides.width = size
+  if (typeof h !== 'number') overrides.height = size
+  const frame = graph.createNode('FRAME', parentId, overrides)
+
+  for (const path of icon.paths) {
+    const vector = graph.createNode('VECTOR', frame.id, {
+      name: 'path',
+      width: size,
+      height: size,
+      vectorNetwork: path.vectorNetwork
+    })
+    vector.x = 0
+    vector.y = 0
+
+    if (path.fill) {
+      const fillColor = path.fill === 'currentColor' ? color : parseColor(path.fill)
+      graph.updateNode(vector.id, {
+        fills: [{ type: 'SOLID', color: fillColor, opacity: 1, visible: true }]
+      })
+    } else {
+      graph.updateNode(vector.id, { fills: [] })
+    }
+
+    if (path.stroke) {
+      const strokeColor = path.stroke === 'currentColor' ? color : parseColor(path.stroke)
+      graph.updateNode(vector.id, {
+        strokes: [{
+          color: strokeColor,
+          weight: path.strokeWidth,
+          opacity: 1,
+          visible: true,
+          align: 'CENTER' as const,
+          cap: ICON_STROKE_CAP[path.strokeCap] ?? 'NONE',
+          join: ICON_STROKE_JOIN[path.strokeJoin] ?? 'MITER'
+        }]
+      })
+    }
+  }
+
+  return frame
+}
+
+const ICON_STROKE_CAP: Record<string, SceneNode['strokeCap']> = {
+  round: 'ROUND', square: 'SQUARE', butt: 'NONE'
+}
+
+const ICON_STROKE_JOIN: Record<string, SceneNode['strokeJoin']> = {
+  miter: 'MITER', round: 'ROUND', bevel: 'BEVEL'
+}
+
+async function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): Promise<SceneNode> {
+  if (tree.type === 'icon') return renderIconNode(graph, tree, parentId)
+
   const nodeType = TYPE_MAP[tree.type]
   if (!nodeType) throw new Error(`Unknown element: <${tree.type}>`)
 
@@ -118,7 +213,7 @@ function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): SceneN
   for (const child of tree.children) {
     if (typeof child === 'string') continue
     if (isTreeNode(child)) {
-      renderNode(graph, child, node.id)
+      await renderNode(graph, child, node.id)
     }
   }
 

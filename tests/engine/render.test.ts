@@ -73,10 +73,10 @@ describe('TreeNode builders', () => {
 })
 
 describe('renderTree', () => {
-  it('renders a simple frame', () => {
+  it('renders a simple frame', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'MyFrame', w: 200, h: 100, bg: '#FF0000' })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
 
     expect(result.name).toBe('MyFrame')
     expect(result.type).toBe('FRAME')
@@ -88,10 +88,10 @@ describe('renderTree', () => {
     expect(node.fills[0]!.type).toBe('SOLID')
   })
 
-  it('renders text node with content', () => {
+  it('renders text node with content', async () => {
     const g = createGraph()
     const tree = Text({ name: 'Heading', size: 24, weight: 'bold', color: '#111', children: 'Hello' })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
 
     const node = g.nodes.get(result.id)!
     expect(node.type).toBe('TEXT')
@@ -101,7 +101,7 @@ describe('renderTree', () => {
     expect(node.fills.length).toBe(1)
   })
 
-  it('renders nested structure', () => {
+  it('renders nested structure', async () => {
     const g = createGraph()
     const tree = Frame({
       name: 'Card',
@@ -116,7 +116,7 @@ describe('renderTree', () => {
         Text({ name: 'Description', size: 14, color: '#6B7280', children: 'Lorem ipsum' })
       ]
     })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
 
     const card = g.nodes.get(result.id)!
     expect(card.layoutMode).toBe('VERTICAL')
@@ -130,28 +130,28 @@ describe('renderTree', () => {
     expect(title.fontWeight).toBe(700)
   })
 
-  it('renders with position override', () => {
+  it('renders with position override', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Positioned', w: 100, h: 100 })
-    const result = renderTree(g, tree, { x: 50, y: 75 })
+    const result = await renderTree(g, tree, { x: 50, y: 75 })
 
     const node = g.nodes.get(result.id)!
     expect(node.x).toBe(50)
     expect(node.y).toBe(75)
   })
 
-  it('renders into a specific parent', () => {
+  it('renders into a specific parent', async () => {
     const g = createGraph()
     const page = g.getPages()[0]!
     const container = g.createNode('FRAME', page.id, { name: 'Container' })
 
     const tree = Frame({ name: 'Child', w: 50, h: 50 })
-    renderTree(g, tree, { parentId: container.id })
+    await renderTree(g, tree, { parentId: container.id })
 
     expect(container.childIds.length).toBe(1)
   })
 
-  it('handles auto-layout properties', () => {
+  it('handles auto-layout properties', async () => {
     const g = createGraph()
     const tree = Frame({
       name: 'Flex',
@@ -161,7 +161,7 @@ describe('renderTree', () => {
       items: 'center',
       wrap: true
     })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const node = g.nodes.get(result.id)!
 
     expect(node.layoutMode).toBe('HORIZONTAL')
@@ -171,13 +171,13 @@ describe('renderTree', () => {
     expect(node.layoutWrap).toBe('WRAP')
   })
 
-  it('justify/items without flex auto-enables auto-layout', () => {
+  it('justify/items without flex auto-enables auto-layout', async () => {
     const g = createGraph()
     const tree = Frame(
       { name: 'IconBtn', w: 36, h: 36, justify: 'center', items: 'center' },
       Text({ size: 16, color: '#FFFFFF', children: '★' })
     )
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const n = g.nodes.get(result.id)!
 
     expect(n.layoutMode).toBe('VERTICAL')
@@ -185,10 +185,10 @@ describe('renderTree', () => {
     expect(n.counterAxisAlign).toBe('CENTER')
   })
 
-  it('handles padding shorthands', () => {
+  it('handles padding shorthands', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Padded', px: 16, py: 8, pt: 4 })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const node = g.nodes.get(result.id)!
 
     expect(node.paddingLeft).toBe(16)
@@ -197,17 +197,17 @@ describe('renderTree', () => {
     expect(node.paddingTop).toBe(4) // pt overrides py
   })
 
-  it('handles corner radius', () => {
+  it('handles corner radius', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Rounded', rounded: 12 })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     expect(g.nodes.get(result.id)!.cornerRadius).toBe(12)
   })
 
-  it('handles independent corners', () => {
+  it('handles independent corners', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Corners', roundedTL: 8, roundedBR: 16 })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const node = g.nodes.get(result.id)!
 
     expect(node.independentCorners).toBe(true)
@@ -215,56 +215,56 @@ describe('renderTree', () => {
     expect(node.bottomRightRadius).toBe(16)
   })
 
-  it('handles stroke', () => {
+  it('handles stroke', async () => {
     const g = createGraph()
     const tree = Rectangle({ name: 'Bordered', stroke: '#000', strokeWidth: 2 })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const node = g.nodes.get(result.id)!
 
     expect(node.strokes.length).toBe(1)
     expect(node.strokes[0]!.weight).toBe(2)
   })
 
-  it('handles opacity and rotation', () => {
+  it('handles opacity and rotation', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Transformed', opacity: 0.5, rotate: 45 })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const node = g.nodes.get(result.id)!
 
     expect(node.opacity).toBe(0.5)
     expect(node.rotation).toBe(45)
   })
 
-  it('handles overflow hidden (clip)', () => {
+  it('handles overflow hidden (clip)', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Clipped', overflow: 'hidden' })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     expect(g.nodes.get(result.id)!.clipsContent).toBe(true)
   })
 
-  it('handles hug sizing', () => {
+  it('handles hug sizing', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Hug', w: 'hug', h: 'hug', flex: 'col' })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const node = g.nodes.get(result.id)!
 
     expect(node.primaryAxisSizing).toBe('HUG')
     expect(node.counterAxisSizing).toBe('HUG')
   })
 
-  it('handles fill sizing', () => {
+  it('handles fill sizing', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Fill', w: 'fill' })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const node = g.nodes.get(result.id)!
 
     expect(node.layoutGrow).toBe(1)
   })
 
-  it('handles shadow effect', () => {
+  it('handles shadow effect', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Shadow', shadow: '0 4 12 rgba(0,0,0,0.1)' })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const node = g.nodes.get(result.id)!
 
     expect(node.effects.length).toBe(1)
@@ -272,10 +272,10 @@ describe('renderTree', () => {
     expect(node.effects[0]!.radius).toBe(12)
   })
 
-  it('handles blur effect', () => {
+  it('handles blur effect', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Blurred', blur: 8 })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const node = g.nodes.get(result.id)!
 
     expect(node.effects.length).toBe(1)
@@ -283,7 +283,7 @@ describe('renderTree', () => {
     expect(node.effects[0]!.radius).toBe(8)
   })
 
-  it('renders all primitive types', () => {
+  it('renders all primitive types', async () => {
     const g = createGraph()
     const types = [
       { fn: Rectangle, expected: 'RECTANGLE' },
@@ -296,7 +296,7 @@ describe('renderTree', () => {
 
     for (const { fn, expected } of types) {
       const tree = fn({ name: expected })
-      const result = renderTree(g, tree)
+      const result = await renderTree(g, tree)
       expect(g.nodes.get(result.id)!.type).toBe(expected)
     }
   })
@@ -309,7 +309,7 @@ describe('renderTree', () => {
 })
 
 describe('renderTreeNode', () => {
-  it('renders pre-built tree (browser path)', () => {
+  it('renders pre-built tree (browser path)', async () => {
     const g = createGraph()
     const tree = Frame({
       name: 'FromAI',
@@ -318,7 +318,7 @@ describe('renderTreeNode', () => {
       bg: '#3B82F6',
       children: [Text({ name: 'Label', size: 16, color: '#FFF', children: 'Button' })]
     })
-    const result = renderTreeNode(g, tree)
+    const result = await renderTreeNode(g, tree)
 
     expect(result.name).toBe('FromAI')
     const node = g.nodes.get(result.id)!
@@ -374,14 +374,14 @@ describe('renderJSX (string → scene graph)', () => {
 })
 
 describe('grid layout rendering', () => {
-  it('creates grid frame with template columns', () => {
+  it('creates grid frame with template columns', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 300, h: 200, grid: true, columns: '1fr 1fr 1fr' },
       Rectangle({ name: 'A', w: 50, h: 50 }),
       Rectangle({ name: 'B', w: 50, h: 50 }),
       Rectangle({ name: 'C', w: 50, h: 50 })
     )
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const frame = g.nodes.get(result.id)!
 
     expect(frame.layoutMode).toBe('GRID')
@@ -392,10 +392,10 @@ describe('grid layout rendering', () => {
     ])
   })
 
-  it('creates grid frame with mixed track sizes', () => {
+  it('creates grid frame with mixed track sizes', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 400, h: 200, grid: true, columns: '100 1fr 2fr' })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const frame = g.nodes.get(result.id)!
 
     expect(frame.gridTemplateColumns).toEqual([
@@ -405,10 +405,10 @@ describe('grid layout rendering', () => {
     ])
   })
 
-  it('creates grid with numeric columns shorthand', () => {
+  it('creates grid with numeric columns shorthand', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 300, h: 200, grid: true, columns: 3 })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const frame = g.nodes.get(result.id)!
 
     expect(frame.gridTemplateColumns).toEqual([
@@ -418,30 +418,30 @@ describe('grid layout rendering', () => {
     ])
   })
 
-  it('sets grid gaps', () => {
+  it('sets grid gaps', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 300, h: 200, grid: true, columns: '1fr 1fr', columnGap: 10, rowGap: 20 })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const frame = g.nodes.get(result.id)!
 
     expect(frame.gridColumnGap).toBe(10)
     expect(frame.gridRowGap).toBe(20)
   })
 
-  it('sets grid gap shorthand', () => {
+  it('sets grid gap shorthand', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 300, h: 200, grid: true, columns: '1fr 1fr', gap: 16 })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const frame = g.nodes.get(result.id)!
 
     expect(frame.gridColumnGap).toBe(16)
     expect(frame.gridRowGap).toBe(16)
   })
 
-  it('applies grid padding', () => {
+  it('applies grid padding', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 300, h: 200, grid: true, columns: '1fr 1fr', p: 10 })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const frame = g.nodes.get(result.id)!
 
     expect(frame.paddingTop).toBe(10)
@@ -450,10 +450,10 @@ describe('grid layout rendering', () => {
     expect(frame.paddingLeft).toBe(10)
   })
 
-  it('sets grid rows', () => {
+  it('sets grid rows', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 300, h: 200, grid: true, columns: '1fr', rows: '100 1fr' })
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const frame = g.nodes.get(result.id)!
 
     expect(frame.gridTemplateRows).toEqual([
@@ -462,36 +462,36 @@ describe('grid layout rendering', () => {
     ])
   })
 
-  it('sets grid child position', () => {
+  it('sets grid child position', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 300, h: 200, grid: true, columns: '1fr 1fr 1fr', rows: '1fr 1fr' },
       Rectangle({ name: 'A', w: 50, h: 50, colStart: 2, rowStart: 1 })
     )
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const children = g.getChildren(result.id)
 
     expect(children[0].gridPosition).toEqual({ column: 2, row: 1, columnSpan: 1, rowSpan: 1 })
   })
 
-  it('sets grid child span', () => {
+  it('sets grid child span', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 300, h: 200, grid: true, columns: '1fr 1fr 1fr', rows: '1fr 1fr' },
       Rectangle({ name: 'A', w: 50, h: 50, colStart: 1, colSpan: 2, rowStart: 1, rowSpan: 2 })
     )
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const children = g.getChildren(result.id)
 
     expect(children[0].gridPosition).toEqual({ column: 1, row: 1, columnSpan: 2, rowSpan: 2 })
   })
 
-  it('grid + computeLayout positions children in cells', () => {
+  it('grid + computeLayout positions children in cells', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 300, h: 200, grid: true, columns: '1fr 1fr 1fr', rows: '1fr' },
       Rectangle({ name: 'A', w: 50, h: 50 }),
       Rectangle({ name: 'B', w: 50, h: 50 }),
       Rectangle({ name: 'C', w: 50, h: 50 })
     )
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     computeLayout(g, result.id)
 
     const children = g.getChildren(result.id)
@@ -500,7 +500,7 @@ describe('grid layout rendering', () => {
     expect(children[2].x).toBe(200)
   })
 
-  it('grid 2x2 with gap positions correctly', () => {
+  it('grid 2x2 with gap positions correctly', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 210, h: 210, grid: true, columns: '1fr 1fr', rows: '1fr 1fr', gap: 10 },
       Rectangle({ name: 'A', w: 30, h: 30 }),
@@ -508,7 +508,7 @@ describe('grid layout rendering', () => {
       Rectangle({ name: 'C', w: 30, h: 30 }),
       Rectangle({ name: 'D', w: 30, h: 30 })
     )
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     computeLayout(g, result.id)
 
     const children = g.getChildren(result.id)
@@ -547,7 +547,7 @@ describe('grid layout rendering', () => {
     expect(children[1].x).toBe(155)
   })
 
-  it('grid auto-height (no rows) grows to fit content', () => {
+  it('grid auto-height (no rows) grows to fit content', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 300, grid: true, columns: '1fr 1fr', gap: 10 },
       Rectangle({ name: 'A', w: 50, h: 80 }),
@@ -555,7 +555,7 @@ describe('grid layout rendering', () => {
       Rectangle({ name: 'C', w: 50, h: 60 }),
       Rectangle({ name: 'D', w: 50, h: 60 })
     )
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const frame = g.nodes.get(result.id)!
     expect(frame.gridTemplateRows).toEqual([])
 
@@ -564,7 +564,7 @@ describe('grid layout rendering', () => {
     expect(updated.height).toBe(150)
   })
 
-  it('grid children with flex stretch to cell width', () => {
+  it('grid children with flex stretch to cell width', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 200, grid: true, columns: '1fr 1fr', gap: 0 },
       Frame({ name: 'A', flex: 'col', gap: 4, p: 8, children: [
@@ -574,7 +574,7 @@ describe('grid layout rendering', () => {
         Rectangle({ name: 'R2', w: 10, h: 20 })
       ]})
     )
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     computeAllLayouts(g)
 
     const children = g.getChildren(result.id)
@@ -584,13 +584,13 @@ describe('grid layout rendering', () => {
     expect(children[1].x).toBe(100)
   })
 
-  it('grid prop takes precedence over padding-triggered auto-layout', () => {
+  it('grid prop takes precedence over padding-triggered auto-layout', async () => {
     const g = createGraph()
     const tree = Frame({ name: 'Grid', w: 300, grid: true, columns: '1fr 1fr', p: 20 },
       Rectangle({ name: 'A', w: 50, h: 50 }),
       Rectangle({ name: 'B', w: 50, h: 50 })
     )
-    const result = renderTree(g, tree)
+    const result = await renderTree(g, tree)
     const frame = g.nodes.get(result.id)!
     expect(frame.layoutMode).toBe('GRID')
   })

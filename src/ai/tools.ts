@@ -3,7 +3,7 @@ import { tool } from 'ai'
 import * as v from 'valibot'
 
 import { makeFigmaFromStore } from '@/automation/figma-factory'
-import { ALL_TOOLS, computeAllLayouts, toolsToAI } from '@open-pencil/core'
+import { CORE_TOOLS, computeAllLayouts, toolsToAI } from '@open-pencil/core'
 
 import type { EditorStore } from '@/stores/editor'
 import type { SceneNode, StepBudget, ToolLogEntry } from '@open-pencil/core'
@@ -53,7 +53,7 @@ export function createAITools(store: EditorStore) {
   let beforeSnapshot: Map<string, SceneNode> | null = null
 
   return toolsToAI(
-    ALL_TOOLS,
+    CORE_TOOLS,
     {
       getFigma: () => makeFigmaFromStore(store),
       onBeforeExecute: (def) => {

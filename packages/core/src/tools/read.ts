@@ -16,16 +16,33 @@ export const getSelection = defineTool({
   }
 })
 
+interface TreeEntry {
+  id: string
+  type: string
+  name: string
+  w: number
+  h: number
+  children?: TreeEntry[]
+}
+
+function nodeToTreeEntry(node: FigmaNodeProxy): TreeEntry {
+  const entry: TreeEntry = { id: node.id, type: node.type, name: node.name, w: node.width, h: node.height }
+  if (node.children.length > 0) {
+    entry.children = node.children.map(nodeToTreeEntry)
+  }
+  return entry
+}
+
 export const getPageTree = defineTool({
   name: 'get_page_tree',
   description:
-    'Get the node tree of the current page. Returns all nodes with hierarchy, types, positions, and sizes.',
+    'Get the node tree of the current page. Returns lightweight hierarchy: id, type, name, size. Use get_node for full properties of a specific node.',
   params: {},
   execute: (figma) => {
     const page = figma.currentPage
     return {
       page: page.name,
-      children: page.children.map(nodeToResult)
+      children: page.children.map(nodeToTreeEntry)
     }
   }
 })
