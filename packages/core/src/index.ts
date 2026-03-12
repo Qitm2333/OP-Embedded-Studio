@@ -67,6 +67,7 @@ export type {
   AnalyzeClustersArgs, AnalyzeClustersResult, TypographyStyle
 } from './rpc'
 export { SkiaRenderer, type RenderOverlays } from './renderer/index'
+export { LabelCache, type CachedSection, type CachedComponent } from './renderer/label-cache'
 export {
   RenderProfiler,
   FrameStats,
@@ -138,7 +139,7 @@ export {
   type SVGExportOptions
 } from './svg-export'
 export { svg, renderSVGNode, type SVGNode } from './svg-node'
-export { exportFigFile } from './fig-export'
+export { exportFigFile, compressFigData, compressFigDataSync } from './fig-export'
 export {
   FIG_KIWI_VERSION,
   buildFigKiwi,

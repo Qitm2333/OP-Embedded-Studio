@@ -651,14 +651,19 @@ export function createEditorStore() {
     }
   }
 
+  function yieldToUI(): Promise<void> {
+    return new Promise((r) => requestAnimationFrame(() => r()))
+  }
+
   async function openFigFile(file: File, handle?: FileSystemFileHandle, path?: string) {
     try {
       state.loading = true
-      await new Promise((r) => requestAnimationFrame(r))
+      await yieldToUI()
       const imported = await readFigFile(file)
+      await yieldToUI()
       graph = imported
-      subscribeToGraph()
       computeAllLayouts(graph)
+      subscribeToGraph()
       undo.clear()
       pageViewports.clear()
       fileHandle = handle ?? null
@@ -673,11 +678,12 @@ export function createEditorStore() {
       state.panY = 0
       state.zoom = 1
       state.pageColor = { ...CANVAS_BG_COLOR }
-      await loadFontsForNodes(graph.getChildren(pageId).map((n) => n.id))
       requestRender()
+      void loadFontsForNodes(graph.getChildren(pageId).map((n) => n.id))
       void startWatchingFile()
     } catch (e) {
       console.error('Failed to open .fig file:', e)
+      toast.show(`Failed to open file: ${e instanceof Error ? e.message : String(e)}`, 'error')
     } finally {
       state.loading = false
     }
@@ -784,14 +790,14 @@ export function createEditorStore() {
       const file = new File([blob], state.documentName + '.fig')
       const imported = await readFigFile(file)
       graph = imported
-      subscribeToGraph()
       computeAllLayouts(graph)
+      subscribeToGraph()
     } else if (fileHandle) {
       const file = await fileHandle.getFile()
       const imported = await readFigFile(file)
       graph = imported
-      subscribeToGraph()
       computeAllLayouts(graph)
+      subscribeToGraph()
     } else {
       return
     }
@@ -1966,7 +1972,17 @@ export function createEditorStore() {
     const toLoad = collectFontKeys(graph, nodeIds)
     if (toLoad.length === 0) return
 
-    await Promise.all(toLoad.map(([family, style]) => loadFont(family, style)))
+    const results = await Promise.all(toLoad.map(([family, style]) => loadFont(family, style)))
+    const failed = toLoad.filter((_, i) => results[i] === null)
+    if (failed.length > 0) {
+      const families = [...new Set(failed.map(([family]) => family))]
+      toast.show(
+        families.length === 1
+          ? `Font "${families[0]}" could not be loaded`
+          : `${families.length} fonts could not be loaded: ${families.join(', ')}`,
+        'warning'
+      )
+    }
     computeAllLayouts(graph, state.currentPageId)
     requestRender()
   }

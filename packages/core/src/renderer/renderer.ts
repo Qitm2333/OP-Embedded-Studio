@@ -73,6 +73,7 @@ import {
   drawSectionTitles as drawSectionTitlesFn,
   drawComponentLabels as drawComponentLabelsFn
 } from './labels'
+import { LabelCache } from './label-cache'
 import {
   renderNode as renderNodeFn,
   renderSection as renderSectionFn,
@@ -183,6 +184,7 @@ export class SkiaRenderer {
   scenePictureVersion = -1
   scenePicturePageId: string | null = null
   nodePictureCache = new Map<string, SkPicture>()
+  readonly labelCache = new LabelCache()
   readonly profiler: RenderProfiler
 
   rulerBgPaint: Paint
@@ -677,6 +679,7 @@ export class SkiaRenderer {
 
     canvas.save()
     canvas.scale(this.dpr, this.dpr)
+    this.labelCache.update(graph, this.pageId, sceneVersion)
     p.beginPhase('render:sectionTitles')
     this.drawSectionTitles(canvas, graph)
     p.endPhase('render:sectionTitles')

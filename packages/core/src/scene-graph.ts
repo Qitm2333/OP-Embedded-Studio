@@ -466,6 +466,7 @@ export class SceneGraph {
   rootId: string
   readonly emitter: Emitter<SceneGraphEvents> = createNanoEvents()
   private absPosCache = new Map<string, Vector>()
+  private instanceIndex = new Map<string, Set<string>>()
 
   constructor() {
     const root = createDefaultNode('FRAME', {
@@ -718,6 +719,15 @@ export class SceneGraph {
       parent.childIds.push(node.id)
     }
 
+    if (node.type === 'INSTANCE' && node.componentId) {
+      let set = this.instanceIndex.get(node.componentId)
+      if (!set) {
+        set = new Set()
+        this.instanceIndex.set(node.componentId, set)
+      }
+      set.add(node.id)
+    }
+
     this.emitter.emit('node:created', node)
     return node
   }
@@ -726,6 +736,17 @@ export class SceneGraph {
     const node = this.nodes.get(id)
     if (!node) return
     this.absPosCache.clear()
+    if (node.type === 'INSTANCE' && 'componentId' in changes && changes.componentId !== node.componentId) {
+      if (node.componentId) this.instanceIndex.get(node.componentId)?.delete(id)
+      if (changes.componentId) {
+        let set = this.instanceIndex.get(changes.componentId)
+        if (!set) {
+          set = new Set()
+          this.instanceIndex.set(changes.componentId, set)
+        }
+        set.add(id)
+      }
+    }
     Object.assign(node, changes)
     this.emitter.emit('node:updated', id, changes)
   }
@@ -811,6 +832,9 @@ export class SceneGraph {
       this.deleteNode(childId)
     }
 
+    if (node.type === 'INSTANCE' && node.componentId) {
+      this.instanceIndex.get(node.componentId)?.delete(id)
+    }
     this.nodes.delete(id)
     this.emitter.emit('node:deleted', id)
   }
@@ -1166,6 +1190,9 @@ export class SceneGraph {
   detachInstance(instanceId: string): void {
     const node = this.nodes.get(instanceId)
     if (node?.type !== 'INSTANCE') return
+    if (node.componentId) {
+      this.instanceIndex.get(node.componentId)?.delete(instanceId)
+    }
     node.type = 'FRAME'
     node.componentId = null
     node.overrides = {}
@@ -1178,11 +1205,12 @@ export class SceneGraph {
   }
 
   getInstances(componentId: string): SceneNode[] {
+    const ids = this.instanceIndex.get(componentId)
+    if (!ids) return []
     const instances: SceneNode[] = []
-    for (const node of this.nodes.values()) {
-      if (node.type === 'INSTANCE' && node.componentId === componentId) {
-        instances.push(node)
-      }
+    for (const id of ids) {
+      const node = this.nodes.get(id)
+      if (node) instances.push(node)
     }
     return instances
   }

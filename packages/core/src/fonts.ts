@@ -72,7 +72,13 @@ async function fetchGoogleFontFiles(family: string): Promise<Record<string, stri
   if (googleFontsFailed.has(family)) return null
 
   const url = `https://www.googleapis.com/webfonts/v1/webfonts?family=${encodeURIComponent(family)}&key=${GOOGLE_FONTS_API_KEY}`
-  const response = await fetch(url)
+  let response: Response
+  try {
+    response = await fetch(url)
+  } catch {
+    googleFontsFailed.add(family)
+    return null
+  }
   if (!response.ok) {
     const normalized = normalizeFontFamily(family)
     if (normalized !== family) {

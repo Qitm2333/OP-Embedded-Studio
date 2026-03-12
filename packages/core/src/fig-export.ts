@@ -243,6 +243,16 @@ export async function exportFigFile(
     )
   }
 
+  return compressFigData(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries)
+}
+
+export function compressFigDataSync(
+  schemaDeflated: Uint8Array,
+  kiwiData: Uint8Array,
+  thumbnailPng: Uint8Array,
+  metaJson: string,
+  imageEntries: Array<{ name: string; data: Uint8Array }>
+): Uint8Array {
   const canvasData = buildFigKiwi(schemaDeflated, kiwiData)
   const zipEntries: Zippable = {
     'canvas.fig': [canvasData, { level: 0 }],
@@ -253,4 +263,59 @@ export async function exportFigFile(
     zipEntries[entry.name] = [entry.data, { level: 0 }]
   }
   return zipSync(zipEntries)
+}
+
+function canUseWorker(): boolean {
+  return typeof Worker !== 'undefined' && typeof window !== 'undefined'
+}
+
+function compressViaWorker(
+  schemaDeflated: Uint8Array,
+  kiwiData: Uint8Array,
+  thumbnailPng: Uint8Array,
+  metaJson: string,
+  imageEntries: Array<{ name: string; data: Uint8Array }>
+): Promise<Uint8Array> {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL('./fig-export-worker.ts', import.meta.url), { type: 'module' })
+
+    worker.onmessage = (e: MessageEvent<Uint8Array>) => {
+      resolve(e.data)
+      worker.terminate()
+    }
+    worker.onerror = (err) => {
+      reject(new Error(err.message))
+      worker.terminate()
+    }
+
+    const imgCopies = imageEntries.map((e) => ({
+      name: e.name,
+      data: new Uint8Array(e.data)
+    }))
+
+    const transferables = [
+      schemaDeflated.buffer,
+      kiwiData.buffer,
+      thumbnailPng.buffer,
+      ...imgCopies.map((e) => e.data.buffer)
+    ]
+
+    worker.postMessage(
+      { schemaDeflated, kiwiData, thumbnailPng, metaJson, images: imgCopies },
+      transferables
+    )
+  })
+}
+
+export function compressFigData(
+  schemaDeflated: Uint8Array,
+  kiwiData: Uint8Array,
+  thumbnailPng: Uint8Array,
+  metaJson: string,
+  imageEntries: Array<{ name: string; data: Uint8Array }>
+): Promise<Uint8Array> {
+  if (canUseWorker()) {
+    return compressViaWorker(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries)
+  }
+  return Promise.resolve(compressFigDataSync(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries))
 }

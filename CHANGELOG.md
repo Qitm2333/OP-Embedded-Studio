@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Performance
+
+- Offload .fig parsing (unzip + Kiwi decode) to a Web Worker — main thread stays responsive during file open
+- Offload .fig compression to a Web Worker during save (was blocking 450ms+)
+- Add instance index (`componentId → Set<nodeId>`) — `getInstances()` is O(1) instead of scanning all nodes
+- Defer graph event subscription until after layout computation during file open — eliminates redundant `syncInstances` calls
+- Cache label collection (sections/components) per scene mutation instead of walking the full tree every frame
+- Non-blocking font loading — files render immediately, fonts load in background
+
 ### Features
 
 - Grid layout in AI chat — JSX renderer supports `grid`, `columns`, `rows`, `gap` props with child positioning (`colStart`, `rowStart`, `colSpan`, `rowSpan`) and auto-height grids
@@ -11,6 +20,10 @@
 
 ### Fixes
 
+- Fix detached ArrayBuffer crash when switching pages after saving — export worker now copies image buffers before transferring
+- Show warning toast when fonts fail to load, error toast when file open fails
+- Fix FillPicker crash when selecting image fills (missing `ref` import from #92)
+- Fix Google Fonts TLS/network errors not cached — failed families no longer retry on every render
 - Fix CJK text garbled when font is unavailable — fallback now renders through paragraph shaper instead of raw `drawText`, preserving CJK characters via the fallback font chain
 - Fix auto-layout overflow in AI-generated designs — text wrapping, min/max constraints, absolute positioning, and FILL sizing now work correctly
 - Fix `layoutAlignSelf` limited to STRETCH — full range supported (CENTER, MAX, MIN, BASELINE)
