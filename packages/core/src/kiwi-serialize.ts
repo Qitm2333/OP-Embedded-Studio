@@ -300,7 +300,7 @@ function serializeTextProps(
     postscript: ''
   }
   nc.textData = exportTextData(node)
-  nc.textAutoResize = 'WIDTH_AND_HEIGHT'
+  if (node.textAutoResize !== 'NONE') nc.textAutoResize = node.textAutoResize
   nc.textAlignHorizontal = node.textAlignHorizontal
   nc.textUserLayoutVersion = 3
   if (fontDigestMap) nc.derivedTextData = buildDerivedTextData(node, fontDigestMap)
@@ -467,6 +467,8 @@ export function sceneNodeToKiwi(
       innerRadius: node.arcData.innerRadius
     }
   }
+
+  if (!node.autoRename) nc.autoRename = false
 
   serializeLayoutProps(node, nc)
   serializeGeometry(node, nc, blobs)

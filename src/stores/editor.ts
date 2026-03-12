@@ -21,9 +21,7 @@ import {
   exportFigFile,
   importClipboardNodes,
   parseFigmaClipboard,
-  parseOpenPencilClipboard,
   buildFigmaClipboardHTML,
-  buildOpenPencilClipboardHTML,
   prefetchFigmaSchema,
   readFigFile,
   computeImageHash,
@@ -1922,15 +1920,8 @@ export function createEditorStore() {
     if (nodes.length === 0) return
 
     const names = nodes.map((n) => n.name).join('\n')
-    const renderer = _renderer
-    const textPicBuilder = renderer
-      ? (node: SceneNode) => renderer.buildTextPicture(node)
-      : undefined
-    const internalHtml = buildOpenPencilClipboardHTML(nodes, graph, textPicBuilder)
-    const figmaHtml = buildFigmaClipboardHTML(nodes, graph)
-
-    const html = figmaHtml ? internalHtml + figmaHtml : internalHtml
-    clipboardData.setData('text/html', html)
+    const html = buildFigmaClipboardHTML(nodes, graph)
+    if (html) clipboardData.setData('text/html', html)
     clipboardData.setData('text/plain', names)
   }
 
@@ -1988,13 +1979,6 @@ export function createEditorStore() {
   }
 
   function pasteFromHTML(html: string, cursorPos?: Vector) {
-    const own = parseOpenPencilClipboard(html)
-    if (own) {
-      for (const [hash, data] of own.images) graph.images.set(hash, data)
-      pasteOpenPencilNodes(own.nodes, undefined, cursorPos)
-      return
-    }
-
     void parseFigmaClipboard(html).then((figma) => {
       if (figma) {
         const prevSelection = new Set(state.selectedIds)
@@ -2050,70 +2034,6 @@ export function createEditorStore() {
         "Some images couldn't be pasted — Figma doesn't include image data in clipboard",
         'warning'
       )
-    }
-  }
-
-  function pasteOpenPencilNodes(
-    nodes: Array<SceneNode & { children?: SceneNode[] }>,
-    parentId?: string,
-    cursorPos?: Vector
-  ) {
-    const target = parentId ?? state.currentPageId
-    const prevSelection = new Set(state.selectedIds)
-    const newIds: string[] = []
-    const created: Array<{ id: string; parentId: string; snapshot: SceneNode }> = []
-
-    let offsetX = 20
-    let offsetY = 20
-    if (cursorPos && nodes.length > 0) {
-      let minX = Infinity
-      let minY = Infinity
-      let maxX = -Infinity
-      let maxY = -Infinity
-      for (const n of nodes) {
-        minX = Math.min(minX, n.x)
-        minY = Math.min(minY, n.y)
-        maxX = Math.max(maxX, n.x + n.width)
-        maxY = Math.max(maxY, n.y + n.height)
-      }
-      offsetX = cursorPos.x - (minX + maxX) / 2
-      offsetY = cursorPos.y - (minY + maxY) / 2
-    }
-
-    function createTree(src: SceneNode & { children?: SceneNode[] }, pid: string, isTop: boolean) {
-      const { id: _srcId, parentId: _srcParent, childIds: _srcChildren, ...rest } = src
-      const node = graph.createNode(src.type, pid, {
-        ...rest,
-        x: src.x + (isTop ? offsetX : 0),
-        y: src.y + (isTop ? offsetY : 0)
-      })
-      created.push({ id: node.id, parentId: pid, snapshot: { ...node } })
-      if (isTop) newIds.push(node.id)
-      if (src.children) {
-        for (const child of src.children) {
-          createTree(child, node.id, false)
-        }
-      }
-    }
-
-    for (const src of nodes) {
-      createTree(src, target, true)
-    }
-    if (newIds.length > 0) {
-      state.selectedIds = new Set(newIds)
-      undo.push({
-        label: 'Paste',
-        forward: () => {
-          for (const { snapshot, parentId: pid } of created) {
-            graph.createNode(snapshot.type, pid, snapshot)
-          }
-          state.selectedIds = new Set(newIds)
-        },
-        inverse: () => {
-          for (const { id } of [...created].reverse()) graph.deleteNode(id)
-          state.selectedIds = prevSelection
-        }
-      })
     }
   }
 
