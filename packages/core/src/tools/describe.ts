@@ -1,11 +1,15 @@
 import { colorToHex } from '../color'
 
 import { detectIssues } from './describe-issues'
+
+import type { DescribeIssue } from './describe-issues'
 import { defineTool } from './schema'
 
 import type { SceneGraph, SceneNode } from '../scene-graph'
 
 const NAME_ROLE_PATTERNS: { pattern: RegExp; role: string }[] = [
+  { pattern: /^icon$/i, role: 'icon' },
+  { pattern: /^icon[-_]/i, role: 'icon' },
   { pattern: /^button$/i, role: 'button' },
   { pattern: /^btn[-_\s]/i, role: 'button' },
   { pattern: /[-_\s]btn$/i, role: 'button' },
@@ -49,7 +53,7 @@ const NAME_ROLE_PATTERNS: { pattern: RegExp; role: string }[] = [
 function detectRoleFromName(name: string): string | null {
   const base = (name.split(/[/,=]/)[0] ?? name).trim()
   for (const { pattern, role } of NAME_ROLE_PATTERNS) {
-    if (pattern.test(base)) return role
+    if (pattern.test(base) || pattern.test(name)) return role
   }
   return null
 }
@@ -99,16 +103,28 @@ function describeVisual(node: SceneNode): string {
   return parts.join(', ') || 'no visual styles'
 }
 
+const JUSTIFY_LABELS: Record<string, string> = {
+  MIN: 'start', CENTER: 'center', MAX: 'end', SPACE_BETWEEN: 'between'
+}
+
+const ITEMS_LABELS: Record<string, string> = {
+  MIN: 'start', CENTER: 'center', MAX: 'end', STRETCH: 'stretch', BASELINE: 'baseline'
+}
+
 function describeLayout(node: SceneNode): string | null {
   if (node.layoutMode === 'NONE') return null
   const dir = node.layoutMode === 'HORIZONTAL' ? 'horizontal' : 'vertical'
   const parts = [dir]
+  if (node.primaryAxisAlign !== 'MIN') parts.push(`justify=${JUSTIFY_LABELS[node.primaryAxisAlign] ?? node.primaryAxisAlign}`)
+  if (node.counterAxisAlign !== 'MIN') parts.push(`items=${ITEMS_LABELS[node.counterAxisAlign] ?? node.counterAxisAlign}`)
   if (node.itemSpacing > 0) parts.push(`${node.itemSpacing}px gap`)
   const pad = [node.paddingTop, node.paddingRight, node.paddingBottom, node.paddingLeft]
   const allSame = pad.every((p) => p === pad[0])
   const first = pad[0]
   if (allSame && first > 0) parts.push(`${first}px padding`)
   else if (pad.some((p) => p > 0)) parts.push(`padding ${pad.join('/')}`)
+  if (node.primaryAxisSizing !== 'FIXED') parts.push(`${node.primaryAxisSizing.toLowerCase()} main`)
+  if (node.counterAxisSizing !== 'FIXED') parts.push(`${node.counterAxisSizing.toLowerCase()} cross`)
   if (node.layoutWrap === 'WRAP') parts.push('wrap')
   return parts.join(', ')
 }
@@ -130,26 +146,40 @@ interface ChildDescription {
   name: string
   summary: string
   id: string
+  issues?: DescribeIssue[]
   children?: ChildDescription[]
+}
+
+function summarizeContainer(node: SceneNode): string {
+  const parts = [`${node.width}×${node.height}`]
+  const fill = node.fills.find((f) => f.type === 'SOLID' && f.visible)
+  if (fill) parts.push(colorToHex(fill.color))
+  if (node.cornerRadius > 0) parts.push('rounded')
+  const layout = describeLayout(node)
+  if (layout) parts.push(layout)
+  return parts.join(', ')
+}
+
+function summarizeText(node: SceneNode): string {
+  const text = node.text.slice(0, 60)
+  let summary = `"${text}" ${node.fontSize}px ${node.fontFamily}`
+  if (node.fontWeight >= 700) summary += ' bold'
+  else if (node.fontWeight >= 500) summary += ' medium'
+  const textColor = node.fills.find((f) => f.type === 'SOLID' && f.visible)
+  if (textColor) summary += `, ${colorToHex(textColor.color)}`
+  if (node.textAutoResize === 'HEIGHT') summary += ', wraps'
+  else if (node.textAutoResize === 'NONE') summary += ', fixed-size'
+  if (node.maxLines !== null && node.maxLines > 0) summary += `, max ${node.maxLines} lines`
+  return summary
 }
 
 function describeChild(node: SceneNode, graph: SceneGraph, depth: number, gridSize: number): ChildDescription {
   const role = detectRole(node)
-  let summary = ''
-  if (node.type === 'TEXT') {
-    const text = node.text.slice(0, 60)
-    summary = `"${text}" ${node.fontSize}px ${node.fontFamily}`
-    if (node.fontWeight >= 700) summary += ' bold'
-    else if (node.fontWeight >= 500) summary += ' medium'
-    const textColor = node.fills.find((f) => f.type === 'SOLID' && f.visible)
-    if (textColor) summary += `, ${colorToHex(textColor.color)}`
-  } else {
-    summary = `${node.width}×${node.height}`
-    const fill = node.fills.find((f) => f.type === 'SOLID' && f.visible)
-    if (fill) summary += `, ${colorToHex(fill.color)}`
-    if (node.cornerRadius > 0) summary += ', rounded'
-  }
+  const summary = node.type === 'TEXT' ? summarizeText(node) : summarizeContainer(node)
   const result: ChildDescription = { role, name: node.name, summary, id: node.id }
+
+  const issues = detectIssues(node, gridSize, graph)
+  if (issues.length > 0) result.issues = issues
 
   if (depth > 0 && node.childIds.length > 0) {
     const kids: ChildDescription[] = []

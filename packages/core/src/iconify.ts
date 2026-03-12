@@ -73,13 +73,88 @@ function attrValue(tag: string, attr: string): string | null {
   return m ? m[1] : null
 }
 
+function num(tag: string, attr: string, fallback = 0): number {
+  const v = attrValue(tag, attr)
+  return v !== null ? parseFloat(v) : fallback
+}
+
+function circleToD(tag: string): string | null {
+  const cx = num(tag, 'cx')
+  const cy = num(tag, 'cy')
+  const r = num(tag, 'r')
+  if (r <= 0) return null
+  return `M${cx - r},${cy}A${r},${r},0,1,0,${cx + r},${cy}A${r},${r},0,1,0,${cx - r},${cy}Z`
+}
+
+function ellipseToD(tag: string): string | null {
+  const cx = num(tag, 'cx')
+  const cy = num(tag, 'cy')
+  const rx = num(tag, 'rx')
+  const ry = num(tag, 'ry')
+  if (rx <= 0 || ry <= 0) return null
+  return `M${cx - rx},${cy}A${rx},${ry},0,1,0,${cx + rx},${cy}A${rx},${ry},0,1,0,${cx - rx},${cy}Z`
+}
+
+function rectToD(tag: string): string | null {
+  const x = num(tag, 'x')
+  const y = num(tag, 'y')
+  const w = num(tag, 'width')
+  const h = num(tag, 'height')
+  if (w <= 0 || h <= 0) return null
+  const rx = Math.min(num(tag, 'rx'), w / 2)
+  const ry = Math.min(num(tag, 'ry', rx), h / 2)
+  if (rx > 0 || ry > 0) {
+    const arx = rx > 0 ? rx : ry
+    const ary = ry > 0 ? ry : rx
+    return `M${x + arx},${y}H${x + w - arx}A${arx},${ary},0,0,1,${x + w},${y + ary}V${y + h - ary}A${arx},${ary},0,0,1,${x + w - arx},${y + h}H${x + arx}A${arx},${ary},0,0,1,${x},${y + h - ary}V${y + ary}A${arx},${ary},0,0,1,${x + arx},${y}Z`
+  }
+  return `M${x},${y}H${x + w}V${y + h}H${x}Z`
+}
+
+function lineToD(tag: string): string | null {
+  const x1 = num(tag, 'x1')
+  const y1 = num(tag, 'y1')
+  const x2 = num(tag, 'x2')
+  const y2 = num(tag, 'y2')
+  return `M${x1},${y1}L${x2},${y2}`
+}
+
+function polyToD(tag: string, close: boolean): string | null {
+  const points = attrValue(tag, 'points')
+  if (!points) return null
+  const nums = points.trim().split(/[\s,]+/).map(Number)
+  if (nums.length < 4) return null
+  let d = `M${nums[0]},${nums[1]}`
+  for (let i = 2; i < nums.length; i += 2) {
+    d += `L${nums[i]},${nums[i + 1]}`
+  }
+  if (close) d += 'Z'
+  return d
+}
+
+const SHAPE_CONVERTERS: Record<string, (tag: string) => string | null> = {
+  circle: circleToD,
+  ellipse: ellipseToD,
+  rect: rectToD,
+  line: lineToD,
+  polygon: (tag) => polyToD(tag, true),
+  polyline: (tag) => polyToD(tag, false)
+}
+
 function extractPaths(svgBody: string): PathInfo[] {
   const result: PathInfo[] = []
-  const pathRe = /<path\b[^>]*>/g
+  const shapeRe = /<(path|circle|ellipse|rect|line|polygon|polyline)\b[^>]*>/g
   let match
-  while ((match = pathRe.exec(svgBody)) !== null) {
+  while ((match = shapeRe.exec(svgBody)) !== null) {
     const tag = match[0]
-    const d = attrValue(tag, 'd')
+    const tagName = match[1]
+
+    let d: string | null
+    if (tagName === 'path') {
+      d = attrValue(tag, 'd')
+    } else {
+      d = SHAPE_CONVERTERS[tagName](tag)
+    }
     if (!d) continue
 
     const fillAttr = attrValue(tag, 'fill')

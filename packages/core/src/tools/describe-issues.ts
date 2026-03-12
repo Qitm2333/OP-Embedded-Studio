@@ -1,5 +1,7 @@
 import { colorDistance, colorToHex } from '../color'
 
+import { detectLayoutIssues } from './describe-layout-issues'
+
 import type { Color } from '../types'
 import type { SceneGraph, SceneNode } from '../scene-graph'
 
@@ -50,7 +52,7 @@ function checkEmptyIcon(node: SceneNode, graph: SceneGraph, issues: DescribeIssu
   if (!hasVisibleChild) {
     issues.push({
       message: `Icon-sized frame "${node.name}" (${node.width}×${node.height}) has no visible content`,
-      suggestion: 'Add bg="#hex" or stroke="#hex" to the icon or its children'
+      suggestion: 'Add bg="#hex" or stroke="#hex"'
     })
   }
 }
@@ -81,6 +83,94 @@ function detectStructuralIssues(node: SceneNode, gridSize: number, graph: SceneG
     const nearest = Math.round(node.itemSpacing / gridSize) * gridSize
     issues.push({ message: `Gap ${node.itemSpacing} not on ${gridSize}px grid`, suggestion: `${nearest}` })
   }
+
+  checkStrokeMismatch(node, issues)
+  checkRoundedWithoutClip(node, graph, issues)
+  checkExcessiveNesting(node, graph, issues)
+  checkSameFillAsParent(node, graph, issues)
+  checkImagePlaceholder(node, graph, issues)
+}
+
+function checkStrokeMismatch(node: SceneNode, issues: DescribeIssue[]): void {
+  const hasStrokeColor = node.strokes.some((s) => s.visible)
+  const hasStrokeWeight = node.strokes.some((s) => s.weight > 0)
+  if (hasStrokeColor && !hasStrokeWeight) {
+    issues.push({ message: `"${node.name}" has stroke color but zero weight`, suggestion: 'Set strokeWidth={1} or remove stroke' })
+  }
+  if (!hasStrokeColor && hasStrokeWeight && node.strokes.length > 0) {
+    issues.push({ message: `"${node.name}" has stroke weight but no visible stroke`, suggestion: 'Add stroke="#hex" or remove strokeWidth' })
+  }
+}
+
+function checkRoundedWithoutClip(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {
+  if (!CONTAINER_TYPES.has(node.type)) return
+  if (node.cornerRadius <= 0 || node.clipsContent) return
+  const minDim = Math.min(node.width, node.height)
+  if (node.cornerRadius < minDim / 2 - 1) return
+  const hasImageChild = node.childIds.some((id) => {
+    const c = graph.getNode(id)
+    return c?.visible && c.fills.some((f) => f.visible && f.type === 'IMAGE')
+  })
+  if (hasImageChild) {
+    issues.push({
+      message: `"${node.name}" is circular/pill but not clipping — image children will overflow rounded corners`,
+      suggestion: 'Add overflow="hidden"'
+    })
+  }
+}
+
+function checkExcessiveNesting(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {
+  if (!CONTAINER_TYPES.has(node.type)) return
+  let depth = 0
+  let current: SceneNode | undefined = node as SceneNode | undefined
+  while (current && CONTAINER_TYPES.has(current.type) && current.childIds.length === 1) {
+    const child = graph.getNode(current.childIds[0])
+    if (!child || !CONTAINER_TYPES.has(child.type)) break
+    if (current.fills.some((f) => f.visible) || current.cornerRadius > 0) break
+    depth++
+    current = child
+  }
+  if (depth >= 3) {
+    issues.push({
+      message: `${depth} levels of single-child wrapper frames starting at "${node.name}"`,
+      suggestion: 'Flatten — apply styles directly to the inner content'
+    })
+  }
+}
+
+function checkSameFillAsParent(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {
+  if (node.type === 'TEXT') return
+  if (!node.parentId) return
+  const nodeFill = node.fills.find((f) => f.visible && f.type === 'SOLID')
+  if (!nodeFill) return
+  const parent = graph.getNode(node.parentId)
+  if (!parent) return
+  const parentFill = parent.fills.find((f) => f.visible && f.type === 'SOLID')
+  if (!parentFill) return
+  if (colorDistance(nodeFill.color, parentFill.color) < 3) {
+    issues.push({
+      message: `"${node.name}" fill ${colorToHex(nodeFill.color)} matches parent "${parent.name}" — invisible border`,
+      suggestion: 'Use a different fill color or remove fill'
+    })
+  }
+}
+
+function checkImagePlaceholder(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {
+  if (!CONTAINER_TYPES.has(node.type)) return
+  if (!node.clipsContent) return
+  if (!/poster|avatar|image|thumb|photo|cover|banner/i.test(node.name)) return
+  const hasImage = node.fills.some((f) => f.visible && f.type === 'IMAGE')
+  if (hasImage) return
+  const childHasImage = node.childIds.some((id) => {
+    const c = graph.getNode(id)
+    return c?.visible && c.fills.some((f) => f.visible && f.type === 'IMAGE')
+  })
+  if (!childHasImage && !node.fills.some((f) => f.visible)) {
+    issues.push({
+      message: `"${node.name}" looks like an image container but has no image or placeholder fill`,
+      suggestion: 'Add bg="#hex" as placeholder color'
+    })
+  }
 }
 
 function detectVisibilityIssues(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {
@@ -88,16 +178,16 @@ function detectVisibilityIssues(node: SceneNode, graph: SceneGraph, issues: Desc
     if (!fill.visible || fill.type !== 'SOLID') continue
     if (fill.opacity < MIN_FILL_OPACITY) {
       issues.push({
-        message: `Near-invisible fill ${colorToHex(fill.color)} at ${Math.round(fill.opacity * 100)}% opacity`,
-        suggestion: `Increase to at least ${Math.round(MIN_FILL_OPACITY * 100)}%`
+        message: `Near-invisible fill ${colorToHex(fill.color)} at ${Math.round(fill.opacity * 100)}%`,
+        suggestion: `Increase to ≥${Math.round(MIN_FILL_OPACITY * 100)}%`
       })
     }
   }
   for (const stroke of node.strokes) {
     if (!stroke.visible || stroke.opacity >= MIN_STROKE_OPACITY) continue
     issues.push({
-      message: `Near-invisible stroke at ${Math.round(stroke.opacity * 100)}% opacity`,
-      suggestion: `Increase to at least ${Math.round(MIN_STROKE_OPACITY * 100)}%`
+      message: `Near-invisible stroke at ${Math.round(stroke.opacity * 100)}%`,
+      suggestion: `Increase to ≥${Math.round(MIN_STROKE_OPACITY * 100)}%`
     })
   }
   if (node.type !== 'TEXT' || !node.parentId) return
@@ -109,243 +199,26 @@ function detectVisibilityIssues(node: SceneNode, graph: SceneGraph, issues: Desc
   if (dist < LOW_CONTRAST_THRESHOLD) {
     issues.push({
       message: `Low contrast: text ${colorToHex(textFill.color)} on ${colorToHex(parentBg)} (distance ${Math.round(dist)})`,
-      suggestion: 'Increase color difference between text and background'
+      suggestion: 'Increase color difference'
     })
   }
-}
-
-const DARK_BG_LUMINANCE = 0.35
-
-function rgbLuminance(c: Color): number {
-  return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b
-}
-
-interface LayoutContext {
-  node: SceneNode
-  graph: SceneGraph
-  isRow: boolean
-  children: SceneNode[]
-  issues: DescribeIssue[]
-}
-
-function checkDividerOrientation(ctx: LayoutContext): void {
-  for (const child of ctx.children) {
-    const isVerticalDivider = child.width <= 2 && child.height > 10 && child.type === 'RECTANGLE'
-    const isHorizontalDivider = child.height <= 2 && child.width > 10 && child.type === 'RECTANGLE'
-    if (isVerticalDivider && !ctx.isRow) {
-      ctx.issues.push({
-        message: `Vertical divider "${child.name}" (${child.width}×${child.height}) is inside a column layout — should be inside flex="row"`,
-        suggestion: 'Move the divider inside the row container it separates, or change to a horizontal divider'
-      })
-    }
-    if (isHorizontalDivider && ctx.isRow) {
-      ctx.issues.push({
-        message: `Horizontal divider "${child.name}" (${child.width}×${child.height}) is inside a row layout — should be inside flex="col"`,
-        suggestion: 'Move the divider inside the column container it separates'
-      })
-    }
-  }
-}
-
-function checkGrowInHug(ctx: LayoutContext): void {
-  const { node, isRow, children, issues } = ctx
-  if (node.primaryAxisSizing !== 'HUG') return
-  for (const child of children) {
-    if (child.layoutGrow > 0) {
-      issues.push({
-        message: `"${child.name}" has grow=${child.layoutGrow} but parent "${node.name}" is HUG on ${isRow ? 'horizontal' : 'vertical'} axis`,
-        suggestion: `Set parent to fixed size, or remove grow from "${child.name}"`
-      })
-    }
-  }
-}
-
-function checkGrowSizeConflict(ctx: LayoutContext): void {
-  for (const child of ctx.children) {
-    if (child.layoutGrow > 0 && child.layoutMode === 'NONE') {
-      const fixedDim = ctx.isRow ? child.width : child.height
-      if (fixedDim > 0 && fixedDim !== 100) {
-        ctx.issues.push({
-          message: `"${child.name}" has both fixed ${ctx.isRow ? 'width' : 'height'}=${fixedDim} and grow=${child.layoutGrow} — grow overrides the size`,
-          suggestion: 'Remove the fixed size or remove grow'
-        })
-      }
-    }
-  }
-}
-
-function checkChildOverflow(ctx: LayoutContext): void {
-  const { node, graph, isRow, children, issues } = ctx
-  for (const child of children) {
-    if (child.layoutPositioning === 'ABSOLUTE') continue
-    for (const grandchildId of child.childIds) {
-      const gc = graph.getNode(grandchildId)
-      if (!gc?.visible) continue
-      const gcDim = isRow ? gc.width : gc.height
-      const parentDim = isRow ? child.width : child.height
-      if (gcDim > parentDim + 1 && !child.clipsContent && parentDim > 0) {
-        issues.push({
-          message: `"${gc.name}" (${Math.round(gcDim)}px) overflows parent "${child.name}" (${Math.round(parentDim)}px)`,
-          suggestion: `Reduce size or add overflow="hidden" on "${child.name}"`
-        })
-      }
-    }
-  }
-
-  if (node.primaryAxisSizing === 'FIXED' && !node.clipsContent) {
-    const pad = isRow
-      ? node.paddingLeft + node.paddingRight
-      : node.paddingTop + node.paddingBottom
-    const spacing = children.length > 1 ? (children.length - 1) * node.itemSpacing : 0
-    const available = (isRow ? node.width : node.height) - pad - spacing
-    let totalChildren = 0
-    for (const child of children) {
-      totalChildren += isRow ? child.width : child.height
-    }
-    if (totalChildren > available + 1) {
-      issues.push({
-        message: `Children total ${Math.round(totalChildren)}px exceeds available ${Math.round(available)}px on ${isRow ? 'horizontal' : 'vertical'} axis`,
-        suggestion: 'Use grow/fill for flexible sizing, reduce child sizes, or set overflow="hidden"'
-      })
-    }
-  }
-}
-
-function checkHugCollapse(ctx: LayoutContext): void {
-  const { node, isRow, children, issues } = ctx
-  if (children.length === 0) return
-
-  if (node.primaryAxisSizing === 'HUG') {
-    const allGrow = children.every((c) => c.layoutGrow > 0)
-    if (allGrow) {
-      issues.push({
-        message: `"${node.name}" is HUG but all children use grow — no child provides a concrete size`,
-        suggestion: 'Give at least one child a fixed size, or set parent to fixed size'
-      })
-    }
-  }
-  if (node.counterAxisSizing === 'HUG') {
-    const allStretch = children.every(
-      (c) => c.layoutAlignSelf === 'STRETCH' || (node.counterAxisAlign === 'STRETCH' && c.layoutAlignSelf === 'AUTO')
-    )
-    const noConcreteChild = children.every((c) => {
-      const dim = isRow ? c.height : c.width
-      return dim <= 0
-    })
-    if (allStretch && noConcreteChild) {
-      issues.push({
-        message: `"${node.name}" is HUG on cross axis but all children stretch — no child provides a concrete size`,
-        suggestion: 'Give at least one child a fixed cross-axis size, or set parent cross-axis to fixed'
-      })
-    }
-  }
-}
-
-function checkTextVisibility(ctx: LayoutContext): void {
-  const { node, graph, issues } = ctx
-  for (const childId of node.childIds) {
-    const child = graph.getNode(childId)
-    if (!child?.visible || child.type !== 'TEXT') continue
-    const textFill = child.fills.find((f) => f.visible && f.type === 'SOLID')
-    if (!textFill) {
-      issues.push({
-        message: `"${child.name || child.text.slice(0, 20) || 'Text'}" has no color — invisible`,
-        suggestion: 'Add color="#hex" to the Text element'
-      })
-      continue
-    }
-    const textLum = rgbLuminance(textFill.color)
-    if (textLum > DARK_BG_LUMINANCE) continue
-    const bg = findAncestorBackground(child, graph)
-    if (!bg) continue
-    if (rgbLuminance(bg) < DARK_BG_LUMINANCE) {
-      issues.push({
-        message: `"${child.name || child.text.slice(0, 20) || 'Text'}" is dark text (${colorToHex(textFill.color)}) on dark background (${colorToHex(bg)})`,
-        suggestion: 'Set an explicit light color on the text'
-      })
-    }
-  }
-}
-
-function checkTextOverflow(ctx: LayoutContext): void {
-  const { node, children, issues } = ctx
-  const parentAvailableW = node.width - node.paddingLeft - node.paddingRight
-  for (const child of children) {
-    if (child.type !== 'TEXT' || !child.visible) continue
-    if (child.textAutoResize === 'WIDTH_AND_HEIGHT' && child.width > parentAvailableW + 1) {
-      issues.push({
-        message: `Text "${child.text.slice(0, 25)}..." is ${Math.round(child.width)}px wide but parent "${node.name}" has ${Math.round(parentAvailableW)}px available`,
-        suggestion: `Add w={${Math.round(parentAvailableW)}} to the Text or use w="fill"`
-      })
-    }
-  }
-}
-
-function checkCrossAxisOverflow(ctx: LayoutContext): void {
-  const { node, isRow, children, issues } = ctx
-  if (node.clipsContent) return
-  const crossPad = isRow
-    ? node.paddingTop + node.paddingBottom
-    : node.paddingLeft + node.paddingRight
-  const crossAvailable = (isRow ? node.height : node.width) - crossPad
-  for (const child of children) {
-    const childCross = isRow ? child.height : child.width
-    if (childCross > crossAvailable + 1 && child.layoutAlignSelf !== 'STRETCH') {
-      issues.push({
-        message: `"${child.name}" is ${Math.round(childCross)}px on cross axis but parent has ${Math.round(crossAvailable)}px available`,
-        suggestion: 'Reduce child size, use fill sizing, or set overflow="hidden" on parent'
-      })
-    }
-  }
-}
-
-function detectLayoutIssues(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {
-  if (!CONTAINER_TYPES.has(node.type)) return
-
-  const isAutoLayout = node.layoutMode !== 'NONE'
-  const isRow = node.layoutMode === 'HORIZONTAL'
-  const children = node.childIds
-    .map((id) => graph.getNode(id))
-    .filter((c): c is SceneNode => c?.visible === true && c.layoutPositioning !== 'ABSOLUTE')
-
-  const ctx: LayoutContext = { node, graph, isRow, children, issues }
-
-  checkTextVisibility(ctx)
-  if (!isAutoLayout) return
-
-  if (node.layoutWrap === 'WRAP' && node.counterAxisSpacing <= 0 && children.length > 1) {
-    issues.push({
-      message: `"${node.name}" uses wrap but has no rowGap — wrapped rows will stick together`,
-      suggestion: 'Add rowGap={8} or similar spacing'
-    })
-  }
-
-  checkDividerOrientation(ctx)
-  checkGrowInHug(ctx)
-  checkGrowSizeConflict(ctx)
-  checkChildOverflow(ctx)
-  checkHugCollapse(ctx)
-  checkTextOverflow(ctx)
-  checkCrossAxisOverflow(ctx)
 }
 
 const RADIUS_TOLERANCE = 2
 
 function detectRadiusIssues(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {
   if (node.cornerRadius <= 0 || node.layoutMode === 'NONE') return
-
   const minPad = Math.min(node.paddingTop, node.paddingRight, node.paddingBottom, node.paddingLeft)
   if (minPad <= 0) return
   const expectedInner = Math.max(0, node.cornerRadius - minPad)
 
   for (const childId of node.childIds) {
     const child = graph.getNode(childId)
-    if (!child?.visible || child.cornerRadius <= 0) continue
-    if (child.layoutPositioning === 'ABSOLUTE') continue
+    if (!child?.visible || child.cornerRadius <= 0 || child.layoutPositioning === 'ABSOLUTE') continue
     if (child.cornerRadius > node.cornerRadius + RADIUS_TOLERANCE) {
       issues.push({
-        message: `"${child.name}" radius ${child.cornerRadius} exceeds parent "${node.name}" radius ${node.cornerRadius}`,
-        suggestion: `Use rounded={${expectedInner}} (parent ${node.cornerRadius} − padding ${minPad})`
+        message: `"${child.name}" radius ${child.cornerRadius} > parent ${node.cornerRadius}`,
+        suggestion: `Use rounded={${expectedInner}}`
       })
     } else if (child.cornerRadius > expectedInner + RADIUS_TOLERANCE && expectedInner < node.cornerRadius) {
       issues.push({
@@ -363,11 +236,10 @@ function detectTypographyIssues(node: SceneNode, graph: SceneGraph, issues: Desc
     const child = graph.getNode(childId)
     if (child?.type !== 'TEXT' || !child.visible) continue
     const text = child.text
-
     if (text === text.toUpperCase() && text.length > 1 && /[A-ZА-ЯЁ]/.test(text) && child.fontSize > UPPERCASE_MAX_SIZE) {
       issues.push({
-        message: `"${text.slice(0, 30)}" is uppercase at ${child.fontSize}px — uppercase is for small labels (≤${UPPERCASE_MAX_SIZE}px)`,
-        suggestion: `Reduce size to ≤${UPPERCASE_MAX_SIZE}px or use mixed case`
+        message: `"${text.slice(0, 30)}" is uppercase at ${child.fontSize}px — only for small labels ≤${UPPERCASE_MAX_SIZE}px`,
+        suggestion: `Reduce size or use mixed case`
       })
     }
   }
@@ -377,7 +249,6 @@ const SPACING_GRID = 4
 
 function detectSpacingIssues(node: SceneNode, graph: SceneGraph, gridSize: number, issues: DescribeIssue[]): void {
   if (node.layoutMode === 'NONE') return
-
   const children = node.childIds
     .map((id) => graph.getNode(id))
     .filter((c): c is SceneNode => c?.visible === true && c.layoutPositioning !== 'ABSOLUTE')
@@ -385,7 +256,7 @@ function detectSpacingIssues(node: SceneNode, graph: SceneGraph, gridSize: numbe
   const minPad = Math.min(node.paddingTop, node.paddingRight, node.paddingBottom, node.paddingLeft)
   if (node.itemSpacing > 0 && minPad > 0 && node.itemSpacing > minPad * 2) {
     issues.push({
-      message: `Gap ${node.itemSpacing} is much larger than padding ${minPad} in "${node.name}"`,
+      message: `Gap ${node.itemSpacing} >> padding ${minPad} in "${node.name}"`,
       suggestion: 'Gap should usually be ≤ padding'
     })
   }
@@ -394,10 +265,9 @@ function detectSpacingIssues(node: SceneNode, graph: SceneGraph, gridSize: numbe
     .filter((v) => v > 0)
   for (const v of spacingValues) {
     if (v % SPACING_GRID !== 0) {
-      const nearest = Math.round(v / SPACING_GRID) * SPACING_GRID
       issues.push({
-        message: `Spacing value ${v} in "${node.name}" is not on ${SPACING_GRID}px grid`,
-        suggestion: `Use ${nearest}`
+        message: `Spacing ${v} in "${node.name}" off ${SPACING_GRID}px grid`,
+        suggestion: `Use ${Math.round(v / SPACING_GRID) * SPACING_GRID}`
       })
       break
     }
@@ -407,18 +277,17 @@ function detectSpacingIssues(node: SceneNode, graph: SceneGraph, gridSize: numbe
   if (flexChildren.length >= 2) {
     const paddings = flexChildren.map((c) => c.paddingTop + c.paddingRight + c.paddingBottom + c.paddingLeft)
     const gaps = flexChildren.map((c) => c.itemSpacing)
-    const uniquePads = new Set(paddings)
-    const uniqueGaps = new Set(gaps.filter((g) => g > 0))
-    if (uniquePads.size > 2) {
+    if (new Set(paddings).size > 2) {
       issues.push({
-        message: `Inconsistent padding across sibling containers in "${node.name}" (${[...uniquePads].join(', ')})`,
-        suggestion: 'Use the same padding for similar containers'
+        message: `Inconsistent padding across siblings in "${node.name}" (${[...new Set(paddings)].join(', ')})`,
+        suggestion: 'Use same padding for similar containers'
       })
     }
+    const uniqueGaps = new Set(gaps.filter((g) => g > 0))
     if (uniqueGaps.size > 2) {
       issues.push({
-        message: `Inconsistent gaps across sibling containers in "${node.name}" (${[...uniqueGaps].join(', ')})`,
-        suggestion: 'Use the same gap for similar containers'
+        message: `Inconsistent gaps across siblings in "${node.name}" (${[...uniqueGaps].join(', ')})`,
+        suggestion: 'Use same gap for similar containers'
       })
     }
   }
