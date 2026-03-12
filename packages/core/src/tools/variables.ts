@@ -87,7 +87,7 @@ export const createVariable = defineTool({
       args.name,
       args.type as VariableType,
       args.collection_id,
-      parsedValue as VariableValue | undefined
+      parsedValue as VariableValue
     )
     return v
   }

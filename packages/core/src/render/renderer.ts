@@ -366,11 +366,7 @@ function applyLayoutOverrides(
   if (props.maxW !== undefined) o.width = Math.min(o.width ?? Infinity, props.maxW as number)
 }
 
-function applyTextOverrides(
-  props: Record<string, unknown>,
-  o: Partial<SceneNode>,
-  parentLayout: SceneNode['layoutMode']
-): void {
+function applyTextStyleOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
   const fontSize = props.size ?? props.fontSize
   if (typeof fontSize === 'number') o.fontSize = fontSize
 
@@ -403,7 +399,13 @@ function applyTextOverrides(
   if (props.textAlign) {
     o.textAlignHorizontal = TEXT_ALIGN_MAP[props.textAlign as string] ?? 'LEFT'
   }
+}
 
+function applyTextAutoResize(
+  props: Record<string, unknown>,
+  o: Partial<SceneNode>,
+  parentLayout: SceneNode['layoutMode']
+): void {
   const w = props.w ?? props.width
   const hasExplicitWidth = w !== undefined
   const fillsParent = w === 'fill' || (props.grow as number) > 0
@@ -420,6 +422,15 @@ function applyTextOverrides(
   } else {
     o.textAutoResize = 'WIDTH_AND_HEIGHT'
   }
+}
+
+function applyTextOverrides(
+  props: Record<string, unknown>,
+  o: Partial<SceneNode>,
+  parentLayout: SceneNode['layoutMode']
+): void {
+  applyTextStyleOverrides(props, o)
+  applyTextAutoResize(props, o, parentLayout)
 }
 
 function applyShapeAndEffectOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {

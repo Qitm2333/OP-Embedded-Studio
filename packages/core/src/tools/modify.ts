@@ -1,7 +1,7 @@
 /* eslint-disable max-lines -- property setters share common patterns, splitting would scatter related tools */
 import { parseColor } from '../color'
 import { DEFAULT_SHADOW_COLOR } from '../constants'
-import type { Effect, StyleRun } from '../scene-graph'
+import type { CharacterStyleOverride, Effect, StyleRun } from '../scene-graph'
 
 import { defineTool } from './schema'
 
@@ -81,14 +81,14 @@ export const setEffects = defineTool({
 
     const isBlur = args.type === 'FOREGROUND_BLUR' || args.type === 'BACKGROUND_BLUR'
     const color = isBlur
-      ? { r: 0, g: 0, b: 0, a: 0 }
+      ? { r: 0, g: 0, b: 0, a: 1 }
       : (args.color ? parseColor(args.color) : { ...DEFAULT_SHADOW_COLOR })
     const effect: Effect = {
       type: args.type as Effect['type'],
       visible: true,
       radius: args.radius ?? 4,
       color,
-      offset: isBlur ? { x: 0, y: 0 } : { x: args.offset_x ?? 0, y: args.offset_y ?? 4 },
+      offset: { x: isBlur ? 0 : (args.offset_x ?? 0), y: isBlur ? 0 : (args.offset_y ?? 4) },
       spread: isBlur ? 0 : (args.spread ?? 0)
     }
 
@@ -385,11 +385,15 @@ export const setFontRange = defineTool({
   execute: (figma, args) => {
     const node = figma.getNodeById(args.id)
     if (!node) return { error: `Node "${args.id}" not found` }
-    const style: StyleRun['style'] = {}
+    const style: CharacterStyleOverride = {}
     if (args.family) style.fontFamily = args.family
     if (args.size) style.fontSize = args.size
-    if (args.style) style.fontWeight = args.style === 'Bold' ? 700 : undefined
-    const run: StyleRun = { start: args.start, length: args.end - args.start, style }
+    if (args.style === 'italic' || args.style === 'Italic') style.italic = true
+    const run: StyleRun = {
+      start: args.start,
+      length: args.end - args.start,
+      style
+    }
     figma.graph.updateNode(node.id, {
       styleRuns: [...(figma.graph.getNode(node.id)?.styleRuns ?? []), run]
     })

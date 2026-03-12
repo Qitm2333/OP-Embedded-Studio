@@ -92,10 +92,23 @@
     },
     
     {
+      "files": ["**/tools/ai-adapter.ts"],
+      "rules": {
+        "typescript/no-explicit-any": "off"
+      }
+    },
+    {
+      "files": ["**/render/render-jsx.ts"],
+      "rules": {
+        "typescript/no-implied-eval": "off"
+      }
+    },
+    {
       "files": ["**/kiwi/kiwi-schema/**"],
       "rules": {
         "typescript/no-explicit-any": "off",
         "typescript/no-non-null-assertion": "off",
+        "typescript/no-implied-eval": "off",
         "typescript/prefer-for-of": "off",
         "typescript/prefer-optional-chain": "off",
         "typescript/consistent-type-imports": "off",
