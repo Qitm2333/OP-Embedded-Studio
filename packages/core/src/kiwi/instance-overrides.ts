@@ -267,9 +267,17 @@ export function populateAndApplyOverrides(
     const node = graph.getNode(nodeId)
     if (node?.type !== 'INSTANCE') return
 
+    // Only rename when the current name matches the root component name
+    // (i.e. it wasn't manually overridden by the user).
+    const rootCompId = node.componentId ? getComponentRoot(node.componentId) : undefined
+    const rootComp = rootCompId ? graph.getNode(rootCompId) : undefined
     for (const childId of Array.from(node.childIds)) graph.deleteNode(childId)
-    graph.updateNode(nodeId, { componentId: compId })
     const comp = graph.getNode(compId)
+    const updates: Partial<SceneNode> = { componentId: compId }
+    if (comp?.name && rootComp?.name && node.name === rootComp.name) {
+      updates.name = comp.name
+    }
+    graph.updateNode(nodeId, updates)
     if (comp && comp.childIds.length > 0) {
       graph.populateInstanceChildren(nodeId, compId)
     }
@@ -532,6 +540,11 @@ export function populateAndApplyOverrides(
     propagateDsdChanges(dsdModified, dsdSizeSet)
   }
 
+  // Tracks INSTANCE nodes whose componentId was changed by a swap override.
+  // Populated in applySymbolOverrides and recloneChildren, read in syncChildrenDeep
+  // to propagate swaps transitively through clone chains.
+  const swappedInstances = new Set<string>()
+
   function applySymbolOverrides(): Set<string> {
     const overriddenNodes = new Set<string>()
     componentIdRoot.clear()
@@ -556,7 +569,10 @@ export function populateAndApplyOverrides(
         if (ov.overriddenSymbolID) {
           const swapGuid = guidToString(ov.overriddenSymbolID)
           const newCompId = guidToNodeId.get(swapGuid)
-          if (newCompId) repopulateInstance(targetId, newCompId)
+          if (newCompId) {
+            repopulateInstance(targetId, newCompId)
+            swappedInstances.add(targetId)
+          }
         }
 
         const { guidPath: _, overriddenSymbolID: _s, componentPropAssignments: _c, ...fields } = ov
@@ -586,6 +602,19 @@ export function populateAndApplyOverrides(
     if (Object.keys(updates).length > 0) graph.updateNode(target.id, updates)
   }
 
+  function recloneChildren(srcChildId: string, tgtNode: SceneNode) {
+    const srcChild = graph.getNode(srcChildId)
+    if (!srcChild) return
+
+    for (const childId of [...tgtNode.childIds]) graph.deleteNode(childId)
+    graph.updateNode(tgtNode.id, { name: srcChild.name, componentId: srcChild.componentId })
+    syncNodeProps(srcChild, tgtNode)
+    if (srcChild.childIds.length > 0) {
+      graph.populateInstanceChildren(tgtNode.id, srcChildId)
+    }
+    swappedInstances.add(tgtNode.id)
+  }
+
   function syncChildrenDeep(sourceId: string, targetId: string, skip?: Set<string>) {
     const src = graph.getNode(sourceId)
     const tgt = graph.getNode(targetId)
@@ -596,6 +625,12 @@ export function populateAndApplyOverrides(
       const srcNode = graph.getNode(src.childIds[i])
       const tgtNode = graph.getNode(tgt.childIds[i])
       if (!srcNode || !tgtNode || srcNode.type !== tgtNode.type) continue
+
+      if (srcNode.type === 'INSTANCE' && swappedInstances.has(src.childIds[i]) && srcNode.componentId !== tgtNode.componentId) {
+        recloneChildren(src.childIds[i], tgtNode)
+        continue
+      }
+
       syncNodeProps(srcNode, tgtNode)
       syncChildrenDeep(src.childIds[i], tgt.childIds[i], skip)
     }
@@ -662,6 +697,8 @@ export function populateAndApplyOverrides(
   function propagateOverridesTransitively(seeds: Set<string>) {
     if (seeds.size === 0) return
 
+    // Stale after applySymbolOverrides changed componentIds via repopulateInstance
+    componentIdRoot.clear()
     const clonesOf = buildClonesMap()
     const expandedSeeds = expandSeedsToParents(seeds)
     const needsSync = buildNeedsSyncSet(expandedSeeds, clonesOf)
