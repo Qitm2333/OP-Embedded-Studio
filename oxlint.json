@@ -78,14 +78,16 @@
     "open-pencil/no-structuredclone-scene-arrays": "error",
     "open-pencil/no-math-random": "error",
     "open-pencil/no-hand-rolled-color": "error",
-    "open-pencil/no-raw-console-format": "off"
+    "open-pencil/no-raw-console-format": "off",
+    "open-pencil/no-silent-catch": "error"
   },
   "overrides": [
     {
       "files": ["**/*.test.ts", "**/*.test.tsx"],
       "rules": {
         "typescript/no-explicit-any": "off",
-        "typescript/no-non-null-assertion": "off"
+        "typescript/no-non-null-assertion": "off",
+        "open-pencil/no-silent-catch": "off"
       }
     },
     

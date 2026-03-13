@@ -294,8 +294,8 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, store: Edi
         insertText(text, node)
         resetBlink()
       }
-    } catch {
-      // Clipboard access denied
+    } catch (e) {
+      console.warn('Clipboard access denied:', e)
     }
   }
 

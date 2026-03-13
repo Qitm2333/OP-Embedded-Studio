@@ -77,8 +77,8 @@ export function startAutomationBridge(server: ViteServer) {
           req.resolve(payload)
         }
       }
-    } catch {
-      // ignore malformed messages
+    } catch (e) {
+      console.warn('Malformed automation message:', e)
     }
   }
 

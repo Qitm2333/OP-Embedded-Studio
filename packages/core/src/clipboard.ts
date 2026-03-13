@@ -374,8 +374,8 @@ export function parseOpenPencilClipboard(
       }
       return { nodes: decoded.nodes, images }
     }
-  } catch {
-    // Not our format
+  } catch (e) {
+    console.warn('Failed to parse OpenPencil clipboard data:', e)
   }
   return null
 }

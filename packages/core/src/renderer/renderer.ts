@@ -172,8 +172,8 @@ export class SkiaRenderer {
   auxStroke: Paint
   opacityPaint: Paint
   effectLayerPaint: Paint
-  imageFilterCache = new Map<string, ImageFilter>()
-  maskFilterCache = new Map<number, MaskFilter>()
+  imageFilterCache = new Map<string, ImageFilter | null>()
+  maskFilterCache = new Map<number, MaskFilter | null>()
   _tmpColor = new Float32Array(4)
   _tmpRect = new Float32Array(4)
   textFont: Font | null = null
@@ -191,7 +191,7 @@ export class SkiaRenderer {
   scenePicture: SkPicture | null = null
   scenePictureVersion = -1
   scenePicturePageId: string | null = null
-  nodePictureCache = new Map<string, SkPicture>()
+  nodePictureCache = new Map<string, SkPicture | null>()
   readonly labelCache = new LabelCache()
   readonly profiler: RenderProfiler
 
@@ -430,7 +430,7 @@ export class SkiaRenderer {
 
   invalidateAllPictures(): void {
     this.invalidateScenePicture()
-    for (const pic of this.nodePictureCache.values()) pic.delete()
+    for (const pic of this.nodePictureCache.values()) pic?.delete()
     this.nodePictureCache.clear()
   }
 
@@ -848,11 +848,11 @@ export class SkiaRenderer {
     this.penVertexFill.delete()
     this.penVertexStroke.delete()
     this.effectLayerPaint.delete()
-    for (const filter of this.imageFilterCache.values()) filter.delete()
+    for (const filter of this.imageFilterCache.values()) filter?.delete()
     this.imageFilterCache.clear()
-    for (const filter of this.maskFilterCache.values()) filter.delete()
+    for (const filter of this.maskFilterCache.values()) filter?.delete()
     this.maskFilterCache.clear()
-    for (const pic of this.nodePictureCache.values()) pic.delete()
+    for (const pic of this.nodePictureCache.values()) pic?.delete()
     this.nodePictureCache.clear()
     this.scenePicture?.delete()
     this._flashPaint?.delete()

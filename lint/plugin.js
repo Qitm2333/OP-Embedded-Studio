@@ -187,6 +187,33 @@ const noRawConsoleFormat = {
   },
 }
 
+const noSilentCatch = {
+  meta: {
+    docs: {
+      description:
+        'Disallow empty catch blocks — log a warning or re-throw instead of silently swallowing errors',
+    },
+  },
+  create(context) {
+    return {
+      CatchClause(node) {
+        const body = node.body
+        if (!body || !body.body) return
+        const stmts = body.body.filter(
+          (s) => s.type !== 'EmptyStatement',
+        )
+        if (stmts.length === 0) {
+          context.report({
+            node,
+            message:
+              'Empty catch block silently swallows errors. Add console.warn(), re-throw, or an explicit // oxlint-ignore-next-line comment.',
+          })
+        }
+      },
+    }
+  },
+}
+
 const plugin = {
   meta: { name: 'open-pencil' },
   rules: {
@@ -195,6 +222,7 @@ const plugin = {
     'no-math-random': noMathRandom,
     'no-hand-rolled-color': noHandRolledColor,
     'no-raw-console-format': noRawConsoleFormat,
+    'no-silent-catch': noSilentCatch,
   },
 }
 

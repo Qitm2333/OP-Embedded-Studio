@@ -162,8 +162,8 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
           return buffer
         }
       }
-    } catch {
-      /* fall through to Google Fonts */
+    } catch (e) {
+      console.warn(`Local font access failed for "${family}" ${style}:`, e)
     }
   }
 
@@ -176,8 +176,8 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
         registerFontInBrowser(family, style, buffer)
         return buffer
       }
-    } catch {
-      /* fall through to bundled */
+    } catch (e) {
+      console.warn(`Google Fonts fetch failed for "${family}" ${style}:`, e)
     }
   }
 
@@ -193,8 +193,8 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
         registerFontInBrowser(family, style, buffer)
         return buffer
       }
-    } catch {
-      /* no bundled font available */
+    } catch (e) {
+      console.warn(`Bundled font fetch failed for "${family}" ${style}:`, e)
     }
   }
 

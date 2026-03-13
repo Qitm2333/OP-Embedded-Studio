@@ -173,8 +173,8 @@ export function connectAutomation(getStore: () => EditorStore) {
             })
           )
         }
-      } catch {
-        // ignore parse errors
+      } catch (e) {
+        console.warn('Failed to parse WebSocket message:', e)
       }
     }
 

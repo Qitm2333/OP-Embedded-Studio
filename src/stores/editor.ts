@@ -222,8 +222,8 @@ export function createEditorStore() {
         if (!state.autosaveEnabled) return
         try {
           await writeFile(await buildFigFile())
-        } catch {
-          // silently fail — user can still save manually
+        } catch (e) {
+          console.warn('Autosave failed:', e)
         }
       }, AUTOSAVE_DELAY)
     }
