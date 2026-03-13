@@ -10,9 +10,6 @@ import type { SceneNode, StepBudget, ToolLogEntry } from '@open-pencil/core'
 
 export const MAX_AGENT_STEPS = 50
 
-let _toolLogEntries: ToolLogEntry[] = []
-let _currentRunSteps = 0
-
 export interface StepUsage {
   inputTokens: number
   outputTokens: number
@@ -21,32 +18,54 @@ export interface StepUsage {
   timestamp: number
 }
 
-let _stepUsages: StepUsage[] = []
+class RunState {
+  toolLog: ToolLogEntry[] = []
+  stepUsages: StepUsage[] = []
+  currentSteps = 0
+
+  recordStep(usage: StepUsage): void {
+    this.stepUsages.push(usage)
+    this.currentSteps++
+  }
+
+  resetSteps(): void {
+    this.currentSteps = 0
+  }
+
+  hitLimit(): boolean {
+    return this.currentSteps >= MAX_AGENT_STEPS
+  }
+
+  clear(): void {
+    this.toolLog = []
+    this.stepUsages = []
+  }
+}
+
+export const runState = new RunState()
 
 export function getToolLogEntries(): ToolLogEntry[] {
-  return _toolLogEntries
+  return runState.toolLog
 }
 
 export function getStepUsages(): StepUsage[] {
-  return _stepUsages
+  return runState.stepUsages
 }
 
 export function recordStepUsage(usage: StepUsage): void {
-  _stepUsages.push(usage)
-  _currentRunSteps++
+  runState.recordStep(usage)
 }
 
 export function resetRunSteps(): void {
-  _currentRunSteps = 0
+  runState.resetSteps()
 }
 
 export function didHitStepLimit(): boolean {
-  return _currentRunSteps >= MAX_AGENT_STEPS
+  return runState.hitLimit()
 }
 
 export function clearToolLogEntries(): void {
-  _toolLogEntries = []
-  _stepUsages = []
+  runState.clear()
 }
 
 export function createAITools(store: EditorStore) {
@@ -81,10 +100,10 @@ export function createAITools(store: EditorStore) {
         store.flashNodes(nodeIds)
       },
       onToolLog: (entry) => {
-        _toolLogEntries.push(entry)
+        runState.toolLog.push(entry)
       },
       getStepBudget: (): StepBudget => ({
-        current: _currentRunSteps,
+        current: runState.currentSteps,
         max: MAX_AGENT_STEPS
       })
     },

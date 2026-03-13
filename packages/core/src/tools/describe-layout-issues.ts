@@ -1,24 +1,16 @@
+import { wcagLuminance } from 'culori'
+
 import { colorToHex } from '../color'
+import { CONTAINER_TYPES, findAncestorBackground } from './describe-shared'
 
 import type { Color } from '../types'
 import type { SceneGraph, SceneNode } from '../scene-graph'
 import type { DescribeIssue } from './describe-issues'
 
-const CONTAINER_TYPES = new Set(['FRAME', 'COMPONENT', 'INSTANCE'])
 const DARK_BG_LUMINANCE = 0.35
 
 function rgbLuminance(c: Color): number {
-  return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b
-}
-
-function findAncestorBackground(node: SceneNode, graph: SceneGraph): Color | null {
-  let current = node.parentId ? graph.getNode(node.parentId) : null
-  while (current) {
-    const solidFill = current.fills.find((f) => f.visible && f.type === 'SOLID' && f.opacity > 0.5)
-    if (solidFill) return solidFill.color
-    current = current.parentId ? graph.getNode(current.parentId) : null
-  }
-  return null
+  return wcagLuminance({ mode: 'rgb', r: c.r, g: c.g, b: c.b })
 }
 
 interface LayoutContext {

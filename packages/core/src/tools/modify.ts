@@ -81,7 +81,7 @@ export const setEffects = defineTool({
 
     const isBlur = args.type === 'FOREGROUND_BLUR' || args.type === 'BACKGROUND_BLUR'
     const color = isBlur
-      ? { r: 0, g: 0, b: 0, a: 1 }
+      ? { r: 0, g: 0, b: 0, a: 0 }
       : (args.color ? parseColor(args.color) : { ...DEFAULT_SHADOW_COLOR })
     const effect: Effect = {
       type: args.type as Effect['type'],

@@ -243,3 +243,5 @@ export {
   parseVarint,
   FIG_WIRE_MAGIC
 } from './kiwi'
+
+export { CODEGEN_PROMPT } from './tools/prompts/codegen-prompt'

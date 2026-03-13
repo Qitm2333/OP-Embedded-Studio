@@ -1,4 +1,5 @@
 import svgpath from 'svgpath'
+import { iconToSVG } from '@iconify/utils'
 
 import { parseSVGPath } from './svg-path-parse'
 
@@ -10,15 +11,10 @@ const FETCH_TIMEOUT_MS = 10_000
 interface PathInfo {
   d: string
   fill: string | null
-  fillExplicit: boolean
   stroke: string | null
-  strokeExplicit: boolean
   strokeWidth: number
-  strokeWidthExplicit: boolean
   strokeCap: string
-  strokeCapExplicit: boolean
   strokeJoin: string
-  strokeJoinExplicit: boolean
   fillRule: WindingRule
 }
 
@@ -78,162 +74,84 @@ function num(tag: string, attr: string, fallback = 0): number {
   return v !== null ? parseFloat(v) : fallback
 }
 
-function circleToD(tag: string): string | null {
-  const cx = num(tag, 'cx')
-  const cy = num(tag, 'cy')
-  const r = num(tag, 'r')
-  if (r <= 0) return null
-  return `M${cx - r},${cy}A${r},${r},0,1,0,${cx + r},${cy}A${r},${r},0,1,0,${cx - r},${cy}Z`
-}
-
-function ellipseToD(tag: string): string | null {
-  const cx = num(tag, 'cx')
-  const cy = num(tag, 'cy')
-  const rx = num(tag, 'rx')
-  const ry = num(tag, 'ry')
-  if (rx <= 0 || ry <= 0) return null
-  return `M${cx - rx},${cy}A${rx},${ry},0,1,0,${cx + rx},${cy}A${rx},${ry},0,1,0,${cx - rx},${cy}Z`
-}
-
-function rectToD(tag: string): string | null {
-  const x = num(tag, 'x')
-  const y = num(tag, 'y')
-  const w = num(tag, 'width')
-  const h = num(tag, 'height')
-  if (w <= 0 || h <= 0) return null
-  const rx = Math.min(num(tag, 'rx'), w / 2)
-  const ry = Math.min(num(tag, 'ry', rx), h / 2)
-  if (rx > 0 || ry > 0) {
-    const arx = rx > 0 ? rx : ry
-    const ary = ry > 0 ? ry : rx
-    return `M${x + arx},${y}H${x + w - arx}A${arx},${ary},0,0,1,${x + w},${y + ary}V${y + h - ary}A${arx},${ary},0,0,1,${x + w - arx},${y + h}H${x + arx}A${arx},${ary},0,0,1,${x},${y + h - ary}V${y + ary}A${arx},${ary},0,0,1,${x + arx},${y}Z`
+function shapeToD(tagName: string, tag: string): string | null {
+  switch (tagName) {
+    case 'circle': {
+      const cx = num(tag, 'cx'), cy = num(tag, 'cy'), r = num(tag, 'r')
+      return r > 0 ? `M${cx - r},${cy}A${r},${r},0,1,0,${cx + r},${cy}A${r},${r},0,1,0,${cx - r},${cy}Z` : null
+    }
+    case 'ellipse': {
+      const cx = num(tag, 'cx'), cy = num(tag, 'cy'), rx = num(tag, 'rx'), ry = num(tag, 'ry')
+      return rx > 0 && ry > 0 ? `M${cx - rx},${cy}A${rx},${ry},0,1,0,${cx + rx},${cy}A${rx},${ry},0,1,0,${cx - rx},${cy}Z` : null
+    }
+    case 'rect': {
+      const x = num(tag, 'x'), y = num(tag, 'y'), w = num(tag, 'width'), h = num(tag, 'height')
+      if (w <= 0 || h <= 0) return null
+      const rx = Math.min(num(tag, 'rx'), w / 2), ry = Math.min(num(tag, 'ry', rx), h / 2)
+      if (rx > 0 || ry > 0) {
+        const arx = rx || ry, ary = ry || rx
+        return `M${x + arx},${y}H${x + w - arx}A${arx},${ary},0,0,1,${x + w},${y + ary}V${y + h - ary}A${arx},${ary},0,0,1,${x + w - arx},${y + h}H${x + arx}A${arx},${ary},0,0,1,${x},${y + h - ary}V${y + ary}A${arx},${ary},0,0,1,${x + arx},${y}Z`
+      }
+      return `M${x},${y}H${x + w}V${y + h}H${x}Z`
+    }
+    case 'line': {
+      const x1 = num(tag, 'x1'), y1 = num(tag, 'y1'), x2 = num(tag, 'x2'), y2 = num(tag, 'y2')
+      return `M${x1},${y1}L${x2},${y2}`
+    }
+    case 'polygon':
+    case 'polyline': {
+      const points = attrValue(tag, 'points')
+      if (!points) return null
+      const nums = points.trim().split(/[\s,]+/).map(Number)
+      if (nums.length < 4) return null
+      let d = `M${nums[0]},${nums[1]}`
+      for (let i = 2; i < nums.length; i += 2) d += `L${nums[i]},${nums[i + 1]}`
+      if (tagName === 'polygon') d += 'Z'
+      return d
+    }
+    default:
+      return null
   }
-  return `M${x},${y}H${x + w}V${y + h}H${x}Z`
 }
 
-function lineToD(tag: string): string | null {
-  const x1 = num(tag, 'x1')
-  const y1 = num(tag, 'y1')
-  const x2 = num(tag, 'x2')
-  const y2 = num(tag, 'y2')
-  return `M${x1},${y1}L${x2},${y2}`
-}
-
-function polyToD(tag: string, close: boolean): string | null {
-  const points = attrValue(tag, 'points')
-  if (!points) return null
-  const nums = points.trim().split(/[\s,]+/).map(Number)
-  if (nums.length < 4) return null
-  let d = `M${nums[0]},${nums[1]}`
-  for (let i = 2; i < nums.length; i += 2) {
-    d += `L${nums[i]},${nums[i + 1]}`
-  }
-  if (close) d += 'Z'
-  return d
-}
-
-const SHAPE_CONVERTERS: Record<string, (tag: string) => string | null> = {
-  circle: circleToD,
-  ellipse: ellipseToD,
-  rect: rectToD,
-  line: lineToD,
-  polygon: (tag) => polyToD(tag, true),
-  polyline: (tag) => polyToD(tag, false)
+function resolveAttr(explicit: string | null, group: string | null, fallback: string | null): string | null {
+  if (explicit !== null) return explicit === 'none' ? null : explicit
+  if (group !== null) return group === 'none' ? null : group
+  return fallback
 }
 
 function extractPaths(svgBody: string): PathInfo[] {
+  const groupAttrs = { fill: null as string | null, stroke: null as string | null, strokeWidth: null as string | null, strokeCap: null as string | null, strokeJoin: null as string | null }
+  const groupRe = /<g\b[^>]*>/g
+  let gm
+  while ((gm = groupRe.exec(svgBody)) !== null) {
+    groupAttrs.fill ??= attrValue(gm[0], 'fill')
+    groupAttrs.stroke ??= attrValue(gm[0], 'stroke')
+    groupAttrs.strokeWidth ??= attrValue(gm[0], 'stroke-width')
+    groupAttrs.strokeCap ??= attrValue(gm[0], 'stroke-linecap')
+    groupAttrs.strokeJoin ??= attrValue(gm[0], 'stroke-linejoin')
+  }
+
   const result: PathInfo[] = []
   const shapeRe = /<(path|circle|ellipse|rect|line|polygon|polyline)\b[^>]*>/g
   let match
   while ((match = shapeRe.exec(svgBody)) !== null) {
-    const tag = match[0]
-    const tagName = match[1]
-
-    let d: string | null
-    if (tagName === 'path') {
-      d = attrValue(tag, 'd')
-    } else {
-      d = SHAPE_CONVERTERS[tagName](tag)
-    }
+    const tag = match[0], tagName = match[1]
+    const d = tagName === 'path' ? attrValue(tag, 'd') : shapeToD(tagName, tag)
     if (!d) continue
 
-    const fillAttr = attrValue(tag, 'fill')
-    const strokeAttr = attrValue(tag, 'stroke')
-    const strokeWidthAttr = attrValue(tag, 'stroke-width')
-    const strokeCapAttr = attrValue(tag, 'stroke-linecap')
-    const strokeJoinAttr = attrValue(tag, 'stroke-linejoin')
     const fillRuleAttr = attrValue(tag, 'fill-rule')
-
     result.push({
       d,
-      fill: fillAttr === 'none' ? null : (fillAttr ?? null),
-      fillExplicit: fillAttr !== null,
-      stroke: strokeAttr === 'none' ? null : (strokeAttr ?? null),
-      strokeExplicit: strokeAttr !== null,
-      strokeWidth: strokeWidthAttr ? parseFloat(strokeWidthAttr) : 1,
-      strokeWidthExplicit: strokeWidthAttr !== null,
-      strokeCap: strokeCapAttr ?? 'butt',
-      strokeCapExplicit: strokeCapAttr !== null,
-      strokeJoin: strokeJoinAttr ?? 'miter',
-      strokeJoinExplicit: strokeJoinAttr !== null,
+      fill: resolveAttr(attrValue(tag, 'fill'), groupAttrs.fill, 'currentColor'),
+      stroke: resolveAttr(attrValue(tag, 'stroke'), groupAttrs.stroke, null),
+      strokeWidth: parseFloat(attrValue(tag, 'stroke-width') ?? groupAttrs.strokeWidth ?? '1'),
+      strokeCap: attrValue(tag, 'stroke-linecap') ?? groupAttrs.strokeCap ?? 'butt',
+      strokeJoin: attrValue(tag, 'stroke-linejoin') ?? groupAttrs.strokeJoin ?? 'miter',
       fillRule: fillRuleAttr === 'evenodd' ? 'EVENODD' : 'NONZERO'
     })
   }
   return result
-}
-
-interface GroupAttrs {
-  fill: string | null
-  stroke: string | null
-  strokeWidth: string | null
-  strokeCap: string | null
-  strokeJoin: string | null
-}
-
-function collectGroupAttrs(svgBody: string): GroupAttrs {
-  const attrs: GroupAttrs = { fill: null, stroke: null, strokeWidth: null, strokeCap: null, strokeJoin: null }
-  const groupRe = /<g\b[^>]*>/g
-  let gMatch
-  while ((gMatch = groupRe.exec(svgBody)) !== null) {
-    const gTag = gMatch[0]
-    attrs.fill ??= attrValue(gTag, 'fill')
-    attrs.stroke ??= attrValue(gTag, 'stroke')
-    attrs.strokeWidth ??= attrValue(gTag, 'stroke-width')
-    attrs.strokeCap ??= attrValue(gTag, 'stroke-linecap')
-    attrs.strokeJoin ??= attrValue(gTag, 'stroke-linejoin')
-  }
-  return attrs
-}
-
-function resolveAttr(value: string | null): string | null {
-  return value === 'none' ? null : value
-}
-
-function inheritGroupAttrs(svgBody: string, paths: PathInfo[]): void {
-  const g = collectGroupAttrs(svgBody)
-
-  for (const p of paths) {
-    if (!p.fillExplicit) p.fill = g.fill ? resolveAttr(g.fill) : (p.fill ?? 'currentColor')
-    if (!p.strokeExplicit && g.stroke) p.stroke = resolveAttr(g.stroke)
-    if (!p.strokeWidthExplicit && g.strokeWidth) p.strokeWidth = parseFloat(g.strokeWidth)
-    if (!p.strokeCapExplicit && g.strokeCap) p.strokeCap = g.strokeCap
-    if (!p.strokeJoinExplicit && g.strokeJoin) p.strokeJoin = g.strokeJoin
-  }
-}
-
-function scalePaths(paths: PathInfo[], srcW: number, srcH: number, targetSize: number): PathInfo[] {
-  if (srcW === targetSize && srcH === targetSize) return paths
-  const sx = targetSize / srcW
-  const sy = targetSize / srcH
-  return paths.map((p) => ({
-    ...p,
-    d: svgpath(p.d).scale(sx, sy).round(2).toString(),
-    strokeWidth: p.strokeWidth * Math.min(sx, sy)
-  }))
-}
-
-function fetchWithTimeout(url: string): Promise<Response> {
-  return fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
 }
 
 function buildIconData(
@@ -244,27 +162,38 @@ function buildIconData(
   defaultH: number,
   size: number
 ): IconData {
-  const srcW = iconEntry.width ?? defaultW
-  const srcH = iconEntry.height ?? defaultH
+  const rendered = iconToSVG({
+    body: iconEntry.body,
+    width: iconEntry.width ?? defaultW,
+    height: iconEntry.height ?? defaultH
+  })
+  const [, , vbW, vbH] = rendered.viewBox
+  const sx = size / vbW
+  const sy = size / vbH
 
-  let pathInfos = extractPaths(iconEntry.body)
-  inheritGroupAttrs(iconEntry.body, pathInfos)
-  pathInfos = scalePaths(pathInfos, srcW, srcH, size)
+  const pathInfos = extractPaths(rendered.body)
 
   return {
     prefix,
     name: iconName,
     width: size,
     height: size,
-    paths: pathInfos.map((p) => ({
-      vectorNetwork: parseSVGPath(p.d, p.fillRule),
-      fill: p.fill,
-      stroke: p.stroke,
-      strokeWidth: p.strokeWidth,
-      strokeCap: p.strokeCap,
-      strokeJoin: p.strokeJoin
-    }))
+    paths: pathInfos.map((p) => {
+      const scaledD = (sx === 1 && sy === 1) ? p.d : svgpath(p.d).scale(sx, sy).round(2).toString()
+      return {
+        vectorNetwork: parseSVGPath(scaledD, p.fillRule),
+        fill: p.fill,
+        stroke: p.stroke,
+        strokeWidth: p.strokeWidth * Math.min(sx, sy),
+        strokeCap: p.strokeCap,
+        strokeJoin: p.strokeJoin
+      }
+    })
   }
+}
+
+function fetchWithTimeout(url: string): Promise<Response> {
+  return fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
 }
 
 export async function fetchIcon(name: string, size = 24): Promise<IconData> {
@@ -274,10 +203,6 @@ export async function fetchIcon(name: string, size = 24): Promise<IconData> {
   return result
 }
 
-/**
- * Batch-fetch multiple icons. Groups by prefix to minimize HTTP requests
- * (one request per prefix, e.g. `lucide.json?icons=heart,home,star`).
- */
 export async function fetchIcons(names: string[], size = 24): Promise<Map<string, IconData>> {
   const results = new Map<string, IconData>()
   const toFetch = new Map<string, string[]>()
@@ -347,9 +272,6 @@ export async function searchIcons(query: string, options?: {
   }
 }
 
-/**
- * Batch-search multiple queries in parallel.
- */
 export async function searchIconsBatch(queries: string[], options?: {
   limit?: number
   prefix?: string

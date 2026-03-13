@@ -1,11 +1,10 @@
 import { parseColor, colorToFill } from '../color'
 import { TRANSPARENT } from '../constants'
 import { fetchIcons } from '../iconify'
+import { createIconFromPaths } from '../icon-render'
 import { isTreeNode } from './tree'
 
-import type { IconData } from '../iconify'
 import type { SceneGraph, SceneNode, NodeType, LayoutMode, GridTrack, Stroke } from '../scene-graph'
-import type { Color } from '../types'
 import type { TreeNode } from './tree'
 
 const TYPE_MAP: Partial<Record<string, NodeType>> = {
@@ -120,75 +119,15 @@ async function renderIconNode(
     throw new Error(`Icon "${iconName}" not found`)
   }
 
-  return createIconNode(graph, icon, iconName, size, parsedColor, parentId, props)
-}
-
-function createIconNode(
-  graph: SceneGraph,
-  icon: IconData,
-  iconName: string,
-  size: number,
-  color: Color,
-  parentId: string,
-  props: Record<string, unknown>
-): SceneNode {
   const parent = graph.getNode(parentId)
   const parentLayout = parent?.layoutMode ?? 'NONE'
-  const overrides: Partial<SceneNode> = {
-    name: (props.label as string | undefined) ?? `Icon / ${iconName}`,
-    width: size,
-    height: size,
-    fills: []
-  }
+  const overrides: Partial<SceneNode> = {}
+  if (props.label) overrides.name = props.label as string
   const { w, h } = applySizeOverrides(props, overrides, parentLayout)
   if (typeof w !== 'number') overrides.width = size
   if (typeof h !== 'number') overrides.height = size
-  const frame = graph.createNode('FRAME', parentId, overrides)
 
-  for (const path of icon.paths) {
-    const vector = graph.createNode('VECTOR', frame.id, {
-      name: 'path',
-      width: size,
-      height: size,
-      vectorNetwork: path.vectorNetwork
-    })
-    vector.x = 0
-    vector.y = 0
-
-    if (path.fill) {
-      const fillColor = path.fill === 'currentColor' ? color : parseColor(path.fill)
-      graph.updateNode(vector.id, {
-        fills: [{ type: 'SOLID', color: fillColor, opacity: 1, visible: true }]
-      })
-    } else {
-      graph.updateNode(vector.id, { fills: [] })
-    }
-
-    if (path.stroke) {
-      const strokeColor = path.stroke === 'currentColor' ? color : parseColor(path.stroke)
-      graph.updateNode(vector.id, {
-        strokes: [{
-          color: strokeColor,
-          weight: path.strokeWidth,
-          opacity: 1,
-          visible: true,
-          align: 'CENTER' as const,
-          cap: ICON_STROKE_CAP[path.strokeCap] ?? 'NONE',
-          join: ICON_STROKE_JOIN[path.strokeJoin] ?? 'MITER'
-        }]
-      })
-    }
-  }
-
-  return frame
-}
-
-const ICON_STROKE_CAP: Record<string, SceneNode['strokeCap']> = {
-  round: 'ROUND', square: 'SQUARE', butt: 'NONE'
-}
-
-const ICON_STROKE_JOIN: Record<string, SceneNode['strokeJoin']> = {
-  miter: 'MITER', round: 'ROUND', bevel: 'BEVEL'
+  return createIconFromPaths(graph, icon, iconName, size, parsedColor, parentId, overrides)
 }
 
 async function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): Promise<SceneNode> {

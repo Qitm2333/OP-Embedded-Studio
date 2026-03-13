@@ -1,4 +1,5 @@
 import { colorToHex } from '../color'
+import { looksLikeButton } from './describe-shared'
 
 import { detectIssues } from './describe-issues'
 
@@ -73,18 +74,7 @@ function looksLikeSeparator(node: SceneNode): boolean {
   return ratio > 10 && Math.min(node.width, node.height) <= 4
 }
 
-const BUTTON_MAX_WIDTH = 200
-const BUTTON_MAX_HEIGHT = 50
-const BUTTON_MIN_HEIGHT = 28
-const BUTTON_MIN_RADIUS = 2
 
-function looksLikeButton(node: SceneNode): boolean {
-  if (node.type !== 'FRAME' && node.type !== 'COMPONENT' && node.type !== 'INSTANCE') return false
-  if (node.width > BUTTON_MAX_WIDTH || node.height > BUTTON_MAX_HEIGHT || node.height < BUTTON_MIN_HEIGHT) return false
-  if (node.fills.length === 0 && node.strokes.length === 0) return false
-  if (node.cornerRadius < BUTTON_MIN_RADIUS) return false
-  return node.childIds.length > 0
-}
 
 function describeVisual(node: SceneNode): string {
   const parts: string[] = []

@@ -1,43 +1,19 @@
 import { colorDistance, colorToHex } from '../color'
+import { CONTAINER_TYPES, findAncestorBackground, looksLikeButton } from './describe-shared'
 
 import { detectLayoutIssues } from './describe-layout-issues'
 
-import type { Color } from '../types'
 import type { SceneGraph, SceneNode } from '../scene-graph'
 
 const MIN_FILL_OPACITY = 0.15
 const MIN_STROKE_OPACITY = 0.20
 const LOW_CONTRAST_THRESHOLD = 15
+const SHAPE_TYPES = new Set(['RECTANGLE', 'ELLIPSE', 'STAR', 'POLYGON', 'LINE'])
+const ICON_MAX_SIZE = 48
 
 export interface DescribeIssue {
   message: string
   suggestion?: string
-}
-
-function findAncestorBackground(node: SceneNode, graph: SceneGraph): Color | null {
-  let current = node.parentId ? graph.getNode(node.parentId) : null
-  while (current) {
-    const solidFill = current.fills.find((f) => f.visible && f.type === 'SOLID' && f.opacity > 0.5)
-    if (solidFill) return solidFill.color
-    current = current.parentId ? graph.getNode(current.parentId) : null
-  }
-  return null
-}
-
-const CONTAINER_TYPES = new Set(['FRAME', 'COMPONENT', 'INSTANCE'])
-const SHAPE_TYPES = new Set(['RECTANGLE', 'ELLIPSE', 'STAR', 'POLYGON', 'LINE'])
-const ICON_MAX_SIZE = 48
-const BUTTON_MAX_WIDTH = 200
-const BUTTON_MAX_HEIGHT = 50
-const BUTTON_MIN_HEIGHT = 28
-const BUTTON_MIN_RADIUS = 2
-
-function looksLikeButton(node: SceneNode): boolean {
-  if (!CONTAINER_TYPES.has(node.type)) return false
-  return node.width <= BUTTON_MAX_WIDTH &&
-    node.height >= BUTTON_MIN_HEIGHT && node.height <= BUTTON_MAX_HEIGHT &&
-    node.cornerRadius >= BUTTON_MIN_RADIUS &&
-    node.childIds.length > 0
 }
 
 function checkEmptyIcon(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {

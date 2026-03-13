@@ -1,11 +1,11 @@
 import { parseColor } from '../color'
+import { createIconFromPaths } from '../icon-render'
 import { fetchIcons, searchIconsBatch } from '../iconify'
 
 import { defineTool, nodeSummary } from './schema'
 
-import type { FigmaAPI, FigmaNodeProxy } from '../figma-api'
-import type { Color } from '../types'
-import type { Stroke, StrokeCap, StrokeJoin, VectorNetwork } from '../scene-graph'
+import type { FigmaNodeProxy } from '../figma-api'
+import type { VectorNetwork } from '../scene-graph'
 
 export const createShape = defineTool({
   name: 'create_shape',
@@ -190,17 +190,6 @@ export const createSlice = defineTool({
   }
 })
 
-const STROKE_CAP_MAP: Record<string, StrokeCap> = {
-  butt: 'NONE',
-  round: 'ROUND',
-  square: 'SQUARE'
-}
-
-const STROKE_JOIN_MAP: Record<string, StrokeJoin> = {
-  miter: 'MITER',
-  round: 'ROUND',
-  bevel: 'BEVEL'
-}
 
 export const fetchIconsTool = defineTool({
   name: 'fetch_icons',
@@ -229,70 +218,7 @@ export const fetchIconsTool = defineTool({
   }
 })
 
-import type { IconData } from '../iconify'
 
-function createIconFrame(
-  figma: FigmaAPI,
-  icon: IconData,
-  name: string,
-  size: number,
-  parsedColor: Color,
-  parentId?: string
-): FigmaNodeProxy {
-  const frame = figma.createFrame()
-  frame.name = `Icon / ${name}`
-  frame.resize(size, size)
-  frame.fills = []
-
-  if (parentId) {
-    const parent = figma.getNodeById(parentId)
-    if (parent) {
-      parent.appendChild(frame)
-      frame.x = 0
-      frame.y = 0
-    }
-  }
-
-  for (const path of icon.paths) {
-    const vector = figma.createVector()
-    vector.name = 'path'
-    vector.resize(size, size)
-    frame.appendChild(vector)
-    vector.x = 0
-    vector.y = 0
-
-    figma.graph.updateNode(vector.id, {
-      vectorNetwork: path.vectorNetwork
-    } as Record<string, unknown>)
-
-    if (path.fill) {
-      vector.fills = [{
-        type: 'SOLID',
-        color: path.fill === 'currentColor' ? parsedColor : parseColor(path.fill),
-        opacity: 1,
-        visible: true
-      }]
-    } else {
-      vector.fills = []
-    }
-
-    if (path.stroke) {
-      const strokeColor = path.stroke === 'currentColor' ? parsedColor : parseColor(path.stroke)
-      const stroke: Stroke = {
-        color: strokeColor,
-        weight: path.strokeWidth,
-        opacity: 1,
-        visible: true,
-        align: 'CENTER',
-        cap: STROKE_CAP_MAP[path.strokeCap] ?? 'NONE',
-        join: STROKE_JOIN_MAP[path.strokeJoin] ?? 'MITER'
-      }
-      vector.strokes = [stroke]
-    }
-  }
-
-  return frame
-}
 
 export const insertIcon = defineTool({
   name: 'insert_icon',
@@ -336,7 +262,8 @@ export const insertIcon = defineTool({
         notFound.push(name)
         continue
       }
-      const frame = createIconFrame(figma, icon, name, size, parsedColor, args.parent_id)
+      const parentId = args.parent_id ?? figma.currentPage.id
+      const frame = createIconFromPaths(figma.graph, icon, name, size, parsedColor, parentId)
       inserted.push({ id: frame.id, name: frame.name, icon: name })
     }
 

@@ -157,9 +157,11 @@
     "types": "./dist/index.d.ts"
   },
   "dependencies": {
+    "@iconify/utils": "^3.1.0",
     "canvaskit-wasm": "^0.40.0",
     "culori": "^4.0.2",
     "diff": "^8.0.3",
+    "expr-eval": "^2.0.2",
     "fflate": "^0.8.2",
     "fontoxpath": "^3.34.0",
     "fzstd": "^0.1.1",
