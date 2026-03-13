@@ -331,7 +331,9 @@ function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
   }
   if (node.layoutPositioning === 'ABSOLUTE') nc.stackPositioning = 'ABSOLUTE'
   if (node.layoutGrow > 0) nc.stackChildPrimaryGrow = node.layoutGrow
-  if (node.layoutAlignSelf !== 'AUTO') nc.stackChildAlignSelf = node.layoutAlignSelf
+  if (node.layoutAlignSelf !== 'AUTO') {
+    nc.stackChildAlignSelf = node.layoutAlignSelf
+  }
 }
 
 function serializeGeometry(node: SceneNode, nc: KiwiNodeChange, blobs: Uint8Array[]): void {
