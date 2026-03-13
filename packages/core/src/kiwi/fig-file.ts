@@ -104,19 +104,11 @@ function parseFigFileSync(buffer: ArrayBuffer): SceneGraph {
   return importNodeChanges(nodeChanges, blobs, images)
 }
 
-const WORKER_TIMEOUT_MS = 30_000
-
 function parseViaWorker(buffer: ArrayBuffer): Promise<SceneGraph> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL('./fig-parse-worker.ts', import.meta.url), { type: 'module' })
 
-    const timeout = setTimeout(() => {
-      worker.terminate()
-      reject(new Error('Worker timed out parsing .fig file'))
-    }, WORKER_TIMEOUT_MS)
-
     worker.onmessage = (e: MessageEvent<FigParseResult & { error?: string }>) => {
-      clearTimeout(timeout)
       worker.terminate()
       if (e.data.error) {
         reject(new Error(e.data.error))
@@ -128,7 +120,6 @@ function parseViaWorker(buffer: ArrayBuffer): Promise<SceneGraph> {
     }
 
     worker.onerror = (err) => {
-      clearTimeout(timeout)
       worker.terminate()
       reject(new Error(err.message || 'Worker failed to parse .fig file'))
     }
