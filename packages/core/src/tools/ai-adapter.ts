@@ -164,7 +164,7 @@ export function toolsToAI(
 
         options.onBeforeExecute?.(def)
         try {
-          const execResult = await def.execute(options.getFigma(), args)
+          let execResult = await def.execute(options.getFigma(), args)
           if (def.mutates && options.onFlashNodes) {
             const ids = extractNodeIds(execResult)
             if (ids.length > 0) options.onFlashNodes(ids)
