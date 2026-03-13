@@ -141,7 +141,8 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
   }
 
   // Try local font access API first (browser only)
-  if (window.queryLocalFonts) {
+  // eslint-disable-next-line typescript-eslint/prefer-optional-chain -- typeof guard needed for non-browser envs
+  if (typeof window !== 'undefined' && window.queryLocalFonts) {
     try {
       const fonts = await window.queryLocalFonts()
       const normalized = normalizeFontFamily(family)

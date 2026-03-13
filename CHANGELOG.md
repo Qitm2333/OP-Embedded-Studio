@@ -36,6 +36,8 @@
 - Fix parsing complex .fig files crashing on missing GUIDs in component overrides
 - Fix headless text layout using 100×100 default size instead of estimated dimensions
 - Fix clipboard roundtrip losing properties — clipsContent, constraints, arcData, strokeCap/Join, layoutAlignSelf, textAutoResize, autoRename now preserved in Figma Kiwi serialization
+- Fix MCP headless export crashing on `window.queryLocalFonts` in non-browser runtimes (Bun/Node)
+- Fix MCP `export_image` rendering blank text — fonts now loaded before rasterization
 
 ## 0.9.0 — 2026-03-09
 

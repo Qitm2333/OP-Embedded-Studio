@@ -11,7 +11,10 @@ import {
   computeAllLayouts,
   SceneGraph,
   renderNodesToImage,
-  SkiaRenderer
+  SkiaRenderer,
+  collectFontKeys,
+  initFontService,
+  loadFont
 } from '@open-pencil/core'
 
 import type { ToolDef, ParamDef, ParamType, ExportFormat } from '@open-pencil/core'
@@ -88,7 +91,15 @@ export function createServer(version: string, options: CreateServerOptions = {})
       renderer.viewportWidth = 1
       renderer.viewportHeight = 1
       renderer.dpr = 1
+
+      // Initialize font provider and load fonts used by the exported nodes
+      await renderer.loadFonts()
       const pageId = currentPageId ?? g.getPages()[0].id
+      const fontKeys = collectFontKeys(g, nodeIds)
+      for (const [family, style] of fontKeys) {
+        await loadFont(family, style)
+      }
+
       return renderNodesToImage(ck, renderer, g, pageId, nodeIds, {
         scale: opts.scale ?? 1,
         format: (opts.format ?? 'PNG') as ExportFormat
