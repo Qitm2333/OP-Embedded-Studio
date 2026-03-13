@@ -95,6 +95,7 @@ export async function exportFigFile(
   const blobs: Uint8Array[] = []
   const pages = graph.getPages(true)
   const nodeIdToGuid = new Map<string, GUID>()
+  const varIdToGuid = new Map<string, GUID>()
   const fontDigestMap = await buildFontDigestMap(graph)
   let internalCanvasGuid: GUID | null = null
 
@@ -127,7 +128,7 @@ export async function exportFigFile(
     const children = graph.getChildren(page.id)
     for (let i = 0; i < children.length; i++) {
       nodeChanges.push(
-        ...sceneNodeToKiwi(children[i], canvasGuid, i, localIdCounter, graph, blobs, nodeIdToGuid, fontDigestMap)
+        ...sceneNodeToKiwi(children[i], canvasGuid, i, localIdCounter, graph, blobs, nodeIdToGuid, fontDigestMap, varIdToGuid)
       )
     }
   }
@@ -152,9 +153,12 @@ export async function exportFigFile(
       })
     }
 
+    const modeIdToGuid = new Map<string, GUID>()
+
     let collIdx = 0
     for (const [colId, col] of graph.variableCollections) {
-      const colGuid = stringToGuid(colId)
+      const colGuid = { sessionID: 0, localID: localIdCounter.value++ }
+      varIdToGuid.set(colId, colGuid)
       const colNc: KiwiNodeChange = {
         guid: colGuid,
         parentIndex: { guid: internalCanvasGuid, position: fractionalPosition(collIdx++) },
@@ -163,11 +167,11 @@ export async function exportFigFile(
         phase: 'CREATED',
         strokeAlign: 'CENTER',
         strokeJoin: 'BEVEL',
-        variableSetModes: col.modes.map((m, i) => ({
-          id: stringToGuid(m.modeId),
-          name: m.name,
-          sortPosition: fractionalPosition(i)
-        }))
+        variableSetModes: col.modes.map((m, i) => {
+          const mGuid = { sessionID: 0, localID: localIdCounter.value++ }
+          modeIdToGuid.set(m.modeId, mGuid)
+          return { id: mGuid, name: m.name, sortPosition: fractionalPosition(i) }
+        })
       }
       nodeChanges.push(colNc)
 
@@ -176,12 +180,13 @@ export async function exportFigFile(
         const variable = graph.variables.get(varId)
         if (!variable) continue
 
-        const varGuid = stringToGuid(varId)
+        const varGuid = { sessionID: 0, localID: localIdCounter.value++ }
+        varIdToGuid.set(varId, varGuid)
         const typeMap: Record<string, string> = { COLOR: 'COLOR', BOOLEAN: 'BOOLEAN', STRING: 'STRING' }
         const resolvedType = typeMap[variable.type] ?? 'FLOAT'
 
         const entries = Object.entries(variable.valuesByMode).map(([modeId, value]) => ({
-          modeID: stringToGuid(modeId),
+          modeID: modeIdToGuid.get(modeId) ?? stringToGuid(modeId),
           variableData: variableValueToKiwi(value, variable.type)
         }))
 

@@ -82,26 +82,9 @@ heavy('fig export roundtrip', () => {
   })
 
   test('exported file can be parsed back', async () => {
-    const originalPages = parsed.getPages()
-    const originalNodes = [...parsed.getAllNodes()].length
-    console.log(`Original: ${originalPages.length} pages, ${originalNodes} nodes`)
-    for (const p of originalPages) {
-      console.log(`  page "${p.name}" children=${parsed.getChildren(p.id).length}`)
-    }
-
     const exported = await exportFigFile(parsed)
-    console.log(`Exported: ${exported.length} bytes`)
-
     const reparsed = await parseFigFile(exported.buffer as ArrayBuffer)
-    const reparsedPages = reparsed.getPages()
-    const reparsedAllPages = reparsed.getPages(true)
-    const reparsedNodes = [...reparsed.getAllNodes()].length
-    console.log(`Reparsed: ${reparsedPages.length} pages (${reparsedAllPages.length} incl internal), ${reparsedNodes} nodes`)
-    for (const p of reparsedAllPages) {
-      console.log(`  page "${p.name}" internal=${p.internalOnly} children=${reparsed.getChildren(p.id).length}`)
-    }
-
     expect(reparsed).toBeInstanceOf(SceneGraph)
-    expect(reparsedPages.length).toBeGreaterThan(0)
+    expect(reparsed.getPages().length).toBeGreaterThan(0)
   })
 })

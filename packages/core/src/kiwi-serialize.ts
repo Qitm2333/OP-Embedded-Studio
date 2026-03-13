@@ -366,7 +366,8 @@ function serializeGeometry(node: SceneNode, nc: KiwiNodeChange, blobs: Uint8Arra
 function serializeVariableBindings(
   node: SceneNode,
   nc: KiwiNodeChange,
-  graph: SceneGraph
+  graph: SceneGraph,
+  varIdToGuid?: Map<string, GUID>
 ): void {
   if (Object.keys(node.boundVariables).length === 0) return
   const entries: VariableConsumptionEntry[] = []
@@ -376,7 +377,7 @@ function serializeVariableBindings(
     if (!kiwiField) continue
     const variable = graph.variables.get(varId)
     if (!variable) continue
-    const varGuid = stringToGuid(varId)
+    const varGuid = varIdToGuid?.get(varId) ?? stringToGuid(varId)
     const resolvedType = typeMap[variable.type] ?? 'FLOAT'
     entries.push({
       variableData: {
@@ -398,7 +399,8 @@ export function sceneNodeToKiwi(
   graph: SceneGraph,
   blobs: Uint8Array[],
   nodeIdToGuid?: Map<string, GUID>,
-  fontDigestMap?: Map<string, Uint8Array>
+  fontDigestMap?: Map<string, Uint8Array>,
+  varIdToGuid?: Map<string, GUID>
 ): KiwiNodeChange[] {
   const localID = localIdCounter.value++
   const guid = { sessionID: 1, localID }
@@ -479,12 +481,12 @@ export function sceneNodeToKiwi(
 
   serializeLayoutProps(node, nc)
   serializeGeometry(node, nc, blobs)
-  serializeVariableBindings(node, nc, graph)
+  serializeVariableBindings(node, nc, graph, varIdToGuid)
 
   const result: KiwiNodeChange[] = [nc]
   const children = graph.getChildren(node.id)
   for (let i = 0; i < children.length; i++) {
-    result.push(...sceneNodeToKiwi(children[i], guid, i, localIdCounter, graph, blobs, nodeIdToGuid, fontDigestMap))
+    result.push(...sceneNodeToKiwi(children[i], guid, i, localIdCounter, graph, blobs, nodeIdToGuid, fontDigestMap, varIdToGuid))
   }
 
   return result
