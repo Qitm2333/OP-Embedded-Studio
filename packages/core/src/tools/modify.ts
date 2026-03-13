@@ -194,6 +194,11 @@ export const setLayout = defineTool({
     const node = figma.getNodeById(args.id)
     if (!node) return { error: `Node "${args.id}" not found` }
 
+    const raw = figma.graph.getNode(args.id)
+    if (!args.direction && raw?.layoutMode === 'NONE') {
+      return { error: 'Frame has no auto-layout. Pass direction ("HORIZONTAL" or "VERTICAL") to enable it.' }
+    }
+
     if (args.direction) node.layoutMode = args.direction as 'HORIZONTAL' | 'VERTICAL'
     if (args.spacing !== undefined) node.itemSpacing = args.spacing
     if (args.align !== undefined) node.primaryAxisAlignItems = args.align
