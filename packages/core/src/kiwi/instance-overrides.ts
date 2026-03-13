@@ -64,38 +64,55 @@ export function populateAndApplyOverrides(
   guidToNodeId: Map<string, string>,
   blobs: Uint8Array[] = []
 ): void {
-  // Work-queue population: seed with empty instances, then discover newly
-  // cloned nested instances by walking the subtree (avoids full graph scan per round).
-  const populateQueue: string[] = []
-  for (const node of graph.getAllNodes()) {
-    if (node.type === 'INSTANCE' && node.componentId && node.childIds.length === 0) {
-      populateQueue.push(node.id)
-    }
-  }
+  // Populate empty INSTANCE nodes from their source components. Instances
+  // must be populated bottom-up: if an instance's source is itself an
+  // unpopulated instance, populate the source first so cloned children
+  // are complete.
+  function ensurePopulated(nodeId: string, visiting: Set<string>): void {
+    const node = graph.getNode(nodeId)
+    if (!node || node.type !== 'INSTANCE' || !node.componentId || node.childIds.length > 0) return
+    if (visiting.has(nodeId)) return
+    visiting.add(nodeId)
 
-  function collectEmptyInstances(parentId: string, out: string[]) {
-    const parent = graph.getNode(parentId)
-    if (!parent) return
-    for (const childId of parent.childIds) {
+    const comp = graph.getNode(node.componentId)
+    if (!comp) return
+
+    // If the source is an unpopulated instance, populate it first
+    if (comp.type === 'INSTANCE' && comp.componentId && comp.childIds.length === 0) {
+      ensurePopulated(comp.id, visiting)
+    }
+    // Also ensure children of the source are populated (nested instances)
+    for (const childId of comp.childIds) {
       const child = graph.getNode(childId)
-      if (!child) continue
-      if (child.type === 'INSTANCE' && child.componentId && child.childIds.length === 0) {
-        out.push(child.id)
-      } else if (child.childIds.length > 0) {
-        collectEmptyInstances(childId, out)
+      if (child?.type === 'INSTANCE' && child.componentId && child.childIds.length === 0) {
+        ensurePopulated(childId, visiting)
       }
     }
+
+    if (comp.childIds.length > 0 && node.childIds.length === 0) {
+      graph.populateInstanceChildren(nodeId, node.componentId)
+    }
   }
 
-  while (populateQueue.length > 0) {
-    const nodeId = populateQueue.pop()
-    if (!nodeId) continue
-    const node = graph.getNode(nodeId)
-    if (node?.type !== 'INSTANCE' || !node.componentId || node.childIds.length > 0) continue
-    const comp = graph.getNode(node.componentId)
-    if (comp && comp.childIds.length > 0) {
-      graph.populateInstanceChildren(nodeId, node.componentId)
-      collectEmptyInstances(nodeId, populateQueue)
+  const visiting = new Set<string>()
+  for (const node of graph.getAllNodes()) {
+    if (node.type === 'INSTANCE' && node.componentId && node.childIds.length === 0) {
+      ensurePopulated(node.id, visiting)
+    }
+  }
+  // Second pass: cloning may have introduced new empty instances not seen
+  // in the first pass (nested clones). Repeat until stable.
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const node of graph.getAllNodes()) {
+      if (node.type === 'INSTANCE' && node.componentId && node.childIds.length === 0) {
+        const comp = graph.getNode(node.componentId)
+        if (comp && comp.childIds.length > 0) {
+          graph.populateInstanceChildren(node.id, node.componentId)
+          changed = true
+        }
+      }
     }
   }
 
@@ -250,9 +267,17 @@ export function populateAndApplyOverrides(
     const node = graph.getNode(nodeId)
     if (node?.type !== 'INSTANCE') return
 
+    // Only rename when the current name matches the root component name
+    // (i.e. it wasn't manually overridden by the user).
+    const rootCompId = node.componentId ? getComponentRoot(node.componentId) : undefined
+    const rootComp = rootCompId ? graph.getNode(rootCompId) : undefined
     for (const childId of Array.from(node.childIds)) graph.deleteNode(childId)
-    graph.updateNode(nodeId, { componentId: compId })
     const comp = graph.getNode(compId)
+    const updates: Partial<SceneNode> = { componentId: compId }
+    if (comp?.name && rootComp?.name && node.name === rootComp.name) {
+      updates.name = comp.name
+    }
+    graph.updateNode(nodeId, updates)
     if (comp && comp.childIds.length > 0) {
       graph.populateInstanceChildren(nodeId, compId)
     }
@@ -282,15 +307,24 @@ export function populateAndApplyOverrides(
         }
       }
 
-      // Also apply from cloned instance sources — after population, cloned
-      // instances have componentId pointing to the original kiwi node
+      // Walk the componentId chain to find a kiwi source with assignments.
+      // Cloned instances may be several levels deep (clone of clone of …),
+      // so a single-hop lookup is insufficient.
       if (!node.componentId) continue
-      const sourceFigmaId = nodeIdToGuid.get(node.componentId)
-      if (!sourceFigmaId) continue
-      const assignments = assignmentSources.get(sourceFigmaId)
-      if (!assignments) continue
-
-      applyPropAssignments(node.id, assignmentsToValueMap(assignments), propRefsMap)
+      let sourceId: string | undefined = node.componentId
+      for (let depth = 0; sourceId && depth < 20; depth++) {
+        const figmaId = nodeIdToGuid.get(sourceId)
+        if (figmaId) {
+          const assignments = assignmentSources.get(figmaId)
+          if (assignments) {
+            applyPropAssignments(node.id, assignmentsToValueMap(assignments), propRefsMap)
+            break
+          }
+        }
+        const n = graph.getNode(sourceId)
+        if (!n?.componentId || n.componentId === sourceId) break
+        sourceId = n.componentId
+      }
     }
   }
 
@@ -506,6 +540,11 @@ export function populateAndApplyOverrides(
     propagateDsdChanges(dsdModified, dsdSizeSet)
   }
 
+  // Tracks INSTANCE nodes whose componentId was changed by a swap override.
+  // Populated in applySymbolOverrides and recloneChildren, read in syncChildrenDeep
+  // to propagate swaps transitively through clone chains.
+  const swappedInstances = new Set<string>()
+
   function applySymbolOverrides(): Set<string> {
     const overriddenNodes = new Set<string>()
     componentIdRoot.clear()
@@ -528,8 +567,12 @@ export function populateAndApplyOverrides(
         overriddenNodes.add(targetId)
 
         if (ov.overriddenSymbolID) {
-          const newCompId = guidToNodeId.get(guidToString(ov.overriddenSymbolID))
-          if (newCompId) repopulateInstance(targetId, newCompId)
+          const swapGuid = guidToString(ov.overriddenSymbolID)
+          const newCompId = guidToNodeId.get(swapGuid)
+          if (newCompId) {
+            repopulateInstance(targetId, newCompId)
+            swappedInstances.add(targetId)
+          }
         }
 
         const { guidPath: _, overriddenSymbolID: _s, componentPropAssignments: _c, ...fields } = ov
@@ -559,6 +602,19 @@ export function populateAndApplyOverrides(
     if (Object.keys(updates).length > 0) graph.updateNode(target.id, updates)
   }
 
+  function recloneChildren(srcChildId: string, tgtNode: SceneNode) {
+    const srcChild = graph.getNode(srcChildId)
+    if (!srcChild) return
+
+    for (const childId of [...tgtNode.childIds]) graph.deleteNode(childId)
+    graph.updateNode(tgtNode.id, { name: srcChild.name, componentId: srcChild.componentId })
+    syncNodeProps(srcChild, tgtNode)
+    if (srcChild.childIds.length > 0) {
+      graph.populateInstanceChildren(tgtNode.id, srcChildId)
+    }
+    swappedInstances.add(tgtNode.id)
+  }
+
   function syncChildrenDeep(sourceId: string, targetId: string, skip?: Set<string>) {
     const src = graph.getNode(sourceId)
     const tgt = graph.getNode(targetId)
@@ -569,6 +625,12 @@ export function populateAndApplyOverrides(
       const srcNode = graph.getNode(src.childIds[i])
       const tgtNode = graph.getNode(tgt.childIds[i])
       if (!srcNode || !tgtNode || srcNode.type !== tgtNode.type) continue
+
+      if (srcNode.type === 'INSTANCE' && swappedInstances.has(src.childIds[i]) && srcNode.componentId !== tgtNode.componentId) {
+        recloneChildren(src.childIds[i], tgtNode)
+        continue
+      }
+
       syncNodeProps(srcNode, tgtNode)
       syncChildrenDeep(src.childIds[i], tgt.childIds[i], skip)
     }
@@ -635,6 +697,8 @@ export function populateAndApplyOverrides(
   function propagateOverridesTransitively(seeds: Set<string>) {
     if (seeds.size === 0) return
 
+    // Stale after applySymbolOverrides changed componentIds via repopulateInstance
+    componentIdRoot.clear()
     const clonesOf = buildClonesMap()
     const expandedSeeds = expandSeedsToParents(seeds)
     const needsSync = buildNeedsSyncSet(expandedSeeds, clonesOf)
@@ -666,11 +730,9 @@ export function populateAndApplyOverrides(
   }
 
   // Order matters:
-  // 1. symbolOverrides — set property values and swap instances
-  // 2. transitive sync — propagate overrides through clone chains (may
-  //    repopulate INSTANCE children, wiping any earlier property changes)
+  // 1. symbolOverrides — set property values and swap instances (kiwi + clones)
+  // 2. transitive sync — propagate overrides through remaining clone chains
   // 3. componentProperties — toggle visibility / swap via prop assignments
-  //    (must run AFTER sync so repopulated children aren't lost)
   // 4. derivedSymbolData — apply Figma's pre-computed sizes last
   const overriddenNodes = applySymbolOverrides()
 
@@ -678,7 +740,5 @@ export function populateAndApplyOverrides(
 
   applyComponentProperties()
 
-  // DSD resolution runs AFTER overrides so guidPaths can reach children
-  // of instance-swapped nodes (repopulateInstance replaces children).
   applyDerivedSymbolData()
 }

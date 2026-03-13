@@ -141,7 +141,9 @@ export function renderNode(
     canvas.saveLayer(r.opacityPaint)
   }
 
-  const layerBlur = node.effects.find((e) => e.visible && e.type === 'LAYER_BLUR')
+  const layerBlur = node.effects.find(
+    (e) => e.visible && (e.type === 'LAYER_BLUR' || e.type === 'FOREGROUND_BLUR')
+  )
   if (layerBlur) {
     r.effectLayerPaint.setImageFilter(r.getCachedBlur(layerBlur.radius / 2))
     canvas.saveLayer(r.effectLayerPaint)
@@ -443,10 +445,7 @@ export function renderEffects(
       }
     }
 
-    if (
-      (pass === 'behind' && effect.type === 'BACKGROUND_BLUR') ||
-      (pass === 'front' && effect.type === 'FOREGROUND_BLUR')
-    ) {
+    if (pass === 'behind' && effect.type === 'BACKGROUND_BLUR') {
       r.applyClippedBlur(canvas, node, rect, hasRadius, effect.radius / 2)
     }
 

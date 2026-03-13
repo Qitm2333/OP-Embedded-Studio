@@ -87,6 +87,31 @@ test('fill item shows color swatch', async () => {
   await expect(swatch).toBeVisible()
 })
 
+test('clicking color area changes fill color', async () => {
+  const id = await getSelectedId()
+  const before = await getNode(id!)
+
+  const swatch = fillSection().locator('[data-test-id="fill-picker-swatch"]').first()
+  await swatch.click()
+
+  const colorArea = page.locator('.cursor-crosshair').first()
+  await expect(colorArea).toBeVisible({ timeout: 5000 })
+
+  const box = await colorArea.boundingBox()
+  await page.mouse.click(box!.x + box!.width - 10, box!.y + 10)
+  await canvas.waitForRender()
+  await page.waitForTimeout(100)
+
+  const after = await getNode(id!)
+  const c1 = before!.fills[0].color
+  const c2 = after!.fills[0].color
+  expect(c1.r !== c2.r || c1.g !== c2.g || c1.b !== c2.b).toBe(true)
+
+  // Close popover — click the swatch again to toggle it off
+  await swatch.click()
+  await canvas.waitForRender()
+})
+
 test('adding a stroke creates stroke section item', async () => {
   const addBtn = strokeSection().locator('[data-test-id="stroke-section-add"]')
   await addBtn.click()

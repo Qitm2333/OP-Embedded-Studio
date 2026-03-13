@@ -101,40 +101,35 @@ export function applyGradientFill(r: SkiaRenderer, fill: Fill, node: SceneNode):
       r.ck.TileMode.Clamp
     )
     r.fillPaint.setShader(shader)
-  } else if (fill.type === 'GRADIENT_RADIAL') {
-    const cx = t.m02 * w
-    const cy = t.m12 * h
-    const radius = Math.sqrt(t.m00 * t.m00 + t.m10 * t.m10) * Math.max(w, h)
-    const shader = r.ck.Shader.MakeRadialGradient(
-      [cx, cy],
-      radius,
-      colors,
-      positions,
-      r.ck.TileMode.Clamp
+  } else if (fill.type === 'GRADIENT_RADIAL' || fill.type === 'GRADIENT_DIAMOND') {
+    // Figma's gradientTransform maps gradient space (center 0.5,0.5, radius 0.5)
+    // to the node's normalized [0,1] coordinate space. The full local matrix
+    // converts to pixel coordinates: scale(w, h) * gradientTransform.
+    const localMatrix = r.ck.Matrix.multiply(
+      r.ck.Matrix.scaled(w, h),
+      [t.m00, t.m01, t.m02, t.m10, t.m11, t.m12, 0, 0, 1]
     )
-    r.fillPaint.setShader(shader)
-  } else if (fill.type === 'GRADIENT_ANGULAR') {
-    const cx = t.m02 * w
-    const cy = t.m12 * h
-    const shader = r.ck.Shader.MakeSweepGradient(
-      cx,
-      cy,
+    const shader = r.ck.Shader.MakeRadialGradient(
+      [0.5, 0.5],
+      0.5,
       colors,
       positions,
       r.ck.TileMode.Clamp,
-      undefined
+      localMatrix
     )
     r.fillPaint.setShader(shader)
-  } else if (fill.type === 'GRADIENT_DIAMOND') {
-    const cx = t.m02 * w
-    const cy = t.m12 * h
-    const radius = Math.sqrt(t.m00 * t.m00 + t.m10 * t.m10) * Math.max(w, h)
-    const shader = r.ck.Shader.MakeRadialGradient(
-      [cx, cy],
-      radius,
+  } else if (fill.type === 'GRADIENT_ANGULAR') {
+    const localMatrix = r.ck.Matrix.multiply(
+      r.ck.Matrix.scaled(w, h),
+      [t.m00, t.m01, t.m02, t.m10, t.m11, t.m12, 0, 0, 1]
+    )
+    const shader = r.ck.Shader.MakeSweepGradient(
+      0.5,
+      0.5,
       colors,
       positions,
-      r.ck.TileMode.Clamp
+      r.ck.TileMode.Clamp,
+      localMatrix
     )
     r.fillPaint.setShader(shader)
   }

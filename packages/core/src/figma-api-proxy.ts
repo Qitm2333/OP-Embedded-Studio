@@ -8,6 +8,7 @@ import type {
   Effect,
   LayoutMode,
 } from './scene-graph'
+import { normalizeColor } from './color'
 import type { Rect } from './types'
 import { copyFills, copyStrokes, copyEffects } from './copy'
 
@@ -167,7 +168,13 @@ export class FigmaNodeProxy {
   }
 
   set fills(v: readonly Fill[]) {
-    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { fills: [...v] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], {
+      fills: v.map((f) => ({
+        ...f,
+        color: normalizeColor(f.color),
+        gradientStops: f.gradientStops?.map((s) => ({ ...s, color: normalizeColor(s.color) }))
+      }))
+    })
   }
 
   get strokes(): readonly Stroke[] {
@@ -175,7 +182,9 @@ export class FigmaNodeProxy {
   }
 
   set strokes(v: readonly Stroke[]) {
-    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { strokes: [...v] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], {
+      strokes: v.map((s) => ({ ...s, color: normalizeColor(s.color) }))
+    })
   }
 
   get effects(): readonly Effect[] {
@@ -183,7 +192,9 @@ export class FigmaNodeProxy {
   }
 
   set effects(v: readonly Effect[]) {
-    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { effects: [...v] })
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], {
+      effects: v.map((e) => ({ ...e, color: normalizeColor(e.color) }))
+    })
   }
 
   get opacity(): number {

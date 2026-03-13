@@ -277,6 +277,7 @@ export interface NodeChange {
   // Frame
   clipsContent?: boolean
   frameMaskDisabled?: boolean
+  resizeToFit?: boolean
   // Vector
   vectorData?: unknown
   fillGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
