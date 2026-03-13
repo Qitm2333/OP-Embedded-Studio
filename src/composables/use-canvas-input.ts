@@ -220,7 +220,7 @@ function hitTestCornerRotation(
     { pos: 'nw', x: x1, y: y1 },
     { pos: 'ne', x: x2, y: y1 },
     { pos: 'se', x: x2, y: y2 },
-    { pos: 'sw', x: x1, y: y2 },
+    { pos: 'sw', x: x1, y: y2 }
   ]
 
   for (const { pos, x, y } of corners) {
@@ -251,10 +251,12 @@ function buildRotationCursor(angleDeg: number): string {
   if (key === 0) {
     svg = rotateCursorSvg
   } else {
-    svg = rotateCursorSvg.replace(
-      '<path',
-      `<g transform='translate(1002 2110) rotate(${key}) translate(-1002 -2110)'><path`
-    ).replace('</svg>', '</g></svg>')
+    svg = rotateCursorSvg
+      .replace(
+        '<path',
+        `<g transform='translate(1002 2110) rotate(${key}) translate(-1002 -2110)'><path`
+      )
+      .replace('</svg>', '</g></svg>')
   }
   cached = `url("data:image/svg+xml,${encodeURIComponent(svg)}") 12 12, auto`
   rotationCursorCache.set(key, cached)
