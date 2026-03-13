@@ -201,7 +201,8 @@ async function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): 
   const parentLayout = parent?.layoutMode ?? 'NONE'
 
   const isText = nodeType === 'TEXT'
-  const overrides = propsToOverrides(tree.props, isText, parentLayout)
+  const childCount = tree.children.filter((c) => typeof c !== 'string' && isTreeNode(c)).length
+  const overrides = propsToOverrides(tree.props, isText, parentLayout, childCount)
 
   if (isText) {
     const textContent = tree.children.filter((c): c is string => typeof c === 'string').join('')
@@ -414,13 +415,25 @@ function applyAutoLayoutSizing(
   if (counterDim === 'hug') o.counterAxisSizing = 'HUG'
 }
 
+function shouldEnableAutoLayout(
+  props: Record<string, unknown>,
+  isText: boolean,
+  childCount: number
+): boolean {
+  if (props.flex !== undefined) return true
+  if (!isText && hasAutoLayoutTriggerProps(props)) return true
+  if (!isText && !props.grid && childCount >= 2) return true
+  return false
+}
+
 function applyLayoutOverrides(
   props: Record<string, unknown>,
   o: Partial<SceneNode>,
   w: unknown,
   h: unknown,
   isText: boolean,
-  parentLayout: SceneNode['layoutMode']
+  parentLayout: SceneNode['layoutMode'],
+  childCount: number
 ): void {
   if (props.grid) {
     applyGridOverrides(props, o, w, h)
@@ -433,9 +446,7 @@ function applyLayoutOverrides(
     applyGridChildOverrides(props, o)
   }
 
-  const needsAutoLayout = props.flex !== undefined || (!isText && hasAutoLayoutTriggerProps(props))
-
-  if (needsAutoLayout) {
+  if (shouldEnableAutoLayout(props, isText, childCount)) {
     applyAutoLayoutSizing(o, props, w, h)
   }
 
@@ -569,7 +580,8 @@ function applyShapeAndEffectOverrides(props: Record<string, unknown>, o: Partial
 function propsToOverrides(
   props: Record<string, unknown>,
   isText: boolean,
-  parentLayout: SceneNode['layoutMode']
+  parentLayout: SceneNode['layoutMode'],
+  childCount = 0
 ): Partial<SceneNode> {
   const o: Partial<SceneNode> = {}
 
@@ -577,7 +589,7 @@ function propsToOverrides(
 
   const { w, h } = applySizeOverrides(props, o, parentLayout)
   applyVisualOverrides(props, o)
-  applyLayoutOverrides(props, o, w, h, isText, parentLayout)
+  applyLayoutOverrides(props, o, w, h, isText, parentLayout, childCount)
   if (isText) applyTextOverrides(props, o, parentLayout)
   applyShapeAndEffectOverrides(props, o)
 

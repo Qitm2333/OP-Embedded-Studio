@@ -32,7 +32,9 @@ These are ALL available props. Nothing else exists.
 
 ## Layout rules
 
-⚠ **Every parent with children using `w="fill"` or `h="fill"` MUST have `flex="col"` or `flex="row"`.** Without flex, fill is ignored. This is the #1 layout bug.
+⚠ **Every Frame with 2+ children needs `flex="col"` or `flex="row"`.** Without it, children stack at (0,0). Card with photo + info → `flex="col"`. Row of buttons → `flex="row"`. Only omit for decorative layers with explicit x/y positioning.
+
+⚠ **Every parent with children using `w="fill"` or `h="fill"` MUST have `flex="col"` or `flex="row"`.** Without flex, fill is ignored.
 
 justify/items require flex. The value is "between", not "space-between".
 
@@ -82,6 +84,8 @@ No style={{}}, className, CSS. No named colors or rgb(). No percentage values. N
 
 **Don't mix `w={N}` and `grow={N}`** — grow overrides width.
 
+**Tab bar / Bottom nav:** Outer frame `flex="row" w="fill" justify="between" px={32}`. Each tab `flex="col" items="center" gap={4}`. Tab items are HUG-width — `justify="between"` distributes them. Don't use `grow` on individual tabs.
+
 **Dividers:** Vertical `w={1} h="fill"` inside flex="row". Horizontal `h={1} w="fill"` inside flex="col".
 
 # Workflow (MANDATORY)
@@ -102,7 +106,6 @@ Typically **3 renders + 3–4 describes**. `describe` the root with `depth=2` �
 
 - "gap N not on 8px grid" → fix the gap
 - "grow inside HUG parent" → set parent to fixed size or use h="fill"
-- "nested flex may collapse" → add w="fill" or grow
 - "duplicate sibling names" → rename
 - "near-invisible fill" → increase alpha
 

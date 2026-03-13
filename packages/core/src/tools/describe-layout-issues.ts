@@ -101,9 +101,16 @@ function checkDividerOrientation(ctx: LayoutContext): void {
   }
 }
 
+function willGetConcreteSize(node: SceneNode, isRow: boolean, graph: SceneGraph): boolean {
+  return node.layoutGrow > 0
+    || node.layoutAlignSelf === 'STRETCH'
+    || isEffectivelyFilling(node, isRow, graph)
+}
+
 function checkGrowInHug(ctx: LayoutContext): void {
-  const { node, children, issues } = ctx
+  const { node, isRow, graph, children, issues } = ctx
   if (node.primaryAxisSizing !== 'HUG') return
+  if (willGetConcreteSize(node, isRow, graph)) return
   for (const child of children) {
     if (child.layoutGrow > 0) {
       issues.push({
@@ -164,9 +171,9 @@ function checkChildOverflow(ctx: LayoutContext): void {
 }
 
 function checkHugCollapse(ctx: LayoutContext): void {
-  const { node, isRow, children, issues } = ctx
+  const { node, isRow, graph, children, issues } = ctx
   if (children.length === 0) return
-  if (node.primaryAxisSizing === 'HUG' && children.every((c) => c.layoutGrow > 0)) {
+  if (node.primaryAxisSizing === 'HUG' && !willGetConcreteSize(node, isRow, graph) && children.every((c) => c.layoutGrow > 0)) {
     issues.push({
       message: `"${node.name}" is HUG but all children use grow — collapses to zero`,
       suggestion: 'Give at least one child a fixed size, or set parent to fixed'
@@ -234,7 +241,8 @@ function checkTextOverflow(ctx: LayoutContext): void {
 }
 
 function checkSiblingHeightConsistency(ctx: LayoutContext): void {
-  const { isRow, children, issues } = ctx
+  const { node, isRow, children, issues } = ctx
+  if (node.counterAxisAlign === 'CENTER') return
   const containers = children.filter((c) => CONTAINER_TYPES.has(c.type))
   if (containers.length < 2) return
   const dim = isRow ? 'height' : 'width'
@@ -290,6 +298,7 @@ function checkAbsoluteInFlex(_ctx: LayoutContext): void {
 function checkNestedFlexWithoutFill(ctx: LayoutContext): void {
   const { node, isRow, children, issues } = ctx
   if (node.layoutMode === 'NONE') return
+  if (node.primaryAxisAlign === 'SPACE_BETWEEN' || node.primaryAxisAlign === 'CENTER') return
   for (const child of children) {
     if (child.layoutMode === 'NONE') continue
     const crossDim = isRow ? child.width : child.height
