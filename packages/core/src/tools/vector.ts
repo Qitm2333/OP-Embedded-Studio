@@ -1,5 +1,3 @@
-import type { SceneNode } from '../scene-graph'
-
 import { defineTool, nodeSummary } from './schema'
 
 const CHUNK_SIZE = 0x8000
@@ -94,7 +92,7 @@ export const pathSet = defineTool({
     const raw = figma.graph.getNode(args.id)
     if (!raw) return { error: `Node "${args.id}" not found` }
     const network = JSON.parse(args.path)
-    figma.graph.updateNode(args.id, { vectorNetwork: network } as Partial<SceneNode>)
+    figma.graph.updateNode(args.id, { vectorNetwork: network })
     return { id: args.id }
   }
 })
@@ -124,7 +122,8 @@ export const pathScale = defineTool({
       s.tangentEnd.x *= factor
       s.tangentEnd.y *= factor
     }
-    figma.graph.updateNode(id, { vectorNetwork: vn } as Partial<SceneNode>)
+
+    figma.graph.updateNode(id, { vectorNetwork: vn })
     return { id, factor }
   }
 })
@@ -159,7 +158,8 @@ export const pathFlip = defineTool({
       if (axis === 'horizontal') s.tangentEnd.x = -s.tangentEnd.x
       else s.tangentEnd.y = -s.tangentEnd.y
     }
-    figma.graph.updateNode(id, { vectorNetwork: vn } as Partial<SceneNode>)
+
+    figma.graph.updateNode(id, { vectorNetwork: vn })
     return { id, axis }
   }
 })
@@ -182,7 +182,8 @@ export const pathMove = defineTool({
       v.x += dx
       v.y += dy
     }
-    figma.graph.updateNode(id, { vectorNetwork: vn } as Partial<SceneNode>)
+
+    figma.graph.updateNode(id, { vectorNetwork: vn })
     return { id, dx, dy }
   }
 })

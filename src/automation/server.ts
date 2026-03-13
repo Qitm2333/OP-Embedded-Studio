@@ -56,7 +56,7 @@ export function connectAutomation(getStore: () => EditorStore) {
     toolArgs: Record<string, unknown>
   ): Promise<unknown> {
     const tree = toolArgs.tree as Parameters<typeof renderTreeNode>[1]
-    const result = renderTreeNode(store.graph, tree, {
+    const result = await renderTreeNode(store.graph, tree, {
       parentId: (toolArgs.parent_id as string | undefined) ?? store.state.currentPageId,
       x: toolArgs.x as number | undefined,
       y: toolArgs.y as number | undefined

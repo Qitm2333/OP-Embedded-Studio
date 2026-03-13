@@ -26,6 +26,20 @@ let globalTextMeasurer: TextMeasurer | null = null
 
 const GLYPH_WIDTH_FACTOR = 0.6
 
+// Rough estimate for text size when CanvasKit/font is not available.
+// DO NOT REMOVE: without this, text nodes keep their 100×100 default size
+// and blow up every HUG container. The real MeasureFunc (CanvasKit) overrides
+// this when available — this is only the fallback.
+function estimateTextSize(node: SceneNode): { width: number; height: number } {
+  const fontSize = node.fontSize || 14
+  const text = node.text || ''
+  const charWidth = fontSize * GLYPH_WIDTH_FACTOR
+  return {
+    width: Math.ceil(text.length * charWidth),
+    height: Math.ceil(fontSize * 1.2),
+  }
+}
+
 export function setTextMeasurer(measurer: TextMeasurer | null): void {
   globalTextMeasurer = measurer
 }
@@ -302,12 +316,14 @@ function configureChildAsAutoLayout(
   const widthSizing = isChildRow ? child.primaryAxisSizing : child.counterAxisSizing
   const heightSizing = isChildRow ? child.counterAxisSizing : child.primaryAxisSizing
 
+  // Main axis: width for row parent, height for col parent — use grow for FILL
+  // Cross axis: height for row parent, width for col parent — use stretch for FILL
   if (isParentRow) {
-    setSizing(yogaChild, 'width', widthSizing, child.width, child.layoutGrow)
-    setSizing(yogaChild, 'height', heightSizing, child.height, 0)
+    setMainAxisSizing(yogaChild, 'width', widthSizing, child.width, child.layoutGrow)
+    setCrossAxisSizing(yogaChild, 'height', heightSizing, child.height)
   } else {
-    setSizing(yogaChild, 'width', widthSizing, child.width, 0)
-    setSizing(yogaChild, 'height', heightSizing, child.height, child.layoutGrow)
+    setCrossAxisSizing(yogaChild, 'width', widthSizing, child.width)
+    setMainAxisSizing(yogaChild, 'height', heightSizing, child.height, child.layoutGrow)
   }
 
   const selfAlign = mapAlignSelf(child.layoutAlignSelf)
@@ -347,12 +363,18 @@ function configureChildAsLeaf(yogaChild: YogaNode, child: SceneNode, parent: Sce
   if (needsMeasureFunc) {
     configureTextLeaf(yogaChild, child, parent)
   } else if (isText && !globalTextMeasurer && child.textAutoResize !== 'NONE') {
+    // No CanvasKit — use rough estimate so HUG containers don't inherit
+    // the 100×100 default SceneNode size. See estimateTextSize above.
     const est = estimateTextSize(child)
     if (child.textAutoResize === 'WIDTH_AND_HEIGHT') {
       yogaChild.setWidth(est.width)
       yogaChild.setHeight(est.height)
     } else if (child.textAutoResize === 'HEIGHT') {
-      yogaChild.setWidth(child.width)
+      const stretches = child.layoutAlignSelf === 'STRETCH' ||
+        (child.layoutAlignSelf === 'AUTO' && parent.counterAxisAlign === 'STRETCH')
+      if (!(!isRow && stretches)) {
+        yogaChild.setWidth(child.width)
+      }
       yogaChild.setHeight(est.height)
     }
   } else {
@@ -365,24 +387,13 @@ function configureChildAsLeaf(yogaChild: YogaNode, child: SceneNode, parent: Sce
   applyMinMaxConstraints(yogaChild, child)
 }
 
-// Fallback text size estimate when CanvasKit is unavailable (headless/tests).
-// Without this, text nodes keep their 100×100 default and blow up HUG containers.
-function estimateTextSize(node: SceneNode): { width: number; height: number } {
-  const fontSize = node.fontSize || 14
-  const lineHeight = fontSize * 1.2
-  const charWidth = fontSize * GLYPH_WIDTH_FACTOR
-  return {
-    width: Math.ceil(node.text.length * charWidth),
-    height: Math.ceil(lineHeight)
-  }
-}
-
 function configureTextLeaf(
   yogaChild: YogaNode,
   child: SceneNode,
-  _parent: SceneNode
+  parent: SceneNode
 ): void {
   const autoResize = child.textAutoResize
+  const isRow = parent.layoutMode === 'HORIZONTAL'
 
   if (child.layoutGrow > 0) {
     yogaChild.setFlexGrow(child.layoutGrow)
@@ -399,24 +410,31 @@ function configureTextLeaf(
       if (cached) return cached
 
       const measured = globalTextMeasurer?.(child, maxW)
-      const result = measured ?? { width: child.width, height: child.height }
+      const result = measured ?? estimateTextSize(child)
       cache.set(cacheKey, result)
       return result
     })
   } else if (autoResize === 'HEIGHT') {
+    const stretchesCross = child.layoutAlignSelf === 'STRETCH' ||
+      (child.layoutAlignSelf === 'AUTO' && parent.counterAxisAlign === 'STRETCH')
+    // Don't set fixed width when text stretches on cross axis (w="fill" in
+    // flex="col" parent) — setWidth blocks Yoga's alignSelf:stretch, leaving
+    // text at 100px default instead of filling the parent.
+    const fillsWidth = !isRow && stretchesCross
     const fixedWidth = child.width
-    if (child.layoutGrow <= 0) {
+    if (child.layoutGrow <= 0 && !fillsWidth) {
       yogaChild.setWidth(fixedWidth)
     }
     yogaChild.setMeasureFunc((width, widthMode, _height, _heightMode) => {
-      const constraintW =
-        widthMode === MeasureMode.Undefined ? fixedWidth : Math.min(width, fixedWidth || width)
+      const constraintW = fillsWidth
+        ? (widthMode === MeasureMode.Undefined ? fixedWidth : width)
+        : (widthMode === MeasureMode.Undefined ? fixedWidth : Math.min(width, fixedWidth || width))
       const cacheKey = Math.round(constraintW)
       const cached = cache.get(cacheKey)
       if (cached) return cached
 
       const measured = globalTextMeasurer?.(child, constraintW)
-      const result = { width: constraintW, height: measured?.height ?? child.height }
+      const result = { width: constraintW, height: measured?.height ?? estimateTextSize(child).height }
       cache.set(cacheKey, result)
       return result
     })
@@ -449,7 +467,7 @@ function configureNonTextLeaf(
   }
 }
 
-function setSizing(
+function setMainAxisSizing(
   yogaNode: YogaNode,
   axis: 'width' | 'height',
   sizing: string,
@@ -474,6 +492,25 @@ function setSizing(
       yogaNode.setFlexGrow(1)
       yogaNode.setFlexShrink(1)
       yogaNode.setFlexBasis(0)
+      break
+  }
+}
+
+function setCrossAxisSizing(
+  yogaNode: YogaNode,
+  axis: 'width' | 'height',
+  sizing: string,
+  fixedValue: number
+): void {
+  switch (sizing) {
+    case 'FIXED':
+      if (axis === 'width') yogaNode.setWidth(fixedValue)
+      else yogaNode.setHeight(fixedValue)
+      break
+    case 'HUG':
+      break
+    case 'FILL':
+      yogaNode.setAlignSelf(Align.Stretch)
       break
   }
 }

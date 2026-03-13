@@ -6,6 +6,7 @@ import { z } from 'zod'
 
 import {
   ALL_TOOLS,
+  CODEGEN_PROMPT,
   FigmaAPI,
   parseFigFile,
   computeAllLayouts,
@@ -204,6 +205,15 @@ export function createServer(version: string, options: CreateServerOptions = {})
     if (!enableEval && tool.name === 'eval') continue
     registerTool(tool)
   }
+
+  register(
+    'get_codegen_prompt',
+    {
+      description: 'Get design-to-code generation guidelines. Call before generating frontend code.',
+      inputSchema: z.object({})
+    },
+    async () => ok({ prompt: CODEGEN_PROMPT })
+  )
 
   return server
 }

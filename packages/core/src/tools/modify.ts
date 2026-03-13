@@ -1,7 +1,7 @@
 /* eslint-disable max-lines -- property setters share common patterns, splitting would scatter related tools */
 import { parseColor } from '../color'
 import { DEFAULT_SHADOW_COLOR } from '../constants'
-import type { Effect, StyleRun } from '../scene-graph'
+import type { CharacterStyleOverride, Effect, StyleRun } from '../scene-graph'
 
 import { defineTool } from './schema'
 
@@ -88,7 +88,7 @@ export const setEffects = defineTool({
       visible: true,
       radius: args.radius ?? 4,
       color,
-      offset: isBlur ? { x: 0, y: 0 } : { x: args.offset_x ?? 0, y: args.offset_y ?? 4 },
+      offset: { x: isBlur ? 0 : (args.offset_x ?? 0), y: isBlur ? 0 : (args.offset_y ?? 4) },
       spread: isBlur ? 0 : (args.spread ?? 0)
     }
 
@@ -172,24 +172,21 @@ export const setLayout = defineTool({
     id: { type: 'string', description: 'Frame node ID', required: true },
     direction: {
       type: 'string',
-      description: 'Layout direction',
-      required: true,
+      description: 'Layout direction (keeps current if omitted)',
       enum: ['HORIZONTAL', 'VERTICAL']
     },
-    spacing: { type: 'number', description: 'Gap between items', default: 0, min: 0 },
-    padding: { type: 'number', description: 'Equal padding on all sides', min: 0 },
+    spacing: { type: 'number', description: 'Gap between items (only changes if provided)', min: 0 },
+    padding: { type: 'number', description: 'Equal padding on all sides (only changes if provided)', min: 0 },
     padding_horizontal: { type: 'number', description: 'Horizontal padding', min: 0 },
     padding_vertical: { type: 'number', description: 'Vertical padding', min: 0 },
     align: {
       type: 'string',
-      description: 'Primary axis alignment',
-      default: 'MIN',
+      description: 'Primary axis alignment (only changes if provided)',
       enum: ['MIN', 'CENTER', 'MAX', 'SPACE_BETWEEN']
     },
     counter_align: {
       type: 'string',
-      description: 'Cross axis alignment',
-      default: 'MIN',
+      description: 'Cross axis alignment (only changes if provided)',
       enum: ['MIN', 'CENTER', 'MAX', 'STRETCH']
     }
   },
@@ -197,19 +194,32 @@ export const setLayout = defineTool({
     const node = figma.getNodeById(args.id)
     if (!node) return { error: `Node "${args.id}" not found` }
 
-    node.layoutMode = args.direction as 'HORIZONTAL' | 'VERTICAL'
-    node.itemSpacing = args.spacing ?? 0
-    node.primaryAxisAlignItems = args.align ?? 'MIN'
-    node.counterAxisAlignItems = args.counter_align ?? 'MIN'
+    const raw = figma.graph.getNode(args.id)
+    if (!args.direction && raw?.layoutMode === 'NONE') {
+      return { error: 'Frame has no auto-layout. Pass direction ("HORIZONTAL" or "VERTICAL") to enable it.' }
+    }
 
-    const ph = args.padding_horizontal ?? args.padding ?? 0
-    const pv = args.padding_vertical ?? args.padding ?? 0
-    node.paddingLeft = ph
-    node.paddingRight = ph
-    node.paddingTop = pv
-    node.paddingBottom = pv
+    if (args.direction) node.layoutMode = args.direction as 'HORIZONTAL' | 'VERTICAL'
+    if (args.spacing !== undefined) node.itemSpacing = args.spacing
+    if (args.align !== undefined) node.primaryAxisAlignItems = args.align
+    if (args.counter_align !== undefined) node.counterAxisAlignItems = args.counter_align
 
-    return { id: args.id, direction: args.direction, spacing: args.spacing ?? 0 }
+    if (args.padding !== undefined) {
+      node.paddingTop = args.padding
+      node.paddingRight = args.padding
+      node.paddingBottom = args.padding
+      node.paddingLeft = args.padding
+    }
+    if (args.padding_horizontal !== undefined) {
+      node.paddingLeft = args.padding_horizontal
+      node.paddingRight = args.padding_horizontal
+    }
+    if (args.padding_vertical !== undefined) {
+      node.paddingTop = args.padding_vertical
+      node.paddingBottom = args.padding_vertical
+    }
+
+    return { id: args.id, spacing: node.itemSpacing }
   }
 })
 
@@ -386,11 +396,15 @@ export const setFontRange = defineTool({
   execute: (figma, args) => {
     const node = figma.getNodeById(args.id)
     if (!node) return { error: `Node "${args.id}" not found` }
-    const style: StyleRun['style'] = {}
+    const style: CharacterStyleOverride = {}
     if (args.family) style.fontFamily = args.family
     if (args.size) style.fontSize = args.size
-    if (args.style) style.fontWeight = args.style === 'Bold' ? 700 : undefined
-    const run: StyleRun = { start: args.start, length: args.end - args.start, style }
+    if (args.style === 'italic' || args.style === 'Italic') style.italic = true
+    const run: StyleRun = {
+      start: args.start,
+      length: args.end - args.start,
+      style
+    }
     figma.graph.updateNode(node.id, {
       styleRuns: [...(figma.graph.getNode(node.id)?.styleRuns ?? []), run]
     })

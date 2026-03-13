@@ -3,6 +3,7 @@ import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewpor
 import { computed, markRaw, nextTick, ref, watch } from 'vue'
 
 import { copyChatLog } from '@/ai/chat-debug'
+import { clearToolLogEntries, didHitStepLimit } from '@/ai/tools'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
 import ProviderSetup from '@/components/chat/ProviderSetup.vue'
@@ -22,6 +23,27 @@ const debugCopied = ref(false)
 
 const messages = computed(() => chat.value?.messages ?? [])
 const status = computed(() => chat.value?.status ?? 'ready')
+const isThinking = computed(() => {
+  const s = status.value
+  if (s !== 'submitted' && s !== 'streaming') return false
+  if (messages.value.length === 0) return true
+  const last = messages.value[messages.value.length - 1]
+  if (last.role !== 'assistant') return true
+  const parts = last.parts
+  if (parts.length === 0) return true
+  const lastPart = parts[parts.length - 1] as Record<string, unknown>
+  if (lastPart.type === 'step-start') return true
+  if ('toolCallId' in lastPart && lastPart.state === 'output-available') return true
+  if ('toolCallId' in lastPart && lastPart.state === 'output-error') return true
+  return s === 'submitted'
+})
+
+const showContinue = computed(() => {
+  if (status.value !== 'ready') return false
+  if (messages.value.length === 0) return false
+  const last = messages.value[messages.value.length - 1]
+  return last.role === 'assistant' && didHitStepLimit()
+})
 
 function scrollToBottom() {
   nextTick(() => {
@@ -32,10 +54,9 @@ function scrollToBottom() {
 watch(messages, scrollToBottom, { deep: true })
 
 function handleSubmit(text: string) {
-  if (!chat.value) {
-    const c = ensureChat()
-    if (c) chat.value = markRaw(c)
-  }
+  if (status.value === 'streaming' || status.value === 'submitted') return
+  const c = ensureChat()
+  if (c) chat.value = markRaw(c)
   chat.value?.sendMessage({ text }).catch(() => {
     /* user-facing error handled by UI */
   })
@@ -56,6 +77,7 @@ async function handleCopyDebug() {
 function handleClearChat() {
   chat.value = null
   resetChat()
+  clearToolLogEntries()
 }
 </script>
 
@@ -80,12 +102,8 @@ function handleClearChat() {
           <div v-else data-test-id="chat-messages" class="flex flex-col gap-3">
             <ChatMessage v-for="msg in messages" :key="msg.id" :message="msg" />
 
-            <!-- Typing indicator -->
-            <div
-              v-if="status === 'submitted'"
-              data-test-id="chat-typing-indicator"
-              class="flex gap-2"
-            >
+            <!-- Thinking indicator: shown when AI is working but no visible activity -->
+            <div v-if="isThinking" data-test-id="chat-typing-indicator" class="flex gap-2">
               <div
                 class="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted/20 text-[10px] font-bold text-muted"
               >
@@ -105,6 +123,17 @@ function handleClearChat() {
                   style="animation-delay: 300ms"
                 />
               </div>
+            </div>
+
+            <!-- Continue button when step limit reached -->
+            <div v-if="showContinue" class="flex justify-center py-2">
+              <button
+                class="flex items-center gap-1.5 rounded-full bg-accent/10 px-4 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/20"
+                @click="handleSubmit('Continue where you left off')"
+              >
+                <icon-lucide-play class="size-3" />
+                Continue
+              </button>
             </div>
 
             <div ref="messagesEnd" />

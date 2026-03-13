@@ -8,7 +8,7 @@ import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi/kiwi-convert'
 
 import type { NodeChange, Paint, VariableConsumptionEntry } from './kiwi/codec'
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from './scene-graph'
-import type { GUID } from './types'
+import type { Color, GUID } from './types'
 
 const fontDigestCache = new Map<string, Uint8Array>()
 
@@ -251,16 +251,20 @@ function exportTextData(node: SceneNode): NodeChange['textData'] {
   }
 }
 
+function safeColor(c: { r: number; g: number; b: number; a?: number }): Color {
+  return { r: c.r, g: c.g, b: c.b, a: c.a ?? 1 }
+}
+
 function fillToKiwiPaint(f: SceneNode['fills'][number]): Paint {
   const paint: Paint = {
     type: f.type,
-    color: f.color,
+    color: safeColor(f.color),
     opacity: f.opacity,
     visible: f.visible,
     blendMode: f.blendMode ?? 'NORMAL'
   }
   if (f.gradientStops) {
-    paint.stops = f.gradientStops.map((s) => ({ color: s.color, position: s.position }))
+    paint.stops = f.gradientStops.map((s) => ({ color: safeColor(s.color), position: s.position }))
   }
   if (f.gradientTransform) paint.transform = f.gradientTransform
   if (f.imageHash) paint.image = { hash: f.imageHash }
@@ -364,7 +368,8 @@ function serializeGeometry(node: SceneNode, nc: KiwiNodeChange, blobs: Uint8Arra
 function serializeVariableBindings(
   node: SceneNode,
   nc: KiwiNodeChange,
-  graph: SceneGraph
+  graph: SceneGraph,
+  varIdToGuid?: Map<string, GUID>
 ): void {
   if (Object.keys(node.boundVariables).length === 0) return
   const entries: VariableConsumptionEntry[] = []
@@ -374,7 +379,7 @@ function serializeVariableBindings(
     if (!kiwiField) continue
     const variable = graph.variables.get(varId)
     if (!variable) continue
-    const varGuid = stringToGuid(varId)
+    const varGuid = varIdToGuid?.get(varId) ?? stringToGuid(varId)
     const resolvedType = typeMap[variable.type] ?? 'FLOAT'
     entries.push({
       variableData: {
@@ -396,7 +401,8 @@ export function sceneNodeToKiwi(
   graph: SceneGraph,
   blobs: Uint8Array[],
   nodeIdToGuid?: Map<string, GUID>,
-  fontDigestMap?: Map<string, Uint8Array>
+  fontDigestMap?: Map<string, Uint8Array>,
+  varIdToGuid?: Map<string, GUID>
 ): KiwiNodeChange[] {
   const localID = localIdCounter.value++
   const guid = { sessionID: 1, localID }
@@ -408,7 +414,7 @@ export function sceneNodeToKiwi(
   const fillPaints = node.fills.map(fillToKiwiPaint)
   const strokePaints = node.strokes.map((s) => ({
     type: 'SOLID' as const,
-    color: s.color,
+    color: safeColor(s.color),
     opacity: s.opacity,
     visible: s.visible,
     blendMode: 'NORMAL' as const
@@ -444,7 +450,7 @@ export function sceneNodeToKiwi(
   if (node.effects.length > 0) {
     nc.effects = node.effects.map((e) => ({
       type: e.type === 'LAYER_BLUR' ? 'FOREGROUND_BLUR' : e.type,
-      color: e.color,
+      color: safeColor(e.color),
       offset: e.offset,
       radius: e.radius,
       spread: e.spread,
@@ -477,12 +483,12 @@ export function sceneNodeToKiwi(
 
   serializeLayoutProps(node, nc)
   serializeGeometry(node, nc, blobs)
-  serializeVariableBindings(node, nc, graph)
+  serializeVariableBindings(node, nc, graph, varIdToGuid)
 
   const result: KiwiNodeChange[] = [nc]
   const children = graph.getChildren(node.id)
   for (let i = 0; i < children.length; i++) {
-    result.push(...sceneNodeToKiwi(children[i], guid, i, localIdCounter, graph, blobs, nodeIdToGuid, fontDigestMap))
+    result.push(...sceneNodeToKiwi(children[i], guid, i, localIdCounter, graph, blobs, nodeIdToGuid, fontDigestMap, varIdToGuid))
   }
 
   return result

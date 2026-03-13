@@ -52,8 +52,8 @@ export {
 } from './scene-graph'
 
 export { FigmaAPI, FigmaNodeProxy, computeImageHash, type FigmaFontName } from './figma-api'
-export { ALL_TOOLS, defineTool, toolsToAI } from './tools'
-export type { ToolDef, ParamDef, ParamType } from './tools'
+export { ALL_TOOLS, CORE_TOOLS, EXTENDED_TOOLS, defineTool, toolsToAI, buildDebugLog } from './tools'
+export type { ToolDef, ParamDef, ParamType, ToolLogEntry, ToolDebugLog, AIAdapterOptions, StepBudget } from './tools'
 export { executeRpcCommand, ALL_RPC_COMMANDS } from './rpc'
 export { queryByXPath, matchByXPath } from './xpath'
 export type { XPathQueryOptions } from './xpath'
@@ -139,6 +139,8 @@ export {
   type SVGExportOptions
 } from './svg-export'
 export { svg, renderSVGNode, type SVGNode } from './svg-node'
+export { parseSVGPath } from './svg-path-parse'
+export { fetchIcon, fetchIcons, searchIcons, searchIconsBatch, clearIconCache, type IconData, type IconPath, type IconSearchResult } from './iconify'
 export { exportFigFile, compressFigData, compressFigDataSync } from './fig-export'
 export {
   FIG_KIWI_VERSION,
@@ -241,3 +243,5 @@ export {
   parseVarint,
   FIG_WIRE_MAGIC
 } from './kiwi'
+
+export { CODEGEN_PROMPT } from './tools/prompts/codegen-prompt'

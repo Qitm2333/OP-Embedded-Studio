@@ -515,6 +515,36 @@ describe('FigmaAPI', () => {
       expect(inner.layoutSizingHorizontal).toBe('FILL')
       expect(inner.layoutMode).toBe('VERTICAL')
     })
+
+    test('HORIZONTAL child in VERTICAL parent: sizing maps to correct raw axis', () => {
+      const api = createAPI()
+      const parent = api.createFrame()
+      parent.layoutMode = 'VERTICAL'
+      parent.resize(375, 812)
+      const child = api.createFrame()
+      child.layoutMode = 'HORIZONTAL'
+      parent.appendChild(child)
+      child.layoutSizingVertical = 'FIXED'
+      child.resize(375, 44)
+      expect(child.layoutSizingVertical).toBe('FIXED')
+      const raw = api.graph.getNode(child.id)!
+      expect(raw.counterAxisSizing).toBe('FIXED')
+    })
+
+    test('VERTICAL child in HORIZONTAL parent: sizing maps to correct raw axis', () => {
+      const api = createAPI()
+      const parent = api.createFrame()
+      parent.layoutMode = 'HORIZONTAL'
+      parent.resize(800, 600)
+      const child = api.createFrame()
+      child.layoutMode = 'VERTICAL'
+      parent.appendChild(child)
+      child.layoutSizingHorizontal = 'FIXED'
+      child.resize(200, 600)
+      expect(child.layoutSizingHorizontal).toBe('FIXED')
+      const raw = api.graph.getNode(child.id)!
+      expect(raw.counterAxisSizing).toBe('FIXED')
+    })
   })
 
   describe('frozen arrays', () => {

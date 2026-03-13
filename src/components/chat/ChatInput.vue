@@ -35,7 +35,9 @@ const emit = defineEmits<{
 const input = ref('')
 
 const isStreaming = computed(() => status === 'streaming' || status === 'submitted')
-const isCustomProvider = computed(() => providerID.value === 'openai-compatible')
+const isCustomProvider = computed(
+  () => providerID.value === 'openai-compatible' || providerID.value === 'anthropic-compatible'
+)
 
 const selectedModelName = computed(() => {
   if (isCustomProvider.value) return customModelID.value || 'No model'
@@ -121,7 +123,7 @@ function handleSubmit(e: Event) {
           data-test-id="chat-input"
           placeholder="Describe a change…"
           :class="uiInput({ class: 'min-w-0 flex-1 placeholder:text-muted' })"
-          :disabled="status === 'submitted'"
+          :disabled="isStreaming"
           @paste.stop
           @copy.stop
           @cut.stop

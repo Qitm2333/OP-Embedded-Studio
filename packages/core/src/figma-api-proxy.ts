@@ -83,6 +83,15 @@ export class FigmaNodeProxy {
     return n
   }
 
+  _parentLayout(): 'HORIZONTAL' | 'VERTICAL' | 'NONE' {
+    const n = this._raw()
+    if (!n.parentId) return 'NONE'
+    const parent = this[INTERNAL_GRAPH].getNode(n.parentId)
+    if (!parent) return 'NONE'
+    const mode = parent.layoutMode
+    return mode === 'HORIZONTAL' || mode === 'VERTICAL' ? mode : 'NONE'
+  }
+
   get id(): string {
     return this[INTERNAL_ID]
   }
@@ -726,48 +735,40 @@ export class FigmaNodeProxy {
 
   get layoutSizingHorizontal(): string {
     const n = this._raw()
-    const parent = n.parentId ? this[INTERNAL_GRAPH].getNode(n.parentId) : undefined
-    const refLayout = parent && parent.layoutMode !== 'NONE' ? parent.layoutMode : n.layoutMode
-    if (refLayout === 'NONE') return 'FIXED'
-    return refLayout === 'HORIZONTAL' ? n.primaryAxisSizing : n.counterAxisSizing
+    const layout = n.layoutMode !== 'NONE' ? n.layoutMode : this._parentLayout()
+    if (layout === 'NONE') return 'FIXED'
+    return layout === 'HORIZONTAL' ? n.primaryAxisSizing : n.counterAxisSizing
   }
 
   set layoutSizingHorizontal(v: string) {
     const n = this._raw()
-    const parent = n.parentId ? this[INTERNAL_GRAPH].getNode(n.parentId) : undefined
-    const refLayout = parent && parent.layoutMode !== 'NONE' ? parent.layoutMode : n.layoutMode
-    if (refLayout === 'VERTICAL') {
-      this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], {
-        counterAxisSizing: v as SceneNode['counterAxisSizing']
-      })
-    } else {
-      this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], {
-        primaryAxisSizing: v as SceneNode['primaryAxisSizing']
-      })
-    }
+    const layout = n.layoutMode !== 'NONE' ? n.layoutMode : this._parentLayout()
+    const parentLayout = this._parentLayout()
+    const isMainAxis = parentLayout === 'HORIZONTAL'
+    const updates: Partial<SceneNode> = layout === 'VERTICAL'
+      ? { counterAxisSizing: v as SceneNode['counterAxisSizing'] }
+      : { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] }
+    if (isMainAxis) updates.layoutGrow = v === 'FILL' ? 1 : 0
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], updates)
   }
 
   get layoutSizingVertical(): string {
     const n = this._raw()
-    const parent = n.parentId ? this[INTERNAL_GRAPH].getNode(n.parentId) : undefined
-    const refLayout = parent && parent.layoutMode !== 'NONE' ? parent.layoutMode : n.layoutMode
-    if (refLayout === 'NONE') return 'FIXED'
-    return refLayout === 'VERTICAL' ? n.primaryAxisSizing : n.counterAxisSizing
+    const layout = n.layoutMode !== 'NONE' ? n.layoutMode : this._parentLayout()
+    if (layout === 'NONE') return 'FIXED'
+    return layout === 'VERTICAL' ? n.primaryAxisSizing : n.counterAxisSizing
   }
 
   set layoutSizingVertical(v: string) {
     const n = this._raw()
-    const parent = n.parentId ? this[INTERNAL_GRAPH].getNode(n.parentId) : undefined
-    const refLayout = parent && parent.layoutMode !== 'NONE' ? parent.layoutMode : n.layoutMode
-    if (refLayout === 'HORIZONTAL') {
-      this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], {
-        counterAxisSizing: v as SceneNode['counterAxisSizing']
-      })
-    } else {
-      this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], {
-        primaryAxisSizing: v as SceneNode['primaryAxisSizing']
-      })
-    }
+    const layout = n.layoutMode !== 'NONE' ? n.layoutMode : this._parentLayout()
+    const parentLayout = this._parentLayout()
+    const isMainAxis = parentLayout === 'VERTICAL'
+    const updates: Partial<SceneNode> = layout === 'HORIZONTAL'
+      ? { counterAxisSizing: v as SceneNode['counterAxisSizing'] }
+      : { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] }
+    if (isMainAxis) updates.layoutGrow = v === 'FILL' ? 1 : 0
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], updates)
   }
 
   // --- Constraints ---

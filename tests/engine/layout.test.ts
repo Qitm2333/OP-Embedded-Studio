@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 
-import { SceneGraph, type SceneNode, type GridTrack, computeLayout, computeAllLayouts, setTextMeasurer } from '@open-pencil/core'
+import { SceneGraph, type SceneNode, type GridTrack, computeLayout, computeAllLayouts, setTextMeasurer, FigmaAPI } from '@open-pencil/core'
 
 function pageId(graph: SceneGraph) {
   return graph.getPages()[0].id
@@ -1033,7 +1033,7 @@ describe('Auto Layout', () => {
         primaryAxisAlign: 'CENTER',
       })
 
-      const text = graph.createNode('TEXT', frame.id, {
+      graph.createNode('TEXT', frame.id, {
         width: 200,
         height: 20,
         text: 'Test',
@@ -1044,12 +1044,49 @@ describe('Auto Layout', () => {
       setTextMeasurer(null)
       computeAllLayouts(graph)
 
-      const updatedText = graph.getNode(text.id)!
+      const children = graph.getChildren(frame.id)
+      const updatedText = children[0]
       // Rough estimate: ~0.6 × fontSize × charCount, not the 100×100 default
       expect(updatedText.width).toBeLessThan(100)
       expect(updatedText.width).toBeGreaterThan(0)
       expect(updatedText.height).toBeLessThan(100)
       expect(updatedText.height).toBeGreaterThan(0)
+    })
+
+    test('text with w="fill" in flex="col" stretches to parent width', () => {
+      const graph = new SceneGraph()
+      const pid = pageId(graph)
+
+      const frame = autoFrame(graph, pid, {
+        width: 300,
+        height: 400,
+        layoutMode: 'VERTICAL',
+        primaryAxisSizing: 'FIXED',
+        counterAxisSizing: 'FIXED',
+        paddingLeft: 20,
+        paddingRight: 20,
+      })
+
+      const text = graph.createNode('TEXT', frame.id, {
+        width: 100,
+        height: 20,
+        text: 'This text should fill the parent width',
+        fontSize: 14,
+        textAutoResize: 'HEIGHT' as const,
+        layoutAlignSelf: 'STRETCH' as const,
+      })
+
+      setTextMeasurer((_node, maxWidth) => {
+        const w = maxWidth ?? 260
+        return { width: w, height: 20 }
+      })
+
+      computeAllLayouts(graph)
+      setTextMeasurer(null)
+
+      const updatedText = graph.getNode(text.id)!
+      // Should stretch to 300 - 20 - 20 = 260, NOT stay at 100
+      expect(updatedText.width).toBe(260)
     })
 
     test('HEIGHT auto-resize text wraps via MeasureFunc when filling parent', () => {
@@ -1890,6 +1927,56 @@ describe('Grid Layout', () => {
       const children = graph.getChildren(frame.id)
       expect(children[0].width).toBe(200)
       expect(children[0].height).toBe(200)
+    })
+  })
+
+  describe('layoutSizingVertical with cross-axis children', () => {
+    test('HORIZONTAL children in VERTICAL parent respect FIXED height after layout', () => {
+      const graph = new SceneGraph()
+      const api = new FigmaAPI(graph)
+
+      const root = api.createFrame()
+      root.layoutMode = 'VERTICAL'
+      root.resize(375, 812)
+      api.currentPage.appendChild(root)
+
+      const statusBar = api.createFrame()
+      statusBar.layoutMode = 'HORIZONTAL'
+      root.appendChild(statusBar)
+      statusBar.layoutSizingHorizontal = 'FILL'
+      statusBar.layoutSizingVertical = 'FIXED'
+      statusBar.resize(375, 44)
+
+      const toolbar = api.createFrame()
+      toolbar.layoutMode = 'HORIZONTAL'
+      root.appendChild(toolbar)
+      toolbar.layoutSizingHorizontal = 'FILL'
+      toolbar.layoutSizingVertical = 'FIXED'
+      toolbar.resize(375, 52)
+
+      const canvas = api.createFrame()
+      root.appendChild(canvas)
+      canvas.layoutSizingHorizontal = 'FILL'
+      canvas.layoutSizingVertical = 'FILL'
+
+      const panel = api.createFrame()
+      panel.layoutMode = 'VERTICAL'
+      root.appendChild(panel)
+      panel.layoutSizingHorizontal = 'FILL'
+      panel.layoutSizingVertical = 'FIXED'
+      panel.resize(375, 220)
+
+      computeAllLayouts(graph)
+
+      const sb = graph.getNode(statusBar.id)!
+      const tb = graph.getNode(toolbar.id)!
+      const cv = graph.getNode(canvas.id)!
+      const pn = graph.getNode(panel.id)!
+
+      expect(sb.height).toBe(44)
+      expect(tb.height).toBe(52)
+      expect(pn.height).toBe(220)
+      expect(cv.height).toBe(812 - 44 - 52 - 220)
     })
   })
 })

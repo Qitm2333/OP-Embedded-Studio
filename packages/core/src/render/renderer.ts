@@ -1,5 +1,7 @@
 import { parseColor, colorToFill } from '../color'
 import { TRANSPARENT } from '../constants'
+import { fetchIcons } from '../iconify'
+import { createIconFromPaths } from '../icon-render'
 import { isTreeNode } from './tree'
 
 import type { SceneGraph, SceneNode, NodeType, LayoutMode, GridTrack, Stroke } from '../scene-graph'
@@ -78,14 +80,14 @@ export interface RenderResult {
   childIds: string[]
 }
 
-export function renderTree(
+export async function renderTree(
   graph: SceneGraph,
   tree: TreeNode,
   options: RenderOptions = {}
-): RenderResult {
+): Promise<RenderResult> {
   const parentId = options.parentId ?? graph.getPages()[0].id
 
-  const result = renderNode(graph, tree, parentId)
+  const result = await renderNode(graph, tree, parentId)
 
   if (options.x !== undefined) graph.updateNode(result.id, { x: options.x })
   if (options.y !== undefined) graph.updateNode(result.id, { y: options.y })
@@ -98,7 +100,39 @@ export function renderTree(
   }
 }
 
-function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): SceneNode {
+async function renderIconNode(
+  graph: SceneGraph,
+  tree: TreeNode,
+  parentId: string
+): Promise<SceneNode> {
+  const props = tree.props
+  const iconName = props.name as string | undefined
+  if (!iconName) throw new Error('<Icon> requires a name prop (e.g. name="lucide:heart")')
+
+  const size = (props.size as number | undefined) ?? 24
+  const colorHex = (props.color as string | undefined) ?? '#000000'
+  const parsedColor = parseColor(colorHex)
+
+  const icons = await fetchIcons([iconName], size)
+  const icon = icons.get(iconName)
+  if (!icon || icon.paths.length === 0) {
+    throw new Error(`Icon "${iconName}" not found`)
+  }
+
+  const parent = graph.getNode(parentId)
+  const parentLayout = parent?.layoutMode ?? 'NONE'
+  const overrides: Partial<SceneNode> = {}
+  if (props.label) overrides.name = props.label as string
+  const { w, h } = applySizeOverrides(props, overrides, parentLayout)
+  if (typeof w !== 'number') overrides.width = size
+  if (typeof h !== 'number') overrides.height = size
+
+  return createIconFromPaths(graph, icon, iconName, size, parsedColor, parentId, overrides)
+}
+
+async function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): Promise<SceneNode> {
+  if (tree.type === 'icon') return renderIconNode(graph, tree, parentId)
+
   const nodeType = TYPE_MAP[tree.type]
   if (!nodeType) throw new Error(`Unknown element: <${tree.type}>`)
 
@@ -118,7 +152,7 @@ function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): SceneN
   for (const child of tree.children) {
     if (typeof child === 'string') continue
     if (isTreeNode(child)) {
-      renderNode(graph, child, node.id)
+      await renderNode(graph, child, node.id)
     }
   }
 
@@ -319,6 +353,15 @@ function applyAutoLayoutSizing(
   if (counterDim === 'hug') o.counterAxisSizing = 'HUG'
 }
 
+function shouldEnableAutoLayout(
+  props: Record<string, unknown>,
+  isText: boolean
+): boolean {
+  if (props.flex !== undefined) return true
+  if (!isText && hasAutoLayoutTriggerProps(props)) return true
+  return false
+}
+
 function applyLayoutOverrides(
   props: Record<string, unknown>,
   o: Partial<SceneNode>,
@@ -338,9 +381,7 @@ function applyLayoutOverrides(
     applyGridChildOverrides(props, o)
   }
 
-  const needsAutoLayout = props.flex !== undefined || (!isText && hasAutoLayoutTriggerProps(props))
-
-  if (needsAutoLayout) {
+  if (shouldEnableAutoLayout(props, isText)) {
     applyAutoLayoutSizing(o, props, w, h)
   }
 
@@ -366,11 +407,7 @@ function applyLayoutOverrides(
   if (props.maxW !== undefined) o.width = Math.min(o.width ?? Infinity, props.maxW as number)
 }
 
-function applyTextOverrides(
-  props: Record<string, unknown>,
-  o: Partial<SceneNode>,
-  parentLayout: SceneNode['layoutMode']
-): void {
+function applyTextStyleOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
   const fontSize = props.size ?? props.fontSize
   if (typeof fontSize === 'number') o.fontSize = fontSize
 
@@ -388,16 +425,37 @@ function applyTextOverrides(
     o.fills = [colorToFill(props.color)]
   }
 
+  if (props.lineHeight !== undefined) o.lineHeight = props.lineHeight as number
+  if (props.letterSpacing !== undefined) o.letterSpacing = props.letterSpacing as number
+  if (props.textDecoration !== undefined) o.textDecoration = (props.textDecoration as string).toUpperCase() as SceneNode['textDecoration']
+  if (props.textCase !== undefined) o.textCase = (props.textCase as string).toUpperCase() as SceneNode['textCase']
+  if (props.maxLines !== undefined) {
+    o.maxLines = props.maxLines as number
+    o.textTruncation = 'ENDING'
+  }
+  if (props.truncate) {
+    o.textTruncation = 'ENDING'
+  }
+
   if (props.textAlign) {
     o.textAlignHorizontal = TEXT_ALIGN_MAP[props.textAlign as string] ?? 'LEFT'
   }
+}
 
+function applyTextAutoResize(
+  props: Record<string, unknown>,
+  o: Partial<SceneNode>,
+  parentLayout: SceneNode['layoutMode']
+): void {
   const w = props.w ?? props.width
   const hasExplicitWidth = w !== undefined
   const fillsParent = w === 'fill' || (props.grow as number) > 0
   const isInsideAutoLayout = parentLayout !== 'NONE'
 
-  // Coupled with estimateTextSize() in layout.ts — test headless layout after changes.
+  // DO NOT CHANGE these defaults without testing headless layout (no CanvasKit).
+  // WIDTH_AND_HEIGHT relies on MeasureFunc — without it, text keeps the 100×100
+  // default SceneNode size and blows up every HUG container. layout.ts has a
+  // fallback estimator, but changing this logic can silently break all JSX rendering.
   if (props.textAutoResize) {
     o.textAutoResize = TEXT_AUTO_RESIZE_MAP[props.textAutoResize as string] ?? 'NONE'
   } else if (hasExplicitWidth || (isInsideAutoLayout && fillsParent)) {
@@ -405,6 +463,15 @@ function applyTextOverrides(
   } else {
     o.textAutoResize = 'WIDTH_AND_HEIGHT'
   }
+}
+
+function applyTextOverrides(
+  props: Record<string, unknown>,
+  o: Partial<SceneNode>,
+  parentLayout: SceneNode['layoutMode']
+): void {
+  applyTextStyleOverrides(props, o)
+  applyTextAutoResize(props, o, parentLayout)
 }
 
 function applyShapeAndEffectOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {

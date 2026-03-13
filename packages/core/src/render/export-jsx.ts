@@ -322,7 +322,7 @@ function collectSizingProps(
 ): void {
   if (ctx.isGrid) collectGridSizingProps(node, props)
   else if (ctx.isFlex) collectFlexSizingProps(node, props)
-  else if (node.type === 'TEXT') collectTextSizingProps(node, props)
+  else if (node.type === 'TEXT') collectTextSizingProps(node, graph, props)
   else {
     if (node.width > 0) props.push(['w', node.width])
     if (node.height > 0) props.push(['h', node.height])
@@ -339,10 +339,21 @@ function collectSizingProps(
   }
 }
 
-function collectTextSizingProps(node: SceneNode, props: [string, unknown][]): void {
+function collectTextSizingProps(node: SceneNode, graph: SceneGraph, props: [string, unknown][]): void {
   const autoResize = node.textAutoResize
-  const emitW = autoResize !== 'WIDTH_AND_HEIGHT'
   const emitH = autoResize === 'NONE' || autoResize === 'TRUNCATE'
+  // Don't emit fixed w when text stretches to fill parent — the layoutAlignSelf
+  // check below will emit w="fill" instead. Without this guard, w={computedPx}
+  // gets emitted first and blocks the fill detection.
+  const isFillWidth = node.layoutAlignSelf === 'STRETCH' && (() => {
+    const parent = node.parentId ? graph.getNode(node.parentId) : null
+    return parent?.layoutMode === 'VERTICAL'
+  })()
+  const isGrowWidth = node.layoutGrow > 0 && (() => {
+    const parent = node.parentId ? graph.getNode(node.parentId) : null
+    return parent?.layoutMode === 'HORIZONTAL'
+  })()
+  const emitW = autoResize !== 'WIDTH_AND_HEIGHT' && !isFillWidth && !isGrowWidth
   if (emitW && node.width > 0) props.push(['w', node.width])
   if (emitH && node.height > 0) props.push(['h', node.height])
 }
@@ -359,6 +370,12 @@ function collectTextNodeProps(node: SceneNode, props: [string, unknown][]): void
   if (node.textAlignHorizontal !== 'LEFT') {
     props.push(['textAlign', node.textAlignHorizontal.toLowerCase()])
   }
+  if (node.lineHeight != null) props.push(['lineHeight', node.lineHeight])
+  if (node.letterSpacing !== 0) props.push(['letterSpacing', node.letterSpacing])
+  if (node.textDecoration !== 'NONE') props.push(['textDecoration', node.textDecoration.toLowerCase()])
+  if (node.textCase !== 'ORIGINAL') props.push(['textCase', node.textCase.toLowerCase()])
+  if (node.maxLines != null) props.push(['maxLines', node.maxLines])
+  if (node.textTruncation === 'ENDING' && node.maxLines == null) props.push(['truncate', true])
   const textColor = solidFillColor(node.fills)
   if (textColor) {
     const bgIdx = props.findIndex(([k]) => k === 'bg')
