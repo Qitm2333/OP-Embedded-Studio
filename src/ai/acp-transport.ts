@@ -127,19 +127,21 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
     const stdoutChunks: Uint8Array[] = []
     let stdoutResolver: ((chunk: Uint8Array) => void) | null = null
 
-    command.stdout.on('data', (data: Uint8Array) => {
+    command.stdout.on('data', (raw: Uint8Array | number[]) => {
+      const chunk = raw instanceof Uint8Array ? raw : new Uint8Array(raw)
       if (stdoutResolver) {
         const resolve = stdoutResolver
         stdoutResolver = null
-        resolve(data)
+        resolve(chunk)
       } else {
-        stdoutChunks.push(data)
+        stdoutChunks.push(chunk)
       }
     })
 
-    command.stderr.on('data', (data: Uint8Array) => {
-      const text =
-        typeof data === 'string' ? data : new TextDecoder().decode(data)
+    command.stderr.on('data', (raw: Uint8Array | number[] | string) => {
+      const text = typeof raw === 'string'
+        ? raw
+        : new TextDecoder().decode(raw instanceof Uint8Array ? raw : new Uint8Array(raw))
       console.error(`[ACP ${this.agentDef.id}]`, text)
     })
 
@@ -228,11 +230,11 @@ function mapUpdate(
 
   switch (update.sessionUpdate) {
     case 'agent_message_chunk': {
-      if (!textStarted) {
-        chunks.push({ type: 'text-start', id: textId })
-        textStarted = true
-      }
-      if (update.content.type === 'text') {
+      if (update.content.type === 'text' && update.content.text) {
+        if (!textStarted) {
+          chunks.push({ type: 'text-start', id: textId })
+          textStarted = true
+        }
         chunks.push({
           type: 'text-delta',
           id: textId,
