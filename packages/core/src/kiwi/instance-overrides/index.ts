@@ -21,6 +21,32 @@ import { applyComponentProperties } from './props'
 import { applyDerivedSymbolData } from './dsd'
 import { applyConstraintScaling } from './constraints'
 
+/**
+ * Identify nodes whose kiwi NC has explicit property values that DIFFER
+ * from their component source. Only these need protection from sync.
+ */
+function buildKiwiPropertyNodes(
+  graph: SceneGraph,
+  changeMap: Map<string, InstanceNodeChange>,
+  guidToNodeId: Map<string, string>
+): Set<string> {
+  const result = new Set<string>()
+  for (const [figmaId, nodeId] of guidToNodeId) {
+    const nc = changeMap.get(figmaId) as Record<string, unknown> | undefined
+    if (!nc) continue
+    const node = graph.getNode(nodeId)
+    if (!node?.componentId) continue
+    const comp = graph.getNode(node.componentId)
+    if (!comp) continue
+    const hasDiffFills = nc.fillPaints !== undefined && node.fills !== comp.fills
+    const hasDiffRadius = (nc.cornerRadius !== undefined || nc.rectangleCornerRadiiIndependent !== undefined) &&
+      node.cornerRadius !== comp.cornerRadius
+    const hasDiffVisible = nc.visible === false && comp.visible
+    if (hasDiffFills || hasDiffRadius || hasDiffVisible) result.add(nodeId)
+  }
+  return result
+}
+
 function buildOverrideContext(
   graph: SceneGraph,
   changeMap: Map<string, InstanceNodeChange>,
@@ -47,17 +73,7 @@ function buildOverrideContext(
     nodeIdToGuid.set(nodeId, figmaId)
   }
 
-  // Identify nodes whose kiwi NC has explicit property values that should
-  // not be overwritten by transitive sync from their component source.
-  const kiwiPropertyNodes = new Set<string>()
-  for (const [figmaId, nodeId] of guidToNodeId) {
-    const nc = changeMap.get(figmaId) as Record<string, unknown> | undefined
-    if (!nc) continue
-    if (nc.fillPaints !== undefined || nc.cornerRadius !== undefined ||
-        nc.rectangleCornerRadiiIndependent !== undefined || nc.visible === false) {
-      kiwiPropertyNodes.add(nodeId)
-    }
-  }
+  const kiwiPropertyNodes = buildKiwiPropertyNodes(graph, changeMap, guidToNodeId)
 
   return {
     graph,
