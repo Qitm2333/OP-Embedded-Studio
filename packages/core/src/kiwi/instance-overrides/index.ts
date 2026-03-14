@@ -19,6 +19,7 @@ import { applySymbolOverrides } from './symbol-overrides'
 import { propagateOverridesTransitively } from './sync'
 import { applyComponentProperties } from './props'
 import { applyDerivedSymbolData } from './dsd'
+import { applyConstraintScaling } from './constraints'
 
 function buildOverrideContext(
   graph: SceneGraph,
@@ -114,4 +115,5 @@ export function populateAndApplyOverrides(
   }
 
   applyDerivedSymbolData(ctx)
+  applyConstraintScaling(ctx)
 }

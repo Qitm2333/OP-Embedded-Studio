@@ -1,0 +1,90 @@
+import type { SceneGraph, SceneNode } from '../../scene-graph'
+import type { OverrideContext } from './types'
+import { buildClonesMap } from './sync'
+
+/**
+ * Apply SCALE constraint resizing to children of instances whose size
+ * differs from their component's original size, then propagate the
+ * changes through clone chains.
+ */
+export function applyConstraintScaling(ctx: OverrideContext): void {
+  const { graph } = ctx
+  const scaled = new Set<string>()
+
+  for (const node of graph.getAllNodes()) {
+    if (node.type !== 'INSTANCE' || !node.componentId) continue
+    const comp = graph.getNode(node.componentId)
+    if (!comp || comp.width <= 0 || comp.height <= 0) continue
+    if (node.width === comp.width && node.height === comp.height) continue
+
+    const sx = node.width / comp.width
+    const sy = node.height / comp.height
+    if (Math.abs(sx - 1) < 0.001 && Math.abs(sy - 1) < 0.001) continue
+
+    scaleChildren(graph, node, comp, sx, sy, scaled)
+  }
+
+  if (scaled.size > 0) propagateScaling(graph, scaled)
+}
+
+function scaleChildren(
+  graph: SceneGraph,
+  instance: SceneNode,
+  comp: SceneNode,
+  sx: number,
+  sy: number,
+  scaled: Set<string>
+): void {
+  const len = Math.min(instance.childIds.length, comp.childIds.length)
+  for (let i = 0; i < len; i++) {
+    const child = graph.getNode(instance.childIds[i])
+    const compChild = graph.getNode(comp.childIds[i])
+    if (!child || !compChild) continue
+
+    const hScale = child.horizontalConstraint === 'SCALE'
+    const vScale = child.verticalConstraint === 'SCALE'
+    if (!hScale && !vScale) continue
+
+    const updates: Partial<SceneNode> = {}
+    if (hScale) {
+      updates.x = compChild.x * sx
+      updates.width = compChild.width * sx
+    }
+    if (vScale) {
+      updates.y = compChild.y * sy
+      updates.height = compChild.height * sy
+    }
+    graph.updateNode(child.id, updates)
+    scaled.add(child.id)
+
+    if (child.childIds.length > 0 && compChild.childIds.length > 0) {
+      scaleChildren(graph, child, compChild, hScale ? sx : 1, vScale ? sy : 1, scaled)
+    }
+  }
+}
+
+function propagateScaling(graph: SceneGraph, scaled: Set<string>): void {
+  const clonesOf = buildClonesMap(graph)
+  const queue = [...scaled]
+  const visited = new Set<string>()
+
+  for (let srcId = queue.shift(); srcId !== undefined; srcId = queue.shift()) {
+    const source = graph.getNode(srcId)
+    if (!source) continue
+    const clones = clonesOf.get(srcId)
+    if (!clones) continue
+    for (const cloneId of clones) {
+      if (visited.has(cloneId)) continue
+      visited.add(cloneId)
+      const clone = graph.getNode(cloneId)
+      if (!clone) continue
+      const cu: Partial<SceneNode> = {}
+      if (clone.width !== source.width) cu.width = source.width
+      if (clone.height !== source.height) cu.height = source.height
+      if (clone.x !== source.x) cu.x = source.x
+      if (clone.y !== source.y) cu.y = source.y
+      if (Object.keys(cu).length > 0) graph.updateNode(cloneId, cu)
+      queue.push(cloneId)
+    }
+  }
+}
