@@ -18,6 +18,9 @@
       "allow": [{ "path": "**" }]
     },
     "fs:allow-watch",
-    "fs:allow-unwatch"
+    "fs:allow-unwatch",
+    "shell:allow-spawn",
+    "shell:allow-stdin-write",
+    "shell:allow-kill"
   ]
 }

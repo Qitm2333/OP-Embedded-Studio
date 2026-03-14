@@ -16,8 +16,11 @@ const IS_DEV = import.meta.env.DEV
 
 const { isConfigured, ensureChat, resetChat } = useAIChat()
 
-const existing = ensureChat()
-const chat = ref<Chat<UIMessage> | null>(existing ? markRaw(existing) : null)
+const chat = ref<Chat<UIMessage> | null>(null)
+
+ensureChat().then((c) => {
+  if (c) chat.value = markRaw(c)
+})
 const messagesEnd = ref<HTMLDivElement>()
 const debugCopied = ref(false)
 
@@ -53,9 +56,9 @@ function scrollToBottom() {
 
 watch(messages, scrollToBottom, { deep: true })
 
-function handleSubmit(text: string) {
+async function handleSubmit(text: string) {
   if (status.value === 'streaming' || status.value === 'submitted') return
-  const c = ensureChat()
+  const c = await ensureChat()
   if (c) chat.value = markRaw(c)
   chat.value?.sendMessage({ text }).catch(() => {
     /* user-facing error handled by UI */

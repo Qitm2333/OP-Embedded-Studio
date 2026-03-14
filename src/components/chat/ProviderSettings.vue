@@ -10,7 +10,7 @@ import {
   TabsRoot,
   TabsTrigger
 } from 'reka-ui'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import ProviderSelect from '@/components/chat/ProviderSelect.vue'
 import { uiInput } from '@/components/ui/input'
@@ -28,6 +28,8 @@ const {
   pexelsApiKey,
   unsplashAccessKey
 } = useAIChat()
+
+const isACP = computed(() => providerID.value.startsWith('acp:'))
 
 const keyInput = ref('')
 const pexelsKeyInput = ref('')
@@ -122,6 +124,7 @@ function clearUnsplashKey() {
 
           <ProviderSelect test-id="provider-settings-provider" />
 
+          <template v-if="!isACP">
           <!-- Base URL (OpenAI-compatible only) -->
           <div v-if="providerDef.supportsCustomBaseURL" class="flex flex-col gap-1">
             <label class="text-[10px] text-muted">Base URL</label>
@@ -295,6 +298,7 @@ function clearUnsplashKey() {
               Get API key →
             </a>
           </div>
+          </template>
 
           <PopoverClose
             class="mt-1 w-full rounded bg-accent px-2 py-1 text-center text-[11px] font-medium text-white hover:bg-accent/90"
