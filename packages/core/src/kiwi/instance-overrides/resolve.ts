@@ -129,8 +129,21 @@ export function resolveOverrideTarget(ctx: OverrideContext, instanceId: string, 
     if (current?.componentId === remapped) continue
 
     const found = findNodeByComponentId(ctx, currentId, remapped)
-    if (!found) return null
-    currentId = found
+    if (found) {
+      currentId = found
+      continue
+    }
+
+    // After an instance swap, the child's componentId points to the new
+    // component, not the one referenced by the guidPath. Fall back to the
+    // single child of a swapped instance — it occupies the same slot.
+    const parent = ctx.graph.getNode(currentId)
+    if (parent?.childIds.length === 1) {
+      currentId = parent.childIds[0]
+      continue
+    }
+
+    return null
   }
   return currentId
 }
