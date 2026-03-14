@@ -99,8 +99,8 @@ export interface ACPAgentDef {
 }
 
 export const ACP_AGENTS: ACPAgentDef[] = [
-  { id: 'claude-code', name: 'Claude Code', command: 'claude', args: ['code', '--acp'] },
-  { id: 'codex', name: 'Codex', command: 'codex', args: ['--acp'] },
+  { id: 'claude-code', name: 'Claude Code', command: 'claude-code-acp', args: [] },
+  { id: 'codex', name: 'Codex', command: 'codex-acp', args: [] },
   { id: 'gemini-cli', name: 'Gemini CLI', command: 'gemini', args: ['--acp'] }
 ]
 
