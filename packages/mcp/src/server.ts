@@ -22,6 +22,7 @@ type McpResult = { content: McpContent[]; isError?: boolean }
 export interface CreateServerOptions {
   enableEval?: boolean
   fileRoot?: string | null
+  makeFigma?: () => FigmaAPI
 }
 
 function ok(data: unknown): McpResult {
@@ -61,10 +62,13 @@ export function createServer(version: string, options: CreateServerOptions = {})
     ? null
     : resolve(options.fileRoot)
 
+  const externalMakeFigma = options.makeFigma ?? null
+
   let graph: SceneGraph | null = null
   let currentPageId: string | null = null
 
   function makeFigma(): FigmaAPI {
+    if (externalMakeFigma) return externalMakeFigma()
     if (!graph) throw new Error('No document loaded. Use open_file or new_document first.')
     const g = graph
     const api = new FigmaAPI(g)
@@ -112,6 +116,8 @@ export function createServer(version: string, options: CreateServerOptions = {})
   }
 
   const register = server.registerTool.bind(server) as (...args: unknown[]) => void
+
+  if (!externalMakeFigma) {
   register(
     'open_file',
     {
@@ -170,6 +176,7 @@ export function createServer(version: string, options: CreateServerOptions = {})
       }
     }
   )
+  } // end if (!externalMakeFigma)
 
   register(
     'export_image_file',
