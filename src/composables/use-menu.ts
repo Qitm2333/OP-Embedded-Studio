@@ -1,8 +1,15 @@
 import { onUnmounted } from 'vue'
+import { useFileDialog } from '@vueuse/core'
 
 import { IS_TAURI } from '@/constants'
 import { useEditorStore } from '@/stores/editor'
 import { openFileInNewTab, createTab, closeTab, activeTab } from '@/stores/tabs'
+
+const fileDialog = useFileDialog({ accept: '.fig', multiple: false, reset: true })
+fileDialog.onChange((files) => {
+  const file = files?.[0]
+  if (file) void openFileInNewTab(file)
+})
 
 export async function openFileDialog() {
   if (IS_TAURI) {
@@ -37,14 +44,7 @@ export async function openFileDialog() {
     }
   }
 
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = '.fig'
-  input.addEventListener('change', () => {
-    const file = input.files?.[0]
-    if (file) void openFileInNewTab(file)
-  })
-  input.click()
+  fileDialog.open()
 }
 
 const store = useEditorStore()
