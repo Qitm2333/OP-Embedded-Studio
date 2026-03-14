@@ -4,8 +4,6 @@ import {
   type SceneGraph,
   type ExportFormat,
   computeAllLayouts,
-  collectFontKeys,
-  loadFont,
   headlessRenderNodes,
   headlessRenderThumbnail
 } from '@open-pencil/core'
@@ -17,12 +15,6 @@ export async function loadDocument(filePath: string): Promise<SceneGraph> {
   const graph = await parseFigFile(data)
   computeAllLayouts(graph)
   return graph
-}
-
-export async function loadFonts(graph: SceneGraph, nodeIds?: string[]): Promise<void> {
-  const ids = nodeIds ?? [...graph.getAllNodes()].map((n) => n.id)
-  const fontKeys = collectFontKeys(graph, ids)
-  await Promise.all(fontKeys.map(([family, style]) => loadFont(family, style)))
 }
 
 export async function exportNodes(

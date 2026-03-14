@@ -416,6 +416,24 @@ export class SkiaRenderer {
     })
   }
 
+  /**
+   * Load document fonts and set up text measurement for layout.
+   * Call after `loadFonts()` and before rendering a document headlessly.
+   * Collects all font family+weight pairs used by `nodeIds`, loads them,
+   * wires up the text measurer for Yoga layout, and recomputes layout.
+   */
+  async prepareForExport(graph: SceneGraph, pageId: string, nodeIds: string[]): Promise<void> {
+    const { collectFontKeys, loadFont } = await import('../fonts')
+    const { setTextMeasurer, computeAllLayouts } = await import('../layout')
+
+    setTextMeasurer((node, maxWidth) => this.measureTextNode(node, maxWidth))
+
+    const fontKeys = collectFontKeys(graph, nodeIds)
+    await Promise.all(fontKeys.map(([family, style]) => loadFont(family, style)))
+
+    computeAllLayouts(graph, pageId)
+  }
+
   replaceSurface(surface: Surface): void {
     this.surface.delete()
     this.surface = surface

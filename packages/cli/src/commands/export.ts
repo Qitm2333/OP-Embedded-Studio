@@ -3,7 +3,7 @@ import { basename, extname, resolve } from 'node:path'
 
 import { renderNodesToSVG, sceneNodeToJSX, selectionToJSX } from '@open-pencil/core'
 
-import { loadDocument, loadFonts, exportNodes, exportThumbnail } from '../headless'
+import { loadDocument, exportNodes, exportThumbnail } from '../headless'
 import { isAppMode, requireFile, rpc } from '../app-client'
 import { ok, printError } from '../format'
 import type { ExportFormat, JSXFormat } from '@open-pencil/core'
@@ -60,7 +60,6 @@ async function exportViaApp(format: string, args: ExportArgs) {
 async function exportFromFile(format: string, args: ExportArgs) {
   const file = requireFile(args.file)
   const graph = await loadDocument(file)
-  await loadFonts(graph)
 
   const pages = graph.getPages()
   const page = args.page ? pages.find((p) => p.name === args.page) : pages[0]
