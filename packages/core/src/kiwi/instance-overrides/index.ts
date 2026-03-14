@@ -92,7 +92,7 @@ export function populateAndApplyOverrides(
 
   const propModified = applyComponentProperties(ctx)
   if (propModified.size > 0) {
-    propagateOverridesTransitively(graph, propModified, ctx.swappedInstances, ctx.componentIdRoot)
+    propagateOverridesTransitively(graph, propModified, ctx.swappedInstances, ctx.componentIdRoot, overriddenNodes)
   }
 
   applyDerivedSymbolData(ctx)

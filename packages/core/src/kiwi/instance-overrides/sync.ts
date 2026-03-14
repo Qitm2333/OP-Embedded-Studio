@@ -131,7 +131,8 @@ export function propagateOverridesTransitively(
   graph: SceneGraph,
   seeds: Set<string>,
   swappedInstances: Set<string>,
-  componentIdRoot: Map<string, string>
+  componentIdRoot: Map<string, string>,
+  protect?: Set<string>
 ): void {
   if (seeds.size === 0) return
 
@@ -139,6 +140,11 @@ export function propagateOverridesTransitively(
   const clonesOf = buildClonesMap(graph)
   const expandedSeeds = expandSeedsToParents(graph, seeds)
   const needsSync = buildNeedsSyncSet(expandedSeeds, clonesOf)
+
+  // Merge seeds + protect into a single skip set for syncChildrenDeep
+  const skip = protect && protect.size > 0
+    ? new Set([...seeds, ...protect])
+    : seeds
 
   const visited = new Set<string>()
   const syncQueue = [...expandedSeeds]
@@ -154,7 +160,7 @@ export function propagateOverridesTransitively(
       const node = graph.getNode(cloneId)
       if (!node) continue
 
-      if (seeds.has(cloneId)) {
+      if (skip.has(cloneId)) {
         syncQueue.push(cloneId)
         continue
       }
@@ -166,7 +172,7 @@ export function propagateOverridesTransitively(
           graph.populateInstanceChildren(node.id, sourceId)
         }
       } else if (source.childIds.length > 0 && node.childIds.length > 0) {
-        syncChildrenDeep(graph, sourceId, node.id, swappedInstances, seeds)
+        syncChildrenDeep(graph, sourceId, node.id, swappedInstances, skip)
       }
       syncQueue.push(cloneId)
     }
