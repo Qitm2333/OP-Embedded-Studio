@@ -5,12 +5,56 @@ import {
   guidToString,
   nodeChangeToProps,
   sortChildren,
+  setVariableColorResolver,
   VARIABLE_BINDING_FIELDS_INVERSE
 } from './kiwi-convert'
 import { populateAndApplyOverrides } from './instance-overrides'
 import type { InstanceNodeChange } from './instance-overrides'
 
-import type { NodeChange, VariableDataValuesEntry } from './codec'
+import type { NodeChange, VariableDataValuesEntry, Color, GUID } from './codec'
+
+function buildVariableColorResolver(changeMap: Map<string, NodeChange>): (guid: GUID) => Color | null {
+  // Collect variable data: GUID → entries
+  const varEntries = new Map<string, VariableDataValuesEntry[]>()
+  const varSetId = new Map<string, string>()
+  for (const [id, nc] of changeMap) {
+    if (nc.type !== 'VARIABLE') continue
+    varEntries.set(id, nc.variableDataValues?.entries ?? [])
+    const setGuid = nc.variableSetID?.guid ? guidToString(nc.variableSetID.guid) : undefined
+    const parentGuid = nc.parentIndex?.guid ? guidToString(nc.parentIndex.guid) : undefined
+    if (setGuid) varSetId.set(id, setGuid)
+    else if (parentGuid) varSetId.set(id, parentGuid)
+  }
+
+  // Collection default modes
+  const defaultModes = new Map<string, string>()
+  for (const [id, nc] of changeMap) {
+    if (nc.type !== 'VARIABLE_SET') continue
+    const modes = nc.variableSetModes ?? []
+    if (modes.length > 0) defaultModes.set(id, guidToString(modes[0].id))
+  }
+
+  return function resolve(guid: GUID, depth = 0): Color | null {
+    if (depth > 10) return null
+    const id = guidToString(guid)
+    const entries = varEntries.get(id)
+    if (!entries?.length) return null
+
+    // Find the default mode value
+    const setId = varSetId.get(id)
+    const defaultMode = setId ? defaultModes.get(setId) : undefined
+    let entry = defaultMode
+      ? entries.find(e => guidToString(e.modeID) === defaultMode)
+      : undefined
+    if (!entry) entry = entries[0]
+
+    const val = entry.variableData.value
+    if (!val) return null
+    if (val.colorValue) return val.colorValue
+    if (val.alias) return resolve(val.alias.guid, depth + 1)
+    return null
+  }
+}
 
 interface ChangeMaps {
   changeMap: Map<string, NodeChange>
@@ -275,12 +319,15 @@ export function importNodeChanges(
   importVariableBindings(changeMap, guidToNodeId, graph)
   remapComponentIds(graph, guidToNodeId)
 
+  setVariableColorResolver(buildVariableColorResolver(changeMap))
   populateAndApplyOverrides(
     graph,
     changeMap as unknown as Map<string, InstanceNodeChange>,
     guidToNodeId,
     blobs
   )
+
+  setVariableColorResolver(null)
 
   if (graph.getPages(true).length === 0) {
     graph.addPage('Page 1')

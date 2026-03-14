@@ -3,7 +3,7 @@ import { normalizeColor } from '../color'
 import { DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from '../constants'
 import { styleToWeight } from '../fonts'
 import { decodeVectorNetworkBlob } from '../vector'
-import type { Matrix, Vector } from '../types'
+import type { Color, Matrix, Vector } from '../types'
 
 import type {
   SceneNode,
@@ -87,12 +87,25 @@ function convertGradientTransform(t?: Matrix): GradientTransform | undefined {
   return { m00: t.m00, m01: t.m01, m02: t.m02, m10: t.m10, m11: t.m11, m12: t.m12 }
 }
 
+let variableColorResolver: ((guid: GUID) => Color | null) | null = null
+
+export function setVariableColorResolver(resolver: ((guid: GUID) => Color | null) | null): void {
+  variableColorResolver = resolver
+}
+
+function resolveColorVar(paint: Paint): Color | undefined {
+  const alias = paint.colorVar?.value?.alias
+  if (!alias || !variableColorResolver) return undefined
+  if (alias.guid) return variableColorResolver(alias.guid) ?? undefined
+  return undefined
+}
+
 export function convertFills(paints?: Paint[]): Fill[] {
   if (!paints) return []
   return paints.map((p) => {
     const base: Fill = {
       type: p.type as FillType,
-      color: convertColor(p.color),
+      color: convertColor(resolveColorVar(p) ?? p.color),
       opacity: p.opacity ?? 1,
       visible: p.visible ?? true,
       blendMode: (p.blendMode ?? 'NORMAL') as BlendMode
@@ -137,7 +150,7 @@ export function convertStrokes(
 ): Stroke[] {
   if (!paints) return []
   return paints.map((p) => ({
-    color: convertColor(p.color),
+    color: convertColor(resolveColorVar(p) ?? p.color),
     weight: weight ?? 1,
     opacity: p.opacity ?? 1,
     visible: p.visible ?? true,

@@ -196,6 +196,16 @@ export interface Paint {
   image?: { hash: string }
   imageScaleMode?: string
   colorVariableBinding?: VariableBinding
+  colorVar?: {
+    value?: {
+      alias?: {
+        guid?: GUID
+        assetRef?: { key: string; version: string }
+      }
+    }
+    dataType?: string
+    resolvedDataType?: string
+  }
 }
 
 export interface Effect {
