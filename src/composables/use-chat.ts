@@ -211,18 +211,7 @@ async function createACPTransport() {
   const { ACPChatTransport } = await import('@/ai/acp-transport')
   const { homeDir } = await import('@tauri-apps/api/path')
   await acpTransportInstance?.destroy()
-
-  const mcpCommand = import.meta.env.DEV ? 'bun' : 'npx'
-  const mcpArgs = import.meta.env.DEV
-    ? [import.meta.env.VITE_PROJECT_ROOT + '/packages/mcp/src/index.ts']
-    : ['-y', '@open-pencil/mcp']
-
-  const transport = new ACPChatTransport({
-    agentDef,
-    cwd: await homeDir(),
-    mcpCommand,
-    mcpArgs
-  })
+  const transport = new ACPChatTransport({ agentDef, cwd: await homeDir() })
   acpTransportInstance = transport
   return transport
 }

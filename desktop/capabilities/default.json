@@ -24,8 +24,7 @@
       "allow": [
         { "name": "claude-code-acp", "cmd": "claude-code-acp", "args": true },
         { "name": "codex-acp", "cmd": "codex-acp", "args": true },
-        { "name": "gemini", "cmd": "gemini", "args": true },
-        { "name": "bun", "cmd": "bun", "args": true }
+        { "name": "gemini", "cmd": "gemini", "args": true }
       ]
     },
     "shell:allow-stdin-write",

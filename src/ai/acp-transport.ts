@@ -27,14 +27,10 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
   private session: ACPSession | null = null
   private agentDef: ACPAgentDef
   private cwd: string
-  private mcpCommand?: string
-  private mcpArgs: string[]
 
-  constructor(options: { agentDef: ACPAgentDef; cwd?: string; mcpCommand?: string; mcpArgs?: string[] }) {
+  constructor(options: { agentDef: ACPAgentDef; cwd?: string }) {
     this.agentDef = options.agentDef
     this.cwd = options.cwd ?? '.'
-    this.mcpCommand = options.mcpCommand
-    this.mcpArgs = options.mcpArgs ?? []
   }
 
   async sendMessages({
@@ -203,13 +199,16 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
       clientCapabilities: {}
     })
 
-    const mcpServers = this.mcpCommand
-      ? [{ name: 'open-pencil', command: this.mcpCommand, args: this.mcpArgs, env: [] }]
-      : []
-
     const sessionResult = await connection.newSession({
       cwd: this.cwd,
-      mcpServers
+      mcpServers: [
+        {
+          type: 'http' as const,
+          name: 'open-pencil',
+          url: 'http://127.0.0.1:7600/mcp',
+          headers: []
+        }
+      ]
     })
 
     const session: ACPSession = {

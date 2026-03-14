@@ -34,7 +34,7 @@ function fail(e: unknown): McpResult {
   return { content: [{ type: 'text', text: JSON.stringify({ error: msg }) }], isError: true }
 }
 
-function paramToZod(param: ParamDef): z.ZodTypeAny {
+export function paramToZod(param: ParamDef): z.ZodTypeAny {
   const typeMap: Record<ParamType, () => z.ZodTypeAny> = {
     string: () =>
       param.enum

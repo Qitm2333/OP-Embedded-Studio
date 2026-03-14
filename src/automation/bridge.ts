@@ -16,6 +16,8 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { WebSocketServer, type WebSocket } from 'ws'
 
+import type { ZodTypeAny } from 'zod'
+
 // Can't import from @open-pencil/core here — this file is bundled by esbuild
 // as part of the Vite config, and workspace packages are externalized then
 // loaded by Node's ESM resolver which can't handle .ts source imports.
@@ -176,10 +178,72 @@ export function startAutomationBridge(server: ViteServer) {
     }
   })
 
+  // MCP Streamable HTTP endpoint — proxies tool calls through WebSocket to the live editor
+  type McpTransport = { handleRequest: (r: Request) => Promise<Response> }
+  const mcpSessions = new Map<string, McpTransport>()
+
+  async function getOrCreateMcpSession(sessionId?: string): Promise<McpTransport> {
+    const cached = sessionId ? mcpSessions.get(sessionId) : undefined
+    if (cached) return cached
+
+    const { WebStandardStreamableHTTPServerTransport } =
+      await import('@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js')
+    const { McpServer } = await import('@modelcontextprotocol/sdk/server/mcp.js')
+    const { z } = await import('zod')
+    const core = await server.ssrLoadModule('@open-pencil/core') as {
+      ALL_TOOLS: Array<{ name: string; description: string; params: Record<string, unknown>; mutates?: boolean }>
+    }
+    const mcp = await server.ssrLoadModule('@open-pencil/mcp') as {
+      paramToZod: (p: unknown) => ZodTypeAny
+    }
+
+    const id = sessionId ?? crypto.randomUUID()
+    const mcpServer = new McpServer({ name: 'open-pencil', version: '0.0.0' })
+    const register = mcpServer.registerTool.bind(mcpServer) as (...a: unknown[]) => void
+
+    for (const def of core.ALL_TOOLS) {
+      const shape: Record<string, ZodTypeAny> = {}
+      for (const [key, param] of Object.entries(def.params)) {
+        shape[key] = mcp.paramToZod(param)
+      }
+      register(def.name, { description: def.description, inputSchema: z.object(shape) },
+        async (args: Record<string, unknown>) => {
+          try {
+            const result = await sendToBrowser({ command: 'tool', args: { name: def.name, args } })
+            const res = result as { ok?: boolean; result?: unknown; error?: string }
+            if (res.ok === false) {
+              return { content: [{ type: 'text' as const, text: JSON.stringify({ error: res.error }) }], isError: true }
+            }
+            const r = res.result as Record<string, unknown> | undefined
+            if (r && 'base64' in r && 'mimeType' in r) {
+              return { content: [{ type: 'image' as const, data: r.base64 as string, mimeType: r.mimeType as string }] }
+            }
+            return { content: [{ type: 'text' as const, text: JSON.stringify(r, null, 2) }] }
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e)
+            return { content: [{ type: 'text' as const, text: JSON.stringify({ error: msg }) }], isError: true }
+          }
+        }
+      )
+    }
+
+    const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: () => id })
+    await mcpServer.connect(transport)
+    mcpSessions.set(id, transport)
+    return transport
+  }
+
+  app.all('/mcp', async (c) => {
+    const sessionId = c.req.header('mcp-session-id') ?? undefined
+    const transport = await getOrCreateMcpSession(sessionId)
+    return transport.handleRequest(c.req.raw)
+  })
+
   void startServer(app)
 
   console.log(`[automation] HTTP  http://127.0.0.1:${AUTOMATION_HTTP_PORT}`)
   console.log(`[automation] WS    ws://127.0.0.1:${AUTOMATION_WS_PORT}`)
+  console.log(`[automation] MCP   http://127.0.0.1:${AUTOMATION_HTTP_PORT}/mcp`)
 }
 
 function isBunRuntime(): boolean {
