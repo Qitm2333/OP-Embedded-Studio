@@ -96,7 +96,13 @@ for (const [path, t] of truthMap) {
   if (o.visible !== t.visible) { visibility++; diffs++ }
   if (t.text && o.text !== t.text) { text++; diffs++ }
   if (t.fill && o.fill && t.fill.toLowerCase() !== o.fill.toLowerCase()) { fills++; diffs++ }
-  if (t.cr && t.cr > 0 && Math.abs((o.cr ?? 0) - t.cr) > 1) { radius++; diffs++ }
+  if (t.cr && t.cr > 0) {
+    const oCr = o.cr ?? 0
+    // Both >= half the smaller dimension = fully rounded (pill), treat as equal
+    const minDim = Math.min(t.width, t.height)
+    const bothPill = oCr >= minDim / 2 && t.cr >= minDim / 2
+    if (!bothPill && Math.abs(oCr - t.cr) > 1) { radius++; diffs++ }
+  }
   if (t.visible && o.visible && (Math.abs(o.width - t.width) > 1 || Math.abs(o.height - t.height) > 1)) {
     size++; diffs++
   }

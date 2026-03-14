@@ -1,2 +1,3 @@
 {"type":"config","name":"Figma .fig import fidelity","metricName":"total_diffs","metricUnit":"","bestDirection":"lower"}
 {"run":1,"commit":"8a90594","metric":246,"metrics":{"visibility":1,"text":0,"fills":10,"radius":161,"size":74,"unmatched":99},"status":"keep","description":"Baseline: 246 diffs (1 vis, 0 text, 10 fills, 161 radius, 74 size, 99 unmatched)","timestamp":1773482910363,"segment":0}
+{"run":2,"commit":"3746d1a","metric":99,"metrics":{"visibility":1,"text":0,"fills":10,"radius":14,"size":74,"unmatched":99},"status":"keep","description":"Fix comparison: read individual corner radii when independentCorners=true","timestamp":1773483304162,"segment":0}
