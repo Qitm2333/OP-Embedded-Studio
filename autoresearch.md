@@ -44,10 +44,10 @@ and `tests/fixtures/gold-preview-truth.json` as ground truth (extracted from liv
 - **DSD for swapped instances**: Single-child fallback in resolveOverrideTarget (d93c475)
 - **Rounded clipping**: clipRRect when clipsContent + cornerRadius (49423e4)
 - **Shadow child shape**: Drop shadow on transparent containers follows first child (f70338d)
-- **Current baseline**: 246 total_diffs (1 vis, 0 text, 10 fills, 161 radius, 74 size, 99 unmatched)
-
-### Key insight: transitive sync overwrites instance-level properties
-Nodes with their own kiwi NC (explicit fills, cornerRadius) get correct values
-during initial kiwi-convert, then transitive sync copies component defaults
-over them. Need to protect nodes with own kiwi NCs from sync overwrite.
-This is the NEXT fix to attempt — should address radius (161) and fills (10).
+- **Current best**: 84 total_diffs (1 vis, 0 text, 9 fills, 0 radius, 74 size, 99 unmatched)
+- **Comparison fixes**: independentCorners radius reading, pill-shape tolerance
+- **kiwiPropertyNodes**: Nodes with explicit kiwi NC fills/cornerRadius are added to seeds AND protected from sync overwrite
+- **Self-referencing symbolOverride**: When an override resolves to the instance itself, skip if the instance has explicit kiwi NC properties
+- **Remaining fills (9)**: Variable-bound colors (Indicators), wrong variant selection (badge Placeholders), deep chain overrides
+- **Remaining sizes (74)**: 38 Vector constraint resizing (no DSD size data), 6 datepicker layout widths, Badge proportional scaling
+- **Unmatched (99)**: Tree path matching gaps in deep clone chains
