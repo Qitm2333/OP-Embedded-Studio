@@ -44,7 +44,10 @@ and `tests/fixtures/gold-preview-truth.json` as ground truth (extracted from liv
 - **DSD for swapped instances**: Single-child fallback in resolveOverrideTarget (d93c475)
 - **Rounded clipping**: clipRRect when clipsContent + cornerRadius (49423e4)
 - **Shadow child shape**: Drop shadow on transparent containers follows first child (f70338d)
-- **Current best**: 62 total_diffs (1 vis, 0 text, 11 fills, 0 radius, 50 size, 0 unmatched)
+- **Current best**: 62 total_diffs (1 vis, 0 text, 11 fills, 0 radius, 50 size, 0 unmatched) — 74.8% improvement
+- **kiwiPropertyNodes narrowed**: Only nodes whose fills/radius/visible actually differ from component source (was too broad — any NC with fillPaints)
+- **reapplyKiwiProperties failed**: Can't distinguish sync-overwritten from symbolOverride-set fills. Reverted.
+- **1 visibility diff root cause**: Email TEXT 0:3480 stays visible because its source 0:3455 IS in seeds (kiwiPropertyNodes) but 0:3452→0:3477 parent sync never runs (0:3477 gets visited by a different sync path first). Needs BFS/skip decoupling.
 - **Comparison fixes**: independentCorners radius reading, pill-shape tolerance, name-based tree matching
 - **kiwiPropertyNodes**: Nodes with explicit kiwi NC fills/cornerRadius are added to seeds AND protected from sync overwrite
 - **Self-referencing symbolOverride**: When an override resolves to the instance itself, skip if the instance has explicit kiwi NC properties
