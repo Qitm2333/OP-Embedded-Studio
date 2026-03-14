@@ -1,0 +1,99 @@
+export type {
+  InstanceNodeChange,
+  OverrideContext,
+  ComponentPropAssignment,
+  ComponentPropDef,
+  ComponentPropRef,
+  ComponentPropValue,
+  DerivedSymbolOverride,
+  SymbolData,
+  SymbolOverride,
+} from './types'
+
+import type { SceneGraph } from '../../scene-graph'
+import type { InstanceNodeChange, OverrideContext, ComponentPropValue } from './types'
+import { guidToString } from '../kiwi-convert'
+import { populateInstances } from './populate'
+import { preComputeRoots } from './resolve'
+import { applySymbolOverrides } from './symbol-overrides'
+import { propagateOverridesTransitively } from './sync'
+import { applyComponentProperties } from './props'
+import { applyDerivedSymbolData } from './dsd'
+
+function buildOverrideContext(
+  graph: SceneGraph,
+  changeMap: Map<string, InstanceNodeChange>,
+  guidToNodeId: Map<string, string>,
+  blobs: Uint8Array[]
+): OverrideContext {
+  const overrideKeyToGuid = new Map<string, string>()
+  for (const [id, nc] of changeMap) {
+    if (nc.overrideKey) overrideKeyToGuid.set(guidToString(nc.overrideKey), id)
+  }
+
+  const propDefaults = new Map<string, ComponentPropValue>()
+  for (const [, nc] of changeMap) {
+    if (!nc.componentPropDefs?.length) continue
+    for (const def of nc.componentPropDefs) {
+      if (def.id && def.initialValue) {
+        propDefaults.set(guidToString(def.id), def.initialValue)
+      }
+    }
+  }
+
+  const nodeIdToGuid = new Map<string, string>()
+  for (const [figmaId, nodeId] of guidToNodeId) {
+    nodeIdToGuid.set(nodeId, figmaId)
+  }
+
+  return {
+    graph,
+    changeMap,
+    guidToNodeId,
+    blobs,
+    overrideKeyToGuid,
+    nodeIdToGuid,
+    propDefaults,
+    preComputedRoot: new Map(),
+    componentIdRoot: new Map(),
+    swappedInstances: new Set(),
+  }
+}
+
+/**
+ * Populate empty instances from their components and apply symbol overrides.
+ *
+ * Shared between .fig file import and clipboard paste. Both paths produce
+ * a SceneGraph with INSTANCE nodes whose componentId references have been
+ * remapped to graph node IDs but whose children may be missing and whose
+ * overrides have not yet been applied.
+ *
+ * Resolution order:
+ * 1. Populate — clone component trees into empty instances
+ * 2. Symbol overrides — set property values and swap instances
+ * 3. Transitive sync — propagate overrides through clone chains
+ * 4. Component properties — toggle visibility / swap via prop assignments
+ * 5. Second transitive sync — propagate property changes to deeper clones
+ * 6. Derived symbol data — apply Figma's pre-computed sizes last
+ */
+export function populateAndApplyOverrides(
+  graph: SceneGraph,
+  changeMap: Map<string, InstanceNodeChange>,
+  guidToNodeId: Map<string, string>,
+  blobs: Uint8Array[] = []
+): void {
+  populateInstances(graph)
+
+  const ctx = buildOverrideContext(graph, changeMap, guidToNodeId, blobs)
+  preComputeRoots(ctx)
+
+  const overriddenNodes = applySymbolOverrides(ctx)
+  propagateOverridesTransitively(graph, overriddenNodes, ctx.swappedInstances, ctx.componentIdRoot)
+
+  const propModified = applyComponentProperties(ctx)
+  if (propModified.size > 0) {
+    propagateOverridesTransitively(graph, propModified, ctx.swappedInstances, ctx.componentIdRoot)
+  }
+
+  applyDerivedSymbolData(ctx)
+}
