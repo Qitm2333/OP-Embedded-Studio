@@ -29,6 +29,11 @@ export function applySymbolOverrides(ctx: OverrideContext): Set<string> {
       const targetId = resolveOverrideTarget(ctx, nodeId, guids)
       if (!targetId) continue
 
+      // When a symbolOverride resolves to the instance itself (self-reference
+      // to the component shell), skip it if the instance has explicit kiwi NC
+      // properties — the instance's own values take precedence.
+      if (targetId === nodeId && ctx.kiwiPropertyNodes.has(nodeId)) continue
+
       overriddenNodes.add(targetId)
 
       if (ov.overriddenSymbolID) {

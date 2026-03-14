@@ -46,6 +46,18 @@ function buildOverrideContext(
     nodeIdToGuid.set(nodeId, figmaId)
   }
 
+  // Identify nodes whose kiwi NC has explicit property values that should
+  // not be overwritten by transitive sync from their component source.
+  const kiwiPropertyNodes = new Set<string>()
+  for (const [figmaId, nodeId] of guidToNodeId) {
+    const nc = changeMap.get(figmaId) as Record<string, unknown> | undefined
+    if (!nc) continue
+    if (nc.fillPaints !== undefined || nc.cornerRadius !== undefined ||
+        nc.rectangleCornerRadiiIndependent !== undefined || nc.visible === false) {
+      kiwiPropertyNodes.add(nodeId)
+    }
+  }
+
   return {
     graph,
     changeMap,
@@ -57,6 +69,7 @@ function buildOverrideContext(
     preComputedRoot: new Map(),
     componentIdRoot: new Map(),
     swappedInstances: new Set(),
+    kiwiPropertyNodes,
   }
 }
 
@@ -88,6 +101,11 @@ export function populateAndApplyOverrides(
   preComputeRoots(ctx)
 
   const overriddenNodes = applySymbolOverrides(ctx)
+
+  // Nodes with explicit kiwi NC properties are seeds (so their clones get
+  // synced with the correct values) AND protected (so sync doesn't overwrite
+  // them with component defaults).
+  for (const id of ctx.kiwiPropertyNodes) overriddenNodes.add(id)
   propagateOverridesTransitively(graph, overriddenNodes, ctx.swappedInstances, ctx.componentIdRoot)
 
   const propModified = applyComponentProperties(ctx)

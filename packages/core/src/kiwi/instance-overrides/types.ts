@@ -75,4 +75,6 @@ export interface OverrideContext {
   preComputedRoot: Map<string, string>
   componentIdRoot: Map<string, string>
   swappedInstances: Set<string>
+  /** Nodes whose kiwi NC has explicit property values (fills, cornerRadius, etc.) */
+  kiwiPropertyNodes: Set<string>
 }
