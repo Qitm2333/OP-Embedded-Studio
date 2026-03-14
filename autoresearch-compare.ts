@@ -60,8 +60,16 @@ function collect(proxy: ReturnType<FigmaAPI['wrapNode']>, parentPath: string, si
   const chars = (proxy as unknown as { characters?: string }).characters
   if (proxy.type === 'TEXT' && chars) entry.text = chars
   if (visibleFill) entry.fill = colorHex(visibleFill.color)
-  const cr = raw.cornerRadius as number | undefined
-  if (cr && cr > 0) entry.cr = Math.round(cr * 10) / 10
+  let cr = raw.cornerRadius as number
+  if (raw.independentCorners) {
+    const tl = raw.topLeftRadius as number ?? 0
+    const tr = raw.topRightRadius as number ?? 0
+    const br = raw.bottomRightRadius as number ?? 0
+    const bl = raw.bottomLeftRadius as number ?? 0
+    if (tl === tr && tr === br && br === bl) cr = tl
+    else cr = Math.max(tl, tr, br, bl)
+  }
+  if (cr > 0) entry.cr = Math.round(cr * 10) / 10
   if (raw.clipsContent) entry.clip = true
 
   ourNodes.set(path, entry)
