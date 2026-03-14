@@ -17,6 +17,9 @@ export function applyConstraintScaling(ctx: OverrideContext): void {
     if (!comp || comp.width <= 0 || comp.height <= 0) continue
     if (node.width === comp.width && node.height === comp.height) continue
 
+    // Skip if instance uses auto-layout — layout engine handles child sizing
+    if (node.layoutMode !== 'NONE') continue
+
     const sx = node.width / comp.width
     const sy = node.height / comp.height
     if (Math.abs(sx - 1) < 0.001 && Math.abs(sy - 1) < 0.001) continue

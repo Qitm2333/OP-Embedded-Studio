@@ -37,6 +37,7 @@ const truthMap = new Map(truth.map(n => [n.path, n]))
 
 const file = Bun.file(fixturePath)
 const graph = await readFigFile(new File([await file.arrayBuffer()], 'gold-preview.fig'))
+
 const api = new FigmaAPI(graph)
 const page = api.root.children[0]
 if (!page) { console.error('No page found'); process.exit(1) }
