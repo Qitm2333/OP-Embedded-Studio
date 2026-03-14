@@ -44,10 +44,13 @@ and `tests/fixtures/gold-preview-truth.json` as ground truth (extracted from liv
 - **DSD for swapped instances**: Single-child fallback in resolveOverrideTarget (d93c475)
 - **Rounded clipping**: clipRRect when clipsContent + cornerRadius (49423e4)
 - **Shadow child shape**: Drop shadow on transparent containers follows first child (f70338d)
-- **Current best**: 84 total_diffs (1 vis, 0 text, 9 fills, 0 radius, 74 size, 99 unmatched)
-- **Comparison fixes**: independentCorners radius reading, pill-shape tolerance
+- **Current best**: 62 total_diffs (1 vis, 0 text, 11 fills, 0 radius, 50 size, 0 unmatched)
+- **Comparison fixes**: independentCorners radius reading, pill-shape tolerance, name-based tree matching
 - **kiwiPropertyNodes**: Nodes with explicit kiwi NC fills/cornerRadius are added to seeds AND protected from sync overwrite
 - **Self-referencing symbolOverride**: When an override resolves to the instance itself, skip if the instance has explicit kiwi NC properties
-- **Remaining fills (9)**: Variable-bound colors (Indicators), wrong variant selection (badge Placeholders), deep chain overrides
-- **Remaining sizes (74)**: 38 Vector constraint resizing (no DSD size data), 6 datepicker layout widths, Badge proportional scaling
-- **Unmatched (99)**: Tree path matching gaps in deep clone chains
+- **SCALE constraint resizing**: Apply proportional scaling to children when instance size ≠ component size; skip auto-layout instances; propagate through clone chains
+- **Remaining fills (11)**: Variable-bound colors (3 Indicators, 1 Ellipse), deep chain color overrides (3 badge Placeholders, 1 Link, 1 Vector, 1 button Placeholder, 1 Left Divider)
+- **Remaining sizes (50)**: 16 Vectors (Badge 1.12x ratio), 7 datepicker widths, 3+3+3 Badge/Avatar/Placeholder sizing (layout-dependent), 4 Groups, misc text widths
+- **Root causes of remaining diffs**:
+  - **Fills (11)**: ALL fill overrides use `colorVar` library aliases. The `paint.color` is the fallback value, but the alias resolves to a different color in context. Need library asset ref → local variable mapping via `variableConsumptionMap`.
+  - **Sizes (50)**: 30+ are Badge area (~1.12x ratio from layout-dependent width), 7 datepicker (layout), rest are text measurement diffs. These need pixel-perfect text measurement or DSD propagation improvements.
