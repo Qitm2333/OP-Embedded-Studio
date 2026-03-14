@@ -2,6 +2,7 @@ import { parseColor, colorToFill } from '../color'
 import { TRANSPARENT } from '../constants'
 import { fetchIcons } from '../iconify'
 import { createIconFromPaths } from '../icon-render'
+import { computeAllLayouts } from '../layout'
 import { isTreeNode } from './tree'
 
 import type { SceneGraph, SceneNode, NodeType, LayoutMode, GridTrack, Stroke } from '../scene-graph'
@@ -91,6 +92,8 @@ export async function renderTree(
 
   if (options.x !== undefined) graph.updateNode(result.id, { x: options.x })
   if (options.y !== undefined) graph.updateNode(result.id, { y: options.y })
+
+  computeAllLayouts(graph)
 
   return {
     id: result.id,

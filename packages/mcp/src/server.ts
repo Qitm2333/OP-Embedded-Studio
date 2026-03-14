@@ -13,6 +13,7 @@ import {
   SceneGraph,
   headlessRenderNodes
 } from '@open-pencil/core'
+import { exportImage } from '@open-pencil/core/tools'
 
 import type { ToolDef, ParamDef, ParamType, ExportFormat } from '@open-pencil/core'
 
@@ -164,6 +165,36 @@ export function createServer(version: string, options: CreateServerOptions = {})
         const pages = graph.getPages()
         currentPageId = pages[0]?.id ?? null
         return ok({ page: pages[0]?.name, id: currentPageId })
+      } catch (e) {
+        return fail(e)
+      }
+    }
+  )
+
+  register(
+    'export_image_file',
+    {
+      description: 'Export nodes as a PNG/JPG/WEBP image file saved to disk. Returns the file path and size.',
+      inputSchema: z.object({
+        path: z.string().describe('Absolute path to save the image file (e.g. /tmp/design.png)'),
+        ids: z.array(z.string()).min(1).optional().describe('Node IDs to export. Omit to export all top-level nodes on the current page.'),
+        format: z.enum(['PNG', 'JPG', 'WEBP']).optional().describe('Image format (default: PNG)'),
+        scale: z.number().min(0.1).max(4).optional().describe('Export scale multiplier (default: 2)')
+      })
+    },
+    async ({ path: filePath, ids, format, scale }: { path: string; ids?: string[]; format?: string; scale?: number }) => {
+      try {
+        const outPath = resolveAndCheckPath(filePath)
+        const result = await exportImage.execute(makeFigma(), {
+          ids,
+          format: format ?? 'PNG',
+          scale: scale ?? 2
+        })
+        if (result && 'error' in result) throw new Error(result.error as string)
+        const { base64 } = result as { base64: string }
+        const data = Buffer.from(base64, 'base64')
+        await writeFile(outPath, data)
+        return ok({ saved: outPath, bytes: data.length, format: (format ?? 'PNG').toUpperCase(), scale: scale ?? 2 })
       } catch (e) {
         return fail(e)
       }

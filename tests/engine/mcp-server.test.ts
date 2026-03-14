@@ -290,6 +290,117 @@ describe('MCP server', () => {
     }
   })
 
+  test('export_image_file produces a valid PNG after new_document + render', async () => {
+    const tmpPath = join(import.meta.dir, '..', `_mcp_test_export_${Date.now()}.png`)
+    try {
+      await client.callTool({ name: 'new_document', arguments: {} })
+      await client.callTool({
+        name: 'render',
+        arguments: { jsx: '<Frame w={200} h={100} bg="#FF0000"><Text size={14}>Hello</Text></Frame>' }
+      })
+      const result = await client.callTool({
+        name: 'export_image_file',
+        arguments: { path: tmpPath, format: 'PNG', scale: 1 }
+      })
+      expect(result.isError).not.toBe(true)
+      const data = parseResult(result) as { saved: string; bytes: number; format: string }
+      expect(data.saved).toBe(tmpPath)
+      expect(data.bytes).toBeGreaterThan(100)
+      expect(data.format).toBe('PNG')
+    } finally {
+      await unlink(tmpPath).catch(() => {})
+    }
+  })
+
+  test('export_image_file without ids exports all page children', async () => {
+    const tmpPath = join(import.meta.dir, '..', `_mcp_test_export_all_${Date.now()}.png`)
+    try {
+      await client.callTool({ name: 'new_document', arguments: {} })
+      await client.callTool({
+        name: 'create_shape',
+        arguments: { type: 'FRAME', x: 0, y: 0, width: 100, height: 100 }
+      })
+      const result = await client.callTool({
+        name: 'export_image_file',
+        arguments: { path: tmpPath }
+      })
+      expect(result.isError).not.toBe(true)
+      const data = parseResult(result) as { bytes: number }
+      expect(data.bytes).toBeGreaterThan(0)
+    } finally {
+      await unlink(tmpPath).catch(() => {})
+    }
+  })
+
+  test('export_image_file without a loaded document returns an error', async () => {
+    const result = await client.callTool({
+      name: 'export_image_file',
+      arguments: { path: '/tmp/_no_doc.png' }
+    })
+    expect(result.isError).toBe(true)
+  })
+
+  test('export_image_file with out-of-root path returns an error', async () => {
+    const rootDir = await mkdtemp(join(tmpdir(), 'openpencil-mcp-export-root-'))
+    const custom = await createLinkedClient({ fileRoot: rootDir })
+    try {
+      await custom.client.callTool({ name: 'new_document', arguments: {} })
+      await custom.client.callTool({
+        name: 'create_shape',
+        arguments: { type: 'RECTANGLE', x: 0, y: 0, width: 50, height: 50 }
+      })
+      const result = await custom.client.callTool({
+        name: 'export_image_file',
+        arguments: { path: '/tmp/_outside_root.png' }
+      })
+      expect(result.isError).toBe(true)
+      const data = parseResult(result) as { error: string }
+      expect(data.error).toContain('outside allowed root')
+    } finally {
+      await custom.close()
+      await rm(rootDir, { recursive: true, force: true })
+    }
+  })
+
+  test('export_image_file JPG and WEBP formats produce non-empty output', async () => {
+    const jpgPath = join(import.meta.dir, '..', `_mcp_test_${Date.now()}.jpg`)
+    const webpPath = join(import.meta.dir, '..', `_mcp_test_${Date.now()}.webp`)
+    try {
+      await client.callTool({ name: 'new_document', arguments: {} })
+      await client.callTool({
+        name: 'create_shape',
+        arguments: { type: 'RECTANGLE', x: 0, y: 0, width: 80, height: 80 }
+      })
+
+      const jpgResult = await client.callTool({
+        name: 'export_image_file',
+        arguments: { path: jpgPath, format: 'JPG', scale: 1 }
+      })
+      expect(jpgResult.isError).not.toBe(true)
+      const jpgData = parseResult(jpgResult) as { bytes: number; format: string }
+      expect(jpgData.bytes).toBeGreaterThan(0)
+      expect(jpgData.format).toBe('JPG')
+
+      const webpResult = await client.callTool({
+        name: 'export_image_file',
+        arguments: { path: webpPath, format: 'WEBP', scale: 1 }
+      })
+      expect(webpResult.isError).not.toBe(true)
+      const webpData = parseResult(webpResult) as { bytes: number; format: string }
+      expect(webpData.bytes).toBeGreaterThan(0)
+      expect(webpData.format).toBe('WEBP')
+    } finally {
+      await unlink(jpgPath).catch(() => {})
+      await unlink(webpPath).catch(() => {})
+    }
+  })
+
+  test('export_image_file is listed in tools', async () => {
+    const { tools } = await client.listTools()
+    const names = tools.map((t) => t.name)
+    expect(names).toContain('export_image_file')
+  })
+
   test('createServer option fileRoot restricts open_file and save_file paths', async () => {
     const rootDir = await mkdtemp(join(tmpdir(), 'openpencil-mcp-root-'))
     const insidePath = join(rootDir, 'inside.fig')
