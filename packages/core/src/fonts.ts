@@ -131,6 +131,39 @@ async function fetchGoogleFont(family: string, style: string): Promise<ArrayBuff
   return response.arrayBuffer()
 }
 
+async function loadLocalFont(family: string, style: string): Promise<ArrayBuffer | null> {
+  // eslint-disable-next-line typescript-eslint/prefer-optional-chain -- typeof guard needed for non-browser envs
+  if (typeof window === 'undefined' || !window.queryLocalFonts) return null
+  try {
+    const fonts = await window.queryLocalFonts()
+    const normalized = normalizeFontFamily(family)
+    const match =
+      fonts.find((f: FontInfo) => f.family === family && f.style === style) ??
+      fonts.find((f: FontInfo) => f.family === family) ??
+      (normalized !== family
+        ? (fonts.find((f: FontInfo) => f.family === normalized && f.style === style) ??
+          fonts.find((f: FontInfo) => f.family === normalized))
+        : undefined)
+    if (!match) return null
+    const blob: Blob = await match.blob()
+    const buffer = await blob.arrayBuffer()
+    // Variable fonts (fvar table) cause CanvasKit to render all text at the
+    // default weight. Skip them — Google Fonts serves per-weight static files.
+    if (isVariableFont(buffer)) return null
+    return buffer
+  } catch (e) {
+    console.warn(`Local font access failed for "${family}" ${style}:`, e)
+    return null
+  }
+}
+
+function registerAndCache(family: string, style: string, buffer: ArrayBuffer): ArrayBuffer | null {
+  if (!registerFontInCanvasKit(family, buffer)) return null
+  loadedFamilies.set(`${family}|${style}`, buffer)
+  registerFontInBrowser(family, style, buffer)
+  return buffer
+}
+
 export async function loadFont(family: string, style = 'Regular'): Promise<ArrayBuffer | null> {
   const cacheKey = `${family}|${style}`
   if (loadedFamilies.has(cacheKey)) {
@@ -140,66 +173,46 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
     return cached
   }
 
-  // Try local font access API first (browser only)
-  // eslint-disable-next-line typescript-eslint/prefer-optional-chain -- typeof guard needed for non-browser envs
-  if (typeof window !== 'undefined' && window.queryLocalFonts) {
-    try {
-      const fonts = await window.queryLocalFonts()
-      const normalized = normalizeFontFamily(family)
-      const match =
-        fonts.find((f: FontInfo) => f.family === family && f.style === style) ??
-        fonts.find((f: FontInfo) => f.family === family) ??
-        (normalized !== family
-          ? (fonts.find((f: FontInfo) => f.family === normalized && f.style === style) ??
-            fonts.find((f: FontInfo) => f.family === normalized))
-          : undefined)
-      if (match) {
-        const blob: Blob = await match.blob()
-        const buffer = await blob.arrayBuffer()
+  const localBuffer = await loadLocalFont(family, style)
+  if (localBuffer) return registerAndCache(family, style, localBuffer)
 
-        if (registerFontInCanvasKit(family, buffer)) {
-          loadedFamilies.set(cacheKey, buffer)
-          registerFontInBrowser(family, style, buffer)
-          return buffer
-        }
-      }
-    } catch (e) {
-      console.warn(`Local font access failed for "${family}" ${style}:`, e)
-    }
-  }
-
-  // Try Google Fonts
   if (typeof fetch !== 'undefined') {
     try {
       const buffer = await fetchGoogleFont(family, style)
-      if (buffer && registerFontInCanvasKit(family, buffer)) {
-        loadedFamilies.set(cacheKey, buffer)
-        registerFontInBrowser(family, style, buffer)
-        return buffer
-      }
+      if (buffer) return registerAndCache(family, style, buffer)
     } catch (e) {
       console.warn(`Google Fonts fetch failed for "${family}" ${style}:`, e)
     }
   }
 
-  // Fall back to bundled font
   const bundledUrl = BUNDLED_FONTS[cacheKey]
   if (bundledUrl) {
     try {
       const response = await fetch(bundledUrl)
       const buffer = await response.arrayBuffer()
-
-      if (registerFontInCanvasKit(family, buffer)) {
-        loadedFamilies.set(cacheKey, buffer)
-        registerFontInBrowser(family, style, buffer)
-        return buffer
-      }
+      return registerAndCache(family, style, buffer)
     } catch (e) {
       console.warn(`Bundled font fetch failed for "${family}" ${style}:`, e)
     }
   }
 
   return null
+}
+
+function isVariableFont(data: ArrayBuffer): boolean {
+  if (data.byteLength < 12) return false
+  const view = new DataView(data)
+  const numTables = view.getUint16(4)
+  for (let i = 0; i < numTables && 12 + i * 16 + 4 <= data.byteLength; i++) {
+    const tag = String.fromCharCode(
+      view.getUint8(12 + i * 16),
+      view.getUint8(12 + i * 16 + 1),
+      view.getUint8(12 + i * 16 + 2),
+      view.getUint8(12 + i * 16 + 3)
+    )
+    if (tag === 'fvar') return true
+  }
+  return false
 }
 
 function registerFontInCanvasKit(family: string, data: ArrayBuffer): boolean {
