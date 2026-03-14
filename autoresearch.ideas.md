@@ -8,6 +8,9 @@
 - **Datepicker width (7 nodes)**: `_datepicker-date-range-link` width 32→131. FIXED sizing but Figma shows wider — check if `layoutGrow` or parent `FILL` sizing should expand it.
 - **Remaining Vector scaling (16 nodes)**: Inside Badge area. Would cascade-fix if Badge width is corrected.
 
+## Attempted & Reverted
+- **kiwiPropertyNodes in seeds + preserveFills**: Adding kiwiPropertyNodes as BFS extra seeds allows propagation of kiwi NC values to clones, but the skip=seeds coupling causes visibility regressions. Need to decouple "BFS start nodes" from "don't overwrite" in propagateOverridesTransitively — a structural refactor of the sync function's skip logic.
+
 ## Investigated / Won't Fix In This Session
 - Avatar distortion: Fixed by skipping auto-layout instances in constraint scaling
 - 99 unmatched nodes: Fixed by name-based tree path matching
