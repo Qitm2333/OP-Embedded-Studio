@@ -14,7 +14,6 @@ import {
   renderNodesToImage,
   SkiaRenderer,
   collectFontKeys,
-  initFontService,
   loadFont
 } from '@open-pencil/core'
 
