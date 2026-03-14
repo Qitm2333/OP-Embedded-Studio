@@ -36,6 +36,13 @@ interface DerivedSymbolOverride {
   strokeGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
 }
 
+interface ComponentPropDef {
+  id?: GUID
+  name?: string
+  initialValue?: ComponentPropAssignment['value']
+  type?: number
+}
+
 export interface InstanceNodeChange {
   type?: string
   guid?: GUID
@@ -43,6 +50,7 @@ export interface InstanceNodeChange {
   symbolData?: SymbolData
   componentPropRefs?: ComponentPropRef[]
   componentPropAssignments?: ComponentPropAssignment[]
+  componentPropDefs?: ComponentPropDef[]
   derivedSymbolData?: DerivedSymbolOverride[]
 }
 
@@ -120,6 +128,19 @@ export function populateAndApplyOverrides(
   const overrideKeyToGuid = new Map<string, string>()
   for (const [id, nc] of changeMap) {
     if (nc.overrideKey) overrideKeyToGuid.set(guidToString(nc.overrideKey), id)
+  }
+
+  // Component property defaults: defID → initialValue from componentPropDefs.
+  // In symbolOverride componentPropAssignments, an empty value {} (all fields
+  // absent) means "reset to component default". We resolve it from this map.
+  const propDefaults = new Map<string, ComponentPropAssignment['value']>()
+  for (const [, nc] of changeMap) {
+    if (!nc.componentPropDefs?.length) continue
+    for (const def of nc.componentPropDefs) {
+      if (def.id && def.initialValue) {
+        propDefaults.set(guidToString(def.id), def.initialValue)
+      }
+    }
   }
 
   // Reverse map: graph node ID → figma GUID (used by getComponentRoot kiwi fallback)
@@ -284,51 +305,55 @@ export function populateAndApplyOverrides(
     componentIdRoot.clear()
   }
 
-  function assignmentsToValueMap(assignments: ComponentPropAssignment[]): Map<string, ComponentPropAssignment['value']> {
+  function isEmptyPropValue(v: ComponentPropAssignment['value']): boolean {
+    return v.boolValue === undefined && v.textValue === undefined && v.guidValue === undefined
+  }
+
+  function assignmentsToValueMap(
+    assignments: ComponentPropAssignment[],
+    resolveDefaults = false
+  ): Map<string, ComponentPropAssignment['value']> {
     const valueByDef = new Map<string, ComponentPropAssignment['value']>()
     for (const a of assignments) {
-      if (a.defID) valueByDef.set(guidToString(a.defID), a.value)
+      if (!a.defID) continue
+      const key = guidToString(a.defID)
+      // In symbolOverride context, an empty value {} (all fields absent in
+      // kiwi binary) means "reset to the component's initialValue default".
+      // This is distinct from {boolValue: false} which is an explicit false.
+      if (resolveDefaults && isEmptyPropValue(a.value)) {
+        const def = propDefaults.get(key)
+        if (def) {
+          valueByDef.set(key, def)
+          continue
+        }
+      }
+      valueByDef.set(key, a.value)
     }
     return valueByDef
   }
 
   function applyInstanceDirectAssignments(
     assignmentSources: Map<string, ComponentPropAssignment[]>,
-    propRefsMap: Map<string, ComponentPropRef[]>
+    propRefsMap: Map<string, ComponentPropRef[]>,
+    modified?: Set<string>
   ) {
     for (const node of graph.getAllNodes()) {
       if (node.type !== 'INSTANCE') continue
-      // Apply assignments from the instance's own kiwi data first
+      // Only apply assignments from the instance's own kiwi data.
+      // Cloned instances inherit correct values from their source via
+      // transitive sync — walking the componentId chain would apply
+      // base-component assignments that should be overridden by
+      // symbolOverride componentPropAssignments at a higher level.
       const ownFigmaId = nodeIdToGuid.get(node.id)
-      if (ownFigmaId) {
-        const ownAssignments = assignmentSources.get(ownFigmaId)
-        if (ownAssignments) {
-          applyPropAssignments(node.id, assignmentsToValueMap(ownAssignments), propRefsMap)
-        }
-      }
-
-      // Walk the componentId chain to find a kiwi source with assignments.
-      // Cloned instances may be several levels deep (clone of clone of …),
-      // so a single-hop lookup is insufficient.
-      if (!node.componentId) continue
-      let sourceId: string | undefined = node.componentId
-      for (let depth = 0; sourceId && depth < 20; depth++) {
-        const figmaId = nodeIdToGuid.get(sourceId)
-        if (figmaId) {
-          const assignments = assignmentSources.get(figmaId)
-          if (assignments) {
-            applyPropAssignments(node.id, assignmentsToValueMap(assignments), propRefsMap)
-            break
-          }
-        }
-        const n = graph.getNode(sourceId)
-        if (!n?.componentId || n.componentId === sourceId) break
-        sourceId = n.componentId
+      if (!ownFigmaId) continue
+      const ownAssignments = assignmentSources.get(ownFigmaId)
+      if (ownAssignments) {
+        applyPropAssignments(node.id, assignmentsToValueMap(ownAssignments), propRefsMap, modified)
       }
     }
   }
 
-  function applySymbolOverrideAssignments(propRefsMap: Map<string, ComponentPropRef[]>) {
+  function applySymbolOverrideAssignments(propRefsMap: Map<string, ComponentPropRef[]>, modified?: Set<string>) {
     for (const [figmaId, nc] of changeMap) {
       const instanceNodeId = guidToNodeId.get(figmaId)
       if (!instanceNodeId) continue
@@ -345,12 +370,12 @@ export function populateAndApplyOverrides(
         const targetId = resolveOverrideTarget(instanceNodeId, guids)
         if (!targetId) continue
 
-        applyPropAssignments(targetId, assignmentsToValueMap(ov.componentPropAssignments), propRefsMap)
+        applyPropAssignments(targetId, assignmentsToValueMap(ov.componentPropAssignments, true), propRefsMap, modified)
       }
     }
   }
 
-  function applyComponentProperties() {
+  function applyComponentProperties(modified: Set<string>) {
     const propRefsMap = new Map<string, ComponentPropRef[]>()
     for (const [figmaId, nc] of changeMap) {
       if (nc.componentPropRefs?.length) {
@@ -366,14 +391,15 @@ export function populateAndApplyOverrides(
       }
     }
 
-    applyInstanceDirectAssignments(assignmentSources, propRefsMap)
-    applySymbolOverrideAssignments(propRefsMap)
+    applyInstanceDirectAssignments(assignmentSources, propRefsMap, modified)
+    applySymbolOverrideAssignments(propRefsMap, modified)
   }
 
   function applyPropAssignments(
     parentId: string,
     valueByDef: Map<string, ComponentPropAssignment['value']>,
-    propRefsMap: Map<string, ComponentPropRef[]>
+    propRefsMap: Map<string, ComponentPropRef[]>,
+    modified?: Set<string>
   ) {
     const parent = graph.getNode(parentId)
     if (!parent) return
@@ -381,7 +407,7 @@ export function populateAndApplyOverrides(
     for (const childId of parent.childIds) {
       const child = graph.getNode(childId)
       if (!child?.componentId) {
-        applyPropAssignments(childId, valueByDef, propRefsMap)
+        applyPropAssignments(childId, valueByDef, propRefsMap, modified)
         continue
       }
 
@@ -394,16 +420,20 @@ export function populateAndApplyOverrides(
 
           if (ref.componentPropNodeField === 'VISIBLE' && val.boolValue !== undefined) {
             graph.updateNode(childId, { visible: val.boolValue })
+            modified?.add(childId)
           } else if (ref.componentPropNodeField === 'OVERRIDDEN_SYMBOL_ID') {
             const swapId = val.textValue ?? (val.guidValue ? guidToString(val.guidValue) : undefined)
             if (!swapId) continue
             const newCompId = guidToNodeId.get(swapId)
-            if (newCompId) repopulateInstance(childId, newCompId)
+            if (newCompId) {
+              repopulateInstance(childId, newCompId)
+              modified?.add(childId)
+            }
           }
         }
       }
 
-      applyPropAssignments(childId, valueByDef, propRefsMap)
+      applyPropAssignments(childId, valueByDef, propRefsMap, modified)
     }
   }
 
@@ -733,12 +763,19 @@ export function populateAndApplyOverrides(
   // 1. symbolOverrides — set property values and swap instances (kiwi + clones)
   // 2. transitive sync — propagate overrides through remaining clone chains
   // 3. componentProperties — toggle visibility / swap via prop assignments
+  //    (runs after sync so visible-page overrides aren't clobbered,
+  //    then a second sync propagates the results to deeper clones)
   // 4. derivedSymbolData — apply Figma's pre-computed sizes last
   const overriddenNodes = applySymbolOverrides()
 
   propagateOverridesTransitively(overriddenNodes)
 
-  applyComponentProperties()
+  const propModified = new Set<string>()
+  applyComponentProperties(propModified)
+
+  if (propModified.size > 0) {
+    propagateOverridesTransitively(propModified)
+  }
 
   applyDerivedSymbolData()
 }
