@@ -19,7 +19,14 @@
     },
     "fs:allow-watch",
     "fs:allow-unwatch",
-    "shell:allow-spawn",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        { "name": "claude-code-acp", "cmd": "claude-code-acp", "args": true },
+        { "name": "codex-acp", "cmd": "codex-acp", "args": true },
+        { "name": "gemini", "cmd": "gemini", "args": true }
+      ]
+    },
     "shell:allow-stdin-write",
     "shell:allow-kill"
   ]
