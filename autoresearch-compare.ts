@@ -43,8 +43,11 @@ if (!page) { console.error('No page found'); process.exit(1) }
 
 const ourNodes = new Map<string, TruthNode>()
 
-function collect(proxy: ReturnType<FigmaAPI['wrapNode']>, parentPath: string, sibIdx: number) {
-  const path = `${parentPath}/${proxy.name}[${sibIdx}]`
+function collect(proxy: ReturnType<FigmaAPI['wrapNode']>, parentPath: string, sibIdx: number, sibNames: Map<string, number>) {
+  // Use name-based index when all sibling names are unique, numeric index otherwise
+  const nameCount = sibNames.get(proxy.name) ?? 0
+  sibNames.set(proxy.name, nameCount + 1)
+  const path = `${parentPath}/${proxy.name}[${nameCount}]`
   const raw = (proxy as unknown as { _raw(): Record<string, unknown> })._raw()
   const fills = raw.fills as Array<{ type: string; color: { r: number; g: number; b: number; a: number }; visible: boolean }> | undefined
   const visibleFill = fills?.find(f => f.type === 'SOLID' && f.visible !== false)
@@ -75,15 +78,17 @@ function collect(proxy: ReturnType<FigmaAPI['wrapNode']>, parentPath: string, si
   ourNodes.set(path, entry)
   const children = (proxy as unknown as { children?: unknown[] }).children
   if (children) {
+    const childNames = new Map<string, number>()
     for (let i = 0; i < children.length; i++) {
-      collect(children[i] as ReturnType<FigmaAPI['wrapNode']>, path, i)
+      collect(children[i] as ReturnType<FigmaAPI['wrapNode']>, path, i, childNames)
     }
   }
 }
 
 const pageChildren = (api.wrapNode(page.id) as unknown as { children?: unknown[] }).children ?? []
+const topNames = new Map<string, number>()
 for (let i = 0; i < pageChildren.length; i++) {
-  collect(pageChildren[i] as ReturnType<FigmaAPI['wrapNode']>, '', i)
+  collect(pageChildren[i] as ReturnType<FigmaAPI['wrapNode']>, '', i, topNames)
 }
 
 let diffs = 0, visibility = 0, text = 0, fills = 0, radius = 0, size = 0, matched = 0
