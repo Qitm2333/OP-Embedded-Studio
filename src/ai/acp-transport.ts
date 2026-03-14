@@ -23,10 +23,18 @@ interface ACPSession {
   onUpdate: ((params: SessionNotification) => void) | null
 }
 
+const DESIGN_CONTEXT = `You are inside OpenPencil, an open-source design editor (like Figma). \
+Use the open-pencil MCP tools to create and modify designs on the live canvas. \
+Key tools: render (JSX to design), create_shape, set_fill, set_layout, find_nodes, get_page_tree, export_image. \
+The render tool accepts JSX with components: Frame, Text, Rectangle, Ellipse, Icon, Group, Section. \
+Props: w, h, bg, flex, gap, p, rounded, color, size, weight, items, justify, stroke, opacity, shadow. \
+Do NOT write HTML files or use terminal commands — draw directly on the canvas using the MCP tools.`
+
 export class ACPChatTransport implements ChatTransport<UIMessage> {
   private session: ACPSession | null = null
   private agentDef: ACPAgentDef
   private cwd: string
+  private sentContext = false
 
   constructor(options: { agentDef: ACPAgentDef; cwd?: string }) {
     this.agentDef = options.agentDef
@@ -51,6 +59,9 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
     if (!this.session) {
       this.session = await this.spawnAgent()
     }
+
+    const promptText = this.sentContext ? text : `${DESIGN_CONTEXT}\n\n${text}`
+    this.sentContext = true
 
     const { connection, sessionId } = this.session
     const session = this.session
@@ -82,7 +93,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
         connection
           .prompt({
             sessionId,
-            prompt: [{ type: 'text', text }]
+            prompt: [{ type: 'text', text: promptText }]
           })
           .then((result) => {
             if (textStarted) {
