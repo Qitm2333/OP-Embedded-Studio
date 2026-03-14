@@ -11,14 +11,10 @@ import {
   parseFigFile,
   computeAllLayouts,
   SceneGraph,
-  renderNodesToImage,
-  SkiaRenderer,
-  collectFontKeys,
-  loadFont
+  headlessRenderNodes
 } from '@open-pencil/core'
 
 import type { ToolDef, ParamDef, ParamType, ExportFormat } from '@open-pencil/core'
-import type { CanvasKit } from 'canvaskit-wasm'
 
 type McpContent = { type: 'text'; text: string } | { type: 'image'; data: string; mimeType: string }
 type McpResult = { content: McpContent[]; isError?: boolean }
@@ -57,17 +53,6 @@ function paramToZod(param: ParamDef): z.ZodTypeAny {
   return param.required ? schema : schema.optional()
 }
 
-let ckInstance: CanvasKit | null = null
-
-async function getCanvasKit(): Promise<CanvasKit> {
-  if (ckInstance) return ckInstance
-  const CanvasKitInit = (await import('canvaskit-wasm/full')).default
-  const ckPath = import.meta.resolve('canvaskit-wasm/full')
-  const binDir = new URL('.', ckPath).pathname
-  ckInstance = await CanvasKitInit({ locateFile: (file: string) => binDir + file })
-  return ckInstance
-}
-
 export function createServer(version: string, options: CreateServerOptions = {}): McpServer {
   const server = new McpServer({ name: 'open-pencil', version })
   const enableEval = options.enableEval ?? true
@@ -84,23 +69,8 @@ export function createServer(version: string, options: CreateServerOptions = {})
     const api = new FigmaAPI(g)
     if (currentPageId) api.currentPage = api.wrapNode(currentPageId)
     api.exportImage = async (nodeIds, opts) => {
-      const ck = await getCanvasKit()
-      const surface = ck.MakeSurface(1, 1)
-      if (!surface) throw new Error('Failed to create CanvasKit surface')
-      const renderer = new SkiaRenderer(ck, surface)
-      renderer.viewportWidth = 1
-      renderer.viewportHeight = 1
-      renderer.dpr = 1
-
-      // Initialize font provider and load fonts used by the exported nodes
-      await renderer.loadFonts()
       const pageId = currentPageId ?? g.getPages()[0].id
-      const fontKeys = collectFontKeys(g, nodeIds)
-      for (const [family, style] of fontKeys) {
-        await loadFont(family, style)
-      }
-
-      return renderNodesToImage(ck, renderer, g, pageId, nodeIds, {
+      return headlessRenderNodes(g, pageId, nodeIds, {
         scale: opts.scale ?? 1,
         format: (opts.format ?? 'PNG') as ExportFormat
       })

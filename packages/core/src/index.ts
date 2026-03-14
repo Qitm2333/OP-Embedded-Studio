@@ -132,6 +132,7 @@ export {
   adjustRunsForDelete
 } from './style-runs'
 export { renderNodesToImage, renderThumbnail, computeContentBounds, type ExportFormat } from './render-image'
+export { initCanvasKit, headlessRenderNodes, headlessRenderThumbnail } from './headless-render'
 export {
   renderNodesToSVG,
   geometryBlobToSVGPath,

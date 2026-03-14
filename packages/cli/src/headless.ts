@@ -1,27 +1,16 @@
-import CanvasKitInit from 'canvaskit-wasm/full'
-import type { CanvasKit } from 'canvaskit-wasm'
 import {
   parseFigFile,
+  initCanvasKit,
   type SceneGraph,
   type ExportFormat,
-  SkiaRenderer,
   computeAllLayouts,
+  collectFontKeys,
   loadFont,
-  renderNodesToImage,
-  renderThumbnail
+  headlessRenderNodes,
+  headlessRenderThumbnail
 } from '@open-pencil/core'
 
-let ck: CanvasKit | null = null
-
-export async function initCanvasKit(): Promise<CanvasKit> {
-  if (ck) return ck
-  const ckPath = import.meta.resolve('canvaskit-wasm/full')
-  const binDir = new URL('.', ckPath).pathname
-  ck = await CanvasKitInit({
-    locateFile: (file) => binDir + file
-  })
-  return ck
-}
+export { initCanvasKit }
 
 export async function loadDocument(filePath: string): Promise<SceneGraph> {
   const data = await Bun.file(filePath).arrayBuffer()
@@ -30,24 +19,10 @@ export async function loadDocument(filePath: string): Promise<SceneGraph> {
   return graph
 }
 
-export async function loadFonts(graph: SceneGraph): Promise<void> {
-  const families = new Set<string>()
-  for (const node of graph.getAllNodes()) {
-    if (node.fontFamily) families.add(node.fontFamily)
-  }
-  for (const family of families) {
-    await loadFont(family)
-  }
-}
-
-function createRenderer(ckInstance: CanvasKit, width: number, height: number): SkiaRenderer {
-  const surface = ckInstance.MakeSurface(width, height)
-  if (!surface) throw new Error('Failed to create Skia surface')
-  const renderer = new SkiaRenderer(ckInstance, surface)
-  renderer.viewportWidth = width
-  renderer.viewportHeight = height
-  renderer.dpr = 1
-  return renderer
+export async function loadFonts(graph: SceneGraph, nodeIds?: string[]): Promise<void> {
+  const ids = nodeIds ?? [...graph.getAllNodes()].map((n) => n.id)
+  const fontKeys = collectFontKeys(graph, ids)
+  await Promise.all(fontKeys.map(([family, style]) => loadFont(family, style)))
 }
 
 export async function exportNodes(
@@ -56,13 +31,7 @@ export async function exportNodes(
   nodeIds: string[],
   options: { scale?: number; format?: ExportFormat; quality?: number }
 ): Promise<Uint8Array | null> {
-  const ckInstance = await initCanvasKit()
-  const renderer = createRenderer(ckInstance, 1, 1)
-  return renderNodesToImage(ckInstance, renderer, graph, pageId, nodeIds, {
-    scale: options.scale ?? 1,
-    format: options.format ?? 'PNG',
-    quality: options.quality
-  })
+  return headlessRenderNodes(graph, pageId, nodeIds, options)
 }
 
 export async function exportThumbnail(
@@ -71,7 +40,5 @@ export async function exportThumbnail(
   width: number,
   height: number
 ): Promise<Uint8Array | null> {
-  const ckInstance = await initCanvasKit()
-  const renderer = createRenderer(ckInstance, width, height)
-  return renderThumbnail(ckInstance, renderer, graph, pageId, width, height)
+  return headlessRenderThumbnail(graph, pageId, width, height)
 }
