@@ -218,7 +218,7 @@ async function createACPTransport() {
 function createTransport() {
   if (overrideTransport) return overrideTransport()
 
-  acpTransportInstance?.destroy()
+  void acpTransportInstance?.destroy()
   acpTransportInstance = null
 
   const tools = createAITools(useEditorStore())

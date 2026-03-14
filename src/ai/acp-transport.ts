@@ -73,7 +73,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
         }
 
         abortSignal?.addEventListener('abort', () => {
-          connection.cancel({ sessionId }).catch(() => {})
+          void connection.cancel({ sessionId })
         })
 
         controller.enqueue({ type: 'start' })
@@ -146,13 +146,13 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
     const child = await command.spawn()
 
     const output = new ReadableStream<Uint8Array>({
-      pull(controller) {
+      async pull(controller) {
         const buffered = stdoutChunks.shift()
         if (buffered) {
           controller.enqueue(buffered)
           return
         }
-        return new Promise<void>((resolve) => {
+        await new Promise<void>((resolve) => {
           stdoutResolver = (chunk) => {
             controller.enqueue(chunk)
             resolve()
@@ -168,12 +168,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
     })
 
     const stream = ndJsonStream(input, output)
-    const session: ACPSession = {
-      connection: null!,
-      sessionId: '',
-      child,
-      onUpdate: null
-    }
+    let onUpdate: ACPSession['onUpdate'] = null
 
     const clientImpl: Client = {
       async requestPermission(
@@ -188,7 +183,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
       },
 
       async sessionUpdate(params: SessionNotification): Promise<void> {
-        session.onUpdate?.(params)
+        onUpdate?.(params)
       }
     }
 
@@ -207,8 +202,13 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
       mcpServers: []
     })
 
-    session.connection = connection
-    session.sessionId = sessionResult.sessionId
+    const session: ACPSession = {
+      connection,
+      sessionId: sessionResult.sessionId,
+      child,
+      get onUpdate() { return onUpdate },
+      set onUpdate(fn) { onUpdate = fn }
+    }
 
     return session
   }
@@ -255,10 +255,11 @@ function mapUpdate(
       break
     }
     case 'tool_call': {
+      const toolName = update.title || 'unknown'
       chunks.push({
         type: 'tool-input-start',
         toolCallId: update.toolCallId,
-        toolName: update.title ?? 'unknown',
+        toolName,
         providerExecuted: true,
         title: update.title
       })
@@ -266,7 +267,7 @@ function mapUpdate(
         chunks.push({
           type: 'tool-input-available',
           toolCallId: update.toolCallId,
-          toolName: update.title ?? 'unknown',
+          toolName,
           input: update.rawInput,
           providerExecuted: true,
           title: update.title
