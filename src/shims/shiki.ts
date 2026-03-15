@@ -1,1 +1,12 @@
-throw new Error('shiki is stubbed out to reduce bundle size')
+export const bundledThemesInfo: never[] = []
+export const bundledLanguagesInfo: never[] = []
+export async function createHighlighter() {
+  return {
+    getLoadedLanguages: () => [] as string[],
+    getLoadedThemes: () => [] as string[],
+    codeToTokens: () => ({ tokens: [], themeName: '', fg: '', bg: '' }),
+    loadLanguage: async () => {},
+    loadTheme: async () => {},
+    dispose: () => {}
+  }
+}
