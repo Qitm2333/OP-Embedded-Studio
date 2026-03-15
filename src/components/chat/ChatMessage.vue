@@ -105,12 +105,7 @@ function partKey(part: UIMessagePart, index: number): string {
             data-test-id="chat-text-bubble"
             class="rounded-xl rounded-tl-md bg-hover px-3 py-2 text-xs leading-relaxed text-surface"
           >
-            <Markdown
-              :content="part.text"
-              :mermaid="false"
-              :cdn-options="{ shiki: false }"
-              class="chat-markdown"
-            />
+            <Markdown :content="part.text" :mermaid="false" class="chat-markdown" />
           </div>
         </template>
       </template>
