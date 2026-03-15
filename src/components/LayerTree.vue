@@ -32,6 +32,7 @@ interface LayerNode {
   type: string
   layoutMode: string
   visible: boolean
+  locked: boolean
   children?: LayerNode[]
 }
 
@@ -64,6 +65,16 @@ function nodeIcon(node: LayerNode) {
 
 const COMPONENT_TYPES = new Set(['COMPONENT', 'COMPONENT_SET', 'INSTANCE'])
 
+function toggleNodeVisibility(id: string) {
+  const node = store.graph.getNode(id)
+  if (node) store.updateNode(id, { visible: !node.visible })
+}
+
+function toggleNodeLock(id: string) {
+  const node = store.graph.getNode(id)
+  if (node) store.updateNode(id, { locked: !node.locked })
+}
+
 function buildTree(parentId: string): LayerNode[] {
   const parent = store.graph.getNode(parentId)
   if (!parent) return []
@@ -76,6 +87,7 @@ function buildTree(parentId: string): LayerNode[] {
       type: node.type,
       layoutMode: node.layoutMode,
       visible: node.visible,
+      locked: node.locked,
       children: node.childIds.length > 0 ? buildTree(node.id) : undefined
     }))
 }
@@ -365,7 +377,7 @@ function updateDropTarget(ev: PointerEvent) {
               <button
                 v-else
                 data-test-id="layers-item"
-                class="group/row flex w-full cursor-pointer items-center gap-1 rounded border-none py-1 text-left text-xs"
+                class="group/row flex w-full cursor-pointer items-center gap-1 rounded border-none py-1 pr-1 text-left text-xs"
                 :class="[
                   store.state.selectedIds.has(item.value.id)
                     ? 'bg-accent text-white'
@@ -397,10 +409,39 @@ function updateDropTarget(ev: PointerEvent) {
                   "
                 />
                 <span class="min-w-0 flex-1 truncate">{{ item.value.name }}</span>
-                <icon-lucide-eye-off
-                  v-if="!item.value.visible"
-                  class="mr-1 size-3 shrink-0 text-muted"
-                />
+                <span
+                  class="flex shrink-0 items-center gap-0.5"
+                  :class="
+                    !item.value.locked && item.value.visible
+                      ? 'opacity-0 group-hover/row:opacity-100'
+                      : ''
+                  "
+                >
+                  <span
+                    class="flex size-4 items-center justify-center rounded hover:bg-white/15"
+                    :title="item.value.locked ? 'Unlock' : 'Lock'"
+                    @pointerdown.stop
+                    @click.stop="toggleNodeLock(item.value.id)"
+                  >
+                    <icon-lucide-lock v-if="item.value.locked" class="size-3 text-muted" />
+                    <icon-lucide-unlock
+                      v-else
+                      class="size-3 text-muted opacity-0 group-hover/row:opacity-50"
+                    />
+                  </span>
+                  <span
+                    class="flex size-4 items-center justify-center rounded hover:bg-white/15"
+                    :title="item.value.visible ? 'Hide' : 'Show'"
+                    @pointerdown.stop
+                    @click.stop="toggleNodeVisibility(item.value.id)"
+                  >
+                    <icon-lucide-eye-off v-if="!item.value.visible" class="size-3 text-muted" />
+                    <icon-lucide-eye
+                      v-else
+                      class="size-3 text-muted opacity-0 group-hover/row:opacity-50"
+                    />
+                  </span>
+                </span>
               </button>
             </TreeItem>
           </div>
