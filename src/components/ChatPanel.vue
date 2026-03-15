@@ -156,12 +156,13 @@ function handleClearChat() {
         </ScrollAreaScrollbar>
       </ScrollAreaRoot>
 
-      <!-- Debug toolbar (dev only) -->
+      <!-- Chat toolbar -->
       <div
-        v-if="IS_DEV && messages.length > 0"
+        v-if="messages.length > 0"
         class="flex shrink-0 items-center gap-1 border-t border-border px-3 py-1"
       >
         <button
+          v-if="IS_DEV"
           class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
           @click="handleCopyDebug"
         >

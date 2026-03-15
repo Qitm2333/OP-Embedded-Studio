@@ -124,68 +124,8 @@ function clearUnsplashKey() {
 
           <ProviderSelect test-id="provider-settings-provider" />
 
-          <template v-if="!isACP">
-          <!-- Base URL (OpenAI-compatible only) -->
-          <div v-if="providerDef.supportsCustomBaseURL" class="flex flex-col gap-1">
-            <label class="text-[10px] text-muted">Base URL</label>
-            <input
-              v-model="baseURLInput"
-              type="text"
-              data-test-id="provider-settings-base-url"
-              placeholder="http://localhost:11434/v1"
-              :class="uiInput({ size: 'sm' })"
-              @change="save"
-            />
-          </div>
-
-          <!-- Custom model ID (OpenAI-compatible only) -->
-          <div v-if="providerDef.supportsCustomModel" class="flex flex-col gap-1">
-            <label class="text-[10px] text-muted">Model ID</label>
-            <input
-              v-model="customModelInput"
-              type="text"
-              data-test-id="provider-settings-custom-model"
-              placeholder="e.g. llama-3.3-70b"
-              :class="uiInput({ size: 'sm' })"
-              @change="save"
-            />
-          </div>
-
-          <!-- API type (OpenAI-compatible only) -->
-          <div v-if="providerID === 'openai-compatible'" class="flex flex-col gap-1">
-            <label class="text-[10px] text-muted">API Type</label>
-            <TabsRoot
-              :model-value="customAPIType"
-              data-test-id="provider-settings-api-type"
-              class="flex flex-col"
-              @update:model-value="
-                (v: string) => {
-                  customAPIType = v as 'completions' | 'responses'
-                  save()
-                }
-              "
-            >
-              <TabsList class="flex rounded bg-canvas">
-                <TabsTrigger
-                  value="completions"
-                  class="flex-1 rounded px-2 py-1 text-[10px] text-muted data-[state=active]:bg-hover data-[state=active]:text-surface"
-                >
-                  Completions
-                </TabsTrigger>
-                <TabsTrigger
-                  value="responses"
-                  class="flex-1 rounded px-2 py-1 text-[10px] text-muted data-[state=active]:bg-hover data-[state=active]:text-surface"
-                >
-                  Responses
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="completions" />
-              <TabsContent value="responses" />
-            </TabsRoot>
-          </div>
-
           <!-- Max output tokens -->
-          <div class="flex flex-col gap-1">
+          <div v-if="!isACP" class="flex flex-col gap-1">
             <label class="text-[10px] text-muted">Max output tokens</label>
             <input
               v-model.number="maxOutputTokens"
@@ -264,6 +204,66 @@ function clearUnsplashKey() {
             >
               Get free Unsplash access key →
             </a>
+          </div>
+
+          <template v-if="!isACP">
+          <!-- Base URL (OpenAI-compatible only) -->
+          <div v-if="providerDef.supportsCustomBaseURL" class="flex flex-col gap-1">
+            <label class="text-[10px] text-muted">Base URL</label>
+            <input
+              v-model="baseURLInput"
+              type="text"
+              data-test-id="provider-settings-base-url"
+              placeholder="http://localhost:11434/v1"
+              :class="uiInput({ size: 'sm' })"
+              @change="save"
+            />
+          </div>
+
+          <!-- Custom model ID (OpenAI-compatible only) -->
+          <div v-if="providerDef.supportsCustomModel" class="flex flex-col gap-1">
+            <label class="text-[10px] text-muted">Model ID</label>
+            <input
+              v-model="customModelInput"
+              type="text"
+              data-test-id="provider-settings-custom-model"
+              placeholder="e.g. llama-3.3-70b"
+              :class="uiInput({ size: 'sm' })"
+              @change="save"
+            />
+          </div>
+
+          <!-- API type (OpenAI-compatible only) -->
+          <div v-if="providerID === 'openai-compatible'" class="flex flex-col gap-1">
+            <label class="text-[10px] text-muted">API Type</label>
+            <TabsRoot
+              :model-value="customAPIType"
+              data-test-id="provider-settings-api-type"
+              class="flex flex-col"
+              @update:model-value="
+                (v: string) => {
+                  customAPIType = v as 'completions' | 'responses'
+                  save()
+                }
+              "
+            >
+              <TabsList class="flex rounded bg-canvas">
+                <TabsTrigger
+                  value="completions"
+                  class="flex-1 rounded px-2 py-1 text-[10px] text-muted data-[state=active]:bg-hover data-[state=active]:text-surface"
+                >
+                  Completions
+                </TabsTrigger>
+                <TabsTrigger
+                  value="responses"
+                  class="flex-1 rounded px-2 py-1 text-[10px] text-muted data-[state=active]:bg-hover data-[state=active]:text-surface"
+                >
+                  Responses
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="completions" />
+              <TabsContent value="responses" />
+            </TabsRoot>
           </div>
 
           <!-- API key -->
