@@ -34,8 +34,8 @@ function fail(e: unknown): McpResult {
   return { content: [{ type: 'text', text: JSON.stringify({ error: msg }) }], isError: true }
 }
 
-export function paramToZod(param: ParamDef): z.ZodTypeAny {
-  const typeMap: Record<ParamType, () => z.ZodTypeAny> = {
+export function paramToZod(param: ParamDef): z.ZodType {
+  const typeMap: Record<ParamType, () => z.ZodType> = {
     string: () =>
       param.enum
         ? z.enum(param.enum as [string, ...string[]]).describe(param.description)
@@ -94,7 +94,7 @@ export function createServer(version: string, options: CreateServerOptions = {})
   }
 
   function registerTool(def: ToolDef) {
-    const shape: Record<string, z.ZodTypeAny> = {}
+    const shape: Record<string, z.ZodType> = {}
     for (const [key, param] of Object.entries(def.params)) {
       shape[key] = paramToZod(param)
     }

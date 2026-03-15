@@ -5,22 +5,14 @@
  * ws WebSocket server on :7601 for the browser page.
  *
  * Flow: CLI → HTTP POST /rpc → Hono → WebSocket → browser → execute → response
- *
- * Security model: same-machine trust. Both HTTP and WebSocket bind to 127.0.0.1.
- * The browser generates a random bearer token and registers it via WebSocket.
- * GET /health exposes the token so the CLI can discover it — this is intentional:
- * any local process can access the bridge, and the token only prevents accidental
- * cross-session collisions when multiple instances are running.
  */
+import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { WebSocketServer, type WebSocket } from 'ws'
 
-import type { ZodTypeAny } from 'zod'
+import type { ViteDevServer } from 'vite'
 
-// Can't import from @open-pencil/core here — this file is bundled by esbuild
-// as part of the Vite config, and workspace packages are externalized then
-// loaded by Node's ESM resolver which can't handle .ts source imports.
 const AUTOMATION_HTTP_PORT = 7600
 const AUTOMATION_WS_PORT = 7601
 const RPC_TIMEOUT = 30_000
@@ -31,9 +23,7 @@ interface PendingRequest {
   timer: ReturnType<typeof setTimeout>
 }
 
-type ViteServer = { ssrLoadModule: (id: string) => Promise<Record<string, unknown>> }
-
-export function startAutomationBridge(server: ViteServer) {
+export function startAutomationBridge(server: ViteDevServer) {
   const pending = new Map<string, PendingRequest>()
   let browserWs: WebSocket | null = null
   let authToken: string | null = null
@@ -119,12 +109,9 @@ export function startAutomationBridge(server: ViteServer) {
 
   async function jsxToTree(jsx: string): Promise<unknown> {
     const core = await server.ssrLoadModule('@open-pencil/core')
-    const buildComponent = core.buildComponent as (jsx: string) => () => unknown
-    const resolveToTree = core.resolveToTree as (el: unknown) => unknown
-    const createElement = core.createElement as (type: unknown, props: unknown) => unknown
-    const Component = buildComponent(jsx)
-    const element = createElement(Component, null)
-    return resolveToTree(element)
+    const Component = (core.buildComponent as (jsx: string) => () => unknown)(jsx)
+    const element = (core.createElement as (type: unknown, props: unknown) => unknown)(Component, null)
+    return (core.resolveToTree as (el: unknown) => unknown)(element)
   }
 
   async function preprocessRpc(body: Record<string, unknown>): Promise<Record<string, unknown>> {
@@ -178,7 +165,7 @@ export function startAutomationBridge(server: ViteServer) {
     }
   })
 
-  // MCP Streamable HTTP endpoint — proxies tool calls through WebSocket to the live editor
+  // MCP Streamable HTTP — proxies tool calls through WebSocket to the live editor
   type McpTransport = { handleRequest: (r: Request) => Promise<Response> }
   const mcpSessions = new Map<string, McpTransport>()
 
@@ -186,15 +173,15 @@ export function startAutomationBridge(server: ViteServer) {
     const cached = sessionId ? mcpSessions.get(sessionId) : undefined
     if (cached) return cached
 
+    const { McpServer } = await import('@modelcontextprotocol/sdk/server/mcp.js')
     const { WebStandardStreamableHTTPServerTransport } =
       await import('@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js')
-    const { McpServer } = await import('@modelcontextprotocol/sdk/server/mcp.js')
     const { z } = await import('zod')
     const core = await server.ssrLoadModule('@open-pencil/core') as {
-      ALL_TOOLS: Array<{ name: string; description: string; params: Record<string, unknown>; mutates?: boolean }>
+      ALL_TOOLS: Array<{ name: string; description: string; params: Record<string, unknown> }>
     }
-    const mcp = await server.ssrLoadModule('../../packages/mcp/src/server.ts') as {
-      paramToZod: (p: unknown) => ZodTypeAny
+    const mcp = await server.ssrLoadModule('@open-pencil/mcp') as {
+      paramToZod: (p: unknown) => ReturnType<typeof z.string>
     }
 
     const id = sessionId ?? crypto.randomUUID()
@@ -202,7 +189,7 @@ export function startAutomationBridge(server: ViteServer) {
     const register = mcpServer.registerTool.bind(mcpServer) as (...a: unknown[]) => void
 
     for (const def of core.ALL_TOOLS) {
-      const shape: Record<string, ZodTypeAny> = {}
+      const shape: Record<string, ReturnType<typeof z.string>> = {}
       for (const [key, param] of Object.entries(def.params)) {
         shape[key] = mcp.paramToZod(param)
       }
@@ -239,26 +226,9 @@ export function startAutomationBridge(server: ViteServer) {
     return transport.handleRequest(c.req.raw)
   })
 
-  void startServer(app)
+  serve({ fetch: app.fetch, port: AUTOMATION_HTTP_PORT, hostname: '127.0.0.1' })
 
   console.log(`[automation] HTTP  http://127.0.0.1:${AUTOMATION_HTTP_PORT}`)
   console.log(`[automation] WS    ws://127.0.0.1:${AUTOMATION_WS_PORT}`)
   console.log(`[automation] MCP   http://127.0.0.1:${AUTOMATION_HTTP_PORT}/mcp`)
-}
-
-function isBunRuntime(): boolean {
-  return 'Bun' in globalThis
-}
-
-async function startServer(app: Hono) {
-  if (isBunRuntime()) {
-    ;(globalThis as unknown as { Bun: { serve: (opts: object) => void } }).Bun.serve({
-      fetch: app.fetch,
-      port: AUTOMATION_HTTP_PORT,
-      hostname: '127.0.0.1'
-    })
-  } else {
-    const { serve } = await import('@hono/node-server')
-    serve({ fetch: app.fetch, port: AUTOMATION_HTTP_PORT, hostname: '127.0.0.1' })
-  }
 }
