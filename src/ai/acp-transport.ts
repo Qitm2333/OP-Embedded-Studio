@@ -1,40 +1,67 @@
-import {
-  ClientSideConnection,
-  ndJsonStream,
-  PROTOCOL_VERSION
-} from '@agentclientprotocol/sdk'
-import { Command } from '@tauri-apps/plugin-shell'
+import { ClientSideConnection, ndJsonStream, PROTOCOL_VERSION } from '@agentclientprotocol/sdk'
+
+import { ACP_DESIGN_CONTEXT } from '@/constants'
+
+import { mapUpdate } from './acp-map-update'
 
 import type {
   Client,
   Agent,
   SessionNotification,
   RequestPermissionRequest,
-  RequestPermissionResponse,
-  SessionUpdate
+  RequestPermissionResponse
 } from '@agentclientprotocol/sdk'
-import type { ChatTransport, UIMessage, UIMessageChunk } from 'ai'
 import type { ACPAgentDef } from '@open-pencil/core'
+import type { ChatTransport, UIMessage, UIMessageChunk } from 'ai'
+
+type TauriChild = {
+  write(data: number[]): Promise<void>
+  kill(): Promise<void>
+}
 
 interface ACPSession {
   connection: ClientSideConnection
   sessionId: string
-  child: Awaited<ReturnType<Command<Uint8Array>['spawn']>>
+  child: TauriChild
   onUpdate: ((params: SessionNotification) => void) | null
+  dead: boolean
 }
 
-const DESIGN_CONTEXT = `You are inside OpenPencil, an open-source design editor (like Figma). \
-Use the open-pencil MCP tools to create and modify designs on the live canvas. \
-Key tools: render (JSX to design), create_shape, set_fill, set_layout, find_nodes, get_page_tree, export_image. \
-The render tool accepts JSX with components: Frame, Text, Rectangle, Ellipse, Icon, Group, Section. \
-Props: w, h, bg, flex, gap, p, rounded, color, size, weight, items, justify, stroke, opacity, shadow. \
-Do NOT write HTML files or use terminal commands — draw directly on the canvas using the MCP tools.`
+export function formatConnectionError(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e)
+  if (
+    msg.includes('ECONNREFUSED') ||
+    msg.includes('fetch failed') ||
+    msg.includes('Failed to fetch')
+  ) {
+    return 'MCP server is not running. Make sure the editor is open.'
+  }
+  if (msg.includes('timeout') || msg.includes('Timeout') || msg.includes('ETIMEDOUT')) {
+    return 'MCP server did not respond in time.'
+  }
+  return msg
+}
+
+export function buildCrashChunks(
+  destroying: boolean,
+  textId: string,
+  textStarted: boolean
+): { chunks: UIMessageChunk[]; shouldNullSession: boolean } {
+  if (destroying) return { chunks: [], shouldNullSession: false }
+  const chunks: UIMessageChunk[] = []
+  if (textStarted) chunks.push({ type: 'text-end', id: textId })
+  chunks.push({ type: 'error', errorText: 'Agent process exited unexpectedly.' })
+  chunks.push({ type: 'finish-step' })
+  chunks.push({ type: 'finish', finishReason: 'error' })
+  return { chunks, shouldNullSession: true }
+}
 
 export class ACPChatTransport implements ChatTransport<UIMessage> {
   private session: ACPSession | null = null
   private agentDef: ACPAgentDef
   private cwd: string
   private sentContext = false
+  private destroying = false
 
   constructor(options: { agentDef: ACPAgentDef; cwd?: string }) {
     this.agentDef = options.agentDef
@@ -47,20 +74,22 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
   }: Parameters<ChatTransport<UIMessage>['sendMessages']>[0]): Promise<
     ReadableStream<UIMessageChunk>
   > {
-    const lastUserMessage = [...messages]
-      .reverse()
-      .find((m) => m.role === 'user')
+    const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user')
     const text =
       lastUserMessage?.parts
         .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
         .map((p) => p.text)
         .join('\n') ?? ''
 
+    if (this.session?.dead) {
+      this.session = null
+    }
+
     if (!this.session) {
       this.session = await this.spawnAgent()
     }
 
-    const promptText = this.sentContext ? text : `${DESIGN_CONTEXT}\n\n${text}`
+    const promptText = this.sentContext ? text : `${ACP_DESIGN_CONTEXT}\n\n${text}`
     this.sentContext = true
 
     const { connection, sessionId } = this.session
@@ -85,11 +114,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
 
         session.onUpdate = (params) => {
           if (closed) return
-          const result = mapUpdate(
-            params.update,
-            textId,
-            textStarted
-          )
+          const result = mapUpdate(params.update, textId, textStarted)
           for (const chunk of result.chunks) {
             controller.enqueue(chunk)
           }
@@ -113,8 +138,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
             finish(result.stopReason === 'end_turn' ? 'stop' : 'other')
           })
           .catch((e) => {
-            const msg = e instanceof Error ? e.message : String(e)
-            finish('error', msg)
+            finish('error', formatConnectionError(e))
           })
       }
     })
@@ -125,6 +149,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
   }
 
   async destroy(): Promise<void> {
+    this.destroying = true
     if (this.session) {
       await this.session.child.kill()
       this.session = null
@@ -132,6 +157,9 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
   }
 
   private async spawnAgent(): Promise<ACPSession> {
+    // @ts-expect-error — Tauri runtime-only module, not resolvable in lint/test environments
+    const { Command } = await import('@tauri-apps/plugin-shell')
+
     const command = Command.create(this.agentDef.command, this.agentDef.args, {
       encoding: 'raw'
     })
@@ -151,10 +179,17 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
     })
 
     command.stderr.on('data', (raw: Uint8Array | number[] | string) => {
-      const text = typeof raw === 'string'
-        ? raw
-        : new TextDecoder().decode(raw instanceof Uint8Array ? raw : new Uint8Array(raw))
+      const text =
+        typeof raw === 'string'
+          ? raw
+          : new TextDecoder().decode(raw instanceof Uint8Array ? raw : new Uint8Array(raw))
       console.error(`[ACP ${this.agentDef.id}]`, text)
+    })
+
+    command.on('close', () => {
+      if (this.destroying || !this.session) return
+      this.session.dead = true
+      this.session = null
     })
 
     const child = await command.spawn()
@@ -188,12 +223,8 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
       async requestPermission(
         params: RequestPermissionRequest
       ): Promise<RequestPermissionResponse> {
-        return {
-          outcome: {
-            outcome: 'selected',
-            optionId: params.options[0]?.optionId ?? ''
-          }
-        }
+        const { requestPermissionFromUser } = await import('@/ai/acp-permission')
+        return requestPermissionFromUser(params)
       },
 
       async sessionUpdate(params: SessionNotification): Promise<void> {
@@ -201,136 +232,44 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
       }
     }
 
-    const connection = new ClientSideConnection(
-      (_agent: Agent) => clientImpl,
-      stream
-    )
+    const connection = new ClientSideConnection((_agent: Agent) => clientImpl, stream)
 
     await connection.initialize({
       protocolVersion: PROTOCOL_VERSION,
       clientCapabilities: {}
     })
 
-    const sessionResult = await connection.newSession({
-      cwd: this.cwd,
-      mcpServers: [
-        {
-          type: 'http' as const,
-          name: 'open-pencil',
-          url: 'http://127.0.0.1:7600/mcp',
-          headers: []
-        }
-      ]
-    })
+    let sessionResult
+    try {
+      sessionResult = await connection.newSession({
+        cwd: this.cwd,
+        mcpServers: [
+          {
+            type: 'http' as const,
+            name: 'open-pencil',
+            url: 'http://127.0.0.1:7600/mcp',
+            headers: []
+          }
+        ]
+      })
+    } catch (e) {
+      await child.kill()
+      throw new Error(formatConnectionError(e))
+    }
 
     const session: ACPSession = {
       connection,
       sessionId: sessionResult.sessionId,
       child,
-      get onUpdate() { return onUpdate },
-      set onUpdate(fn) { onUpdate = fn }
+      dead: false,
+      get onUpdate() {
+        return onUpdate
+      },
+      set onUpdate(fn) {
+        onUpdate = fn
+      }
     }
 
     return session
   }
-}
-
-interface MapResult {
-  chunks: UIMessageChunk[]
-  textStarted: boolean
-}
-
-export function mapUpdate(
-  update: SessionUpdate,
-  textId: string,
-  textStarted: boolean
-): MapResult {
-  const chunks: UIMessageChunk[] = []
-
-  switch (update.sessionUpdate) {
-    case 'agent_message_chunk': {
-      if (update.content.type === 'text' && update.content.text) {
-        if (!textStarted) {
-          chunks.push({ type: 'text-start', id: textId })
-          textStarted = true
-        }
-        chunks.push({
-          type: 'text-delta',
-          id: textId,
-          delta: update.content.text
-        })
-      }
-      break
-    }
-    case 'agent_thought_chunk': {
-      if (update.content.type === 'text') {
-        const rid = `reasoning-${textId}`
-        chunks.push({ type: 'reasoning-start', id: rid })
-        chunks.push({
-          type: 'reasoning-delta',
-          id: rid,
-          delta: update.content.text
-        })
-        chunks.push({ type: 'reasoning-end', id: rid })
-      }
-      break
-    }
-    case 'tool_call': {
-      const toolName = update.title || 'unknown'
-      chunks.push({
-        type: 'tool-input-start',
-        toolCallId: update.toolCallId,
-        toolName,
-        providerExecuted: true,
-        title: update.title
-      })
-      if (update.rawInput) {
-        chunks.push({
-          type: 'tool-input-available',
-          toolCallId: update.toolCallId,
-          toolName,
-          input: update.rawInput,
-          providerExecuted: true,
-          title: update.title
-        })
-      }
-      break
-    }
-    case 'tool_call_update': {
-      if (update.status === 'completed') {
-        chunks.push({
-          type: 'tool-output-available',
-          toolCallId: update.toolCallId,
-          output: update.rawOutput ?? textFromContent(update.content ?? undefined),
-          providerExecuted: true
-        })
-      } else if (update.status === 'failed') {
-        chunks.push({
-          type: 'tool-output-error',
-          toolCallId: update.toolCallId,
-          errorText: textFromContent(update.content ?? undefined) ?? 'Tool call failed',
-          providerExecuted: true
-        })
-      }
-      break
-    }
-  }
-
-  return { chunks, textStarted }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ACP content blocks have dynamic shape
-function textFromContent(content: any[] | undefined): string | undefined {
-  if (!content) return undefined
-  return content
-    .filter(
-      (c: Record<string, unknown>) =>
-        c.type === 'content' &&
-        (c.content as Record<string, unknown> | undefined)?.type === 'text'
-    )
-    .map(
-      (c: Record<string, unknown>) =>
-        (c.content as Record<string, string>).text
-    )
-    .join('\n')
 }

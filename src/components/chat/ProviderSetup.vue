@@ -93,7 +93,9 @@ function save() {
 
       <p class="text-center text-[10px] leading-relaxed text-muted">
         Uses your existing {{ acpAgent?.name }} subscription. Make sure
-        <code class="rounded bg-input px-1 py-0.5 font-mono text-[9px]">{{ acpAgent?.command }}</code>
+        <code class="rounded bg-input px-1 py-0.5 font-mono text-[9px]">{{
+          acpAgent?.command
+        }}</code>
         is installed and authenticated.
       </p>
     </div>

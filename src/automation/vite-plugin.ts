@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process'
 
 import type { Plugin } from 'vite'
 
+// TODO: production — bundle MCP server as Tauri sidecar or spawn via shell plugin
 export function automationPlugin(): Plugin {
   let child: ReturnType<typeof spawn> | null = null
 
@@ -11,11 +12,29 @@ export function automationPlugin(): Plugin {
       if (child) return
 
       child = spawn('bun', ['run', 'packages/mcp/src/index.ts'], {
-        stdio: 'inherit',
+        stdio: ['ignore', 'inherit', 'pipe'],
         env: { ...process.env, PORT: '7600', WS_PORT: '7601' }
       })
 
-      child.on('exit', () => { child = null })
+      child.stderr?.on('data', (data: Buffer) => {
+        const text = data.toString()
+        if (text.includes('EADDRINUSE')) {
+          console.error(
+            '\x1b[31m[MCP] Port 7600 already in use. Is another OpenPencil instance running?\x1b[0m'
+          )
+          child?.kill()
+          child = null
+          return
+        }
+        process.stderr.write(data)
+      })
+
+      child.on('exit', (code) => {
+        if (code && code !== 0 && child) {
+          console.error(`[MCP] Server exited with code ${code}`)
+        }
+        child = null
+      })
     },
     buildEnd() {
       child?.kill()

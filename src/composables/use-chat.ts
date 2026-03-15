@@ -258,9 +258,7 @@ async function ensureChat(): Promise<Chat<UIMessage> | null> {
   if (!isConfigured.value) return null
   if (!chat || transportDirty) {
     const messages = chat?.messages
-    const transport = isACPProvider.value
-      ? await createACPTransport()
-      : createTransport()
+    const transport = isACPProvider.value ? await createACPTransport() : createTransport()
     chat = new Chat<UIMessage>({ transport, messages })
     transportDirty = false
   }

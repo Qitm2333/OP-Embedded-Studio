@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
-import { mapUpdate } from '../../src/ai/acp-transport'
+import { mapUpdate } from '../../src/ai/acp-map-update'
+import { formatConnectionError, buildCrashChunks } from '../../src/ai/acp-transport'
 
 import type { SessionUpdate } from '@agentclientprotocol/sdk'
 
@@ -141,6 +142,16 @@ describe('mapUpdate', () => {
     }])
   })
 
+  test('agent_message_chunk with non-text content produces no chunks', () => {
+    const update: SessionUpdate = {
+      sessionUpdate: 'agent_message_chunk',
+      content: { type: 'image', url: 'https://example.com/img.png' }
+    }
+    const result = mapUpdate(update, TEXT_ID, false)
+    expect(result.textStarted).toBe(false)
+    expect(result.chunks).toEqual([])
+  })
+
   test('unhandled update type produces no chunks', () => {
     const update = {
       sessionUpdate: 'available_commands_update',
@@ -149,5 +160,57 @@ describe('mapUpdate', () => {
     const result = mapUpdate(update, TEXT_ID, false)
     expect(result.chunks).toEqual([])
     expect(result.textStarted).toBe(false)
+  })
+})
+
+describe('formatConnectionError', () => {
+  test('ECONNREFUSED maps to MCP not running', () => {
+    const msg = formatConnectionError(new Error('connect ECONNREFUSED 127.0.0.1:7600'))
+    expect(msg).toBe('MCP server is not running. Make sure the editor is open.')
+  })
+
+  test('fetch failed maps to MCP not running', () => {
+    const msg = formatConnectionError(new Error('fetch failed'))
+    expect(msg).toBe('MCP server is not running. Make sure the editor is open.')
+  })
+
+  test('timeout maps to timeout message', () => {
+    const msg = formatConnectionError(new Error('Request timeout after 30s'))
+    expect(msg).toBe('MCP server did not respond in time.')
+  })
+
+  test('other errors pass through', () => {
+    const msg = formatConnectionError(new Error('Something unexpected'))
+    expect(msg).toBe('Something unexpected')
+  })
+
+  test('non-Error values converted to string', () => {
+    const msg = formatConnectionError('raw string error')
+    expect(msg).toBe('raw string error')
+  })
+})
+
+describe('buildCrashChunks', () => {
+  test('destroying=true returns empty chunks, no session null', () => {
+    const result = buildCrashChunks(true, TEXT_ID, false)
+    expect(result.chunks).toEqual([])
+    expect(result.shouldNullSession).toBe(false)
+  })
+
+  test('destroying=false with no text emits error + finish', () => {
+    const result = buildCrashChunks(false, TEXT_ID, false)
+    expect(result.shouldNullSession).toBe(true)
+    expect(result.chunks).toEqual([
+      { type: 'error', errorText: 'Agent process exited unexpectedly.' },
+      { type: 'finish-step' },
+      { type: 'finish', finishReason: 'error' }
+    ])
+  })
+
+  test('destroying=false with active text emits text-end before error', () => {
+    const result = buildCrashChunks(false, TEXT_ID, true)
+    expect(result.shouldNullSession).toBe(true)
+    expect(result.chunks[0]).toEqual({ type: 'text-end', id: TEXT_ID })
+    expect(result.chunks[1]).toEqual({ type: 'error', errorText: 'Agent process exited unexpectedly.' })
   })
 })

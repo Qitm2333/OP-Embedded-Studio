@@ -14,14 +14,7 @@ import {
 } from '@open-pencil/core'
 import { serve } from '@hono/node-server'
 
-let httpPort = 17600
-let wsPort = 17601
-
-function nextPorts() {
-  httpPort += 2
-  wsPort += 2
-  return { httpPort, wsPort }
-}
+import type { AddressInfo } from 'node:net'
 
 interface MockBrowser {
   ws: WebSocket
@@ -80,16 +73,28 @@ function connectMockBrowser(port: number, graph: SceneGraph): Promise<MockBrowse
   })
 }
 
-async function createTestClient(ports: { httpPort: number; wsPort: number }) {
-  const { app, wss } = startServer(ports)
-  const httpServer = serve({ fetch: app.fetch, port: ports.httpPort, hostname: '127.0.0.1' })
+function waitForWsListening(wss: InstanceType<typeof WebSocket.Server>): Promise<number> {
+  return new Promise((resolve) => {
+    if (wss.address()) {
+      resolve((wss.address() as AddressInfo).port)
+      return
+    }
+    wss.on('listening', () => resolve((wss.address() as AddressInfo).port))
+  })
+}
+
+async function createTestClient() {
+  const { app, wss } = startServer({ httpPort: 0, wsPort: 0 })
+  const httpServer = serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' })
+  const actualHttpPort = (httpServer.address() as AddressInfo).port
+  const actualWsPort = await waitForWsListening(wss)
 
   const graph = new SceneGraph()
-  const browser = await connectMockBrowser(ports.wsPort, graph)
+  const browser = await connectMockBrowser(actualWsPort, graph)
 
   const client = new Client({ name: 'test-client', version: '0.0.0' })
   const transport = new StreamableHTTPClientTransport(
-    new URL(`http://127.0.0.1:${ports.httpPort}/mcp`)
+    new URL(`http://127.0.0.1:${actualHttpPort}/mcp`)
   )
   await client.connect(transport)
 
@@ -116,7 +121,7 @@ describe('MCP server', () => {
   let cleanup: () => Promise<void>
 
   beforeEach(async () => {
-    const ctx = await createTestClient(nextPorts())
+    const ctx = await createTestClient()
     client = ctx.client
     graph = ctx.graph
     cleanup = ctx.close

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { createRequire } from 'node:module'
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
@@ -14,9 +15,11 @@ import {
   createElement,
   resolveToTree
 } from '@open-pencil/core'
-import { exportImage } from '@open-pencil/core/tools'
 
 import type { ParamDef, ParamType } from '@open-pencil/core'
+
+const require = createRequire(import.meta.url)
+const MCP_VERSION: string = (require('../package.json') as { version: string }).version
 
 type McpContent = { type: 'text'; text: string } | { type: 'image'; data: string; mimeType: string }
 type McpResult = { content: McpContent[]; isError?: boolean }
@@ -138,7 +141,7 @@ export function startServer(options: ServerOptions = {}) {
   const wss = new WebSocketServer({ port: wsPort, host: '127.0.0.1' })
 
   wss.on('connection', (ws) => {
-    if (browserWs?.readyState === browserWs?.OPEN) browserWs?.close()
+    if (browserWs && browserWs.readyState === WebSocket.OPEN) browserWs.close()
     rejectAllPending('Browser reconnected')
     browserWs = ws
     browserToken = null
@@ -164,12 +167,17 @@ export function startServer(options: ServerOptions = {}) {
     if (body.command !== 'tool') return body
     const args = body.args as { name?: string; args?: Record<string, unknown> } | undefined
     if (args?.name !== 'render' || !args.args?.jsx) return body
-    const Component = buildComponent(args.args.jsx as string)
-    const element = createElement(Component, null)
-    const tree = resolveToTree(element)
-    return {
-      ...body,
-      args: { ...args, args: { ...args.args, jsx: undefined, tree } }
+    try {
+      const Component = buildComponent(args.args.jsx as string)
+      const element = createElement(Component, null)
+      const tree = resolveToTree(element)
+      return {
+        ...body,
+        args: { ...args, args: { ...args.args, jsx: undefined, tree } }
+      }
+    } catch (e) {
+      console.warn('JSX preprocessing failed, passing raw:', e instanceof Error ? e.message : e)
+      return body
     }
   }
 
@@ -229,9 +237,10 @@ export function startServer(options: ServerOptions = {}) {
 
   type McpTransport = { handleRequest: (r: Request) => Promise<Response> }
   const mcpSessions = new Map<string, McpTransport>()
+  const MAX_MCP_SESSIONS = 10
 
   function createMcpSession(id: string): McpTransport {
-    const mcpServer = new McpServer({ name: 'open-pencil', version: '0.0.0' })
+    const mcpServer = new McpServer({ name: 'open-pencil', version: MCP_VERSION })
     const register = mcpServer.registerTool.bind(mcpServer) as (...a: unknown[]) => void
 
     for (const def of ALL_TOOLS) {
@@ -288,10 +297,19 @@ export function startServer(options: ServerOptions = {}) {
       }
     }
     const sessionId = c.req.header('mcp-session-id') ?? undefined
-    const transport =
-      (sessionId && mcpSessions.get(sessionId)) ??
-      createMcpSession(sessionId ?? randomUUID())
-    return transport.handleRequest(c.req.raw)
+    const existing = sessionId ? mcpSessions.get(sessionId) : undefined
+    if (!existing && mcpSessions.size >= MAX_MCP_SESSIONS) {
+      return c.json(
+        { error: 'Too many active MCP sessions' },
+        { status: 503, headers: { 'Retry-After': '5' } }
+      )
+    }
+    const transport = existing ?? createMcpSession(sessionId ?? randomUUID())
+    const response = await transport.handleRequest(c.req.raw)
+    if (c.req.method === 'DELETE' && sessionId) {
+      mcpSessions.delete(sessionId)
+    }
+    return response
   })
 
   return { app, wss, httpPort }

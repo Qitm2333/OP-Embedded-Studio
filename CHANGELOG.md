@@ -13,6 +13,8 @@
 
 ### Features
 
+- ACP agent support — use Claude Code, Codex, or Gemini CLI as AI assistants in the desktop chat panel
+- Unified MCP server — single HTTP + WebSocket proxy replaces Vite SSR bridge
 - Grid layout in AI chat — JSX renderer supports `grid`, `columns`, `rows`, `gap` props with child positioning (`colStart`, `rowStart`, `colSpan`, `rowSpan`) and auto-height grids
 - Configurable max output tokens in AI provider settings (default 16384)
 - Z.ai AI provider with GLM-5, GLM-4.7, GLM-4.6, GLM-4.5 model families

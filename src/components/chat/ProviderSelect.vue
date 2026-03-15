@@ -11,19 +11,44 @@ import {
   SelectTrigger,
   SelectViewport
 } from 'reka-ui'
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import { selectContent, selectItem, selectTrigger } from '@/components/ui/select'
-import { ACP_AGENTS, AI_PROVIDERS, IS_TAURI } from '@open-pencil/core'
+import { ACP_AGENTS, AI_PROVIDERS, AUTOMATION_HTTP_PORT, IS_TAURI } from '@open-pencil/core'
 import { useAIChat } from '@/composables/use-chat'
 
 const { providerID, providerDef } = useAIChat()
-const acpAgents = IS_TAURI ? ACP_AGENTS : []
+
+const mcpAvailable = ref(false)
+
+async function checkMcpHealth(retries = 3, delayMs = 1000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(`http://127.0.0.1:${AUTOMATION_HTTP_PORT}/health`, {
+        signal: AbortSignal.timeout(2000)
+      })
+      if (res.ok) {
+        mcpAvailable.value = true
+        return
+      }
+    } catch {
+      if (i < retries - 1) await new Promise((r) => setTimeout(r, delayMs))
+    }
+  }
+}
+
+if (IS_TAURI) {
+  onMounted(() => {
+    void checkMcpHealth()
+  })
+}
+
+const acpAgents = computed(() => (IS_TAURI && mcpAvailable.value ? ACP_AGENTS : []))
 
 const displayName = computed(() => {
   if (providerID.value.startsWith('acp:')) {
     const agentId = providerID.value.replace('acp:', '')
-    return acpAgents.find((a) => a.id === agentId)?.name ?? providerID.value
+    return ACP_AGENTS.find((a) => a.id === agentId)?.name ?? providerID.value
   }
   return providerDef.value.name
 })

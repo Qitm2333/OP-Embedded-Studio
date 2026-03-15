@@ -4,6 +4,7 @@ import { computed, markRaw, nextTick, ref, watch } from 'vue'
 
 import { copyChatLog } from '@/ai/chat-debug'
 import { clearToolLogEntries, didHitStepLimit } from '@/ai/tools'
+import AcpPermissionDialog from '@/components/chat/AcpPermissionDialog.vue'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
 import ProviderSetup from '@/components/chat/ProviderSetup.vue'
@@ -190,6 +191,8 @@ function handleClearChat() {
       </div>
 
       <ChatInput :status="status" @submit="handleSubmit" @stop="handleStop" />
+
+      <AcpPermissionDialog />
     </template>
   </div>
 </template>
