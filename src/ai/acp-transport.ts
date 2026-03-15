@@ -157,7 +157,6 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
   }
 
   private async spawnAgent(): Promise<ACPSession> {
-    // @ts-expect-error — Tauri runtime-only module, not resolvable in lint/test environments
     const { Command } = await import('@tauri-apps/plugin-shell')
 
     const command = Command.create(this.agentDef.command, this.agentDef.args, {

@@ -24,7 +24,6 @@ export async function spawnMcpIfNeeded(): Promise<(() => void) | null> {
 
   if (await checkHealth()) return null
 
-  // @ts-expect-error — Tauri runtime-only module, not resolvable in lint/test environments
   const { Command } = await import('@tauri-apps/plugin-shell')
   const command = Command.create('openpencil-mcp', [])
 

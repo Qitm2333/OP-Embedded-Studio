@@ -22,7 +22,7 @@
     {
       "identifier": "shell:allow-spawn",
       "allow": [
-        { "name": "claude-code-acp", "cmd": "claude-code-acp", "args": true },
+        { "name": "claude-agent-acp", "cmd": "claude-agent-acp", "args": true },
         { "name": "codex-acp", "cmd": "codex-acp", "args": true },
         { "name": "gemini", "cmd": "gemini", "args": true },
         { "name": "openpencil-mcp", "cmd": "openpencil-mcp", "args": true }
