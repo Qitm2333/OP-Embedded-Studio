@@ -423,10 +423,23 @@ function updateDropTarget(ev: PointerEvent) {
                     @pointerdown.stop
                     @click.stop="toggleNodeLock(item.value.id)"
                   >
-                    <icon-lucide-lock v-if="item.value.locked" class="size-3 text-muted" />
+                    <icon-lucide-lock
+                      v-if="item.value.locked"
+                      class="size-3"
+                      :class="
+                        store.state.selectedIds.has(item.value.id)
+                          ? 'text-white/80'
+                          : 'text-surface/70'
+                      "
+                    />
                     <icon-lucide-unlock
                       v-else
-                      class="size-3 text-muted opacity-0 group-hover/row:opacity-50"
+                      class="size-3 opacity-0 group-hover/row:opacity-70"
+                      :class="
+                        store.state.selectedIds.has(item.value.id)
+                          ? 'text-white/70'
+                          : 'text-surface/50'
+                      "
                     />
                   </span>
                   <span
@@ -435,10 +448,23 @@ function updateDropTarget(ev: PointerEvent) {
                     @pointerdown.stop
                     @click.stop="toggleNodeVisibility(item.value.id)"
                   >
-                    <icon-lucide-eye-off v-if="!item.value.visible" class="size-3 text-muted" />
+                    <icon-lucide-eye-off
+                      v-if="!item.value.visible"
+                      class="size-3"
+                      :class="
+                        store.state.selectedIds.has(item.value.id)
+                          ? 'text-white/80'
+                          : 'text-surface/70'
+                      "
+                    />
                     <icon-lucide-eye
                       v-else
-                      class="size-3 text-muted opacity-0 group-hover/row:opacity-50"
+                      class="size-3 opacity-0 group-hover/row:opacity-70"
+                      :class="
+                        store.state.selectedIds.has(item.value.id)
+                          ? 'text-white/70'
+                          : 'text-surface/50'
+                      "
                     />
                   </span>
                 </span>

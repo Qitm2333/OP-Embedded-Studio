@@ -336,7 +336,7 @@ export function useCanvasInput(
     if (store.state.selectedIds.size !== 1) return false
     const id = [...store.state.selectedIds][0]
     const node = store.graph.getNode(id)
-    if (!node) return false
+    if (!node || node.locked) return false
     const abs = store.graph.getAbsolutePosition(id)
     if (
       !hitTestCornerRotation(
@@ -371,7 +371,7 @@ export function useCanvasInput(
   function tryStartResize(sx: number, sy: number, cx: number, cy: number): boolean {
     for (const id of store.state.selectedIds) {
       const node = store.graph.getNode(id)
-      if (!node) continue
+      if (!node || node.locked) continue
       const abs = store.graph.getAbsolutePosition(id)
       const handle = hitTestHandle(
         sx,
@@ -476,6 +476,9 @@ export function useCanvasInput(
     } else if (e.shiftKey) {
       store.select([hit.id], true)
     }
+
+    const allLocked = [...store.state.selectedIds].every((id) => store.graph.getNode(id)?.locked)
+    if (allLocked) return
 
     const originals = new Map<string, { x: number; y: number; parentId: string }>()
     for (const id of store.state.selectedIds) {
@@ -778,6 +781,7 @@ export function useCanvasInput(
 
     const hits: string[] = []
     for (const node of store.graph.getChildren(store.state.currentPageId)) {
+      if (!node.visible || node.locked) continue
       if (
         node.x + node.width > minX &&
         node.x < maxX &&
