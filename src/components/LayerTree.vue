@@ -428,17 +428,17 @@ function updateDropTarget(ev: PointerEvent) {
                       class="size-3"
                       :class="
                         store.state.selectedIds.has(item.value.id)
-                          ? 'text-white/80'
-                          : 'text-surface/70'
+                          ? 'text-white'
+                          : 'text-surface'
                       "
                     />
                     <icon-lucide-unlock
                       v-else
-                      class="size-3 opacity-0 group-hover/row:opacity-70"
+                      class="size-3 opacity-0 group-hover/row:opacity-100"
                       :class="
                         store.state.selectedIds.has(item.value.id)
-                          ? 'text-white/70'
-                          : 'text-surface/50'
+                          ? 'text-white/80'
+                          : 'text-surface/70'
                       "
                     />
                   </span>
@@ -453,17 +453,17 @@ function updateDropTarget(ev: PointerEvent) {
                       class="size-3"
                       :class="
                         store.state.selectedIds.has(item.value.id)
-                          ? 'text-white/80'
-                          : 'text-surface/70'
+                          ? 'text-white'
+                          : 'text-surface'
                       "
                     />
                     <icon-lucide-eye
                       v-else
-                      class="size-3 opacity-0 group-hover/row:opacity-70"
+                      class="size-3 opacity-0 group-hover/row:opacity-100"
                       :class="
                         store.state.selectedIds.has(item.value.id)
-                          ? 'text-white/70'
-                          : 'text-surface/50'
+                          ? 'text-white/80'
+                          : 'text-surface/70'
                       "
                     />
                   </span>
