@@ -128,18 +128,18 @@
       "version": "0.8.0",
       "bin": {
         "openpencil-mcp": "./dist/index.js",
-        "openpencil-mcp-http": "./dist/http.js",
       },
       "dependencies": {
         "@hono/node-server": "^1.19.9",
         "@modelcontextprotocol/sdk": "^1.25.2",
         "@open-pencil/core": "workspace:*",
-        "canvaskit-wasm": "^0.40.0",
         "hono": "^4.11.4",
+        "ws": "^8.19.0",
         "zod": "^4.3.6",
       },
       "devDependencies": {
         "@types/node": "^22.0.0",
+        "@types/ws": "^8.18.1",
       },
     },
   },
