@@ -239,7 +239,7 @@ interface MapResult {
   textStarted: boolean
 }
 
-function mapUpdate(
+export function mapUpdate(
   update: SessionUpdate,
   textId: string,
   textStarted: boolean
