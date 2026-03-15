@@ -437,4 +437,53 @@ describe('MCP server', () => {
       await rm(rootDir, { recursive: true, force: true })
     }
   })
+
+  test('createServer with makeFigma skips file lifecycle tools', async () => {
+    const graph = new SceneGraph()
+    const { FigmaAPI } = await import('@open-pencil/core')
+    const custom = await createLinkedClient({
+      makeFigma: () => new FigmaAPI(graph)
+    })
+    try {
+      const { tools } = await custom.client.listTools()
+      const names = tools.map((t) => t.name)
+      expect(names).not.toContain('open_file')
+      expect(names).not.toContain('save_file')
+      expect(names).not.toContain('new_document')
+      expect(names).toContain('create_shape')
+      expect(names).toContain('render')
+      expect(names).toContain('get_page_tree')
+    } finally {
+      await custom.close()
+    }
+  })
+
+  test('createServer with makeFigma can call tools without loading a document', async () => {
+    const graph = new SceneGraph()
+    const { FigmaAPI } = await import('@open-pencil/core')
+    const custom = await createLinkedClient({
+      makeFigma: () => {
+        const api = new FigmaAPI(graph)
+        api.currentPage = api.wrapNode(graph.getPages()[0].id)
+        return api
+      }
+    })
+    try {
+      const result = await custom.client.callTool({
+        name: 'create_shape',
+        arguments: { type: 'RECTANGLE', x: 0, y: 0, width: 100, height: 50 }
+      })
+      expect(result.isError).not.toBe(true)
+      const data = parseResult(result) as { id: string; type: string }
+      expect(data.type).toBe('RECTANGLE')
+      expect(data.id).toBeTruthy()
+
+      const tree = await custom.client.callTool({ name: 'get_page_tree', arguments: {} })
+      expect(tree.isError).not.toBe(true)
+      const treeData = parseResult(tree) as { children: { id: string }[] }
+      expect(treeData.children.some((c) => c.id === data.id)).toBe(true)
+    } finally {
+      await custom.close()
+    }
+  })
 })
