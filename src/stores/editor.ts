@@ -204,7 +204,8 @@ export function createEditorStore() {
     actionToast: null as string | null,
     mobileDrawerSnap: 'closed' as 'closed' | 'half' | 'full',
     clipboardHtml: '',
-    autosaveEnabled: false
+    autosaveEnabled: false,
+    enteredContainerId: null as string | null
   })
 
   const AUTOSAVE_DELAY = 3000
@@ -314,6 +315,7 @@ export function createEditorStore() {
 
     // Switch
     state.currentPageId = pageId
+    state.enteredContainerId = null
     clearSelection()
 
     // Restore viewport
@@ -378,6 +380,23 @@ export function createEditorStore() {
 
   function clearSelection() {
     state.selectedIds = new Set()
+  }
+
+  function enterContainer(id: string) {
+    state.enteredContainerId = id
+  }
+
+  function exitContainer() {
+    const entered = state.enteredContainerId
+    if (!entered) return
+    const node = graph.getNode(entered)
+    const parentId = node?.parentId
+    if (parentId && parentId !== state.currentPageId) {
+      state.enteredContainerId = parentId
+    } else {
+      state.enteredContainerId = null
+    }
+    state.selectedIds = new Set(entered ? [entered] : [])
   }
 
   function setMarquee(rect: Rect | null) {
@@ -2375,6 +2394,8 @@ export function createEditorStore() {
     setTool,
     select,
     clearSelection,
+    enterContainer,
+    exitContainer,
     selectAll,
     setMarquee,
     setSnapGuides,

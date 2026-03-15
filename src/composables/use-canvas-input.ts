@@ -294,6 +294,31 @@ export function useCanvasInput(
     return { sx, sy, cx, cy }
   }
 
+  function hitTestInScope(cx: number, cy: number, deep: boolean): SceneNode | null {
+    const scopeId = store.state.enteredContainerId
+    if (scopeId) {
+      if (!store.graph.getNode(scopeId)) {
+        store.state.enteredContainerId = null
+      } else {
+        const abs = store.graph.getAbsolutePosition(scopeId)
+        return deep
+          ? store.graph.hitTestDeep(cx - abs.x, cy - abs.y, scopeId)
+          : store.graph.hitTest(cx - abs.x, cy - abs.y, scopeId)
+      }
+    }
+    return deep
+      ? store.graph.hitTestDeep(cx, cy, store.state.currentPageId)
+      : store.graph.hitTest(cx, cy, store.state.currentPageId)
+  }
+
+  function isInsideContainerBounds(cx: number, cy: number, containerId: string): boolean {
+    const container = store.graph.getNode(containerId)
+    if (!container) return false
+    const abs = store.graph.getAbsolutePosition(containerId)
+    return cx >= abs.x && cx <= abs.x + container.width
+      && cy >= abs.y && cy <= abs.y + container.height
+  }
+
   function startPanDrag(e: MouseEvent) {
     drag.value = {
       type: 'pan',
@@ -451,6 +476,34 @@ export function useCanvasInput(
     return undefined
   }
 
+  function resolveHit(cx: number, cy: number): SceneNode | null {
+    const titleHit =
+      hitTestFrameTitle(cx, cy) ??
+      hitTestSectionTitle(cx, cy) ??
+      hitTestComponentLabel(cx, cy)
+    if (titleHit) return titleHit
+
+    const hit = hitTestInScope(cx, cy, false)
+    if (hit) return hit
+
+    const scopeId = store.state.enteredContainerId
+    if (!scopeId) return null
+
+    if (isInsideContainerBounds(cx, cy, scopeId)) {
+      store.clearSelection()
+      return null
+    }
+
+    store.exitContainer()
+    const afterExit = hitTestInScope(cx, cy, false)
+    if (afterExit) return afterExit
+
+    if (store.state.enteredContainerId) {
+      store.exitContainer()
+    }
+    return null
+  }
+
   function handleSelectDown(e: MouseEvent, sx: number, sy: number, cx: number, cy: number) {
     if (store.state.editingTextId && handleTextEditClick(cx, cy, e.shiftKey)) return
 
@@ -459,15 +512,12 @@ export function useCanvasInput(
     if (tryStartRotation(sx, sy)) return
     if (tryStartResize(sx, sy, cx, cy)) return
 
-    const hit =
-      hitTestFrameTitle(cx, cy) ??
-      hitTestSectionTitle(cx, cy) ??
-      hitTestComponentLabel(cx, cy) ??
-      store.graph.hitTest(cx, cy, store.state.currentPageId)
-
+    const hit = resolveHit(cx, cy)
     if (!hit) {
-      store.clearSelection()
-      drag.value = { type: 'marquee', startX: cx, startY: cy }
+      if (!store.state.enteredContainerId) {
+        store.clearSelection()
+        drag.value = { type: 'marquee', startX: cx, startY: cy }
+      }
       return
     }
 
@@ -614,7 +664,7 @@ export function useCanvasInput(
     const hit =
       hitTestSectionTitle(cx, cy) ??
       hitTestComponentLabel(cx, cy) ??
-      store.graph.hitTest(cx, cy, store.state.currentPageId)
+      hitTestInScope(cx, cy, false)
     store.setHoveredNode(hit && !store.state.selectedIds.has(hit.id) ? hit.id : null)
   }
 
@@ -1087,17 +1137,23 @@ export function useCanvasInput(
       ? [...store.state.selectedIds][0]
       : undefined
     const selectedNode = selectedId ? store.graph.getNode(selectedId) : undefined
-    const canEnter = selectedNode && selectedId && store.graph.isContainer(selectedId) && !selectedNode.locked
+    const canEnter = selectedNode && selectedId
+      && store.graph.isContainer(selectedId) && !selectedNode.locked
 
-    let hit: SceneNode | null = null
     if (canEnter) {
-      const abs = store.graph.getAbsolutePosition(selectedId)
-      hit = store.graph.hitTestDeep(cx - abs.x, cy - abs.y, selectedId)
-    } else {
-      hit = hitTestSectionTitle(cx, cy) ??
-        hitTestComponentLabel(cx, cy) ??
-        store.graph.hitTestDeep(cx, cy, store.state.currentPageId)
+      store.enterContainer(selectedId)
+      const hit = hitTestInScope(cx, cy, false)
+      if (hit) {
+        store.select([hit.id])
+      } else {
+        store.clearSelection()
+      }
+      return
     }
+
+    const hit = hitTestSectionTitle(cx, cy) ??
+      hitTestComponentLabel(cx, cy) ??
+      hitTestInScope(cx, cy, true)
     if (!hit) return
 
     if (hit.type === 'TEXT') {

@@ -210,6 +210,10 @@ export function useKeyboard() {
       store.penCancel()
       return
     }
+    if (store.state.enteredContainerId) {
+      store.exitContainer()
+      return
+    }
     store.clearSelection()
     store.setTool('SELECT')
   })

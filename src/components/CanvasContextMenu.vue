@@ -15,7 +15,15 @@ function onRightClick(e: MouseEvent) {
   const sy = e.clientY - rect.top
   const { x: cx, y: cy } = store.screenToCanvas(sx, sy)
 
-  const hit = store.graph.hitTest(cx, cy, store.state.currentPageId)
+  let hit = null
+  const scopeId = store.state.enteredContainerId
+  if (scopeId && store.graph.getNode(scopeId)) {
+    const abs = store.graph.getAbsolutePosition(scopeId)
+    hit = store.graph.hitTest(cx - abs.x, cy - abs.y, scopeId)
+  }
+  if (!hit) {
+    hit = store.graph.hitTest(cx, cy, store.state.currentPageId)
+  }
   if (hit) {
     if (!store.state.selectedIds.has(hit.id)) {
       store.select([hit.id])
