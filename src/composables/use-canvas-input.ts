@@ -294,16 +294,36 @@ export function useCanvasInput(
     return { sx, sy, cx, cy }
   }
 
+  function canvasToLocal(cx: number, cy: number, scopeId: string): { lx: number; ly: number } {
+    const node = store.graph.getNode(scopeId)
+    if (!node) return { lx: cx, ly: cy }
+    const abs = store.graph.getAbsolutePosition(scopeId)
+    let dx = cx - abs.x
+    let dy = cy - abs.y
+    if (node.rotation !== 0) {
+      const hw = node.width / 2
+      const hh = node.height / 2
+      const rad = (-node.rotation * Math.PI) / 180
+      const cos = Math.cos(rad)
+      const sin = Math.sin(rad)
+      const rx = dx - hw
+      const ry = dy - hh
+      dx = rx * cos - ry * sin + hw
+      dy = rx * sin + ry * cos + hh
+    }
+    return { lx: dx, ly: dy }
+  }
+
   function hitTestInScope(cx: number, cy: number, deep: boolean): SceneNode | null {
     const scopeId = store.state.enteredContainerId
     if (scopeId) {
       if (!store.graph.getNode(scopeId)) {
         store.state.enteredContainerId = null
       } else {
-        const abs = store.graph.getAbsolutePosition(scopeId)
+        const { lx, ly } = canvasToLocal(cx, cy, scopeId)
         return deep
-          ? store.graph.hitTestDeep(cx - abs.x, cy - abs.y, scopeId)
-          : store.graph.hitTest(cx - abs.x, cy - abs.y, scopeId)
+          ? store.graph.hitTestDeep(lx, ly, scopeId)
+          : store.graph.hitTest(lx, ly, scopeId)
       }
     }
     return deep
@@ -314,9 +334,8 @@ export function useCanvasInput(
   function isInsideContainerBounds(cx: number, cy: number, containerId: string): boolean {
     const container = store.graph.getNode(containerId)
     if (!container) return false
-    const abs = store.graph.getAbsolutePosition(containerId)
-    return cx >= abs.x && cx <= abs.x + container.width
-      && cy >= abs.y && cy <= abs.y + container.height
+    const { lx, ly } = canvasToLocal(cx, cy, containerId)
+    return lx >= 0 && lx <= container.width && ly >= 0 && ly <= container.height
   }
 
   function startPanDrag(e: MouseEvent) {
@@ -831,11 +850,12 @@ export function useCanvasInput(
 
     const scopeId = store.state.enteredContainerId
     const parentId = scopeId ?? store.state.currentPageId
-    const abs = scopeId ? store.graph.getAbsolutePosition(scopeId) : { x: 0, y: 0 }
-    const localMinX = minX - abs.x
-    const localMinY = minY - abs.y
-    const localMaxX = maxX - abs.x
-    const localMaxY = maxY - abs.y
+    const localMin = scopeId ? canvasToLocal(minX, minY, scopeId) : { lx: minX, ly: minY }
+    const localMax = scopeId ? canvasToLocal(maxX, maxY, scopeId) : { lx: maxX, ly: maxY }
+    const localMinX = Math.min(localMin.lx, localMax.lx)
+    const localMinY = Math.min(localMin.ly, localMax.ly)
+    const localMaxX = Math.max(localMin.lx, localMax.lx)
+    const localMaxY = Math.max(localMin.ly, localMax.ly)
 
     const hits: string[] = []
     for (const node of store.graph.getChildren(parentId)) {
@@ -1150,7 +1170,8 @@ export function useCanvasInput(
 
     if (canEnter) {
       store.enterContainer(selectedId)
-      const hit = hitTestInScope(cx, cy, false)
+      const useDeep = selectedNode.type === 'COMPONENT' || selectedNode.type === 'INSTANCE'
+      const hit = hitTestInScope(cx, cy, useDeep)
       if (hit) {
         store.select([hit.id])
       } else {

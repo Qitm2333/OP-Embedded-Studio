@@ -152,6 +152,7 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>, store: Edito
       store.state.selectedIds,
       {
         hoveredNodeId: store.state.hoveredNodeId,
+        enteredContainerId: store.state.enteredContainerId,
         editingTextId: store.state.editingTextId,
         textEditor: store.textEditor,
         marquee: store.state.marquee,

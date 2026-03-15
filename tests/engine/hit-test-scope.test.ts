@@ -258,3 +258,129 @@ describe('hitTest — frame with children', () => {
     expect(hit!.id).toBe(child.id)
   })
 })
+
+describe('hitTest — opaque containers (COMPONENT/INSTANCE)', () => {
+  test('hitTest on COMPONENT returns component itself (not child)', () => {
+    const graph = new SceneGraph()
+    const page = pageId(graph)
+    const comp = graph.createNode('COMPONENT', page, {
+      name: 'MyComp',
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100
+    })
+    graph.createNode('RECTANGLE', comp.id, {
+      name: 'CompChild',
+      x: 10,
+      y: 10,
+      width: 30,
+      height: 30
+    })
+
+    const hit = graph.hitTest(10, 10, page)
+    expect(hit).not.toBeNull()
+    expect(hit!.name).toBe('MyComp')
+  })
+
+  test('hitTestDeep inside COMPONENT scope finds child', () => {
+    const graph = new SceneGraph()
+    const page = pageId(graph)
+    const comp = graph.createNode('COMPONENT', page, {
+      name: 'MyComp',
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100
+    })
+    const child = graph.createNode('RECTANGLE', comp.id, {
+      name: 'CompChild',
+      x: 10,
+      y: 10,
+      width: 30,
+      height: 30
+    })
+
+    const hit = graph.hitTestDeep(10, 10, comp.id)
+    expect(hit).not.toBeNull()
+    expect(hit!.id).toBe(child.id)
+  })
+
+  test('hitTest on INSTANCE returns instance itself', () => {
+    const graph = new SceneGraph()
+    const page = pageId(graph)
+    const inst = graph.createNode('INSTANCE', page, {
+      name: 'MyInstance',
+      x: 50,
+      y: 50,
+      width: 80,
+      height: 80
+    })
+    graph.createNode('RECTANGLE', inst.id, {
+      name: 'InstChild',
+      x: 5,
+      y: 5,
+      width: 20,
+      height: 20
+    })
+
+    const hit = graph.hitTest(55, 55, page)
+    expect(hit).not.toBeNull()
+    expect(hit!.name).toBe('MyInstance')
+  })
+
+  test('hitTestDeep inside INSTANCE scope finds child', () => {
+    const graph = new SceneGraph()
+    const page = pageId(graph)
+    const inst = graph.createNode('INSTANCE', page, {
+      name: 'MyInstance',
+      x: 50,
+      y: 50,
+      width: 80,
+      height: 80
+    })
+    const child = graph.createNode('RECTANGLE', inst.id, {
+      name: 'InstChild',
+      x: 5,
+      y: 5,
+      width: 20,
+      height: 20
+    })
+
+    const hit = graph.hitTestDeep(5, 5, inst.id)
+    expect(hit).not.toBeNull()
+    expect(hit!.id).toBe(child.id)
+  })
+})
+
+describe('hitTest — absolute position and scope offset', () => {
+  test('scoped hitTest accounts for parent offset', () => {
+    const graph = new SceneGraph()
+    const page = pageId(graph)
+    const frame = graph.createNode('FRAME', page, {
+      name: 'Frame',
+      x: 200,
+      y: 300,
+      width: 400,
+      height: 400
+    })
+    const child = graph.createNode('RECTANGLE', frame.id, {
+      name: 'Child',
+      x: 50,
+      y: 60,
+      width: 100,
+      height: 100
+    })
+
+    const abs = graph.getAbsolutePosition(frame.id)
+    expect(abs.x).toBe(200)
+    expect(abs.y).toBe(300)
+
+    const hit = graph.hitTest(50, 60, frame.id)
+    expect(hit).not.toBeNull()
+    expect(hit!.id).toBe(child.id)
+
+    const missHit = graph.hitTest(250, 360, frame.id)
+    expect(missHit).toBeNull()
+  })
+})

@@ -52,6 +52,7 @@ import type {
 
 import {
   drawHoverHighlight as drawHoverHighlightFn,
+  drawEnteredContainer as drawEnteredContainerFn,
   drawSelection as drawSelectionFn,
   drawNodeSelection as drawNodeSelectionFn,
   drawSelectionLabels as drawSelectionLabelsFn,
@@ -127,6 +128,7 @@ import {
 
 export interface RenderOverlays {
   hoveredNodeId?: string | null
+  enteredContainerId?: string | null
   editingTextId?: string | null
   textEditor?: TextEditor | null
   marquee?: Rect | null
@@ -750,6 +752,7 @@ export class SkiaRenderer {
     canvas.scale(this.dpr, this.dpr)
 
     this.drawHoverHighlight(canvas, graph, overlays.hoveredNodeId)
+    this.drawEnteredContainer(canvas, graph, overlays.enteredContainerId)
     p.beginPhase('render:selection')
     this.drawSelection(canvas, graph, selectedIds, overlays)
     p.endPhase('render:selection')
@@ -914,6 +917,10 @@ export class SkiaRenderer {
 
   private drawHoverHighlight(canvas: Canvas, graph: SceneGraph, hoveredNodeId?: string | null): void {
     drawHoverHighlightFn(this, canvas, graph, hoveredNodeId)
+  }
+
+  private drawEnteredContainer(canvas: Canvas, graph: SceneGraph, enteredContainerId?: string | null): void {
+    drawEnteredContainerFn(this, canvas, graph, enteredContainerId)
   }
 
   private drawSelection(canvas: Canvas, graph: SceneGraph, selectedIds: Set<string>, overlays: RenderOverlays): void {
