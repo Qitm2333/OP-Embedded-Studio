@@ -2,7 +2,7 @@
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport } from 'reka-ui'
 import { computed, markRaw, nextTick, ref, watch } from 'vue'
 
-import { getAcpDebugText, clearAcpDebugLog } from '@/ai/acp-transport'
+import { getAcpDebugText, clearAcpDebugLog, saveAcpDebugLog } from '@/ai/acp-transport'
 import { copyChatLog } from '@/ai/chat-debug'
 import { clearToolLogEntries, didHitStepLimit } from '@/ai/tools'
 import AcpPermissionDialog from '@/components/chat/AcpPermissionDialog.vue'
@@ -92,6 +92,7 @@ async function handleCopyAcpLog() {
   const text = getAcpDebugText()
   if (!text) return
   await navigator.clipboard.writeText(text)
+  void saveAcpDebugLog()
   acpLogCopied.value = true
   setTimeout(() => { acpLogCopied.value = false }, 1500)
 }

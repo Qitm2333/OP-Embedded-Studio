@@ -62,9 +62,19 @@ interface AcpDebugEntry {
   data: unknown
 }
 
+const MAX_LOG_AGE_MS = 5 * 60 * 1000
+
 export const acpDebugLog: AcpDebugEntry[] = []
 
+function pruneOldEntries() {
+  const cutoff = Date.now() - MAX_LOG_AGE_MS
+  while (acpDebugLog.length > 0 && acpDebugLog[0].ts < cutoff) {
+    acpDebugLog.shift()
+  }
+}
+
 export function getAcpDebugText(): string {
+  pruneOldEntries()
   return acpDebugLog.map((e) =>
     `[${new Date(e.ts).toISOString()}] ${e.type}\n${JSON.stringify(e.data, null, 2)}`
   ).join('\n\n---\n\n')
@@ -72,6 +82,22 @@ export function getAcpDebugText(): string {
 
 export function clearAcpDebugLog() {
   acpDebugLog.length = 0
+}
+
+export async function saveAcpDebugLog(): Promise<string | null> {
+  pruneOldEntries()
+  const text = getAcpDebugText()
+  if (!text) return null
+  try {
+    const { writeTextFile } = await import('@tauri-apps/plugin-fs')
+    const { join, desktopDir } = await import('@tauri-apps/api/path')
+    const filename = `acp-debug-${new Date().toISOString().replace(/[:.]/g, '-')}.log`
+    const path = await join(await desktopDir(), filename)
+    await writeTextFile(path, text)
+    return path
+  } catch {
+    return null
+  }
 }
 
 export class ACPChatTransport implements ChatTransport<UIMessage> {
