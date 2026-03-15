@@ -193,7 +193,7 @@ export function startAutomationBridge(server: ViteServer) {
     const core = await server.ssrLoadModule('@open-pencil/core') as {
       ALL_TOOLS: Array<{ name: string; description: string; params: Record<string, unknown>; mutates?: boolean }>
     }
-    const mcp = await server.ssrLoadModule('@open-pencil/mcp') as {
+    const mcp = await server.ssrLoadModule('../../packages/mcp/src/server.ts') as {
       paramToZod: (p: unknown) => ZodTypeAny
     }
 
