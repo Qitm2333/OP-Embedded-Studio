@@ -20,8 +20,7 @@ export const calc = defineTool({
   },
   execute: (_figma, { expr }) => {
     try {
-      const normalized = expr.replace(/Math\./g, '')
-      const result = parser.evaluate(normalized)
+      const result = parser.evaluate(expr)
       if (!Number.isFinite(result)) {
         return { error: `Expression "${expr}" produced ${String(result)}` }
       }
