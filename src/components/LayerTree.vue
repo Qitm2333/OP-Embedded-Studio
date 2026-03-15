@@ -125,6 +125,21 @@ watch(
   }
 )
 
+function syncCanvasScope(nodeId: string) {
+  const node = store.graph.getNode(nodeId)
+  if (!node) return
+  let parentId = node.parentId
+  while (parentId && parentId !== store.state.currentPageId) {
+    if (store.graph.isContainer(parentId)) {
+      store.enterContainer(parentId)
+      return
+    }
+    const parent = store.graph.getNode(parentId)
+    parentId = parent?.parentId
+  }
+  store.state.enteredContainerId = null
+}
+
 function onSelect(ev: CustomEvent) {
   ev.preventDefault()
   const node = ev.detail.value as LayerNode
@@ -132,6 +147,7 @@ function onSelect(ev: CustomEvent) {
     store.select([node.id], true)
   } else {
     store.select([node.id])
+    syncCanvasScope(node.id)
   }
 }
 

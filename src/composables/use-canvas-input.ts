@@ -829,14 +829,22 @@ export function useCanvasInput(
     const maxX = Math.max(d.startX, cx)
     const maxY = Math.max(d.startY, cy)
 
+    const scopeId = store.state.enteredContainerId
+    const parentId = scopeId ?? store.state.currentPageId
+    const abs = scopeId ? store.graph.getAbsolutePosition(scopeId) : { x: 0, y: 0 }
+    const localMinX = minX - abs.x
+    const localMinY = minY - abs.y
+    const localMaxX = maxX - abs.x
+    const localMaxY = maxY - abs.y
+
     const hits: string[] = []
-    for (const node of store.graph.getChildren(store.state.currentPageId)) {
+    for (const node of store.graph.getChildren(parentId)) {
       if (!node.visible || node.locked) continue
       if (
-        node.x + node.width > minX &&
-        node.x < maxX &&
-        node.y + node.height > minY &&
-        node.y < maxY
+        node.x + node.width > localMinX &&
+        node.x < localMaxX &&
+        node.y + node.height > localMinY &&
+        node.y < localMaxY
       ) {
         hits.push(node.id)
       }
