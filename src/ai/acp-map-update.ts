@@ -90,11 +90,13 @@ export function textFromContent(
   content: Record<string, unknown>[] | undefined
 ): string | undefined {
   if (!content) return undefined
-  return content
-    .filter(
-      (c) =>
-        c.type === 'content' && (c.content as Record<string, unknown> | undefined)?.type === 'text'
-    )
-    .map((c) => (c.content as Record<string, string>).text)
-    .join('\n')
+  const parts: string[] = []
+  for (const c of content) {
+    if (c.type !== 'content') continue
+    const inner = c.content as Record<string, unknown> | undefined
+    if (inner?.type === 'text' && typeof inner.text === 'string') {
+      parts.push(inner.text)
+    }
+  }
+  return parts.length > 0 ? parts.join('\n') : undefined
 }

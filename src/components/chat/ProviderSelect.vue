@@ -21,7 +21,7 @@ const { providerID, providerDef } = useAIChat()
 
 const mcpAvailable = ref(false)
 
-async function checkMcpHealth(retries = 3, delayMs = 1000) {
+async function checkMCPHealth(retries = 3, delayMs = 1000) {
   for (let i = 0; i < retries; i++) {
     try {
       const res = await fetch(`http://127.0.0.1:${AUTOMATION_HTTP_PORT}/health`, {
@@ -39,7 +39,7 @@ async function checkMcpHealth(retries = 3, delayMs = 1000) {
 
 if (IS_TAURI) {
   onMounted(() => {
-    void checkMcpHealth()
+    void checkMCPHealth()
   })
 }
 

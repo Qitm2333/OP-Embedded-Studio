@@ -19,7 +19,7 @@ async function pollHealth(retries: number, delayMs: number): Promise<boolean> {
   return false
 }
 
-export async function spawnMcpIfNeeded(): Promise<(() => void) | null> {
+export async function spawnMCPIfNeeded(): Promise<(() => void) | null> {
   if (import.meta.env.DEV || !IS_TAURI) return null
 
   if (await checkHealth()) return null

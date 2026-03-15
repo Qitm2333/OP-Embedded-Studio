@@ -2,10 +2,10 @@
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport } from 'reka-ui'
 import { computed, markRaw, nextTick, ref, watch } from 'vue'
 
-import { getAcpDebugText, clearAcpDebugLog, saveAcpDebugLog } from '@/ai/acp-transport'
+import { getAcpDebugText, clearAcpDebugLog, hasAcpDebugEntries } from '@/ai/acp-transport'
 import { copyChatLog } from '@/ai/chat-debug'
 import { clearToolLogEntries, didHitStepLimit } from '@/ai/tools'
-import AcpPermissionDialog from '@/components/chat/AcpPermissionDialog.vue'
+import ACPPermissionDialog from '@/components/chat/ACPPermissionDialog.vue'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
 import ProviderSetup from '@/components/chat/ProviderSetup.vue'
@@ -92,9 +92,10 @@ async function handleCopyAcpLog() {
   const text = getAcpDebugText()
   if (!text) return
   await navigator.clipboard.writeText(text)
-  void saveAcpDebugLog()
   acpLogCopied.value = true
-  setTimeout(() => { acpLogCopied.value = false }, 1500)
+  setTimeout(() => {
+    acpLogCopied.value = false
+  }, 1500)
 }
 
 function handleClearChat() {
@@ -183,6 +184,7 @@ function handleClearChat() {
           {{ debugCopied ? 'Copied' : 'Copy log' }}
         </button>
         <button
+          v-if="IS_DEV && hasAcpDebugEntries()"
           class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
           @click="handleCopyAcpLog"
         >
@@ -213,7 +215,7 @@ function handleClearChat() {
 
       <ChatInput :status="status" @submit="handleSubmit" @stop="handleStop" />
 
-      <AcpPermissionDialog />
+      <ACPPermissionDialog />
     </template>
   </div>
 </template>

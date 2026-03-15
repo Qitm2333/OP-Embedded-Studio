@@ -21,8 +21,8 @@ import type { ParamDef, ParamType } from '@open-pencil/core'
 const require = createRequire(import.meta.url)
 const MCP_VERSION: string = (require('../package.json') as { version: string }).version
 
-type McpContent = { type: 'text'; text: string } | { type: 'image'; data: string; mimeType: string }
-type McpResult = { content: McpContent[]; isError?: boolean }
+type MCPContent = { type: 'text'; text: string } | { type: 'image'; data: string; mimeType: string }
+type MCPResult = { content: MCPContent[]; isError?: boolean }
 
 const RPC_TIMEOUT = 30_000
 
@@ -32,11 +32,11 @@ interface PendingRequest {
   timer: ReturnType<typeof setTimeout>
 }
 
-function ok(data: unknown): McpResult {
+function ok(data: unknown): MCPResult {
   return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] }
 }
 
-function fail(e: unknown): McpResult {
+function fail(e: unknown): MCPResult {
   const msg = e instanceof Error ? e.message : String(e)
   return { content: [{ type: 'text', text: JSON.stringify({ error: msg }) }], isError: true }
 }
@@ -127,7 +127,6 @@ export function startServer(options: ServerOptions = {}) {
     } catch (e) {
       console.warn('Malformed automation message:', e)
     }
-
   }
 
   function rejectAllPending(reason: string) {
@@ -235,11 +234,11 @@ export function startServer(options: ServerOptions = {}) {
 
   // --- MCP Streamable HTTP ---
 
-  type McpTransport = { handleRequest: (r: Request) => Promise<Response> }
-  const mcpSessions = new Map<string, McpTransport>()
+  type MCPTransport = { handleRequest: (r: Request) => Promise<Response> }
+  const mcpSessions = new Map<string, MCPTransport>()
   const MAX_MCP_SESSIONS = 10
 
-  function createMcpSession(id: string): McpTransport {
+  function createMCPSession(id: string): MCPTransport {
     const mcpServer = new McpServer({ name: 'open-pencil', version: MCP_VERSION })
     const register = mcpServer.registerTool.bind(mcpServer) as (...a: unknown[]) => void
 
@@ -304,7 +303,7 @@ export function startServer(options: ServerOptions = {}) {
         { status: 503, headers: { 'Retry-After': '5' } }
       )
     }
-    const transport = existing ?? createMcpSession(sessionId ?? randomUUID())
+    const transport = existing ?? createMCPSession(sessionId ?? randomUUID())
     const response = await transport.handleRequest(c.req.raw)
     if (c.req.method === 'DELETE' && sessionId) {
       mcpSessions.delete(sessionId)

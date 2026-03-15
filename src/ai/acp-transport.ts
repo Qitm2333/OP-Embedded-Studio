@@ -56,15 +56,16 @@ export function buildCrashChunks(
   return { chunks, shouldNullSession: true }
 }
 
-interface AcpDebugEntry {
+interface ACPDebugEntry {
   ts: number
   type: string
   data: unknown
 }
 
 const MAX_LOG_AGE_MS = 5 * 60 * 1000
+const IS_DEV = import.meta.env.DEV
 
-export const acpDebugLog: AcpDebugEntry[] = []
+export const acpDebugLog: ACPDebugEntry[] = []
 
 function pruneOldEntries() {
   const cutoff = Date.now() - MAX_LOG_AGE_MS
@@ -75,29 +76,18 @@ function pruneOldEntries() {
 
 export function getAcpDebugText(): string {
   pruneOldEntries()
-  return acpDebugLog.map((e) =>
-    `[${new Date(e.ts).toISOString()}] ${e.type}\n${JSON.stringify(e.data, null, 2)}`
-  ).join('\n\n---\n\n')
+  return acpDebugLog
+    .map((e) => `[${new Date(e.ts).toISOString()}] ${e.type}\n${JSON.stringify(e.data, null, 2)}`)
+    .join('\n\n---\n\n')
 }
 
 export function clearAcpDebugLog() {
   acpDebugLog.length = 0
 }
 
-export async function saveAcpDebugLog(): Promise<string | null> {
+export function hasAcpDebugEntries(): boolean {
   pruneOldEntries()
-  const text = getAcpDebugText()
-  if (!text) return null
-  try {
-    const { writeTextFile } = await import('@tauri-apps/plugin-fs')
-    const { join, desktopDir } = await import('@tauri-apps/api/path')
-    const filename = `acp-debug-${new Date().toISOString().replace(/[:.]/g, '-')}.log`
-    const path = await join(await desktopDir(), filename)
-    await writeTextFile(path, text)
-    return path
-  } catch {
-    return null
-  }
+  return acpDebugLog.length > 0
 }
 
 export class ACPChatTransport implements ChatTransport<UIMessage> {
@@ -158,11 +148,13 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
 
         session.onUpdate = (params) => {
           if (closed) return
-          acpDebugLog.push({
-            ts: Date.now(),
-            type: params.update.sessionUpdate,
-            data: params.update
-          })
+          if (IS_DEV) {
+            acpDebugLog.push({
+              ts: Date.now(),
+              type: params.update.sessionUpdate,
+              data: params.update
+            })
+          }
           const result = mapUpdate(params.update, textId, textStarted)
           for (const chunk of result.chunks) {
             controller.enqueue(chunk)

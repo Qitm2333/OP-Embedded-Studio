@@ -9,7 +9,7 @@ import { useKeyboard } from '@/composables/use-keyboard'
 import { useMenu } from '@/composables/use-menu'
 import { useCollab, COLLAB_KEY } from '@/composables/use-collab'
 import { connectAutomation } from '@/automation/server'
-import { spawnMcpIfNeeded } from '@/automation/spawn-mcp'
+import { spawnMCPIfNeeded } from '@/automation/spawn-mcp'
 import { createDemoShapes } from '@/demo'
 import { useEditorStore } from '@/stores/editor'
 import { createTab, activeTab, getActiveStore } from '@/stores/tabs'
@@ -35,7 +35,7 @@ const { disconnect: disconnectAutomation } = connectAutomation(getActiveStore)
 const mcpCleanup = ref<(() => void) | null>(null)
 onMounted(async () => {
   try {
-    mcpCleanup.value = await spawnMcpIfNeeded()
+    mcpCleanup.value = await spawnMCPIfNeeded()
   } catch (e) {
     console.error(e)
   }
