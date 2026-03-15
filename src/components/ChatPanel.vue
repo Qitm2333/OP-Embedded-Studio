@@ -2,6 +2,7 @@
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport } from 'reka-ui'
 import { computed, markRaw, nextTick, ref, watch } from 'vue'
 
+import { getAcpDebugText, clearAcpDebugLog } from '@/ai/acp-transport'
 import { copyChatLog } from '@/ai/chat-debug'
 import { clearToolLogEntries, didHitStepLimit } from '@/ai/tools'
 import AcpPermissionDialog from '@/components/chat/AcpPermissionDialog.vue'
@@ -24,6 +25,7 @@ ensureChat().then((c) => {
 })
 const messagesEnd = ref<HTMLDivElement>()
 const debugCopied = ref(false)
+const acpLogCopied = ref(false)
 const initError = ref<string | null>(null)
 
 const messages = computed(() => chat.value?.messages ?? [])
@@ -86,10 +88,19 @@ async function handleCopyDebug() {
   }, 1500)
 }
 
+async function handleCopyAcpLog() {
+  const text = getAcpDebugText()
+  if (!text) return
+  await navigator.clipboard.writeText(text)
+  acpLogCopied.value = true
+  setTimeout(() => { acpLogCopied.value = false }, 1500)
+}
+
 function handleClearChat() {
   chat.value = null
   resetChat()
   clearToolLogEntries()
+  clearAcpDebugLog()
 }
 </script>
 
@@ -169,6 +180,14 @@ function handleClearChat() {
           <icon-lucide-clipboard-copy v-if="!debugCopied" class="size-3" />
           <icon-lucide-check v-else class="size-3 text-green-400" />
           {{ debugCopied ? 'Copied' : 'Copy log' }}
+        </button>
+        <button
+          class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
+          @click="handleCopyAcpLog"
+        >
+          <icon-lucide-bug v-if="!acpLogCopied" class="size-3" />
+          <icon-lucide-check v-else class="size-3 text-green-400" />
+          {{ acpLogCopied ? 'Copied' : 'ACP log' }}
         </button>
         <button
           class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"

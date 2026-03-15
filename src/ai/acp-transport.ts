@@ -56,6 +56,24 @@ export function buildCrashChunks(
   return { chunks, shouldNullSession: true }
 }
 
+interface AcpDebugEntry {
+  ts: number
+  type: string
+  data: unknown
+}
+
+export const acpDebugLog: AcpDebugEntry[] = []
+
+export function getAcpDebugText(): string {
+  return acpDebugLog.map((e) =>
+    `[${new Date(e.ts).toISOString()}] ${e.type}\n${JSON.stringify(e.data, null, 2)}`
+  ).join('\n\n---\n\n')
+}
+
+export function clearAcpDebugLog() {
+  acpDebugLog.length = 0
+}
+
 export class ACPChatTransport implements ChatTransport<UIMessage> {
   private session: ACPSession | null = null
   private agentDef: ACPAgentDef
@@ -114,7 +132,11 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
 
         session.onUpdate = (params) => {
           if (closed) return
-          console.debug('[ACP update]', params.update.sessionUpdate, params.update)
+          acpDebugLog.push({
+            ts: Date.now(),
+            type: params.update.sessionUpdate,
+            data: params.update
+          })
           const result = mapUpdate(params.update, textId, textStarted)
           for (const chunk of result.chunks) {
             controller.enqueue(chunk)
