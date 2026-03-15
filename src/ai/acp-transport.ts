@@ -70,8 +70,21 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
       start: (controller) => {
         const textId = `text-${Date.now()}`
         let textStarted = false
+        let closed = false
+
+        function finish(reason: 'stop' | 'other' | 'error', errorText?: string) {
+          if (closed) return
+          closed = true
+          if (errorText) controller.enqueue({ type: 'error', errorText })
+          if (textStarted) controller.enqueue({ type: 'text-end', id: textId })
+          controller.enqueue({ type: 'finish-step' })
+          controller.enqueue({ type: 'finish', finishReason: reason })
+          session.onUpdate = null
+          controller.close()
+        }
 
         session.onUpdate = (params) => {
+          if (closed) return
           const result = mapUpdate(
             params.update,
             textId,
@@ -85,6 +98,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
 
         abortSignal?.addEventListener('abort', () => {
           void connection.cancel({ sessionId })
+          finish('stop')
         })
 
         controller.enqueue({ type: 'start' })
@@ -96,24 +110,11 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
             prompt: [{ type: 'text', text: promptText }]
           })
           .then((result) => {
-            if (textStarted) {
-              controller.enqueue({ type: 'text-end', id: textId })
-            }
-            controller.enqueue({ type: 'finish-step' })
-            controller.enqueue({
-              type: 'finish',
-              finishReason:
-                result.stopReason === 'end_turn' ? 'stop' : 'other'
-            })
+            finish(result.stopReason === 'end_turn' ? 'stop' : 'other')
           })
           .catch((e) => {
             const msg = e instanceof Error ? e.message : String(e)
-            controller.enqueue({ type: 'error', errorText: msg })
-            controller.enqueue({ type: 'finish', finishReason: 'error' })
-          })
-          .finally(() => {
-            session.onUpdate = null
-            controller.close()
+            finish('error', msg)
           })
       }
     })
