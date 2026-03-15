@@ -138,6 +138,19 @@ Press <kbd>⌘</kbd><kbd>J</kbd> to open the AI assistant. It has 87 tools that 
 
 Use Claude Code, Codex, or Gemini CLI directly in the chat panel. The agent connects to the editor's MCP server and uses all 90+ design tools. Requires the desktop app and the agent CLI installed locally.
 
+**Setup (Claude Code):**
+
+1. Install the ACP adapter: `npm i -g @zed-industries/claude-agent-acp`
+2. Add MCP permission to `~/.claude/settings.json`:
+   ```json
+   {
+     "permissions": {
+       "allow": ["mcp__open-pencil"]
+     }
+   }
+   ```
+3. Open the desktop app → <kbd>Ctrl</kbd><kbd>J</kbd> → select **Claude Code** from the provider dropdown
+
 ### MCP server
 
 Connect Claude Code, Cursor, Windsurf, or any MCP client to read and write `.fig` files headlessly. 90 tools (87 core + 3 file management). [Full docs →](https://openpencil.dev/reference/mcp-tools)
