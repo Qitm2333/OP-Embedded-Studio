@@ -1,6 +1,6 @@
 import { ClientSideConnection, ndJsonStream, PROTOCOL_VERSION } from '@agentclientprotocol/sdk'
 
-import { ACP_DESIGN_CONTEXT } from '@/constants'
+import SYSTEM_PROMPT from '@/ai/system-prompt.md?raw'
 
 import { mapUpdate } from './acp-map-update'
 
@@ -133,7 +133,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
       this.session = await this.spawnAgent()
     }
 
-    const promptText = this.sentContext ? text : `${ACP_DESIGN_CONTEXT}\n\n${text}`
+    const promptText = this.sentContext ? text : `${SYSTEM_PROMPT}\n\n${text}`
     this.sentContext = true
 
     const { connection, sessionId } = this.session
