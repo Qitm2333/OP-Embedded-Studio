@@ -114,6 +114,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
 
         session.onUpdate = (params) => {
           if (closed) return
+          console.debug('[ACP update]', params.update.sessionUpdate, params.update)
           const result = mapUpdate(params.update, textId, textStarted)
           for (const chunk of result.chunks) {
             controller.enqueue(chunk)
