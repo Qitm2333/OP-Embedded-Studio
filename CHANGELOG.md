@@ -2,12 +2,24 @@
 
 ## Unreleased
 
+### Features
+
+- Lock and visibility toggle buttons in layers panel (hover to reveal, always shown when active)
+- Figma-style selection scope — double-click to enter groups/frames/components, Escape to exit
+- Nested container navigation — each double-click goes one level deeper
+- Dashed border around entered container for visual feedback
+- Layer panel click syncs canvas scope automatically
+
 ### Fixes
 
 - Fix `set_layout` tool not defaulting to HUG sizing when enabling auto-layout — frames now shrink/grow to fit children instead of keeping fixed dimensions
 - Fix save crash when COLOR variable is missing alpha channel
 - Fix console error spam on deployed web app from automation WebSocket reconnect loop
 - Fix headless CLI font fallback — bundled Inter font now ships with `@open-pencil/core` and loads without a web server
+- Locked nodes now block move, resize, rotate, and delete on canvas
+- Locked containers block double-click enter
+- Marquee selection skips locked and hidden nodes
+- COMPONENT/INSTANCE containers are now enterable via double-click
 
 ## 0.10.0 — 2026-03-15
 
