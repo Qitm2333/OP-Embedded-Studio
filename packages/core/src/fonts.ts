@@ -65,7 +65,7 @@ const BUNDLED_FONTS: Record<string, string> = {
 const googleFontsCache = new Map<string, Record<string, string>>()
 const googleFontsFailed = new Set<string>()
 
-function normalizeFontFamily(family: string): string {
+export function normalizeFontFamily(family: string): string {
   return family.replace(/\s+Variable$/i, '')
 }
 
@@ -111,7 +111,7 @@ async function fetchGoogleFontFiles(family: string): Promise<Record<string, stri
   return files
 }
 
-function styleToVariant(style: string): string {
+export function styleToVariant(style: string): string {
   const weight = styleToWeight(style)
   const italic = style.toLowerCase().includes('italic')
   if (weight === 400 && !italic) return 'regular'
@@ -164,7 +164,7 @@ async function findLocalFont(
   }
 }
 
-async function fetchBundledFont(url: string): Promise<ArrayBuffer | null> {
+export async function fetchBundledFont(url: string): Promise<ArrayBuffer | null> {
   if (IS_BROWSER) {
     const response = await fetch(url)
     return response.arrayBuffer()
@@ -217,7 +217,7 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
   return null
 }
 
-function isVariableFont(data: ArrayBuffer): boolean {
+export function isVariableFont(data: ArrayBuffer): boolean {
   if (data.byteLength < 12) return false
   const view = new DataView(data)
   const numTables = view.getUint16(4)

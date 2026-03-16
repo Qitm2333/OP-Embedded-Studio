@@ -95,7 +95,11 @@ export {
   getCJKFallbackFamily,
   setCJKFallbackFamily,
   styleToWeight,
-  weightToStyle
+  weightToStyle,
+  normalizeFontFamily,
+  isVariableFont,
+  styleToVariant,
+  fetchBundledFont
 } from './fonts'
 export {
   parseColor,
