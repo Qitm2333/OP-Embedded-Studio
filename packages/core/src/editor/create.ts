@@ -242,6 +242,7 @@ export function createEditor(options?: EditorOptions) {
     pasteFromHTML: clipboard.pasteFromHTML,
     deleteSelected: clipboard.deleteSelected,
     storeImage: clipboard.storeImage,
+    placeImageFiles: clipboard.placeImageFiles,
     loadFontsForNodes: clipboard.loadFontsForNodes,
 
     // Components — bridge functions
