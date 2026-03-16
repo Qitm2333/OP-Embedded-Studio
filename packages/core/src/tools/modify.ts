@@ -231,7 +231,7 @@ export const setLayout = defineTool({
 
     const wasNone = raw?.layoutMode === 'NONE'
     if (args.direction) node.layoutMode = args.direction as 'HORIZONTAL' | 'VERTICAL'
-    if (args.direction && wasNone) {
+    if (wasNone) {
       node.primaryAxisSizingMode = 'AUTO'
       node.counterAxisSizingMode = 'AUTO'
     }
