@@ -584,7 +584,7 @@ function injectVariableBinding(
 
   // Find visible=true pattern (04 01) after the marker
   const visiblePattern = '0401'
-  let patternIdx = hex.indexOf(visiblePattern, markerIdx)
+  const patternIdx = hex.indexOf(visiblePattern, markerIdx)
   if (patternIdx === -1) return hex
 
   // Move past 0401 to find where to insert

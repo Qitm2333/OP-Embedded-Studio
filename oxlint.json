@@ -15,7 +15,11 @@
   },
   "rules": {
     "no-unused-vars": "warn",
-    "no-console": "off",
+    "no-console": ["warn", { "allow": ["warn", "error", "debug", "time", "timeEnd"] }],
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "prefer-const": "error",
+    "radix": "error",
+
     "no-restricted-imports": [
       "error",
       {
@@ -113,7 +117,8 @@
     "open-pencil/no-math-random": "error",
     "open-pencil/no-hand-rolled-color": "error",
     "open-pencil/no-raw-console-format": "off",
-    "open-pencil/no-silent-catch": "error"
+    "open-pencil/no-silent-catch": "error",
+    "open-pencil/no-typeof-window-check": "warn"
   },
   "overrides": [
     {
@@ -137,6 +142,14 @@
     },
     {
       "files": [
+        "**/figma-api.ts"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": [
         "**/render/render-jsx.ts"
       ],
       "rules": {
@@ -156,7 +169,10 @@
         "typescript/consistent-type-imports": "off",
         "typescript/no-unnecessary-condition": "off",
         "import/no-mutable-exports": "off",
-        "complexity": "off"
+        "complexity": "off",
+        "prefer-const": "off",
+        "eqeqeq": "off",
+        "radix": "off"
       }
     },
     {
@@ -167,6 +183,15 @@
       ],
       "rules": {
         "max-lines": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/**",
+        "packages/mcp/src/**"
+      ],
+      "rules": {
+        "no-console": "off"
       }
     },
     {

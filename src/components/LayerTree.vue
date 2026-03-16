@@ -217,7 +217,7 @@ function resolveInsertPosition(
   if (!parent) return null
 
   const idx = parent.childIds.indexOf(rowId)
-  const level = parseInt(row.dataset.level ?? '0')
+  const level = parseInt(row.dataset.level ?? '0', 10)
 
   if (edge === 'before') {
     return {

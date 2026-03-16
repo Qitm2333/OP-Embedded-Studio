@@ -214,6 +214,37 @@ const noSilentCatch = {
   },
 }
 
+const noTypeofWindowCheck = {
+  meta: {
+    docs: {
+      description:
+        'Disallow raw typeof window checks — use IS_BROWSER or IS_TAURI from constants',
+    },
+  },
+  create(context) {
+    const file = context.filename ?? context.getFilename?.()
+    if (file?.endsWith('constants.ts') || file?.endsWith('fonts.ts')) return {}
+
+    return {
+      BinaryExpression(node) {
+        if (node.operator !== '!==' && node.operator !== '===') return
+        const isTypeofWindow = (side) =>
+          side.type === 'UnaryExpression' &&
+          side.operator === 'typeof' &&
+          side.argument?.type === 'Identifier' &&
+          side.argument.name === 'window'
+        if (isTypeofWindow(node.left) || isTypeofWindow(node.right)) {
+          context.report({
+            node,
+            message:
+              "Use IS_BROWSER or IS_TAURI from constants instead of raw 'typeof window' checks.",
+          })
+        }
+      },
+    }
+  },
+}
+
 const plugin = {
   meta: { name: 'open-pencil' },
   rules: {
@@ -223,6 +254,7 @@ const plugin = {
     'no-hand-rolled-color': noHandRolledColor,
     'no-raw-console-format': noRawConsoleFormat,
     'no-silent-catch': noSilentCatch,
+    'no-typeof-window-check': noTypeofWindowCheck,
   },
 }
 

@@ -1015,7 +1015,7 @@ export function useCanvasInput(
     cursorOverride.value = null
   }
 
-  let wheelAccum = {
+  const wheelAccum = {
     deltaX: 0,
     deltaY: 0,
     zoomDelta: 0,

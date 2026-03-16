@@ -529,7 +529,7 @@ export class SkiaRenderer {
           const pillH = SECTION_TITLE_HEIGHT / this.zoom
           const gap = SECTION_TITLE_GAP / this.zoom
 
-          let pillX = ax
+          const pillX = ax
           let pillY: number
           if (insideSection) {
             pillY = ay + gap
