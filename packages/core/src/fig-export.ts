@@ -1,16 +1,22 @@
-import { zipSync, deflateSync, type Zippable } from 'fflate'
+import { deflateSync } from 'fflate'
 
 import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from './constants'
-import { sceneNodeToKiwi, fractionalPosition, buildFigKiwi, buildFontDigestMap, safeColor } from './kiwi/kiwi-serialize'
+import { compressFigDataSync } from './fig-compress'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { stringToGuid } from './kiwi/kiwi-convert'
+import {
+  sceneNodeToKiwi,
+  fractionalPosition,
+  buildFontDigestMap,
+  safeColor
+} from './kiwi/kiwi-serialize'
 import { renderThumbnail } from './render-image'
 
 import type { NodeChange } from './kiwi/codec'
 import type { SkiaRenderer } from './renderer'
 import type { SceneGraph, VariableValue } from './scene-graph'
-import type { CanvasKit } from 'canvaskit-wasm'
 import type { GUID } from './types'
+import type { CanvasKit } from 'canvaskit-wasm'
 
 const THUMBNAIL_1X1 = Uint8Array.from(
   atob(
@@ -128,7 +134,17 @@ export async function exportFigFile(
     const children = graph.getChildren(page.id)
     for (let i = 0; i < children.length; i++) {
       nodeChanges.push(
-        ...sceneNodeToKiwi(children[i], canvasGuid, i, localIdCounter, graph, blobs, nodeIdToGuid, fontDigestMap, varIdToGuid)
+        ...sceneNodeToKiwi(
+          children[i],
+          canvasGuid,
+          i,
+          localIdCounter,
+          graph,
+          blobs,
+          nodeIdToGuid,
+          fontDigestMap,
+          varIdToGuid
+        )
       )
     }
   }
@@ -182,7 +198,11 @@ export async function exportFigFile(
 
         const varGuid = { sessionID: 0, localID: localIdCounter.value++ }
         varIdToGuid.set(varId, varGuid)
-        const typeMap: Record<string, string> = { COLOR: 'COLOR', BOOLEAN: 'BOOLEAN', STRING: 'STRING' }
+        const typeMap: Record<string, string> = {
+          COLOR: 'COLOR',
+          BOOLEAN: 'BOOLEAN',
+          STRING: 'STRING'
+        }
         const resolvedType = typeMap[variable.type] ?? 'FLOAT'
 
         const entries = Object.entries(variable.valuesByMode).map(([modeId, value]) => ({
@@ -243,7 +263,7 @@ export async function exportFigFile(
         kiwiData: Array.from(kiwiData),
         thumbnailPng: Array.from(thumbnailPng),
         metaJson,
-        images: imageEntries.map(e => ({ name: e.name, data: Array.from(e.data) }))
+        images: imageEntries.map((e) => ({ name: e.name, data: Array.from(e.data) }))
       })
     )
   }
@@ -251,24 +271,7 @@ export async function exportFigFile(
   return compressFigData(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries)
 }
 
-export function compressFigDataSync(
-  schemaDeflated: Uint8Array,
-  kiwiData: Uint8Array,
-  thumbnailPng: Uint8Array,
-  metaJson: string,
-  imageEntries: Array<{ name: string; data: Uint8Array }>
-): Uint8Array {
-  const canvasData = buildFigKiwi(schemaDeflated, kiwiData)
-  const zipEntries: Zippable = {
-    'canvas.fig': [canvasData, { level: 0 }],
-    'thumbnail.png': [thumbnailPng, { level: 0 }],
-    'meta.json': new TextEncoder().encode(metaJson)
-  }
-  for (const entry of imageEntries) {
-    zipEntries[entry.name] = [entry.data, { level: 0 }]
-  }
-  return zipSync(zipEntries)
-}
+export { compressFigDataSync } from './fig-compress'
 
 function canUseWorker(): boolean {
   return typeof Worker !== 'undefined' && IS_BROWSER
@@ -282,7 +285,9 @@ function compressViaWorker(
   imageEntries: Array<{ name: string; data: Uint8Array }>
 ): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL('./fig-export-worker.ts', import.meta.url), { type: 'module' })
+    const worker = new Worker(new URL('./fig-export-worker.ts', import.meta.url), {
+      type: 'module'
+    })
 
     worker.onmessage = (e: MessageEvent<Uint8Array>) => {
       resolve(e.data)
@@ -322,5 +327,7 @@ export function compressFigData(
   if (canUseWorker()) {
     return compressViaWorker(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries)
   }
-  return Promise.resolve(compressFigDataSync(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries))
+  return Promise.resolve(
+    compressFigDataSync(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries)
+  )
 }

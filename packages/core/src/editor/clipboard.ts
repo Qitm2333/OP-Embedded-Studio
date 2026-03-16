@@ -1,3 +1,4 @@
+import { computeBounds } from '../geometry'
 import { computeAllLayouts } from '../layout'
 import {
   buildFigmaClipboardHTML,
@@ -25,21 +26,11 @@ export function createClipboardActions(ctx: EditorContext) {
   }
 
   function centerNodesAt(nodeIds: string[], cx: number, cy: number) {
-    let minX = Infinity
-    let minY = Infinity
-    let maxX = -Infinity
-    let maxY = -Infinity
-    for (const id of nodeIds) {
-      const n = ctx.graph.getNode(id)
-      if (!n) continue
-      minX = Math.min(minX, n.x)
-      minY = Math.min(minY, n.y)
-      maxX = Math.max(maxX, n.x + n.width)
-      maxY = Math.max(maxY, n.y + n.height)
-    }
-    if (minX === Infinity) return
-    const dx = cx - (minX + maxX) / 2
-    const dy = cy - (minY + maxY) / 2
+    const items = nodeIds.map((id) => ctx.graph.getNode(id)).filter((n) => n != null)
+    const b = computeBounds(items)
+    if (b.width === 0 && b.height === 0 && items.length === 0) return
+    const dx = cx - (b.x + b.width / 2)
+    const dy = cy - (b.y + b.height / 2)
     for (const id of nodeIds) {
       const n = ctx.graph.getNode(id)
       if (n) ctx.graph.updateNode(id, { x: n.x + dx, y: n.y + dy })

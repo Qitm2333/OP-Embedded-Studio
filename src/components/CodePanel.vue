@@ -101,7 +101,7 @@ watch(jsxCode, () => {
   </div>
 </template>
 
-<style>
+<style scoped>
 .token.tag {
   color: #7dd3fc;
 }

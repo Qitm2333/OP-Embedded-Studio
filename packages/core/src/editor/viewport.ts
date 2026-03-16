@@ -1,4 +1,5 @@
 import { ZOOM_DIVISOR, ZOOM_SCALE_MAX, ZOOM_SCALE_MIN } from '../constants'
+import { computeBounds } from '../geometry'
 
 import type { EditorContext } from './types'
 
@@ -46,18 +47,8 @@ export function createViewportActions(ctx: EditorContext) {
     const nodes = ctx.graph.getChildren(ctx.state.currentPageId)
     if (nodes.length === 0) return
 
-    let minX = Infinity
-    let minY = Infinity
-    let maxX = -Infinity
-    let maxY = -Infinity
-    for (const n of nodes) {
-      minX = Math.min(minX, n.x)
-      minY = Math.min(minY, n.y)
-      maxX = Math.max(maxX, n.x + n.width)
-      maxY = Math.max(maxY, n.y + n.height)
-    }
-
-    zoomToBounds(minX, minY, maxX, maxY)
+    const b = computeBounds(nodes)
+    zoomToBounds(b.x, b.y, b.x + b.width, b.y + b.height)
   }
 
   function zoomTo100() {
