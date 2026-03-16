@@ -1,7 +1,7 @@
 import { zipSync, deflateSync, type Zippable } from 'fflate'
 
 import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from './constants'
-import { sceneNodeToKiwi, fractionalPosition, buildFigKiwi, buildFontDigestMap } from './kiwi-serialize'
+import { sceneNodeToKiwi, fractionalPosition, buildFigKiwi, buildFontDigestMap, safeColor } from './kiwi-serialize'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { stringToGuid } from './kiwi/kiwi-convert'
 import { renderThumbnail } from './render-image'
@@ -34,7 +34,7 @@ function variableValueToKiwi(
   }
   if (type === 'COLOR' && typeof value === 'object' && 'r' in value) {
     return {
-      value: { colorValue: { r: value.r, g: value.g, b: value.b, a: value.a } },
+      value: { colorValue: safeColor(value as { r: number; g: number; b: number; a?: number }) },
       dataType: 'COLOR',
       resolvedDataType: 'COLOR'
     }
