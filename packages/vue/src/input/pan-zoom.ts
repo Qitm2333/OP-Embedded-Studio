@@ -9,7 +9,6 @@ export function setupPanZoom(
   canvasRef: Ref<HTMLCanvasElement | null>,
   editor: Editor,
   drag: Ref<DragState | null>,
-  getCoords: (e: MouseEvent) => { sx: number; sy: number; cx: number; cy: number },
   onMouseDown: (e: MouseEvent) => void,
   onMouseMove: (e: MouseEvent) => void,
   onMouseUp: () => void

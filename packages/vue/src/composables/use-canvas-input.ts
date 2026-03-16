@@ -603,11 +603,9 @@ export function useCanvasInput(
   }
 
   function onMouseMove(e: MouseEvent) {
-    {
+    if (onCursorMove) {
       const { cx, cy } = getCoords(e)
-      editor.state.cursorCanvasX = cx
-      editor.state.cursorCanvasY = cy
-      if (onCursorMove) onCursorMove(cx, cy)
+      onCursorMove(cx, cy)
     }
 
     if (editor.state.activeTool === 'PEN' && editor.state.penState && !drag.value) {
@@ -808,7 +806,7 @@ export function useCanvasInput(
     if (drag.value) onMouseUp()
   })
 
-  setupPanZoom(canvasRef, editor, drag, getCoords, onMouseDown, onMouseMove, onMouseUp)
+  setupPanZoom(canvasRef, editor, drag, onMouseDown, onMouseMove, onMouseUp)
 
   return {
     drag,

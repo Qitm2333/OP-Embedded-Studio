@@ -14,37 +14,37 @@ import type { SceneNode } from '@open-pencil/core'
 
 const CARET_BLINK_MS = 530
 
-export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Editor) {
+export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, store: Editor) {
   const textareaRef = shallowRef<HTMLTextAreaElement | null>(null)
   let isComposing = false
   let blinkTimer = 0
 
   function getEditingNode() {
-    const id = editor.state.editingTextId
+    const id = store.state.editingTextId
     if (!id) return null
-    return editor.graph.getNode(id) ?? null
+    return store.graph.getNode(id) ?? null
   }
 
   function resetBlink() {
-    if (editor.textEditor) editor.textEditor.caretVisible = true
+    if (store.textEditor) store.textEditor.caretVisible = true
     clearInterval(blinkTimer)
     blinkTimer = window.setInterval(() => {
-      if (!editor.textEditor) return
-      editor.textEditor.caretVisible = !editor.textEditor.caretVisible
-      editor.requestRepaint()
+      if (!store.textEditor) return
+      store.textEditor.caretVisible = !store.textEditor.caretVisible
+      store.requestRepaint()
     }, CARET_BLINK_MS)
-    editor.requestRepaint()
+    store.requestRepaint()
   }
 
   function syncText(nodeId: string, text: string, runs?: SceneNode['styleRuns']) {
     const changes: Partial<SceneNode> = { text }
     if (runs !== undefined) changes.styleRuns = runs
-    editor.graph.updateNode(nodeId, changes)
-    editor.requestRender()
+    store.graph.updateNode(nodeId, changes)
+    store.requestRender()
   }
 
   function insertText(text: string, node: SceneNode) {
-    const editor = editor.textEditor
+    const editor = store.textEditor
     if (!editor) return
     const range = editor.getSelectionRange()
     let runs = node.styleRuns
@@ -59,7 +59,7 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Ed
   }
 
   function deleteText(node: SceneNode, forward: boolean) {
-    const editor = editor.textEditor
+    const editor = store.textEditor
     if (!editor) return
     const range = editor.getSelectionRange()
     let runs = node.styleRuns
@@ -105,7 +105,7 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Ed
     resetBlink()
   }
 
-  function handleHorizontalArrow(e: KeyboardEvent, editor: NonNullable<typeof editor.textEditor>) {
+  function handleHorizontalArrow(e: KeyboardEvent, editor: NonNullable<typeof store.textEditor>) {
     const select = e.shiftKey
     const isMeta = e.metaKey || e.ctrlKey
     if (e.key === 'ArrowLeft') {
@@ -121,7 +121,7 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Ed
 
   function handleDeletion(
     e: KeyboardEvent,
-    editor: NonNullable<typeof editor.textEditor>,
+    editor: NonNullable<typeof store.textEditor>,
     node: SceneNode
   ) {
     const isMeta = e.metaKey || e.ctrlKey
@@ -138,7 +138,7 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Ed
 
   type MetaAction = (node: SceneNode) => void
   const metaKeyActions: Partial<Record<string, MetaAction>> = {
-    a: () => editor.textEditor?.selectAll(),
+    a: () => store.textEditor?.selectAll(),
     c: () => handleCopy(),
     x: (node) => handleCut(node),
     v: (node) => void handlePaste(node),
@@ -149,7 +149,7 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Ed
 
   function onKeyDown(e: KeyboardEvent) {
     if (isComposing) return
-    const editor = editor.textEditor
+    const editor = store.textEditor
     const node = getEditingNode()
     if (!editor || !node) return
 
@@ -158,7 +158,7 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Ed
 
     switch (e.key) {
       case 'Escape':
-        editor.commitTextEdit()
+        store.commitTextEdit()
         canvasRef.value?.focus()
         e.preventDefault()
         return
@@ -198,21 +198,21 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Ed
     }
 
     if (!textChanged) {
-      editor.requestRender()
+      store.requestRender()
     }
     resetBlink()
     e.preventDefault()
   }
 
   function applyFormatting(nodeId: string, changes: Partial<SceneNode>, label: string) {
-    editor.updateNodeWithUndo(nodeId, changes, label)
-    const updated = editor.graph.getNode(nodeId)
-    if (updated) editor.textEditor?.rebuildParagraph(updated)
-    editor.requestRender()
+    store.updateNodeWithUndo(nodeId, changes, label)
+    const updated = store.graph.getNode(nodeId)
+    if (updated) store.textEditor?.rebuildParagraph(updated)
+    store.requestRender()
   }
 
   function toggleBold(node: SceneNode) {
-    const editor = editor.textEditor
+    const editor = store.textEditor
     const range = editor?.getSelectionRange()
     if (range) {
       const { runs } = toggleBoldInRange(
@@ -229,7 +229,7 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Ed
   }
 
   function toggleItalic(node: SceneNode) {
-    const editor = editor.textEditor
+    const editor = store.textEditor
     const range = editor?.getSelectionRange()
     if (range) {
       const { runs } = toggleItalicInRange(
@@ -246,7 +246,7 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Ed
   }
 
   function toggleUnderline(node: SceneNode) {
-    const editor = editor.textEditor
+    const editor = store.textEditor
     const range = editor?.getSelectionRange()
     if (range) {
       const { runs } = toggleDecorationInRange(
@@ -268,14 +268,14 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Ed
   }
 
   function handleCopy() {
-    const editor = editor.textEditor
+    const editor = store.textEditor
     if (!editor) return
     const text = editor.getSelectedText()
     if (text) void navigator.clipboard.writeText(text)
   }
 
   function handleCut(node: ReturnType<typeof getEditingNode>) {
-    const editor = editor.textEditor
+    const editor = store.textEditor
     if (!editor || !node) return
     const text = editor.getSelectedText()
     if (text) {
@@ -286,7 +286,7 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Ed
   }
 
   async function handlePaste(node: ReturnType<typeof getEditingNode>) {
-    const editor = editor.textEditor
+    const editor = store.textEditor
     if (!editor || !node) return
     try {
       const text = await navigator.clipboard.readText()
@@ -305,13 +305,13 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, editor: Ed
   useEventListener(textareaRef, 'keydown', onKeyDown)
 
   useEventListener(canvasRef, 'mousedown', () => {
-    if (editor.state.editingTextId && textareaRef.value) {
+    if (store.state.editingTextId && textareaRef.value) {
       requestAnimationFrame(() => textareaRef.value?.focus())
     }
   })
 
   watch(
-    () => editor.state.editingTextId,
+    () => store.state.editingTextId,
     (id, _, onCleanup) => {
       if (id) {
         const el = document.createElement('textarea')

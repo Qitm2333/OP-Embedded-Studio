@@ -24,7 +24,11 @@ const { cursorOverride } = useCanvasInput(
   hitTestSectionTitle,
   hitTestComponentLabel,
   hitTestFrameTitle,
-  (cx, cy) => collab?.updateCursor(cx, cy, store.state.currentPageId)
+  (cx, cy) => {
+    store.state.cursorCanvasX = cx
+    store.state.cursorCanvasY = cy
+    collab?.updateCursor(cx, cy, store.state.currentPageId)
+  }
 )
 
 useTextEdit(canvasRef, store)
