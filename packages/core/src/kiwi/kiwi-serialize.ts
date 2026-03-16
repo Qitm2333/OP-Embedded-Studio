@@ -2,6 +2,7 @@ export const FIG_KIWI_VERSION = 106
 
 import { deflateSync, inflateSync } from 'fflate'
 
+<<<<<<< HEAD:packages/core/src/kiwi/kiwi-serialize.ts
 import { getLoadedFontData, normalizeFontFamily, weightToStyle } from '../fonts'
 import { encodeVectorNetworkBlob } from '../vector'
 import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi-convert'
@@ -9,6 +10,15 @@ import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi-convert'
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from '../scene-graph'
 import type { Color, GUID } from '../types'
 import type { NodeChange, Paint, VariableConsumptionEntry } from './codec'
+=======
+import { weightToStyle, getLoadedFontData, normalizeFontFamily } from './fonts'
+import { encodeVectorNetworkBlob } from './vector'
+import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi/kiwi-convert'
+
+import type { NodeChange, Paint, VariableConsumptionEntry } from './kiwi/codec'
+import type { SceneGraph, SceneNode, CharacterStyleOverride } from './scene-graph'
+import type { Color, GUID, Matrix } from './types'
+>>>>>>> 4df3671 (fix: kiwi serialization bugs causing broken auto-layout in Figma import):packages/core/src/kiwi-serialize.ts
 
 const fontDigestCache = new Map<string, Uint8Array>()
 
@@ -170,11 +180,12 @@ function buildDerivedTextData(
 
   const addFont = (family: string, weight: number, italic: boolean) => {
     const style = weightToStyle(weight, italic)
-    const key = `${family}|${style}`
+    const normalized = normalizeFontFamily(family)
+    const key = `${normalized}|${style}`
     if (seen.has(key)) return
     seen.add(key)
     fontMeta.push({
-      key: { family, style, postscript: '' },
+      key: { family: normalized, style, postscript: '' },
       fontLineHeight: 1.2,
       fontDigest: digestMap.get(key),
       fontStyle: italic ? 'ITALIC' : 'NORMAL',
@@ -311,7 +322,10 @@ function serializeTextProps(
   nc.textAlignHorizontal = node.textAlignHorizontal
   nc.textUserLayoutVersion = 3
   if (fontDigestMap) nc.derivedTextData = buildDerivedTextData(node, fontDigestMap)
-  if (node.lineHeight != null) nc.lineHeight = { value: node.lineHeight, units: 'PIXELS' }
+  // Figma needs explicit lineHeight to compute text bounding boxes.
+  // Without it (and without baselines/glyphs data), text gets 0 height.
+  const lh = node.lineHeight != null ? node.lineHeight : Math.ceil(node.fontSize * 1.2)
+  nc.lineHeight = { value: lh, units: 'PIXELS' }
   if (node.letterSpacing !== 0) nc.letterSpacing = { value: node.letterSpacing, units: 'PIXELS' }
   if (node.textDecoration !== 'NONE') {
     nc.textDecoration = node.textDecoration === 'UNDERLINE' ? 'UNDERLINE' : 'STRIKETHROUGH'
@@ -332,6 +346,7 @@ function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
     nc.stackCounterAlignItems = node.counterAxisAlign
     if (node.layoutWrap === 'WRAP') nc.stackWrap = 'WRAP'
     if (node.counterAxisSpacing > 0) nc.stackCounterSpacing = node.counterAxisSpacing
+    nc.bordersTakeSpace = node.strokesIncludedInLayout
   }
   if (node.layoutPositioning === 'ABSOLUTE') nc.stackPositioning = 'ABSOLUTE'
   if (node.layoutGrow > 0) nc.stackChildPrimaryGrow = node.layoutGrow
@@ -393,6 +408,30 @@ function serializeVariableBindings(
   if (entries.length > 0) nc.variableConsumptionMap = { entries }
 }
 
+function computeExportTransform(
+  node: SceneNode,
+  graph: SceneGraph
+): Matrix {
+  const sx = node.flipX ? -1 : 1
+  const cos = Math.cos((node.rotation * Math.PI) / 180)
+  const sin = Math.sin((node.rotation * Math.PI) / 180)
+
+  // Auto-layout children should have (0,0) transform — Figma computes
+  // their positions from the layout engine at render time.
+  const parent = node.parentId ? graph.getNode(node.parentId) : undefined
+  const isAutoLayoutChild = parent
+    && parent.layoutMode !== 'NONE'
+    && parent.layoutMode !== 'GRID'
+    && node.layoutPositioning !== 'ABSOLUTE'
+
+  return {
+    m00: cos * sx, m01: -sin,
+    m02: isAutoLayoutChild ? 0 : node.x,
+    m10: sin * sx, m11: cos,
+    m12: isAutoLayoutChild ? 0 : node.y
+  }
+}
+
 export function sceneNodeToKiwi(
   node: SceneNode,
   parentGuid: GUID,
@@ -407,9 +446,6 @@ export function sceneNodeToKiwi(
   const localID = localIdCounter.value++
   const guid = { sessionID: 1, localID }
   nodeIdToGuid?.set(node.id, guid)
-  const sx = node.flipX ? -1 : 1
-  const cos = Math.cos((node.rotation * Math.PI) / 180)
-  const sin = Math.sin((node.rotation * Math.PI) / 180)
 
   const fillPaints = node.fills.map(fillToKiwiPaint)
   const strokePaints = node.strokes.map((s) => ({
@@ -429,9 +465,9 @@ export function sceneNodeToKiwi(
     opacity: node.opacity,
     phase: 'CREATED',
     size: { x: node.width, y: node.height },
-    transform: { m00: cos * sx, m01: -sin, m02: node.x, m10: sin * sx, m11: cos, m12: node.y },
+    transform: computeExportTransform(node, graph),
     strokeWeight: node.strokes.length > 0 ? node.strokes[0].weight : 1,
-    strokeAlign: node.strokes.length > 0 ? node.strokes[0].align : 'INSIDE'
+    strokeAlign: node.strokes.length > 0 ? node.strokes[0].align : 'INSIDE',
   }
 
   if (node.independentStrokeWeights) {
@@ -461,7 +497,6 @@ export function sceneNodeToKiwi(
   if (node.type === 'TEXT') serializeTextProps(node, nc, fontDigestMap)
 
   nc.frameMaskDisabled = !node.clipsContent
-  if (node.clipsContent) nc.clipsContent = true
 
   if (node.horizontalConstraint !== 'MIN') nc.horizontalConstraint = node.horizontalConstraint
   if (node.verticalConstraint !== 'MIN') nc.verticalConstraint = node.verticalConstraint
