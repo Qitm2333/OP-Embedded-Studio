@@ -10,6 +10,7 @@ import { useMenu } from '@/composables/use-menu'
 import { useCollab, COLLAB_KEY } from '@/composables/use-collab'
 import { connectAutomation } from '@/automation/server'
 import { spawnMCPIfNeeded } from '@/automation/spawn-mcp'
+import { IS_TAURI } from '@/constants'
 import { createDemoShapes } from '@/demo'
 import { useEditorStore } from '@/stores/editor'
 import { createTab, activeTab, getActiveStore } from '@/stores/tabs'
@@ -25,25 +26,22 @@ import TabBar from '@/components/TabBar.vue'
 import Toolbar from '@/components/Toolbar.vue'
 
 const route = useRoute()
+const params = useUrlSearchParams('history')
+const showChrome = !('no-chrome' in params)
+
 const firstTab = createTab()
 const store = useEditorStore()
 const breakpoints = useBreakpoints({ mobile: 768 })
 const isMobile = breakpoints.smaller('mobile')
+
+if (route.meta.demo && !('test' in params)) {
+  createDemoShapes(firstTab.store)
+}
+
+useHead({ title: route.meta.demo ? 'Demo' : undefined })
 useKeyboard()
 useMenu()
-const { disconnect: disconnectAutomation } = connectAutomation(getActiveStore)
-const mcpCleanup = ref<(() => void) | null>(null)
-onMounted(async () => {
-  try {
-    mcpCleanup.value = await spawnMCPIfNeeded()
-  } catch (e) {
-    console.error(e)
-  }
-})
-onUnmounted(() => {
-  mcpCleanup.value?.()
-  disconnectAutomation()
-})
+
 const collab = useCollab(firstTab.store)
 provide(COLLAB_KEY, collab)
 
@@ -56,13 +54,24 @@ useEventListener(
   { passive: false }
 )
 
-const params = useUrlSearchParams('history')
-const showChrome = !('no-chrome' in params)
-if (route.meta.demo && !('test' in params)) {
-  createDemoShapes(firstTab.store)
-}
+const automationCleanup = ref<(() => void) | null>(null)
+const mcpCleanup = ref<(() => void) | null>(null)
 
-useHead({ title: route.meta.demo ? 'Demo' : undefined })
+onMounted(async () => {
+  if (import.meta.env.DEV || IS_TAURI) {
+    automationCleanup.value = connectAutomation(getActiveStore).disconnect
+  }
+  try {
+    mcpCleanup.value = await spawnMCPIfNeeded()
+  } catch (e) {
+    console.error(e)
+  }
+})
+
+onUnmounted(() => {
+  mcpCleanup.value?.()
+  automationCleanup.value?.()
+})
 </script>
 
 <template>
