@@ -1,161 +1,104 @@
 # Refactoring Roadmap
 
-Comprehensive audit of vibe-coding leftovers and structural debt.
+Status of all items from the codebase audit.
 
 ## 🔴 Critical (Architectural Debt)
 
-### 1. `src/stores/editor.ts` — 2,505 lines, the God Store
+### 1. `src/stores/editor.ts` — was 2,505 lines
 
-One closure captures ~30 mutable `let` variables and exposes ~80 methods covering: file I/O, undo, pen tool, layout, selection, export, import, clipboard, images, paging, zooming, autosave, file watching, component ops, text editing.
+**Status:** ✅ Done — extracted to `packages/core/src/editor/` (15 modules). App store is 570 lines, spreads `Editor` + adds file I/O, export, flash effects.
 
-**Refactoring:** Extract `createEditor()` to `packages/core/src/editor/` folder with domain modules sharing an `EditorContext` interface. App store becomes a thin Vue wrapper.
+### 2. `src/composables/use-canvas-input.ts` — was 1,501 lines
 
-**Status:** ✅ Done — 13 modules, largest 394 lines. App store: 747 lines.
-
-### 2. `src/composables/use-canvas-input.ts` — 1,501 lines, the Input Monolith
-
-Handles 8 drag types, touch/gesture, wheel zoom, double-click, hit testing, snap guides, auto-layout indicators, reparenting, and hover cursors — all in one function.
-
-**Status:** ✅ Done — split into 5 modules in `packages/vue/src/input/`:
-- `types.ts` (88) — DragState variants, HandlePosition, TOOL_TO_NODE
-- `geometry.ts` (170) — hit testing, handle positions, rotation cursor
-- `pan-zoom.ts` (266) — wheel, touch pinch, Safari gestures
-- `resize.ts` (121) — constrainToAspectRatio, applyResize
-- `auto-layout.ts` (103) — insert indicator computation
-- Orchestrator `use-canvas-input.ts` reduced to 817 lines
+**Status:** ✅ Done — split into 5 modules in `packages/vue/src/input/` (types, geometry, pan-zoom, resize, auto-layout). Orchestrator: 815 lines.
 
 ### 3. State is fully mutable to all consumers
 
-`editor.state` is a raw `shallowReactive` — every composable mutates it freely (`store.state.panX = ...`, `store.state.zoom = ...`). Zero uses of `readonly`/`shallowReadonly` anywhere.
-
-**Refactoring:** Expose `shallowReadonly(state)` as the public API, add explicit setter methods for mutations that need to happen from outside the store.
+**Status:** 🔜 Deferred — `shallowReadonly` + setter methods. Low priority since SDK composables now type against `Editor` not raw state.
 
 ## 🟡 Medium (Code Quality)
 
 ### 4. Fire-and-forget async calls — 10+ unhandled
 
-Multiple `void asyncFn()` calls where rejections are silently swallowed:
-- `void switchPage()` in `addPage`/`deletePage`
-- `void reloadFromDisk()` in file watcher
-- `void loadFontsForNodes()` in paste handler
-- `saveFigFile`, `writeFile`, `reloadFromDisk` — no try/catch, silent data loss risk
-
-**Refactoring:** Wrap fire-and-forget calls in a `safeFire(promise, context)` helper that catches and shows a toast. Add try/catch to all async store methods.
+**Status:** 🔜 Deferred — needs `safeFire()` helper.
 
 ### 5. Module-level state in composables
 
-`use-chat.ts` declares all state (`providerID`, `apiKey`, `modelID`, etc.) at module scope outside the composable function. `use-menu.ts` calls `useFileDialog()` and `useEditorStore()` at module scope — technically incorrect for VueUse composables that expect `setup()` context.
-
-**Refactoring:** Move state inside the composable function or convert `use-chat.ts` to a proper store. Move `useFileDialog()` inside the exported function.
+**Status:** 🔜 Deferred — `use-chat.ts` and `use-menu.ts` are app-specific, low urgency.
 
 ### 6. Bounding-box computation duplicated ~10 times
 
-The `let minX = Infinity; ... Math.min/max` pattern appears in `editor.ts` (7×), `tools/read.ts`, `tools/vector.ts`, `clipboard.ts`, `renderer/overlays.ts`, `figma-api.ts`.
-
-**Refactoring:** Add a generic `computeBounds(items, getRect): Rect` to `geometry.ts`, replace all copies.
+**Status:** ✅ Done — `computeBounds()` added to geometry.ts. snap.ts deduplicated with `rotatedBBox()`.
 
 ### 7. "Node not found" guard repeated 44 times in tools
 
-Every tool function starts with `const node = figma.getNodeById(id); if (!node) return { error: ... }`.
+**Status:** ✅ Partially done — `requireNode()` + `NodeNotFoundError` added to tools/schema.ts. Tool-by-tool adoption is incremental.
 
-**Refactoring:** Add `requireNode(figma, id)` to `tools/schema.ts` that either returns the node or throws a typed error caught by the tool executor.
+### 8. Barrel import overuse
 
-### 8. Barrel import overuse — 58 consumers use `@open-pencil/core` vs 2 using subpaths
-
-Subpath exports (`/scene-graph`, `/tools`, `/renderer`, etc.) exist but are almost unused. The barrel `export * from './constants'` dumps 91 exports.
-
-**Refactoring:** Migrate app imports to use subpath exports. Improves tree-shaking and makes dependency intent explicit.
+**Status:** 🔜 Deferred — gradual migration to subpath imports.
 
 ### 9. `kiwi-serialize.ts` misplaced
 
-495-line file at the core root that imports exclusively from `./kiwi/*`. Belongs inside `kiwi/`.
-
-**Refactoring:** Move to `packages/core/src/kiwi/kiwi-serialize.ts`, update imports.
+**Status:** ✅ Done — moved to `packages/core/src/kiwi/kiwi-serialize.ts`.
 
 ### 10. `tools/stock-photo.ts` throws instead of returning `{ error }`
 
-All other tools return `{ error: string }` for AI consumers, but `stock-photo.ts` throws.
-
-**Refactoring:** Change to return `{ error }` like all other tools.
+**Status:** ✅ Already correct — exports use `return { error }`, throws are internal only.
 
 ## 🟢 Low Priority (Polish)
 
 ### 11. Large Vue components (8 over 300 lines)
 
-| Lines | Component | Split into |
-|-------|-----------|-----------|
-| 553 | `VariablesDialog.vue` | `VariablesTable` + `VariableCell` + dialog wrapper |
-| 537 | `LayoutSection.vue` | auto-layout vs absolute sections |
-| 504 | `FillPicker.vue` | extract `GradientEditor` |
-| 503 | `LayerTree.vue` | extract drag-to-reparent composable |
-| 388 | `Toolbar.vue` | extract action menu sub-components |
-| 382 | `StrokeSection.vue` | extract shared paint picker with FillSection |
-| 337 | `NodeContextMenuContent.vue` | group into sub-menus |
-| 314 | `ProviderSettings.vue` | extract per-provider form components |
+**Status:** 🔜 Deferred — split incrementally.
 
 ### 12. Icon import bloat
 
-`Toolbar.vue` (14 icon imports), `LayerTree.vue` (13), `MobileHud.vue` (5). Extract icon maps to shared utils.
+**Status:** 🔜 Deferred.
 
 ### 13. Unscoped `<style>` in `CodePanel.vue`
 
-8 `.token.*` rules leak globally. Scope or move to `app.css`.
+**Status:** ✅ Done — scoped.
 
-### 14. Dead exports (7 functions)
+### 14. Dead exports
 
-- `copyFill`, `copyStroke`, `copyEffect`, `copyStyleRun` in `copy.ts` (only array variants used)
-- `createPropertyChange` in `undo.ts`
-- `designTokens` in `tools/codegen.ts`
-- `queryFonts` in `fonts.ts`
+**Status:** ✅ Done — removed `createPropertyChange` from undo.ts, un-exported `queryFonts`/`FontInfo` from fonts.ts. `copy*` functions kept (tested).
 
 ### 15. Renderer circular imports
 
-`renderer.ts` ↔ `ai-overlays.ts` and `renderer.ts` ↔ `rulers.ts` — runtime cycles through type + value imports. Extract a `SkiaRendererContext` interface to break the cycle.
+**Status:** ✅ Not actionable — type-only imports, no runtime cycles.
 
 ### 16. Duplicate font weight maps
 
-Weight-to-name mapping exists in both `figma-api-proxy.ts` and `fonts.ts`. Extract to a shared constant.
+**Status:** ✅ Done — single `FONT_WEIGHT_NAMES` in fonts.ts, figma-api-proxy.ts imports from there.
 
 ### 17. Rotated corners reimplemented
 
-`renderer/overlays.ts` and `snap.ts` reimplement `rotatedCorners()` instead of importing from `geometry.ts`.
+**Status:** ✅ Done — snap.ts now uses `rotatedBBox()` from geometry.ts. overlays.ts kept (different — screen coords).
 
 ### 18. Duplicate .fig scaffold/zip assembly
 
-Same DOCUMENT NodeChange in `clipboard.ts` and `fig-export.ts`. Same zip structure in `fig-export-worker.ts` and `fig-export.ts`.
+**Status:** ✅ Done — zip assembly extracted to `fig-compress.ts`. DOCUMENT scaffold intentionally different (clipboard vs full export).
 
 ### 19. Group/Frame/Component/ComponentSet creation — 4× copy-paste
 
-Lines ~1215, ~1295, ~1390, ~1460 in editor.ts each follow the identical 50-line pattern: compute bbox → calculate parent offset → find z-index → create container → reparent children → push undo. Only the node type and a few props differ. ~200 lines that should be `wrapSelectionInContainer(type, extraProps)`.
+**Status:** ✅ Already fixed — `wrapSelectionInContainer()` in structure.ts handles all 4 types.
 
 ### 20. `console.warn`/`console.error` (30 total)
 
-All legitimate error handlers but would benefit from a structured logger. The bare `console.error(e)` in `EditorView.vue:67` should add context.
+**Status:** 🔜 Deferred — all legitimate error handlers, structured logger is a nice-to-have.
 
----
+## Additional work completed
 
-## Editor Folder Split Plan
-
-Target: `packages/core/src/editor/`
-
-```
-packages/core/src/editor/
-├── index.ts              # re-export createEditor, types, constants
-├── types.ts              # EditorState, EditorOptions, Tool, EditorToolDef
-├── context.ts            # EditorContext interface (shared deps all modules access)
-├── create.ts             # createEditor() assembler
-├── viewport.ts           # screenToCanvas, applyZoom, pan, zoomToBounds/Fit/100/Selection
-├── selection.ts          # select, clearSelection, selectAll, setMarquee, setSnapGuides, ...
-├── pages.ts              # switchPage, addPage, deletePage, renamePage, pageViewports
-├── shapes.ts             # createShape, adoptNodesIntoSection, pen*, vector bounds
-├── structure.ts          # group, ungroup, wrapInAutoLayout, reorder, reparent, bringToFront/sendToBack
-├── components.ts         # createComponent, componentSet, createInstance, detach, goToMain, sync
-├── clipboard.ts          # duplicateSelected, writeCopyData, pasteFromHTML, deleteSelected
-├── undo.ts               # commitMove/Resize/Rotation/NodeUpdate, undo/redo, snapshot
-├── text.ts               # startTextEditing, commitTextEdit
-└── nodes.ts              # updateNode, updateNodeWithUndo, setLayoutMode, visibility/lock, rename, moveToPage
-```
-
-Each module exports a factory: `createXxxActions(ctx: EditorContext) => { ... }`.
-`create.ts` assembles context + all modules, spreads into a flat return object.
-`Editor` type = `ReturnType<typeof createEditor>` — unchanged for all consumers.
+- **vue-tsc errors**: Fixed all 135, now a check gate (was never checked before)
+- **`@open-pencil/vue` SDK**: Headless package with 8 composables, 6 renderless components
+- **Editor variable actions**: 7 undo-able CRUD operations, wired into VariablesDialog
+- **Editor alignment actions**: alignNodes, flipNodes, rotateNodes, wired into PositionSection
+- **`updateNodeWithUndo` auto-renders**: eliminated 15+ redundant requestRender() calls
+- **Merged `useNodeProps` + `useMultiProps`**: single composable, no duplicate computed refs
+- **`toolCursor()` utility**: replaces if/else chain
+- **`toast.ts` rename**: singleton module, not a composable
+- **`computeBounds()` utility**: bounding box helper in geometry.ts
+- **`requireNode()` helper**: for tool guard patterns
+- **`tsgo --noEmit`**: added to check script
+- **EditorStore simplified**: spreads Editor instead of listing 80+ methods manually
