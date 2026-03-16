@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   PopoverRoot,
   PopoverTrigger,
@@ -20,30 +21,42 @@ import IconZoomIn from '~icons/lucide/zoom-in'
 
 import { menuContent, menuItem } from '@/components/ui/menu'
 import { openFileDialog } from '@/composables/use-menu'
+import { useCollabInjected } from '@/composables/use-collab'
+import { toast } from '@/composables/use-toast'
 import { useEditorStore } from '@/stores/editor'
 import { colorToCSS } from '@open-pencil/core'
 import { toolIcons } from '@/utils/tools'
 import { initials } from '@/utils/text'
 
 import type { Component } from 'vue'
-import type { CollabState, RemotePeer } from '@/composables/use-collab'
 
-const { collabState, collabPeers, pendingRoomId, followingPeer } = defineProps<{
-  collabState: CollabState
-  collabPeers: RemotePeer[]
-  pendingRoomId?: string | null
-  followingPeer?: number | null
-}>()
-
-const emit = defineEmits<{
-  share: []
-  join: [roomId: string]
-  disconnect: []
-  'update:collab-name': [name: string]
-  follow: [clientId: number | null]
-}>()
-
+const route = useRoute()
+const router = useRouter()
+const collab = useCollabInjected()
 const store = useEditorStore()
+
+const collabState = computed(() => collab.state.value)
+const collabPeers = computed(() => collab.remotePeers.value)
+const followingPeer = computed(() => collab.followingPeer.value)
+const pendingRoomId = (route.params.roomId as string) || null
+
+function onShare() {
+  const roomId = collab.shareCurrentDoc()
+  router.push(`/share/${roomId}`)
+  navigator.clipboard.writeText(`${window.location.origin}/share/${roomId}`)
+  toast.show('Link copied to clipboard')
+}
+
+function onJoin() {
+  if (!pendingRoomId) return
+  collab.connect(pendingRoomId)
+  router.push(`/share/${pendingRoomId}`)
+}
+
+function onDisconnect() {
+  collab.disconnect()
+  router.push('/')
+}
 
 const activeToolIcon = computed(() => toolIcons[store.state.activeTool])
 
@@ -69,7 +82,7 @@ const menuItems: MenuAction[] = [
   { icon: IconZoomIn, label: 'Zoom to fit', action: () => store.zoomToFit() }
 ]
 
-const onlineCount = computed(() => collabPeers.length + 1)
+const onlineCount = computed(() => collabPeers.value.length + 1)
 </script>
 
 <template>
@@ -151,7 +164,7 @@ const onlineCount = computed(() => collabPeers.length + 1)
                 v-for="peer in collabPeers"
                 :key="peer.clientId"
                 class="flex cursor-pointer items-center gap-2 rounded-md px-0.5 py-0.5 select-none active:bg-hover"
-                @click="emit('follow', followingPeer === peer.clientId ? null : peer.clientId)"
+                @click="collab.followPeer(followingPeer === peer.clientId ? null : peer.clientId)"
               >
                 <div
                   class="flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
@@ -169,7 +182,7 @@ const onlineCount = computed(() => collabPeers.length + 1)
 
             <button
               class="mt-3 flex h-7 w-full cursor-pointer items-center justify-center rounded border border-border bg-transparent text-xs text-muted select-none active:bg-hover"
-              @click="emit('disconnect')"
+              @click="onDisconnect"
             >
               Disconnect
             </button>
@@ -196,7 +209,7 @@ const onlineCount = computed(() => collabPeers.length + 1)
     <div class="pointer-events-auto flex items-center gap-1.5">
       <button
         class="flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-white/10 bg-panel/70 px-3 shadow-md backdrop-blur-xl select-none active:bg-hover"
-        @click="emit('share')"
+        @click="onShare"
       >
         <icon-lucide-share-2 class="size-3.5 text-surface" />
         <span class="text-xs text-surface">Share</span>

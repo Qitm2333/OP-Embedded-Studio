@@ -123,17 +123,7 @@ onUnmounted(() => {
     >
       <div class="relative flex min-w-0 flex-1">
         <EditorCanvas />
-        <MobileHud
-          :collab-state="collab.state.value"
-          :collab-peers="collab.remotePeers.value"
-          :pending-room-id="pendingRoomId"
-          :following-peer="collab.followingPeer.value"
-          @share="onShare"
-          @join="onJoin"
-          @disconnect="onDisconnect"
-          @update:collab-name="collab.setLocalName"
-          @follow="collab.followPeer"
-        />
+        <MobileHud />
         <Toolbar />
       </div>
       <MobileDrawer />
