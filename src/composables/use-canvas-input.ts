@@ -10,7 +10,7 @@ import {
   DEFAULT_TEXT_WIDTH,
   DEFAULT_TEXT_HEIGHT
 } from '@/constants'
-import { computeSelectionBounds, computeSnap } from '@open-pencil/core'
+import { computeSelectionBounds, computeSnap, degToRad } from '@open-pencil/core'
 
 import type { EditorStore, Tool } from '@/stores/editor'
 import type { NodeType, Rect, SceneNode, Vector } from '@open-pencil/core'
@@ -294,6 +294,50 @@ export function useCanvasInput(
     return { sx, sy, cx, cy }
   }
 
+  function canvasToLocal(cx: number, cy: number, scopeId: string): { lx: number; ly: number } {
+    const node = store.graph.getNode(scopeId)
+    if (!node) return { lx: cx, ly: cy }
+    const abs = store.graph.getAbsolutePosition(scopeId)
+    let dx = cx - abs.x
+    let dy = cy - abs.y
+    if (node.rotation !== 0) {
+      const hw = node.width / 2
+      const hh = node.height / 2
+      const rad = degToRad(-node.rotation)
+      const cos = Math.cos(rad)
+      const sin = Math.sin(rad)
+      const rx = dx - hw
+      const ry = dy - hh
+      dx = rx * cos - ry * sin + hw
+      dy = rx * sin + ry * cos + hh
+    }
+    return { lx: dx, ly: dy }
+  }
+
+  function hitTestInScope(cx: number, cy: number, deep: boolean): SceneNode | null {
+    const scopeId = store.state.enteredContainerId
+    if (scopeId) {
+      if (!store.graph.getNode(scopeId)) {
+        store.state.enteredContainerId = null
+      } else {
+        const { lx, ly } = canvasToLocal(cx, cy, scopeId)
+        return deep
+          ? store.graph.hitTestDeep(lx, ly, scopeId)
+          : store.graph.hitTest(lx, ly, scopeId)
+      }
+    }
+    return deep
+      ? store.graph.hitTestDeep(cx, cy, store.state.currentPageId)
+      : store.graph.hitTest(cx, cy, store.state.currentPageId)
+  }
+
+  function isInsideContainerBounds(cx: number, cy: number, containerId: string): boolean {
+    const container = store.graph.getNode(containerId)
+    if (!container) return false
+    const { lx, ly } = canvasToLocal(cx, cy, containerId)
+    return lx >= 0 && lx <= container.width && ly >= 0 && ly <= container.height
+  }
+
   function startPanDrag(e: MouseEvent) {
     drag.value = {
       type: 'pan',
@@ -336,7 +380,7 @@ export function useCanvasInput(
     if (store.state.selectedIds.size !== 1) return false
     const id = [...store.state.selectedIds][0]
     const node = store.graph.getNode(id)
-    if (!node) return false
+    if (!node || node.locked) return false
     const abs = store.graph.getAbsolutePosition(id)
     if (
       !hitTestCornerRotation(
@@ -371,7 +415,7 @@ export function useCanvasInput(
   function tryStartResize(sx: number, sy: number, cx: number, cy: number): boolean {
     for (const id of store.state.selectedIds) {
       const node = store.graph.getNode(id)
-      if (!node) continue
+      if (!node || node.locked) continue
       const abs = store.graph.getAbsolutePosition(id)
       const handle = hitTestHandle(
         sx,
@@ -451,6 +495,34 @@ export function useCanvasInput(
     return undefined
   }
 
+  function resolveHit(cx: number, cy: number): SceneNode | null {
+    const titleHit =
+      hitTestFrameTitle(cx, cy) ??
+      hitTestSectionTitle(cx, cy) ??
+      hitTestComponentLabel(cx, cy)
+    if (titleHit) return titleHit
+
+    const hit = hitTestInScope(cx, cy, false)
+    if (hit) return hit
+
+    const scopeId = store.state.enteredContainerId
+    if (!scopeId) return null
+
+    if (isInsideContainerBounds(cx, cy, scopeId)) {
+      store.clearSelection()
+      return null
+    }
+
+    store.exitContainer()
+    const afterExit = hitTestInScope(cx, cy, false)
+    if (afterExit) return afterExit
+
+    if (store.state.enteredContainerId) {
+      store.exitContainer()
+    }
+    return null
+  }
+
   function handleSelectDown(e: MouseEvent, sx: number, sy: number, cx: number, cy: number) {
     if (store.state.editingTextId && handleTextEditClick(cx, cy, e.shiftKey)) return
 
@@ -459,15 +531,12 @@ export function useCanvasInput(
     if (tryStartRotation(sx, sy)) return
     if (tryStartResize(sx, sy, cx, cy)) return
 
-    const hit =
-      hitTestFrameTitle(cx, cy) ??
-      hitTestSectionTitle(cx, cy) ??
-      hitTestComponentLabel(cx, cy) ??
-      store.graph.hitTest(cx, cy, store.state.currentPageId)
-
+    const hit = resolveHit(cx, cy)
     if (!hit) {
-      store.clearSelection()
-      drag.value = { type: 'marquee', startX: cx, startY: cy }
+      if (!store.state.enteredContainerId) {
+        store.clearSelection()
+        drag.value = { type: 'marquee', startX: cx, startY: cy }
+      }
       return
     }
 
@@ -476,6 +545,9 @@ export function useCanvasInput(
     } else if (e.shiftKey) {
       store.select([hit.id], true)
     }
+
+    const allLocked = [...store.state.selectedIds].every((id) => store.graph.getNode(id)?.locked)
+    if (allLocked) return
 
     const originals = new Map<string, { x: number; y: number; parentId: string }>()
     for (const id of store.state.selectedIds) {
@@ -611,7 +683,7 @@ export function useCanvasInput(
     const hit =
       hitTestSectionTitle(cx, cy) ??
       hitTestComponentLabel(cx, cy) ??
-      store.graph.hitTest(cx, cy, store.state.currentPageId)
+      hitTestInScope(cx, cy, false)
     store.setHoveredNode(hit && !store.state.selectedIds.has(hit.id) ? hit.id : null)
   }
 
@@ -776,13 +848,23 @@ export function useCanvasInput(
     const maxX = Math.max(d.startX, cx)
     const maxY = Math.max(d.startY, cy)
 
+    const scopeId = store.state.enteredContainerId
+    const parentId = scopeId ?? store.state.currentPageId
+    const localMin = scopeId ? canvasToLocal(minX, minY, scopeId) : { lx: minX, ly: minY }
+    const localMax = scopeId ? canvasToLocal(maxX, maxY, scopeId) : { lx: maxX, ly: maxY }
+    const localMinX = Math.min(localMin.lx, localMax.lx)
+    const localMinY = Math.min(localMin.ly, localMax.ly)
+    const localMaxX = Math.max(localMin.lx, localMax.lx)
+    const localMaxY = Math.max(localMin.ly, localMax.ly)
+
     const hits: string[] = []
-    for (const node of store.graph.getChildren(store.state.currentPageId)) {
+    for (const node of store.graph.getChildren(parentId)) {
+      if (!node.visible || node.locked) continue
       if (
-        node.x + node.width > minX &&
-        node.x < maxX &&
-        node.y + node.height > minY &&
-        node.y < maxY
+        node.x + node.width > localMinX &&
+        node.x < localMaxX &&
+        node.y + node.height > localMinY &&
+        node.y < localMaxY
       ) {
         hits.push(node.id)
       }
@@ -1078,10 +1160,29 @@ export function useCanvasInput(
     if (store.state.editingTextId) return
 
     const { cx, cy } = getCoords(e)
-    const hit =
-      hitTestSectionTitle(cx, cy) ??
+
+    const selectedId = store.state.selectedIds.size === 1
+      ? [...store.state.selectedIds][0]
+      : undefined
+    const selectedNode = selectedId ? store.graph.getNode(selectedId) : undefined
+    const canEnter = selectedNode && selectedId
+      && store.graph.isContainer(selectedId) && !selectedNode.locked
+
+    if (canEnter) {
+      store.enterContainer(selectedId)
+      const useDeep = selectedNode.type === 'COMPONENT' || selectedNode.type === 'INSTANCE'
+      const hit = hitTestInScope(cx, cy, useDeep)
+      if (hit) {
+        store.select([hit.id])
+      } else {
+        store.clearSelection()
+      }
+      return
+    }
+
+    const hit = hitTestSectionTitle(cx, cy) ??
       hitTestComponentLabel(cx, cy) ??
-      store.graph.hitTestDeep(cx, cy, store.state.currentPageId)
+      hitTestInScope(cx, cy, true)
     if (!hit) return
 
     if (hit.type === 'TEXT') {

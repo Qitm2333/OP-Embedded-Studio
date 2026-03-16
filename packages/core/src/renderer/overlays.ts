@@ -61,6 +61,40 @@ export function drawHoverHighlight(
   canvas.restore()
 }
 
+export function drawEnteredContainer(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  graph: SceneGraph,
+  enteredContainerId?: string | null
+): void {
+  if (!enteredContainerId) return
+  const node = graph.getNode(enteredContainerId)
+  if (!node) return
+
+  const abs = graph.getAbsolutePosition(node.id)
+  const sx = abs.x * r.zoom + r.panX
+  const sy = abs.y * r.zoom + r.panY
+
+  r.auxStroke.setStrokeWidth(1)
+  r.auxStroke.setColor(r.selColor(SELECTION_DASH_ALPHA))
+  r.auxStroke.setPathEffect(r.ck.PathEffect.MakeDash([4, 4], 0))
+
+  canvas.save()
+  canvas.translate(sx, sy)
+  if (node.rotation !== 0) {
+    const cx = (node.width / 2) * r.zoom
+    const cy = (node.height / 2) * r.zoom
+    canvas.rotate(node.rotation, cx, cy)
+  }
+  canvas.drawRect(
+    r.ck.LTRBRect(0, 0, node.width * r.zoom, node.height * r.zoom),
+    r.auxStroke
+  )
+  canvas.restore()
+
+  r.auxStroke.setPathEffect(null)
+}
+
 export function drawSelection(
   r: SkiaRenderer,
   canvas: Canvas,
