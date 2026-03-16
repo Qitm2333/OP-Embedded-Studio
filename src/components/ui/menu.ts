@@ -11,7 +11,7 @@ const item = tv({
     tone: {
       default: 'text-surface',
       component:
-        'text-[#9747ff] data-[disabled]:text-[#9747ff]/40 data-[highlighted]:bg-[#9747ff]/12'
+        'text-component data-[disabled]:text-component/40 data-[highlighted]:bg-component/12'
     },
     justify: {
       between: 'justify-between gap-6',

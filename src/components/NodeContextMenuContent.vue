@@ -234,7 +234,7 @@ const separatorClass = menuSeparator({ class: 'my-1' })
       @select="store.createComponentFromSelection()"
     >
       <span>Create component</span>
-      <span class="text-[11px] text-[#9747ff]/60">⌥⌘K</span>
+      <span class="text-[11px] text-component/60">⌥⌘K</span>
     </ContextMenuItem>
     <ContextMenuItem
       v-if="canCreateComponentSet"
@@ -243,7 +243,7 @@ const separatorClass = menuSeparator({ class: 'my-1' })
       @select="store.createComponentSetFromComponents()"
     >
       <span>Create component set</span>
-      <span class="text-[11px] text-[#9747ff]/60">⇧⌘K</span>
+      <span class="text-[11px] text-component/60">⇧⌘K</span>
     </ContextMenuItem>
     <ContextMenuItem
       v-if="isComponent"

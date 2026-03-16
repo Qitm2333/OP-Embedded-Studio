@@ -12,22 +12,15 @@ import {
   renderTreeNode,
   computeAllLayouts,
   selectionToJSX,
-  sceneNodeToJSX
+  sceneNodeToJSX,
+  randomHex
 } from '@open-pencil/core'
 
 import type { EditorStore } from '@/stores/editor'
 import type { ExportFormat } from '@open-pencil/core'
 
-const TOKEN_LENGTH = 32
-
-function generateToken(): string {
-  const bytes = new Uint8Array(TOKEN_LENGTH)
-  crypto.getRandomValues(bytes)
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
-}
-
 export function connectAutomation(getStore: () => EditorStore) {
-  const token = generateToken()
+  const token = randomHex(32)
   let ws: WebSocket | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | undefined
 

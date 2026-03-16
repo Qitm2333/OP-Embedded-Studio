@@ -281,3 +281,4 @@ export const CJK_FALLBACK_FAMILIES_LINUX = [
 ]
 
 export const CJK_GOOGLE_FONT = 'Noto Sans SC'
+

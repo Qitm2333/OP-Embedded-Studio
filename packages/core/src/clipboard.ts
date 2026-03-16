@@ -1,5 +1,7 @@
 import { inflateSync, deflateSync } from 'fflate'
 
+import { randomInt } from './random'
+
 import {
   sceneNodeToKiwi,
   buildFigKiwi,
@@ -313,7 +315,7 @@ export function buildFigmaClipboardHTML(nodes: SceneNode[], graph: SceneGraph): 
     type: 'NODE_CHANGES',
     sessionID: 0,
     ackID: 0,
-    pasteID: crypto.getRandomValues(new Int32Array(1))[0],
+    pasteID: randomInt(),
     pasteFileKey: 'openpencil',
     nodeChanges
   }

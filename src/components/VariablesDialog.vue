@@ -24,7 +24,7 @@ import IconType from '~icons/lucide/type'
 import IconToggleLeft from '~icons/lucide/toggle-left'
 import IconX from '~icons/lucide/x'
 import ColorInput from './ColorInput.vue'
-import { colorToHexRaw, parseColor } from '@open-pencil/core'
+import { colorToHexRaw, parseColor, randomHex } from '@open-pencil/core'
 import { useEditorStore } from '@/stores/editor'
 import type { Variable, VariableCollection, VariableValue, Color } from '@open-pencil/core'
 
@@ -186,7 +186,7 @@ function addVariable() {
   const col = store.graph.variableCollections.get(activeTab.value)
   if (!col) return
 
-  const id = `var:${Date.now()}`
+  const id = `var:${randomHex(8)}`
   const valuesByMode: Record<string, VariableValue> = {}
   for (const mode of col.modes) {
     valuesByMode[mode.modeId] = { r: 0, g: 0, b: 0, a: 1 }
@@ -217,7 +217,7 @@ function addVariable() {
 }
 
 function addCollection() {
-  const id = `col:${Date.now()}`
+  const id = `col:${randomHex(8)}`
   const collection: VariableCollection = {
     id,
     name: 'New collection',

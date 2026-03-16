@@ -57,7 +57,7 @@ const isComponentType = computed(() => {
       data-test-id="design-node-header"
       class="flex items-center gap-1.5 border-b border-border px-3 py-2"
     >
-      <span class="text-[11px]" :class="isComponentType ? 'text-[#9747ff]' : 'text-muted'">{{
+      <span class="text-[11px]" :class="isComponentType ? 'text-component' : 'text-muted'">{{
         node.type
       }}</span>
       <span class="text-xs font-semibold">{{ node.name }}</span>
@@ -70,7 +70,7 @@ const isComponentType = computed(() => {
     >
       <button
         data-test-id="design-go-to-component"
-        class="rounded bg-[#9747ff]/10 px-2 py-1 text-left text-[11px] text-[#9747ff] hover:bg-[#9747ff]/20"
+        class="rounded bg-component/10 px-2 py-1 text-left text-[11px] text-component hover:bg-component/20"
         @click="store.goToMainComponent()"
       >
         Go to Main Component

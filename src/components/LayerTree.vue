@@ -392,7 +392,7 @@ function updateDropTarget(ev: PointerEvent) {
                   class="size-3 shrink-0"
                   :class="
                     COMPONENT_TYPES.has(item.value.type)
-                      ? 'text-[#9747ff] opacity-100'
+                      ? 'text-component opacity-100'
                       : 'opacity-70'
                   "
                 />

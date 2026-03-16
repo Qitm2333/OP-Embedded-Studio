@@ -1,5 +1,6 @@
 export type { GUID, Color, Vector, Matrix, Rect } from './types'
 export { degToRad, radToDeg, rotatePoint, rotatedCorners, rotatedBBox } from './geometry'
+export { randomHex, randomInt, randomIndex } from './random'
 
 export * from './constants'
 

@@ -14,6 +14,7 @@ import {
 } from '@/constants'
 
 import type { EditorStore } from '@/stores/editor'
+import { randomIndex } from '@open-pencil/core'
 import type { Color, SceneNode } from '@open-pencil/core'
 import type { Room } from 'trystero'
 
@@ -40,7 +41,7 @@ export function useCollab(store: EditorStore) {
     roomId: null,
     peers: [],
     localName: storedName.value,
-    localColor: PEER_COLORS[crypto.getRandomValues(new Uint8Array(1))[0] % PEER_COLORS.length]
+    localColor: PEER_COLORS[randomIndex(PEER_COLORS.length)]
   })
 
   let ydoc: Y.Doc | null = null
@@ -458,10 +459,9 @@ export function useCollab(store: EditorStore) {
   }
 
   function generateRoomId(): string {
-    const bytes = crypto.getRandomValues(new Uint8Array(ROOM_ID_LENGTH))
     let result = ''
     for (let i = 0; i < ROOM_ID_LENGTH; i++) {
-      result += ROOM_ID_CHARS[bytes[i] % ROOM_ID_CHARS.length]
+      result += ROOM_ID_CHARS[randomIndex(ROOM_ID_CHARS.length)]
     }
     return result
   }
