@@ -67,12 +67,12 @@ const COMPONENT_TYPES = new Set(['COMPONENT', 'COMPONENT_SET', 'INSTANCE'])
 
 function toggleNodeVisibility(id: string) {
   const node = store.graph.getNode(id)
-  if (node) store.updateNode(id, { visible: !node.visible })
+  if (node) store.updateNodeWithUndo(id, { visible: !node.visible }, node.visible ? 'Hide layer' : 'Show layer')
 }
 
 function toggleNodeLock(id: string) {
   const node = store.graph.getNode(id)
-  if (node) store.updateNode(id, { locked: !node.locked })
+  if (node) store.updateNodeWithUndo(id, { locked: !node.locked }, node.locked ? 'Unlock layer' : 'Lock layer')
 }
 
 function buildTree(parentId: string): LayerNode[] {

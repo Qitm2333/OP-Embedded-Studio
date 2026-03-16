@@ -10,7 +10,7 @@ import {
   DEFAULT_TEXT_WIDTH,
   DEFAULT_TEXT_HEIGHT
 } from '@/constants'
-import { computeSelectionBounds, computeSnap } from '@open-pencil/core'
+import { computeSelectionBounds, computeSnap, degToRad } from '@open-pencil/core'
 
 import type { EditorStore, Tool } from '@/stores/editor'
 import type { NodeType, Rect, SceneNode, Vector } from '@open-pencil/core'
@@ -303,7 +303,7 @@ export function useCanvasInput(
     if (node.rotation !== 0) {
       const hw = node.width / 2
       const hh = node.height / 2
-      const rad = (-node.rotation * Math.PI) / 180
+      const rad = degToRad(-node.rotation)
       const cos = Math.cos(rad)
       const sin = Math.sin(rad)
       const rx = dx - hw
