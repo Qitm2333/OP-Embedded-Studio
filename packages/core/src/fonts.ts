@@ -2,6 +2,7 @@ import type { CanvasKit, TypefaceFontProvider } from 'canvaskit-wasm'
 
 import {
   DEFAULT_FONT_FAMILY,
+  IS_BROWSER,
   CJK_FALLBACK_FAMILIES_MACOS,
   CJK_FALLBACK_FAMILIES_WINDOWS,
   CJK_FALLBACK_FAMILIES_LINUX,
@@ -16,8 +17,6 @@ export interface FontInfo {
   style: string
   postscriptName: string
 }
-
-const IS_BROWSER = typeof window !== 'undefined'
 
 const loadedFamilies = new Map<string, ArrayBuffer>()
 let fontProvider: TypefaceFontProvider | null = null

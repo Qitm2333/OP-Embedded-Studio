@@ -20,7 +20,7 @@ import type { Color, SceneNode, Stroke } from '@open-pencil/core'
 type StrokeSides = 'ALL' | 'TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT' | 'CUSTOM'
 
 const { store } = useNodeProps()
-const { nodes, isMulti, active, activeNode, isArrayMixed } = useMultiProps()
+const { nodes, isMulti, active, activeNode, targetNodes, isArrayMixed, updateArrayItem, removeArrayItem, toggleArrayVisibility } = useMultiProps()
 
 const strokesAreMixed = computed(() => isArrayMixed('strokes'))
 
@@ -59,47 +59,26 @@ const hasStrokes = computed(
 const sideMenuOpen = ref(false)
 
 function updateColor(index: number, color: Color) {
-  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
-    if (!n) continue
-    const strokes = [...n.strokes]
-    strokes[index] = { ...strokes[index], color }
-    store.updateNodeWithUndo(n.id, { strokes }, 'Change stroke')
-  }
+  updateArrayItem('strokes', index, { color }, 'Change stroke')
 }
 
 function updateWeight(index: number, weight: number) {
-  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
-    if (!n) continue
-    const strokes = [...n.strokes]
-    strokes[index] = { ...strokes[index], weight }
-    store.updateNodeWithUndo(n.id, { strokes }, 'Change stroke')
-  }
+  updateArrayItem('strokes', index, { weight }, 'Change stroke')
 }
 
 function updateOpacity(index: number, opacity: number) {
-  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
-    if (!n) continue
-    const strokes = [...n.strokes]
-    strokes[index] = { ...strokes[index], opacity: Math.max(0, Math.min(1, opacity / 100)) }
-    store.updateNodeWithUndo(n.id, { strokes }, 'Change stroke')
-  }
+  updateArrayItem('strokes', index, { opacity: Math.max(0, Math.min(1, opacity / 100)) }, 'Change stroke')
 }
 
 function updateAlign(align: Stroke['align']) {
-  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
-    if (!n) continue
+  for (const n of targetNodes()) {
     const strokes = n.strokes.map((s) => ({ ...s, align }))
     store.updateNodeWithUndo(n.id, { strokes }, 'Change stroke align')
   }
 }
 
 function toggleVisibility(index: number) {
-  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
-    if (!n) continue
-    const strokes = [...n.strokes]
-    strokes[index] = { ...strokes[index], visible: !strokes[index].visible }
-    store.updateNodeWithUndo(n.id, { strokes }, 'Change stroke')
-  }
+  toggleArrayVisibility('strokes', index)
 }
 
 function add() {
@@ -110,32 +89,18 @@ function add() {
     visible: true,
     align: 'CENTER'
   }
-  if (isMulti.value) {
-    for (const n of nodes.value) {
-      store.updateNodeWithUndo(n.id, { strokes: [stroke] }, 'Set stroke')
-    }
-    store.requestRender()
-  } else {
-    const n = activeNode.value
-    if (!n) return
-    store.updateNodeWithUndo(n.id, { strokes: [...n.strokes, stroke] }, 'Add stroke')
+  for (const n of targetNodes()) {
+    const strokes = isMulti.value ? [stroke] : [...n.strokes, stroke]
+    store.updateNodeWithUndo(n.id, { strokes }, isMulti.value ? 'Set stroke' : 'Add stroke')
   }
 }
 
 function remove(index: number) {
-  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
-    if (!n) continue
-    store.updateNodeWithUndo(
-      n.id,
-      { strokes: n.strokes.filter((_, i) => i !== index) },
-      'Remove stroke'
-    )
-  }
+  removeArrayItem('strokes', index, 'Remove stroke')
 }
 
 function selectSide(side: StrokeSides) {
-  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
-    if (!n) continue
+  for (const n of targetNodes()) {
     const weight = n.strokes.length > 0 ? n.strokes[0].weight : 1
     if (side === 'ALL') {
       store.updateNodeWithUndo(
@@ -193,8 +158,7 @@ function updateBorderWeight(side: 'top' | 'right' | 'bottom' | 'left', value: nu
     bottom: 'borderBottomWeight',
     left: 'borderLeftWeight'
   } as const
-  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
-    if (!n) continue
+  for (const n of targetNodes()) {
     store.updateNodeWithUndo(
       n.id,
       { [fieldMap[side]]: value } as Partial<SceneNode>,

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useLocalStorage } from '@vueuse/core'
 
-import { IS_TAURI } from '@/constants'
+import { IS_BROWSER, IS_TAURI } from '@/constants'
 
 const dismissed = useLocalStorage('safari-banner-dismissed', false)
-const show = !IS_TAURI && typeof window !== 'undefined' && !window.showSaveFilePicker
+const show = !IS_TAURI && IS_BROWSER && !window.showSaveFilePicker
 </script>
 
 <template>

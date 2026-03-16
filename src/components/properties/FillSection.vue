@@ -22,7 +22,7 @@ import { colorToCSS, colorToHexRaw } from '@open-pencil/core'
 import type { Fill, Variable, Color } from '@open-pencil/core'
 
 const { store } = useNodeProps()
-const { nodes, isMulti, active, activeNode, isArrayMixed } = useMultiProps()
+const { nodes, isMulti, active, activeNode, targetNodes, isArrayMixed, updateArrayItem, removeArrayItem, toggleArrayVisibility } = useMultiProps()
 
 const fillsAreMixed = computed(() => isArrayMixed('fills'))
 
@@ -56,50 +56,26 @@ function resolvedSwatchStyle(variable: Variable): string {
 }
 
 function updateFill(index: number, fill: Fill) {
-  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
-    if (!n) continue
-    const fills = [...n.fills]
-    fills[index] = fill
-    store.updateNodeWithUndo(n.id, { fills }, 'Change fill')
-  }
+  updateArrayItem('fills', index, fill, 'Change fill')
 }
 
 function updateOpacity(index: number, opacity: number) {
-  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
-    if (!n) continue
-    const fills = [...n.fills]
-    fills[index] = { ...fills[index], opacity: Math.max(0, Math.min(1, opacity / 100)) }
-    store.updateNodeWithUndo(n.id, { fills }, 'Change fill')
-  }
+  updateArrayItem('fills', index, { opacity: Math.max(0, Math.min(1, opacity / 100)) }, 'Change fill')
 }
 
 function toggleVisibility(index: number) {
-  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
-    if (!n) continue
-    const fills = [...n.fills]
-    fills[index] = { ...fills[index], visible: !fills[index].visible }
-    store.updateNodeWithUndo(n.id, { fills }, 'Change fill')
-  }
+  toggleArrayVisibility('fills', index)
 }
 
 function add() {
-  if (isMulti.value) {
-    for (const n of nodes.value) {
-      store.updateNodeWithUndo(n.id, { fills: [{ ...DEFAULT_SHAPE_FILL }] }, 'Set fill')
-    }
-    store.requestRender()
-  } else {
-    const n = activeNode.value
-    if (!n) return
-    store.updateNodeWithUndo(n.id, { fills: [...n.fills, { ...DEFAULT_SHAPE_FILL }] }, 'Add fill')
+  for (const n of targetNodes()) {
+    const fills = isMulti.value ? [{ ...DEFAULT_SHAPE_FILL }] : [...n.fills, { ...DEFAULT_SHAPE_FILL }]
+    store.updateNodeWithUndo(n.id, { fills }, isMulti.value ? 'Set fill' : 'Add fill')
   }
 }
 
 function remove(index: number) {
-  for (const n of isMulti.value ? nodes.value : [activeNode.value]) {
-    if (!n) continue
-    store.updateNodeWithUndo(n.id, { fills: n.fills.filter((_, i) => i !== index) }, 'Remove fill')
-  }
+  removeArrayItem('fills', index, 'Remove fill')
 }
 
 const searchTerm = ref('')

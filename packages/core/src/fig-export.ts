@@ -1,6 +1,6 @@
 import { zipSync, deflateSync, type Zippable } from 'fflate'
 
-import { CANVAS_BG_COLOR, IS_TAURI } from './constants'
+import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from './constants'
 import { sceneNodeToKiwi, fractionalPosition, buildFigKiwi, buildFontDigestMap } from './kiwi-serialize'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { stringToGuid } from './kiwi/kiwi-convert'
@@ -271,7 +271,7 @@ export function compressFigDataSync(
 }
 
 function canUseWorker(): boolean {
-  return typeof Worker !== 'undefined' && typeof window !== 'undefined'
+  return typeof Worker !== 'undefined' && IS_BROWSER
 }
 
 function compressViaWorker(

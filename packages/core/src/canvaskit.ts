@@ -1,5 +1,7 @@
 import CanvasKitInit, { type CanvasKit } from 'canvaskit-wasm'
 
+import { IS_BROWSER } from './constants'
+
 let instance: CanvasKit | null = null
 
 export type GpuBackend = 'webgl' | 'webgpu'
@@ -16,7 +18,7 @@ export interface CanvasKitOptions {
 }
 
 function detectBackend(): GpuBackend {
-  if (typeof window === 'undefined') return 'webgl'
+  if (!IS_BROWSER) return 'webgl'
   const params = new URLSearchParams(window.location.search)
   if (params.get('gpu') === 'webgpu' && 'gpu' in navigator) return 'webgpu'
   return 'webgl'
@@ -45,7 +47,7 @@ export async function getCanvasKit(options?: CanvasKitOptions): Promise<CanvasKi
   activeBackend = backend
 
   const defaultLocate = (file: string) => {
-    if (typeof window !== 'undefined') return `/${file}`
+    if (IS_BROWSER) return `/${file}`
     return file
   }
 

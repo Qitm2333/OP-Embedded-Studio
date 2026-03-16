@@ -1,6 +1,7 @@
 import type { Color } from './types'
 
-export const IS_TAURI = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+export const IS_BROWSER = typeof window !== 'undefined'
+export const IS_TAURI = IS_BROWSER && '__TAURI_INTERNALS__' in window
 
 export const BLACK: Color = { r: 0, g: 0, b: 0, a: 1 }
 export const TRANSPARENT: Color = { r: 0, g: 0, b: 0, a: 0 }

@@ -7,6 +7,7 @@ import type {
   VariableValue
 } from './scene-graph'
 import type { Rect, Vector } from './types'
+import { IS_BROWSER } from './constants'
 import { copyFills, copyStrokes, copyEffects } from './copy'
 
 import {
@@ -337,8 +338,8 @@ export class FigmaAPI implements NodeProxyHost {
         const padding = 80
         const contentW = maxX - minX + padding * 2
         const contentH = maxY - minY + padding * 2
-        const viewW = typeof window !== 'undefined' ? window.innerWidth : 1280
-        const viewH = typeof window !== 'undefined' ? window.innerHeight : 720
+        const viewW = IS_BROWSER ? window.innerWidth : 1280
+        const viewH = IS_BROWSER ? window.innerHeight : 720
         const zoom = Math.min(viewW / contentW, viewH / contentH, 1)
         this._viewport = { x: (minX + maxX) / 2, y: (minY + maxY) / 2, zoom }
       }

@@ -15,6 +15,7 @@ import {
   AI_PROVIDERS,
   DEFAULT_AI_MODEL,
   DEFAULT_AI_PROVIDER,
+  IS_BROWSER,
   IS_TAURI,
   setPexelsApiKey,
   setUnsplashAccessKey
@@ -41,7 +42,7 @@ function migrateLegacyStorage() {
   }
 }
 
-if (typeof window !== 'undefined') migrateLegacyStorage()
+if (IS_BROWSER) migrateLegacyStorage()
 
 const providerID = useLocalStorage<AIProviderID>(
   `${STORAGE_PREFIX}ai-provider`,
@@ -270,7 +271,7 @@ function resetChat() {
   transportDirty = false
 }
 
-if (typeof window !== 'undefined') {
+if (IS_BROWSER) {
   window.__OPEN_PENCIL_SET_TRANSPORT__ = (factory) => {
     overrideTransport = factory
   }

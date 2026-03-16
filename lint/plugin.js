@@ -223,7 +223,7 @@ const noTypeofWindowCheck = {
   },
   create(context) {
     const file = context.filename ?? context.getFilename?.()
-    if (file?.endsWith('constants.ts') || file?.endsWith('fonts.ts')) return {}
+    if (file?.endsWith('constants.ts')) return {}
 
     return {
       BinaryExpression(node) {

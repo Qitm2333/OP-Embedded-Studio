@@ -118,7 +118,7 @@
     "open-pencil/no-hand-rolled-color": "error",
     "open-pencil/no-raw-console-format": "off",
     "open-pencil/no-silent-catch": "error",
-    "open-pencil/no-typeof-window-check": "warn"
+    "open-pencil/no-typeof-window-check": "error"
   },
   "overrides": [
     {

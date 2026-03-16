@@ -1,6 +1,7 @@
 import { unzipSync, inflateSync } from 'fflate'
 import { decompress as zstdDecompress } from 'fzstd'
 
+import { IS_BROWSER } from '../constants'
 import { importNodeChanges } from './fig-import'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi-schema'
 import { isZstdCompressed } from './protocol'
@@ -129,7 +130,7 @@ function parseViaWorker(buffer: ArrayBuffer): Promise<SceneGraph> {
 }
 
 export async function parseFigFile(buffer: ArrayBuffer): Promise<SceneGraph> {
-  if (typeof Worker !== 'undefined' && typeof window !== 'undefined') {
+  if (typeof Worker !== 'undefined' && IS_BROWSER) {
     const copy = buffer.slice(0)
     try {
       return await parseViaWorker(buffer)
