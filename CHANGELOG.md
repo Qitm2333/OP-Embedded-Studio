@@ -5,6 +5,9 @@
 ### Fixes
 
 - Fix `set_layout` tool not defaulting to HUG sizing when enabling auto-layout — frames now shrink/grow to fit children instead of keeping fixed dimensions
+- Fix save crash when COLOR variable is missing alpha channel
+- Fix console error spam on deployed web app from automation WebSocket reconnect loop
+- Fix headless CLI font fallback — bundled Inter font now ships with `@open-pencil/core` and loads without a web server
 
 ## 0.10.0 — 2026-03-15
 
