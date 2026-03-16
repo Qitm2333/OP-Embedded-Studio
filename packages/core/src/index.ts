@@ -97,6 +97,7 @@ export { computeLayout, computeAllLayouts, setTextMeasurer } from './layout'
 export type { TextMeasurer } from './layout'
 export { getCanvasKit, getGpuBackend, type CanvasKitOptions, type GpuBackend } from './canvaskit'
 export {
+  FONT_WEIGHT_NAMES,
   collectFontKeys,
   loadFont,
   listFamilies,
@@ -171,7 +172,7 @@ export {
   sceneNodeToKiwi,
   fractionalPosition,
   mapToFigmaType
-} from './kiwi-serialize'
+} from './kiwi/kiwi-serialize'
 
 export {
   createElement,

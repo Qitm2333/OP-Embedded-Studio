@@ -7,7 +7,7 @@ import {
   buildFigKiwi,
   parseFigKiwiChunks,
   decompressFigKiwiDataAsync
-} from './kiwi-serialize'
+} from './kiwi/kiwi-serialize'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
 import { nodeChangeToProps, sortChildren } from './kiwi/kiwi-convert'

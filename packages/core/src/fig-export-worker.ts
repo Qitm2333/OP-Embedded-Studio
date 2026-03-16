@@ -1,5 +1,5 @@
 import { zipSync, type Zippable } from 'fflate'
-import { buildFigKiwi } from './kiwi-serialize'
+import { buildFigKiwi } from './kiwi/kiwi-serialize'
 
 interface CompressMessage {
   schemaDeflated: Uint8Array

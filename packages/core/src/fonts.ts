@@ -29,7 +29,7 @@ export function getFontProvider(): TypefaceFontProvider | null {
   return fontProvider
 }
 
-export async function queryFonts(): Promise<FontInfo[]> {
+async function queryFonts(): Promise<FontInfo[]> {
   if (!IS_BROWSER || !window.queryLocalFonts) return []
   try {
     const fonts = await window.queryLocalFonts()
@@ -353,17 +353,20 @@ export function setCJKFallbackFamily(family: string): void {
   cjkFallbackFamily = family
 }
 
+export const FONT_WEIGHT_NAMES: Record<number, string> = {
+  100: 'Thin',
+  200: 'Extra Light',
+  300: 'Light',
+  400: 'Regular',
+  500: 'Medium',
+  600: 'Semi Bold',
+  700: 'Bold',
+  800: 'Extra Bold',
+  900: 'Black'
+}
+
 export function weightToStyle(weight: number, italic = false): string {
-  let label = 'Regular'
-  if (weight <= 100) label = 'Thin'
-  else if (weight <= 200) label = 'ExtraLight'
-  else if (weight <= 300) label = 'Light'
-  else if (weight <= 400) label = 'Regular'
-  else if (weight <= 500) label = 'Medium'
-  else if (weight <= 600) label = 'SemiBold'
-  else if (weight <= 700) label = 'Bold'
-  else if (weight <= 800) label = 'ExtraBold'
-  else if (weight >= 900) label = 'Black'
-  if (italic) label += ' Italic'
-  return label
+  const rounded = Math.round(weight / 100) * 100
+  const label = (FONT_WEIGHT_NAMES[rounded] ?? 'Regular').replace(/ /g, '')
+  return italic ? `${label} Italic` : label
 }

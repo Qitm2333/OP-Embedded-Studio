@@ -1,7 +1,7 @@
 import { zipSync, deflateSync, type Zippable } from 'fflate'
 
 import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from './constants'
-import { sceneNodeToKiwi, fractionalPosition, buildFigKiwi, buildFontDigestMap, safeColor } from './kiwi-serialize'
+import { sceneNodeToKiwi, fractionalPosition, buildFigKiwi, buildFontDigestMap, safeColor } from './kiwi/kiwi-serialize'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { stringToGuid } from './kiwi/kiwi-convert'
 import { renderThumbnail } from './render-image'

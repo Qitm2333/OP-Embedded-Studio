@@ -19,107 +19,7 @@ const hValue = multiProp('height')
 const rotationValue = computed(() =>
   isMulti.value ? multiProp('rotation').value : Math.round(node.value?.rotation ?? 0)
 )
-
-type HAlign = 'left' | 'center' | 'right'
-type VAlign = 'top' | 'center' | 'bottom'
-
-function alignHorizontal(align: HAlign) {
-  const selected = nodes.value
-  if (selected.length === 0) return
-
-  let minX: number, maxX: number
-
-  if (selected.length === 1) {
-    const parent = store.graph.getNode(selected[0].parentId ?? '')
-    if (!parent) return
-    minX = 0
-    maxX = parent.width
-  } else {
-    minX = Infinity
-    maxX = -Infinity
-    for (const n of selected) {
-      const abs = store.graph.getAbsolutePosition(n.id)
-      minX = Math.min(minX, abs.x)
-      maxX = Math.max(maxX, abs.x + n.width)
-    }
-  }
-
-  for (const n of selected) {
-    let targetX: number
-    if (selected.length === 1) {
-      if (align === 'left') targetX = minX
-      else if (align === 'right') targetX = maxX - n.width
-      else targetX = (minX + maxX) / 2 - n.width / 2
-      store.updateNode(n.id, { x: targetX })
-    } else {
-      const abs = store.graph.getAbsolutePosition(n.id)
-      if (align === 'left') targetX = minX
-      else if (align === 'right') targetX = maxX - n.width
-      else targetX = (minX + maxX) / 2 - n.width / 2
-      store.updateNode(n.id, { x: n.x + (targetX - abs.x) })
-    }
-  }
-  store.requestRender()
-}
-
-function alignVertical(align: VAlign) {
-  const selected = nodes.value
-  if (selected.length === 0) return
-
-  let minY: number, maxY: number
-
-  if (selected.length === 1) {
-    const parent = store.graph.getNode(selected[0].parentId ?? '')
-    if (!parent) return
-    minY = 0
-    maxY = parent.height
-  } else {
-    minY = Infinity
-    maxY = -Infinity
-    for (const n of selected) {
-      const abs = store.graph.getAbsolutePosition(n.id)
-      minY = Math.min(minY, abs.y)
-      maxY = Math.max(maxY, abs.y + n.height)
-    }
-  }
-
-  for (const n of selected) {
-    let targetY: number
-    if (selected.length === 1) {
-      if (align === 'top') targetY = minY
-      else if (align === 'bottom') targetY = maxY - n.height
-      else targetY = (minY + maxY) / 2 - n.height / 2
-      store.updateNode(n.id, { y: targetY })
-    } else {
-      const abs = store.graph.getAbsolutePosition(n.id)
-      if (align === 'top') targetY = minY
-      else if (align === 'bottom') targetY = maxY - n.height
-      else targetY = (minY + maxY) / 2 - n.height / 2
-      store.updateNode(n.id, { y: n.y + (targetY - abs.y) })
-    }
-  }
-  store.requestRender()
-}
-
-function flipHorizontal() {
-  for (const n of nodes.value) {
-    store.updateNodeWithUndo(n.id, { flipX: !n.flipX }, 'Flip horizontal')
-  }
-  store.requestRender()
-}
-
-function flipVertical() {
-  for (const n of nodes.value) {
-    store.updateNodeWithUndo(n.id, { flipY: !n.flipY }, 'Flip vertical')
-  }
-}
-
-function rotate90() {
-  for (const n of nodes.value) {
-    store.updateNodeWithUndo(n.id, { rotation: (n.rotation + 90) % 360 }, 'Rotate 90°')
-  }
-  store.requestRender()
-}
+const ids = computed(() => nodes.value.map((n) => n.id))
 </script>
 
 <template>
@@ -133,7 +33,7 @@ function rotate90() {
           class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
           data-test-id="position-align-left"
           title="Align left"
-          @click="alignHorizontal('left')"
+          @click="store.alignNodes(ids, 'horizontal', 'min')"
         >
           <icon-lucide-align-horizontal-justify-start class="size-3.5" />
         </button>
@@ -141,7 +41,7 @@ function rotate90() {
           class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
           data-test-id="position-align-center-h"
           title="Align center horizontally"
-          @click="alignHorizontal('center')"
+          @click="store.alignNodes(ids, 'horizontal', 'center')"
         >
           <icon-lucide-align-horizontal-justify-center class="size-3.5" />
         </button>
@@ -149,7 +49,7 @@ function rotate90() {
           class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
           data-test-id="position-align-right"
           title="Align right"
-          @click="alignHorizontal('right')"
+          @click="store.alignNodes(ids, 'horizontal', 'max')"
         >
           <icon-lucide-align-horizontal-justify-end class="size-3.5" />
         </button>
@@ -159,7 +59,7 @@ function rotate90() {
           class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
           data-test-id="position-align-top"
           title="Align top"
-          @click="alignVertical('top')"
+          @click="store.alignNodes(ids, 'vertical', 'min')"
         >
           <icon-lucide-align-vertical-justify-start class="size-3.5" />
         </button>
@@ -167,7 +67,7 @@ function rotate90() {
           class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
           data-test-id="position-align-center-v"
           title="Align center vertically"
-          @click="alignVertical('center')"
+          @click="store.alignNodes(ids, 'vertical', 'center')"
         >
           <icon-lucide-align-vertical-justify-center class="size-3.5" />
         </button>
@@ -175,7 +75,7 @@ function rotate90() {
           class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
           data-test-id="position-align-bottom"
           title="Align bottom"
-          @click="alignVertical('bottom')"
+          @click="store.alignNodes(ids, 'vertical', 'max')"
         >
           <icon-lucide-align-vertical-justify-end class="size-3.5" />
         </button>
@@ -235,7 +135,7 @@ function rotate90() {
         class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
         data-test-id="position-flip-horizontal"
         title="Flip horizontal"
-        @click="flipHorizontal"
+        @click="store.flipNodes(ids, 'horizontal')"
       >
         <icon-lucide-flip-horizontal class="size-3.5" />
       </button>
@@ -243,7 +143,7 @@ function rotate90() {
         class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
         data-test-id="position-flip-vertical"
         title="Flip vertical"
-        @click="flipVertical"
+        @click="store.flipNodes(ids, 'vertical')"
       >
         <icon-lucide-flip-vertical class="size-3.5" />
       </button>
@@ -251,7 +151,7 @@ function rotate90() {
         class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
         data-test-id="position-rotate-90"
         title="Rotate 90°"
-        @click="rotate90"
+        @click="store.rotateNodes(ids, 90)"
       >
         <icon-lucide-rotate-cw class="size-3.5" />
       </button>

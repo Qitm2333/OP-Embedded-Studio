@@ -69,20 +69,7 @@ function commitRenameCollection(id: string, input: HTMLInputElement) {
   const value = input.value.trim()
   const collection = store.graph.variableCollections.get(id)
   if (collection && value && value !== collection.name) {
-    const oldName = collection.name
-    store.undo.push({
-      label: 'Rename collection',
-      forward: () => {
-        store.graph.variableCollections.set(id, { ...collection, name: value })
-        store.requestRender()
-      },
-      inverse: () => {
-        store.graph.variableCollections.set(id, { ...collection, name: oldName })
-        store.requestRender()
-      }
-    })
-    store.graph.variableCollections.set(id, { ...collection, name: value })
-    store.requestRender()
+    store.renameCollection(id, value)
   }
   editingCollectionId.value = null
 }
@@ -119,42 +106,15 @@ function shortName(variable: Variable): string {
 
 function commitNameEdit(variable: Variable, newName: string) {
   if (newName && newName !== variable.name) {
-    const oldName = variable.name
-    store.undo.push({
-      label: 'Rename variable',
-      forward: () => {
-        variable.name = newName
-        store.requestRender()
-      },
-      inverse: () => {
-        variable.name = oldName
-        store.requestRender()
-      }
-    })
-    variable.name = newName
-    store.requestRender()
+    store.renameVariable(variable.id, newName)
   }
 }
 
 function updateColorValue(variable: Variable, modeId: string, color: Color) {
-  const oldValue = structuredClone(variable.valuesByMode[modeId])
-  store.undo.push({
-    label: 'Change variable value',
-    forward: () => {
-      variable.valuesByMode[modeId] = color
-      store.requestRender()
-    },
-    inverse: () => {
-      variable.valuesByMode[modeId] = oldValue
-      store.requestRender()
-    }
-  })
-  variable.valuesByMode[modeId] = color
-  store.requestRender()
+  store.updateVariableValue(variable.id, modeId, color)
 }
 
 function commitValueEdit(variable: Variable, modeId: string, newValue: string) {
-  const oldValue = structuredClone(variable.valuesByMode[modeId])
   let parsed: VariableValue
   if (variable.type === 'COLOR') {
     parsed = parseColor(newValue.startsWith('#') ? newValue : `#${newValue}`)
@@ -167,19 +127,7 @@ function commitValueEdit(variable: Variable, modeId: string, newValue: string) {
   } else {
     parsed = newValue
   }
-  store.undo.push({
-    label: 'Change variable value',
-    forward: () => {
-      variable.valuesByMode[modeId] = parsed
-      store.requestRender()
-    },
-    inverse: () => {
-      variable.valuesByMode[modeId] = oldValue
-      store.requestRender()
-    }
-  })
-  variable.valuesByMode[modeId] = parsed
-  store.requestRender()
+  store.updateVariableValue(variable.id, modeId, parsed)
 }
 
 function addVariable() {
@@ -201,19 +149,7 @@ function addVariable() {
     description: '',
     hiddenFromPublishing: false
   }
-  store.undo.push({
-    label: 'Create variable',
-    forward: () => {
-      store.graph.addVariable(variable)
-      store.requestRender()
-    },
-    inverse: () => {
-      store.graph.removeVariable(id)
-      store.requestRender()
-    }
-  })
-  store.graph.addVariable(variable)
-  store.requestRender()
+  store.addVariable(variable)
 }
 
 function addCollection() {
@@ -225,42 +161,12 @@ function addCollection() {
     defaultModeId: 'default',
     variableIds: []
   }
-  const prevTab = activeTab.value
-  store.undo.push({
-    label: 'Create collection',
-    forward: () => {
-      store.graph.addCollection(collection)
-      activeTab.value = id
-      store.requestRender()
-    },
-    inverse: () => {
-      store.graph.removeCollection(id)
-      activeTab.value = prevTab
-      store.requestRender()
-    }
-  })
-  store.graph.addCollection(collection)
+  store.addCollection(collection)
   activeTab.value = id
-  store.requestRender()
 }
 
 function removeVariable(id: string) {
-  const variable = store.graph.variables.get(id)
-  if (!variable) return
-  const snapshot = structuredClone(variable)
-  store.undo.push({
-    label: 'Delete variable',
-    forward: () => {
-      store.graph.removeVariable(id)
-      store.requestRender()
-    },
-    inverse: () => {
-      store.graph.addVariable(snapshot)
-      store.requestRender()
-    }
-  })
-  store.graph.removeVariable(id)
-  store.requestRender()
+  store.removeVariable(id)
 }
 
 const columns = computed<ColumnDef<Variable>[]>(() => {

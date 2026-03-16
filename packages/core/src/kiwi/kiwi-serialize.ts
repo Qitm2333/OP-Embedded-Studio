@@ -2,13 +2,13 @@ export const FIG_KIWI_VERSION = 106
 
 import { deflateSync, inflateSync } from 'fflate'
 
-import { weightToStyle, getLoadedFontData } from './fonts'
-import { encodeVectorNetworkBlob } from './vector'
-import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi/kiwi-convert'
+import { weightToStyle, getLoadedFontData } from '../fonts'
+import { encodeVectorNetworkBlob } from '../vector'
+import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi-convert'
 
-import type { NodeChange, Paint, VariableConsumptionEntry } from './kiwi/codec'
-import type { SceneGraph, SceneNode, CharacterStyleOverride } from './scene-graph'
-import type { Color, GUID } from './types'
+import type { NodeChange, Paint, VariableConsumptionEntry } from './codec'
+import type { SceneGraph, SceneNode, CharacterStyleOverride } from '../scene-graph'
+import type { Color, GUID } from '../types'
 
 const fontDigestCache = new Map<string, Uint8Array>()
 
