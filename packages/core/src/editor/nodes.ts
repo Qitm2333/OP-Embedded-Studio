@@ -28,6 +28,7 @@ export function createNodeActions(ctx: EditorContext) {
         ctx.runLayoutForNode(id)
       }
     })
+    ctx.requestRender()
   }
 
   function setLayoutMode(id: string, mode: LayoutMode) {

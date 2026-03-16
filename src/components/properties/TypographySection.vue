@@ -32,7 +32,6 @@ type TextAlign = 'LEFT' | 'CENTER' | 'RIGHT'
 async function selectFamily(family: string) {
   await loadFont(family, currentWeightLabel.value)
   store.updateNodeWithUndo(node.value.id, { fontFamily: family }, 'Change font')
-  store.requestRender()
 }
 
 async function selectWeight(weight: number) {

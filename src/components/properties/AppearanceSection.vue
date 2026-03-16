@@ -77,7 +77,6 @@ function toggleIndependentCorners() {
         )
       }
     }
-    store.requestRender()
   } else {
     const n = node.value
     if (!n) return

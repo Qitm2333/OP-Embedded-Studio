@@ -112,7 +112,6 @@ function flipVertical() {
   for (const n of nodes.value) {
     store.updateNodeWithUndo(n.id, { flipY: !n.flipY }, 'Flip vertical')
   }
-  store.requestRender()
 }
 
 function rotate90() {

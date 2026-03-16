@@ -113,7 +113,6 @@ function add() {
     for (const n of nodes.value) {
       store.updateNodeWithUndo(n.id, { effects: [defaultEffect()] }, 'Set effect')
     }
-    store.requestRender()
     return
   }
   const n = node.value

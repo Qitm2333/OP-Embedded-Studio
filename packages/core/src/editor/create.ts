@@ -6,6 +6,7 @@ import { SceneGraph } from '../scene-graph'
 import { TextEditor } from '../text-editor'
 import { UndoManager } from '../undo'
 
+import { createAlignmentActions } from './alignment'
 import { createClipboardActions } from './clipboard'
 import { createComponentActions } from './components'
 import { createNodeActions } from './nodes'
@@ -15,6 +16,7 @@ import { createShapeActions } from './shapes'
 import { createStructureActions } from './structure'
 import { createTextActions } from './text'
 import { createUndoActions } from './undo'
+import { createVariableActions } from './variables'
 import { createViewportActions } from './viewport'
 
 import type { SceneNode } from '../scene-graph'
@@ -172,6 +174,8 @@ export function createEditor(options?: EditorOptions) {
   const undoActions = createUndoActions(ctx)
   const text = createTextActions(ctx)
   const nodes = createNodeActions(ctx)
+  const variables = createVariableActions(ctx)
+  const alignment = createAlignmentActions(ctx)
 
   function setCanvasKit(ck: CanvasKit, renderer: SkiaRenderer) {
     _ck = ck
@@ -217,6 +221,12 @@ export function createEditor(options?: EditorOptions) {
 
     // Nodes (update, layout)
     ...nodes,
+
+    // Alignment (align, flip, rotate)
+    ...alignment,
+
+    // Variables
+    ...variables,
 
     // Text editing
     ...text,

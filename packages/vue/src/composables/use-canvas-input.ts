@@ -3,8 +3,6 @@ import { ref, type Ref } from 'vue'
 
 import {
   AUTO_LAYOUT_BREAK_THRESHOLD,
-  CORNER_ROTATE_ZONE,
-  HANDLE_HIT_RADIUS,
   PEN_CLOSE_THRESHOLD,
   ROTATION_SNAP_DEGREES,
   DEFAULT_TEXT_WIDTH,
@@ -14,260 +12,20 @@ import {
   degToRad
 } from '@open-pencil/core'
 
-import type { Editor, Tool } from '@open-pencil/core/editor'
-import type { NodeType, Rect, SceneNode, Vector } from '@open-pencil/core'
+import type { Editor } from '@open-pencil/core/editor'
+import type { SceneNode } from '@open-pencil/core'
 
-type HandlePosition = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
-
-interface DragDraw {
-  type: 'draw'
-  startX: number
-  startY: number
-  nodeId: string
-}
-
-interface DragMove {
-  type: 'move'
-  startX: number
-  startY: number
-  originals: Map<string, { x: number; y: number; parentId: string }>
-  duplicated?: boolean
-  autoLayoutParentId?: string
-  brokeFromAutoLayout?: boolean
-}
-
-interface DragPan {
-  type: 'pan'
-  startScreenX: number
-  startScreenY: number
-  startPanX: number
-  startPanY: number
-}
-
-interface DragResize {
-  type: 'resize'
-  handle: HandlePosition
-  startX: number
-  startY: number
-  origRect: Rect
-  nodeId: string
-}
-
-interface DragMarquee {
-  type: 'marquee'
-  startX: number
-  startY: number
-}
-
-interface DragRotate {
-  type: 'rotate'
-  nodeId: string
-  centerX: number
-  centerY: number
-  startAngle: number
-  origRotation: number
-}
-
-interface DragPen {
-  type: 'pen-drag'
-  startX: number
-  startY: number
-}
-
-interface DragTextSelect {
-  type: 'text-select'
-  startX: number
-  startY: number
-}
-
-type DragState =
-  | DragDraw
-  | DragMove
-  | DragPan
-  | DragResize
-  | DragMarquee
-  | DragRotate
-  | DragPen
-  | DragTextSelect
-
-const TOOL_TO_NODE: Partial<Record<Tool, NodeType>> = {
-  FRAME: 'FRAME',
-  SECTION: 'SECTION',
-  RECTANGLE: 'RECTANGLE',
-  ELLIPSE: 'ELLIPSE',
-  LINE: 'LINE',
-  POLYGON: 'POLYGON',
-  STAR: 'STAR',
-  TEXT: 'TEXT'
-}
-
-const HANDLE_CURSORS: Record<HandlePosition, string> = {
-  nw: 'nwse-resize',
-  n: 'ns-resize',
-  ne: 'nesw-resize',
-  e: 'ew-resize',
-  se: 'nwse-resize',
-  s: 'ns-resize',
-  sw: 'nesw-resize',
-  w: 'ew-resize'
-}
-
-function getScreenRect(
-  absX: number,
-  absY: number,
-  w: number,
-  h: number,
-  zoom: number,
-  panX: number,
-  panY: number
-) {
-  return {
-    x1: absX * zoom + panX,
-    y1: absY * zoom + panY,
-    x2: (absX + w) * zoom + panX,
-    y2: (absY + h) * zoom + panY
-  }
-}
-
-function getHandlePositions(
-  absX: number,
-  absY: number,
-  w: number,
-  h: number,
-  zoom: number,
-  panX: number,
-  panY: number
-) {
-  const { x1, y1, x2, y2 } = getScreenRect(absX, absY, w, h, zoom, panX, panY)
-  const mx = (x1 + x2) / 2
-  const my = (y1 + y2) / 2
-
-  return {
-    nw: { x: x1, y: y1 },
-    n: { x: mx, y: y1 },
-    ne: { x: x2, y: y1 },
-    e: { x: x2, y: my },
-    se: { x: x2, y: y2 },
-    s: { x: mx, y: y2 },
-    sw: { x: x1, y: y2 },
-    w: { x: x1, y: my }
-  } satisfies Record<HandlePosition, Vector>
-}
-
-function unrotate(
-  sx: number,
-  sy: number,
-  centerX: number,
-  centerY: number,
-  rotation: number
-): { sx: number; sy: number } {
-  if (rotation === 0) return { sx, sy }
-  const rad = (-rotation * Math.PI) / 180
-  const cos = Math.cos(rad)
-  const sin = Math.sin(rad)
-  const dx = sx - centerX
-  const dy = sy - centerY
-  return {
-    sx: centerX + dx * cos - dy * sin,
-    sy: centerY + dx * sin + dy * cos
-  }
-}
-
-function hitTestHandle(
-  sx: number,
-  sy: number,
-  absX: number,
-  absY: number,
-  w: number,
-  h: number,
-  zoom: number,
-  panX: number,
-  panY: number,
-  rotation = 0
-): HandlePosition | null {
-  const { x1, y1, x2, y2 } = getScreenRect(absX, absY, w, h, zoom, panX, panY)
-  const cx = (x1 + x2) / 2
-  const cy = (y1 + y2) / 2
-  const ur = unrotate(sx, sy, cx, cy, rotation)
-
-  const handles = getHandlePositions(absX, absY, w, h, zoom, panX, panY)
-  for (const [pos, pt] of Object.entries(handles)) {
-    if (Math.abs(ur.sx - pt.x) < HANDLE_HIT_RADIUS && Math.abs(ur.sy - pt.y) < HANDLE_HIT_RADIUS) {
-      return pos as HandlePosition
-    }
-  }
-  return null
-}
-
-type CornerPosition = 'nw' | 'ne' | 'se' | 'sw'
-
-function hitTestCornerRotation(
-  sx: number,
-  sy: number,
-  absX: number,
-  absY: number,
-  w: number,
-  h: number,
-  zoom: number,
-  panX: number,
-  panY: number,
-  rotation = 0
-): CornerPosition | null {
-  const { x1, y1, x2, y2 } = getScreenRect(absX, absY, w, h, zoom, panX, panY)
-  const cx = (x1 + x2) / 2
-  const cy = (y1 + y2) / 2
-  const ur = unrotate(sx, sy, cx, cy, rotation)
-
-  const corners: Array<{ pos: CornerPosition; x: number; y: number }> = [
-    { pos: 'nw', x: x1, y: y1 },
-    { pos: 'ne', x: x2, y: y1 },
-    { pos: 'se', x: x2, y: y2 },
-    { pos: 'sw', x: x1, y: y2 }
-  ]
-
-  for (const { pos, x, y } of corners) {
-    const dx = Math.abs(ur.sx - x)
-    const dy = Math.abs(ur.sy - y)
-    if (
-      dx <= CORNER_ROTATE_ZONE &&
-      dy <= CORNER_ROTATE_ZONE &&
-      (dx > HANDLE_HIT_RADIUS || dy > HANDLE_HIT_RADIUS)
-    ) {
-      return pos
-    }
-  }
-  return null
-}
-
-const CORNER_BASE_ANGLES: Record<CornerPosition, number> = { nw: 0, ne: 90, se: 180, sw: 270 }
-
-import rotateCursorSvg from '../assets/rotate-cursor.svg?raw'
-
-const rotationCursorCache = new Map<number, string>()
-
-function buildRotationCursor(angleDeg: number): string {
-  const key = Math.round(angleDeg) % 360
-  let cached = rotationCursorCache.get(key)
-  if (cached) return cached
-  let svg: string
-  if (key === 0) {
-    svg = rotateCursorSvg
-  } else {
-    svg = rotateCursorSvg
-      .replace(
-        '<path',
-        `<g transform='translate(1002 2110) rotate(${key}) translate(-1002 -2110)'><path`
-      )
-      .replace('</svg>', '</g></svg>')
-  }
-  cached = `url("data:image/svg+xml,${encodeURIComponent(svg)}") 12 12, auto`
-  rotationCursorCache.set(key, cached)
-  return cached
-}
-
-function cornerRotationCursor(corner: CornerPosition, nodeRotation = 0): string {
-  return buildRotationCursor(CORNER_BASE_ANGLES[corner] + nodeRotation)
-}
+import type { DragDraw, DragMarquee, DragMove, DragPan, DragRotate, DragState } from '../input/types'
+import { TOOL_TO_NODE } from '../input/types'
+import {
+  HANDLE_CURSORS,
+  hitTestHandle,
+  hitTestCornerRotation,
+  cornerRotationCursor
+} from '../input/geometry'
+import { setupPanZoom } from '../input/pan-zoom'
+import { applyResize, tryStartResize } from '../input/resize'
+import { computeAutoLayoutIndicator, computeAutoLayoutIndicatorForFrame } from '../input/auto-layout'
 
 export function useCanvasInput(
   canvasRef: Ref<HTMLCanvasElement | null>,
@@ -351,11 +109,11 @@ export function useCanvasInput(
   }
 
   function handleTextEditClick(cx: number, cy: number, shiftKey: boolean): boolean {
-    const editor = editor.textEditor
+    const textEd = editor.textEditor
     const editNode = editor.state.editingTextId
       ? editor.graph.getNode(editor.state.editingTextId)
       : null
-    if (!editor || !editNode) {
+    if (!textEd || !editNode) {
       editor.commitTextEdit()
       return false
     }
@@ -367,11 +125,11 @@ export function useCanvasInput(
       return false
     }
     if (clickCount >= 3) {
-      editor.selectAll()
+      textEd.selectAll()
     } else if (clickCount === 2) {
-      editor.selectWordAt(localX, localY)
+      textEd.selectWordAt(localX, localY)
     } else {
-      editor.setCursorAt(localX, localY, shiftKey)
+      textEd.setCursorAt(localX, localY, shiftKey)
       drag.value = { type: 'text-select', startX: cx, startY: cy } as DragState
     }
     editor.requestRender()
@@ -412,38 +170,6 @@ export function useCanvasInput(
       origRotation: node.rotation
     }
     return true
-  }
-
-  function tryStartResize(sx: number, sy: number, cx: number, cy: number): boolean {
-    for (const id of editor.state.selectedIds) {
-      const node = editor.graph.getNode(id)
-      if (!node || node.locked) continue
-      const abs = editor.graph.getAbsolutePosition(id)
-      const handle = hitTestHandle(
-        sx,
-        sy,
-        abs.x,
-        abs.y,
-        node.width,
-        node.height,
-        editor.state.zoom,
-        editor.state.panX,
-        editor.state.panY,
-        node.rotation
-      )
-      if (handle) {
-        drag.value = {
-          type: 'resize',
-          handle,
-          startX: cx,
-          startY: cy,
-          origRect: { x: node.x, y: node.y, width: node.width, height: node.height },
-          nodeId: id
-        }
-        return true
-      }
-    }
-    return false
   }
 
   function duplicateAndDrag(
@@ -529,7 +255,12 @@ export function useCanvasInput(
     if (editor.state.editingTextId) editor.commitTextEdit()
 
     if (tryStartRotation(sx, sy)) return
-    if (tryStartResize(sx, sy, cx, cy)) return
+
+    const resizeDrag = tryStartResize(sx, sy, cx, cy, editor)
+    if (resizeDrag) {
+      drag.value = resizeDrag
+      return
+    }
 
     const hit = resolveHit(cx, cy)
     if (!hit) {
@@ -774,7 +505,7 @@ export function useCanvasInput(
     if (d.autoLayoutParentId && !d.brokeFromAutoLayout) {
       const dist = Math.sqrt(dx * dx + dy * dy)
       if (dist < AUTO_LAYOUT_BREAK_THRESHOLD) {
-        computeAutoLayoutIndicator(d, cx, cy)
+        computeAutoLayoutIndicator(d, cx, cy, editor)
         return
       }
       d.brokeFromAutoLayout = true
@@ -785,7 +516,7 @@ export function useCanvasInput(
     const dropParent = dropTarget ? editor.graph.getNode(dropTarget.id) : null
 
     if (dropParent && dropParent.layoutMode !== 'NONE') {
-      computeAutoLayoutIndicatorForFrame(dropParent, cx, cy)
+      computeAutoLayoutIndicatorForFrame(dropParent, cx, cy, editor)
       editor.setDropTarget(dropParent.id)
       for (const [id, orig] of d.originals) {
         editor.graph.updateNode(id, {
@@ -811,13 +542,13 @@ export function useCanvasInput(
   }
 
   function handleTextSelectMove(cx: number, cy: number) {
-    const editor = editor.textEditor
+    const textEd = editor.textEditor
     const editNode = editor.state.editingTextId
       ? editor.graph.getNode(editor.state.editingTextId)
       : null
-    if (editor && editNode) {
+    if (textEd && editNode) {
       const abs = editor.graph.getAbsolutePosition(editNode.id)
-      editor.setCursorAt(cx - abs.x, cy - abs.y, true)
+      textEd.setCursorAt(cx - abs.x, cy - abs.y, true)
       editor.requestRender()
     }
   }
@@ -919,7 +650,7 @@ export function useCanvasInput(
       return
     }
     if (d.type === 'resize') {
-      applyResize(d, cx, cy, e.shiftKey)
+      applyResize(d, cx, cy, e.shiftKey, editor)
       return
     }
 
@@ -938,79 +669,6 @@ export function useCanvasInput(
     }
 
     handleMarqueeMove(d, cx, cy)
-  }
-
-  function constrainToAspectRatio(
-    handle: HandlePosition,
-    origRect: Rect,
-    width: number,
-    height: number,
-    dx: number,
-    dy: number
-  ): Rect {
-    let x = handle.includes('w') ? origRect.x + origRect.width - Math.abs(width) : origRect.x
-    const isTop = handle === 'nw' || handle === 'n' || handle === 'ne'
-    let y = isTop ? origRect.y + origRect.height - Math.abs(height) : origRect.y
-    const aspect = origRect.width / origRect.height
-
-    if (handle === 'n' || handle === 's') {
-      width = Math.abs(height) * aspect
-      x = origRect.x + (origRect.width - width) / 2
-    } else if (handle === 'e' || handle === 'w') {
-      height = Math.abs(width) / aspect
-      y = origRect.y + (origRect.height - height) / 2
-    } else if (Math.abs(dx) > Math.abs(dy)) {
-      height = (Math.abs(width) / aspect) * Math.sign(height || 1)
-      if (isTop) y = origRect.y + origRect.height - Math.abs(height)
-    } else {
-      width = Math.abs(height) * aspect * Math.sign(width || 1)
-      if (handle.includes('w')) x = origRect.x + origRect.width - Math.abs(width)
-    }
-
-    return { x, y, width, height }
-  }
-
-  function applyResize(d: DragResize, cx: number, cy: number, constrain: boolean) {
-    const { handle, origRect } = d
-    let { x, y, width, height } = origRect
-    const dx = cx - d.startX
-    const dy = cy - d.startY
-
-    const moveLeft = handle.includes('w')
-    const moveRight = handle.includes('e')
-    const moveTop = handle === 'nw' || handle === 'n' || handle === 'ne'
-    const moveBottom = handle === 'sw' || handle === 's' || handle === 'se'
-
-    if (moveRight) width = origRect.width + dx
-    if (moveLeft) {
-      x = origRect.x + dx
-      width = origRect.width - dx
-    }
-    if (moveBottom) height = origRect.height + dy
-    if (moveTop) {
-      y = origRect.y + dy
-      height = origRect.height - dy
-    }
-
-    if (constrain && origRect.width > 0 && origRect.height > 0) {
-      ;({ x, y, width, height } = constrainToAspectRatio(handle, origRect, width, height, dx, dy))
-    }
-
-    if (width < 0) {
-      x += width
-      width = -width
-    }
-    if (height < 0) {
-      y += height
-      height = -height
-    }
-
-    editor.updateNode(d.nodeId, {
-      x: Math.round(x),
-      y: Math.round(y),
-      width: Math.round(Math.max(1, width)),
-      height: Math.round(Math.max(1, height))
-    })
   }
 
   function handleMoveUp(d: DragMove) {
@@ -1095,65 +753,6 @@ export function useCanvasInput(
     cursorOverride.value = null
   }
 
-  const wheelAccum = {
-    deltaX: 0,
-    deltaY: 0,
-    zoomDelta: 0,
-    zoomCenterX: 0,
-    zoomCenterY: 0,
-    hasZoom: false,
-    rafId: 0
-  }
-
-  function flushWheel() {
-    wheelAccum.rafId = 0
-    editor.setHoveredNode(null)
-    if (wheelAccum.hasZoom) {
-      editor.applyZoom(wheelAccum.zoomDelta, wheelAccum.zoomCenterX, wheelAccum.zoomCenterY)
-    } else {
-      editor.pan(wheelAccum.deltaX, wheelAccum.deltaY)
-    }
-    wheelAccum.deltaX = 0
-    wheelAccum.deltaY = 0
-    wheelAccum.zoomDelta = 0
-    wheelAccum.hasZoom = false
-  }
-
-  // Normalize wheel deltaY across deltaMode variants (line/page/pixel).
-  // Trackpad pinch is always DOM_DELTA_PIXEL; external mice may use LINE or PAGE.
-  function normalizeWheelDelta(e: WheelEvent): { dx: number; dy: number } {
-    let { deltaX, deltaY } = e
-    if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
-      deltaX *= 40
-      deltaY *= 40
-    } else if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
-      deltaX *= 800
-      deltaY *= 800
-    }
-    return { dx: deltaX, dy: deltaY }
-  }
-
-  function onWheel(e: WheelEvent) {
-    e.preventDefault()
-    const canvas = canvasRef.value
-    if (!canvas) return
-    const { dx, dy } = normalizeWheelDelta(e)
-
-    if (e.ctrlKey || e.metaKey) {
-      const rect = canvas.getBoundingClientRect()
-      wheelAccum.zoomCenterX = e.clientX - rect.left
-      wheelAccum.zoomCenterY = e.clientY - rect.top
-      wheelAccum.zoomDelta += dy
-      wheelAccum.hasZoom = true
-    } else {
-      wheelAccum.deltaX -= dx
-      wheelAccum.deltaY -= dy
-    }
-    if (!wheelAccum.rafId) {
-      wheelAccum.rafId = requestAnimationFrame(flushWheel)
-    }
-  }
-
   function onDblClick(e: MouseEvent) {
     if (editor.state.editingTextId) return
 
@@ -1184,235 +783,16 @@ export function useCanvasInput(
     if (hit.type === 'TEXT') {
       editor.select([hit.id])
       editor.startTextEditing(hit.id)
-      const editor = editor.textEditor
-      if (editor) {
+      const textEd = editor.textEditor
+      if (textEd) {
         const abs = editor.graph.getAbsolutePosition(hit.id)
-        editor.selectWordAt(cx - abs.x, cy - abs.y)
+        textEd.selectWordAt(cx - abs.x, cy - abs.y)
         editor.requestRender()
       }
       return
     }
 
     editor.select([hit.id])
-  }
-
-  function computeAutoLayoutIndicator(d: DragMove, cx: number, cy: number) {
-    if (!d.autoLayoutParentId) return
-    const parent = editor.graph.getNode(d.autoLayoutParentId)
-    if (!parent || parent.layoutMode === 'NONE') return
-    computeAutoLayoutIndicatorForFrame(parent, cx, cy)
-  }
-
-  function computeIndicatorPosition(
-    children: SceneNode[],
-    insertIndex: number,
-    parent: SceneNode,
-    parentAbs: Vector,
-    isRow: boolean
-  ): number {
-    if (children.length === 0) {
-      return isRow ? parentAbs.x + parent.paddingLeft : parentAbs.y + parent.paddingTop
-    }
-    if (insertIndex === 0) {
-      const firstAbs = editor.graph.getAbsolutePosition(children[0].id)
-      return (isRow ? firstAbs.x : firstAbs.y) - parent.itemSpacing / 2
-    }
-    if (insertIndex >= children.length) {
-      const last = children[children.length - 1]
-      const lastAbs = editor.graph.getAbsolutePosition(last.id)
-      return isRow
-        ? lastAbs.x + last.width + parent.itemSpacing / 2
-        : lastAbs.y + last.height + parent.itemSpacing / 2
-    }
-    const prev = children[insertIndex - 1]
-    const next = children[insertIndex]
-    const prevAbs = editor.graph.getAbsolutePosition(prev.id)
-    const nextAbs = editor.graph.getAbsolutePosition(next.id)
-    return isRow
-      ? (prevAbs.x + prev.width + nextAbs.x) / 2
-      : (prevAbs.y + prev.height + nextAbs.y) / 2
-  }
-
-  function filteredToRealIndex(parentId: string, insertIndex: number): number {
-    const allChildren = editor.graph.getChildren(parentId)
-    let realIndex = 0
-    let filteredCount = 0
-    for (const child of allChildren) {
-      if (editor.state.selectedIds.has(child.id)) continue
-      if (child.layoutPositioning === 'ABSOLUTE') {
-        realIndex++
-        continue
-      }
-      if (filteredCount === insertIndex) break
-      filteredCount++
-      realIndex++
-    }
-    return realIndex
-  }
-
-  function computeAutoLayoutIndicatorForFrame(parent: SceneNode, cx: number, cy: number) {
-    const children = editor.graph
-      .getChildren(parent.id)
-      .filter((c) => c.layoutPositioning !== 'ABSOLUTE' && !editor.state.selectedIds.has(c.id))
-
-    const parentAbs = editor.graph.getAbsolutePosition(parent.id)
-    const isRow = parent.layoutMode === 'HORIZONTAL'
-
-    let insertIndex = children.length
-    for (let i = 0; i < children.length; i++) {
-      const childAbs = editor.graph.getAbsolutePosition(children[i].id)
-      const mid = isRow ? childAbs.x + children[i].width / 2 : childAbs.y + children[i].height / 2
-      if ((isRow ? cx : cy) < mid) {
-        insertIndex = i
-        break
-      }
-    }
-
-    const indicatorPos = computeIndicatorPosition(children, insertIndex, parent, parentAbs, isRow)
-    const crossStart = isRow ? parentAbs.y + parent.paddingTop : parentAbs.x + parent.paddingLeft
-    const crossLength = isRow
-      ? parent.height - parent.paddingTop - parent.paddingBottom
-      : parent.width - parent.paddingLeft - parent.paddingRight
-
-    editor.setLayoutInsertIndicator({
-      parentId: parent.id,
-      index: filteredToRealIndex(parent.id, insertIndex),
-      x: isRow ? indicatorPos : crossStart,
-      y: isRow ? crossStart : indicatorPos,
-      length: crossLength,
-      direction: isRow ? 'VERTICAL' : 'HORIZONTAL'
-    })
-  }
-
-  let activeTouches: Touch[] = []
-  let pinchStartDist = 0
-  let pinchStartZoom = 0
-  let pinchMidX = 0
-  let pinchMidY = 0
-
-  function touchDist(a: Touch, b: Touch) {
-    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
-  }
-
-  let touchAsMouse = false
-
-  function syntheticMouse(type: string, t: Touch): MouseEvent {
-    return new MouseEvent(type, {
-      clientX: t.clientX,
-      clientY: t.clientY,
-      screenX: t.screenX,
-      screenY: t.screenY,
-      button: 0,
-      buttons: 1,
-      bubbles: true
-    })
-  }
-
-  function onTouchStart(e: TouchEvent) {
-    e.preventDefault()
-    activeTouches = Array.from(e.touches)
-    const canvas = canvasRef.value
-    if (!canvas) return
-
-    if (activeTouches.length === 2) {
-      if (touchAsMouse) {
-        onMouseUp()
-        touchAsMouse = false
-      }
-      drag.value = null
-      const [a, b] = activeTouches
-      pinchStartDist = touchDist(a, b)
-      pinchStartZoom = editor.state.zoom
-      const rect = canvas.getBoundingClientRect()
-      pinchMidX = (a.clientX + b.clientX) / 2 - rect.left
-      pinchMidY = (a.clientY + b.clientY) / 2 - rect.top
-    } else if (activeTouches.length === 1) {
-      const t = activeTouches[0]
-      const tool = editor.state.activeTool
-      if (tool === 'HAND') {
-        touchAsMouse = false
-        drag.value = {
-          type: 'pan',
-          startScreenX: t.clientX,
-          startScreenY: t.clientY,
-          startPanX: editor.state.panX,
-          startPanY: editor.state.panY
-        }
-      } else {
-        touchAsMouse = true
-        onMouseDown(syntheticMouse('mousedown', t))
-      }
-    }
-  }
-
-  function onTouchMove(e: TouchEvent) {
-    e.preventDefault()
-    activeTouches = Array.from(e.touches)
-    const canvas = canvasRef.value
-    if (!canvas) return
-
-    if (activeTouches.length === 2) {
-      const [a, b] = activeTouches
-      const rect = canvas.getBoundingClientRect()
-      const newMidX = (a.clientX + b.clientX) / 2 - rect.left
-      const newMidY = (a.clientY + b.clientY) / 2 - rect.top
-
-      editor.setHoveredNode(null)
-      const newDist = touchDist(a, b)
-      if (pinchStartDist > 0) {
-        const scale = newDist / pinchStartDist
-        const newZoom = Math.max(0.02, Math.min(256, pinchStartZoom * scale))
-        const zoomRatio = newZoom / editor.state.zoom
-
-        const panDx = newMidX - pinchMidX
-        const panDy = newMidY - pinchMidY
-
-        editor.state.panX = pinchMidX - (pinchMidX - editor.state.panX) * zoomRatio + panDx
-        editor.state.panY = pinchMidY - (pinchMidY - editor.state.panY) * zoomRatio + panDy
-        editor.state.zoom = newZoom
-      }
-
-      pinchMidX = newMidX
-      pinchMidY = newMidY
-      editor.requestRepaint()
-    } else if (activeTouches.length === 1) {
-      const t = activeTouches[0]
-      if (touchAsMouse) {
-        onMouseMove(syntheticMouse('mousemove', t))
-      } else if (drag.value?.type === 'pan') {
-        const d = drag.value
-        editor.state.panX = d.startPanX + (t.clientX - d.startScreenX)
-        editor.state.panY = d.startPanY + (t.clientY - d.startScreenY)
-        editor.requestRepaint()
-      }
-    }
-  }
-
-  function onTouchEnd(e: TouchEvent) {
-    e.preventDefault()
-    activeTouches = Array.from(e.touches)
-
-    if (activeTouches.length === 0) {
-      if (touchAsMouse) {
-        onMouseUp()
-        touchAsMouse = false
-      } else {
-        drag.value = null
-      }
-      pinchStartDist = 0
-    } else if (activeTouches.length === 1) {
-      const t = activeTouches[0]
-      if (!touchAsMouse) {
-        drag.value = {
-          type: 'pan',
-          startScreenX: t.clientX,
-          startScreenY: t.clientY,
-          startPanX: editor.state.panX,
-          startPanY: editor.state.panY
-        }
-      }
-      pinchStartDist = 0
-    }
   }
 
   useEventListener(canvasRef, 'dblclick', onDblClick)
@@ -1427,68 +807,8 @@ export function useCanvasInput(
   useEventListener(window, 'mouseup', () => {
     if (drag.value) onMouseUp()
   })
-  useEventListener(canvasRef, 'wheel', onWheel, { passive: false })
-  useEventListener(canvasRef, 'touchstart', onTouchStart, { passive: false })
-  useEventListener(canvasRef, 'touchmove', onTouchMove, { passive: false })
-  useEventListener(canvasRef, 'touchend', onTouchEnd, { passive: false })
-  useEventListener(canvasRef, 'touchcancel', onTouchEnd, { passive: false })
 
-  // Safari macOS: trackpad pinch-to-zoom uses gesture events, not wheel+ctrlKey
-  let gestureStartZoom = 1
-  let gestureRafId = 0
-  let pendingGesture: { scale: number; sx: number; sy: number } | null = null
-
-  function flushGesture() {
-    gestureRafId = 0
-    if (!pendingGesture) return
-    editor.setHoveredNode(null)
-    const { scale, sx, sy } = pendingGesture
-    pendingGesture = null
-    const newZoom = Math.max(0.02, Math.min(256, gestureStartZoom * scale))
-    const zoomRatio = newZoom / editor.state.zoom
-    editor.state.panX = sx - (sx - editor.state.panX) * zoomRatio
-    editor.state.panY = sy - (sy - editor.state.panY) * zoomRatio
-    editor.state.zoom = newZoom
-    editor.requestRepaint()
-  }
-
-  useEventListener(
-    canvasRef,
-    'gesturestart' as keyof HTMLElementEventMap,
-    (e: Event) => {
-      e.preventDefault()
-      gestureStartZoom = editor.state.zoom
-    },
-    { passive: false }
-  )
-  useEventListener(
-    canvasRef,
-    'gesturechange' as keyof HTMLElementEventMap,
-    (e: Event) => {
-      e.preventDefault()
-      const ge = e as GestureEvent
-      const canvas = canvasRef.value
-      if (!canvas) return
-      const rect = canvas.getBoundingClientRect()
-      pendingGesture = {
-        scale: ge.scale,
-        sx: ge.clientX - rect.left,
-        sy: ge.clientY - rect.top
-      }
-      if (!gestureRafId) {
-        gestureRafId = requestAnimationFrame(flushGesture)
-      }
-    },
-    { passive: false }
-  )
-  useEventListener(
-    canvasRef,
-    'gestureend' as keyof HTMLElementEventMap,
-    (e: Event) => {
-      e.preventDefault()
-    },
-    { passive: false }
-  )
+  setupPanZoom(canvasRef, editor, drag, getCoords, onMouseDown, onMouseMove, onMouseUp)
 
   return {
     drag,

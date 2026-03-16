@@ -7,6 +7,7 @@ import { useCanvasInput } from '@/composables/use-canvas-input'
 import { useCollabInjected } from '@/composables/use-collab'
 import { useTextEdit } from '@/composables/use-text-edit'
 import { useEditorStore } from '@/stores/editor'
+import { toolCursor } from '@open-pencil/vue'
 import CanvasContextMenu from './CanvasContextMenu.vue'
 
 const store = useEditorStore()
@@ -34,14 +35,7 @@ watch(
   (ids) => collab?.updateSelection(ids)
 )
 
-const cursor = computed(() => {
-  if (cursorOverride.value) return cursorOverride.value
-  const tool = store.state.activeTool
-  if (tool === 'HAND') return 'grab'
-  if (tool === 'SELECT') return 'default'
-  if (tool === 'TEXT') return 'text'
-  return 'crosshair'
-})
+const cursor = computed(() => toolCursor(store.state.activeTool, cursorOverride.value))
 </script>
 
 <template>
