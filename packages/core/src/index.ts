@@ -5,6 +5,20 @@ export { randomHex, randomInt, randomIndex } from './random'
 export * from './constants'
 
 export {
+  createEditor,
+  EDITOR_TOOLS,
+  TOOL_SHORTCUTS
+} from './editor'
+export type {
+  Editor,
+  EditorContext,
+  EditorOptions,
+  EditorState,
+  EditorToolDef,
+  Tool
+} from './editor'
+
+export {
   SceneGraph,
   generateId,
   type SceneNode,
