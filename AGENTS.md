@@ -13,7 +13,9 @@ Bun workspace with three packages:
 - `packages/docs` — `@open-pencil/docs`: VitePress documentation site. Run with `cd packages/docs && bun run dev`.
 - `packages/mcp` — `@open-pencil/mcp`: MCP server for AI coding tools. Stdio + HTTP (Hono). Reuses `createServer()` factory with all core tools.
 
-The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files are thin re-export shims from `@open-pencil/core`.
+- `packages/vue` — `@open-pencil/vue`: headless Vue 3 SDK (Reka UI-style). Renderless components, composables. The app is a consumer.
+
+The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files are thin re-export shims from `@open-pencil/core`. `src/composables/use-canvas.ts` re-exports from `@open-pencil/vue`.
 
 ### Core subpath exports
 
