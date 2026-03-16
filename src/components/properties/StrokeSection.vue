@@ -21,7 +21,6 @@ type StrokeSides = 'ALL' | 'TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT' | 'CUSTOM'
 
 const { store } = useNodeProps()
 const {
-  nodes,
   isMulti,
   active,
   activeNode,
@@ -74,15 +73,6 @@ function updateColor(index: number, color: Color) {
 
 function updateWeight(index: number, weight: number) {
   updateArrayItem('strokes', index, { weight }, 'Change stroke')
-}
-
-function updateOpacity(index: number, opacity: number) {
-  updateArrayItem(
-    'strokes',
-    index,
-    { opacity: Math.max(0, Math.min(1, opacity / 100)) },
-    'Change stroke'
-  )
 }
 
 function updateAlign(align: Stroke['align']) {

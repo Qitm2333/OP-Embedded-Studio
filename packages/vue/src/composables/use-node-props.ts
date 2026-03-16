@@ -2,7 +2,7 @@ import { computed } from 'vue'
 
 import { useEditor } from '../context'
 
-import type { SceneNode } from '@open-pencil/core'
+import type { Fill, SceneNode, Stroke } from '@open-pencil/core'
 
 export const MIXED = Symbol('mixed')
 export type MixedValue<T> = T | typeof MIXED
@@ -52,7 +52,7 @@ export function useNodeProps() {
   function updateArrayItem(
     key: ArrayPropKey,
     index: number,
-    patch: Record<string, unknown>,
+    patch: Record<string, unknown> | Fill | Stroke,
     label: string
   ) {
     for (const n of targetNodes()) {

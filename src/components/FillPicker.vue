@@ -455,7 +455,7 @@ function setScaleMode(mode: string) {
           <button
             class="flex h-7 w-full cursor-pointer items-center justify-center gap-1 rounded border border-border bg-input text-xs text-surface hover:bg-hover"
             data-test-id="fill-picker-choose-image"
-            @click="pickImage"
+            @click="() => pickImage()"
           >
             <icon-lucide-image class="size-3" />
             {{ fill.imageHash ? 'Replace' : 'Choose image' }}

@@ -24,17 +24,19 @@ const WEIGHTS = [
 ]
 
 const currentWeightLabel = computed(
-  () => WEIGHTS.find((w) => w.value === node.value.fontWeight)?.label ?? 'Regular'
+  () => WEIGHTS.find((w) => w.value === node.value?.fontWeight)?.label ?? 'Regular'
 )
 
 type TextAlign = 'LEFT' | 'CENTER' | 'RIGHT'
 
 async function selectFamily(family: string) {
+  if (!node.value) return
   await loadFont(family, currentWeightLabel.value)
   store.updateNodeWithUndo(node.value.id, { fontFamily: family }, 'Change font')
 }
 
 async function selectWeight(weight: number) {
+  if (!node.value) return
   const label = WEIGHTS.find((w) => w.value === weight)?.label ?? 'Regular'
   await loadFont(node.value.fontFamily, label)
   store.updateNodeWithUndo(node.value.id, { fontWeight: weight }, 'Change font weight')
@@ -42,21 +44,24 @@ async function selectWeight(weight: number) {
 }
 
 function setAlign(align: TextAlign) {
+  if (!node.value) return
   store.updateNodeWithUndo(node.value.id, { textAlignHorizontal: align }, 'Change text alignment')
   store.requestRender()
 }
 
 function toggleBold() {
-  const n = node.value
-  selectWeight(n.fontWeight >= 700 ? 400 : 700)
+  if (!node.value) return
+  selectWeight(node.value.fontWeight >= 700 ? 400 : 700)
 }
 
 function toggleItalic() {
+  if (!node.value) return
   store.updateNodeWithUndo(node.value.id, { italic: !node.value.italic }, 'Toggle italic')
   store.requestRender()
 }
 
 function toggleDecoration(deco: 'UNDERLINE' | 'STRIKETHROUGH') {
+  if (!node.value) return
   const current = node.value.textDecoration
   store.updateNodeWithUndo(
     node.value.id,
@@ -67,6 +72,7 @@ function toggleDecoration(deco: 'UNDERLINE' | 'STRIKETHROUGH') {
 }
 
 onMounted(async () => {
+  if (!node.value) return
   await loadFont(node.value.fontFamily, currentWeightLabel.value)
 })
 </script>

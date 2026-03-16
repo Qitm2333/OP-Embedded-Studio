@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import type { ListboxFilter } from 'reka-ui'
+import type { AcceptableValue, ListboxFilter } from 'reka-ui'
 import {
   ListboxContent,
   ListboxItem,
@@ -12,7 +12,7 @@ import {
   useFilter
 } from 'reka-ui'
 
-import { selectContent, selectItem, selectTrigger } from '@/components/ui/select'
+import { selectItem, selectTrigger } from '@/components/ui/select'
 import { panelSurface } from '@/components/ui/surface'
 import { listFamilies } from '@/engine/fonts'
 
@@ -41,7 +41,8 @@ watch(open, (isOpen) => {
   }
 })
 
-function onSelect(val: string) {
+function onSelect(val: AcceptableValue) {
+  if (typeof val !== 'string') return
   modelValue.value = val
   emit('select', val)
   open.value = false

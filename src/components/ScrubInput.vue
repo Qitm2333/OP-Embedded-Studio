@@ -72,7 +72,7 @@ function startScrub(e: PointerEvent) {
     stopMove?.()
     stopUp?.()
     if (hasMoved) {
-      if (modelValue !== valueBeforeScrub) {
+      if (typeof modelValue === 'number' && modelValue !== valueBeforeScrub) {
         emit('commit', modelValue, valueBeforeScrub)
       }
     } else {

@@ -100,6 +100,10 @@ function copyAsJSX() {
   toast.show('Copied as JSX')
 }
 
+function execCommand(command: string) {
+  window.document.execCommand(command)
+}
+
 const itemClass = menuItem()
 const componentItemClass = menuItem({ tone: 'component' })
 const menuClass = menuContent({
@@ -114,7 +118,7 @@ const separatorClass = menuSeparator({ class: 'my-1' })
       data-test-id="context-copy"
       :class="itemClass"
       :disabled="!hasSelection"
-      @select="document.execCommand('copy')"
+      @select="execCommand('copy')"
     >
       <span>Copy</span>
       <span class="text-[11px] text-muted">⌘C</span>
@@ -123,16 +127,12 @@ const separatorClass = menuSeparator({ class: 'my-1' })
       data-test-id="context-cut"
       :class="itemClass"
       :disabled="!hasSelection"
-      @select="document.execCommand('cut')"
+      @select="execCommand('cut')"
     >
       <span>Cut</span>
       <span class="text-[11px] text-muted">⌘X</span>
     </ContextMenuItem>
-    <ContextMenuItem
-      data-test-id="context-paste"
-      :class="itemClass"
-      @select="document.execCommand('paste')"
-    >
+    <ContextMenuItem data-test-id="context-paste" :class="itemClass" @select="execCommand('paste')">
       <span>Paste here</span>
       <span class="text-[11px] text-muted">⌘V</span>
     </ContextMenuItem>

@@ -4,10 +4,10 @@ import { isFontLoaded, DEFAULT_FONT_FAMILY } from '@open-pencil/core'
 
 import type { SceneNode } from '@open-pencil/core'
 
-export function useNodeFontStatus(node: () => SceneNode) {
+export function useNodeFontStatus(node: () => SceneNode | null | undefined) {
   const missingFonts = computed(() => {
     const n = node()
-    if (n.type !== 'TEXT') return []
+    if (!n || n.type !== 'TEXT') return []
 
     const families = new Set<string>()
     families.add(n.fontFamily || DEFAULT_FONT_FAMILY)

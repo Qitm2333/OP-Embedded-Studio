@@ -115,9 +115,9 @@ function onActionTap(item: ActionItem) {
 const slideDirection = ref(1)
 
 const slideVariants = {
-  initial: (dir: number) => ({ opacity: 0, x: dir * 20 }),
+  initial: (dir: unknown) => ({ opacity: 0, x: (dir as number) * 20 }),
   animate: { opacity: 1, x: 0 },
-  exit: (dir: number) => ({ opacity: 0, x: dir * -20 })
+  exit: (dir: unknown) => ({ opacity: 0, x: (dir as number) * -20 })
 }
 
 function goPrev() {

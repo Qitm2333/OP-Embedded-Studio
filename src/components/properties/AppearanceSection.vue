@@ -119,7 +119,7 @@ function updateCornerProp(key: string, value: number) {
   }
 }
 
-function commitCornerProp(key: string, value: number, previous: number) {
+function commitCornerProp(key: string, _value: number, previous: number) {
   if (isMulti.value) {
     for (const n of nodes.value) {
       store.commitNodeUpdate(n.id, { [key]: previous } as Partial<SceneNode>, `Change ${key}`)

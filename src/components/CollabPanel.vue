@@ -14,7 +14,7 @@ import {
 } from 'reka-ui'
 
 import { colorToCSS } from '@open-pencil/core'
-import { useCollabInjected } from '@/composables/use-collab'
+import { DEFAULT_COLLAB_STATE, useCollabInjected } from '@/composables/use-collab'
 import { toast } from '@/composables/use-toast'
 import { initials } from '@/utils/text'
 
@@ -23,14 +23,14 @@ const router = useRouter()
 const collab = useCollabInjected()
 
 const joinInput = ref('')
-const nameDraft = ref(collab.state.value.localName)
+const nameDraft = ref(collab?.state.value.localName ?? '')
 const copied = ref(false)
 const pendingRoomId = (route.params.roomId as string) || null
 const popoverOpen = ref(!!pendingRoomId)
 
-const state = computed(() => collab.state.value)
-const peers = computed(() => collab.remotePeers.value)
-const followingPeer = computed(() => collab.followingPeer.value)
+const state = computed(() => collab?.state.value ?? DEFAULT_COLLAB_STATE)
+const peers = computed(() => collab?.remotePeers.value ?? [])
+const followingPeer = computed(() => collab?.followingPeer.value ?? null)
 
 const shareUrl = computed(() => {
   if (!state.value.roomId) return ''
@@ -50,7 +50,7 @@ function copyLink() {
 }
 
 function onShare() {
-  if (!nameDraft.value.trim()) return
+  if (!collab || !nameDraft.value.trim()) return
   collab.setLocalName(nameDraft.value.trim())
   const roomId = collab.shareCurrentDoc()
   router.push(`/share/${roomId}`)
@@ -60,6 +60,7 @@ function onShare() {
 }
 
 function onJoin() {
+  if (!collab) return
   const roomId = pendingRoomId || joinInput.value.trim().replace(/.*\/share\//, '')
   if (!roomId || !nameDraft.value.trim()) return
   collab.setLocalName(nameDraft.value.trim())
@@ -69,6 +70,7 @@ function onJoin() {
 }
 
 function onDisconnect() {
+  if (!collab) return
   collab.disconnect()
   router.push('/')
 }
@@ -110,7 +112,7 @@ function onDisconnect() {
                   : 'border-panel'
               "
               :style="{ background: colorToCSS(peer.color) }"
-              @click="collab.followPeer(followingPeer === peer.clientId ? null : peer.clientId)"
+              @click="collab?.followPeer(followingPeer === peer.clientId ? null : peer.clientId)"
             >
               {{ initials(peer.name) }}
             </div>

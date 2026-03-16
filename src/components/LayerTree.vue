@@ -145,7 +145,7 @@ function syncCanvasScope(nodeId: string) {
       return
     }
     const parent = store.graph.getNode(parentId)
-    parentId = parent?.parentId
+    parentId = parent?.parentId ?? null
   }
   store.state.enteredContainerId = null
 }
@@ -414,7 +414,7 @@ function updateDropTarget(ev: PointerEvent) {
                 ]"
                 :style="{ paddingLeft: `${8 + (item.level - 1) * 16}px` }"
                 @pointerdown.prevent="onPointerDown($event, item.value.id)"
-                @dblclick="rename.start(item.value.id, item.value.name, '[data-layer-edit]')"
+                @dblclick="rename.start(item.value.id, item.value.name)"
               >
                 <span
                   v-if="item.hasChildren"

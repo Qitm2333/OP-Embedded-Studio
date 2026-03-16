@@ -34,6 +34,14 @@ export interface CollabState {
   localColor: Color
 }
 
+export const DEFAULT_COLLAB_STATE: CollabState = {
+  connected: false,
+  roomId: null,
+  peers: [],
+  localName: '',
+  localColor: { r: 0.5, g: 0.5, b: 0.5, a: 1 }
+}
+
 export function useCollab(store: EditorStore) {
   const storedName = useLocalStorage('op-collab-name', '')
   const state = ref<CollabState>({

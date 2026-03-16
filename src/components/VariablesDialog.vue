@@ -289,7 +289,7 @@ const columns = computed<ColumnDef<Variable>[]>(() => {
           {
             defaultValue: shortName(v),
             class: 'min-w-0 flex-1',
-            onSubmit: (val: string) => commitNameEdit(v, val)
+            onSubmit: (val: string | null | undefined) => val && commitNameEdit(v, val)
           },
           () =>
             h(EditableArea, { class: 'flex' }, () => [
@@ -328,7 +328,7 @@ const columns = computed<ColumnDef<Variable>[]>(() => {
         {
           defaultValue: formatModeValue(v, mode.modeId),
           class: 'min-w-0 flex-1',
-          onSubmit: (val: string) => commitValueEdit(v, mode.modeId, val)
+          onSubmit: (val: string | null | undefined) => val && commitValueEdit(v, mode.modeId, val)
         },
         () =>
           h(EditableArea, { class: 'flex' }, () => [
