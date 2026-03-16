@@ -12,6 +12,7 @@
         "@ai-sdk/vue": "^3.0.105",
         "@open-pencil/cli": "workspace:*",
         "@open-pencil/core": "workspace:*",
+        "@open-pencil/vue": "workspace:*",
         "@openrouter/ai-sdk-provider": "^2.2.3",
         "@tailwindcss/vite": "^4.2.1",
         "@tanstack/vue-table": "^8.21.3",
@@ -140,6 +141,18 @@
       "devDependencies": {
         "@types/node": "^22.0.0",
         "@types/ws": "^8.18.1",
+      },
+    },
+    "packages/vue": {
+      "name": "@open-pencil/vue",
+      "version": "0.10.0",
+      "dependencies": {
+        "@vueuse/core": "^14.2.1",
+      },
+      "peerDependencies": {
+        "@open-pencil/core": "workspace:*",
+        "canvaskit-wasm": ">=0.39.0",
+        "vue": "^3.4.0",
       },
     },
   },
@@ -673,6 +686,8 @@
     "@open-pencil/docs": ["@open-pencil/docs@workspace:packages/docs"],
 
     "@open-pencil/mcp": ["@open-pencil/mcp@workspace:packages/mcp"],
+
+    "@open-pencil/vue": ["@open-pencil/vue@workspace:packages/vue"],
 
     "@openrouter/ai-sdk-provider": ["@openrouter/ai-sdk-provider@2.2.3", "", { "peerDependencies": { "ai": "^6.0.0", "zod": "^3.25.0 || ^4.0.0" } }, "sha512-NovC+BaCfEeJwhToDrs8JeDYXXlJdEyz7lcxkjtyePSE4eoAKik872SyDK0MzXKcz8MRkv7XlNhPI6zz4TQp0g=="],
 

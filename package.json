@@ -36,6 +36,7 @@
     "@ai-sdk/vue": "^3.0.105",
     "@open-pencil/cli": "workspace:*",
     "@open-pencil/core": "workspace:*",
+    "@open-pencil/vue": "workspace:*",
     "@openrouter/ai-sdk-provider": "^2.2.3",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/vue-table": "^8.21.3",
