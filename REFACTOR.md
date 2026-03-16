@@ -16,12 +16,13 @@ One closure captures ~30 mutable `let` variables and exposes ~80 methods coverin
 
 Handles 8 drag types, touch/gesture, wheel zoom, double-click, hit testing, snap guides, auto-layout indicators, reparenting, and hover cursors — all in one function.
 
-**Refactoring:** Extract by concern:
-- `use-drag-move.ts` — move with snap, reparent, auto-layout break
-- `use-drag-resize.ts` — resize with aspect ratio
-- `use-drag-rotate.ts` — rotation with snap
-- `use-touch-input.ts` — touch/gesture/pinch
-- `use-hit-test.ts` — hit testing (already pure functions)
+**Status:** ✅ Done — split into 5 modules in `packages/vue/src/input/`:
+- `types.ts` (88) — DragState variants, HandlePosition, TOOL_TO_NODE
+- `geometry.ts` (170) — hit testing, handle positions, rotation cursor
+- `pan-zoom.ts` (266) — wheel, touch pinch, Safari gestures
+- `resize.ts` (121) — constrainToAspectRatio, applyResize
+- `auto-layout.ts` (103) — insert indicator computation
+- Orchestrator `use-canvas-input.ts` reduced to 817 lines
 
 ### 3. State is fully mutable to all consumers
 
