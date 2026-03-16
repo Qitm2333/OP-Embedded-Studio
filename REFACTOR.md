@@ -8,9 +8,9 @@ Comprehensive audit of vibe-coding leftovers and structural debt.
 
 One closure captures ~30 mutable `let` variables and exposes ~80 methods covering: file I/O, undo, pen tool, layout, selection, export, import, clipboard, images, paging, zooming, autosave, file watching, component ops, text editing.
 
-**Refactoring:** Extract `createEditor()` to `packages/core/src/editor/` folder with domain modules sharing an `EditorContext` interface. App store becomes a thin Vue wrapper. See "Editor Folder Split" section below.
+**Refactoring:** Extract `createEditor()` to `packages/core/src/editor/` folder with domain modules sharing an `EditorContext` interface. App store becomes a thin Vue wrapper.
 
-**Status:** 🔧 In progress
+**Status:** ✅ Done — 13 modules, largest 394 lines. App store: 747 lines.
 
 ### 2. `src/composables/use-canvas-input.ts` — 1,501 lines, the Input Monolith
 
