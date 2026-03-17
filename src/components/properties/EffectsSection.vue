@@ -3,15 +3,13 @@ import { computed, ref } from 'vue'
 import AppSelect from '@/components/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
-import { useNodeProps } from '@/composables/use-node-props'
-import { useMultiProps } from '@/composables/use-multi-props'
+import { useNodeProps } from '@open-pencil/vue'
 
 import { colorToCSS } from '@open-pencil/core'
 
 import type { Color, Effect } from '@open-pencil/core'
 
-const { store } = useNodeProps()
-const { node, nodes, isMulti, active, isArrayMixed } = useMultiProps()
+const { store, node, nodes, isMulti, active, isArrayMixed } = useNodeProps()
 
 const effectsAreMixed = computed(() => isArrayMixed('effects'))
 

@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 
-import { useCanvas } from '@/composables/use-canvas'
-import { useCanvasDrop } from '@/composables/use-canvas-drop'
-import { useCanvasInput } from '@/composables/use-canvas-input'
+import { toolCursor, useCanvas, useCanvasDrop, useCanvasInput, useTextEdit } from '@open-pencil/vue'
 import { useCollabInjected } from '@/composables/use-collab'
-import { useTextEdit } from '@/composables/use-text-edit'
 import { useEditorStore } from '@/stores/editor'
-import { toolCursor } from '@open-pencil/vue'
 import CanvasContextMenu from './CanvasContextMenu.vue'
 
 const store = useEditorStore()

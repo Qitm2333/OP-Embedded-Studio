@@ -2,13 +2,12 @@
 import { computed } from 'vue'
 
 import ScrubInput from '@/components/ScrubInput.vue'
-import { useNodeProps } from '@/composables/use-node-props'
-import { MIXED, useMultiProps } from '@/composables/use-multi-props'
+import { MIXED, useNodeProps } from '@open-pencil/vue'
 
 import type { SceneNode } from '@open-pencil/core'
 
-const { store, updateProp, commitProp } = useNodeProps()
-const { node, nodes, isMulti, active, merged, updateAllWithUndo } = useMultiProps()
+const { store, node, nodes, isMulti, active, merged, updateAllWithUndo, updateProp, commitProp } =
+  useNodeProps()
 
 const CORNER_RADIUS_TYPES = new Set([
   'RECTANGLE',

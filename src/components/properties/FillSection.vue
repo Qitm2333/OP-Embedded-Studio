@@ -15,14 +15,13 @@ import {
 
 import FillPicker from '@/components/FillPicker.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
-import { useNodeProps } from '@/composables/use-node-props'
-import { useMultiProps } from '@/composables/use-multi-props'
+import { useNodeProps } from '@open-pencil/vue'
 import { DEFAULT_SHAPE_FILL } from '@/constants'
 import { colorToCSS, colorToHexRaw } from '@open-pencil/core'
 import type { Fill, Variable } from '@open-pencil/core'
 
-const { store } = useNodeProps()
 const {
+  store,
   isMulti,
   active,
   activeNode,
@@ -31,7 +30,7 @@ const {
   updateArrayItem,
   removeArrayItem,
   toggleArrayVisibility
-} = useMultiProps()
+} = useNodeProps()
 
 const fillsAreMixed = computed(() => isArrayMixed('fills'))
 

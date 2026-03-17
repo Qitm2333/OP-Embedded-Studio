@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 
 import AppSelect from '@/components/AppSelect.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
-import { useNodeProps } from '@/composables/use-node-props'
+import { useNodeProps } from '@open-pencil/vue'
 
 import type {
   SceneNode,

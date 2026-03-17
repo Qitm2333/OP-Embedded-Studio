@@ -2,11 +2,18 @@
 import { computed } from 'vue'
 
 import ScrubInput from '@/components/ScrubInput.vue'
-import { useNodeProps } from '@/composables/use-node-props'
-import { useMultiProps } from '@/composables/use-multi-props'
+import { useNodeProps } from '@open-pencil/vue'
 
-const { store, updateProp, commitProp } = useNodeProps()
-const { node, nodes, isMulti, active, prop: multiProp } = useMultiProps()
+const {
+  store,
+  updateProp,
+  commitProp,
+  node,
+  nodes,
+  isMulti,
+  active,
+  prop: multiProp
+} = useNodeProps()
 
 const xValue = computed(() =>
   isMulti.value ? multiProp('x').value : Math.round(node.value?.x ?? 0)

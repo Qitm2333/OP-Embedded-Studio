@@ -5,8 +5,7 @@ import AppSelect from '@/components/AppSelect.vue'
 import { menuContent, menuItem } from '@/components/ui/menu'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
-import { useNodeProps } from '@/composables/use-node-props'
-import { useMultiProps } from '@/composables/use-multi-props'
+import { useNodeProps } from '@open-pencil/vue'
 import {
   DropdownMenuRoot,
   DropdownMenuTrigger,
@@ -19,8 +18,8 @@ import type { Color, SceneNode, Stroke } from '@open-pencil/core'
 
 type StrokeSides = 'ALL' | 'TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT' | 'CUSTOM'
 
-const { store } = useNodeProps()
 const {
+  store,
   isMulti,
   active,
   activeNode,
@@ -29,7 +28,7 @@ const {
   updateArrayItem,
   removeArrayItem,
   toggleArrayVisibility
-} = useMultiProps()
+} = useNodeProps()
 
 const strokesAreMixed = computed(() => isArrayMixed('strokes'))
 

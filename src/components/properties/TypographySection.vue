@@ -4,8 +4,7 @@ import { computed, onMounted } from 'vue'
 import AppSelect from '@/components/AppSelect.vue'
 import FontPicker from '@/components/FontPicker.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
-import { useNodeFontStatus } from '@/composables/use-font-status'
-import { useNodeProps } from '@/composables/use-node-props'
+import { useNodeFontStatus, useNodeProps } from '@open-pencil/vue'
 import { loadFont } from '@/engine/fonts'
 
 const { store, node, updateProp, commitProp } = useNodeProps()

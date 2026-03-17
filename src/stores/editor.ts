@@ -1,6 +1,5 @@
 import { shallowReactive, shallowRef, computed, watch } from 'vue'
 
-import { toast } from '@/composables/use-toast'
 import { IS_TAURI, CANVAS_BG_COLOR } from '@/constants'
 import { loadFont } from '@/engine/fonts'
 import {
@@ -12,6 +11,7 @@ import {
   renderNodesToSVG,
   SceneGraph
 } from '@open-pencil/core'
+import { toast } from '@open-pencil/vue'
 
 import type { EditorState, ExportFormat, SceneNode } from '@open-pencil/core'
 

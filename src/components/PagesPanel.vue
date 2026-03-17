@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { useInlineRename } from '@/composables/use-inline-rename'
+import { useInlineRename } from '@open-pencil/vue'
 import { useEditorStore } from '@/stores/editor'
 
 const store = useEditorStore()

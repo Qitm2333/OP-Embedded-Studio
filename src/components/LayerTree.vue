@@ -3,7 +3,7 @@ import { nextTick, onUnmounted, ref, watch } from 'vue'
 import { useEventListener } from '@vueuse/core'
 import { TreeRoot, TreeItem, ContextMenuRoot, ContextMenuTrigger, ContextMenuPortal } from 'reka-ui'
 
-import { useInlineRename } from '@/composables/use-inline-rename'
+import { useInlineRename } from '@open-pencil/vue'
 
 import IconCircle from '~icons/lucide/circle'
 import IconComponent from '~icons/lucide/diamond'

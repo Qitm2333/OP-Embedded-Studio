@@ -13,7 +13,7 @@ import { selectionToJSX, renderNodesToSVG } from '@open-pencil/core'
 
 import { useEditorStore } from '@/stores/editor'
 import { menuContent, menuItem, menuSeparator } from '@/components/ui/menu'
-import { toast } from '@/composables/use-toast'
+import { toast } from '@open-pencil/vue'
 
 const store = useEditorStore()
 
