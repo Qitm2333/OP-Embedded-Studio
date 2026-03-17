@@ -27,6 +27,11 @@ export {
 export type { ScrubInputContext } from './ScrubInput'
 
 export { CanvasRoot, CanvasSurface, useCanvasContext } from './Canvas'
+
+export { PropertyListRoot, PropertyListItem, usePropertyList } from './PropertyList'
+export type { PropertyListContext } from './PropertyList'
+
+export { PositionControlsRoot } from './PositionControls'
 export type { CanvasContext } from './Canvas'
 
 export { ToolbarRoot, ToolbarItem, useToolbar } from './Toolbar'

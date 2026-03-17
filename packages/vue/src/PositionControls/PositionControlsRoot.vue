@@ -1,0 +1,64 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+
+import { useEditor } from '../context'
+
+import type { SceneNode } from '@open-pencil/core'
+
+const editor = useEditor()
+
+const nodes = computed(() => editor.getSelectedNodes())
+const node = computed<SceneNode | null>(() => editor.getSelectedNode() ?? null)
+const active = computed(() => nodes.value.length > 0)
+const isMulti = computed(() => nodes.value.length > 1)
+const ids = computed(() => nodes.value.map((n) => n.id))
+
+const x = computed(() => Math.round(node.value?.x ?? 0))
+const y = computed(() => Math.round(node.value?.y ?? 0))
+const width = computed(() => node.value?.width ?? 0)
+const height = computed(() => node.value?.height ?? 0)
+const rotation = computed(() => Math.round(node.value?.rotation ?? 0))
+
+function updateProp(key: string, value: number) {
+  for (const n of nodes.value) {
+    editor.updateNode(n.id, { [key]: value })
+  }
+}
+
+function commitProp(key: string, _value: number, previous: number) {
+  for (const n of nodes.value) {
+    editor.commitNodeUpdate(n.id, { [key]: previous } as Partial<SceneNode>, `Change ${key}`)
+  }
+}
+
+function align(axis: 'horizontal' | 'vertical', pos: 'min' | 'center' | 'max') {
+  editor.alignNodes(ids.value, axis, pos)
+}
+
+function flip(axis: 'horizontal' | 'vertical') {
+  editor.flipNodes(ids.value, axis)
+}
+
+function rotate(degrees: number) {
+  editor.rotateNodes(ids.value, degrees)
+}
+</script>
+
+<template>
+  <slot
+    v-if="active"
+    :node="node"
+    :nodes="nodes"
+    :is-multi="isMulti"
+    :x="x"
+    :y="y"
+    :width="width"
+    :height="height"
+    :rotation="rotation"
+    :update-prop="updateProp"
+    :commit-prop="commitProp"
+    :align="align"
+    :flip="flip"
+    :rotate="rotate"
+  />
+</template>
