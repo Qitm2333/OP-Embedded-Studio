@@ -74,9 +74,14 @@ export function createPageActions(ctx: EditorContext) {
     ctx.graph.updateNode(pageId, { name })
   }
 
+  function setPageColor(color: Color) {
+    ctx.state.pageColor = color
+    ctx.requestRender()
+  }
+
   function clearPageViewports() {
     pageViewports.clear()
   }
 
-  return { switchPage, addPage, deletePage, renamePage, clearPageViewports }
+  return { switchPage, addPage, deletePage, renamePage, setPageColor, clearPageViewports }
 }

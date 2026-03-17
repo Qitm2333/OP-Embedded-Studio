@@ -14,7 +14,7 @@ function isDivider(page: { name: string; childIds: string[] }) {
 
 const pages = computed(() => {
   void store.state.sceneVersion
-  return store.graph.getPages()
+  return store.getPages()
 })
 
 const rename = useInlineRename((id, name) => store.renamePage(id, name))

@@ -7,8 +7,7 @@ import type { Color } from '@open-pencil/core'
 const store = useEditor()
 
 function updateColor(color: Color) {
-  store.state.pageColor = color
-  store.requestRender()
+  store.setPageColor(color)
 }
 </script>
 

@@ -38,7 +38,6 @@ function toggleVisibility() {
     const n = node.value
     if (!n) return
     store.updateNodeWithUndo(n.id, { visible: !n.visible }, 'Toggle visibility')
-    store.requestRender()
   }
 }
 

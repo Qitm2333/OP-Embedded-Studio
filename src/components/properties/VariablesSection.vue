@@ -8,12 +8,12 @@ const emit = defineEmits<{ openDialog: [] }>()
 
 const collectionCount = computed(() => {
   void store.state.sceneVersion
-  return store.graph.variableCollections.size
+  return store.getCollectionCount()
 })
 
 const variableCount = computed(() => {
   void store.state.sceneVersion
-  return store.graph.variables.size
+  return store.getVariableCount()
 })
 </script>
 

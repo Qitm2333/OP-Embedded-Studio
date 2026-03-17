@@ -23,27 +23,25 @@ import type { Fill, Variable } from '@open-pencil/core'
 
 const store = useEditor()
 
-const colorVariables = computed(() => store.graph.getVariablesByType('COLOR'))
+const colorVariables = computed(() => store.getVariablesByType('COLOR'))
 
 function getBoundVariable(nodeId: string, index: number): Variable | undefined {
-  const n = store.graph.getNode(nodeId)
+  const n = store.getNode(nodeId)
   if (!n) return undefined
   const varId = n.boundVariables[`fills/${index}/color`]
-  return varId ? store.graph.variables.get(varId) : undefined
+  return varId ? store.getVariable(varId) : undefined
 }
 
-function bindVariable(nodeId: string, index: number, variableId: string) {
-  store.graph.bindVariable(nodeId, `fills/${index}/color`, variableId)
-  store.requestRender()
+function bindFillVariable(nodeId: string, index: number, variableId: string) {
+  store.bindVariable(nodeId, `fills/${index}/color`, variableId)
 }
 
-function unbindVariable(nodeId: string, index: number) {
-  store.graph.unbindVariable(nodeId, `fills/${index}/color`)
-  store.requestRender()
+function unbindFillVariable(nodeId: string, index: number) {
+  store.unbindVariable(nodeId, `fills/${index}/color`)
 }
 
 function resolvedSwatchStyle(variable: Variable): string {
-  const color = store.graph.resolveColorVariable(variable.id)
+  const color = store.resolveColorVariable(variable.id)
   if (!color) return 'background: #000'
   return `background: ${colorToCSS(color)}`
 }
@@ -93,7 +91,7 @@ const filteredVariables = computed(() => {
             data-test-id="fill-unbind-variable"
             class="cursor-pointer border-none bg-transparent p-0 text-violet-400 hover:text-surface"
             title="Detach variable"
-            @click="unbindVariable(activeNode.id, i)"
+            @click="unbindFillVariable(activeNode.id, i)"
           >
             <icon-lucide-unlink class="size-3" />
           </button>
@@ -139,7 +137,7 @@ const filteredVariables = computed(() => {
             >
               <ComboboxRoot
                 @update:model-value="
-                  activeNode && bindVariable(activeNode.id, i, ($event as Variable).id)
+                  activeNode && bindFillVariable(activeNode.id, i, ($event as Variable).id)
                 "
               >
                 <ComboboxInput

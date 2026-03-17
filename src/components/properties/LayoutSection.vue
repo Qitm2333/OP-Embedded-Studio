@@ -20,7 +20,7 @@ const showIndividualPadding = ref(false)
 const isInAutoLayout = computed(() => {
   const n = node.value
   if (!n?.parentId) return false
-  const parent = store.graph.getNode(n.parentId)
+  const parent = store.getNode(n.parentId)
   return parent ? parent.layoutMode !== 'NONE' : false
 })
 

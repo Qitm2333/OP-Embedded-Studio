@@ -34,7 +34,7 @@ const searchTerm = ref('')
 
 const collections = computed(() => {
   void store.state.sceneVersion
-  return [...store.graph.variableCollections.values()]
+  return store.getCollections()
 })
 
 const activeTab = ref(collections.value[0]?.id ?? '')
@@ -67,7 +67,7 @@ function startRenameCollection(id: string) {
 function commitRenameCollection(id: string, input: HTMLInputElement) {
   if (editingCollectionId.value !== id) return
   const value = input.value.trim()
-  const collection = store.graph.variableCollections.get(id)
+  const collection = store.getCollection(id)
   if (collection && value && value !== collection.name) {
     store.renameCollection(id, value)
   }
@@ -75,14 +75,14 @@ function commitRenameCollection(id: string, input: HTMLInputElement) {
 }
 
 const activeModes = computed(() => {
-  const col = store.graph.variableCollections.get(activeTab.value)
+  const col = store.getCollection(activeTab.value)
   return col?.modes ?? []
 })
 
 const variables = computed(() => {
   void store.state.sceneVersion
   if (!activeTab.value) return []
-  const all = store.graph.getVariablesForCollection(activeTab.value)
+  const all = store.getVariablesForCollection(activeTab.value)
   if (!searchTerm.value) return all
   const q = searchTerm.value.toLowerCase()
   return all.filter((v) => v.name.toLowerCase().includes(q))
@@ -93,7 +93,7 @@ function formatModeValue(variable: Variable, modeId: string): string {
   if (value === undefined) return '—'
   if (typeof value === 'object' && 'r' in value) return colorToHexRaw(value as Color)
   if (typeof value === 'object' && 'aliasId' in value) {
-    const aliased = store.graph.variables.get(value.aliasId)
+    const aliased = store.getVariable(value.aliasId)
     return aliased ? `→ ${aliased.name}` : '→ ?'
   }
   return String(value)
@@ -131,7 +131,7 @@ function commitValueEdit(variable: Variable, modeId: string, newValue: string) {
 }
 
 function addVariable() {
-  const col = store.graph.variableCollections.get(activeTab.value)
+  const col = store.getCollection(activeTab.value)
   if (!col) return
 
   const id = `var:${randomHex(8)}`

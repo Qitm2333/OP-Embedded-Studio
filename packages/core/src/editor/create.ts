@@ -205,6 +205,11 @@ export function createEditor(options?: EditorOptions) {
     undo,
     state,
 
+    // Graph reads
+    getNode: (id: string) => _graph.getNode(id),
+    getChildren: (id: string) => _graph.getChildren(id),
+    getPages: (includeInternal?: boolean) => _graph.getPages(includeInternal),
+
     // Lifecycle
     requestRender,
     requestRepaint,

@@ -40,13 +40,11 @@ async function selectWeight(weight: number) {
   const label = WEIGHTS.find((w) => w.value === weight)?.label ?? 'Regular'
   await loadFont(node.value.fontFamily, label)
   store.updateNodeWithUndo(node.value.id, { fontWeight: weight }, 'Change font weight')
-  store.requestRender()
 }
 
 function setAlign(align: TextAlign) {
   if (!node.value) return
   store.updateNodeWithUndo(node.value.id, { textAlignHorizontal: align }, 'Change text alignment')
-  store.requestRender()
 }
 
 function toggleBold() {
@@ -57,7 +55,6 @@ function toggleBold() {
 function toggleItalic() {
   if (!node.value) return
   store.updateNodeWithUndo(node.value.id, { italic: !node.value.italic }, 'Toggle italic')
-  store.requestRender()
 }
 
 function toggleDecoration(deco: 'UNDERLINE' | 'STRIKETHROUGH') {
@@ -68,7 +65,6 @@ function toggleDecoration(deco: 'UNDERLINE' | 'STRIKETHROUGH') {
     { textDecoration: current === deco ? 'NONE' : deco },
     `Toggle ${deco.toLowerCase()}`
   )
-  store.requestRender()
 }
 
 const activeFormatting = computed(() => {

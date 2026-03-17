@@ -1,7 +1,40 @@
-import type { Variable, VariableCollection, VariableValue } from '../scene-graph'
+import type { Variable, VariableCollection, VariableType, VariableValue } from '../scene-graph'
 import type { EditorContext } from './types'
 
 export function createVariableActions(ctx: EditorContext) {
+  function getVariablesByType(type: VariableType) {
+    return ctx.graph.getVariablesByType(type)
+  }
+
+  function getVariable(id: string) {
+    return ctx.graph.variables.get(id)
+  }
+
+  function resolveColorVariable(id: string) {
+    return ctx.graph.resolveColorVariable(id)
+  }
+
+  function getVariablesForCollection(collectionId: string) {
+    return ctx.graph.getVariablesForCollection(collectionId)
+  }
+
+  function getCollection(id: string) {
+    return ctx.graph.variableCollections.get(id)
+  }
+
+  function getCollections() {
+    return [...ctx.graph.variableCollections.values()]
+  }
+
+  function getCollectionCount() {
+    return ctx.graph.variableCollections.size
+  }
+
+  function getVariableCount() {
+    return ctx.graph.variables.size
+  }
+
+
   function renameCollection(id: string, newName: string) {
     const collection = ctx.graph.variableCollections.get(id)
     if (!collection) return
@@ -142,6 +175,14 @@ export function createVariableActions(ctx: EditorContext) {
   }
 
   return {
+    getVariablesByType,
+    getVariable,
+    resolveColorVariable,
+    getVariablesForCollection,
+    getCollection,
+    getCollections,
+    getCollectionCount,
+    getVariableCount,
     renameCollection,
     addCollection,
     removeCollection,
