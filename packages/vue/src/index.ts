@@ -33,6 +33,7 @@ export { PropertyListRoot, PropertyListItem, usePropertyList } from './PropertyL
 export type { PropertyListContext } from './PropertyList'
 
 export { PositionControlsRoot } from './PositionControls'
+export { LayoutControlsRoot } from './LayoutControls'
 
 export { LayerTreeRoot, LayerTreeItem, useLayerTree } from './LayerTree'
 
