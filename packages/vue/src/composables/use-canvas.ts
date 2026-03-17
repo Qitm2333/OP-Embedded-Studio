@@ -1,5 +1,5 @@
 import { useBreakpoints, useRafFn, useResizeObserver } from '@vueuse/core'
-import { onMounted, onUnmounted, type Ref } from 'vue'
+import { onMounted, onScopeDispose, type Ref } from 'vue'
 
 import { getCanvasKit, getGpuBackend, SkiaRenderer } from '@open-pencil/core'
 
@@ -169,7 +169,7 @@ export function useCanvas(
     void init()
   })
 
-  onUnmounted(() => {
+  onScopeDispose(() => {
     destroyed = true
     pause()
     cancelAnimationFrame(resizeRaf)

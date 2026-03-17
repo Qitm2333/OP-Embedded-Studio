@@ -1,4 +1,4 @@
-import { ref, watchEffect, type Ref } from 'vue'
+import { onScopeDispose, ref, watchEffect, type Ref } from 'vue'
 import { draggable, dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
 import {
@@ -84,7 +84,7 @@ export function useLayerDrag(
     })
   }
 
-  monitorForElements({
+  const cleanupMonitor = monitorForElements({
     onDrop: ({ source, location }) => {
       const target = location.current.dropTargets[0]
       if (!target) return
@@ -117,6 +117,7 @@ export function useLayerDrag(
       instructionTargetId.value = null
     }
   })
+  onScopeDispose(cleanupMonitor)
 
   return {
     draggingId,

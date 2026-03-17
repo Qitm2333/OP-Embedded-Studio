@@ -110,14 +110,17 @@ onMounted(async () => {
 
     <div class="mb-1.5 flex items-center gap-1.5">
       <FontPicker class="min-w-0 flex-1" :model-value="node.fontFamily" @select="selectFamily" />
-      <icon-lucide-alert-triangle
+      <Tip
         v-if="hasMissingFonts"
-        data-test-id="typography-missing-font"
-        class="size-3.5 shrink-0 text-amber-400"
-        :title="
+        :label="
           'Missing font' + (missingFonts.length > 1 ? 's' : '') + ': ' + missingFonts.join(', ')
         "
-      />
+      >
+        <icon-lucide-alert-triangle
+          data-test-id="typography-missing-font"
+          class="size-3.5 shrink-0 text-amber-400"
+        />
+      </Tip>
     </div>
 
     <!-- Weight + Size -->

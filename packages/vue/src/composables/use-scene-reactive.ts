@@ -1,4 +1,4 @@
-import { computed, onScopeDispose, shallowRef, triggerRef, type ComputedRef } from 'vue'
+import { computed, onScopeDispose, shallowRef, triggerRef, watchEffect, type ComputedRef } from 'vue'
 
 import type { Editor } from '@open-pencil/core/editor'
 
@@ -37,6 +37,11 @@ function getBridge(editor: Editor): SceneBridge {
         editor.graph.emitter.on('node:reparented', trigger),
         editor.graph.emitter.on('node:reordered', trigger)
       )
+      const stop = watchEffect(() => {
+        void editor.state.sceneVersion
+        trigger()
+      })
+      unbinds.push(stop)
     },
     unsubscribe() {
       if (--this.count > 0) return

@@ -201,14 +201,15 @@ const topMenus = [
         @dblclick="startRename"
         >{{ store.state.documentName }}</span
       >
-      <button
-        data-test-id="app-toggle-ui"
-        class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
-        title="Toggle UI (⌘\)"
-        @click="store.state.showUI = !store.state.showUI"
-      >
-        <icon-lucide-sidebar class="size-3.5" />
-      </button>
+      <Tip label="Toggle UI (⌘\)">
+        <button
+          data-test-id="app-toggle-ui"
+          class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
+          @click="store.state.showUI = !store.state.showUI"
+        >
+          <icon-lucide-sidebar class="size-3.5" />
+        </button>
+      </Tip>
     </div>
     <div v-if="!IS_TAURI" class="flex items-center px-1 pb-1">
       <MenubarRoot class="scrollbar-none flex items-center gap-0.5 overflow-x-auto">
