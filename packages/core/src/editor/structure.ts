@@ -158,7 +158,7 @@ export function createStructureActions(ctx: EditorContext) {
     ctx.undo.push({
       label: `Create ${containerType.toLowerCase().replace('_', ' ')}`,
       forward: () => {
-        const c = ctx.graph.createNode(containerType, parentId, { ...containerNode, ...extraProps })
+        const c = ctx.graph.createNode(containerType, parentId, { ...containerNode, ...extraProps, id: containerId })
         ctx.graph.insertChildAt(c.id, parentId, firstIndex)
         for (const n of origPositions) ctx.graph.reparentNode(n.id, c.id)
         ctx.state.selectedIds = new Set([c.id])
@@ -228,7 +228,7 @@ export function createStructureActions(ctx: EditorContext) {
     ctx.undo.push({
       label: 'Wrap in auto layout',
       forward: () => {
-        const f = ctx.graph.createNode('FRAME', parentId, { ...frame })
+        const f = ctx.graph.createNode('FRAME', parentId, { ...frame, id: frameId })
         for (const n of origPositions) ctx.graph.reparentNode(n.id, f.id)
         computeLayout(ctx.graph, f.id)
         ctx.runLayoutForNode(f.id)
@@ -265,6 +265,7 @@ export function createStructureActions(ctx: EditorContext) {
       if (!child) return { id, x: 0, y: 0 }
       return { id, x: child.x, y: child.y }
     })
+    const groupId = node.id
     const groupSnapshot = { ...node, childIds: [...node.childIds] }
 
     for (let i = 0; i < childIds.length; i++) {
@@ -282,11 +283,11 @@ export function createStructureActions(ctx: EditorContext) {
           ctx.graph.reparentNode(childIds[i], parentId)
           ctx.graph.insertChildAt(childIds[i], parentId, groupIndex + i)
         }
-        ctx.graph.deleteNode(node.id)
+        ctx.graph.deleteNode(groupId)
         ctx.state.selectedIds = new Set(childIds)
       },
       inverse: () => {
-        const g = ctx.graph.createNode('GROUP', parentId, { ...groupSnapshot, childIds: [] })
+        const g = ctx.graph.createNode('GROUP', parentId, { ...groupSnapshot, childIds: [], id: groupId })
         ctx.graph.insertChildAt(g.id, parentId, groupIndex)
         for (const orig of origPositions) {
           ctx.graph.reparentNode(orig.id, g.id)

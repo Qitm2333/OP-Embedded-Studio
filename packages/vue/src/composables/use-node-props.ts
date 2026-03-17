@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 
 import { useEditor } from '../context'
+import { useSceneComputed } from './use-scene-reactive'
 
 import type { Fill, SceneNode, Stroke } from '@open-pencil/core'
 
@@ -9,8 +10,8 @@ export type MixedValue<T> = T | typeof MIXED
 
 export function useNodeProps() {
   const store = useEditor()
-  const node = computed(() => store.getSelectedNode() ?? null)
-  const nodes = computed(() => store.getSelectedNodes())
+  const node = useSceneComputed(() => store.getSelectedNode() ?? null)
+  const nodes = useSceneComputed(() => store.getSelectedNodes())
   const isMulti = computed(() => nodes.value.length > 1)
   const active = computed(() => node.value || isMulti.value)
   const activeNode = computed(() => node.value ?? (nodes.value[0] as SceneNode | undefined) ?? null)

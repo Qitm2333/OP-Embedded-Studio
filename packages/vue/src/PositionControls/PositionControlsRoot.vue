@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 
 import { useEditor } from '../context'
+import { usePropScrub } from '../composables/use-prop-scrub'
 
 import type { SceneNode } from '@open-pencil/core'
 
@@ -19,16 +20,14 @@ const width = computed(() => node.value?.width ?? 0)
 const height = computed(() => node.value?.height ?? 0)
 const rotation = computed(() => Math.round(node.value?.rotation ?? 0))
 
+const { updateProp: _updateProp, commitProp: _commitProp } = usePropScrub(editor)
+
 function updateProp(key: string, value: number) {
-  for (const n of nodes.value) {
-    editor.updateNode(n.id, { [key]: value })
-  }
+  _updateProp(nodes.value, key, value)
 }
 
 function commitProp(key: string, _value: number, previous: number) {
-  for (const n of nodes.value) {
-    editor.commitNodeUpdate(n.id, { [key]: previous } as Partial<SceneNode>, `Change ${key}`)
-  }
+  _commitProp(nodes.value, key, _value, previous)
 }
 
 function align(axis: 'horizontal' | 'vertical', pos: 'min' | 'center' | 'max') {

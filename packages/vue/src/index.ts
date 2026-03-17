@@ -16,6 +16,7 @@ export { useLayerDrag } from './composables/use-layer-drag'
 export { useSceneComputed } from './composables/use-scene-reactive'
 export { useSelectionState } from './composables/use-selection-state'
 export { useNodeFontStatus } from './composables/use-font-status'
+export { usePropScrub } from './composables/use-prop-scrub'
 export { toast } from './toast'
 export type { Toast, ToastVariant } from './toast'
 

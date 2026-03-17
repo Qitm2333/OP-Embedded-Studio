@@ -140,12 +140,17 @@ export function createEditor(options?: EditorOptions) {
     requestRender()
   }
 
+  let graphUnbinds: Array<() => void> = []
+
   function subscribeToGraph() {
-    _graph.emitter.on('node:updated', onNodeUpdated)
-    _graph.emitter.on('node:created', (node) => onNodeStructureChanged(node.id))
-    _graph.emitter.on('node:deleted', onNodeStructureChanged)
-    _graph.emitter.on('node:reparented', onNodeStructureChanged)
-    _graph.emitter.on('node:reordered', onNodeStructureChanged)
+    for (const u of graphUnbinds) u()
+    graphUnbinds = [
+      _graph.emitter.on('node:updated', onNodeUpdated),
+      _graph.emitter.on('node:created', (node) => onNodeStructureChanged(node.id)),
+      _graph.emitter.on('node:deleted', onNodeStructureChanged),
+      _graph.emitter.on('node:reparented', onNodeStructureChanged),
+      _graph.emitter.on('node:reordered', onNodeStructureChanged)
+    ]
   }
 
   subscribeToGraph()

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import { useEditor } from '../context'
 import { MIXED } from '../composables/use-node-props'
+import { usePropScrub } from '../composables/use-prop-scrub'
 
 import type { SceneNode } from '@open-pencil/core'
 import type { MixedValue } from '../composables/use-node-props'
@@ -58,44 +59,14 @@ const visibilityState = computed<'visible' | 'hidden' | 'mixed'>(() => {
   return v ? 'visible' : 'hidden'
 })
 
-const previousValues = new Map<string, Record<string, number | string>>()
-
-function storePreviousValues(key: string) {
-  for (const n of editor.getSelectedNodes()) {
-    let rec = previousValues.get(n.id)
-    if (!rec) {
-      rec = {}
-      previousValues.set(n.id, rec)
-    }
-    if (!(key in rec)) {
-      rec[key] = n[key as keyof SceneNode] as number | string
-    }
-  }
-}
+const { updateProp: _updateProp, commitProp: _commitProp } = usePropScrub(editor)
 
 function updateProp(key: string, value: number | string) {
-  if (editor.getSelectedNodes().length > 1) {
-    storePreviousValues(key)
-    for (const n of editor.getSelectedNodes()) {
-      editor.updateNode(n.id, { [key]: value })
-    }
-  } else {
-    const n = editor.getSelectedNode()
-    if (n) editor.updateNode(n.id, { [key]: value })
-  }
+  _updateProp(nodes.value, key, value)
 }
 
 function commitProp(key: string, _value: number | string, previous: number | string) {
-  if (editor.getSelectedNodes().length > 1) {
-    for (const n of editor.getSelectedNodes()) {
-      const prev = previousValues.get(n.id)?.[key] ?? previous
-      editor.commitNodeUpdate(n.id, { [key]: prev } as Partial<SceneNode>, `Change ${key}`)
-    }
-    previousValues.clear()
-  } else {
-    const n = editor.getSelectedNode()
-    if (n) editor.commitNodeUpdate(n.id, { [key]: previous } as Partial<SceneNode>, `Change ${key}`)
-  }
+  _commitProp(nodes.value, key, _value, previous)
 }
 
 function toggleVisibility() {

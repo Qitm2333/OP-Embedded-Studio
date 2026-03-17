@@ -150,6 +150,7 @@ export function createUndoActions(ctx: EditorContext) {
     computeAllLayouts(ctx.graph, ctx.state.currentPageId)
     ctx.state.selectedIds = new Set()
     ctx.state.hoveredNodeId = null
+    ctx.graph.emitter.emit('node:reordered', ctx.state.currentPageId, ctx.graph.rootId, 0)
     ctx.requestRender()
   }
 
