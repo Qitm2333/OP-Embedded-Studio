@@ -26,11 +26,13 @@ import IconLock from '~icons/lucide/lock'
 
 import { menuContent, menuItem } from '@/components/ui/menu'
 import { ACTION_TOAST_DURATION } from '@/constants'
-import { TOOLS, useEditorStore } from '@/stores/editor'
+import { useEditorStore } from '@/stores/editor'
 import { toolIcons } from '@/utils/tools'
-
 import type { Component } from 'vue'
-import type { Tool, ToolDef } from '@/stores/editor'
+import type { EditorToolDef, Tool } from '@open-pencil/vue'
+import { EDITOR_TOOLS } from '@open-pencil/vue'
+
+const TOOLS = EDITOR_TOOLS
 
 const store = useEditorStore()
 const breakpoints = useBreakpoints({ mobile: 768 })
@@ -64,12 +66,12 @@ const toolShortcuts: Record<Tool, string> = {
   HAND: 'H'
 }
 
-function isActive(tool: ToolDef): boolean {
+function isActive(tool: EditorToolDef): boolean {
   if (tool.key === store.state.activeTool) return true
   return tool.flyout?.includes(store.state.activeTool) ?? false
 }
 
-function activeKeyForTool(tool: ToolDef): Tool {
+function activeKeyForTool(tool: EditorToolDef): Tool {
   if (tool.flyout?.includes(store.state.activeTool)) return store.state.activeTool
   return tool.key
 }
