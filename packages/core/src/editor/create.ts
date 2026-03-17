@@ -24,23 +24,10 @@ import type { SkiaRenderer } from '../renderer/renderer'
 import type { CanvasKit } from 'canvaskit-wasm'
 import type { EditorContext, EditorOptions, EditorState } from './types'
 
-export function createEditor(options?: EditorOptions) {
-  let _graph = options?.graph ?? new SceneGraph()
-  const undo = new UndoManager()
-  const _loadFont = options?.loadFont ?? defaultLoadFont
-  const _getViewportSize = options?.getViewportSize ?? (() => {
-    if (IS_BROWSER) return { width: window.innerWidth, height: window.innerHeight }
-    return { width: 800, height: 600 }
-  })
-  let _ck: CanvasKit | null = null
-  let _renderer: SkiaRenderer | null = null
-  let _textEditor: TextEditor | null = null
-
-  void prefetchFigmaSchema()
-
-  const state: EditorState = options?.state ?? {
+export function createDefaultEditorState(pageId: string): EditorState {
+  return {
     activeTool: 'SELECT',
-    currentPageId: _graph.getPages()[0].id,
+    currentPageId: pageId,
     selectedIds: new Set<string>(),
     marquee: null,
     snapGuides: [],
@@ -63,6 +50,23 @@ export function createEditor(options?: EditorOptions) {
     loading: false,
     enteredContainerId: null
   }
+}
+
+export function createEditor(options?: EditorOptions) {
+  let _graph = options?.graph ?? new SceneGraph()
+  const undo = new UndoManager()
+  const _loadFont = options?.loadFont ?? defaultLoadFont
+  const _getViewportSize = options?.getViewportSize ?? (() => {
+    if (IS_BROWSER) return { width: window.innerWidth, height: window.innerHeight }
+    return { width: 800, height: 600 }
+  })
+  let _ck: CanvasKit | null = null
+  let _renderer: SkiaRenderer | null = null
+  let _textEditor: TextEditor | null = null
+
+  void prefetchFigmaSchema()
+
+  const state: EditorState = options?.state ?? createDefaultEditorState(_graph.getPages()[0].id)
 
   function requestRender() {
     state.renderVersion++

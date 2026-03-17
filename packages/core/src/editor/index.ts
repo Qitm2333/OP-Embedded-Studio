@@ -1,4 +1,4 @@
-export { createEditor } from './create'
+export { createDefaultEditorState, createEditor } from './create'
 export type { Editor } from './create'
 export {
   EDITOR_TOOLS,

@@ -1,3 +1,4 @@
+import { computeAbsoluteBounds } from '../geometry'
 import { computeLayout } from '../layout'
 
 import type { LayoutMode, SceneNode } from '../scene-graph'
@@ -117,17 +118,11 @@ export function createStructureActions(ctx: EditorContext) {
     const nodeIds = selectedNodes.map((n) => n.id)
     const origPositions = selectedNodes.map((n) => ({ id: n.id, x: n.x, y: n.y }))
 
-    let minX = Infinity
-    let minY = Infinity
-    let maxX = -Infinity
-    let maxY = -Infinity
-    for (const n of selectedNodes) {
-      const abs = ctx.graph.getAbsolutePosition(n.id)
-      minX = Math.min(minX, abs.x)
-      minY = Math.min(minY, abs.y)
-      maxX = Math.max(maxX, abs.x + n.width)
-      maxY = Math.max(maxY, abs.y + n.height)
-    }
+    const { x: minX, y: minY, width: bw, height: bh } = computeAbsoluteBounds(
+      selectedNodes, (id) => ctx.graph.getAbsolutePosition(id)
+    )
+    const maxX = minX + bw
+    const maxY = minY + bh
 
     const parentAbs = isTopLevel(parentId) ? { x: 0, y: 0 } : ctx.graph.getAbsolutePosition(parentId)
     const firstIndex = Math.min(...nodeIds.map((id) => parent.childIds.indexOf(id)))
@@ -195,31 +190,21 @@ export function createStructureActions(ctx: EditorContext) {
     const prevSelection = new Set(ctx.state.selectedIds)
     const origPositions = selectedNodes.map((n) => ({ id: n.id, x: n.x, y: n.y, parentId }))
 
-    let minX = Infinity
-    let minY = Infinity
-    let maxX = -Infinity
-    let maxY = -Infinity
-    for (const n of selectedNodes) {
-      const abs = ctx.graph.getAbsolutePosition(n.id)
-      minX = Math.min(minX, abs.x)
-      minY = Math.min(minY, abs.y)
-      maxX = Math.max(maxX, abs.x + n.width)
-      maxY = Math.max(maxY, abs.y + n.height)
-    }
+    const bounds = computeAbsoluteBounds(selectedNodes, (id) => ctx.graph.getAbsolutePosition(id))
 
     const parentAbs = isTopLevel(parentId)
       ? { x: 0, y: 0 }
       : ctx.graph.getAbsolutePosition(parentId)
 
     const direction: LayoutMode =
-      selectedNodes.length <= 1 || maxY - minY > maxX - minX ? 'VERTICAL' : 'HORIZONTAL'
+      selectedNodes.length <= 1 || bounds.height > bounds.width ? 'VERTICAL' : 'HORIZONTAL'
 
     const frame = ctx.graph.createNode('FRAME', parentId, {
       name: 'Frame',
-      x: minX - parentAbs.x,
-      y: minY - parentAbs.y,
-      width: maxX - minX,
-      height: maxY - minY,
+      x: bounds.x - parentAbs.x,
+      y: bounds.y - parentAbs.y,
+      width: bounds.width,
+      height: bounds.height,
       layoutMode: direction,
       primaryAxisSizing: 'HUG',
       counterAxisSizing: 'HUG',

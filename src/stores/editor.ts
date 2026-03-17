@@ -4,6 +4,7 @@ import { IS_TAURI, CANVAS_BG_COLOR } from '@/constants'
 import { loadFont } from '@/engine/fonts'
 import {
   computeAllLayouts,
+  createDefaultEditorState,
   createEditor,
   exportFigFile,
   readFigFile,
@@ -35,29 +36,7 @@ export function createEditorStore() {
       cursorCanvasY: number | null
     }
   >({
-    activeTool: 'SELECT',
-    currentPageId: graph.getPages()[0].id,
-    selectedIds: new Set<string>(),
-    marquee: null,
-    snapGuides: [],
-    rotationPreview: null,
-    dropTargetId: null,
-    layoutInsertIndicator: null,
-    hoveredNodeId: null,
-    editingTextId: null,
-    penState: null,
-    penCursorX: null,
-    penCursorY: null,
-    remoteCursors: [],
-    documentName: 'Untitled',
-    panX: 0,
-    pageColor: { ...CANVAS_BG_COLOR },
-    panY: 0,
-    zoom: 1,
-    renderVersion: 0,
-    sceneVersion: 0,
-    loading: false,
-    enteredContainerId: null,
+    ...createDefaultEditorState(graph.getPages()[0].id),
     showUI: true,
     activeRibbonTab: 'panels',
     panelMode: 'design',

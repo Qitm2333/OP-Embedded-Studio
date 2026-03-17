@@ -8,7 +8,9 @@ import {
   sceneNodeToKiwi,
   fractionalPosition,
   buildFontDigestMap,
-  safeColor
+  safeColor,
+  makeDocumentNodeChange,
+  makeCanvasNodeChange
 } from './kiwi/kiwi-serialize'
 import { renderThumbnail } from './render-image'
 
@@ -82,21 +84,7 @@ export async function exportFigFile(
   const docGuid = { sessionID: 0, localID: 0 }
   const localIdCounter = { value: 2 }
 
-  const nodeChanges: KiwiNodeChange[] = [
-    {
-      guid: docGuid,
-      type: 'DOCUMENT',
-      name: 'Document',
-      visible: true,
-      opacity: 1,
-      phase: 'CREATED',
-      transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
-      strokeWeight: 1,
-      strokeAlign: 'CENTER',
-      strokeJoin: 'MITER',
-      documentColorProfile: 'SRGB'
-    }
-  ]
+  const nodeChanges: KiwiNodeChange[] = [makeDocumentNodeChange(docGuid)]
 
   const blobs: Uint8Array[] = []
   const pages = graph.getPages(true)
@@ -112,22 +100,11 @@ export async function exportFigFile(
 
     if (page.internalOnly) internalCanvasGuid = canvasGuid
 
-    const canvasNc: KiwiNodeChange = {
-      guid: canvasGuid,
-      parentIndex: { guid: docGuid, position: fractionalPosition(p) },
-      type: 'CANVAS',
-      name: page.name,
-      visible: true,
-      opacity: 1,
-      phase: 'CREATED',
-      transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
-      strokeWeight: 1,
-      strokeAlign: 'CENTER',
-      strokeJoin: 'MITER',
+    const canvasNc = makeCanvasNodeChange(canvasGuid, docGuid, fractionalPosition(p), page.name, {
       backgroundOpacity: 1,
       backgroundColor: { ...CANVAS_BG_COLOR },
       backgroundEnabled: true
-    }
+    })
     if (page.internalOnly) canvasNc.internalOnly = true
     nodeChanges.push(canvasNc)
 
@@ -153,20 +130,10 @@ export async function exportFigFile(
     if (!internalCanvasGuid) {
       const internalLocalID = localIdCounter.value++
       internalCanvasGuid = { sessionID: 0, localID: internalLocalID }
-      nodeChanges.push({
-        guid: internalCanvasGuid,
-        parentIndex: { guid: docGuid, position: fractionalPosition(pages.length) },
-        type: 'CANVAS',
-        name: 'Internal Only Canvas',
-        visible: true,
-        opacity: 1,
-        phase: 'CREATED',
-        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
-        strokeWeight: 1,
-        strokeAlign: 'CENTER',
-        strokeJoin: 'MITER',
-        internalOnly: true
-      })
+      nodeChanges.push(makeCanvasNodeChange(
+        internalCanvasGuid, docGuid, fractionalPosition(pages.length), 'Internal Only Canvas',
+        { internalOnly: true }
+      ))
     }
 
     const modeIdToGuid = new Map<string, GUID>()

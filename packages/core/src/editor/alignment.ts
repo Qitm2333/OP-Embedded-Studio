@@ -1,3 +1,4 @@
+import { computeAbsoluteBounds } from '../geometry'
 import type { Vector } from '../types'
 import type { SceneNode } from '../scene-graph'
 import type { EditorContext } from './types'
@@ -37,19 +38,14 @@ function alignMultipleNodes(
   align: 'min' | 'center' | 'max'
 ) {
   const absPositions = new Map<string, Vector>()
-  let minX = Infinity
-  let minY = Infinity
-  let maxX = -Infinity
-  let maxY = -Infinity
+  for (const n of nodes) absPositions.set(n.id, ctx.graph.getAbsolutePosition(n.id))
 
-  for (const n of nodes) {
-    const abs = ctx.graph.getAbsolutePosition(n.id)
-    absPositions.set(n.id, abs)
-    minX = Math.min(minX, abs.x)
-    minY = Math.min(minY, abs.y)
-    maxX = Math.max(maxX, abs.x + n.width)
-    maxY = Math.max(maxY, abs.y + n.height)
-  }
+  const getPos = (id: string) => absPositions.get(id) ?? { x: 0, y: 0 }
+  const b = computeAbsoluteBounds(nodes, getPos)
+  const minX = b.x
+  const minY = b.y
+  const maxX = b.x + b.width
+  const maxY = b.y + b.height
 
   for (const n of nodes) {
     const abs = absPositions.get(n.id)

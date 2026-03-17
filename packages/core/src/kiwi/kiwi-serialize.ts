@@ -493,3 +493,44 @@ export function sceneNodeToKiwi(
 
   return result
 }
+
+const IDENTITY_TRANSFORM = { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 }
+
+export function makeDocumentNodeChange(guid: GUID): NodeChange & Record<string, unknown> {
+  return {
+    guid,
+    type: 'DOCUMENT',
+    name: 'Document',
+    visible: true,
+    opacity: 1,
+    phase: 'CREATED',
+    transform: { ...IDENTITY_TRANSFORM },
+    strokeWeight: 1,
+    strokeAlign: 'CENTER',
+    strokeJoin: 'MITER',
+    documentColorProfile: 'SRGB'
+  }
+}
+
+export function makeCanvasNodeChange(
+  guid: GUID,
+  parentGuid: GUID,
+  position: string,
+  name: string,
+  extra?: Record<string, unknown>
+): NodeChange & Record<string, unknown> {
+  return {
+    guid,
+    parentIndex: { guid: parentGuid, position },
+    type: 'CANVAS',
+    name,
+    visible: true,
+    opacity: 1,
+    phase: 'CREATED',
+    transform: { ...IDENTITY_TRANSFORM },
+    strokeWeight: 1,
+    strokeAlign: 'CENTER',
+    strokeJoin: 'MITER',
+    ...extra
+  }
+}

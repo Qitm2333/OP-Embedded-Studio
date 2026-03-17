@@ -68,6 +68,18 @@ export function normalizeFontFamily(family: string): string {
   return family.replace(/\s+Variable$/i, '')
 }
 
+async function retryWithNormalizedFamily(family: string): Promise<Record<string, string> | null> {
+  const normalized = normalizeFontFamily(family)
+  if (normalized === family) {
+    googleFontsFailed.add(family)
+    return null
+  }
+  const result = await fetchGoogleFontFiles(normalized)
+  if (result) googleFontsCache.set(family, result)
+  else googleFontsFailed.add(family)
+  return result
+}
+
 async function fetchGoogleFontFiles(family: string): Promise<Record<string, string> | null> {
   if (googleFontsCache.has(family)) return googleFontsCache.get(family) ?? null
   if (googleFontsFailed.has(family)) return null
@@ -80,31 +92,11 @@ async function fetchGoogleFontFiles(family: string): Promise<Record<string, stri
     googleFontsFailed.add(family)
     return null
   }
-  if (!response.ok) {
-    const normalized = normalizeFontFamily(family)
-    if (normalized !== family) {
-      const result = await fetchGoogleFontFiles(normalized)
-      if (result) googleFontsCache.set(family, result)
-      else googleFontsFailed.add(family)
-      return result
-    }
-    googleFontsFailed.add(family)
-    return null
-  }
+  if (!response.ok) return retryWithNormalizedFamily(family)
 
   const data = (await response.json()) as { items?: Array<{ files?: Record<string, string> }> }
   const files = data.items?.[0]?.files
-  if (!files) {
-    const normalized = normalizeFontFamily(family)
-    if (normalized !== family) {
-      const result = await fetchGoogleFontFiles(normalized)
-      if (result) googleFontsCache.set(family, result)
-      else googleFontsFailed.add(family)
-      return result
-    }
-    googleFontsFailed.add(family)
-    return null
-  }
+  if (!files) return retryWithNormalizedFamily(family)
 
   googleFontsCache.set(family, files)
   return files

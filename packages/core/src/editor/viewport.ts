@@ -1,5 +1,5 @@
 import { ZOOM_DIVISOR, ZOOM_SCALE_MAX, ZOOM_SCALE_MIN } from '../constants'
-import { computeBounds } from '../geometry'
+import { computeBounds, computeAbsoluteBounds } from '../geometry'
 
 import type { EditorContext } from './types'
 
@@ -65,22 +65,13 @@ export function createViewportActions(ctx: EditorContext) {
   function zoomToSelection() {
     if (ctx.state.selectedIds.size === 0) return
 
-    let minX = Infinity
-    let minY = Infinity
-    let maxX = -Infinity
-    let maxY = -Infinity
-    for (const id of ctx.state.selectedIds) {
-      const n = ctx.graph.getNode(id)
-      if (!n) continue
-      const abs = ctx.graph.getAbsolutePosition(id)
-      minX = Math.min(minX, abs.x)
-      minY = Math.min(minY, abs.y)
-      maxX = Math.max(maxX, abs.x + n.width)
-      maxY = Math.max(maxY, abs.y + n.height)
-    }
-    if (minX === Infinity) return
+    const nodes = [...ctx.state.selectedIds]
+      .map((id) => ctx.graph.getNode(id))
+      .filter((n): n is NonNullable<typeof n> => n != null)
+    if (nodes.length === 0) return
 
-    zoomToBounds(minX, minY, maxX, maxY)
+    const b = computeAbsoluteBounds(nodes, (id) => ctx.graph.getAbsolutePosition(id))
+    zoomToBounds(b.x, b.y, b.x + b.width, b.y + b.height)
   }
 
   return { screenToCanvas, applyZoom, pan, zoomToBounds, zoomToFit, zoomTo100, zoomToSelection }

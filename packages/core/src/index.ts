@@ -1,10 +1,11 @@
 export type { GUID, Color, Vector, Matrix, Rect } from './types'
-export { computeBounds, degToRad, radToDeg, rotatePoint, rotatedCorners, rotatedBBox } from './geometry'
+export { computeBounds, computeAbsoluteBounds, degToRad, radToDeg, rotatePoint, rotatedCorners, rotatedBBox } from './geometry'
 export { randomHex, randomInt, randomIndex } from './random'
 
 export * from './constants'
 
 export {
+  createDefaultEditorState,
   createEditor,
   EDITOR_TOOLS,
   TOOL_SHORTCUTS
@@ -67,7 +68,7 @@ export {
 } from './scene-graph'
 
 export { FigmaAPI, FigmaNodeProxy, computeImageHash, type FigmaFontName } from './figma-api'
-export { ALL_TOOLS, CORE_TOOLS, EXTENDED_TOOLS, defineTool, toolsToAI, buildDebugLog, requireNode, NodeNotFoundError } from './tools'
+export { ALL_TOOLS, CORE_TOOLS, EXTENDED_TOOLS, defineTool, toolsToAI, buildDebugLog, requireNode, NodeNotFoundError, calcClusterConfidence } from './tools'
 export type { ToolDef, ParamDef, ParamType, ToolLogEntry, ToolDebugLog, AIAdapterOptions, StepBudget } from './tools'
 export { executeRpcCommand, ALL_RPC_COMMANDS } from './rpc'
 export { queryByXPath, matchByXPath } from './xpath'
