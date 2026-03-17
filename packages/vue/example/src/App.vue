@@ -2,10 +2,12 @@
 import { createEditor, type Tool } from '@open-pencil/core/editor'
 import {
   OpenPencilProvider,
-  OpenPencilCanvas,
-  PageList,
+  CanvasRoot,
+  CanvasSurface,
+  PageListRoot,
   LayerTree,
-  ToolSelector,
+  ToolbarRoot,
+  ToolbarItem,
   NodeProperties
 } from '@open-pencil/vue'
 
@@ -26,22 +28,17 @@ const TOOL_LIST: Tool[] = [
 <template>
   <OpenPencilProvider :editor="editor">
     <div class="layout">
-      <ToolSelector v-slot="{ activeTool, setTool }">
+      <ToolbarRoot>
         <div class="toolbar">
-          <button
-            v-for="tool in TOOL_LIST"
-            :key="tool"
-            :class="{ active: activeTool === tool }"
-            @click="setTool(tool)"
-          >
-            {{ tool }}
-          </button>
+          <ToolbarItem v-for="tool in TOOL_LIST" :key="tool" v-slot="{ active, select }" :tool="tool">
+            <button :class="{ active }" @click="select">{{ tool }}</button>
+          </ToolbarItem>
         </div>
-      </ToolSelector>
+      </ToolbarRoot>
 
       <div class="main">
         <div class="panel left">
-          <PageList v-slot="{ pages, currentPageId, switchPage }">
+          <PageListRoot v-slot="{ pages, currentPageId, switchPage }">
             <div class="section">
               <h3>Pages</h3>
               <div
@@ -54,7 +51,7 @@ const TOOL_LIST: Tool[] = [
                 {{ page.name }}
               </div>
             </div>
-          </PageList>
+          </PageListRoot>
 
           <LayerTree v-slot="{ layers, selectedIds, select }">
             <div class="section">
@@ -73,7 +70,9 @@ const TOOL_LIST: Tool[] = [
           </LayerTree>
         </div>
 
-        <OpenPencilCanvas class="canvas-area" />
+        <CanvasRoot>
+          <CanvasSurface class="canvas-area" style="width: 100%; height: 100%; display: block" />
+        </CanvasRoot>
 
         <div class="panel right">
           <NodeProperties v-slot="{ node, update }">

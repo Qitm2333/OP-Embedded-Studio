@@ -143,38 +143,13 @@ export function useCanvas(
 
   function renderNow() {
     if (!renderer || destroyed) return
-    renderer.dpr = window.devicePixelRatio || 1
-    renderer.panX = editor.state.panX
-    renderer.panY = editor.state.panY
-    renderer.zoom = editor.state.zoom
-    renderer.viewportWidth = canvasRef.value?.clientWidth ?? 0
-    renderer.viewportHeight = canvasRef.value?.clientHeight ?? 0
-    renderer.showRulers = shouldShowRulers()
-    renderer.pageColor = editor.state.pageColor
-    renderer.pageId = editor.state.currentPageId
-    renderer.render(
+    renderer.renderFromEditorState(
+      editor.state,
       editor.graph,
-      editor.state.selectedIds,
-      {
-        hoveredNodeId: editor.state.hoveredNodeId,
-        enteredContainerId: editor.state.enteredContainerId,
-        editingTextId: editor.state.editingTextId,
-        textEditor: editor.textEditor,
-        marquee: editor.state.marquee,
-        snapGuides: editor.state.snapGuides,
-        rotationPreview: editor.state.rotationPreview,
-        dropTargetId: editor.state.dropTargetId,
-        layoutInsertIndicator: editor.state.layoutInsertIndicator,
-        penState: editor.state.penState
-          ? {
-              ...editor.state.penState,
-              cursorX: editor.state.penCursorX ?? undefined,
-              cursorY: editor.state.penCursorY ?? undefined
-            }
-          : null,
-        remoteCursors: editor.state.remoteCursors.length > 0 ? editor.state.remoteCursors : undefined
-      },
-      editor.state.sceneVersion
+      editor.textEditor,
+      canvasRef.value?.clientWidth ?? 0,
+      canvasRef.value?.clientHeight ?? 0,
+      shouldShowRulers()
     )
     lastRenderVersion = editor.state.renderVersion
     lastSelectedIds = editor.state.selectedIds

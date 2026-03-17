@@ -26,6 +26,9 @@ export {
 } from './ScrubInput'
 export type { ScrubInputContext } from './ScrubInput'
 
+export { CanvasRoot, CanvasSurface, useCanvasContext } from './Canvas'
+export type { CanvasContext } from './Canvas'
+
 export { ToolbarRoot, ToolbarItem, useToolbar } from './Toolbar'
 export type { ToolbarContext } from './Toolbar'
 
