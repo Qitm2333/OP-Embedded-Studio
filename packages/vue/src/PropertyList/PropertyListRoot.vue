@@ -84,13 +84,14 @@ function toggleVisibility(index: number) {
 providePropertyList({
   editor,
   propKey,
-  items: items as ReturnType<typeof computed<unknown[]>>,
+  items,
   isMixed,
   activeNode,
   isMulti,
-  add: add as (defaults: unknown) => void,
+  add,
   remove,
-  update: update as (index: number, item: unknown) => void,
+  update,
+  patch,
   toggleVisibility
 })
 </script>

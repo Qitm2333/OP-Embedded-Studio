@@ -147,8 +147,7 @@ export function createStructureActions(ctx: EditorContext) {
     })
     const containerId = containerNode.id
 
-    parent.childIds = parent.childIds.filter((id) => id !== containerId)
-    parent.childIds.splice(firstIndex, 0, containerId)
+    ctx.graph.insertChildAt(containerId, parentId, firstIndex)
 
     for (const n of selectedNodes) {
       ctx.graph.reparentNode(n.id, containerId)
@@ -160,8 +159,7 @@ export function createStructureActions(ctx: EditorContext) {
       label: `Create ${containerType.toLowerCase().replace('_', ' ')}`,
       forward: () => {
         const c = ctx.graph.createNode(containerType, parentId, { ...containerNode, ...extraProps })
-        parent.childIds = parent.childIds.filter((id) => id !== c.id)
-        parent.childIds.splice(firstIndex, 0, c.id)
+        ctx.graph.insertChildAt(c.id, parentId, firstIndex)
         for (const n of origPositions) ctx.graph.reparentNode(n.id, c.id)
         ctx.state.selectedIds = new Set([c.id])
       },
@@ -271,8 +269,7 @@ export function createStructureActions(ctx: EditorContext) {
 
     for (let i = 0; i < childIds.length; i++) {
       ctx.graph.reparentNode(childIds[i], parentId)
-      parent.childIds = parent.childIds.filter((id) => id !== childIds[i])
-      parent.childIds.splice(groupIndex + i, 0, childIds[i])
+      ctx.graph.insertChildAt(childIds[i], parentId, groupIndex + i)
     }
 
     ctx.graph.deleteNode(node.id)
@@ -283,16 +280,14 @@ export function createStructureActions(ctx: EditorContext) {
       forward: () => {
         for (let i = 0; i < childIds.length; i++) {
           ctx.graph.reparentNode(childIds[i], parentId)
-          parent.childIds = parent.childIds.filter((id) => id !== childIds[i])
-          parent.childIds.splice(groupIndex + i, 0, childIds[i])
+          ctx.graph.insertChildAt(childIds[i], parentId, groupIndex + i)
         }
         ctx.graph.deleteNode(node.id)
         ctx.state.selectedIds = new Set(childIds)
       },
       inverse: () => {
         const g = ctx.graph.createNode('GROUP', parentId, { ...groupSnapshot, childIds: [] })
-        parent.childIds = parent.childIds.filter((id) => id !== g.id)
-        parent.childIds.splice(groupIndex, 0, g.id)
+        ctx.graph.insertChildAt(g.id, parentId, groupIndex)
         for (const orig of origPositions) {
           ctx.graph.reparentNode(orig.id, g.id)
           ctx.graph.updateNode(orig.id, { x: orig.x, y: orig.y })
@@ -310,8 +305,7 @@ export function createStructureActions(ctx: EditorContext) {
       if (!parent) continue
       const idx = parent.childIds.indexOf(id)
       if (idx === parent.childIds.length - 1) continue
-      parent.childIds = parent.childIds.filter((cid) => cid !== id)
-      parent.childIds.push(id)
+      ctx.graph.insertChildAt(id, node.parentId, parent.childIds.length)
     }
     ctx.requestRender()
   }
@@ -324,8 +318,7 @@ export function createStructureActions(ctx: EditorContext) {
       if (!parent) continue
       const idx = parent.childIds.indexOf(id)
       if (idx === 0) continue
-      parent.childIds = parent.childIds.filter((cid) => cid !== id)
-      parent.childIds.unshift(id)
+      ctx.graph.insertChildAt(id, node.parentId, 0)
     }
     ctx.requestRender()
   }

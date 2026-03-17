@@ -5,13 +5,14 @@ const { index } = defineProps<{
   index: number
 }>()
 
-const { update, remove, toggleVisibility } = usePropertyList()
+const { update, patch, remove, toggleVisibility } = usePropertyList()
 </script>
 
 <template>
   <slot
     :index="index"
-    :update="(patch: Record<string, unknown>) => update(index, patch)"
+    :update="(item: unknown) => update(index, item)"
+    :patch="(changes: Record<string, unknown>) => patch(index, changes)"
     :remove="() => remove(index)"
     :toggle-visibility="() => toggleVisibility(index)"
   />
