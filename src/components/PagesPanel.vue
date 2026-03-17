@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
-import { useInlineRename, useEditor } from '@open-pencil/vue'
+import { useInlineRename, useEditor, useSceneComputed } from '@open-pencil/vue'
 
 const store = useEditor()
 
@@ -12,10 +12,7 @@ function isDivider(page: { name: string; childIds: string[] }) {
   return page.childIds.length === 0 && DIVIDER_RE.test(page.name)
 }
 
-const pages = computed(() => {
-  void store.state.sceneVersion
-  return store.getPages()
-})
+const pages = useSceneComputed(() => store.getPages())
 
 const rename = useInlineRename((id, name) => store.renamePage(id, name))
 const activeRenameId = ref<string | null>(null)

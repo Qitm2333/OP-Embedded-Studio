@@ -6,7 +6,7 @@ import { useClipboard } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 
 import { selectionToJSX } from '@open-pencil/core'
-import { useEditor } from '@open-pencil/vue'
+import { useEditor, useSceneComputed } from '@open-pencil/vue'
 
 import type { JSXFormat } from '@open-pencil/core'
 
@@ -19,8 +19,7 @@ function toggleFormat() {
   jsxFormat.value = jsxFormat.value === 'openpencil' ? 'tailwind' : 'openpencil'
 }
 
-const jsxCode = computed(() => {
-  void store.state.sceneVersion
+const jsxCode = useSceneComputed(() => {
   const ids = [...store.state.selectedIds]
   if (ids.length === 0) return ''
   return selectionToJSX(ids, store.graph, jsxFormat.value)

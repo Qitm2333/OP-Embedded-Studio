@@ -2,13 +2,11 @@
 import { computed } from 'vue'
 
 import { useEditor } from '../context'
+import { useSceneComputed } from '../composables/use-scene-reactive'
 
 const editor = useEditor()
 
-const pages = computed(() => {
-  void editor.state.sceneVersion
-  return editor.graph.getPages()
-})
+const pages = useSceneComputed(() => editor.graph.getPages())
 const currentPageId = computed(() => editor.state.currentPageId)
 </script>
 

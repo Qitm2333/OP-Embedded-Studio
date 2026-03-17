@@ -25,17 +25,14 @@ import IconToggleLeft from '~icons/lucide/toggle-left'
 import IconX from '~icons/lucide/x'
 import ColorInput from './ColorInput.vue'
 import { colorToHexRaw, parseColor, randomHex } from '@open-pencil/core'
-import { useEditor } from '@open-pencil/vue'
+import { useEditor, useSceneComputed } from '@open-pencil/vue'
 import type { Variable, VariableCollection, VariableValue, Color } from '@open-pencil/core'
 
 const open = defineModel<boolean>('open', { default: false })
 const store = useEditor()
 const searchTerm = ref('')
 
-const collections = computed(() => {
-  void store.state.sceneVersion
-  return store.getCollections()
-})
+const collections = useSceneComputed(() => store.getCollections())
 
 const activeTab = ref(collections.value[0]?.id ?? '')
 watch(collections, (cols) => {
@@ -79,9 +76,8 @@ const activeModes = computed(() => {
   return col?.modes ?? []
 })
 
-const variables = computed(() => {
-  void store.state.sceneVersion
-  if (!activeTab.value) return []
+const variables = useSceneComputed(() => {
+  if (!activeTab.value) return [] as Variable[]
   const all = store.getVariablesForCollection(activeTab.value)
   if (!searchTerm.value) return all
   const q = searchTerm.value.toLowerCase()
@@ -457,3 +453,4 @@ const table = useVueTable({
     </DialogPortal>
   </DialogRoot>
 </template>
+emplate>

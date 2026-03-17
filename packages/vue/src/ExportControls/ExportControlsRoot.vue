@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
 import { useEditor } from '../context'
+import { useSceneComputed } from '../composables/use-scene-reactive'
 
 import type { ExportFormat } from '@open-pencil/core'
 
@@ -17,13 +18,9 @@ const editor = useEditor()
 
 const settings = ref<ExportSetting[]>([{ scale: 1, format: 'PNG' }])
 
-const selectedIds = computed(() => {
-  void editor.state.sceneVersion
-  return [...editor.state.selectedIds]
-})
+const selectedIds = useSceneComputed(() => [...editor.state.selectedIds])
 
-const nodeName = computed(() => {
-  void editor.state.sceneVersion
+const nodeName = useSceneComputed(() => {
   const ids = editor.state.selectedIds
   if (ids.size === 1) {
     const id = [...ids][0]

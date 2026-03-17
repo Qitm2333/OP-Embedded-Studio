@@ -1,20 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-
-import { useEditor } from '@open-pencil/vue'
+import { useEditor, useSceneComputed } from '@open-pencil/vue'
 
 const store = useEditor()
 const emit = defineEmits<{ openDialog: [] }>()
 
-const collectionCount = computed(() => {
-  void store.state.sceneVersion
-  return store.getCollectionCount()
-})
+const collectionCount = useSceneComputed(() => store.getCollectionCount())
 
-const variableCount = computed(() => {
-  void store.state.sceneVersion
-  return store.getVariableCount()
-})
+const variableCount = useSceneComputed(() => store.getVariableCount())
 </script>
 
 <template>

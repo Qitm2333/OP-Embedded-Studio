@@ -2,23 +2,18 @@
 import { computed } from 'vue'
 
 import { useEditor } from '../context'
+import { useSceneComputed } from '../composables/use-scene-reactive'
 
 import type { SceneNode } from '@open-pencil/core'
 
 const editor = useEditor()
 
-const selectedIds = computed(() => {
-  void editor.state.sceneVersion
-  return editor.state.selectedIds
-})
+const selectedIds = useSceneComputed(() => editor.state.selectedIds)
 
 const hasSelection = computed(() => selectedIds.value.size > 0)
 const selectedCount = computed(() => selectedIds.value.size)
 
-const selectedNode = computed<SceneNode | null>(() => {
-  void editor.state.sceneVersion
-  return editor.getSelectedNode() ?? null
-})
+const selectedNode = useSceneComputed<SceneNode | null>(() => editor.getSelectedNode() ?? null)
 
 const selectedType = computed(() => selectedNode.value?.type ?? null)
 const isInstance = computed(() => selectedType.value === 'INSTANCE')
