@@ -3,7 +3,7 @@ import type { Vector } from '@open-pencil/core'
 
 import type { CornerPosition, HandlePosition } from './types'
 
-import rotateCursorSvg from '../shared/assets/rotate-cursor.svg?raw'
+import rotateCursorSvg from '../assets/rotate-cursor.svg?raw'
 
 export const HANDLE_CURSORS: Record<HandlePosition, string> = {
   nw: 'nwse-resize',
