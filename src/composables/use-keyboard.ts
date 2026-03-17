@@ -99,6 +99,7 @@ export function useKeyboard() {
     onEventFired(e) {
       if (e.type !== 'keydown') return
       if (isEditing(e)) return
+      if (store.state.editingTextId) return
 
       if (!e.metaKey && !e.ctrlKey && !e.altKey) {
         const tool = TOOL_SHORTCUTS[e.key.toLowerCase()]
@@ -198,7 +199,8 @@ export function useKeyboard() {
         !keys['meta'].value &&
         !keys['control'].value &&
         !keys['shift'].value &&
-        !keys['alt'].value
+        !keys['alt'].value &&
+        !store.state.editingTextId
     )
   }
 
