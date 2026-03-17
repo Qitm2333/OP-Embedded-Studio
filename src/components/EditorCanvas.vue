@@ -13,7 +13,16 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 const { hitTestSectionTitle, hitTestComponentLabel, hitTestFrameTitle } = useCanvas(
   canvasRef,
-  store
+  store,
+  {
+    onReady() {
+      const loader = document.getElementById('loader')
+      if (loader) {
+        loader.classList.add('fade-out')
+        setTimeout(() => loader.remove(), 300)
+      }
+    }
+  }
 )
 const { cursorOverride } = useCanvasInput(
   canvasRef,
