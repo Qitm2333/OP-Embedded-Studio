@@ -42,18 +42,6 @@ function ids() {
   return [...selectedIds.value]
 }
 
-function copyAsText() {
-  return editor.copySelectionAsText(ids())
-}
-
-function copyAsSVG() {
-  return editor.copySelectionAsSVG(ids())
-}
-
-function copyAsJSX() {
-  return editor.copySelectionAsJSX(ids())
-}
-
 function execCommand(cmd: string) {
   window.document.execCommand(cmd)
 }
@@ -65,7 +53,7 @@ async function clipboardWrite(text: string | null, label: string) {
 }
 
 async function copyAsPNG() {
-  const data = await store.renderExportImage([...store.state.selectedIds], 2, 'PNG')
+  const data = await store.renderExportImage([...selectedIds.value], 2, 'PNG')
   if (!data) return
   const blob = new Blob([data], { type: 'image/png' })
   await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
@@ -197,16 +185,22 @@ const cls = {
         </ContextMenuSubTrigger>
         <ContextMenuPortal>
           <ContextMenuSubContent :class="cls.menu">
-            <ContextMenuItem :class="cls.item" @select="clipboardWrite(copyAsText(), 'text')"
+            <ContextMenuItem
+              :class="cls.item"
+              @select="clipboardWrite(editor.copySelectionAsText(ids()), 'text')"
               >Copy as text</ContextMenuItem
             >
-            <ContextMenuItem :class="cls.item" @select="clipboardWrite(copyAsSVG(), 'SVG')"
+            <ContextMenuItem
+              :class="cls.item"
+              @select="clipboardWrite(editor.copySelectionAsSVG(ids()), 'SVG')"
               >Copy as SVG</ContextMenuItem
             >
             <ContextMenuItem :class="cls.item" @select="copyAsPNG">
               <span>Copy as PNG</span><span class="text-[11px] text-muted">⇧⌘C</span>
             </ContextMenuItem>
-            <ContextMenuItem :class="cls.item" @select="clipboardWrite(copyAsJSX(), 'JSX')"
+            <ContextMenuItem
+              :class="cls.item"
+              @select="clipboardWrite(editor.copySelectionAsJSX(ids()), 'JSX')"
               >Copy as JSX</ContextMenuItem
             >
           </ContextMenuSubContent>

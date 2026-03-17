@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, h, type Component } from 'vue'
+import { ref, computed, nextTick, h, type Component } from 'vue'
 import {
   DialogRoot,
   DialogPortal,
@@ -25,20 +25,27 @@ import IconToggleLeft from '~icons/lucide/toggle-left'
 import IconX from '~icons/lucide/x'
 import Tip from './Tip.vue'
 import ColorInput from './ColorInput.vue'
-import { colorToHexRaw, parseColor, randomHex } from '@open-pencil/core'
-import { useEditor, useSceneComputed } from '@open-pencil/vue'
-import type { Variable, VariableCollection, VariableValue, Color } from '@open-pencil/core'
+import { useVariables } from '@open-pencil/vue'
+import type { Variable, Color } from '@open-pencil/core'
 
 const open = defineModel<boolean>('open', { default: false })
-const store = useEditor()
-const searchTerm = ref('')
 
-const collections = useSceneComputed(() => store.getCollections())
-
-const activeTab = ref(collections.value[0]?.id ?? '')
-watch(collections, (cols) => {
-  if (!activeTab.value && cols[0]) activeTab.value = cols[0].id
-})
+const {
+  collections,
+  variables,
+  activeCollectionId,
+  activeModes,
+  searchTerm,
+  addCollection,
+  renameCollection,
+  addVariable,
+  removeVariable,
+  renameVariable,
+  updateVariableValue,
+  formatModeValue,
+  parseVariableValue,
+  shortName
+} = useVariables()
 
 const editingCollectionId = ref<string | null>(null)
 const collectionInputRefs = new Map<string, HTMLInputElement>()
@@ -65,105 +72,24 @@ function startRenameCollection(id: string) {
 function commitRenameCollection(id: string, input: HTMLInputElement) {
   if (editingCollectionId.value !== id) return
   const value = input.value.trim()
-  const collection = store.getCollection(id)
-  if (collection && value && value !== collection.name) {
-    store.renameCollection(id, value)
+  const col = collections.value.find((c) => c.id === id)
+  if (col && value && value !== col.name) {
+    renameCollection(id, value)
   }
   editingCollectionId.value = null
 }
 
-const activeModes = computed(() => {
-  const col = store.getCollection(activeTab.value)
-  return col?.modes ?? []
-})
-
-const variables = useSceneComputed(() => {
-  if (!activeTab.value) return [] as Variable[]
-  const all = store.getVariablesForCollection(activeTab.value)
-  if (!searchTerm.value) return all
-  const q = searchTerm.value.toLowerCase()
-  return all.filter((v) => v.name.toLowerCase().includes(q))
-})
-
-function formatModeValue(variable: Variable, modeId: string): string {
-  const value = variable.valuesByMode[modeId]
-  if (value === undefined) return '—'
-  if (typeof value === 'object' && 'r' in value) return colorToHexRaw(value as Color)
-  if (typeof value === 'object' && 'aliasId' in value) {
-    const aliased = store.getVariable(value.aliasId)
-    return aliased ? `→ ${aliased.name}` : '→ ?'
-  }
-  return String(value)
-}
-
-function shortName(variable: Variable): string {
-  const parts = variable.name.split('/')
-  return parts[parts.length - 1] ?? variable.name
-}
-
 function commitNameEdit(variable: Variable, newName: string) {
   if (newName && newName !== variable.name) {
-    store.renameVariable(variable.id, newName)
+    renameVariable(variable.id, newName)
   }
-}
-
-function updateColorValue(variable: Variable, modeId: string, color: Color) {
-  store.updateVariableValue(variable.id, modeId, color)
 }
 
 function commitValueEdit(variable: Variable, modeId: string, newValue: string) {
-  let parsed: VariableValue
-  if (variable.type === 'COLOR') {
-    parsed = parseColor(newValue.startsWith('#') ? newValue : `#${newValue}`)
-  } else if (variable.type === 'FLOAT') {
-    const num = parseFloat(newValue)
-    if (isNaN(num)) return
-    parsed = num
-  } else if (variable.type === 'BOOLEAN') {
-    parsed = newValue === 'true'
-  } else {
-    parsed = newValue
+  const parsed = parseVariableValue(variable, newValue)
+  if (parsed !== undefined) {
+    updateVariableValue(variable.id, modeId, parsed)
   }
-  store.updateVariableValue(variable.id, modeId, parsed)
-}
-
-function addVariable() {
-  const col = store.getCollection(activeTab.value)
-  if (!col) return
-
-  const id = `var:${randomHex(8)}`
-  const valuesByMode: Record<string, VariableValue> = {}
-  for (const mode of col.modes) {
-    valuesByMode[mode.modeId] = { r: 0, g: 0, b: 0, a: 1 }
-  }
-
-  const variable: Variable = {
-    id,
-    name: 'New variable',
-    type: 'COLOR',
-    collectionId: col.id,
-    valuesByMode,
-    description: '',
-    hiddenFromPublishing: false
-  }
-  store.addVariable(variable)
-}
-
-function addCollection() {
-  const id = `col:${randomHex(8)}`
-  const collection: VariableCollection = {
-    id,
-    name: 'New collection',
-    modes: [{ modeId: 'default', name: 'Mode 1' }],
-    defaultModeId: 'default',
-    variableIds: []
-  }
-  store.addCollection(collection)
-  activeTab.value = id
-}
-
-function removeVariable(id: string) {
-  store.removeVariable(id)
 }
 
 const VARIABLE_TYPE_ICONS: Record<string, Component> = {
@@ -223,7 +149,7 @@ const columns = computed<ColumnDef<Variable>[]>(() => {
       if (v.type === 'COLOR' && value && typeof value === 'object' && 'r' in value) {
         return h(ColorInput, {
           color: value as Color,
-          onUpdate: (c: Color) => updateColorValue(v, mode.modeId, c)
+          onUpdate: (c: Color) => updateVariableValue(v.id, mode.modeId, c)
         })
       }
 
@@ -319,7 +245,7 @@ const table = useVueTable({
         </div>
 
         <template v-else>
-          <TabsRoot v-model="activeTab" class="flex flex-1 flex-col overflow-hidden">
+          <TabsRoot v-model="activeCollectionId" class="flex flex-1 flex-col overflow-hidden">
             <!-- Top bar -->
             <div class="flex shrink-0 items-center border-b border-border">
               <TabsList class="flex flex-1 gap-0.5 overflow-x-auto px-3 py-1">

@@ -2,20 +2,19 @@
 import { ref } from 'vue'
 
 import Tip from '@/components/Tip.vue'
-import { useInlineRename, useEditor, useSceneComputed } from '@open-pencil/vue'
+import { useInlineRename, usePageList } from '@open-pencil/vue'
 
-const store = useEditor()
+const { pages, currentPageId, switchPage, addPage, renamePage } = usePageList()
 
 const DIVIDER_RE = /^[-–—*\s]+$/
-const pageInputRefs = new Map<string, HTMLInputElement>()
 
 function isDivider(page: { name: string; childIds: string[] }) {
   return page.childIds.length === 0 && DIVIDER_RE.test(page.name)
 }
 
-const pages = useSceneComputed(() => store.getPages())
+const pageInputRefs = new Map<string, HTMLInputElement>()
 
-const rename = useInlineRename((id, name) => store.renamePage(id, name))
+const rename = useInlineRename((id, name) => renamePage(id, name))
 const activeRenameId = ref<string | null>(null)
 
 function setPageInputRef(pageId: string, el: HTMLInputElement | null) {
@@ -44,7 +43,7 @@ function startRename(pg: { id: string; name: string }) {
         <button
           data-test-id="pages-add"
           class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
-          @click="store.addPage()"
+          @click="addPage()"
         >
           +
         </button>
@@ -78,11 +77,11 @@ function startRename(pg: { id: string; name: string }) {
           data-test-id="pages-item"
           class="flex w-full cursor-pointer items-center gap-1.5 rounded border-none px-2 py-1 text-left text-xs"
           :class="
-            pg.id === store.state.currentPageId
+            pg.id === currentPageId
               ? 'bg-hover text-surface'
               : 'bg-transparent text-muted hover:bg-hover hover:text-surface'
           "
-          @click="store.switchPage(pg.id)"
+          @click="switchPage(pg.id)"
           @dblclick="startRename(pg)"
         >
           <icon-lucide-file class="size-3 shrink-0" />
