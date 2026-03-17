@@ -2,6 +2,7 @@
 import AppSelect from '@/components/AppSelect.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/Tip.vue'
+import { sectionWrapper } from '@/components/ui/section'
 import { LayoutControlsRoot, useEditor } from '@open-pencil/vue'
 
 const store = useEditor()
@@ -36,7 +37,7 @@ const store = useEditor()
       toggleIndividualPadding
     }"
   >
-    <div data-test-id="layout-section" class="border-b border-border px-3 py-2">
+    <div data-test-id="layout-section" :class="sectionWrapper()">
       <label class="mb-1.5 block text-[11px] text-muted">Layout</label>
       <div class="flex gap-1.5">
         <div class="flex min-w-0 flex-1 items-center gap-1">
@@ -73,7 +74,7 @@ const store = useEditor()
     </div>
 
     <template v-if="node.type === 'FRAME'">
-      <div class="border-b border-border px-3 py-2">
+      <div :class="sectionWrapper()">
         <div class="flex items-center justify-between">
           <label class="mb-1.5 block text-[11px] text-muted">Auto layout</label>
           <Tip v-if="node.layoutMode === 'NONE'" label="Add auto layout (Shift+A)">
@@ -277,7 +278,7 @@ const store = useEditor()
       </div>
 
       <!-- Clip content -->
-      <div class="border-b border-border px-3 py-2">
+      <div :class="sectionWrapper()">
         <label class="flex cursor-pointer items-center gap-2 text-xs text-surface">
           <input
             type="checkbox"

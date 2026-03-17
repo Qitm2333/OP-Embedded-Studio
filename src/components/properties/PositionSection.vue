@@ -3,6 +3,8 @@ import { computed } from 'vue'
 
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/Tip.vue'
+import { iconButton } from '@/components/ui/icon-button'
+import { sectionWrapper } from '@/components/ui/section'
 import { useNodeProps } from '@open-pencil/vue'
 
 const {
@@ -31,7 +33,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
 </script>
 
 <template>
-  <div v-if="active" data-test-id="position-section" class="border-b border-border px-3 py-2">
+  <div v-if="active" data-test-id="position-section" :class="sectionWrapper()">
     <label class="mb-1.5 block text-[11px] text-muted">Position</label>
 
     <!-- Alignment buttons -->
@@ -39,7 +41,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
       <div class="flex gap-0.5">
         <Tip label="Align left">
           <button
-            class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            :class="iconButton({ size: 'md' })"
             data-test-id="position-align-left"
             @click="store.alignNodes(ids, 'horizontal', 'min')"
           >
@@ -48,7 +50,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
         </Tip>
         <Tip label="Align center horizontally">
           <button
-            class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            :class="iconButton({ size: 'md' })"
             data-test-id="position-align-center-h"
             @click="store.alignNodes(ids, 'horizontal', 'center')"
           >
@@ -57,7 +59,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
         </Tip>
         <Tip label="Align right">
           <button
-            class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            :class="iconButton({ size: 'md' })"
             data-test-id="position-align-right"
             @click="store.alignNodes(ids, 'horizontal', 'max')"
           >
@@ -68,7 +70,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
       <div class="flex gap-0.5">
         <Tip label="Align top">
           <button
-            class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            :class="iconButton({ size: 'md' })"
             data-test-id="position-align-top"
             @click="store.alignNodes(ids, 'vertical', 'min')"
           >
@@ -77,7 +79,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
         </Tip>
         <Tip label="Align center vertically">
           <button
-            class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            :class="iconButton({ size: 'md' })"
             data-test-id="position-align-center-v"
             @click="store.alignNodes(ids, 'vertical', 'center')"
           >
@@ -86,7 +88,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
         </Tip>
         <Tip label="Align bottom">
           <button
-            class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            :class="iconButton({ size: 'md' })"
             data-test-id="position-align-bottom"
             @click="store.alignNodes(ids, 'vertical', 'max')"
           >
@@ -147,7 +149,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
       </ScrubInput>
       <Tip label="Flip horizontal">
         <button
-          class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+          :class="iconButton({ size: 'md', class: 'shrink-0' })"
           data-test-id="position-flip-horizontal"
           @click="store.flipNodes(ids, 'horizontal')"
         >
@@ -156,7 +158,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
       </Tip>
       <Tip label="Flip vertical">
         <button
-          class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+          :class="iconButton({ size: 'md', class: 'shrink-0' })"
           data-test-id="position-flip-vertical"
           @click="store.flipNodes(ids, 'vertical')"
         >
@@ -165,7 +167,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
       </Tip>
       <Tip label="Rotate 90°">
         <button
-          class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+          :class="iconButton({ size: 'md', class: 'shrink-0' })"
           data-test-id="position-rotate-90"
           @click="store.rotateNodes(ids, 90)"
         >

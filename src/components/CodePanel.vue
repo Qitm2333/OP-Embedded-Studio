@@ -3,7 +3,7 @@ import Prism from 'prismjs'
 import 'prismjs/components/prism-jsx'
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport } from 'reka-ui'
 import { useClipboard } from '@vueuse/core'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 
 import { selectionToJSX } from '@open-pencil/core'
 import { useEditor, useSceneComputed } from '@open-pencil/vue'
@@ -11,8 +11,7 @@ import { useEditor, useSceneComputed } from '@open-pencil/vue'
 import type { JSXFormat } from '@open-pencil/core'
 
 const store = useEditor()
-const { copy } = useClipboard()
-const copied = ref(false)
+const { copy, copied } = useClipboard({ copiedDuring: 2000 })
 const jsxFormat = ref<JSXFormat>('openpencil')
 
 function toggleFormat() {
@@ -31,18 +30,9 @@ const highlightedLines = computed(() => {
   return jsxCode.value.split('\n').map((line) => Prism.highlight(line, grammar, 'jsx'))
 })
 
-let copyTimeout: ReturnType<typeof setTimeout> | undefined
-
 function copyCode() {
   copy(jsxCode.value)
-  copied.value = true
-  clearTimeout(copyTimeout)
-  copyTimeout = setTimeout(() => (copied.value = false), 2000)
 }
-
-watch(jsxCode, () => {
-  copied.value = false
-})
 </script>
 
 <template>

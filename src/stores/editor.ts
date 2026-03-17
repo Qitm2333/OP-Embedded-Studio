@@ -1,3 +1,4 @@
+import { useDebounceFn } from '@vueuse/core'
 import { shallowReactive, shallowRef, computed, watch } from 'vue'
 
 import { IS_TAURI, CANVAS_BG_COLOR } from '@/constants'
@@ -72,11 +73,20 @@ export function createEditorStore() {
   let filePath: string | null = null
   let downloadName: string | null = null
   let savedVersion = 0
-  let autosaveTimer: ReturnType<typeof setTimeout> | undefined
   let lastWriteTime = 0
   let unwatchFile: (() => void) | null = null
 
   const AUTOSAVE_DELAY = 3000
+
+  const debouncedAutosave = useDebounceFn(async () => {
+    if (state.sceneVersion === savedVersion) return
+    if (!state.autosaveEnabled) return
+    try {
+      await writeFile(await buildFigFile())
+    } catch (e) {
+      console.warn('Autosave failed:', e)
+    }
+  }, AUTOSAVE_DELAY)
 
   watch(
     () => state.sceneVersion,
@@ -84,17 +94,7 @@ export function createEditorStore() {
       if (version === savedVersion) return
       if (!state.autosaveEnabled) return
       if (!fileHandle && !filePath) return
-      clearTimeout(autosaveTimer)
-      // oxlint-disable-next-line typescript/no-misused-promises
-      autosaveTimer = setTimeout(async () => {
-        if (state.sceneVersion === savedVersion) return
-        if (!state.autosaveEnabled) return
-        try {
-          await writeFile(await buildFigFile())
-        } catch (e) {
-          console.warn('Autosave failed:', e)
-        }
-      }, AUTOSAVE_DELAY)
+      void debouncedAutosave()
     }
   )
 

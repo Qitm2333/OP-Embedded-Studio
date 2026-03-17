@@ -12,6 +12,8 @@ import AppSelect from '@/components/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/Tip.vue'
+import { iconButton } from '@/components/ui/icon-button'
+import { sectionLabel, sectionWrapper } from '@/components/ui/section'
 import { PropertyListRoot, useEditor } from '@open-pencil/vue'
 import { menuContent, menuItem } from '@/components/ui/menu'
 
@@ -148,12 +150,12 @@ const DEFAULT_STROKE: Stroke = {
     prop-key="strokes"
     label="Stroke"
   >
-    <div data-test-id="stroke-section" class="border-b border-border px-3 py-2">
+    <div data-test-id="stroke-section" :class="sectionWrapper()">
       <div class="flex items-center justify-between">
-        <label class="mb-1 block text-[11px] text-muted">Stroke</label>
+        <label :class="sectionLabel()">Stroke</label>
         <button
           data-test-id="stroke-section-add"
-          class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"
+          :class="iconButton()"
           @click="add(DEFAULT_STROKE)"
         >
           +
@@ -182,12 +184,7 @@ const DEFAULT_STROKE: Stroke = {
           <icon-lucide-eye v-if="stroke.visible" class="size-3.5" />
           <icon-lucide-eye-off v-else class="size-3.5" />
         </button>
-        <button
-          class="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"
-          @click="remove(i)"
-        >
-          −
-        </button>
+        <button :class="iconButton({ class: 'shrink-0' })" @click="remove(i)">−</button>
       </div>
 
       <!-- Stroke details -->

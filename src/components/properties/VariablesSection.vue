@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Tip from '@/components/Tip.vue'
+import { sectionWrapper } from '@/components/ui/section'
 import { VariablesIndicatorRoot } from '@open-pencil/vue'
 
 const emit = defineEmits<{ openDialog: [] }>()
@@ -7,7 +8,7 @@ const emit = defineEmits<{ openDialog: [] }>()
 
 <template>
   <VariablesIndicatorRoot v-slot="{ variableCount, collectionCount, hasVariables }">
-    <div data-test-id="variables-section" class="border-b border-border px-3 py-2">
+    <div data-test-id="variables-section" :class="sectionWrapper()">
       <div class="flex items-center justify-between">
         <label class="text-[11px] font-medium text-surface">Variables</label>
         <Tip label="Open variables">

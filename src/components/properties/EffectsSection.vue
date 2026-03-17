@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import AppSelect from '@/components/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
+import { iconButton } from '@/components/ui/icon-button'
+import { sectionLabel, sectionWrapper } from '@/components/ui/section'
 import { PropertyListRoot, useEditor } from '@open-pencil/vue'
 
 import { colorToCSS } from '@open-pencil/core'
@@ -113,12 +115,12 @@ function toggleExpand(index: number) {
     prop-key="effects"
     label="Effects"
   >
-    <div data-test-id="effects-section" class="border-b border-border px-3 py-2">
+    <div data-test-id="effects-section" :class="sectionWrapper()">
       <div class="flex items-center justify-between">
-        <label class="mb-1 block text-[11px] text-muted">Effects</label>
+        <label :class="sectionLabel()">Effects</label>
         <button
           data-test-id="effects-section-add"
-          class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"
+          :class="iconButton()"
           @click="add(defaultEffect())"
         >
           +
@@ -162,12 +164,7 @@ function toggleExpand(index: number) {
             <icon-lucide-eye v-if="effect.visible" class="size-3.5" />
             <icon-lucide-eye-off v-else class="size-3.5" />
           </button>
-          <button
-            class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"
-            @click="handleRemove(remove, i)"
-          >
-            −
-          </button>
+          <button :class="iconButton()" @click="handleRemove(remove, i)">−</button>
         </div>
 
         <!-- Expanded controls inline -->

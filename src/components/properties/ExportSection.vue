@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onScopeDispose } from 'vue'
 
 import AppSelect from '@/components/AppSelect.vue'
+import { iconButton } from '@/components/ui/icon-button'
+import { sectionLabel, sectionWrapper } from '@/components/ui/section'
 import { useEditorStore } from '@/stores/editor'
 import { ExportControlsRoot } from '@open-pencil/vue'
 
@@ -61,7 +63,7 @@ const previewKey = computed(
 watch(() => showPreview.value, updatePreview, { flush: 'post' })
 watch(previewKey, updatePreview, { flush: 'post' })
 
-onUnmounted(() => {
+onScopeDispose(() => {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
 })
 </script>
@@ -70,14 +72,10 @@ onUnmounted(() => {
   <ExportControlsRoot
     v-slot="{ settings, nodeName, addSetting, removeSetting, updateScale, updateFormat }"
   >
-    <div data-test-id="export-section" class="border-b border-border px-3 py-2">
+    <div data-test-id="export-section" :class="sectionWrapper()">
       <div class="flex items-center justify-between">
-        <label class="mb-1 block text-[11px] text-muted">Export</label>
-        <button
-          data-test-id="export-section-add"
-          class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"
-          @click="addSetting"
-        >
+        <label :class="sectionLabel()">Export</label>
+        <button data-test-id="export-section-add" :class="iconButton()" @click="addSetting">
           +
         </button>
       </div>
@@ -100,12 +98,7 @@ onUnmounted(() => {
           :options="FORMAT_OPTIONS"
           @update:model-value="updateFormat(i, $event as ExportFormat)"
         />
-        <button
-          class="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded border-none bg-transparent text-sm leading-none text-muted hover:bg-hover hover:text-surface"
-          @click="removeSetting(i)"
-        >
-          −
-        </button>
+        <button :class="iconButton({ class: 'shrink-0' })" @click="removeSetting(i)">−</button>
       </div>
 
       <button

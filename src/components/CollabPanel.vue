@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useClipboard } from '@vueuse/core'
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   PopoverRoot,
@@ -22,11 +22,10 @@ import { initials } from '@/utils/text'
 const route = useRoute()
 const router = useRouter()
 const collab = useCollabInjected()
-const { copy } = useClipboard()
+const { copy, copied } = useClipboard({ copiedDuring: 2000 })
 
 const joinInput = ref('')
 const nameDraft = ref(collab?.state.value.localName ?? '')
-const copied = ref(false)
 const pendingRoomId = (route.params.roomId as string) || null
 const popoverOpen = ref(!!pendingRoomId)
 
@@ -45,10 +44,6 @@ function copyLink() {
   if (!shareUrl.value) return
   copy(shareUrl.value)
   toast.show('Link copied to clipboard')
-  copied.value = true
-  setTimeout(() => {
-    copied.value = false
-  }, 2000)
 }
 
 function onShare() {

@@ -3,6 +3,7 @@ import AppSelect from '@/components/AppSelect.vue'
 import FontPicker from '@/components/FontPicker.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/Tip.vue'
+import { sectionWrapper } from '@/components/ui/section'
 import { loadFont } from '@/engine/fonts'
 import { TypographyControlsRoot } from '@open-pencil/vue'
 import { ToggleGroupItem, ToggleGroupRoot, type AcceptableValue } from 'reka-ui'
@@ -10,7 +11,7 @@ import { ToggleGroupItem, ToggleGroupRoot, type AcceptableValue } from 'reka-ui'
 
 <template>
   <TypographyControlsRoot v-slot="ctx" :load-font="loadFont">
-    <div data-test-id="typography-section" class="border-b border-border px-3 py-2">
+    <div data-test-id="typography-section" :class="sectionWrapper()">
       <label class="mb-1.5 block text-[11px] text-muted">Typography</label>
 
       <div class="mb-1.5 flex items-center gap-1.5">

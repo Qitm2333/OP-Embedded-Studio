@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/Tip.vue'
+import { sectionWrapper } from '@/components/ui/section'
 import { AppearanceControlsRoot } from '@open-pencil/vue'
 </script>
 
@@ -22,7 +23,7 @@ import { AppearanceControlsRoot } from '@open-pencil/vue'
       commitCornerProp
     }"
   >
-    <div data-test-id="appearance-section" class="border-b border-border px-3 py-2">
+    <div data-test-id="appearance-section" :class="sectionWrapper()">
       <div class="mb-1.5 flex items-center justify-between">
         <label class="text-[11px] text-muted">Appearance</label>
         <Tip label="Toggle visibility">
