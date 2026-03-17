@@ -10,6 +10,7 @@ import {
 } from '@open-pencil/vue'
 import { nodeIcon, COMPONENT_TYPES } from '@/utils/layer-icons'
 import CanvasMenu from './CanvasMenu.vue'
+import Tip from './Tip.vue'
 
 const INDENT = 16
 const store = useEditor()
@@ -146,40 +147,42 @@ function onLayerRightClick(e: MouseEvent) {
                       !node.locked && node.visible ? 'opacity-0 group-hover/row:opacity-100' : ''
                     "
                   >
-                    <span
-                      class="flex size-4 items-center justify-center rounded hover:bg-white/15"
-                      :title="node.locked ? 'Unlock' : 'Lock'"
-                      @pointerdown.stop
-                      @click.stop="toggleLock"
-                    >
-                      <icon-lucide-lock
-                        v-if="node.locked"
-                        class="size-3"
-                        :class="isSelected ? 'text-white' : 'text-surface'"
-                      />
-                      <icon-lucide-unlock
-                        v-else
-                        class="size-3 opacity-0 group-hover/row:opacity-100"
-                        :class="isSelected ? 'text-white/80' : 'text-surface/70'"
-                      />
-                    </span>
-                    <span
-                      class="flex size-4 items-center justify-center rounded hover:bg-white/15"
-                      :title="node.visible ? 'Hide' : 'Show'"
-                      @pointerdown.stop
-                      @click.stop="toggleVisibility"
-                    >
-                      <icon-lucide-eye-off
-                        v-if="!node.visible"
-                        class="size-3"
-                        :class="isSelected ? 'text-white' : 'text-surface'"
-                      />
-                      <icon-lucide-eye
-                        v-else
-                        class="size-3 opacity-0 group-hover/row:opacity-100"
-                        :class="isSelected ? 'text-white/80' : 'text-surface/70'"
-                      />
-                    </span>
+                    <Tip :label="node.locked ? 'Unlock' : 'Lock'">
+                      <span
+                        class="flex size-4 items-center justify-center rounded hover:bg-white/15"
+                        @pointerdown.stop
+                        @click.stop="toggleLock"
+                      >
+                        <icon-lucide-lock
+                          v-if="node.locked"
+                          class="size-3"
+                          :class="isSelected ? 'text-white' : 'text-surface'"
+                        />
+                        <icon-lucide-unlock
+                          v-else
+                          class="size-3 opacity-0 group-hover/row:opacity-100"
+                          :class="isSelected ? 'text-white/80' : 'text-surface/70'"
+                        />
+                      </span>
+                    </Tip>
+                    <Tip :label="node.visible ? 'Hide' : 'Show'">
+                      <span
+                        class="flex size-4 items-center justify-center rounded hover:bg-white/15"
+                        @pointerdown.stop
+                        @click.stop="toggleVisibility"
+                      >
+                        <icon-lucide-eye-off
+                          v-if="!node.visible"
+                          class="size-3"
+                          :class="isSelected ? 'text-white' : 'text-surface'"
+                        />
+                        <icon-lucide-eye
+                          v-else
+                          class="size-3 opacity-0 group-hover/row:opacity-100"
+                          :class="isSelected ? 'text-white/80' : 'text-surface/70'"
+                        />
+                      </span>
+                    </Tip>
                   </span>
 
                   <!-- DnD indicator -->

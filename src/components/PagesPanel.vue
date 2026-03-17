@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import Tip from '@/components/Tip.vue'
 import { useInlineRename, useEditor, useSceneComputed } from '@open-pencil/vue'
 
 const store = useEditor()
@@ -39,14 +40,15 @@ function startRename(pg: { id: string; name: string }) {
       <span data-test-id="pages-header" class="text-[11px] tracking-wider text-muted uppercase"
         >Pages</span
       >
-      <button
-        data-test-id="pages-add"
-        class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
-        title="Add page"
-        @click="store.addPage()"
-      >
-        +
-      </button>
+      <Tip label="Add page">
+        <button
+          data-test-id="pages-add"
+          class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
+          @click="store.addPage()"
+        >
+          +
+        </button>
+      </Tip>
     </div>
     <div class="scrollbar-thin overflow-x-hidden overflow-y-auto px-1 pb-1">
       <div v-for="pg in pages" :key="pg.id">

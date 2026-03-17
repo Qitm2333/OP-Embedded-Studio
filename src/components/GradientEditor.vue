@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 
 import AppSelect from './AppSelect.vue'
+import Tip from './Tip.vue'
 import HsvColorArea from './HsvColorArea.vue'
 import ScrubInput from './ScrubInput.vue'
 import { colorToCSS, colorToHexRaw, parseColor } from '@open-pencil/core'
@@ -165,14 +166,15 @@ const barBackground = computed(() =>
     <div class="mb-2">
       <div class="mb-1 flex items-center justify-between">
         <span class="text-[11px] text-muted">Stops</span>
-        <button
-          class="flex size-4 cursor-pointer items-center justify-center rounded border-none bg-transparent p-0 text-muted hover:text-surface"
-          data-test-id="fill-picker-add-stop"
-          title="Add stop"
-          @click="addStop"
-        >
-          <icon-lucide-plus class="size-3" />
-        </button>
+        <Tip label="Add stop">
+          <button
+            class="flex size-4 cursor-pointer items-center justify-center rounded border-none bg-transparent p-0 text-muted hover:text-surface"
+            data-test-id="fill-picker-add-stop"
+            @click="addStop"
+          >
+            <icon-lucide-plus class="size-3" />
+          </button>
+        </Tip>
       </div>
       <div
         v-for="(stop, idx) in stops"

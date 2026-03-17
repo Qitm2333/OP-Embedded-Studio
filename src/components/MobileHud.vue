@@ -25,6 +25,7 @@ import { openFileDialog } from '@/composables/use-menu'
 import { DEFAULT_COLLAB_STATE, useCollabInjected } from '@/composables/use-collab'
 import { toast } from '@open-pencil/vue'
 import { useEditorStore } from '@/stores/editor'
+import Tip from '@/components/Tip.vue'
 import { colorToCSS } from '@open-pencil/core'
 import { toolIcons } from '@/utils/tools'
 import { initials } from '@/utils/text'
@@ -89,20 +90,22 @@ const onlineCount = computed(() => collabPeers.value.length + 1)
     <!-- Undo / Redo + active tool indicator -->
     <div class="pointer-events-auto flex flex-col items-start gap-1.5">
       <div class="flex gap-1.5">
-        <button
-          class="flex size-8 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-panel/70 shadow-md backdrop-blur-xl select-none active:bg-hover"
-          title="Undo"
-          @click="store.undoAction()"
-        >
-          <icon-lucide-undo-2 class="size-3.5 text-surface" />
-        </button>
-        <button
-          class="flex size-8 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-panel/70 shadow-md backdrop-blur-xl select-none active:bg-hover"
-          title="Redo"
-          @click="store.redoAction()"
-        >
-          <icon-lucide-redo-2 class="size-3.5 text-surface" />
-        </button>
+        <Tip label="Undo">
+          <button
+            class="flex size-8 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-panel/70 shadow-md backdrop-blur-xl select-none active:bg-hover"
+            @click="store.undoAction()"
+          >
+            <icon-lucide-undo-2 class="size-3.5 text-surface" />
+          </button>
+        </Tip>
+        <Tip label="Redo">
+          <button
+            class="flex size-8 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-panel/70 shadow-md backdrop-blur-xl select-none active:bg-hover"
+            @click="store.redoAction()"
+          >
+            <icon-lucide-redo-2 class="size-3.5 text-surface" />
+          </button>
+        </Tip>
       </div>
       <div
         class="flex size-8 items-center justify-center rounded-full border border-accent/20 bg-panel/70 shadow-md backdrop-blur-xl transition-colors duration-200"

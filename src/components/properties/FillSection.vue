@@ -15,6 +15,7 @@ import {
 
 import FillPicker from '@/components/FillPicker.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
+import Tip from '@/components/Tip.vue'
 import { PropertyListRoot, useEditor } from '@open-pencil/vue'
 import { DEFAULT_SHAPE_FILL } from '@/constants'
 import { colorToCSS, colorToHexRaw } from '@open-pencil/core'
@@ -87,14 +88,15 @@ const filteredVariables = computed(() => {
           >
             {{ getBoundVariable(activeNode.id, i)!.name }}
           </span>
-          <button
-            data-test-id="fill-unbind-variable"
-            class="cursor-pointer border-none bg-transparent p-0 text-violet-400 hover:text-surface"
-            title="Detach variable"
-            @click="unbindFillVariable(activeNode.id, i)"
-          >
-            <icon-lucide-unlink class="size-3" />
-          </button>
+          <Tip label="Detach variable">
+            <button
+              data-test-id="fill-unbind-variable"
+              class="cursor-pointer border-none bg-transparent p-0 text-violet-400 hover:text-surface"
+              @click="unbindFillVariable(activeNode.id, i)"
+            >
+              <icon-lucide-unlink class="size-3" />
+            </button>
+          </Tip>
         </template>
         <template v-else>
           <span class="min-w-0 flex-1 font-mono text-xs text-surface">
@@ -123,12 +125,13 @@ const filteredVariables = computed(() => {
             !getBoundVariable(activeNode.id, i)
           "
         >
-          <PopoverTrigger
-            class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
-            title="Apply variable"
-          >
-            <icon-lucide-link class="size-3.5" />
-          </PopoverTrigger>
+          <Tip label="Apply variable">
+            <PopoverTrigger
+              class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
+            >
+              <icon-lucide-link class="size-3.5" />
+            </PopoverTrigger>
+          </Tip>
           <PopoverPortal>
             <PopoverContent
               side="left"

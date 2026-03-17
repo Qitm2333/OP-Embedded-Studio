@@ -7,6 +7,7 @@ import ScrubInput from '@/components/ScrubInput.vue'
 import { useNodeFontStatus, useNodeProps } from '@open-pencil/vue'
 import { loadFont } from '@/engine/fonts'
 import { ToggleGroupItem, ToggleGroupRoot, type AcceptableValue } from 'reka-ui'
+import Tip from '@/components/Tip.vue'
 
 const { store, node, updateProp, commitProp } = useNodeProps()
 const { missingFonts, hasMissingFonts } = useNodeFontStatus(() => node.value)
@@ -191,35 +192,39 @@ onMounted(async () => {
         :model-value="activeFormatting"
         @update:model-value="onFormattingChange"
       >
-        <ToggleGroupItem
-          value="bold"
-          data-test-id="typography-bold-button"
-          class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 font-bold text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
-          title="Bold (⌘B)"
-        >
-          <icon-lucide-bold class="size-3.5" />
-        </ToggleGroupItem>
-        <ToggleGroupItem
-          value="italic"
-          class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
-          title="Italic (⌘I)"
-        >
-          <icon-lucide-italic class="size-3.5" />
-        </ToggleGroupItem>
-        <ToggleGroupItem
-          value="underline"
-          class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
-          title="Underline (⌘U)"
-        >
-          <icon-lucide-underline class="size-3.5" />
-        </ToggleGroupItem>
-        <ToggleGroupItem
-          value="strikethrough"
-          class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
-          title="Strikethrough"
-        >
-          <icon-lucide-strikethrough class="size-3.5" />
-        </ToggleGroupItem>
+        <Tip label="Bold (⌘B)">
+          <ToggleGroupItem
+            value="bold"
+            data-test-id="typography-bold-button"
+            class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 font-bold text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
+          >
+            <icon-lucide-bold class="size-3.5" />
+          </ToggleGroupItem>
+        </Tip>
+        <Tip label="Italic (⌘I)">
+          <ToggleGroupItem
+            value="italic"
+            class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
+          >
+            <icon-lucide-italic class="size-3.5" />
+          </ToggleGroupItem>
+        </Tip>
+        <Tip label="Underline (⌘U)">
+          <ToggleGroupItem
+            value="underline"
+            class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
+          >
+            <icon-lucide-underline class="size-3.5" />
+          </ToggleGroupItem>
+        </Tip>
+        <Tip label="Strikethrough">
+          <ToggleGroupItem
+            value="strikethrough"
+            class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
+          >
+            <icon-lucide-strikethrough class="size-3.5" />
+          </ToggleGroupItem>
+        </Tip>
       </ToggleGroupRoot>
     </div>
   </div>

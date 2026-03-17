@@ -23,6 +23,7 @@ import IconHash from '~icons/lucide/hash'
 import IconType from '~icons/lucide/type'
 import IconToggleLeft from '~icons/lucide/toggle-left'
 import IconX from '~icons/lucide/x'
+import Tip from './Tip.vue'
 import ColorInput from './ColorInput.vue'
 import { colorToHexRaw, parseColor, randomHex } from '@open-pencil/core'
 import { useEditor, useSceneComputed } from '@open-pencil/vue'
@@ -353,14 +354,15 @@ const table = useVueTable({
                     placeholder="Search"
                   />
                 </div>
-                <button
-                  data-test-id="variables-add-collection"
-                  class="flex size-6 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
-                  title="Add collection"
-                  @click="addCollection"
-                >
-                  <icon-lucide-folder-plus class="size-3.5" />
-                </button>
+                <Tip label="Add collection">
+                  <button
+                    data-test-id="variables-add-collection"
+                    class="flex size-6 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
+                    @click="addCollection"
+                  >
+                    <icon-lucide-folder-plus class="size-3.5" />
+                  </button>
+                </Tip>
                 <DialogClose
                   class="flex size-6 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
                 >

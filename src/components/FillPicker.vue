@@ -8,6 +8,8 @@ import HsvColorArea from './HsvColorArea.vue'
 import ImageFillPicker from './ImageFillPicker.vue'
 import { colorToCSS } from '@open-pencil/core'
 
+import Tip from './Tip.vue'
+
 import type { Fill, GradientStop } from '@open-pencil/core'
 
 type FillCategory = 'SOLID' | 'GRADIENT' | 'IMAGE'
@@ -91,30 +93,33 @@ const swatchBg = computed(() => {
         side="left"
       >
         <div class="mb-2 flex items-center gap-0.5">
-          <button
-            :class="tabClass(category === 'SOLID')"
-            data-test-id="fill-picker-tab-solid"
-            title="Solid"
-            @click="toSolid"
-          >
-            <icon-lucide-square class="size-3.5" />
-          </button>
-          <button
-            :class="tabClass(category === 'GRADIENT')"
-            data-test-id="fill-picker-tab-gradient"
-            title="Gradient"
-            @click="toGradient"
-          >
-            <icon-lucide-blend class="size-3.5" />
-          </button>
-          <button
-            :class="tabClass(category === 'IMAGE')"
-            data-test-id="fill-picker-tab-image"
-            title="Image"
-            @click="toImage"
-          >
-            <icon-lucide-image class="size-3.5" />
-          </button>
+          <Tip label="Solid">
+            <button
+              :class="tabClass(category === 'SOLID')"
+              data-test-id="fill-picker-tab-solid"
+              @click="toSolid"
+            >
+              <icon-lucide-square class="size-3.5" />
+            </button>
+          </Tip>
+          <Tip label="Gradient">
+            <button
+              :class="tabClass(category === 'GRADIENT')"
+              data-test-id="fill-picker-tab-gradient"
+              @click="toGradient"
+            >
+              <icon-lucide-blend class="size-3.5" />
+            </button>
+          </Tip>
+          <Tip label="Image">
+            <button
+              :class="tabClass(category === 'IMAGE')"
+              data-test-id="fill-picker-tab-image"
+              @click="toImage"
+            >
+              <icon-lucide-image class="size-3.5" />
+            </button>
+          </Tip>
         </div>
 
         <HsvColorArea

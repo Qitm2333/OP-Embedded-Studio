@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppSelect from '@/components/AppSelect.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
+import Tip from '@/components/Tip.vue'
 import { LayoutControlsRoot, useEditor } from '@open-pencil/vue'
 
 const store = useEditor()
@@ -75,24 +76,24 @@ const store = useEditor()
       <div class="border-b border-border px-3 py-2">
         <div class="flex items-center justify-between">
           <label class="mb-1.5 block text-[11px] text-muted">Auto layout</label>
-          <button
-            v-if="node.layoutMode === 'NONE'"
-            class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
-            data-test-id="layout-add-auto"
-            title="Add auto layout (Shift+A)"
-            @click="store.setLayoutMode(node.id, 'VERTICAL')"
-          >
-            +
-          </button>
-          <button
-            v-else
-            class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
-            data-test-id="layout-remove-auto"
-            title="Remove auto layout"
-            @click="store.setLayoutMode(node.id, 'NONE')"
-          >
-            −
-          </button>
+          <Tip v-if="node.layoutMode === 'NONE'" label="Add auto layout (Shift+A)">
+            <button
+              class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
+              data-test-id="layout-add-auto"
+              @click="store.setLayoutMode(node.id, 'VERTICAL')"
+            >
+              +
+            </button>
+          </Tip>
+          <Tip v-else label="Remove auto layout">
+            <button
+              class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
+              data-test-id="layout-remove-auto"
+              @click="store.setLayoutMode(node.id, 'NONE')"
+            >
+              −
+            </button>
+          </Tip>
         </div>
 
         <template v-if="node.layoutMode !== 'NONE'">

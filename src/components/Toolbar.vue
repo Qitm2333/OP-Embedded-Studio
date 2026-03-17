@@ -25,6 +25,7 @@ import IconUngroup from '~icons/lucide/ungroup'
 import IconLock from '~icons/lucide/lock'
 
 import { menuContent, menuItem } from '@/components/ui/menu'
+import Tip from '@/components/Tip.vue'
 import { ACTION_TOAST_DURATION } from '@/constants'
 import { useEditorStore } from '@/stores/editor'
 import { toolIcons } from '@/utils/tools'
@@ -143,19 +144,20 @@ function goNext() {
     >
       <template v-for="tool in TOOLS" :key="tool.key">
         <div v-if="tool.flyout && tool.flyout.length > 1" class="flex items-center">
-          <button
-            :data-test-id="`toolbar-tool-${activeKeyForTool(tool).toLowerCase()}`"
-            class="flex size-8 cursor-pointer items-center justify-center rounded-lg border-none transition-colors"
-            :class="
-              isActive(tool)
-                ? 'bg-accent text-white'
-                : 'bg-transparent text-muted hover:bg-hover hover:text-surface'
-            "
-            :title="`${toolLabels[activeKeyForTool(tool)]} (${tool.shortcut})`"
-            @click="store.setTool(activeKeyForTool(tool))"
-          >
-            <component :is="toolIcons[activeKeyForTool(tool)]" class="size-4" />
-          </button>
+          <Tip :label="`${toolLabels[activeKeyForTool(tool)]} (${tool.shortcut})`">
+            <button
+              :data-test-id="`toolbar-tool-${activeKeyForTool(tool).toLowerCase()}`"
+              class="flex size-8 cursor-pointer items-center justify-center rounded-lg border-none transition-colors"
+              :class="
+                isActive(tool)
+                  ? 'bg-accent text-white'
+                  : 'bg-transparent text-muted hover:bg-hover hover:text-surface'
+              "
+              @click="store.setTool(activeKeyForTool(tool))"
+            >
+              <component :is="toolIcons[activeKeyForTool(tool)]" class="size-4" />
+            </button>
+          </Tip>
 
           <DropdownMenuRoot>
             <DropdownMenuTrigger as-child>
@@ -201,20 +203,20 @@ function goNext() {
           </DropdownMenuRoot>
         </div>
 
-        <button
-          v-else
-          :data-test-id="`toolbar-tool-${tool.key.toLowerCase()}`"
-          class="flex size-8 cursor-pointer items-center justify-center rounded-lg border-none transition-colors"
-          :class="
-            isActive(tool)
-              ? 'bg-accent text-white'
-              : 'bg-transparent text-muted hover:bg-hover hover:text-surface'
-          "
-          :title="`${toolLabels[tool.key]} (${tool.shortcut})`"
-          @click="store.setTool(tool.key)"
-        >
-          <component :is="toolIcons[tool.key]" class="size-4" />
-        </button>
+        <Tip v-else :label="`${toolLabels[tool.key]} (${tool.shortcut})`">
+          <button
+            :data-test-id="`toolbar-tool-${tool.key.toLowerCase()}`"
+            class="flex size-8 cursor-pointer items-center justify-center rounded-lg border-none transition-colors"
+            :class="
+              isActive(tool)
+                ? 'bg-accent text-white'
+                : 'bg-transparent text-muted hover:bg-hover hover:text-surface'
+            "
+            @click="store.setTool(tool.key)"
+          >
+            <component :is="toolIcons[tool.key]" class="size-4" />
+          </button>
+        </Tip>
       </template>
     </div>
   </div>

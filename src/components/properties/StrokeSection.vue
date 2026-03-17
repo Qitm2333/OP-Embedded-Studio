@@ -5,6 +5,7 @@ import AppSelect from '@/components/AppSelect.vue'
 import { menuContent, menuItem } from '@/components/ui/menu'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
+import Tip from '@/components/Tip.vue'
 import { useNodeProps } from '@open-pencil/vue'
 import {
   DropdownMenuRoot,
@@ -267,20 +268,21 @@ const borderWeights = computed(() => {
         </template>
       </ScrubInput>
       <DropdownMenuRoot v-model:open="sideMenuOpen">
-        <DropdownMenuTrigger as-child>
-          <button
-            class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-            :class="{ '!border-accent !text-accent': activeNode?.independentStrokeWeights }"
-            title="Stroke sides"
-          >
-            <svg class="size-3.5" viewBox="0 0 14 14" fill="currentColor">
-              <rect x="1" y="1" width="5" height="5" rx="1" />
-              <rect x="8" y="1" width="5" height="5" rx="1" />
-              <rect x="1" y="8" width="5" height="5" rx="1" />
-              <rect x="8" y="8" width="5" height="5" rx="1" />
-            </svg>
-          </button>
-        </DropdownMenuTrigger>
+        <Tip label="Stroke sides">
+          <DropdownMenuTrigger as-child>
+            <button
+              class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+              :class="{ '!border-accent !text-accent': activeNode?.independentStrokeWeights }"
+            >
+              <svg class="size-3.5" viewBox="0 0 14 14" fill="currentColor">
+                <rect x="1" y="1" width="5" height="5" rx="1" />
+                <rect x="8" y="1" width="5" height="5" rx="1" />
+                <rect x="1" y="8" width="5" height="5" rx="1" />
+                <rect x="8" y="8" width="5" height="5" rx="1" />
+              </svg>
+            </button>
+          </DropdownMenuTrigger>
+        </Tip>
         <DropdownMenuPortal>
           <DropdownMenuContent
             :side-offset="4"

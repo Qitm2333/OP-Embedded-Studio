@@ -4,6 +4,8 @@ import { computed } from 'vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import { MIXED, useNodeProps } from '@open-pencil/vue'
 
+import Tip from '@/components/Tip.vue'
+
 import type { SceneNode } from '@open-pencil/core'
 
 const { store, node, nodes, isMulti, active, merged, updateAllWithUndo, updateProp, commitProp } =
@@ -148,17 +150,18 @@ const cornerRadiusValue = computed(() => {
   <div v-if="active" data-test-id="appearance-section" class="border-b border-border px-3 py-2">
     <div class="mb-1.5 flex items-center justify-between">
       <label class="text-[11px] text-muted">Appearance</label>
-      <button
-        data-test-id="appearance-visibility"
-        class="flex cursor-pointer items-center justify-center rounded border-none bg-transparent p-0.5 text-muted hover:bg-hover hover:text-surface"
-        :class="{ 'text-accent': visibilityState === 'hidden' }"
-        title="Toggle visibility"
-        @click="toggleVisibility"
-      >
-        <icon-lucide-eye v-if="visibilityState === 'visible'" class="size-3.5" />
-        <icon-lucide-eye-off v-else-if="visibilityState === 'hidden'" class="size-3.5" />
-        <icon-lucide-eye class="size-3.5 opacity-50" v-else />
-      </button>
+      <Tip label="Toggle visibility">
+        <button
+          data-test-id="appearance-visibility"
+          class="flex cursor-pointer items-center justify-center rounded border-none bg-transparent p-0.5 text-muted hover:bg-hover hover:text-surface"
+          :class="{ 'text-accent': visibilityState === 'hidden' }"
+          @click="toggleVisibility"
+        >
+          <icon-lucide-eye v-if="visibilityState === 'visible'" class="size-3.5" />
+          <icon-lucide-eye-off v-else-if="visibilityState === 'hidden'" class="size-3.5" />
+          <icon-lucide-eye class="size-3.5 opacity-50" v-else />
+        </button>
+      </Tip>
     </div>
     <div class="flex gap-1.5">
       <ScrubInput
@@ -186,26 +189,27 @@ const cornerRadiusValue = computed(() => {
             <icon-lucide-radius class="size-3" />
           </template>
         </ScrubInput>
-        <button
-          data-test-id="independent-corners-toggle"
-          class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-          :class="{ '!border-accent !text-accent': independentCorners === true }"
-          title="Independent corner radii"
-          @click="toggleIndependentCorners"
-        >
-          <svg
-            class="size-3"
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
+        <Tip label="Independent corner radii">
+          <button
+            data-test-id="independent-corners-toggle"
+            class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            :class="{ '!border-accent !text-accent': independentCorners === true }"
+            @click="toggleIndependentCorners"
           >
-            <path d="M1 4V2.5A1.5 1.5 0 0 1 2.5 1H4" />
-            <path d="M8 1h1.5A2.5 2.5 0 0 1 11 3.5V5" />
-            <path d="M11 8v1a2 2 0 0 1-2 2H8" />
-            <path d="M4 11H3a2 2 0 0 1-2-2V8" />
-          </svg>
-        </button>
+            <svg
+              class="size-3"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M1 4V2.5A1.5 1.5 0 0 1 2.5 1H4" />
+              <path d="M8 1h1.5A2.5 2.5 0 0 1 11 3.5V5" />
+              <path d="M11 8v1a2 2 0 0 1-2 2H8" />
+              <path d="M4 11H3a2 2 0 0 1-2-2V8" />
+            </svg>
+          </button>
+        </Tip>
       </template>
     </div>
 
