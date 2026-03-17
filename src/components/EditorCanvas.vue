@@ -71,10 +71,7 @@ function onContextMenu(e: MouseEvent) {
             class="pointer-events-none absolute inset-0 z-40 border-2 border-dashed border-accent/60 bg-accent/5"
           />
         </Transition>
-        <Transition
-          leave-active-class="transition-opacity duration-300"
-          leave-to-class="opacity-0"
-        >
+        <Transition leave-active-class="transition-opacity duration-300" leave-to-class="opacity-0">
           <div
             v-if="store.state.loading"
             data-test-id="canvas-loading"

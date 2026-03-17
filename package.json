@@ -34,6 +34,8 @@
     "@ai-sdk/openai": "^3.0.37",
     "@ai-sdk/valibot": "^2.0.17",
     "@ai-sdk/vue": "^3.0.105",
+    "@atlaskit/pragmatic-drag-and-drop": "^1.7.9",
+    "@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.1.0",
     "@open-pencil/cli": "workspace:*",
     "@open-pencil/core": "workspace:*",
     "@open-pencil/vue": "workspace:*",
