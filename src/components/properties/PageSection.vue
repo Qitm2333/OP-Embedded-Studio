@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import ColorInput from '@/components/ColorInput.vue'
-import { useEditorStore } from '@/stores/editor'
+import { useEditor } from '@open-pencil/vue'
 
 import type { Color } from '@open-pencil/core'
 
-const store = useEditorStore()
+const store = useEditor()
 
 function updateColor(color: Color) {
   store.state.pageColor = color

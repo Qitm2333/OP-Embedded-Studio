@@ -5,11 +5,11 @@ import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewpor
 import { computed, ref, watch } from 'vue'
 
 import { selectionToJSX } from '@open-pencil/core'
-import { useEditorStore } from '@/stores/editor'
+import { useEditor } from '@open-pencil/vue'
 
 import type { JSXFormat } from '@open-pencil/core'
 
-const store = useEditorStore()
+const store = useEditor()
 const copied = ref(false)
 const jsxFormat = ref<JSXFormat>('openpencil')
 

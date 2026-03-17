@@ -15,14 +15,13 @@ import {
 
 import FillPicker from '@/components/FillPicker.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
-import { PropertyListRoot } from '@open-pencil/vue'
-import { useEditorStore } from '@/stores/editor'
+import { PropertyListRoot, useEditor } from '@open-pencil/vue'
 import { DEFAULT_SHAPE_FILL } from '@/constants'
 import { colorToCSS, colorToHexRaw } from '@open-pencil/core'
 
 import type { Fill, Variable } from '@open-pencil/core'
 
-const store = useEditorStore()
+const store = useEditor()
 
 const colorVariables = computed(() => store.graph.getVariablesByType('COLOR'))
 

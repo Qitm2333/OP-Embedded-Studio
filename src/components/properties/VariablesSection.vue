@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { useEditorStore } from '@/stores/editor'
+import { useEditor } from '@open-pencil/vue'
 
-const store = useEditorStore()
+const store = useEditor()
 const emit = defineEmits<{ openDialog: [] }>()
 
 const collectionCount = computed(() => {

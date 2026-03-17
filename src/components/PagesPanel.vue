@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { useInlineRename } from '@open-pencil/vue'
-import { useEditorStore } from '@/stores/editor'
+import { useInlineRename, useEditor } from '@open-pencil/vue'
 
-const store = useEditorStore()
+const store = useEditor()
 
 const DIVIDER_RE = /^[-–—*\s]+$/
 const pageInputRefs = new Map<string, HTMLInputElement>()

@@ -25,11 +25,11 @@ import IconToggleLeft from '~icons/lucide/toggle-left'
 import IconX from '~icons/lucide/x'
 import ColorInput from './ColorInput.vue'
 import { colorToHexRaw, parseColor, randomHex } from '@open-pencil/core'
-import { useEditorStore } from '@/stores/editor'
+import { useEditor } from '@open-pencil/vue'
 import type { Variable, VariableCollection, VariableValue, Color } from '@open-pencil/core'
 
 const open = defineModel<boolean>('open', { default: false })
-const store = useEditorStore()
+const store = useEditor()
 const searchTerm = ref('')
 
 const collections = computed(() => {

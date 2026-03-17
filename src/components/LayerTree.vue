@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { TreeRoot, TreeItem, ContextMenuRoot, ContextMenuTrigger, ContextMenuPortal } from 'reka-ui'
 
-import { LayerTreeRoot, LayerTreeItem, useInlineRename, useLayerDrag } from '@open-pencil/vue'
-
-import { useEditorStore } from '@/stores/editor'
+import {
+  LayerTreeRoot,
+  LayerTreeItem,
+  useInlineRename,
+  useLayerDrag,
+  useEditor
+} from '@open-pencil/vue'
 import { nodeIcon, COMPONENT_TYPES } from '@/utils/layer-icons'
 import CanvasMenu from './CanvasMenu.vue'
 
 const INDENT = 16
-const store = useEditorStore()
+const store = useEditor()
 const rename = useInlineRename((id, name) => store.renameNode(id, name))
 const { draggingId, instruction, instructionTargetId } = useLayerDrag(store, INDENT)
 
