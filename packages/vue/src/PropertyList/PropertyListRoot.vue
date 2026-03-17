@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { useEditor } from '../context'
+import { useEditor } from '../shared/editorContext'
 import { providePropertyList } from './context'
 
 import type { Fill, Stroke, Effect, SceneNode } from '@open-pencil/core'

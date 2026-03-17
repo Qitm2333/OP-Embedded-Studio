@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 
-import { useEditor } from '../context'
-import { useSceneComputed } from './use-scene-reactive'
+import { useEditor } from '../shared/editorContext'
+import { useSceneComputed } from './useSceneComputed'
 
 import type { Fill, SceneNode, Stroke } from '@open-pencil/core'
 

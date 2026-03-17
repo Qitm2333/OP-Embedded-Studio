@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { useEditor } from '../context'
-import { useSceneComputed } from '../composables/use-scene-reactive'
+import { useEditor } from '../shared/editorContext'
+import { useSceneComputed } from '../shared/useSceneComputed'
 
 import type { ExportFormat } from '@open-pencil/core'
 

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { useEditor } from '../context'
-import { useCanvas } from '../composables/use-canvas'
+import { useEditor } from '../shared/editorContext'
+import { useCanvas } from '../shared/useCanvas'
 import { provideCanvas } from './context'
 
-import type { UseCanvasOptions } from '../composables/use-canvas'
+import type { UseCanvasOptions } from '../shared/useCanvas'
 
 const props = withDefaults(defineProps<UseCanvasOptions>(), {
   showRulers: undefined

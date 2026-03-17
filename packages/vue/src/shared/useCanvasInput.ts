@@ -12,14 +12,14 @@ import {
 import type { Editor } from '@open-pencil/core/editor'
 import type { SceneNode } from '@open-pencil/core'
 
-import type { DragMarquee, DragPan, DragRotate, DragState } from '../input/types'
-import { TOOL_TO_NODE } from '../input/types'
-import { hitTestCornerRotation } from '../input/geometry'
-import { setupPanZoom } from '../input/pan-zoom'
-import { applyResize } from '../input/resize'
-import { handleMoveMove, handleMoveUp } from '../input/move'
-import { handleSelectDown, updateHoverCursor, type HitTestFns } from '../input/select'
-import { handleDrawMove, handleDrawUp } from '../input/draw'
+import type { DragMarquee, DragPan, DragRotate, DragState } from './input/types'
+import { TOOL_TO_NODE } from './input/types'
+import { hitTestCornerRotation } from './input/geometry'
+import { setupPanZoom } from './input/pan-zoom'
+import { applyResize } from './input/resize'
+import { handleMoveMove, handleMoveUp } from './input/move'
+import { handleSelectDown, updateHoverCursor, type HitTestFns } from './input/select'
+import { handleDrawMove, handleDrawUp } from './input/draw'
 
 export function useCanvasInput(
   canvasRef: Ref<HTMLCanvasElement | null>,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { useEditor } from '../context'
+import { useEditor } from '../shared/editorContext'
 
 import type {
   SceneNode,

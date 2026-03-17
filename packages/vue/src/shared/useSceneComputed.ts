@@ -1,6 +1,6 @@
 import { computed, type ComputedRef } from 'vue'
 
-import { useEditor } from '../context'
+import { useEditor } from '../shared/editorContext'
 
 /**
  * Creates a computed ref that re-evaluates when the scene graph changes.

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { useEditor } from '../context'
-import { MIXED } from '../composables/use-node-props'
-import { usePropScrub } from '../composables/use-prop-scrub'
+import { useEditor } from '../shared/editorContext'
+import { MIXED } from '../shared/useNodeProps'
+import { usePropScrub } from '../shared/usePropScrub'
 
 import type { SceneNode } from '@open-pencil/core'
-import type { MixedValue } from '../composables/use-node-props'
+import type { MixedValue } from '../shared/useNodeProps'
 
 const editor = useEditor()
 

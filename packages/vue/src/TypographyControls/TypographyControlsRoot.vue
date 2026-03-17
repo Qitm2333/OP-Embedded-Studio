@@ -5,8 +5,8 @@ import { FONT_WEIGHT_NAMES, weightToStyle } from '@open-pencil/core'
 
 import type { SceneNode, TextDecoration } from '@open-pencil/core'
 
-import { useEditor } from '../context'
-import { useNodeFontStatus } from '../composables/use-font-status'
+import { useEditor } from '../shared/editorContext'
+import { useNodeFontStatus } from '../shared/useFontStatus'
 
 type TextAlign = 'LEFT' | 'CENTER' | 'RIGHT'
 

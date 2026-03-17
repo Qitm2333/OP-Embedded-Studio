@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { useEditor } from '../context'
-import { useSceneComputed } from '../composables/use-scene-reactive'
+import { useEditor } from '../shared/editorContext'
+import { useSceneComputed } from '../shared/useSceneComputed'
 
 const editor = useEditor()
 

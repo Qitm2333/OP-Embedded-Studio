@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { useEditor } from '../context'
-import { usePropScrub } from '../composables/use-prop-scrub'
+import { useEditor } from '../shared/editorContext'
+import { usePropScrub } from '../shared/usePropScrub'
 
 import type { SceneNode } from '@open-pencil/core'
 

@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { EDITOR_TOOLS } from '@open-pencil/core/editor'
 
-import { useEditor } from '../context'
+import { useEditor } from '../shared/editorContext'
 import { provideToolbar } from './context'
 
 import type { EditorToolDef, Tool } from '@open-pencil/core/editor'
