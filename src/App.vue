@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import { useHead } from '@unhead/vue'
 
 import AppToast from '@/components/AppToast.vue'
-import { toast } from '@open-pencil/vue'
+import { toast } from '@/utils/toast'
 
 useHead({ titleTemplate: (title) => (title ? `${title} — OpenPencil` : 'OpenPencil') })
 

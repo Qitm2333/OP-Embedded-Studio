@@ -44,7 +44,7 @@ async function updatePreview() {
   }
   let maxW = 0
   for (const id of ids) {
-    const node = store.graph.getNode(id)
+    const node = store.getNode(id)
     if (node) maxW = Math.max(maxW, node.width)
   }
   const scale = maxW > 0 ? Math.min(PREVIEW_WIDTH / maxW, 2) : 1

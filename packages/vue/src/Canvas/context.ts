@@ -1,14 +1,15 @@
 import { type InjectionKey, inject, provide } from 'vue'
 
+import type { SceneNode } from '@open-pencil/core'
 import type { Ref } from 'vue'
 
 export interface CanvasContext {
   canvasRef: Ref<HTMLCanvasElement | null>
   ready: Ref<boolean>
   renderNow: () => void
-  hitTestSectionTitle: (cx: number, cy: number) => unknown
-  hitTestComponentLabel: (cx: number, cy: number) => unknown
-  hitTestFrameTitle: (cx: number, cy: number) => unknown
+  hitTestSectionTitle: (cx: number, cy: number) => SceneNode | null
+  hitTestComponentLabel: (cx: number, cy: number) => SceneNode | null
+  hitTestFrameTitle: (cx: number, cy: number) => SceneNode | null
 }
 
 export const CANVAS_KEY: InjectionKey<CanvasContext> = Symbol('canvas')

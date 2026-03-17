@@ -16,7 +16,7 @@ import {
 
 import { colorToCSS } from '@open-pencil/core'
 import { DEFAULT_COLLAB_STATE, useCollabInjected } from '@/composables/use-collab'
-import { toast } from '@open-pencil/vue'
+import { toast } from '@/utils/toast'
 import { initials } from '@/utils/text'
 
 const route = useRoute()

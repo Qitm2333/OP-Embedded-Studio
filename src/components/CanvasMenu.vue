@@ -9,7 +9,8 @@ import {
   ContextMenuPortal
 } from 'reka-ui'
 import { useClipboard } from '@vueuse/core'
-import { EditorMenuRoot, toast } from '@open-pencil/vue'
+import { EditorMenuRoot } from '@open-pencil/vue'
+import { toast } from '@/utils/toast'
 
 import { useEditorStore } from '@/stores/editor'
 import { menuContent, menuItem, menuSeparator } from '@/components/ui/menu'

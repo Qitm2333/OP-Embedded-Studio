@@ -212,6 +212,7 @@ export function createEditor(options?: EditorOptions) {
 
     // Graph reads
     getNode: (id: string) => _graph.getNode(id),
+    getImage: (hash: string) => _graph.images.get(hash),
     getChildren: (id: string) => _graph.getChildren(id),
     getPages: (includeInternal?: boolean) => _graph.getPages(includeInternal),
 

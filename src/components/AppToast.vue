@@ -4,7 +4,7 @@ import { ToastProvider, ToastRoot, ToastDescription, ToastViewport, ToastClose }
 import { useClipboard } from '@vueuse/core'
 
 import Tip from '@/components/Tip.vue'
-import { toast } from '@open-pencil/vue'
+import { toast } from '@/utils/toast'
 import { toastRoot } from '@/components/ui/toast'
 
 const { copy, copied } = useClipboard({ copiedDuring: 1500 })

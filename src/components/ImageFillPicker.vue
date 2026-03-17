@@ -10,7 +10,7 @@ const emit = defineEmits<{ update: [fill: Fill] }>()
 const store = useEditor()
 
 function resolveImage(hash: string) {
-  return store.graph.images.get(hash)
+  return store.getImage(hash)
 }
 </script>
 
