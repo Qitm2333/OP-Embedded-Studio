@@ -4,7 +4,6 @@ import {
   OpenPencilProvider,
   CanvasRoot,
   CanvasSurface,
-  PageListRoot,
   LayerTree,
   ToolbarRoot,
   ToolbarItem,
@@ -12,6 +11,8 @@ import {
 } from '@open-pencil/vue'
 
 const editor = createEditor()
+const pages = () => editor.graph.getPages()
+const currentPageId = () => editor.state.currentPageId
 
 editor.createShape('FRAME', 100, 100, 400, 300)
 editor.createShape('RECTANGLE', 150, 150, 120, 80)
@@ -38,20 +39,18 @@ const TOOL_LIST: Tool[] = [
 
       <div class="main">
         <div class="panel left">
-          <PageListRoot v-slot="{ pages, currentPageId, switchPage }">
-            <div class="section">
-              <h3>Pages</h3>
-              <div
-                v-for="page in pages"
-                :key="page.id"
-                :class="{ active: page.id === currentPageId }"
-                class="list-item"
-                @click="switchPage(page.id)"
-              >
-                {{ page.name }}
-              </div>
+          <div class="section">
+            <h3>Pages</h3>
+            <div
+              v-for="page in pages()"
+              :key="page.id"
+              :class="{ active: page.id === currentPageId() }"
+              class="list-item"
+              @click="editor.switchPage(page.id)"
+            >
+              {{ page.name }}
             </div>
-          </PageListRoot>
+          </div>
 
           <LayerTree v-slot="{ layers, selectedIds, select }">
             <div class="section">

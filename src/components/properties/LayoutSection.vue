@@ -3,40 +3,39 @@ import AppSelect from '@/components/AppSelect.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/Tip.vue'
 import { sectionWrapper } from '@/components/ui/section'
-import { LayoutControlsRoot, useEditor } from '@open-pencil/vue'
+import { useLayout } from '@open-pencil/vue'
 
-const store = useEditor()
+const {
+  editor: store,
+  node,
+  isInAutoLayout,
+  isGrid,
+  isFlex,
+  widthSizing,
+  heightSizing,
+  widthSizingOptions,
+  heightSizingOptions,
+  alignGrid,
+  showIndividualPadding,
+  hasUniformPadding,
+  trackSizingOptions,
+  updateProp,
+  commitProp,
+  setWidthSizing,
+  setHeightSizing,
+  setUniformPadding,
+  commitUniformPadding,
+  setAlignment,
+  updateGridTrack,
+  addTrack,
+  removeTrack,
+  trackLabel,
+  toggleIndividualPadding
+} = useLayout()
 </script>
 
 <template>
-  <LayoutControlsRoot
-    v-slot="{
-      node,
-      isInAutoLayout,
-      isGrid,
-      isFlex,
-      widthSizing,
-      heightSizing,
-      widthSizingOptions,
-      heightSizingOptions,
-      alignGrid,
-      showIndividualPadding,
-      hasUniformPadding,
-      trackSizingOptions,
-      updateProp,
-      commitProp,
-      setWidthSizing,
-      setHeightSizing,
-      setUniformPadding,
-      commitUniformPadding,
-      setAlignment,
-      updateGridTrack,
-      addTrack,
-      removeTrack,
-      trackLabel,
-      toggleIndividualPadding
-    }"
-  >
+  <template v-if="node">
     <div data-test-id="layout-section" :class="sectionWrapper()">
       <label class="mb-1.5 block text-[11px] text-muted">Layout</label>
       <div class="flex gap-1.5">
@@ -297,5 +296,5 @@ const store = useEditor()
         </label>
       </div>
     </template>
-  </LayoutControlsRoot>
+  </template>
 </template>

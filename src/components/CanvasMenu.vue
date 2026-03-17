@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   ContextMenuContent,
   ContextMenuItem,
@@ -9,7 +10,7 @@ import {
   ContextMenuPortal
 } from 'reka-ui'
 import { useClipboard } from '@vueuse/core'
-import { EditorMenuRoot } from '@open-pencil/vue'
+import { useSelectionState } from '@open-pencil/vue'
 import { toast } from '@/utils/toast'
 
 import { useEditorStore } from '@/stores/editor'
@@ -17,6 +18,41 @@ import { menuContent, menuItem, menuSeparator } from '@/components/ui/menu'
 
 const store = useEditorStore()
 const { copy } = useClipboard()
+
+const {
+  editor,
+  selectedIds,
+  hasSelection,
+  selectedCount,
+  selectedNode,
+  isInstance,
+  isComponent,
+  isGroup,
+  canCreateComponentSet
+} = useSelectionState()
+
+const isVisible = computed(() => selectedNode.value?.visible ?? true)
+const isLocked = computed(() => selectedNode.value?.locked ?? false)
+
+const otherPages = computed(() =>
+  editor.graph.getPages().filter((p) => p.id !== editor.state.currentPageId)
+)
+
+function ids() {
+  return [...selectedIds.value]
+}
+
+function copyAsText() {
+  return editor.copySelectionAsText(ids())
+}
+
+function copyAsSVG() {
+  return editor.copySelectionAsSVG(ids())
+}
+
+function copyAsJSX() {
+  return editor.copySelectionAsJSX(ids())
+}
 
 function execCommand(cmd: string) {
   window.document.execCommand(cmd)
@@ -47,162 +83,135 @@ const cls = {
 </script>
 
 <template>
-  <EditorMenuRoot
-    v-slot="{
-      editor,
-      hasSelection,
-      selectedCount,
-      selectedNode,
-      isInstance,
-      isComponent,
-      isGroup,
-      isVisible,
-      isLocked,
-      canCreateComponentSet,
-      otherPages,
-      copyAsText,
-      copyAsSVG,
-      copyAsJSX
-    }"
-  >
-    <ContextMenuContent :class="cls.menu" :side-offset="2" align="start">
-      <ContextMenuItem :class="cls.item" :disabled="!hasSelection" @select="execCommand('copy')">
-        <span>Copy</span><span class="text-[11px] text-muted">⌘C</span>
+  <ContextMenuContent :class="cls.menu" :side-offset="2" align="start">
+    <ContextMenuItem :class="cls.item" :disabled="!hasSelection" @select="execCommand('copy')">
+      <span>Copy</span><span class="text-[11px] text-muted">⌘C</span>
+    </ContextMenuItem>
+    <ContextMenuItem :class="cls.item" :disabled="!hasSelection" @select="execCommand('cut')">
+      <span>Cut</span><span class="text-[11px] text-muted">⌘X</span>
+    </ContextMenuItem>
+    <ContextMenuItem :class="cls.item" @select="execCommand('paste')">
+      <span>Paste here</span><span class="text-[11px] text-muted">⌘V</span>
+    </ContextMenuItem>
+    <ContextMenuItem
+      :class="cls.item"
+      :disabled="!hasSelection"
+      @select="editor.duplicateSelected()"
+    >
+      <span>Duplicate</span><span class="text-[11px] text-muted">⌘D</span>
+    </ContextMenuItem>
+    <ContextMenuItem :class="cls.item" :disabled="!hasSelection" @select="editor.deleteSelected()">
+      <span>Delete</span><span class="text-[11px] text-muted">⌫</span>
+    </ContextMenuItem>
+
+    <ContextMenuSeparator :class="cls.sep" />
+
+    <ContextMenuSub v-if="otherPages.length > 0 && hasSelection">
+      <ContextMenuSubTrigger :class="cls.item">
+        <span>Move to page</span><span class="text-sm text-muted">›</span>
+      </ContextMenuSubTrigger>
+      <ContextMenuPortal>
+        <ContextMenuSubContent :class="cls.menu">
+          <ContextMenuItem
+            v-for="page in otherPages"
+            :key="page.id"
+            :class="cls.item"
+            @select="editor.moveToPage(page.id)"
+          >
+            {{ page.name }}
+          </ContextMenuItem>
+        </ContextMenuSubContent>
+      </ContextMenuPortal>
+    </ContextMenuSub>
+
+    <ContextMenuItem :class="cls.item" :disabled="!hasSelection" @select="editor.bringToFront()">
+      <span>Bring to front</span><span class="text-[11px] text-muted">]</span>
+    </ContextMenuItem>
+    <ContextMenuItem :class="cls.item" :disabled="!hasSelection" @select="editor.sendToBack()">
+      <span>Send to back</span><span class="text-[11px] text-muted">[</span>
+    </ContextMenuItem>
+
+    <ContextMenuSeparator :class="cls.sep" />
+
+    <ContextMenuItem
+      :class="cls.item"
+      :disabled="selectedCount < 2"
+      @select="editor.groupSelected()"
+    >
+      <span>Group</span><span class="text-[11px] text-muted">⌘G</span>
+    </ContextMenuItem>
+    <ContextMenuItem v-if="isGroup" :class="cls.item" @select="editor.ungroupSelected()">
+      <span>Ungroup</span><span class="text-[11px] text-muted">⇧⌘G</span>
+    </ContextMenuItem>
+    <ContextMenuItem v-if="hasSelection" :class="cls.item" @select="editor.wrapInAutoLayout()">
+      <span>Add auto layout</span><span class="text-[11px] text-muted">⇧A</span>
+    </ContextMenuItem>
+
+    <ContextMenuSeparator :class="cls.sep" />
+
+    <ContextMenuItem
+      :class="cls.component"
+      :disabled="!hasSelection"
+      @select="editor.createComponentFromSelection()"
+    >
+      <span>Create component</span><span class="text-[11px] text-component/60">⌥⌘K</span>
+    </ContextMenuItem>
+    <ContextMenuItem
+      v-if="canCreateComponentSet"
+      :class="cls.component"
+      @select="editor.createComponentSetFromComponents()"
+    >
+      <span>Create component set</span><span class="text-[11px] text-component/60">⇧⌘K</span>
+    </ContextMenuItem>
+    <ContextMenuItem
+      v-if="isComponent && selectedNode"
+      :class="cls.component"
+      @select="editor.createInstanceFromComponent(selectedNode.id)"
+    >
+      <span>Create instance</span>
+    </ContextMenuItem>
+    <ContextMenuItem v-if="isInstance" :class="cls.component" @select="editor.goToMainComponent()">
+      <span>Go to main component</span>
+    </ContextMenuItem>
+    <ContextMenuItem v-if="isInstance" :class="cls.item" @select="editor.detachInstance()">
+      <span>Detach instance</span><span class="text-[11px] text-muted">⌥⌘B</span>
+    </ContextMenuItem>
+
+    <template v-if="hasSelection">
+      <ContextMenuSeparator :class="cls.sep" />
+
+      <ContextMenuItem :class="cls.item" @select="editor.toggleVisibility()">
+        <span>{{ isVisible ? 'Hide' : 'Show' }}</span
+        ><span class="text-[11px] text-muted">⇧⌘H</span>
       </ContextMenuItem>
-      <ContextMenuItem :class="cls.item" :disabled="!hasSelection" @select="execCommand('cut')">
-        <span>Cut</span><span class="text-[11px] text-muted">⌘X</span>
-      </ContextMenuItem>
-      <ContextMenuItem :class="cls.item" @select="execCommand('paste')">
-        <span>Paste here</span><span class="text-[11px] text-muted">⌘V</span>
-      </ContextMenuItem>
-      <ContextMenuItem
-        :class="cls.item"
-        :disabled="!hasSelection"
-        @select="editor.duplicateSelected()"
-      >
-        <span>Duplicate</span><span class="text-[11px] text-muted">⌘D</span>
-      </ContextMenuItem>
-      <ContextMenuItem
-        :class="cls.item"
-        :disabled="!hasSelection"
-        @select="editor.deleteSelected()"
-      >
-        <span>Delete</span><span class="text-[11px] text-muted">⌫</span>
+      <ContextMenuItem :class="cls.item" @select="editor.toggleLock()">
+        <span>{{ isLocked ? 'Unlock' : 'Lock' }}</span
+        ><span class="text-[11px] text-muted">⇧⌘L</span>
       </ContextMenuItem>
 
       <ContextMenuSeparator :class="cls.sep" />
 
-      <ContextMenuSub v-if="otherPages.length > 0 && hasSelection">
+      <ContextMenuSub>
         <ContextMenuSubTrigger :class="cls.item">
-          <span>Move to page</span><span class="text-sm text-muted">›</span>
+          <span>Copy/Paste as</span><span class="text-sm text-muted">›</span>
         </ContextMenuSubTrigger>
         <ContextMenuPortal>
           <ContextMenuSubContent :class="cls.menu">
-            <ContextMenuItem
-              v-for="page in otherPages"
-              :key="page.id"
-              :class="cls.item"
-              @select="editor.moveToPage(page.id)"
+            <ContextMenuItem :class="cls.item" @select="clipboardWrite(copyAsText(), 'text')"
+              >Copy as text</ContextMenuItem
             >
-              {{ page.name }}
+            <ContextMenuItem :class="cls.item" @select="clipboardWrite(copyAsSVG(), 'SVG')"
+              >Copy as SVG</ContextMenuItem
+            >
+            <ContextMenuItem :class="cls.item" @select="copyAsPNG">
+              <span>Copy as PNG</span><span class="text-[11px] text-muted">⇧⌘C</span>
             </ContextMenuItem>
+            <ContextMenuItem :class="cls.item" @select="clipboardWrite(copyAsJSX(), 'JSX')"
+              >Copy as JSX</ContextMenuItem
+            >
           </ContextMenuSubContent>
         </ContextMenuPortal>
       </ContextMenuSub>
-
-      <ContextMenuItem :class="cls.item" :disabled="!hasSelection" @select="editor.bringToFront()">
-        <span>Bring to front</span><span class="text-[11px] text-muted">]</span>
-      </ContextMenuItem>
-      <ContextMenuItem :class="cls.item" :disabled="!hasSelection" @select="editor.sendToBack()">
-        <span>Send to back</span><span class="text-[11px] text-muted">[</span>
-      </ContextMenuItem>
-
-      <ContextMenuSeparator :class="cls.sep" />
-
-      <ContextMenuItem
-        :class="cls.item"
-        :disabled="selectedCount < 2"
-        @select="editor.groupSelected()"
-      >
-        <span>Group</span><span class="text-[11px] text-muted">⌘G</span>
-      </ContextMenuItem>
-      <ContextMenuItem v-if="isGroup" :class="cls.item" @select="editor.ungroupSelected()">
-        <span>Ungroup</span><span class="text-[11px] text-muted">⇧⌘G</span>
-      </ContextMenuItem>
-      <ContextMenuItem v-if="hasSelection" :class="cls.item" @select="editor.wrapInAutoLayout()">
-        <span>Add auto layout</span><span class="text-[11px] text-muted">⇧A</span>
-      </ContextMenuItem>
-
-      <ContextMenuSeparator :class="cls.sep" />
-
-      <ContextMenuItem
-        :class="cls.component"
-        :disabled="!hasSelection"
-        @select="editor.createComponentFromSelection()"
-      >
-        <span>Create component</span><span class="text-[11px] text-component/60">⌥⌘K</span>
-      </ContextMenuItem>
-      <ContextMenuItem
-        v-if="canCreateComponentSet"
-        :class="cls.component"
-        @select="editor.createComponentSetFromComponents()"
-      >
-        <span>Create component set</span><span class="text-[11px] text-component/60">⇧⌘K</span>
-      </ContextMenuItem>
-      <ContextMenuItem
-        v-if="isComponent && selectedNode"
-        :class="cls.component"
-        @select="editor.createInstanceFromComponent(selectedNode.id)"
-      >
-        <span>Create instance</span>
-      </ContextMenuItem>
-      <ContextMenuItem
-        v-if="isInstance"
-        :class="cls.component"
-        @select="editor.goToMainComponent()"
-      >
-        <span>Go to main component</span>
-      </ContextMenuItem>
-      <ContextMenuItem v-if="isInstance" :class="cls.item" @select="editor.detachInstance()">
-        <span>Detach instance</span><span class="text-[11px] text-muted">⌥⌘B</span>
-      </ContextMenuItem>
-
-      <template v-if="hasSelection">
-        <ContextMenuSeparator :class="cls.sep" />
-
-        <ContextMenuItem :class="cls.item" @select="editor.toggleVisibility()">
-          <span>{{ isVisible ? 'Hide' : 'Show' }}</span
-          ><span class="text-[11px] text-muted">⇧⌘H</span>
-        </ContextMenuItem>
-        <ContextMenuItem :class="cls.item" @select="editor.toggleLock()">
-          <span>{{ isLocked ? 'Unlock' : 'Lock' }}</span
-          ><span class="text-[11px] text-muted">⇧⌘L</span>
-        </ContextMenuItem>
-
-        <ContextMenuSeparator :class="cls.sep" />
-
-        <ContextMenuSub>
-          <ContextMenuSubTrigger :class="cls.item">
-            <span>Copy/Paste as</span><span class="text-sm text-muted">›</span>
-          </ContextMenuSubTrigger>
-          <ContextMenuPortal>
-            <ContextMenuSubContent :class="cls.menu">
-              <ContextMenuItem :class="cls.item" @select="clipboardWrite(copyAsText(), 'text')"
-                >Copy as text</ContextMenuItem
-              >
-              <ContextMenuItem :class="cls.item" @select="clipboardWrite(copyAsSVG(), 'SVG')"
-                >Copy as SVG</ContextMenuItem
-              >
-              <ContextMenuItem :class="cls.item" @select="copyAsPNG">
-                <span>Copy as PNG</span><span class="text-[11px] text-muted">⇧⌘C</span>
-              </ContextMenuItem>
-              <ContextMenuItem :class="cls.item" @select="clipboardWrite(copyAsJSX(), 'JSX')"
-                >Copy as JSX</ContextMenuItem
-              >
-            </ContextMenuSubContent>
-          </ContextMenuPortal>
-        </ContextMenuSub>
-      </template>
-    </ContextMenuContent>
-  </EditorMenuRoot>
+    </template>
+  </ContextMenuContent>
 </template>
