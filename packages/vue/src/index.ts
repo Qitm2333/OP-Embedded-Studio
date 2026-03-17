@@ -42,6 +42,9 @@ export { EditorMenuRoot } from './EditorMenu'
 export { FillPickerRoot } from './FillPicker'
 export { GradientEditorRoot } from './GradientEditor'
 export { ExportControlsRoot } from './ExportControls'
+export { TypographyControlsRoot } from './TypographyControls'
+
+export { AppearanceControlsRoot } from './AppearanceControls'
 export type { LayerTreeContext, LayerNode } from './LayerTree'
 export type { CanvasContext } from './Canvas'
 
