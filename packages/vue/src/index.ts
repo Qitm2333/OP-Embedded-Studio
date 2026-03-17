@@ -36,6 +36,10 @@ export { PositionControlsRoot } from './PositionControls'
 export { LayerTreeRoot, LayerTreeItem, useLayerTree } from './LayerTree'
 
 export { EditorMenuRoot } from './EditorMenu'
+
+export { FillPickerRoot } from './FillPicker'
+export { GradientEditorRoot } from './GradientEditor'
+export { ExportControlsRoot } from './ExportControls'
 export type { LayerTreeContext, LayerNode } from './LayerTree'
 export type { CanvasContext } from './Canvas'
 

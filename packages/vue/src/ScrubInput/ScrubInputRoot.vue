@@ -120,7 +120,7 @@ provideScrubInput(ctx)
     :start-scrub="startScrub"
     :start-edit="startEdit"
     :commit-edit="commitEdit"
-    :on-keydown="onKeydown"
+    :keydown="onKeydown"
     :placeholder="props.placeholder"
   />
 </template>
