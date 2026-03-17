@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 
 import ScrubInput from '@/components/ScrubInput.vue'
+import Tip from '@/components/Tip.vue'
 import { useNodeProps } from '@open-pencil/vue'
 
 const {
@@ -36,56 +37,62 @@ const ids = computed(() => nodes.value.map((n) => n.id))
     <!-- Alignment buttons -->
     <div class="mb-1.5 flex gap-2">
       <div class="flex gap-0.5">
-        <button
-          class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-          data-test-id="position-align-left"
-          title="Align left"
-          @click="store.alignNodes(ids, 'horizontal', 'min')"
-        >
-          <icon-lucide-align-horizontal-justify-start class="size-3.5" />
-        </button>
-        <button
-          class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-          data-test-id="position-align-center-h"
-          title="Align center horizontally"
-          @click="store.alignNodes(ids, 'horizontal', 'center')"
-        >
-          <icon-lucide-align-horizontal-justify-center class="size-3.5" />
-        </button>
-        <button
-          class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-          data-test-id="position-align-right"
-          title="Align right"
-          @click="store.alignNodes(ids, 'horizontal', 'max')"
-        >
-          <icon-lucide-align-horizontal-justify-end class="size-3.5" />
-        </button>
+        <Tip label="Align left">
+          <button
+            class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            data-test-id="position-align-left"
+            @click="store.alignNodes(ids, 'horizontal', 'min')"
+          >
+            <icon-lucide-align-horizontal-justify-start class="size-3.5" />
+          </button>
+        </Tip>
+        <Tip label="Align center horizontally">
+          <button
+            class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            data-test-id="position-align-center-h"
+            @click="store.alignNodes(ids, 'horizontal', 'center')"
+          >
+            <icon-lucide-align-horizontal-justify-center class="size-3.5" />
+          </button>
+        </Tip>
+        <Tip label="Align right">
+          <button
+            class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            data-test-id="position-align-right"
+            @click="store.alignNodes(ids, 'horizontal', 'max')"
+          >
+            <icon-lucide-align-horizontal-justify-end class="size-3.5" />
+          </button>
+        </Tip>
       </div>
       <div class="flex gap-0.5">
-        <button
-          class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-          data-test-id="position-align-top"
-          title="Align top"
-          @click="store.alignNodes(ids, 'vertical', 'min')"
-        >
-          <icon-lucide-align-vertical-justify-start class="size-3.5" />
-        </button>
-        <button
-          class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-          data-test-id="position-align-center-v"
-          title="Align center vertically"
-          @click="store.alignNodes(ids, 'vertical', 'center')"
-        >
-          <icon-lucide-align-vertical-justify-center class="size-3.5" />
-        </button>
-        <button
-          class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-          data-test-id="position-align-bottom"
-          title="Align bottom"
-          @click="store.alignNodes(ids, 'vertical', 'max')"
-        >
-          <icon-lucide-align-vertical-justify-end class="size-3.5" />
-        </button>
+        <Tip label="Align top">
+          <button
+            class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            data-test-id="position-align-top"
+            @click="store.alignNodes(ids, 'vertical', 'min')"
+          >
+            <icon-lucide-align-vertical-justify-start class="size-3.5" />
+          </button>
+        </Tip>
+        <Tip label="Align center vertically">
+          <button
+            class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            data-test-id="position-align-center-v"
+            @click="store.alignNodes(ids, 'vertical', 'center')"
+          >
+            <icon-lucide-align-vertical-justify-center class="size-3.5" />
+          </button>
+        </Tip>
+        <Tip label="Align bottom">
+          <button
+            class="flex size-7 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            data-test-id="position-align-bottom"
+            @click="store.alignNodes(ids, 'vertical', 'max')"
+          >
+            <icon-lucide-align-vertical-justify-end class="size-3.5" />
+          </button>
+        </Tip>
       </div>
     </div>
 
@@ -138,30 +145,33 @@ const ids = computed(() => nodes.value.map((n) => n.id))
           <icon-lucide-rotate-ccw class="size-3" />
         </template>
       </ScrubInput>
-      <button
-        class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-        data-test-id="position-flip-horizontal"
-        title="Flip horizontal"
-        @click="store.flipNodes(ids, 'horizontal')"
-      >
-        <icon-lucide-flip-horizontal class="size-3.5" />
-      </button>
-      <button
-        class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-        data-test-id="position-flip-vertical"
-        title="Flip vertical"
-        @click="store.flipNodes(ids, 'vertical')"
-      >
-        <icon-lucide-flip-vertical class="size-3.5" />
-      </button>
-      <button
-        class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-        data-test-id="position-rotate-90"
-        title="Rotate 90°"
-        @click="store.rotateNodes(ids, 90)"
-      >
-        <icon-lucide-rotate-cw class="size-3.5" />
-      </button>
+      <Tip label="Flip horizontal">
+        <button
+          class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+          data-test-id="position-flip-horizontal"
+          @click="store.flipNodes(ids, 'horizontal')"
+        >
+          <icon-lucide-flip-horizontal class="size-3.5" />
+        </button>
+      </Tip>
+      <Tip label="Flip vertical">
+        <button
+          class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+          data-test-id="position-flip-vertical"
+          @click="store.flipNodes(ids, 'vertical')"
+        >
+          <icon-lucide-flip-vertical class="size-3.5" />
+        </button>
+      </Tip>
+      <Tip label="Rotate 90°">
+        <button
+          class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+          data-test-id="position-rotate-90"
+          @click="store.rotateNodes(ids, 90)"
+        >
+          <icon-lucide-rotate-cw class="size-3.5" />
+        </button>
+      </Tip>
     </div>
   </div>
 </template>

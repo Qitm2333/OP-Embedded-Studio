@@ -2,6 +2,7 @@
 import Prism from 'prismjs'
 import 'prismjs/components/prism-jsx'
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport } from 'reka-ui'
+import { useClipboard } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 
 import { selectionToJSX } from '@open-pencil/core'
@@ -10,6 +11,7 @@ import { useEditor } from '@open-pencil/vue'
 import type { JSXFormat } from '@open-pencil/core'
 
 const store = useEditor()
+const { copy } = useClipboard()
 const copied = ref(false)
 const jsxFormat = ref<JSXFormat>('openpencil')
 
@@ -33,7 +35,7 @@ const highlightedLines = computed(() => {
 let copyTimeout: ReturnType<typeof setTimeout> | undefined
 
 function copyCode() {
-  navigator.clipboard.writeText(jsxCode.value)
+  copy(jsxCode.value)
   copied.value = true
   clearTimeout(copyTimeout)
   copyTimeout = setTimeout(() => (copied.value = false), 2000)

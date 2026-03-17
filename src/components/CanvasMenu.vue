@@ -8,12 +8,14 @@ import {
   ContextMenuSubContent,
   ContextMenuPortal
 } from 'reka-ui'
+import { useClipboard } from '@vueuse/core'
 import { EditorMenuRoot, toast } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/stores/editor'
 import { menuContent, menuItem, menuSeparator } from '@/components/ui/menu'
 
 const store = useEditorStore()
+const { copy } = useClipboard()
 
 function execCommand(cmd: string) {
   window.document.execCommand(cmd)
@@ -21,7 +23,7 @@ function execCommand(cmd: string) {
 
 async function clipboardWrite(text: string | null, label: string) {
   if (!text) return
-  await navigator.clipboard.writeText(text)
+  copy(text)
   toast.show(`Copied as ${label}`)
 }
 

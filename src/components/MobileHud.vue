@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useClipboard } from '@vueuse/core'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -33,6 +34,7 @@ import type { Component } from 'vue'
 const router = useRouter()
 const collab = useCollabInjected()
 const store = useEditorStore()
+const { copy } = useClipboard()
 
 const collabState = computed(() => collab?.state.value ?? DEFAULT_COLLAB_STATE)
 const collabPeers = computed(() => collab?.remotePeers.value ?? [])
@@ -42,7 +44,7 @@ function onShare() {
   if (!collab) return
   const roomId = collab.shareCurrentDoc()
   router.push(`/share/${roomId}`)
-  navigator.clipboard.writeText(`${window.location.origin}/share/${roomId}`)
+  copy(`${window.location.origin}/share/${roomId}`)
   toast.show('Link copied to clipboard')
 }
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useClipboard } from '@vueuse/core'
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -21,6 +22,7 @@ import { initials } from '@/utils/text'
 const route = useRoute()
 const router = useRouter()
 const collab = useCollabInjected()
+const { copy } = useClipboard()
 
 const joinInput = ref('')
 const nameDraft = ref(collab?.state.value.localName ?? '')
@@ -41,7 +43,7 @@ const isJoining = computed(() => !!pendingRoomId && !state.value.connected)
 
 function copyLink() {
   if (!shareUrl.value) return
-  navigator.clipboard.writeText(shareUrl.value)
+  copy(shareUrl.value)
   toast.show('Link copied to clipboard')
   copied.value = true
   setTimeout(() => {
@@ -54,7 +56,7 @@ function onShare() {
   collab.setLocalName(nameDraft.value.trim())
   const roomId = collab.shareCurrentDoc()
   router.push(`/share/${roomId}`)
-  navigator.clipboard.writeText(`${window.location.origin}/share/${roomId}`)
+  copy(`${window.location.origin}/share/${roomId}`)
   toast.show('Link copied to clipboard')
   popoverOpen.value = false
 }

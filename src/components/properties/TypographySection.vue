@@ -6,6 +6,7 @@ import FontPicker from '@/components/FontPicker.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import { useNodeFontStatus, useNodeProps } from '@open-pencil/vue'
 import { loadFont } from '@/engine/fonts'
+import { ToggleGroupItem, ToggleGroupRoot, type AcceptableValue } from 'reka-ui'
 
 const { store, node, updateProp, commitProp } = useNodeProps()
 const { missingFonts, hasMissingFonts } = useNodeFontStatus(() => node.value)
@@ -68,6 +69,36 @@ function toggleDecoration(deco: 'UNDERLINE' | 'STRIKETHROUGH') {
     `Toggle ${deco.toLowerCase()}`
   )
   store.requestRender()
+}
+
+const activeFormatting = computed(() => {
+  if (!node.value) return []
+  const result: string[] = []
+  if (node.value.fontWeight >= 700) result.push('bold')
+  if (node.value.italic) result.push('italic')
+  if (node.value.textDecoration === 'UNDERLINE') result.push('underline')
+  if (node.value.textDecoration === 'STRIKETHROUGH') result.push('strikethrough')
+  return result
+})
+
+function onFormattingChange(next: AcceptableValue | AcceptableValue[]) {
+  if (!node.value || !Array.isArray(next)) return
+  const prev = activeFormatting.value
+  const values = next as string[]
+  const added = values.filter((v) => !prev.includes(v))
+  const removed = prev.filter((v) => !values.includes(v))
+  for (const item of added) {
+    if (item === 'bold') toggleBold()
+    else if (item === 'italic') toggleItalic()
+    else if (item === 'underline') toggleDecoration('UNDERLINE')
+    else if (item === 'strikethrough') toggleDecoration('STRIKETHROUGH')
+  }
+  for (const item of removed) {
+    if (item === 'bold') toggleBold()
+    else if (item === 'italic') toggleItalic()
+    else if (item === 'underline') toggleDecoration('UNDERLINE')
+    else if (item === 'strikethrough') toggleDecoration('STRIKETHROUGH')
+  }
 }
 
 onMounted(async () => {
@@ -137,74 +168,63 @@ onMounted(async () => {
 
     <!-- Text alignment + formatting -->
     <div class="flex items-center gap-3">
-      <div class="flex gap-0.5">
-        <button
+      <ToggleGroupRoot
+        type="single"
+        class="flex gap-0.5"
+        :model-value="node.textAlignHorizontal"
+        @update:model-value="
+          (val: AcceptableValue) => {
+            if (val) setAlign(val as TextAlign)
+          }
+        "
+      >
+        <ToggleGroupItem
           v-for="align in ['LEFT', 'CENTER', 'RIGHT'] as TextAlign[]"
           :key="align"
-          class="flex cursor-pointer items-center justify-center rounded border px-2 py-1"
-          :class="
-            node.textAlignHorizontal === align
-              ? 'border-accent bg-accent text-white'
-              : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
-          "
-          @click="setAlign(align)"
+          :value="align"
+          class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
         >
           <icon-lucide-align-left v-if="align === 'LEFT'" class="size-3.5" />
           <icon-lucide-align-center v-else-if="align === 'CENTER'" class="size-3.5" />
           <icon-lucide-align-right v-else class="size-3.5" />
-        </button>
-      </div>
-      <div class="flex gap-0.5">
-        <button
+        </ToggleGroupItem>
+      </ToggleGroupRoot>
+      <ToggleGroupRoot
+        type="multiple"
+        class="flex gap-0.5"
+        :model-value="activeFormatting"
+        @update:model-value="onFormattingChange"
+      >
+        <ToggleGroupItem
+          value="bold"
           data-test-id="typography-bold-button"
-          class="flex cursor-pointer items-center justify-center rounded border px-2 py-1 font-bold"
-          :class="
-            node.fontWeight >= 700
-              ? 'border-accent bg-accent text-white'
-              : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
-          "
+          class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 font-bold text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
           title="Bold (⌘B)"
-          @click="toggleBold"
         >
           <icon-lucide-bold class="size-3.5" />
-        </button>
-        <button
-          class="flex cursor-pointer items-center justify-center rounded border px-2 py-1"
-          :class="
-            node.italic
-              ? 'border-accent bg-accent text-white'
-              : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
-          "
+        </ToggleGroupItem>
+        <ToggleGroupItem
+          value="italic"
+          class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
           title="Italic (⌘I)"
-          @click="toggleItalic"
         >
           <icon-lucide-italic class="size-3.5" />
-        </button>
-        <button
-          class="flex cursor-pointer items-center justify-center rounded border px-2 py-1"
-          :class="
-            node.textDecoration === 'UNDERLINE'
-              ? 'border-accent bg-accent text-white'
-              : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
-          "
+        </ToggleGroupItem>
+        <ToggleGroupItem
+          value="underline"
+          class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
           title="Underline (⌘U)"
-          @click="toggleDecoration('UNDERLINE')"
         >
           <icon-lucide-underline class="size-3.5" />
-        </button>
-        <button
-          class="flex cursor-pointer items-center justify-center rounded border px-2 py-1"
-          :class="
-            node.textDecoration === 'STRIKETHROUGH'
-              ? 'border-accent bg-accent text-white'
-              : 'border-border bg-input text-muted hover:bg-hover hover:text-surface'
-          "
+        </ToggleGroupItem>
+        <ToggleGroupItem
+          value="strikethrough"
+          class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
           title="Strikethrough"
-          @click="toggleDecoration('STRIKETHROUGH')"
         >
           <icon-lucide-strikethrough class="size-3.5" />
-        </button>
-      </div>
+        </ToggleGroupItem>
+      </ToggleGroupRoot>
     </div>
   </div>
 </template>
