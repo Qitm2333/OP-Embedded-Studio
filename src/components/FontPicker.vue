@@ -16,17 +16,18 @@ import { selectItem, selectTrigger } from '@/components/ui/select'
 import { panelSurface } from '@/components/ui/surface'
 import { listFamilies } from '@/engine/fonts'
 
-defineModel<string>({ required: true })
-defineEmits<{ select: [family: string] }>()
+const modelValue = defineModel<string>({ required: true })
+const emit = defineEmits<{ select: [family: string] }>()
 
 const filterRef = ref<InstanceType<typeof ListboxFilter> | null>(null)
 </script>
 
 <template>
   <FontPickerRoot
-    v-model="modelValue"
+    :model-value="modelValue"
     :list-families="listFamilies"
-    @select="$emit('select', $event)"
+    @update:model-value="modelValue = $event"
+    @select="emit('select', $event)"
     v-slot="{ filtered, searchTerm, open, modelValue: selected, select, setSearchTerm, setOpen }"
   >
     <PopoverRoot :open="open" @update:open="setOpen">

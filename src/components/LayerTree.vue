@@ -35,7 +35,7 @@ function onLayerRightClick(e: MouseEvent) {
           <TreeRoot
             :key="treeKey"
             v-slot="{ flattenItems }"
-            v-model:expanded="expanded"
+            :expanded="expanded"
             :items="items"
             :get-key="getKey"
             :get-children="getChildren"
