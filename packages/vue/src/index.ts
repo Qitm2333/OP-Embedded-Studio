@@ -32,6 +32,11 @@ export { PropertyListRoot, PropertyListItem, usePropertyList } from './PropertyL
 export type { PropertyListContext } from './PropertyList'
 
 export { PositionControlsRoot } from './PositionControls'
+
+export { LayerTreeRoot, LayerTreeItem, useLayerTree } from './LayerTree'
+
+export { EditorMenuRoot } from './EditorMenu'
+export type { LayerTreeContext, LayerNode } from './LayerTree'
 export type { CanvasContext } from './Canvas'
 
 export { ToolbarRoot, ToolbarItem, useToolbar } from './Toolbar'
