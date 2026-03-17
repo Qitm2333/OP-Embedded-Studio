@@ -36,10 +36,18 @@ watch(
 )
 
 const cursor = computed(() => toolCursor(store.state.activeTool, cursorOverride.value))
+
+function onContextMenu(e: MouseEvent) {
+  const canvas = canvasRef.value
+  if (!canvas) return
+  const rect = canvas.getBoundingClientRect()
+  const { x: cx, y: cy } = store.screenToCanvas(e.clientX - rect.left, e.clientY - rect.top)
+  store.selectAtPoint(cx, cy)
+}
 </script>
 
 <template>
-  <CanvasContextMenu>
+  <CanvasContextMenu :on-context-menu="onContextMenu">
     <div
       data-test-id="canvas-area"
       class="canvas-area relative min-h-0 min-w-0 flex-1 overflow-hidden"

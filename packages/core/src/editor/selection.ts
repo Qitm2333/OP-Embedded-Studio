@@ -1,4 +1,5 @@
 import type { Rect } from '../types'
+import type { SceneNode } from '../scene-graph'
 import type { SnapGuide } from '../snap'
 import type { EditorContext } from './types'
 
@@ -99,6 +100,35 @@ export function createSelectionActions(ctx: EditorContext) {
     return ctx.graph.flattenTree(ctx.state.currentPageId)
   }
 
+  function hitTestAtPoint(cx: number, cy: number, deep = false): SceneNode | null {
+    const scopeId = ctx.state.enteredContainerId
+    if (scopeId) {
+      const scopeNode = ctx.graph.getNode(scopeId)
+      if (!scopeNode) {
+        ctx.state.enteredContainerId = null
+      } else {
+        const abs = ctx.graph.getAbsolutePosition(scopeId)
+        const lx = cx - abs.x
+        const ly = cy - abs.y
+        return deep
+          ? ctx.graph.hitTestDeep(lx, ly, scopeId)
+          : ctx.graph.hitTest(lx, ly, scopeId)
+      }
+    }
+    return deep
+      ? ctx.graph.hitTestDeep(cx, cy, ctx.state.currentPageId)
+      : ctx.graph.hitTest(cx, cy, ctx.state.currentPageId)
+  }
+
+  function selectAtPoint(cx: number, cy: number) {
+    const hit = hitTestAtPoint(cx, cy)
+    if (hit) {
+      if (!ctx.state.selectedIds.has(hit.id)) select([hit.id])
+    } else {
+      clearSelection()
+    }
+  }
+
   return {
     select,
     clearSelection,
@@ -114,6 +144,8 @@ export function createSelectionActions(ctx: EditorContext) {
     exitContainer,
     getSelectedNodes,
     getSelectedNode,
-    getLayerTree
+    getLayerTree,
+    hitTestAtPoint,
+    selectAtPoint
   }
 }
