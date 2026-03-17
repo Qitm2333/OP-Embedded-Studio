@@ -18,8 +18,20 @@ export { useNodeFontStatus } from './composables/use-font-status'
 export { toast } from './toast'
 export type { Toast, ToastVariant } from './toast'
 
+export {
+  ScrubInputRoot,
+  ScrubInputField,
+  ScrubInputDisplay,
+  useScrubInput
+} from './ScrubInput'
+export type { ScrubInputContext } from './ScrubInput'
+
+export { ToolbarRoot, ToolbarItem, useToolbar } from './Toolbar'
+export type { ToolbarContext } from './Toolbar'
+
 export { default as OpenPencilProvider } from './components/OpenPencilProvider.vue'
 export { default as OpenPencilCanvas } from './components/OpenPencilCanvas.vue'
+export { PageListRoot } from './PageList'
 export { default as PageList } from './components/PageList.vue'
 export { default as LayerTree } from './components/LayerTree.vue'
 export { default as ToolSelector } from './components/ToolSelector.vue'

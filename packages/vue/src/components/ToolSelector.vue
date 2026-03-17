@@ -4,7 +4,6 @@ import { computed } from 'vue'
 import { useEditor } from '../context'
 
 const editor = useEditor()
-
 const activeTool = computed(() => editor.state.activeTool)
 </script>
 
