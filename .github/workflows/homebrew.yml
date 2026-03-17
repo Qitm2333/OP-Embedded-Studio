@@ -32,7 +32,7 @@ jobs:
           SHA_ARM=$(shasum -a 256 "$TMPDIR/OpenPencil_aarch64.app.tar.gz" | cut -d' ' -f1)
           SHA_X64=$(shasum -a 256 "$TMPDIR/OpenPencil_x64.app.tar.gz" | cut -d' ' -f1)
 
-          gh repo clone open-pencil/homebrew-tap "$TMPDIR/tap"
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/open-pencil/homebrew-tap.git" "$TMPDIR/tap"
           cd "$TMPDIR/tap"
 
           sed -i '' \
