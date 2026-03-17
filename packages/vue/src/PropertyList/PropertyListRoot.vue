@@ -24,7 +24,12 @@ const active = computed(() => selectedNodes.value.length > 0)
 const isMixed = computed(() => {
   const all = selectedNodes.value
   if (all.length <= 1) return false
-  const first = JSON.stringify(all[0][propKey])
+  const firstArr = all[0][propKey] as unknown[]
+  for (let i = 1; i < all.length; i++) {
+    const arr = all[i][propKey] as unknown[]
+    if (arr.length !== firstArr.length) return true
+  }
+  const first = JSON.stringify(firstArr)
   return all.some((n) => JSON.stringify(n[propKey]) !== first)
 })
 

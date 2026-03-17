@@ -51,34 +51,38 @@ export function createClipboardActions(ctx: EditorContext) {
 
   function duplicateSelected(selectedNodes: SceneNode[]) {
     const prevSelection = new Set(ctx.state.selectedIds)
-    const newIds: string[] = []
-    const snapshots: Array<{ id: string; parentId: string; snapshot: SceneNode }> = []
+    const selectedSet = new Set(selectedNodes.map((n) => n.id))
+    const topLevel = selectedNodes.filter((n) => !n.parentId || !selectedSet.has(n.parentId))
 
-    for (const node of selectedNodes) {
+    const newRootIds: string[] = []
+
+    for (const node of topLevel) {
       const parentId = node.parentId ?? ctx.state.currentPageId
-      const { id: _srcId, parentId: _srcParent, childIds: _srcChildren, ...srcRest } = node
-      const created = ctx.graph.createNode(node.type, parentId, {
-        ...srcRest,
+      const clone = ctx.graph.cloneTree(node.id, parentId, {
         name: node.name + ' copy',
         x: node.x + 20,
         y: node.y + 20
       })
-      newIds.push(created.id)
-      snapshots.push({ id: created.id, parentId, snapshot: { ...created } })
+      if (clone) newRootIds.push(clone.id)
     }
 
-    if (newIds.length > 0) {
-      ctx.state.selectedIds = new Set(newIds)
+    if (newRootIds.length > 0) {
+      const allCloned = collectSubtrees(ctx.graph, newRootIds)
+      const pageId = ctx.state.currentPageId
+      ctx.state.selectedIds = new Set(newRootIds)
       ctx.undo.push({
         label: 'Duplicate',
         forward: () => {
-          for (const { snapshot, parentId } of snapshots) {
-            ctx.graph.createNode(snapshot.type, parentId, snapshot)
+          for (const snapshot of allCloned) {
+            ctx.graph.createNode(snapshot.type, snapshot.parentId ?? pageId, {
+              ...snapshot,
+              childIds: []
+            })
           }
-          ctx.state.selectedIds = new Set(newIds)
+          ctx.state.selectedIds = new Set(newRootIds)
         },
         inverse: () => {
-          for (const { id } of snapshots) ctx.graph.deleteNode(id)
+          for (const id of newRootIds) ctx.graph.deleteNode(id)
           ctx.state.selectedIds = prevSelection
         }
       })
