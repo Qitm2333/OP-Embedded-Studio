@@ -94,6 +94,28 @@ export function useKeyboard() {
     if (html) store.pasteFromHTML(html, cursorPos)
   })
 
+  // Spacebar hold → temporary Hand tool (Figma-style canvas pan)
+  let toolBeforeSpace: (typeof store.state.activeTool) | null = null
+
+  useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+    if (isEditing(e)) return
+    if (e.code === 'Space' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat) {
+      if (store.state.activeTool !== 'HAND') {
+        toolBeforeSpace = store.state.activeTool
+        store.setTool('HAND')
+      }
+      e.preventDefault()
+    }
+  })
+
+  useEventListener(window, 'keyup', (e: KeyboardEvent) => {
+    if (e.code === 'Space' && toolBeforeSpace) {
+      store.setTool(toolBeforeSpace)
+      toolBeforeSpace = null
+      e.preventDefault()
+    }
+  })
+
   const keys = useMagicKeys({
     passive: false,
     onEventFired(e) {

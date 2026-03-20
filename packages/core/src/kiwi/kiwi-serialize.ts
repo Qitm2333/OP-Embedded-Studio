@@ -2,23 +2,13 @@ export const FIG_KIWI_VERSION = 106
 
 import { deflateSync, inflateSync } from 'fflate'
 
-<<<<<<< HEAD:packages/core/src/kiwi/kiwi-serialize.ts
 import { getLoadedFontData, normalizeFontFamily, weightToStyle } from '../fonts'
 import { encodeVectorNetworkBlob } from '../vector'
 import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi-convert'
 
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from '../scene-graph'
-import type { Color, GUID } from '../types'
+import type { Color, GUID, Matrix } from '../types'
 import type { NodeChange, Paint, VariableConsumptionEntry } from './codec'
-=======
-import { weightToStyle, getLoadedFontData, normalizeFontFamily } from './fonts'
-import { encodeVectorNetworkBlob } from './vector'
-import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi/kiwi-convert'
-
-import type { NodeChange, Paint, VariableConsumptionEntry } from './kiwi/codec'
-import type { SceneGraph, SceneNode, CharacterStyleOverride } from './scene-graph'
-import type { Color, GUID, Matrix } from './types'
->>>>>>> 4df3671 (fix: kiwi serialization bugs causing broken auto-layout in Figma import):packages/core/src/kiwi-serialize.ts
 
 const fontDigestCache = new Map<string, Uint8Array>()
 

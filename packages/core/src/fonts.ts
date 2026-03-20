@@ -301,7 +301,7 @@ export function collectFontKeys(graph: SceneGraph, nodeIds: string[]): Array<[st
   return [...fontKeys].map((k) => k.split('\0') as [string, string])
 }
 
-let cjkFallbackFamilies: string[] = []
+const cjkFallbackFamilies: string[] = []
 let cjkFallbackPromise: Promise<string[]> | null = null
 
 function getCJKCandidates(): string[] {
