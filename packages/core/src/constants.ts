@@ -281,7 +281,7 @@ export const CJK_FALLBACK_FAMILIES_LINUX = [
   'Droid Sans Fallback'
 ]
 
-export const CJK_GOOGLE_FONT = 'Noto Sans SC'
+export const CJK_GOOGLE_FONTS = ['Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR']
 
 export const DEFAULT_SHAPE_FILL: Fill = {
   type: 'SOLID',
