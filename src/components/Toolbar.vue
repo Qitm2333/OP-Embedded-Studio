@@ -7,7 +7,6 @@ import {
   DropdownMenuItem,
   DropdownMenuPortal
 } from 'reka-ui'
-import { useBreakpoints } from '@vueuse/core'
 import { AnimatePresence, motion } from 'motion-v'
 
 import IconChevronDown from '~icons/lucide/chevron-down'
@@ -29,13 +28,13 @@ import Tip from '@/components/Tip.vue'
 import { ACTION_TOAST_DURATION } from '@/constants'
 import { useEditorStore } from '@/stores/editor'
 import { toolIcons } from '@/utils/tools'
-import { ToolbarRoot, ToolbarItem } from '@open-pencil/vue'
+import { ToolbarRoot, ToolbarItem, useEditorCommands, useViewportKind } from '@open-pencil/vue'
 import type { Component } from 'vue'
 import type { EditorToolDef, Tool } from '@open-pencil/vue'
 
 const store = useEditorStore()
-const breakpoints = useBreakpoints({ mobile: 768 })
-const isMobile = breakpoints.smaller('mobile')
+const { isMobile } = useViewportKind()
+const { getCommand } = useEditorCommands()
 
 const toolLabels: Record<Tool, string> = {
   SELECT: 'Move',
@@ -85,16 +84,16 @@ const editActions: ActionItem[] = [
   { icon: IconCopy, label: 'Copy', action: () => store.mobileCopy() },
   { icon: IconClipboard, label: 'Paste', action: () => store.mobilePaste() },
   { icon: IconScissors, label: 'Cut', action: () => store.mobileCut() },
-  { icon: IconCopyPlus, label: 'Duplicate', action: () => store.duplicateSelected() },
-  { icon: IconTrash2, label: 'Delete', action: () => store.deleteSelected() }
+  { icon: IconCopyPlus, label: 'Duplicate', action: () => getCommand('selection.duplicate').run() },
+  { icon: IconTrash2, label: 'Delete', action: () => getCommand('selection.delete').run() }
 ]
 
 const arrangeActions: ActionItem[] = [
-  { icon: IconArrowUpToLine, label: 'Front', action: () => store.bringToFront() },
-  { icon: IconArrowDownToLine, label: 'Back', action: () => store.sendToBack() },
-  { icon: IconGroup, label: 'Group', action: () => store.groupSelected() },
-  { icon: IconUngroup, label: 'Ungroup', action: () => store.ungroupSelected() },
-  { icon: IconLock, label: 'Lock', action: () => store.toggleLock() }
+  { icon: IconArrowUpToLine, label: 'Front', action: () => getCommand('selection.bringToFront').run() },
+  { icon: IconArrowDownToLine, label: 'Back', action: () => getCommand('selection.sendToBack').run() },
+  { icon: IconGroup, label: 'Group', action: () => getCommand('selection.group').run() },
+  { icon: IconUngroup, label: 'Ungroup', action: () => getCommand('selection.ungroup').run() },
+  { icon: IconLock, label: 'Lock', action: () => getCommand('selection.toggleLock').run() }
 ]
 
 const CATEGORY_COUNT = 3

@@ -27,6 +27,7 @@ import { toast } from '@/utils/toast'
 import { useEditorStore } from '@/stores/editor'
 import Tip from '@/components/Tip.vue'
 import { colorToCSS } from '@open-pencil/core'
+import { useEditorCommands } from '@open-pencil/vue'
 import { toolIcons } from '@/utils/tools'
 import { initials } from '@/utils/text'
 
@@ -40,6 +41,7 @@ const { copy } = useClipboard()
 const collabState = computed(() => collab?.state.value ?? DEFAULT_COLLAB_STATE)
 const collabPeers = computed(() => collab?.remotePeers.value ?? [])
 const followingPeer = computed(() => collab?.followingPeer.value ?? null)
+const { getCommand } = useEditorCommands()
 
 function onShare() {
   if (!collab) return
@@ -76,7 +78,7 @@ const menuItems: MenuAction[] = [
     label: 'Export…',
     action: () => store.exportSelection(1, 'PNG')
   },
-  { icon: IconZoomIn, label: 'Zoom to fit', action: () => store.zoomToFit() }
+  { icon: IconZoomIn, label: 'Zoom to fit', action: () => getCommand('view.zoomFit').run() }
 ]
 
 const onlineCount = computed(() => collabPeers.value.length + 1)
@@ -93,7 +95,7 @@ const onlineCount = computed(() => collabPeers.value.length + 1)
         <Tip label="Undo">
           <button
             class="flex size-8 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-panel/70 shadow-md backdrop-blur-xl select-none active:bg-hover"
-            @click="store.undoAction()"
+            @click="getCommand('edit.undo').run()"
           >
             <icon-lucide-undo-2 class="size-3.5 text-surface" />
           </button>
@@ -101,7 +103,7 @@ const onlineCount = computed(() => collabPeers.value.length + 1)
         <Tip label="Redo">
           <button
             class="flex size-8 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-panel/70 shadow-md backdrop-blur-xl select-none active:bg-hover"
-            @click="store.redoAction()"
+            @click="getCommand('edit.redo').run()"
           >
             <icon-lucide-redo-2 class="size-3.5 text-surface" />
           </button>

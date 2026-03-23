@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { useEditor } from '@open-pencil/vue'
+import { useSelectionState, useEditorCommands } from '@open-pencil/vue'
 
 import VariablesDialog from './VariablesDialog.vue'
 import AppearanceSection from './properties/AppearanceSection.vue'
@@ -15,11 +15,11 @@ import StrokeSection from './properties/StrokeSection.vue'
 import TypographySection from './properties/TypographySection.vue'
 import VariablesSection from './properties/VariablesSection.vue'
 
-const store = useEditor()
 const variablesOpen = ref(false)
-
-const node = computed(() => store.getSelectedNode())
-const multiCount = computed(() => store.getSelectedNodes().length)
+const { selectedNode: node, selectedCount: multiCount } = useSelectionState()
+const { getCommand } = useEditorCommands()
+const goToMainComponent = getCommand('selection.goToMainComponent')
+const detachInstance = getCommand('selection.detachInstance')
 const isComponentType = computed(() => {
   const t = node.value?.type
   return t === 'COMPONENT' || t === 'COMPONENT_SET' || t === 'INSTANCE'
@@ -71,14 +71,14 @@ const isComponentType = computed(() => {
       <button
         data-test-id="design-go-to-component"
         class="rounded bg-component/10 px-2 py-1 text-left text-[11px] text-component hover:bg-component/20"
-        @click="store.goToMainComponent()"
+        @click="goToMainComponent.run()"
       >
         Go to Main Component
       </button>
       <button
         data-test-id="design-detach-instance"
         class="rounded px-2 py-1 text-left text-[11px] text-muted hover:bg-hover"
-        @click="store.detachInstance()"
+        @click="detachInstance.run()"
       >
         Detach Instance
       </button>

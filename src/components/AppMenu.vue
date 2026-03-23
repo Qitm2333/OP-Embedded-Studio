@@ -18,13 +18,15 @@ import IconChevronRight from '~icons/lucide/chevron-right'
 
 import { computed } from 'vue'
 
-import { useInlineRename } from '@open-pencil/vue'
+import { useEditorCommands, useInlineRename, useMenuModel } from '@open-pencil/vue'
 import { menuContent, menuItem, menuSeparator } from '@/components/ui/menu'
 import { IS_TAURI } from '@/constants'
 import { openFileDialog } from '@/composables/use-menu'
 import { useEditorStore } from '@/stores/editor'
 
 const store = useEditorStore()
+const { menuItem: commandMenuItem } = useEditorCommands()
+const { appMenu } = useMenuModel()
 
 const DOCUMENT_NAME_ID = 'document-name'
 const rename = useInlineRename<'document-name'>((_id, name) => {
@@ -95,88 +97,100 @@ const fileMenu: MenuEntry[] = [
   }
 ]
 
-const editMenu: MenuEntry[] = [
-  { label: 'Undo', shortcut: `${mod}Z`, action: () => store.undoAction() },
-  { label: 'Redo', shortcut: `${mod}⇧Z`, action: () => store.redoAction() },
-  { separator: true },
-  { label: 'Copy', shortcut: `${mod}C` },
-  { label: 'Paste', shortcut: `${mod}V` },
-  { label: 'Duplicate', shortcut: `${mod}D`, action: () => store.duplicateSelected() },
-  { label: 'Delete', shortcut: '⌫', action: () => store.deleteSelected() },
-  { separator: true },
-  { label: 'Select all', shortcut: `${mod}A`, action: () => store.selectAll() }
-]
-
-const viewMenu: MenuEntry[] = [
-  { label: 'Zoom to 100%', shortcut: `${mod}0`, action: () => store.zoomTo100() },
-  { label: 'Zoom to fit', shortcut: `${mod}1`, action: () => store.zoomToFit() },
-  { label: 'Zoom to selection', shortcut: `${mod}2`, action: () => store.zoomToSelection() },
-  {
-    label: 'Zoom in',
-    shortcut: `${mod}=`,
-    action: () => store.applyZoom(-100, window.innerWidth / 2, window.innerHeight / 2)
-  },
-  {
-    label: 'Zoom out',
-    shortcut: `${mod}-`,
-    action: () => store.applyZoom(100, window.innerWidth / 2, window.innerHeight / 2)
-  },
-  { separator: true },
-  {
-    label: 'Performance profiler',
-    get checked() {
-      return store.renderer?.profiler.hudVisible ?? false
-    },
-    onCheckedChange: () => {
-      store.toggleProfiler()
-    }
-  }
-]
-
-const objectMenu: MenuEntry[] = [
-  { label: 'Group', shortcut: `${mod}G`, action: () => store.groupSelected() },
-  { label: 'Ungroup', shortcut: `${mod}⇧G`, action: () => store.ungroupSelected() },
-  { separator: true },
-  {
-    label: 'Create component',
-    shortcut: `${mod}⌥K`,
-    action: () => store.createComponentFromSelection()
-  },
-  {
-    label: 'Create component set',
-    action: () => store.createComponentSetFromComponents()
-  },
-  { label: 'Detach instance', action: () => store.detachInstance() },
-  { separator: true },
-  { label: 'Bring to front', shortcut: ']', action: () => store.bringToFront() },
-  { label: 'Send to back', shortcut: '[', action: () => store.sendToBack() }
-]
-
 const textMenu: MenuEntry[] = [
   { label: 'Bold', shortcut: `${mod}B` },
   { label: 'Italic', shortcut: `${mod}I` },
   { label: 'Underline', shortcut: `${mod}U` }
 ]
 
-const arrangeMenu: MenuEntry[] = [
-  { label: 'Add auto layout', shortcut: '⇧A', action: () => store.wrapInAutoLayout() },
-  { separator: true },
-  { label: 'Align left', shortcut: '⌥A' },
-  { label: 'Align center', shortcut: '⌥H' },
-  { label: 'Align right', shortcut: '⌥D' },
-  { separator: true },
-  { label: 'Align top', shortcut: '⌥W' },
-  { label: 'Align middle', shortcut: '⌥V' },
-  { label: 'Align bottom', shortcut: '⌥S' }
-]
-
 const topMenus = [
   { label: 'File', items: fileMenu },
-  { label: 'Edit', items: editMenu },
-  { label: 'View', items: viewMenu },
-  { label: 'Object', items: objectMenu },
-  { label: 'Text', items: textMenu },
-  { label: 'Arrange', items: arrangeMenu }
+  ...appMenu.value.map((menu) => {
+    if (menu.label === 'View') {
+      return {
+        label: 'View',
+        items: [
+          commandMenuItem('view.zoom100', `${mod}0`),
+          commandMenuItem('view.zoomFit', `${mod}1`),
+          commandMenuItem('view.zoomSelection', `${mod}2`),
+          {
+            label: 'Zoom in',
+            shortcut: `${mod}=`,
+            action: () => store.applyZoom(-100, window.innerWidth / 2, window.innerHeight / 2)
+          },
+          {
+            label: 'Zoom out',
+            shortcut: `${mod}-`,
+            action: () => store.applyZoom(100, window.innerWidth / 2, window.innerHeight / 2)
+          },
+          { separator: true },
+          {
+            label: 'Performance profiler',
+            get checked() {
+              return store.renderer?.profiler.hudVisible ?? false
+            },
+            onCheckedChange: () => {
+              store.toggleProfiler()
+            }
+          }
+        ]
+      }
+    }
+
+    if (menu.label === 'Edit') {
+      return {
+        label: 'Edit',
+        items: [
+          commandMenuItem('edit.undo', `${mod}Z`),
+          commandMenuItem('edit.redo', `${mod}⇧Z`),
+          { separator: true },
+          { label: 'Copy', shortcut: `${mod}C` },
+          { label: 'Paste', shortcut: `${mod}V` },
+          commandMenuItem('selection.duplicate', `${mod}D`),
+          commandMenuItem('selection.delete', '⌫'),
+          { separator: true },
+          commandMenuItem('selection.selectAll', `${mod}A`)
+        ]
+      }
+    }
+
+    if (menu.label === 'Object') {
+      return {
+        label: 'Object',
+        items: [
+          commandMenuItem('selection.group', `${mod}G`),
+          commandMenuItem('selection.ungroup', `${mod}⇧G`),
+          { separator: true },
+          commandMenuItem('selection.createComponent', `${mod}⌥K`),
+          commandMenuItem('selection.createComponentSet'),
+          commandMenuItem('selection.detachInstance'),
+          { separator: true },
+          commandMenuItem('selection.bringToFront', ']'),
+          commandMenuItem('selection.sendToBack', '[')
+        ]
+      }
+    }
+
+    if (menu.label === 'Arrange') {
+      return {
+        label: 'Arrange',
+        items: [
+          commandMenuItem('selection.wrapInAutoLayout', '⇧A'),
+          { separator: true },
+          { label: 'Align left', shortcut: '⌥A' },
+          { label: 'Align center', shortcut: '⌥H' },
+          { label: 'Align right', shortcut: '⌥D' },
+          { separator: true },
+          { label: 'Align top', shortcut: '⌥W' },
+          { label: 'Align middle', shortcut: '⌥V' },
+          { label: 'Align bottom', shortcut: '⌥S' }
+        ]
+      }
+    }
+
+    return menu
+  }),
+  { label: 'Text', items: textMenu }
 ]
 </script>
 
@@ -228,24 +242,24 @@ const topMenus = [
               :class="menuContent({ class: 'min-w-52' })"
             >
               <template v-for="(item, i) in menu.items" :key="i">
-                <MenubarSeparator v-if="item.separator" :class="menuSeparator()" />
-                <MenubarSub v-else-if="item.sub">
+                <MenubarSeparator v-if="'separator' in item && item.separator" :class="menuSeparator()" />
+                <MenubarSub v-else-if="'sub' in item && item.sub">
                   <MenubarSubTrigger :class="menuItem()">
-                    <span class="flex-1">{{ item.label }}</span>
+                    <span class="flex-1">{{ 'label' in item ? item.label : '' }}</span>
                     <IconChevronRight class="size-3 text-muted" />
                   </MenubarSubTrigger>
                   <MenubarPortal>
                     <MenubarSubContent :side-offset="4" :class="menuContent({ class: 'min-w-44' })">
-                      <template v-for="(sub, j) in item.sub" :key="j">
-                        <MenubarSeparator v-if="sub.separator" :class="menuSeparator()" />
+                      <template v-for="(sub, j) in ('sub' in item && item.sub ? item.sub : [])" :key="j">
+                        <MenubarSeparator v-if="'separator' in sub && sub.separator" :class="menuSeparator()" />
                         <MenubarItem
                           v-else
                           :class="menuItem()"
-                          :disabled="sub.disabled"
-                          @select="sub.action?.()"
+                          :disabled="'disabled' in sub ? sub.disabled : undefined"
+                          @select="'action' in sub ? sub.action?.() : undefined"
                         >
-                          <span class="flex-1">{{ sub.label }}</span>
-                          <span v-if="sub.shortcut" class="text-[11px] text-muted">{{
+                          <span class="flex-1">{{ 'label' in sub ? sub.label : '' }}</span>
+                          <span v-if="'shortcut' in sub && sub.shortcut" class="text-[11px] text-muted">{{
                             sub.shortcut
                           }}</span>
                         </MenubarItem>
@@ -254,12 +268,12 @@ const topMenus = [
                   </MenubarPortal>
                 </MenubarSub>
                 <MenubarCheckboxItem
-                  v-else-if="item.onCheckedChange"
-                  :model-value="item.checked"
+                  v-else-if="'onCheckedChange' in item && item.onCheckedChange"
+                  :model-value="'checked' in item ? item.checked : undefined"
                   :class="menuItem()"
                   @update:model-value="item.onCheckedChange?.($event as boolean)"
                 >
-                  <span class="flex-1">{{ item.label }}</span>
+                  <span class="flex-1">{{ 'label' in item ? item.label : '' }}</span>
                   <MenubarItemIndicator class="text-surface">
                     <icon-lucide-check class="size-3.5" />
                   </MenubarItemIndicator>
@@ -267,11 +281,11 @@ const topMenus = [
                 <MenubarItem
                   v-else
                   :class="menuItem()"
-                  :disabled="item.disabled"
-                  @select="item.action?.()"
+                  :disabled="'disabled' in item ? item.disabled : undefined"
+                  @select="'action' in item ? item.action?.() : undefined"
                 >
-                  <span class="flex-1">{{ item.label }}</span>
-                  <span v-if="item.shortcut" class="text-[11px] text-muted">{{
+                  <span class="flex-1">{{ 'label' in item ? item.label : '' }}</span>
+                  <span v-if="'shortcut' in item && item.shortcut" class="text-[11px] text-muted">{{
                     item.shortcut
                   }}</span>
                 </MenubarItem>

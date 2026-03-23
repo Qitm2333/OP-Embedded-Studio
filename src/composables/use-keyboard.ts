@@ -1,10 +1,10 @@
-import { useBreakpoints, useEventListener, useMagicKeys, whenever } from '@vueuse/core'
+import { useEventListener, useMagicKeys, whenever } from '@vueuse/core'
 import { computed } from 'vue'
 
 import { useAIChat } from '@/composables/use-chat'
 import { TOOL_SHORTCUTS, useEditorStore } from '@/stores/editor'
 import { closeTab, createTab, activeTab as activeTabRef } from '@/stores/tabs'
-import { extractImageFilesFromClipboard } from '@open-pencil/vue'
+import { extractImageFilesFromClipboard, useEditorCommands, useViewportKind } from '@open-pencil/vue'
 
 import { openFileDialog } from './use-menu'
 
@@ -55,8 +55,8 @@ function shouldPreventDefault(e: KeyboardEvent, hasPenState: boolean): boolean {
 export function useKeyboard() {
   const { activeTab } = useAIChat()
   const store = useEditorStore()
-  const breakpoints = useBreakpoints({ mobile: 768 })
-  const isMobile = breakpoints.smaller('mobile')
+  const { isMobile } = useViewportKind()
+  const { runCommand } = useEditorCommands()
 
   useEventListener(window, 'copy', (e: ClipboardEvent) => {
     if (isEditing(e)) return
@@ -121,19 +121,19 @@ export function useKeyboard() {
   }
 
   // --- Mod + Alt ---
-  whenever(mod('alt+keyk'), () => store.createComponentFromSelection())
-  whenever(mod('alt+keyb'), () => store.detachInstance())
+  whenever(mod('alt+keyk'), () => runCommand('selection.createComponent'))
+  whenever(mod('alt+keyb'), () => runCommand('selection.detachInstance'))
 
   // --- Mod + Shift ---
-  whenever(mod('shift+keyk'), () => store.createComponentSetFromComponents())
-  whenever(mod('shift+keyh'), () => store.toggleVisibility())
-  whenever(mod('shift+keyl'), () => store.toggleLock())
+  whenever(mod('shift+keyk'), () => runCommand('selection.createComponentSet'))
+  whenever(mod('shift+keyh'), () => runCommand('selection.toggleVisibility'))
+  whenever(mod('shift+keyl'), () => runCommand('selection.toggleLock'))
   whenever(mod('shift+keye'), () => {
     if (store.state.selectedIds.size > 0) void store.exportSelection(1, 'PNG')
   })
   whenever(mod('shift+keys'), () => store.saveFigFileAs())
-  whenever(mod('shift+keyg'), () => store.ungroupSelected())
-  whenever(mod('shift+keyz'), () => store.redoAction())
+  whenever(mod('shift+keyg'), () => runCommand('selection.ungroup'))
+  whenever(mod('shift+keyz'), () => runCommand('edit.redo'))
 
   // --- Mod + Key ---
   whenever(mod('backslash'), () => {
@@ -154,25 +154,25 @@ export function useKeyboard() {
   })
   whenever(mod('keyn'), () => createTab())
   whenever(mod('keyt'), () => createTab())
-  whenever(mod('keyz'), () => store.undoAction())
-  whenever(mod('keyy'), () => store.redoAction())
-  whenever(mod('digit0'), () => store.zoomTo100())
-  whenever(mod('digit1'), () => store.zoomToFit())
-  whenever(mod('digit2'), () => store.zoomToSelection())
-  whenever(mod('keyd'), () => store.duplicateSelected())
-  whenever(mod('keya'), () => store.selectAll())
+  whenever(mod('keyz'), () => runCommand('edit.undo'))
+  whenever(mod('keyy'), () => runCommand('edit.redo'))
+  whenever(mod('digit0'), () => runCommand('view.zoom100'))
+  whenever(mod('digit1'), () => runCommand('view.zoomFit'))
+  whenever(mod('digit2'), () => runCommand('view.zoomSelection'))
+  whenever(mod('keyd'), () => runCommand('selection.duplicate'))
+  whenever(mod('keya'), () => runCommand('selection.selectAll'))
   whenever(mod('keys'), () => store.saveFigFile())
   whenever(mod('keyo'), () => openFileDialog())
-  whenever(mod('keyg'), () => store.groupSelected())
+  whenever(mod('keyg'), () => runCommand('selection.group'))
 
   // --- Shift (no mod) ---
   whenever(
     computed(() => keys['shift+digit1'].value && !keys['meta'].value && !keys['control'].value),
-    () => store.zoomToFit()
+    () => runCommand('view.zoomFit')
   )
   whenever(
     computed(() => keys['shift+digit2'].value && !keys['meta'].value && !keys['control'].value),
-    () => store.zoomToSelection()
+    () => runCommand('view.zoomSelection')
   )
   whenever(
     computed(() => keys['shift+keya'].value && !keys['meta'].value && !keys['control'].value),
@@ -181,7 +181,7 @@ export function useKeyboard() {
       if (node?.type === 'FRAME' && store.selectedNodes.value.length === 1) {
         store.setLayoutMode(node.id, node.layoutMode === 'NONE' ? 'VERTICAL' : 'NONE')
       } else if (store.selectedNodes.value.length > 0) {
-        store.wrapInAutoLayout()
+        runCommand('selection.wrapInAutoLayout')
       }
     }
   )
@@ -198,10 +198,10 @@ export function useKeyboard() {
     )
   }
 
-  whenever(plain('bracketright'), () => store.bringToFront())
-  whenever(plain('bracketleft'), () => store.sendToBack())
-  whenever(plain('backspace'), () => store.deleteSelected())
-  whenever(plain('delete'), () => store.deleteSelected())
+  whenever(plain('bracketright'), () => runCommand('selection.bringToFront'))
+  whenever(plain('bracketleft'), () => runCommand('selection.sendToBack'))
+  whenever(plain('backspace'), () => runCommand('selection.delete'))
+  whenever(plain('delete'), () => runCommand('selection.delete'))
   whenever(plain('enter'), () => {
     if (store.state.penState) store.penCommit(false)
   })

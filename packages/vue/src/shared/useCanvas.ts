@@ -1,5 +1,7 @@
-import { useBreakpoints, useRafFn, useResizeObserver } from '@vueuse/core'
+import { useRafFn, useResizeObserver } from '@vueuse/core'
 import { onMounted, onScopeDispose, type Ref } from 'vue'
+
+import { useViewportKind } from '../viewport/useViewportKind'
 
 import { getCanvasKit, getGpuBackend, SkiaRenderer } from '@open-pencil/core'
 
@@ -133,8 +135,7 @@ export function useCanvas(
 
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams()
   const noRulersParam = params.has('no-rulers')
-  const breakpoints = useBreakpoints({ mobile: 768 })
-  const isMobile = breakpoints.smaller('mobile')
+  const { isMobile } = useViewportKind()
 
   function shouldShowRulers() {
     if (options?.showRulers === false) return false
