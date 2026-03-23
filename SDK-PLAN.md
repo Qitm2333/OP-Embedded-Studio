@@ -50,12 +50,12 @@ OpenPencil app becomes a styled composition of these primitives.
 |-----|------|-----------|
 | `useNodeProps()` | Composable | Selection-aware property editing with undo |
 | `PositionControls` | Component | x, y, w, h, rotation, alignment actions |
-| `FillList` | Component | Fill array CRUD, variable binding |
-| `StrokeList` | Component | Stroke array CRUD, side/weight |
-| `EffectList` | Component | Effect array CRUD |
-| `AppearanceControls` | Component | Corner radius, opacity, blend, visibility |
-| `TypographyControls` | Component | Font family/weight/size, alignment, decoration |
-| `LayoutControls` | Component | Auto-layout/grid, sizing, padding, alignment |
+| `FillControlsRoot` | Component | fill CRUD, variable binding helpers |
+| `StrokeControlsRoot` | Component | stroke align/side/weight helpers |
+| `EffectsControlsRoot` | Component | effect defaults, scrub/commit helpers |
+| `AppearanceControlsRoot` | Component | corner radius, opacity, visibility helpers |
+| `TypographyControlsRoot` | Component | font family/weight/size, alignment, decoration helpers |
+| `LayoutControlsRoot` | Component | auto-layout/grid, sizing, padding, alignment helpers |
 | `ExportControls` | Component | Format/scale, export trigger |
 | `PageControls` | Component | Page background color |
 | `VariablesIndicator` | Component | Variable count |
@@ -76,7 +76,7 @@ OpenPencil app becomes a styled composition of these primitives.
 
 | SDK | Type | Slot props |
 |-----|------|-----------|
-| `VariablesEditorRoot` | Component | Collection tabs, variable table CRUD |
+| `VariablesEditorRoot` | Component | collections, active tab/search state, table instance, collection actions |
 
 ### Menus
 
@@ -92,7 +92,7 @@ OpenPencil app becomes a styled composition of these primitives.
 | SDK | Type | Slot props |
 |-----|------|-----------|
 | `ScrubInput` | Component | Drag-to-change number input |
-| `FontPicker` | Component | Font family combobox |
+| `FontPickerRoot` | Component | Font family combobox behavior + slots |
 
 ### Composables (existing, keep)
 
@@ -133,9 +133,10 @@ OpenPencil app becomes a styled composition of these primitives.
 - Clean `useCanvasInput`, `usePanZoom`, `useTextEdit`, `useCanvasDrop`
 
 ### Phase 3: Property primitives
-- `FillList`, `StrokeList`, `EffectList`
-- `PositionControls`, `AppearanceControls`, `TypographyControls`, `LayoutControls`
-- Move `ScrubInput`, `ColorInput`, `FontPicker` to SDK
+- ✅ `FillControlsRoot`, `StrokeControlsRoot`, `EffectsControlsRoot`
+- ✅ `PositionControlsRoot`, `AppearanceControlsRoot`, `TypographyControlsRoot`, `LayoutControlsRoot`
+- ✅ `FontPickerRoot`
+- Next: tighten slot APIs and decide whether `ColorInput` / richer fill picker pieces belong in SDK
 
 ### Phase 4: Layer tree primitives
 - `LayerTreeRoot`/`LayerTreeItem` with Atlaskit DnD
@@ -147,7 +148,7 @@ OpenPencil app becomes a styled composition of these primitives.
 - Next: optional `EditorContextMenu`, `EditorMenuBar` renderers once app-side host overrides settle
 
 ### Phase 6: Dialog/picker primitives
-- `VariablesEditorRoot`
+- ✅ `VariablesEditorRoot`
 - `FillPickerRoot`, `GradientEditorRoot`, `ImageFillControls`
 - `ExportControls`
 
@@ -162,13 +163,26 @@ Completed:
 - `useEditorCommands()`
 - `useViewportKind()`
 - `useMenuModel()`
+- `FontPickerRoot`
+- `PageListRoot`
+- `PositionControlsRoot`
+- `TypographyControlsRoot`
+- `AppearanceControlsRoot`
+- `LayoutControlsRoot`
+- `FillControlsRoot`
+- `StrokeControlsRoot`
+- `EffectsControlsRoot`
+- `VariablesEditorRoot`
 - `CanvasMenu.vue` partly rendered from SDK menu model
 - `AppMenu.vue` partly rendered from SDK menu model
 - keyboard shortcuts migrated to shared command execution for core editor actions
 
 Next recommended steps:
-1. Standardize remaining app primitives on the `ui` + `useComponentUI()` pattern, preferring semantic slot overrides over raw class props
-2. Continue moving app-styled reusable components into `src/components/ui/`
-3. Normalize slot-based style helpers (`menu`, `dialog`, `popover`, `tooltip`, `select`) around the same override conventions
-4. Move remaining `MobileHud` menu/action groups behind command/menu abstractions
-5. Decide whether `EditorContextMenu` / `EditorMenuBar` should exist as SDK renderers or stay as app renderers over SDK data
+1. Tighten SDK slot APIs to avoid broad "ctx dump" slot objects where possible
+2. Continue peeling reusable editor logic from root components into shared composables (`useVariablesEditor`, fill/effect/stroke helpers, etc.)
+3. Decide whether `ColorInput`, `FillPickerRoot`, and image/gradient subcontrols should move into SDK next
+4. Standardize remaining app primitives on the `ui` + `useComponentUI()` pattern, preferring semantic slot overrides over raw class props
+5. Continue moving app-styled reusable components into `src/components/ui/`
+6. Normalize slot-based style helpers (`menu`, `dialog`, `popover`, `tooltip`, `select`) around the same override conventions
+7. Move remaining `MobileHud` menu/action groups behind command/menu abstractions
+8. Decide whether `EditorContextMenu` / `EditorMenuBar` should exist as SDK renderers or stay as app renderers over SDK data

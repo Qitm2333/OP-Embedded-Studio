@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { PopoverRoot, PopoverTrigger, PopoverPortal, PopoverContent } from 'reka-ui'
 import { twMerge } from 'tailwind-merge'
+
+import { FillPickerRoot } from '@open-pencil/vue'
 
 import GradientEditor from './GradientEditor.vue'
 import HsvColorArea from './HsvColorArea.vue'
 import ImageFillPicker from './ImageFillPicker.vue'
-import { useFillPicker } from '@open-pencil/vue'
-
 import Tip from './ui/Tip.vue'
 import { usePopoverUI } from './ui/popover'
 
@@ -26,73 +24,47 @@ function tabClass(active: boolean) {
 const { fill } = defineProps<{ fill: Fill }>()
 const emit = defineEmits<{ update: [fill: Fill] }>()
 const cls = usePopoverUI({ content: 'w-60 p-2' })
-
-const { category, swatchBg, toSolid, toGradient, toImage } = useFillPicker(
-  computed(() => fill),
-  (updated) => emit('update', updated)
-)
 </script>
 
 <template>
-  <PopoverRoot>
-    <PopoverTrigger as-child>
-      <button
-        data-test-id="fill-picker-swatch"
-        class="size-5 shrink-0 cursor-pointer rounded border border-border p-0"
-        :style="{ background: swatchBg }"
+  <FillPickerRoot
+    :fill="fill"
+    :content-class="cls.content"
+    swatch-class="size-5 shrink-0 cursor-pointer rounded border border-border p-0"
+    @update="emit('update', $event)"
+  >
+    <template #default="{ fill: currentFill, category, toSolid, toGradient, toImage, update }">
+      <div class="mb-2 flex items-center gap-0.5">
+        <Tip label="Solid">
+          <button :class="tabClass(category === 'SOLID')" data-test-id="fill-picker-tab-solid" @click="toSolid">
+            <icon-lucide-square class="size-3.5" />
+          </button>
+        </Tip>
+        <Tip label="Gradient">
+          <button
+            :class="tabClass(category === 'GRADIENT')"
+            data-test-id="fill-picker-tab-gradient"
+            @click="toGradient"
+          >
+            <icon-lucide-blend class="size-3.5" />
+          </button>
+        </Tip>
+        <Tip label="Image">
+          <button :class="tabClass(category === 'IMAGE')" data-test-id="fill-picker-tab-image" @click="toImage">
+            <icon-lucide-image class="size-3.5" />
+          </button>
+        </Tip>
+      </div>
+
+      <HsvColorArea
+        v-if="category === 'SOLID'"
+        :color="currentFill.color"
+        @update="update({ ...currentFill, color: $event })"
       />
-    </PopoverTrigger>
 
-    <PopoverPortal>
-      <PopoverContent :class="cls.content" :side-offset="4" side="left">
-        <div class="mb-2 flex items-center gap-0.5">
-          <Tip label="Solid">
-            <button
-              :class="tabClass(category === 'SOLID')"
-              data-test-id="fill-picker-tab-solid"
-              @click="toSolid"
-            >
-              <icon-lucide-square class="size-3.5" />
-            </button>
-          </Tip>
-          <Tip label="Gradient">
-            <button
-              :class="tabClass(category === 'GRADIENT')"
-              data-test-id="fill-picker-tab-gradient"
-              @click="toGradient"
-            >
-              <icon-lucide-blend class="size-3.5" />
-            </button>
-          </Tip>
-          <Tip label="Image">
-            <button
-              :class="tabClass(category === 'IMAGE')"
-              data-test-id="fill-picker-tab-image"
-              @click="toImage"
-            >
-              <icon-lucide-image class="size-3.5" />
-            </button>
-          </Tip>
-        </div>
+      <GradientEditor v-if="category === 'GRADIENT'" :fill="currentFill" @update="update($event)" />
 
-        <HsvColorArea
-          v-if="category === 'SOLID'"
-          :color="fill.color"
-          @update="emit('update', { ...fill, color: $event })"
-        />
-
-        <GradientEditor
-          v-if="category === 'GRADIENT'"
-          :fill="fill"
-          @update="emit('update', $event)"
-        />
-
-        <ImageFillPicker
-          v-if="category === 'IMAGE'"
-          :fill="fill"
-          @update="emit('update', $event)"
-        />
-      </PopoverContent>
-    </PopoverPortal>
-  </PopoverRoot>
+      <ImageFillPicker v-if="category === 'IMAGE'" :fill="currentFill" @update="update($event)" />
+    </template>
+  </FillPickerRoot>
 </template>

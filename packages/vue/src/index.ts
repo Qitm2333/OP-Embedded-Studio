@@ -1,4 +1,10 @@
-export type { Editor, EditorState, EditorOptions, Tool, EditorToolDef } from '@open-pencil/core/editor'
+export type {
+  Editor,
+  EditorState,
+  EditorOptions,
+  Tool,
+  EditorToolDef
+} from '@open-pencil/core/editor'
 export { createEditor, EDITOR_TOOLS, TOOL_SHORTCUTS } from '@open-pencil/core/editor'
 
 export { provideEditor, useEditor, EDITOR_KEY } from './shared/editorContext'
@@ -32,15 +38,29 @@ export type { UseTypographyOptions } from './shared/useTypography'
 export { useExport } from './shared/useExport'
 export { useVariables } from './shared/useVariables'
 export { useVariablesDialogState } from './shared/useVariablesDialogState'
+export { useVariablesEditor } from './shared/use-variables-editor'
 export { useVariablesTable } from './shared/useVariablesTable'
 export { useFillPicker } from './shared/useFillPicker'
+export { useFillVariableBinding } from './shared/use-fill-variable-binding'
 export { useGradientStops } from './shared/useGradientStops'
 export { usePageList } from './shared/usePageList'
 export { useFontPicker } from './shared/useFontPicker'
 
 export * from './Canvas'
+export * from './ColorPicker'
+export * from './EffectsControls'
+export * from './FillControls'
+export * from './FillPicker'
+export * from './FontPicker'
 export * from './GradientEditor'
 export * from './LayerTree'
+export * from './LayoutControls'
+export * from './AppearanceControls'
+export * from './PageList'
+export * from './PositionControls'
 export * from './PropertyList'
 export * from './ScrubInput'
+export * from './StrokeControls'
+export * from './TypographyControls'
 export * from './Toolbar'
+export * from './VariablesEditor'

@@ -1,253 +1,202 @@
 <script setup lang="ts">
 import { type Component } from 'vue'
 import {
-  DialogRoot,
-  DialogPortal,
-  DialogOverlay,
-  DialogContent,
-  DialogTitle,
   DialogClose,
-  TabsRoot,
+  DialogContent,
+  DialogOverlay,
+  DialogPortal,
+  DialogRoot,
+  DialogTitle,
+  TabsContent,
   TabsList,
-  TabsTrigger,
-  TabsContent
+  TabsRoot,
+  TabsTrigger
 } from 'reka-ui'
-import { useVueTable, getCoreRowModel, FlexRender } from '@tanstack/vue-table'
+import { FlexRender } from '@tanstack/vue-table'
 
-import IconPalette from '~icons/lucide/palette'
+import { VariablesEditorRoot } from '@open-pencil/vue'
+
 import IconHash from '~icons/lucide/hash'
-import IconType from '~icons/lucide/type'
+import IconPalette from '~icons/lucide/palette'
 import IconToggleLeft from '~icons/lucide/toggle-left'
+import IconType from '~icons/lucide/type'
 import IconX from '~icons/lucide/x'
-import Tip from './ui/Tip.vue'
 import ColorInput from './ColorInput.vue'
+import Tip from './ui/Tip.vue'
 import { useDialogUI } from '@/components/ui/dialog'
-import { useVariablesDialogState, useVariablesTable } from '@open-pencil/vue'
 
 const open = defineModel<boolean>('open', { default: false })
 const cls = useDialogUI({ content: 'flex h-[75vh] w-[800px] max-w-[90vw] flex-col' })
 
-const {
-  collections,
-  variables,
-  activeCollectionId,
-  activeModes,
-  searchTerm,
-  addCollection,
-  addVariable,
-  removeVariable,
-  renameVariable,
-  updateVariableValue,
-  formatModeValue,
-  parseVariableValue,
-  shortName,
-  editingCollectionId,
-  setCollectionInputRef,
-  startRenameCollection,
-  commitRenameCollection
-} = useVariablesDialogState()
-
-const VARIABLE_TYPE_ICONS: Record<string, Component> = {
+const variableTypeIcons: Record<string, Component> = {
   COLOR: IconPalette,
   FLOAT: IconHash,
   STRING: IconType,
   BOOLEAN: IconToggleLeft
 }
-
-const { columns } = useVariablesTable({
-  activeModes: activeModes,
-  formatModeValue,
-  parseVariableValue,
-  shortName,
-  renameVariable,
-  updateVariableValue,
-  removeVariable,
-  ColorInput,
-  icons: VARIABLE_TYPE_ICONS,
-  fallbackIcon: IconToggleLeft,
-  deleteIcon: IconX
-})
-
-const table = useVueTable({
-  get data() {
-    return variables.value
-  },
-  get columns() {
-    return columns.value
-  },
-  columnResizeMode: 'onChange',
-  getCoreRowModel: getCoreRowModel(),
-  defaultColumn: {
-    minSize: 60,
-    maxSize: 800
-  },
-  getRowId: (row) => row.id
-})
 </script>
 
 <template>
-  <DialogRoot v-model:open="open">
-    <DialogPortal>
-      <DialogOverlay :class="cls.overlay" />
-      <DialogContent data-test-id="variables-dialog" :class="cls.content">
-        <div v-if="collections.length === 0" class="flex flex-1 flex-col">
-          <div class="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
-            <DialogTitle class="text-sm font-semibold text-surface">Local variables</DialogTitle>
-            <DialogClose
-              class="flex size-6 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
-            >
-              <icon-lucide-x class="size-4" />
-            </DialogClose>
-          </div>
-          <div class="flex flex-1 items-center justify-center">
-            <div class="text-center">
-              <p class="text-sm text-muted">No variable collections</p>
-              <button
-                data-test-id="variables-create-collection"
-                class="mt-2 cursor-pointer rounded bg-hover px-3 py-1.5 text-xs text-surface hover:bg-border"
-                @click="addCollection"
+  <VariablesEditorRoot
+    v-slot="ctx"
+    :color-input="ColorInput"
+    :icons="variableTypeIcons"
+    :fallback-icon="IconToggleLeft"
+    :delete-icon="IconX"
+  >
+    <DialogRoot v-model:open="open">
+      <DialogPortal>
+        <DialogOverlay :class="cls.overlay" />
+        <DialogContent data-test-id="variables-dialog" :class="cls.content">
+          <div v-if="!ctx.hasCollections" class="flex flex-1 flex-col">
+            <div class="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
+              <DialogTitle class="text-sm font-semibold text-surface">Local variables</DialogTitle>
+              <DialogClose
+                class="flex size-6 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
               >
-                Create collection
-              </button>
+                <icon-lucide-x class="size-4" />
+              </DialogClose>
+            </div>
+            <div class="flex flex-1 items-center justify-center">
+              <div class="text-center">
+                <p class="text-sm text-muted">No variable collections</p>
+                <button
+                  data-test-id="variables-create-collection"
+                  class="mt-2 cursor-pointer rounded bg-hover px-3 py-1.5 text-xs text-surface hover:bg-border"
+                  @click="ctx.addCollection"
+                >
+                  Create collection
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <template v-else>
-          <TabsRoot v-model="activeCollectionId" class="flex flex-1 flex-col overflow-hidden">
-            <!-- Top bar -->
-            <div class="flex shrink-0 items-center border-b border-border">
-              <TabsList class="flex flex-1 gap-0.5 overflow-x-auto px-3 py-1">
-                <template v-for="col in collections" :key="col.id">
-                  <input
-                    v-if="editingCollectionId === col.id"
-                    :ref="(el) => setCollectionInputRef(col.id, el as HTMLInputElement | null)"
-                    class="w-24 rounded border border-accent bg-input px-2 py-0.5 text-xs text-surface outline-none"
-                    :value="col.name"
-                    @blur="commitRenameCollection(col.id, $event.target as HTMLInputElement)"
-                    @keydown.enter="($event.target as HTMLInputElement).blur()"
-                    @keydown.escape="editingCollectionId = null"
-                  />
-                  <TabsTrigger
-                    v-else
-                    :value="col.id"
-                    data-test-id="variables-collection-tab"
-                    class="cursor-pointer rounded border-none px-2.5 py-1 text-xs whitespace-nowrap text-muted data-[state=active]:bg-hover data-[state=active]:text-surface"
-                    @dblclick="startRenameCollection(col.id)"
-                  >
-                    {{ col.name }}
-                  </TabsTrigger>
-                </template>
-              </TabsList>
+          <template v-else>
+            <TabsRoot v-model="ctx.activeCollectionId.value" class="flex flex-1 flex-col overflow-hidden">
+              <div class="flex shrink-0 items-center border-b border-border">
+                <TabsList class="flex flex-1 gap-0.5 overflow-x-auto px-3 py-1">
+                  <template v-for="col in ctx.collections.value" :key="col.id">
+                    <input
+                      v-if="ctx.editingCollectionId.value === col.id"
+                      :ref="(el) => ctx.setCollectionInputRef(col.id, el as HTMLInputElement | null)"
+                      class="w-24 rounded border border-accent bg-input px-2 py-0.5 text-xs text-surface outline-none"
+                      :value="col.name"
+                      @blur="ctx.commitRenameCollection(col.id, $event.target as HTMLInputElement)"
+                      @keydown.enter="($event.target as HTMLInputElement).blur()"
+                      @keydown.escape="ctx.editingCollectionId.value = null"
+                    />
+                    <TabsTrigger
+                      v-else
+                      :value="col.id"
+                      data-test-id="variables-collection-tab"
+                      class="cursor-pointer rounded border-none px-2.5 py-1 text-xs whitespace-nowrap text-muted data-[state=active]:bg-hover data-[state=active]:text-surface"
+                      @dblclick="ctx.startRenameCollection(col.id)"
+                    >
+                      {{ col.name }}
+                    </TabsTrigger>
+                  </template>
+                </TabsList>
 
-              <div class="flex items-center gap-1.5 px-3">
-                <div class="flex items-center gap-1 rounded border border-border px-2 py-0.5">
-                  <icon-lucide-search class="size-3 text-muted" />
-                  <input
-                    v-model="searchTerm"
-                    data-test-id="variables-search-input"
-                    class="w-24 border-none bg-transparent text-xs text-surface outline-none placeholder:text-muted"
-                    placeholder="Search"
-                  />
-                </div>
-                <Tip label="Add collection">
-                  <button
-                    data-test-id="variables-add-collection"
+                <div class="flex items-center gap-1.5 px-3">
+                  <div class="flex items-center gap-1 rounded border border-border px-2 py-0.5">
+                    <icon-lucide-search class="size-3 text-muted" />
+                    <input
+                      v-model="ctx.searchTerm.value"
+                      data-test-id="variables-search-input"
+                      class="w-24 border-none bg-transparent text-xs text-surface outline-none placeholder:text-muted"
+                      placeholder="Search"
+                    />
+                  </div>
+                  <Tip label="Add collection">
+                    <button
+                      data-test-id="variables-add-collection"
+                      class="flex size-6 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
+                      @click="ctx.addCollection"
+                    >
+                      <icon-lucide-folder-plus class="size-3.5" />
+                    </button>
+                  </Tip>
+                  <DialogClose
                     class="flex size-6 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
-                    @click="addCollection"
                   >
-                    <icon-lucide-folder-plus class="size-3.5" />
-                  </button>
-                </Tip>
-                <DialogClose
-                  class="flex size-6 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
-                >
-                  <icon-lucide-x class="size-4" />
-                </DialogClose>
-              </div>
-            </div>
-
-            <!-- Table -->
-            <TabsContent
-              v-for="col in collections"
-              :key="col.id"
-              :value="col.id"
-              class="flex flex-1 flex-col overflow-hidden outline-none"
-            >
-              <div class="flex-1 overflow-auto">
-                <table
-                  class="w-full border-collapse"
-                  :style="{ width: `${table.getCenterTotalSize()}px` }"
-                >
-                  <thead class="sticky top-0 z-10 bg-panel">
-                    <tr
-                      v-for="headerGroup in table.getHeaderGroups()"
-                      :key="headerGroup.id"
-                      class="border-b border-border"
-                    >
-                      <th
-                        v-for="header in headerGroup.headers"
-                        :key="header.id"
-                        class="relative px-4 py-2 text-left text-[11px] font-medium text-muted"
-                        :style="{ width: `${header.getSize()}px` }"
-                      >
-                        <FlexRender
-                          v-if="!header.isPlaceholder"
-                          :render="header.column.columnDef.header"
-                          :props="header.getContext()"
-                        />
-                        <!-- Resize handle -->
-                        <div
-                          v-if="header.column.getCanResize()"
-                          class="absolute top-0 right-0 h-full w-1 cursor-col-resize touch-none select-none"
-                          :class="
-                            header.column.getIsResizing()
-                              ? 'bg-accent'
-                              : 'bg-transparent hover:bg-border'
-                          "
-                          @mousedown="header.getResizeHandler()?.($event)"
-                          @touchstart="header.getResizeHandler()?.($event)"
-                          @dblclick="header.column.resetSize()"
-                        />
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="row in table.getRowModel().rows"
-                      :key="row.id"
-                      data-test-id="variable-row"
-                      class="group border-b border-border/30 hover:bg-hover/50"
-                    >
-                      <td
-                        v-for="cell in row.getVisibleCells()"
-                        :key="cell.id"
-                        class="px-4 py-1.5"
-                        :style="{ width: `${cell.column.getSize()}px` }"
-                      >
-                        <FlexRender
-                          :render="cell.column.columnDef.cell"
-                          :props="cell.getContext()"
-                        />
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                    <icon-lucide-x class="size-4" />
+                  </DialogClose>
+                </div>
               </div>
 
-              <!-- Footer -->
-              <button
-                data-test-id="variables-add-variable"
-                class="flex w-full shrink-0 cursor-pointer items-center gap-1.5 border-t border-border bg-transparent px-4 py-2 text-xs text-muted hover:bg-hover hover:text-surface"
-                @click="addVariable"
+              <TabsContent
+                v-for="col in ctx.collections.value"
+                :key="col.id"
+                :value="col.id"
+                class="flex flex-1 flex-col overflow-hidden outline-none"
               >
-                <icon-lucide-plus class="size-3.5" />
-                Create variable
-              </button>
-            </TabsContent>
-          </TabsRoot>
-        </template>
-      </DialogContent>
-    </DialogPortal>
-  </DialogRoot>
+                <div class="flex-1 overflow-auto">
+                  <table class="w-full border-collapse" :style="{ width: `${ctx.table.getCenterTotalSize()}px` }">
+                    <thead class="sticky top-0 z-10 bg-panel">
+                      <tr
+                        v-for="headerGroup in ctx.table.getHeaderGroups()"
+                        :key="headerGroup.id"
+                        class="border-b border-border"
+                      >
+                        <th
+                          v-for="header in headerGroup.headers"
+                          :key="header.id"
+                          class="relative px-4 py-2 text-left text-[11px] font-medium text-muted"
+                          :style="{ width: `${header.getSize()}px` }"
+                        >
+                          <FlexRender
+                            v-if="!header.isPlaceholder"
+                            :render="header.column.columnDef.header"
+                            :props="header.getContext()"
+                          />
+                          <div
+                            v-if="header.column.getCanResize()"
+                            class="absolute top-0 right-0 h-full w-1 cursor-col-resize touch-none select-none"
+                            :class="
+                              header.column.getIsResizing()
+                                ? 'bg-accent'
+                                : 'bg-transparent hover:bg-border'
+                            "
+                            @mousedown="header.getResizeHandler()?.($event)"
+                            @touchstart="header.getResizeHandler()?.($event)"
+                            @dblclick="header.column.resetSize()"
+                          />
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="row in ctx.table.getRowModel().rows"
+                        :key="row.id"
+                        data-test-id="variable-row"
+                        class="group border-b border-border/30 hover:bg-hover/50"
+                      >
+                        <td
+                          v-for="cell in row.getVisibleCells()"
+                          :key="cell.id"
+                          class="px-4 py-1.5"
+                          :style="{ width: `${cell.column.getSize()}px` }"
+                        >
+                          <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <button
+                  data-test-id="variables-add-variable"
+                  class="flex w-full shrink-0 cursor-pointer items-center gap-1.5 border-t border-border bg-transparent px-4 py-2 text-xs text-muted hover:bg-hover hover:text-surface"
+                  @click="ctx.addVariable"
+                >
+                  <icon-lucide-plus class="size-3.5" />
+                  Create variable
+                </button>
+              </TabsContent>
+            </TabsRoot>
+          </template>
+        </DialogContent>
+      </DialogPortal>
+    </DialogRoot>
+  </VariablesEditorRoot>
 </template>
