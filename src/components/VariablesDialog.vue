@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, h, type Component } from 'vue'
+import { type Component } from 'vue'
 import {
   DialogRoot,
   DialogPortal,
@@ -10,25 +10,22 @@ import {
   TabsRoot,
   TabsList,
   TabsTrigger,
-  TabsContent,
-  EditableRoot,
-  EditableArea,
-  EditableInput,
-  EditablePreview
+  TabsContent
 } from 'reka-ui'
-import { useVueTable, getCoreRowModel, FlexRender, type ColumnDef } from '@tanstack/vue-table'
+import { useVueTable, getCoreRowModel, FlexRender } from '@tanstack/vue-table'
 
 import IconPalette from '~icons/lucide/palette'
 import IconHash from '~icons/lucide/hash'
 import IconType from '~icons/lucide/type'
 import IconToggleLeft from '~icons/lucide/toggle-left'
 import IconX from '~icons/lucide/x'
-import Tip from './Tip.vue'
+import Tip from './ui/Tip.vue'
 import ColorInput from './ColorInput.vue'
-import { useVariables } from '@open-pencil/vue'
-import type { Variable, Color } from '@open-pencil/core'
+import { useDialogUI } from '@/components/ui/dialog'
+import { useVariablesDialogState, useVariablesTable } from '@open-pencil/vue'
 
 const open = defineModel<boolean>('open', { default: false })
+const cls = useDialogUI({ content: 'flex h-[75vh] w-[800px] max-w-[90vw] flex-col' })
 
 const {
   collections,
@@ -37,60 +34,18 @@ const {
   activeModes,
   searchTerm,
   addCollection,
-  renameCollection,
   addVariable,
   removeVariable,
   renameVariable,
   updateVariableValue,
   formatModeValue,
   parseVariableValue,
-  shortName
-} = useVariables()
-
-const editingCollectionId = ref<string | null>(null)
-const collectionInputRefs = new Map<string, HTMLInputElement>()
-const pendingCollectionFocusId = ref<string | null>(null)
-
-function setCollectionInputRef(id: string, el: HTMLInputElement | null) {
-  if (el) collectionInputRefs.set(id, el)
-  else collectionInputRefs.delete(id)
-
-  if (el && pendingCollectionFocusId.value === id) {
-    pendingCollectionFocusId.value = null
-    void nextTick(() => {
-      el.focus()
-      el.select()
-    })
-  }
-}
-
-function startRenameCollection(id: string) {
-  editingCollectionId.value = id
-  pendingCollectionFocusId.value = id
-}
-
-function commitRenameCollection(id: string, input: HTMLInputElement) {
-  if (editingCollectionId.value !== id) return
-  const value = input.value.trim()
-  const col = collections.value.find((c) => c.id === id)
-  if (col && value && value !== col.name) {
-    renameCollection(id, value)
-  }
-  editingCollectionId.value = null
-}
-
-function commitNameEdit(variable: Variable, newName: string) {
-  if (newName && newName !== variable.name) {
-    renameVariable(variable.id, newName)
-  }
-}
-
-function commitValueEdit(variable: Variable, modeId: string, newValue: string) {
-  const parsed = parseVariableValue(variable, newValue)
-  if (parsed !== undefined) {
-    updateVariableValue(variable.id, modeId, parsed)
-  }
-}
+  shortName,
+  editingCollectionId,
+  setCollectionInputRef,
+  startRenameCollection,
+  commitRenameCollection
+} = useVariablesDialogState()
 
 const VARIABLE_TYPE_ICONS: Record<string, Component> = {
   COLOR: IconPalette,
@@ -99,101 +54,18 @@ const VARIABLE_TYPE_ICONS: Record<string, Component> = {
   BOOLEAN: IconToggleLeft
 }
 
-const columns = computed<ColumnDef<Variable>[]>(() => {
-  const nameCol: ColumnDef<Variable> = {
-    id: 'name',
-    header: 'Name',
-    size: 200,
-    minSize: 120,
-    maxSize: 400,
-    cell: ({ row }) => {
-      const v = row.original
-      const iconClass = 'size-3.5 shrink-0 text-muted'
-      const iconComponent = VARIABLE_TYPE_ICONS[v.type] ?? IconToggleLeft
-      const icon = h(iconComponent, { class: iconClass })
-
-      return h('div', { class: 'flex items-center gap-2' }, [
-        icon,
-        h(
-          EditableRoot,
-          {
-            defaultValue: shortName(v),
-            class: 'min-w-0 flex-1',
-            onSubmit: (val: string | null | undefined) => val && commitNameEdit(v, val)
-          },
-          () =>
-            h(EditableArea, { class: 'flex' }, () => [
-              h(EditablePreview, {
-                class: 'min-w-0 flex-1 cursor-text truncate text-xs text-surface'
-              }),
-              h(EditableInput, {
-                class:
-                  'min-w-0 flex-1 rounded border border-border bg-surface/10 px-1 py-0.5 text-xs text-surface outline-none'
-              })
-            ])
-        )
-      ])
-    }
-  }
-
-  const modeCols: ColumnDef<Variable>[] = activeModes.value.map((mode) => ({
-    id: `mode-${mode.modeId}`,
-    header: mode.name,
-    size: 200,
-    minSize: 120,
-    maxSize: 500,
-    cell: ({ row }) => {
-      const v = row.original
-      const value = v.valuesByMode[mode.modeId]
-
-      if (v.type === 'COLOR' && value && typeof value === 'object' && 'r' in value) {
-        return h(ColorInput, {
-          color: value as Color,
-          onUpdate: (c: Color) => updateVariableValue(v.id, mode.modeId, c)
-        })
-      }
-
-      return h(
-        EditableRoot,
-        {
-          defaultValue: formatModeValue(v, mode.modeId),
-          class: 'min-w-0 flex-1',
-          onSubmit: (val: string | null | undefined) => val && commitValueEdit(v, mode.modeId, val)
-        },
-        () =>
-          h(EditableArea, { class: 'flex' }, () => [
-            h(EditablePreview, {
-              class: 'min-w-0 flex-1 cursor-text truncate font-mono text-xs text-muted'
-            }),
-            h(EditableInput, {
-              class:
-                'min-w-0 flex-1 rounded border border-border bg-surface/10 px-1 py-0.5 font-mono text-xs text-surface outline-none'
-            })
-          ])
-      )
-    }
-  }))
-
-  const deleteCol: ColumnDef<Variable> = {
-    id: 'actions',
-    header: '',
-    size: 36,
-    minSize: 36,
-    maxSize: 36,
-    enableResizing: false,
-    cell: ({ row }) =>
-      h(
-        'button',
-        {
-          class:
-            'flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-surface',
-          onClick: () => removeVariable(row.original.id)
-        },
-        h(IconX, { class: 'size-3' })
-      )
-  }
-
-  return [nameCol, ...modeCols, deleteCol]
+const { columns } = useVariablesTable({
+  activeModes: activeModes,
+  formatModeValue,
+  parseVariableValue,
+  shortName,
+  renameVariable,
+  updateVariableValue,
+  removeVariable,
+  ColorInput,
+  icons: VARIABLE_TYPE_ICONS,
+  fallbackIcon: IconToggleLeft,
+  deleteIcon: IconX
 })
 
 const table = useVueTable({
@@ -216,11 +88,8 @@ const table = useVueTable({
 <template>
   <DialogRoot v-model:open="open">
     <DialogPortal>
-      <DialogOverlay class="fixed inset-0 z-40 bg-black/50" />
-      <DialogContent
-        data-test-id="variables-dialog"
-        class="fixed top-1/2 left-1/2 z-50 flex h-[75vh] w-[800px] max-w-[90vw] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-panel shadow-2xl outline-none"
-      >
+      <DialogOverlay :class="cls.overlay" />
+      <DialogContent data-test-id="variables-dialog" :class="cls.content">
         <div v-if="collections.length === 0" class="flex flex-1 flex-col">
           <div class="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
             <DialogTitle class="text-sm font-semibold text-surface">Local variables</DialogTitle>

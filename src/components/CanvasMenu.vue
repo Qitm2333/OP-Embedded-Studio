@@ -13,7 +13,7 @@ import { useEditorCommands, useMenuModel, useSelectionState } from '@open-pencil
 import { toast } from '@/utils/toast'
 
 import { useEditorStore } from '@/stores/editor'
-import { menuContent, menuItem, menuSeparator } from '@/components/ui/menu'
+import { menu, useMenuUI } from '@/components/ui/menu'
 
 const store = useEditorStore()
 const { copy } = useClipboard()
@@ -21,7 +21,6 @@ const { copy } = useClipboard()
 const { editor, selectedIds, hasSelection } = useSelectionState()
 const { getCommand } = useEditorCommands()
 const { canvasMenu } = useMenuModel()
-
 
 function ids() {
   return [...selectedIds.value]
@@ -45,13 +44,17 @@ async function copyAsPNG() {
   toast.show('Copied as PNG')
 }
 
+const menuCls = useMenuUI({
+  content: 'min-w-56 shadow-[0_8px_30px_rgb(0_0_0/0.4)] animate-in fade-in zoom-in-95',
+  separator: 'my-1'
+})
+const componentMenu = menu({ tone: 'component' })
+
 const cls = {
-  menu: menuContent({
-    class: 'min-w-56 shadow-[0_8px_30px_rgb(0_0_0/0.4)] animate-in fade-in zoom-in-95'
-  }),
-  item: menuItem(),
-  component: menuItem({ tone: 'component' }),
-  sep: menuSeparator({ class: 'my-1' })
+  menu: menuCls.content,
+  item: menuCls.item,
+  component: componentMenu.item(),
+  sep: menuCls.separator
 }
 </script>
 
@@ -73,7 +76,11 @@ const cls = {
     >
       <span>Duplicate</span><span class="text-[11px] text-muted">⌘D</span>
     </ContextMenuItem>
-    <ContextMenuItem :class="cls.item" :disabled="!hasSelection" @select="getCommand('selection.delete').run()">
+    <ContextMenuItem
+      :class="cls.item"
+      :disabled="!hasSelection"
+      @select="getCommand('selection.delete').run()"
+    >
       <span>Delete</span><span class="text-[11px] text-muted">⌫</span>
     </ContextMenuItem>
 
@@ -81,7 +88,8 @@ const cls = {
       <ContextMenuSeparator v-if="item.separator" :class="cls.sep" />
       <ContextMenuSub v-else-if="item.sub">
         <ContextMenuSubTrigger :class="cls.item">
-          <span>{{ item.label }}</span><span class="text-sm text-muted">›</span>
+          <span>{{ item.label }}</span
+          ><span class="text-sm text-muted">›</span>
         </ContextMenuSubTrigger>
         <ContextMenuPortal>
           <ContextMenuSubContent :class="cls.menu">
@@ -102,12 +110,25 @@ const cls = {
       </ContextMenuSub>
       <ContextMenuItem
         v-else
-        :class="item.label.includes('component') || item.label.includes('instance') ? cls.component : cls.item"
+        :class="
+          item.label.includes('component') || item.label.includes('instance')
+            ? cls.component
+            : cls.item
+        "
         :disabled="item.disabled"
         @select="item.action?.()"
       >
         <span class="flex-1">{{ item.label }}</span>
-        <span v-if="item.shortcut" class="text-[11px]" :class="item.label.includes('component') || item.label.includes('instance') ? 'text-component/60' : 'text-muted'">{{ item.shortcut }}</span>
+        <span
+          v-if="item.shortcut"
+          class="text-[11px]"
+          :class="
+            item.label.includes('component') || item.label.includes('instance')
+              ? 'text-component/60'
+              : 'text-muted'
+          "
+          >{{ item.shortcut }}</span
+        >
       </ContextMenuItem>
     </template>
 

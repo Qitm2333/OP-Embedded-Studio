@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { TooltipContent, TooltipPortal, TooltipRoot, TooltipTrigger } from 'reka-ui'
 
+import { useTooltipUI } from '@/components/ui/tooltip'
+
+const cls = useTooltipUI({ content: 'animate-in zoom-in-95 fade-in' })
+
 const { side = 'top' } = defineProps<{
   label: string
   side?: 'top' | 'bottom' | 'left' | 'right'
@@ -13,11 +17,7 @@ const { side = 'top' } = defineProps<{
       <slot />
     </TooltipTrigger>
     <TooltipPortal>
-      <TooltipContent
-        :side="side"
-        :side-offset="4"
-        class="z-50 animate-in rounded bg-neutral-800 px-2 py-1 text-xs text-white shadow-lg zoom-in-95 fade-in"
-      >
+      <TooltipContent :side="side" :side-offset="4" :class="cls.content">
         {{ label }}
       </TooltipContent>
     </TooltipPortal>

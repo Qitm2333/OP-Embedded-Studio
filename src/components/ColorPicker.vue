@@ -4,11 +4,13 @@ import { PopoverRoot, PopoverTrigger, PopoverPortal, PopoverContent } from 'reka
 import { colorToCSS } from '@open-pencil/core'
 
 import HsvColorArea from './HsvColorArea.vue'
+import { usePopoverUI } from './ui/popover'
 
 import type { Color } from '@open-pencil/core'
 
 const { color } = defineProps<{ color: Color }>()
 const emit = defineEmits<{ update: [color: Color] }>()
+const cls = usePopoverUI({ content: 'w-56 p-2' })
 
 const swatchBg = computed(() => colorToCSS(color))
 </script>
@@ -26,7 +28,7 @@ const swatchBg = computed(() => colorToCSS(color))
     <PopoverPortal>
       <PopoverContent
         data-test-id="color-picker-popover"
-        class="z-[100] w-56 rounded-lg border border-border bg-panel p-2 shadow-xl"
+        :class="cls.content"
         :side-offset="4"
         side="left"
       >

@@ -5,15 +5,22 @@ const { index } = defineProps<{
   index: number
 }>()
 
+const emit = defineEmits<{
+  update: [index: number, item: unknown]
+  patch: [index: number, changes: Record<string, unknown>]
+  remove: [index: number]
+  toggleVisibility: [index: number]
+}>()
+
 const { update, patch, remove, toggleVisibility } = usePropertyList()
 </script>
 
 <template>
   <slot
     :index="index"
-    :update="(item: unknown) => update(index, item)"
-    :patch="(changes: Record<string, unknown>) => patch(index, changes)"
-    :remove="() => remove(index)"
-    :toggle-visibility="() => toggleVisibility(index)"
+    :update="(item: unknown) => { emit('update', index, item); update(index, item) }"
+    :patch="(changes: Record<string, unknown>) => { emit('patch', index, changes); patch(index, changes) }"
+    :remove="() => { emit('remove', index); remove(index) }"
+    :toggle-visibility="() => { emit('toggleVisibility', index); toggleVisibility(index) }"
   />
 </template>

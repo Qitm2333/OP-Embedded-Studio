@@ -2,25 +2,18 @@
 import { useClipboard } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  PopoverRoot,
-  PopoverTrigger,
-  PopoverPortal,
-  PopoverContent,
-  TooltipRoot,
-  TooltipTrigger,
-  TooltipPortal,
-  TooltipContent,
-  TooltipProvider
-} from 'reka-ui'
+import { PopoverRoot, PopoverTrigger, PopoverPortal, PopoverContent } from 'reka-ui'
 
 import { colorToCSS } from '@open-pencil/core'
+import Tip from '@/components/ui/Tip.vue'
+import { usePopoverUI } from '@/components/ui/popover'
 import { DEFAULT_COLLAB_STATE, useCollabInjected } from '@/composables/use-collab'
 import { toast } from '@/utils/toast'
 import { initials } from '@/utils/text'
 
 const route = useRoute()
 const router = useRouter()
+const cls = usePopoverUI({ content: 'z-50 w-72 p-3' })
 const collab = useCollabInjected()
 const { copy, copied } = useClipboard({ copiedDuring: 2000 })
 
@@ -76,59 +69,39 @@ function onDisconnect() {
 <template>
   <div class="flex w-full items-center justify-end gap-2">
     <!-- Avatar stack -->
-    <TooltipProvider :delay-duration="200">
-      <div class="flex -space-x-1.5">
-        <TooltipRoot>
-          <TooltipTrigger as-child>
-            <div
-              data-test-id="collab-local-avatar"
-              class="flex size-6 items-center justify-center rounded-full border-2 border-panel text-[10px] font-semibold text-white"
-              :style="{ background: colorToCSS(state.localColor) }"
-            >
-              {{ initials(state.localName || 'You') }}
-            </div>
-          </TooltipTrigger>
-          <TooltipPortal>
-            <TooltipContent
-              class="rounded bg-neutral-800 px-2 py-1 text-xs text-white shadow-lg"
-              :side-offset="4"
-            >
-              {{ state.localName || 'You' }} (you)
-            </TooltipContent>
-          </TooltipPortal>
-        </TooltipRoot>
+    <div class="flex -space-x-1.5">
+      <Tip :label="`${state.localName || 'You'} (you)`">
+        <div
+          data-test-id="collab-local-avatar"
+          class="flex size-6 items-center justify-center rounded-full border-2 border-panel text-[10px] font-semibold text-white"
+          :style="{ background: colorToCSS(state.localColor) }"
+        >
+          {{ initials(state.localName || 'You') }}
+        </div>
+      </Tip>
 
-        <TooltipRoot v-for="peer in peers" :key="peer.clientId">
-          <TooltipTrigger as-child>
-            <div
-              data-test-id="collab-peer-avatar"
-              class="flex size-6 cursor-pointer items-center justify-center rounded-full border-2 text-[10px] font-semibold text-white transition-all"
-              :class="
-                followingPeer === peer.clientId
-                  ? 'border-white ring-2 ring-white/40'
-                  : 'border-panel'
-              "
-              :style="{ background: colorToCSS(peer.color) }"
-              @click="collab?.followPeer(followingPeer === peer.clientId ? null : peer.clientId)"
-            >
-              {{ initials(peer.name) }}
-            </div>
-          </TooltipTrigger>
-          <TooltipPortal>
-            <TooltipContent
-              class="rounded bg-neutral-800 px-2 py-1 text-xs text-white shadow-lg"
-              :side-offset="4"
-            >
-              {{
-                followingPeer === peer.clientId
-                  ? `Following ${peer.name} (click to stop)`
-                  : `Click to follow ${peer.name}`
-              }}
-            </TooltipContent>
-          </TooltipPortal>
-        </TooltipRoot>
-      </div>
-    </TooltipProvider>
+      <Tip
+        v-for="peer in peers"
+        :key="peer.clientId"
+        :label="
+          followingPeer === peer.clientId
+            ? `Following ${peer.name} (click to stop)`
+            : `Click to follow ${peer.name}`
+        "
+      >
+        <div
+          data-test-id="collab-peer-avatar"
+          class="flex size-6 cursor-pointer items-center justify-center rounded-full border-2 text-[10px] font-semibold text-white transition-all"
+          :class="
+            followingPeer === peer.clientId ? 'border-white ring-2 ring-white/40' : 'border-panel'
+          "
+          :style="{ background: colorToCSS(peer.color) }"
+          @click="collab?.followPeer(followingPeer === peer.clientId ? null : peer.clientId)"
+        >
+          {{ initials(peer.name) }}
+        </div>
+      </Tip>
+    </div>
 
     <div class="flex-1" />
 
@@ -154,7 +127,7 @@ function onDisconnect() {
       <PopoverPortal>
         <PopoverContent
           data-test-id="collab-popover"
-          class="z-50 w-72 rounded-lg border border-border bg-panel p-3 shadow-xl"
+          :class="cls.content"
           :side-offset="8"
           side="bottom"
           align="end"

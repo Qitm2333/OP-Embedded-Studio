@@ -14,6 +14,14 @@ const { propKey } = defineProps<{
   label?: string
 }>()
 
+const emit = defineEmits<{
+  add: [item: ArrayItemType]
+  remove: [index: number]
+  update: [index: number, item: ArrayItemType]
+  patch: [index: number, changes: Record<string, unknown>]
+  toggleVisibility: [index: number]
+}>()
+
 const editor = useEditor()
 
 const selectedNodes = computed(() => editor.getSelectedNodes())
@@ -44,6 +52,7 @@ function targetNodes(): SceneNode[] {
 }
 
 function add(defaults: ArrayItemType) {
+  emit('add', defaults)
   for (const n of targetNodes()) {
     const arr = isMulti.value ? [defaults] : [...n[propKey], defaults]
     editor.updateNodeWithUndo(n.id, { [propKey]: arr } as Partial<SceneNode>, isMulti.value ? `Set ${propKey}` : `Add ${propKey}`)
@@ -51,6 +60,7 @@ function add(defaults: ArrayItemType) {
 }
 
 function remove(index: number) {
+  emit('remove', index)
   for (const n of targetNodes()) {
     editor.updateNodeWithUndo(
       n.id,
@@ -61,6 +71,7 @@ function remove(index: number) {
 }
 
 function update(index: number, item: ArrayItemType) {
+  emit('update', index, item)
   for (const n of targetNodes()) {
     const arr = [...n[propKey]] as ArrayItemType[]
     arr[index] = item
@@ -69,6 +80,7 @@ function update(index: number, item: ArrayItemType) {
 }
 
 function patch(index: number, changes: Record<string, unknown>) {
+  emit('patch', index, changes)
   for (const n of targetNodes()) {
     const arr = [...n[propKey]] as ArrayItemType[]
     arr[index] = { ...arr[index], ...changes } as ArrayItemType
@@ -77,6 +89,7 @@ function patch(index: number, changes: Record<string, unknown>) {
 }
 
 function toggleVisibility(index: number) {
+  emit('toggleVisibility', index)
   for (const n of targetNodes()) {
     const arr = n[propKey] as Array<{ visible: boolean }>
     if (!arr[index]) continue

@@ -8,7 +8,8 @@ import HsvColorArea from './HsvColorArea.vue'
 import ImageFillPicker from './ImageFillPicker.vue'
 import { useFillPicker } from '@open-pencil/vue'
 
-import Tip from './Tip.vue'
+import Tip from './ui/Tip.vue'
+import { usePopoverUI } from './ui/popover'
 
 import type { Fill } from '@open-pencil/core'
 
@@ -24,6 +25,7 @@ function tabClass(active: boolean) {
 
 const { fill } = defineProps<{ fill: Fill }>()
 const emit = defineEmits<{ update: [fill: Fill] }>()
+const cls = usePopoverUI({ content: 'w-60 p-2' })
 
 const { category, swatchBg, toSolid, toGradient, toImage } = useFillPicker(
   computed(() => fill),
@@ -42,11 +44,7 @@ const { category, swatchBg, toSolid, toGradient, toImage } = useFillPicker(
     </PopoverTrigger>
 
     <PopoverPortal>
-      <PopoverContent
-        class="z-[100] w-60 rounded-lg border border-border bg-panel p-2 shadow-xl"
-        :side-offset="4"
-        side="left"
-      >
+      <PopoverContent :class="cls.content" :side-offset="4" side="left">
         <div class="mb-2 flex items-center gap-0.5">
           <Tip label="Solid">
             <button

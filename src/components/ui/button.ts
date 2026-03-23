@@ -1,6 +1,8 @@
 import { twMerge } from 'tailwind-merge'
 import { tv } from 'tailwind-variants'
 
+import { useComponentUI } from '@/components/ui/use-component-ui'
+
 const button = tv({
   base: 'inline-flex items-center justify-center transition-colors select-none',
   variants: {
@@ -48,7 +50,10 @@ export function uiButton(options?: {
   shape?: 'square' | 'rounded' | 'pill'
   size?: 'sm' | 'md' | 'icon' | 'iconSm'
   bordered?: boolean
-  class?: string
+  ui?: {
+    base?: string
+  }
 }) {
-  return twMerge(button(options), options?.class)
+  const ui = useComponentUI(options?.ui, { base: '' })
+  return twMerge(button(options), ui.value.base)
 }

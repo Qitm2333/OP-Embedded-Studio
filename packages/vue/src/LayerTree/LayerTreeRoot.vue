@@ -10,6 +10,14 @@ const { indentPerLevel = 16 } = defineProps<{
   indentPerLevel?: number
 }>()
 
+const emit = defineEmits<{
+  select: [id: string, additive: boolean]
+  toggleExpand: [id: string]
+  toggleVisibility: [id: string]
+  toggleLock: [id: string]
+  rename: [id: string, name: string]
+}>()
+
 const editor = useEditor()
 
 function buildTree(parentId: string): LayerNode[] {
@@ -81,6 +89,7 @@ function syncCanvasScope(nodeId: string) {
 }
 
 function select(id: string, additive: boolean) {
+  emit('select', id, additive)
   if (additive) {
     editor.select([id], true)
   } else {
@@ -90,6 +99,7 @@ function select(id: string, additive: boolean) {
 }
 
 function toggleExpand(id: string) {
+  emit('toggleExpand', id)
   const idx = expanded.value.indexOf(id)
   if (idx !== -1) expanded.value = expanded.value.filter((e) => e !== id)
   else expanded.value = [...expanded.value, id]
@@ -104,9 +114,18 @@ provideLayerTree({
   indentPerLevel,
   select,
   toggleExpand,
-  toggleVisibility: (id: string) => editor.toggleNodeVisibility(id),
-  toggleLock: (id: string) => editor.toggleNodeLock(id),
-  rename: (id: string, name: string) => editor.renameNode(id, name),
+  toggleVisibility: (id: string) => {
+    emit('toggleVisibility', id)
+    editor.toggleNodeVisibility(id)
+  },
+  toggleLock: (id: string) => {
+    emit('toggleLock', id)
+    editor.toggleNodeLock(id)
+  },
+  rename: (id: string, name: string) => {
+    emit('rename', id, name)
+    editor.renameNode(id, name)
+  },
   setRowRef
 })
 </script>

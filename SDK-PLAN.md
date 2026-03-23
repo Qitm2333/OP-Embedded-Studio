@@ -82,8 +82,10 @@ OpenPencil app becomes a styled composition of these primitives.
 
 | SDK | Type | Slot props |
 |-----|------|-----------|
-| `EditorContextMenu` | Component | Selection-aware context menu items |
-| `EditorMenuBar` | Component | File/Edit/View menu structure |
+| `useEditorCommands()` | Composable | Typed command registry, enablement, run helpers |
+| `useMenuModel()` | Composable | Renderless menu trees for app/context/mobile menus |
+| `EditorContextMenu` | Component | Optional thin renderer over `useMenuModel().canvasMenu` |
+| `EditorMenuBar` | Component | Optional thin renderer over `useMenuModel().appMenu` |
 
 ### Inputs
 
@@ -98,6 +100,10 @@ OpenPencil app becomes a styled composition of these primitives.
 |-----|---------|
 | `useEditor()` | Inject editor |
 | `useSelectionState()` | Reactive selection queries |
+| `useSelectionCapabilities()` | Selection-aware command enablement |
+| `useEditorCommands()` | Shared command execution layer |
+| `useMenuModel()` | Renderless menu data model |
+| `useViewportKind()` | Shared mobile/desktop breakpoint state |
 | `useNodeProps()` | Property editing with undo |
 | `useInlineRename()` | Inline rename input |
 | `useLayerDrag()` | Atlaskit tree DnD |
@@ -113,6 +119,7 @@ OpenPencil app becomes a styled composition of these primitives.
 - `AppToast` — toast styling
 - `CodePanel` — JSX generation
 - `use-collab.ts`, `use-chat.ts`, `use-keyboard.ts`, `use-menu.ts`
+- app-styled UI primitives in `src/components/ui/` (`AppSelect`, `AppGroupedSelect`, `Tip`, style helpers) stay outside SDK unless rewritten as headless/generic primitives
 
 ## Migration Phases
 
@@ -135,7 +142,9 @@ OpenPencil app becomes a styled composition of these primitives.
 - Rename, selection sync
 
 ### Phase 5: Menu primitives
-- `EditorContextMenu`, `EditorMenuBar`
+- ✅ `useEditorCommands()`
+- ✅ `useMenuModel()`
+- Next: optional `EditorContextMenu`, `EditorMenuBar` renderers once app-side host overrides settle
 
 ### Phase 6: Dialog/picker primitives
 - `VariablesEditorRoot`
@@ -145,3 +154,21 @@ OpenPencil app becomes a styled composition of these primitives.
 ### Phase 7: App migration
 - Rewrite every app component as styled SDK composition
 - App files = styling + layout only
+
+## Current status
+
+Completed:
+- `useSelectionCapabilities()`
+- `useEditorCommands()`
+- `useViewportKind()`
+- `useMenuModel()`
+- `CanvasMenu.vue` partly rendered from SDK menu model
+- `AppMenu.vue` partly rendered from SDK menu model
+- keyboard shortcuts migrated to shared command execution for core editor actions
+
+Next recommended steps:
+1. Standardize remaining app primitives on the `ui` + `useComponentUI()` pattern, preferring semantic slot overrides over raw class props
+2. Continue moving app-styled reusable components into `src/components/ui/`
+3. Normalize slot-based style helpers (`menu`, `dialog`, `popover`, `tooltip`, `select`) around the same override conventions
+4. Move remaining `MobileHud` menu/action groups behind command/menu abstractions
+5. Decide whether `EditorContextMenu` / `EditorMenuBar` should exist as SDK renderers or stay as app renderers over SDK data

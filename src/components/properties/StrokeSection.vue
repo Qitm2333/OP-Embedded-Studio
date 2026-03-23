@@ -8,14 +8,14 @@ import {
   DropdownMenuPortal
 } from 'reka-ui'
 
-import AppSelect from '@/components/AppSelect.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
-import Tip from '@/components/Tip.vue'
+import Tip from '@/components/ui/Tip.vue'
 import { iconButton } from '@/components/ui/icon-button'
 import { sectionLabel, sectionWrapper } from '@/components/ui/section'
 import { PropertyListRoot, useEditor } from '@open-pencil/vue'
-import { menuContent, menuItem } from '@/components/ui/menu'
+import { menu, useMenuUI } from '@/components/ui/menu'
 
 import type { SceneNode, Stroke } from '@open-pencil/core'
 
@@ -41,6 +41,10 @@ const SIDE_OPTIONS: { value: StrokeSides; label: string }[] = [
 const BORDER_SIDES = ['top', 'right', 'bottom', 'left'] as const
 
 const sideMenuOpen = ref(false)
+const sideMenuCls = useMenuUI({
+  content: 'min-w-[140px] rounded-md p-0.5',
+  item: 'relative px-2'
+})
 
 function updateAlign(align: Stroke['align'], activeNode: SceneNode) {
   const strokes = activeNode.strokes.map((s) => ({ ...s, align }))
@@ -184,7 +188,7 @@ const DEFAULT_STROKE: Stroke = {
           <icon-lucide-eye v-if="stroke.visible" class="size-3.5" />
           <icon-lucide-eye-off v-else class="size-3.5" />
         </button>
-        <button :class="iconButton({ class: 'shrink-0' })" @click="remove(i)">−</button>
+        <button :class="iconButton({ ui: { base: 'shrink-0' } })" @click="remove(i)">−</button>
       </div>
 
       <!-- Stroke details -->
@@ -236,15 +240,11 @@ const DEFAULT_STROKE: Stroke = {
             </DropdownMenuTrigger>
           </Tip>
           <DropdownMenuPortal>
-            <DropdownMenuContent
-              :side-offset="4"
-              align="end"
-              :class="menuContent({ class: 'min-w-[140px] rounded-md p-0.5' })"
-            >
+            <DropdownMenuContent :side-offset="4" align="end" :class="sideMenuCls.content">
               <DropdownMenuItem
                 v-for="opt in SIDE_OPTIONS"
                 :key="opt.value"
-                :class="menuItem({ justify: 'start', class: 'relative px-2' })"
+                :class="menu({ justify: 'start' }).item({ class: sideMenuCls.item })"
                 @click="selectSide(opt.value, activeNode)"
               >
                 <icon-lucide-check

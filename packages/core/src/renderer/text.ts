@@ -28,12 +28,9 @@ export function measureTextNode(
   if (node.type !== 'TEXT' || !node.text) return null
 
   const paragraph = buildParagraph(r, node)
-  const layoutWidth =
-    maxWidth !== undefined
-      ? maxWidth
-      : (node.textAutoResize === 'WIDTH_AND_HEIGHT'
-          ? 1e6
-          : node.width || 1e6)
+  let layoutWidth = node.width || 1e6
+  if (maxWidth !== undefined) layoutWidth = maxWidth
+  else if (node.textAutoResize === 'WIDTH_AND_HEIGHT') layoutWidth = 1e6
   paragraph.layout(layoutWidth)
   const width = paragraph.getLongestLine()
   const height = paragraph.getHeight()

@@ -361,8 +361,7 @@ function configureChildAsLeaf(yogaChild: YogaNode, child: SceneNode, parent: Sce
     : parent.counterAxisAlign === 'STRETCH'
 
   const isText = child.type === 'TEXT'
-  const needsMeasureFunc =
-    isText && globalTextMeasurer && child.textAutoResize !== 'NONE'
+  const needsMeasureFunc = isText && globalTextMeasurer && child.textAutoResize !== 'NONE'
 
   if (needsMeasureFunc) {
     configureTextLeaf(yogaChild, child, parent)
@@ -374,7 +373,8 @@ function configureChildAsLeaf(yogaChild: YogaNode, child: SceneNode, parent: Sce
       yogaChild.setWidth(est.width)
       yogaChild.setHeight(est.height)
     } else if (child.textAutoResize === 'HEIGHT') {
-      const stretches = child.layoutAlignSelf === 'STRETCH' ||
+      const stretches =
+        child.layoutAlignSelf === 'STRETCH' ||
         (child.layoutAlignSelf === 'AUTO' && parent.counterAxisAlign === 'STRETCH')
       if (!(!isRow && stretches)) {
         yogaChild.setWidth(child.width)
@@ -392,11 +392,7 @@ function configureChildAsLeaf(yogaChild: YogaNode, child: SceneNode, parent: Sce
   applyMinMaxConstraints(yogaChild, child)
 }
 
-function configureTextLeaf(
-  yogaChild: YogaNode,
-  child: SceneNode,
-  parent: SceneNode
-): void {
+function configureTextLeaf(yogaChild: YogaNode, child: SceneNode, parent: SceneNode): void {
   const autoResize = child.textAutoResize
   const isRow = parent.layoutMode === 'HORIZONTAL'
 
@@ -420,7 +416,8 @@ function configureTextLeaf(
       return result
     })
   } else if (autoResize === 'HEIGHT') {
-    const stretchesCross = child.layoutAlignSelf === 'STRETCH' ||
+    const stretchesCross =
+      child.layoutAlignSelf === 'STRETCH' ||
       (child.layoutAlignSelf === 'AUTO' && parent.counterAxisAlign === 'STRETCH')
     // Don't set fixed width when text stretches on cross axis (w="fill" in
     // flex="col" parent) — setWidth blocks Yoga's alignSelf:stretch, leaving
@@ -431,15 +428,21 @@ function configureTextLeaf(
       yogaChild.setWidth(fixedWidth)
     }
     yogaChild.setMeasureFunc((width, widthMode, _height, _heightMode) => {
-      const constraintW = fillsWidth
-        ? (widthMode === MeasureMode.Undefined ? fixedWidth : width)
-        : (widthMode === MeasureMode.Undefined ? fixedWidth : Math.min(width, fixedWidth || width))
+      let constraintW = fixedWidth
+      if (fillsWidth) {
+        if (widthMode !== MeasureMode.Undefined) constraintW = width
+      } else if (widthMode !== MeasureMode.Undefined) {
+        constraintW = Math.min(width, fixedWidth || width)
+      }
       const cacheKey = Math.round(constraintW)
       const cached = cache.get(cacheKey)
       if (cached) return cached
 
       const measured = globalTextMeasurer?.(child, constraintW)
-      const result = { width: constraintW, height: measured?.height ?? estimateTextSize(child, constraintW).height }
+      const result = {
+        width: constraintW,
+        height: measured?.height ?? estimateTextSize(child, constraintW).height
+      }
       cache.set(cacheKey, result)
       return result
     })
@@ -569,7 +572,11 @@ function applyYogaLayout(graph: SceneGraph, frame: SceneNode, yogaNode: YogaNode
     if (child.layoutMode !== 'NONE') {
       if (child.layoutMode === 'GRID' && child.visible && child.layoutPositioning !== 'ABSOLUTE') {
         computeLayout(graph, child.id)
-      } else if (frame.layoutMode === 'GRID' && child.visible && child.layoutPositioning !== 'ABSOLUTE') {
+      } else if (
+        frame.layoutMode === 'GRID' &&
+        child.visible &&
+        child.layoutPositioning !== 'ABSOLUTE'
+      ) {
         recomputeGridChild(graph, child)
       } else {
         applyYogaLayout(graph, child, yogaChild)

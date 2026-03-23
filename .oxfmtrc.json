@@ -6,11 +6,6 @@
   "singleQuote": true,
   "printWidth": 100,
   "arrowParens": "always",
-  "sortTailwindcss": {
-    "stylesheet": "src/app.css",
-    "functions": ["twMerge", "tv"],
-    "preserveDuplicates": false
-  },
   "sortImports": {
     "order": "asc",
     "ignoreCase": true,

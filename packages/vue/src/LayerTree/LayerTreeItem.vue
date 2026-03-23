@@ -11,6 +11,14 @@ const { node, level, hasChildren } = defineProps<{
   hasChildren: boolean
 }>()
 
+const emit = defineEmits<{
+  select: [id: string, additive: boolean]
+  toggleExpand: [id: string]
+  toggleVisibility: [id: string]
+  toggleLock: [id: string]
+  rename: [id: string, name: string]
+}>()
+
 const ctx = useLayerTree()
 
 const isSelected = computed(() => ctx.selectedIds.value.has(node.id))
@@ -37,11 +45,11 @@ defineExpose({ rowEl })
       :is-selected="isSelected"
       :is-dragging="isDragging"
       :pad-left="padLeft"
-      :select="(additive: boolean) => ctx.select(node.id, additive)"
-      :toggle-expand="() => ctx.toggleExpand(node.id)"
-      :toggle-visibility="() => ctx.toggleVisibility(node.id)"
-      :toggle-lock="() => ctx.toggleLock(node.id)"
-      :rename="(name: string) => ctx.rename(node.id, name)"
+      :select="(additive: boolean) => { emit('select', node.id, additive); ctx.select(node.id, additive) }"
+      :toggle-expand="() => { emit('toggleExpand', node.id); ctx.toggleExpand(node.id) }"
+      :toggle-visibility="() => { emit('toggleVisibility', node.id); ctx.toggleVisibility(node.id) }"
+      :toggle-lock="() => { emit('toggleLock', node.id); ctx.toggleLock(node.id) }"
+      :rename="(name: string) => { emit('rename', node.id, name); ctx.rename(node.id, name) }"
     />
   </div>
 </template>

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import ScrubInput from '@/components/ScrubInput.vue'
-import Tip from '@/components/Tip.vue'
+import Tip from '@/components/ui/Tip.vue'
 import { iconButton } from '@/components/ui/icon-button'
 import { sectionWrapper } from '@/components/ui/section'
 import { useNodeProps } from '@open-pencil/vue'
@@ -149,7 +149,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
       </ScrubInput>
       <Tip label="Flip horizontal">
         <button
-          :class="iconButton({ size: 'md', class: 'shrink-0' })"
+          :class="iconButton({ size: 'md', ui: { base: 'shrink-0' } })"
           data-test-id="position-flip-horizontal"
           @click="store.flipNodes(ids, 'horizontal')"
         >
@@ -158,7 +158,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
       </Tip>
       <Tip label="Flip vertical">
         <button
-          :class="iconButton({ size: 'md', class: 'shrink-0' })"
+          :class="iconButton({ size: 'md', ui: { base: 'shrink-0' } })"
           data-test-id="position-flip-vertical"
           @click="store.flipNodes(ids, 'vertical')"
         >
@@ -167,7 +167,7 @@ const ids = computed(() => nodes.value.map((n) => n.id))
       </Tip>
       <Tip label="Rotate 90°">
         <button
-          :class="iconButton({ size: 'md', class: 'shrink-0' })"
+          :class="iconButton({ size: 'md', ui: { base: 'shrink-0' } })"
           data-test-id="position-rotate-90"
           @click="store.rotateNodes(ids, 90)"
         >

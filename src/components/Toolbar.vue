@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import {
   DropdownMenuRoot,
   DropdownMenuTrigger,
@@ -23,18 +22,25 @@ import IconGroup from '~icons/lucide/group'
 import IconUngroup from '~icons/lucide/ungroup'
 import IconLock from '~icons/lucide/lock'
 
-import { menuContent, menuItem } from '@/components/ui/menu'
-import Tip from '@/components/Tip.vue'
-import { ACTION_TOAST_DURATION } from '@/constants'
+import { menu, useMenuUI } from '@/components/ui/menu'
+import Tip from '@/components/ui/Tip.vue'
+import { useActionToast } from '@/composables/use-action-toast'
 import { useEditorStore } from '@/stores/editor'
 import { toolIcons } from '@/utils/tools'
-import { ToolbarRoot, ToolbarItem, useEditorCommands, useViewportKind } from '@open-pencil/vue'
+import {
+  ToolbarRoot,
+  ToolbarItem,
+  useEditorCommands,
+  useToolbarState,
+  useViewportKind
+} from '@open-pencil/vue'
 import type { Component } from 'vue'
-import type { EditorToolDef, Tool } from '@open-pencil/vue'
+import type { Tool } from '@open-pencil/vue'
 
 const store = useEditorStore()
 const { isMobile } = useViewportKind()
 const { getCommand } = useEditorCommands()
+const { showActionToast } = useActionToast()
 
 const toolLabels: Record<Tool, string> = {
   SELECT: 'Move',
@@ -64,21 +70,13 @@ const toolShortcuts: Record<Tool, string> = {
   HAND: 'H'
 }
 
-function isActive(tool: EditorToolDef, activeTool: Tool): boolean {
-  if (tool.key === activeTool) return true
-  return tool.flyout?.includes(activeTool) ?? false
-}
-
-function activeKeyForTool(tool: EditorToolDef, activeTool: Tool): Tool {
-  if (tool.flyout?.includes(activeTool)) return activeTool
-  return tool.key
-}
-
 interface ActionItem {
   icon: Component
   label: string
   action: () => void
 }
+
+const flyoutMenuCls = useMenuUI({ content: 'min-w-32' })
 
 const editActions: ActionItem[] = [
   { icon: IconCopy, label: 'Copy', action: () => store.mobileCopy() },
@@ -89,47 +87,41 @@ const editActions: ActionItem[] = [
 ]
 
 const arrangeActions: ActionItem[] = [
-  { icon: IconArrowUpToLine, label: 'Front', action: () => getCommand('selection.bringToFront').run() },
-  { icon: IconArrowDownToLine, label: 'Back', action: () => getCommand('selection.sendToBack').run() },
+  {
+    icon: IconArrowUpToLine,
+    label: 'Front',
+    action: () => getCommand('selection.bringToFront').run()
+  },
+  {
+    icon: IconArrowDownToLine,
+    label: 'Back',
+    action: () => getCommand('selection.sendToBack').run()
+  },
   { icon: IconGroup, label: 'Group', action: () => getCommand('selection.group').run() },
   { icon: IconUngroup, label: 'Ungroup', action: () => getCommand('selection.ungroup').run() },
   { icon: IconLock, label: 'Lock', action: () => getCommand('selection.toggleLock').run() }
 ]
 
-const CATEGORY_COUNT = 3
-const mobileCategory = ref(0)
-const hasPrev = computed(() => mobileCategory.value > 0)
-const hasNext = computed(() => mobileCategory.value < CATEGORY_COUNT - 1)
-
-let toastTimer: ReturnType<typeof setTimeout> | undefined
+const {
+  mobileCategory,
+  slideDirection,
+  hasPrev,
+  hasNext,
+  isActive,
+  activeKeyForTool,
+  goPrev,
+  goNext
+} = useToolbarState()
 
 function onActionTap(item: ActionItem) {
   item.action()
-  store.state.actionToast = item.label
-  clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => {
-    store.state.actionToast = null
-  }, ACTION_TOAST_DURATION)
+  showActionToast(item.label)
 }
-
-const slideDirection = ref(1)
 
 const slideVariants = {
   initial: (dir: unknown) => ({ opacity: 0, x: (dir as number) * 20 }),
   animate: { opacity: 1, x: 0 },
   exit: (dir: unknown) => ({ opacity: 0, x: (dir as number) * -20 })
-}
-
-function goPrev() {
-  if (!hasPrev.value) return
-  slideDirection.value = -1
-  mobileCategory.value--
-}
-
-function goNext() {
-  if (!hasNext.value) return
-  slideDirection.value = 1
-  mobileCategory.value++
 }
 </script>
 
@@ -180,7 +172,7 @@ function goNext() {
                   side="top"
                   :side-offset="8"
                   align="start"
-                  :class="menuContent({ class: 'min-w-32' })"
+                  :class="flyoutMenuCls.content"
                 >
                   <ToolbarItem
                     v-for="sub in tool.flyout"
@@ -191,9 +183,7 @@ function goNext() {
                     <DropdownMenuItem
                       :data-test-id="`toolbar-flyout-item-${sub.toLowerCase()}`"
                       :class="
-                        menuItem({
-                          class: subActive ? 'bg-accent text-white' : undefined
-                        })
+                        menu().item({ class: subActive ? 'bg-accent text-white' : undefined })
                       "
                       @select="selectSub"
                     >
@@ -303,7 +293,7 @@ function goNext() {
                       side="top"
                       :side-offset="8"
                       align="start"
-                      :class="menuContent({ class: 'min-w-32' })"
+                      :class="flyoutMenuCls.content"
                     >
                       <ToolbarItem
                         v-for="sub in tool.flyout"
@@ -314,9 +304,7 @@ function goNext() {
                         <DropdownMenuItem
                           :data-test-id="`mobile-toolbar-flyout-item-${sub.toLowerCase()}`"
                           :class="
-                            menuItem({
-                              class: subActive ? 'bg-accent text-white' : undefined
-                            })
+                            menu().item({ class: subActive ? 'bg-accent text-white' : undefined })
                           "
                           @select="selectSub"
                         >

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onScopeDispose } from 'vue'
 
-import AppSelect from '@/components/AppSelect.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import { iconButton } from '@/components/ui/icon-button'
 import { sectionLabel, sectionWrapper } from '@/components/ui/section'
 import { useEditorStore } from '@/stores/editor'
@@ -94,7 +94,7 @@ onScopeDispose(() => {
         :options="FORMAT_OPTIONS"
         @update:model-value="updateFormat(i, $event as ExportFormat)"
       />
-      <button :class="iconButton({ class: 'shrink-0' })" @click="removeSetting(i)">−</button>
+      <button :class="iconButton({ ui: { base: 'shrink-0' } })" @click="removeSetting(i)">−</button>
     </div>
 
     <button

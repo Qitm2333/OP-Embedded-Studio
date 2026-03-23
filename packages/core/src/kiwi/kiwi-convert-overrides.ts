@@ -1,7 +1,4 @@
 import { styleToWeight } from '../fonts'
-
-import type { SceneNode, ArcData, TextAutoResize } from '../scene-graph'
-import type { NodeChange, Paint, Effect as KiwiEffect } from './codec'
 import {
   convertFills,
   mapStackSizing,
@@ -14,8 +11,11 @@ import {
   mapArcData,
   importStyleRuns,
   convertStrokes,
-  convertEffects,
+  convertEffects
 } from './kiwi-convert'
+
+import type { SceneNode, ArcData, TextAutoResize } from '../scene-graph'
+import type { NodeChange, Paint, Effect as KiwiEffect } from './codec'
 
 function applyOverridePaints(ov: Record<string, unknown>, updates: Partial<SceneNode>): void {
   if (ov.textData != null) {
@@ -55,8 +55,7 @@ function applyOverrideGeometry(ov: Record<string, unknown>, updates: Partial<Sce
     updates.bottomLeftRadius = ov.rectangleBottomLeftCornerRadius as number
   if (ov.rectangleCornerRadiiIndependent != null)
     updates.independentCorners = ov.rectangleCornerRadiiIndependent as boolean
-  if (ov.arcData != null)
-    updates.arcData = mapArcData(ov.arcData as Partial<ArcData> | undefined)
+  if (ov.arcData != null) updates.arcData = mapArcData(ov.arcData as Partial<ArcData> | undefined)
   if (ov.frameMaskDisabled != null) updates.clipsContent = ov.frameMaskDisabled === false
 }
 
@@ -74,8 +73,7 @@ function applyOverrideLayout(ov: Record<string, unknown>, updates: Partial<Scene
   if (ov.stackChildAlignSelf != null)
     updates.layoutAlignSelf = mapAlignSelf(ov.stackChildAlignSelf as string)
   if (ov.stackPositioning != null)
-    updates.layoutPositioning =
-      (ov.stackPositioning as string) === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO'
+    updates.layoutPositioning = (ov.stackPositioning as string) === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO'
   if (ov.stackVerticalPadding != null) {
     updates.paddingTop = ov.stackVerticalPadding as number
     if (ov.stackPaddingBottom == null) updates.paddingBottom = ov.stackVerticalPadding as number
@@ -93,8 +91,9 @@ function applyOverrideStrokes(ov: Record<string, unknown>, updates: Partial<Scen
     updates.strokes = updates.strokes ?? []
   }
   if (ov.strokeAlign != null && updates.strokes) {
-    const align =
-      ov.strokeAlign === 'INSIDE' ? 'INSIDE' : (ov.strokeAlign === 'OUTSIDE' ? 'OUTSIDE' : 'CENTER')
+    let align: 'INSIDE' | 'OUTSIDE' | 'CENTER' = 'CENTER'
+    if (ov.strokeAlign === 'INSIDE') align = 'INSIDE'
+    else if (ov.strokeAlign === 'OUTSIDE') align = 'OUTSIDE'
     for (const s of updates.strokes) s.align = align
   }
   if (ov.borderTopWeight != null) updates.borderTopWeight = ov.borderTopWeight as number
@@ -130,8 +129,7 @@ function applyOverrideText(ov: Record<string, unknown>, updates: Partial<SceneNo
     )
   if (ov.maxLines != null) updates.maxLines = ov.maxLines as number | null
   if (ov.textTruncation != null)
-    updates.textTruncation =
-      (ov.textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED'
+    updates.textTruncation = (ov.textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED'
   if (ov.textDecoration != null)
     updates.textDecoration = mapTextDecoration(ov.textDecoration as string)
 }

@@ -91,7 +91,10 @@ Status of all items from the codebase audit.
 ## Additional work completed
 
 - **vue-tsc errors**: Fixed all 135, now a check gate (was never checked before)
-- **`@open-pencil/vue` SDK**: Headless package with 8 composables, 6 renderless components
+- **`@open-pencil/vue` SDK**: Headless package with renderless components plus shared editor composables for selection, commands, viewport, and menu models
+- **SDK command spine**: `useSelectionCapabilities()`, `useEditorCommands()`, `useViewportKind()`, `useMenuModel()` now power keyboard/menu/context-menu flows
+- **App UI primitives cleanup**: base app-styled components moved under `src/components/ui/`, `ui` prop adopted for grouped/simple selects, lightweight `useComponentUI()` added and expanded into button/input/icon-button helpers; slot helpers now have `useMenuUI()`, `usePopoverUI()`, `useDialogUI()`, `useTooltipUI()`, `useSelectUI()`
+- **Formatter restored**: `.oxfmtrc.json` recovered from git history, import sorting restored, formatting now covers all packages
 - **Editor variable actions**: 7 undo-able CRUD operations, wired into VariablesDialog
 - **Editor alignment actions**: alignNodes, flipNodes, rotateNodes, wired into PositionSection
 - **`updateNodeWithUndo` auto-renders**: eliminated 15+ redundant requestRender() calls

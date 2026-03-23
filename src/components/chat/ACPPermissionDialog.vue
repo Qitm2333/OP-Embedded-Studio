@@ -16,8 +16,13 @@ import {
   rejectCurrentPermission,
   respondToPermission
 } from '@/ai/acp-permission'
+import { useDialogUI } from '@/components/ui/dialog'
 
 const open = computed(() => currentPermission.value !== null)
+const cls = useDialogUI({
+  overlay: 'z-50',
+  content: 'w-80 rounded-lg p-4 shadow-xl'
+})
 
 interface ToolCallInfo {
   title?: string
@@ -56,10 +61,10 @@ function handleDismiss() {
 <template>
   <AlertDialogRoot :open="open">
     <AlertDialogPortal>
-      <AlertDialogOverlay class="fixed inset-0 z-50 bg-black/50" @click="handleDismiss" />
+      <AlertDialogOverlay :class="cls.overlay" @click="handleDismiss" />
       <AlertDialogContent
         data-test-id="acp-permission-dialog"
-        class="fixed top-1/2 left-1/2 z-50 w-80 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-panel p-4 shadow-xl"
+        :class="cls.content"
         @escape-key-down="handleDismiss"
       >
         <AlertDialogTitle class="text-sm font-semibold text-surface">

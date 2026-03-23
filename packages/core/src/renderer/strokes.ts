@@ -1,6 +1,6 @@
 import type { SceneNode, Stroke } from '../scene-graph'
-import type { Canvas, Paint } from 'canvaskit-wasm'
 import type { SkiaRenderer } from './renderer'
+import type { Canvas, Paint } from 'canvaskit-wasm'
 
 export function drawNodeStroke(
   r: SkiaRenderer,
@@ -58,12 +58,7 @@ export function drawStrokeWithAlign(
     canvas.restore()
   } else if (align === 'OUTSIDE') {
     canvas.save()
-    const bigRect = r.ck.LTRBRect(
-      -node.width,
-      -node.height,
-      node.width * 2,
-      node.height * 2
-    )
+    const bigRect = r.ck.LTRBRect(-node.width, -node.height, node.width * 2, node.height * 2)
     const outerPath = new r.ck.Path()
     outerPath.addRect(bigRect)
     const innerPath = r.makeNodeShapePath(node, rect, hasRadius)
@@ -98,9 +93,7 @@ export function drawRRectStrokeWithAlign(
   } else if (stroke.align === 'OUTSIDE') {
     canvas.save()
     const outerPath = new r.ck.Path()
-    outerPath.addRect(
-      r.ck.LTRBRect(-node.width, -node.height, node.width * 2, node.height * 2)
-    )
+    outerPath.addRect(r.ck.LTRBRect(-node.width, -node.height, node.width * 2, node.height * 2))
     const innerPath = new r.ck.Path()
     innerPath.addRRect(rrect)
     outerPath.op(innerPath, r.ck.PathOp.Difference)
@@ -129,28 +122,36 @@ export function drawIndividualSideStrokes(
 
   const tw = node.borderTopWeight
   if (tw > 0) {
-    const y = inside ? tw / 2 : (outside ? -tw / 2 : 0)
+    let y = 0
+    if (inside) y = tw / 2
+    else if (outside) y = -tw / 2
     r.strokePaint.setStrokeWidth(tw)
     canvas.drawLine(0, y, w, y, r.strokePaint)
   }
 
   const rw = node.borderRightWeight
   if (rw > 0) {
-    const x = inside ? w - rw / 2 : (outside ? w + rw / 2 : w)
+    let x = w
+    if (inside) x = w - rw / 2
+    else if (outside) x = w + rw / 2
     r.strokePaint.setStrokeWidth(rw)
     canvas.drawLine(x, 0, x, h, r.strokePaint)
   }
 
   const bw = node.borderBottomWeight
   if (bw > 0) {
-    const y = inside ? h - bw / 2 : (outside ? h + bw / 2 : h)
+    let y = h
+    if (inside) y = h - bw / 2
+    else if (outside) y = h + bw / 2
     r.strokePaint.setStrokeWidth(bw)
     canvas.drawLine(0, y, w, y, r.strokePaint)
   }
 
   const lw = node.borderLeftWeight
   if (lw > 0) {
-    const x = inside ? lw / 2 : (outside ? -lw / 2 : 0)
+    let x = 0
+    if (inside) x = lw / 2
+    else if (outside) x = -lw / 2
     r.strokePaint.setStrokeWidth(lw)
     canvas.drawLine(x, 0, x, h, r.strokePaint)
   }

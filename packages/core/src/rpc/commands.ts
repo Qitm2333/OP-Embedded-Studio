@@ -1,8 +1,9 @@
 /* eslint-disable max-lines -- RPC commands are cohesive; splitting adds indirection */
 import { colorToHex, colorDistance as colorDist } from '../color'
 import { queryByXPath } from '../xpath'
-import type { Color } from '../types'
+
 import type { SceneGraph, SceneNode, Variable } from '../scene-graph'
+import type { Color } from '../types'
 
 export interface RpcCommand<A = unknown, R = unknown> {
   name: string
@@ -23,7 +24,12 @@ function walkNodes(graph: SceneGraph, rootId: string, fn: (node: SceneNode) => b
 function countNodes(graph: SceneGraph, pageId: string): number {
   let count = 0
   const page = graph.getNode(pageId)
-  if (page) for (const cid of page.childIds) walkNodes(graph, cid, () => { count++; return true })
+  if (page)
+    for (const cid of page.childIds)
+      walkNodes(graph, cid, () => {
+        count++
+        return true
+      })
   return count
 }
 
@@ -97,7 +103,12 @@ export interface TreeNodeResult {
   children?: TreeNodeResult[]
 }
 
-function buildTreeNode(graph: SceneGraph, id: string, depth: number, maxDepth: number): TreeNodeResult | null {
+function buildTreeNode(
+  graph: SceneGraph,
+  id: string,
+  depth: number,
+  maxDepth: number
+): TreeNodeResult | null {
   const node = graph.getNode(id)
   if (!node) return null
   const result: TreeNodeResult = {
@@ -128,7 +139,10 @@ export const treeCommand: RpcCommand<TreeArgs, TreeResult | { error: string }> =
     const pages = graph.getPages()
     const maxDepth = args.depth ?? Infinity
     const page = args.page ? pages.find((p) => p.name === args.page) : pages[0]
-    if (!page) return { error: `Page "${args.page}" not found. Available: ${pages.map((p) => p.name).join(', ')}` }
+    if (!page)
+      return {
+        error: `Page "${args.page}" not found. Available: ${pages.map((p) => p.name).join(', ')}`
+      }
 
     return {
       page: { id: page.id, name: page.name, type: page.type },
@@ -173,8 +187,11 @@ export const findCommand: RpcCommand<FindArgs, FindNodeResult[]> = {
           const matchesType = !typeFilter || node.type === typeFilter
           if (matchesName && matchesType) {
             results.push({
-              id: node.id, name: node.name, type: node.type,
-              width: Math.round(node.width), height: Math.round(node.height)
+              id: node.id,
+              name: node.name,
+              type: node.type,
+              width: Math.round(node.width),
+              height: Math.round(node.height)
             })
           }
           return true
@@ -302,7 +319,11 @@ export const nodeCommand: RpcCommand<NodeArgs, NodeResult | { error: string }> =
       fontFamily: node.fontFamily,
       fontSize: node.fontSize,
       fontWeight: node.fontWeight,
-      text: node.text.length ? (node.text.length > 200 ? node.text.slice(0, 200) + '…' : node.text) : null,
+      text: (() => {
+        if (!node.text.length) return null
+        if (node.text.length > 200) return node.text.slice(0, 200) + '…'
+        return node.text
+      })(),
       parent: parent ? { id: parent.id, name: parent.name, type: parent.type } : null,
       children: node.childIds.length,
       boundVariables: boundVars
@@ -364,7 +385,8 @@ export const variablesCommand: RpcCommand<VariablesArgs, VariablesResult> = {
     for (const coll of graph.variableCollections.values()) {
       if (collFilter && !coll.name.toLowerCase().includes(collFilter)) continue
 
-      const collVars = graph.getVariablesForCollection(coll.id)
+      const collVars = graph
+        .getVariablesForCollection(coll.id)
         .filter((v) => !typeFilter || v.type === typeFilter)
 
       if (collVars.length === 0) continue
@@ -413,7 +435,11 @@ function clusterColors(colors: ColorInfo[], threshold: number): ColorCluster[] {
 
   for (const color of sorted) {
     if (used.has(color.hex)) continue
-    const cluster: ColorCluster = { colors: [color], suggestedHex: color.hex, totalCount: color.count }
+    const cluster: ColorCluster = {
+      colors: [color],
+      suggestedHex: color.hex,
+      totalCount: color.count
+    }
     used.add(color.hex)
 
     for (const other of sorted) {
@@ -490,7 +516,12 @@ export const analyzeColorsCommand: RpcCommand<AnalyzeColorsArgs, AnalyzeColorsRe
   name: 'analyze_colors',
   execute: (graph, args) => {
     const { colors, totalNodes } = collectColors(graph)
-    const clusters = args.similar ? clusterColors(colors.filter((c) => !c.variableName), args.threshold ?? 15) : []
+    const clusters = args.similar
+      ? clusterColors(
+          colors.filter((c) => !c.variableName),
+          args.threshold ?? 15
+        )
+      : []
     return { colors: colors.sort((a, b) => b.count - a.count), totalNodes, clusters }
   }
 }
@@ -512,27 +543,36 @@ export interface AnalyzeTypographyResult {
   totalTextNodes: number
 }
 
-export const analyzeTypographyCommand: RpcCommand<AnalyzeTypographyArgs, AnalyzeTypographyResult> = {
-  name: 'analyze_typography',
-  execute: (graph) => {
-    const styleMap = new Map<string, TypographyStyle>()
-    let totalTextNodes = 0
+export const analyzeTypographyCommand: RpcCommand<AnalyzeTypographyArgs, AnalyzeTypographyResult> =
+  {
+    name: 'analyze_typography',
+    execute: (graph) => {
+      const styleMap = new Map<string, TypographyStyle>()
+      let totalTextNodes = 0
 
-    for (const node of graph.getAllNodes()) {
-      if (node.type !== 'TEXT') continue
-      totalTextNodes++
+      for (const node of graph.getAllNodes()) {
+        if (node.type !== 'TEXT') continue
+        totalTextNodes++
 
-      const lh = node.lineHeight === null ? 'auto' : `${node.lineHeight}px`
-      const key = `${node.fontFamily}|${node.fontSize}|${node.fontWeight}|${lh}`
-      const existing = styleMap.get(key)
-      if (existing) { existing.count++ } else {
-        styleMap.set(key, { family: node.fontFamily, size: node.fontSize, weight: node.fontWeight, lineHeight: lh, count: 1 })
+        const lh = node.lineHeight === null ? 'auto' : `${node.lineHeight}px`
+        const key = `${node.fontFamily}|${node.fontSize}|${node.fontWeight}|${lh}`
+        const existing = styleMap.get(key)
+        if (existing) {
+          existing.count++
+        } else {
+          styleMap.set(key, {
+            family: node.fontFamily,
+            size: node.fontSize,
+            weight: node.fontWeight,
+            lineHeight: lh,
+            count: 1
+          })
+        }
       }
-    }
 
-    return { styles: [...styleMap.values()].sort((a, b) => b.count - a.count), totalTextNodes }
+      return { styles: [...styleMap.values()].sort((a, b) => b.count - a.count), totalTextNodes }
+    }
   }
-}
 
 // ── analyze spacing ──
 
@@ -558,16 +598,25 @@ export const analyzeSpacingCommand: RpcCommand<void, AnalyzeSpacingResult> = {
       if (node.type === 'CANVAS' || node.layoutMode === 'NONE') continue
       totalNodes++
 
-      if (node.itemSpacing > 0) gapMap.set(node.itemSpacing, (gapMap.get(node.itemSpacing) ?? 0) + 1)
-      if (node.counterAxisSpacing > 0) gapMap.set(node.counterAxisSpacing, (gapMap.get(node.counterAxisSpacing) ?? 0) + 1)
+      if (node.itemSpacing > 0)
+        gapMap.set(node.itemSpacing, (gapMap.get(node.itemSpacing) ?? 0) + 1)
+      if (node.counterAxisSpacing > 0)
+        gapMap.set(node.counterAxisSpacing, (gapMap.get(node.counterAxisSpacing) ?? 0) + 1)
 
-      for (const pad of [node.paddingTop, node.paddingRight, node.paddingBottom, node.paddingLeft]) {
+      for (const pad of [
+        node.paddingTop,
+        node.paddingRight,
+        node.paddingBottom,
+        node.paddingLeft
+      ]) {
         if (pad > 0) paddingMap.set(pad, (paddingMap.get(pad) ?? 0) + 1)
       }
     }
 
     const toValues = (map: Map<number, number>) =>
-      [...map.entries()].map(([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count)
+      [...map.entries()]
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => b.count - a.count)
 
     return { gaps: toValues(gapMap), paddings: toValues(paddingMap), totalNodes }
   }
@@ -605,7 +654,10 @@ function buildSignature(graph: SceneGraph, node: SceneNode): string {
     if (!child) continue
     childTypes.set(child.type, (childTypes.get(child.type) ?? 0) + 1)
   }
-  const childPart = [...childTypes.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([t, c]) => `${t}:${c}`).join(',')
+  const childPart = [...childTypes.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([t, c]) => `${t}:${c}`)
+    .join(',')
   const w = Math.round(node.width / 10) * 10
   const h = Math.round(node.height / 10) * 10
   return `${node.type}:${w}x${h}|${childPart}`
@@ -629,8 +681,12 @@ export const analyzeClustersCommand: RpcCommand<AnalyzeClustersArgs, AnalyzeClus
       const sig = buildSignature(graph, node)
       const arr = sigMap.get(sig) ?? []
       arr.push({
-        id: node.id, name: node.name, type: node.type,
-        width: Math.round(node.width), height: Math.round(node.height), childCount: node.childIds.length
+        id: node.id,
+        name: node.name,
+        type: node.type,
+        width: Math.round(node.width),
+        height: Math.round(node.height),
+        childCount: node.childIds.length
       })
       sigMap.set(sig, arr)
     }

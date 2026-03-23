@@ -20,12 +20,12 @@ import IconImageDown from '~icons/lucide/image-down'
 import IconSave from '~icons/lucide/save'
 import IconZoomIn from '~icons/lucide/zoom-in'
 
-import { menuContent, menuItem } from '@/components/ui/menu'
+import { menu, useMenuUI } from '@/components/ui/menu'
 import { openFileDialog } from '@/composables/use-menu'
 import { DEFAULT_COLLAB_STATE, useCollabInjected } from '@/composables/use-collab'
 import { toast } from '@/utils/toast'
 import { useEditorStore } from '@/stores/editor'
-import Tip from '@/components/Tip.vue'
+import Tip from '@/components/ui/Tip.vue'
 import { colorToCSS } from '@open-pencil/core'
 import { useEditorCommands } from '@open-pencil/vue'
 import { toolIcons } from '@/utils/tools'
@@ -58,6 +58,10 @@ function onDisconnect() {
 }
 
 const activeToolIcon = computed(() => toolIcons[store.state.activeTool])
+const menuCls = useMenuUI({
+  content: 'w-48 rounded-xl p-1.5 shadow-xl',
+  item: 'w-full gap-2.5 rounded-lg border-none bg-transparent px-2.5 py-2 active:bg-hover'
+})
 
 interface MenuAction {
   icon: Component
@@ -225,22 +229,11 @@ const onlineCount = computed(() => collabPeers.value.length + 1)
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuPortal>
-          <DropdownMenuContent
-            :side-offset="8"
-            side="bottom"
-            align="end"
-            :class="menuContent({ class: 'w-48 rounded-xl p-1.5 shadow-xl' })"
-          >
+          <DropdownMenuContent :side-offset="8" side="bottom" align="end" :class="menuCls.content">
             <DropdownMenuItem
               v-for="item in menuItems"
               :key="item.label"
-              :class="
-                menuItem({
-                  justify: 'start',
-                  class:
-                    'w-full gap-2.5 rounded-lg border-none bg-transparent px-2.5 py-2 active:bg-hover'
-                })
-              "
+              :class="menu({ justify: 'start' }).item({ class: menuCls.item })"
               @click="item.action()"
             >
               <component :is="item.icon" class="size-4 text-muted" />
