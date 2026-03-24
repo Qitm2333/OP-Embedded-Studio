@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 
 import { useEditor } from '@open-pencil/vue/context/editorContext'
+import { useNodeProps } from '@open-pencil/vue/controls/useNodeProps'
 import { providePropertyList } from './context'
 
 import type { Fill, Stroke, Effect, SceneNode } from '@open-pencil/core'
@@ -23,6 +24,7 @@ const emit = defineEmits<{
 }>()
 
 const editor = useEditor()
+const { isArrayMixed } = useNodeProps()
 
 const selectedNodes = computed(() => editor.getSelectedNodes())
 const activeNode = computed<SceneNode | null>(
@@ -31,17 +33,7 @@ const activeNode = computed<SceneNode | null>(
 const isMulti = computed(() => selectedNodes.value.length > 1)
 const active = computed(() => selectedNodes.value.length > 0)
 
-const isMixed = computed(() => {
-  const all = selectedNodes.value
-  if (all.length <= 1) return false
-  const firstArr = all[0][propKey] as unknown[]
-  for (let i = 1; i < all.length; i++) {
-    const arr = all[i][propKey] as unknown[]
-    if (arr.length !== firstArr.length) return true
-  }
-  const first = JSON.stringify(firstArr)
-  return all.some((n) => JSON.stringify(n[propKey]) !== first)
-})
+const isMixed = computed(() => isArrayMixed(propKey))
 
 const items = computed(() => {
   if (isMixed.value) return []

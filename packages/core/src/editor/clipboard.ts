@@ -51,6 +51,7 @@ export function createClipboardActions(ctx: EditorContext) {
     const topLevel = selectedNodes.filter((n) => !n.parentId || !selectedSet.has(n.parentId))
 
     const newRootIds: string[] = []
+    const rootSnapshots: SceneNode[] = []
 
     for (const node of topLevel) {
       const parentId = node.parentId ?? ctx.state.currentPageId
@@ -59,26 +60,56 @@ export function createClipboardActions(ctx: EditorContext) {
         x: node.x + 20,
         y: node.y + 20
       })
-      if (clone) newRootIds.push(clone.id)
+      if (!clone) continue
+      newRootIds.push(clone.id)
+      const snapshot = ctx.graph.getNode(clone.id)
+      if (snapshot) rootSnapshots.push(structuredClone(snapshot))
+    }
+
+    const cloneSnapshotTree = (snapshot: SceneNode): SceneNode => {
+      const cloned = structuredClone(snapshot)
+      cloned.childIds = snapshot.childIds
+        .map((childId) => ctx.graph.getNode(childId))
+        .filter((child): child is SceneNode => child != null)
+        .map((child) => cloneSnapshotTree(child))
+        .map((child) => child.id)
+      return cloned
+    }
+
+    for (let i = 0; i < rootSnapshots.length; i++) {
+      rootSnapshots[i] = cloneSnapshotTree(rootSnapshots[i])
+    }
+
+    const snapshotIndex = new Map<string, SceneNode>()
+    for (const snapshot of rootSnapshots) {
+      snapshotIndex.set(snapshot.id, snapshot)
+    }
+
+    const restoreTree = (snapshot: SceneNode, parentId: string) => {
+      const { id: _snapshotId, parentId: _snapshotParentId, childIds, ...rest } = snapshot
+      const created = ctx.graph.createNode(snapshot.type, parentId, rest)
+      for (const childId of childIds) {
+        const child = snapshotIndex.get(childId)
+        if (!child) continue
+        restoreTree(child, created.id)
+      }
+      return created.id
     }
 
     if (newRootIds.length > 0) {
-      const allCloned = collectSubtrees(ctx.graph, newRootIds)
-      const pageId = ctx.state.currentPageId
       ctx.state.selectedIds = new Set(newRootIds)
       ctx.undo.push({
         label: 'Duplicate',
         forward: () => {
-          for (const snapshot of allCloned) {
-            ctx.graph.createNode(snapshot.type, snapshot.parentId ?? pageId, {
-              ...snapshot,
-              childIds: []
-            })
+          const restoredRootIds: string[] = []
+          for (const snapshot of rootSnapshots) {
+            const parentId = snapshot.parentId ?? ctx.state.currentPageId
+            restoredRootIds.push(restoreTree(snapshot, parentId))
           }
-          ctx.state.selectedIds = new Set(newRootIds)
+          ctx.state.selectedIds = new Set(restoredRootIds)
         },
         inverse: () => {
-          for (const id of newRootIds) ctx.graph.deleteNode(id)
+          for (const id of [...ctx.state.selectedIds].reverse()) ctx.graph.deleteNode(id)
           ctx.state.selectedIds = prevSelection
         }
       })

@@ -20,14 +20,12 @@ function toggleFormat() {
   jsxFormat.value = jsxFormat.value === 'openpencil' ? 'tailwind' : 'openpencil'
 }
 
-const jsxCode = useSceneComputed(
-  () => {
-    const ids = [...store.state.selectedIds]
-    if (ids.length === 0) return ''
-    return selectionToJSX(ids, store.graph, jsxFormat.value)
-  },
-  () => store.state.sceneVersion
-)
+const jsxCode = useSceneComputed(() => {
+  void store.state.sceneVersion
+  const ids = [...store.state.selectedIds]
+  if (ids.length === 0) return ''
+  return selectionToJSX(ids, store.graph, jsxFormat.value)
+})
 
 const highlightedLines = computed(() => {
   if (!jsxCode.value) return []

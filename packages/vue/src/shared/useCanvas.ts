@@ -201,6 +201,7 @@ export function useCanvas(
 
     const surface = makeGLSurface(canvas)
     if (!surface) {
+      console.warn('Falling back to full surface recreation after resize')
       createSurface(canvas)
       return
     }

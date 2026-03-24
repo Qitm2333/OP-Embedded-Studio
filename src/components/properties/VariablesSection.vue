@@ -10,14 +10,14 @@ import { useEditorStore } from '@/stores/editor'
 const emit = defineEmits<{ openDialog: [] }>()
 
 const editor = useEditorStore()
-const collectionCount = useSceneComputed(
-  () => editor.getCollectionCount(),
-  () => editor.state.sceneVersion
-)
-const variableCount = useSceneComputed(
-  () => editor.getVariableCount(),
-  () => editor.state.sceneVersion
-)
+const collectionCount = useSceneComputed(() => {
+  void editor.state.sceneVersion
+  return editor.getCollectionCount()
+})
+const variableCount = useSceneComputed(() => {
+  void editor.state.sceneVersion
+  return editor.getVariableCount()
+})
 const hasVariables = computed(() => variableCount.value > 0)
 </script>
 

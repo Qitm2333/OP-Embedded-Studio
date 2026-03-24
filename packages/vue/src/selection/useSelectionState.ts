@@ -22,7 +22,7 @@ export function useSelectionState() {
   const isComponent = computed(() => selectedNodeType.value === 'COMPONENT')
   const isGroup = computed(() => selectedNodeType.value === 'GROUP')
 
-  const canCreateComponentSet = computed(() => {
+  const canCreateComponentSet = useSceneComputed(() => {
     if (selectedIds.value.size < 2) return false
     for (const id of selectedIds.value) {
       if (editor.graph.getNode(id)?.type !== 'COMPONENT') return false

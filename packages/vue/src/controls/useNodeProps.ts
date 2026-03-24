@@ -3,10 +3,12 @@ import { computed } from 'vue'
 import { useEditor } from '@open-pencil/vue/context/editorContext'
 import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
 
-import type { Fill, SceneNode, Stroke } from '@open-pencil/core'
+import type { Effect, Fill, SceneNode, Stroke } from '@open-pencil/core'
 
 export const MIXED = Symbol('mixed')
 export type MixedValue<T> = T | typeof MIXED
+
+type ArrayItem = Fill | Stroke | Effect | Record<string, unknown>
 
 export function useNodeProps() {
   const store = useEditor()
@@ -26,6 +28,46 @@ export function useNodeProps() {
     return first
   }
 
+  function areArrayItemsEqual(a: ArrayItem, b: ArrayItem): boolean {
+    if (a === b) return true
+    const aKeys = Object.keys(a)
+    const bKeys = Object.keys(b)
+    if (aKeys.length !== bKeys.length) return false
+    for (const key of aKeys) {
+      const aValue = a[key as keyof typeof a]
+      const bValue = b[key as keyof typeof b]
+      if (Array.isArray(aValue) && Array.isArray(bValue)) {
+        if (aValue.length !== bValue.length) return false
+        for (let i = 0; i < aValue.length; i++) {
+          const left = aValue[i]
+          const right = bValue[i]
+          if (
+            typeof left === 'object' &&
+            left != null &&
+            typeof right === 'object' &&
+            right != null
+          ) {
+            if (!areArrayItemsEqual(left as ArrayItem, right as ArrayItem)) return false
+          } else if (left !== right) {
+            return false
+          }
+        }
+        continue
+      }
+      if (
+        typeof aValue === 'object' &&
+        aValue != null &&
+        typeof bValue === 'object' &&
+        bValue != null
+      ) {
+        if (!areArrayItemsEqual(aValue as ArrayItem, bValue as ArrayItem)) return false
+        continue
+      }
+      if (aValue !== bValue) return false
+    }
+    return true
+  }
+
   function prop<K extends keyof SceneNode>(key: K) {
     return computed(() => merged(key))
   }
@@ -39,8 +81,27 @@ export function useNodeProps() {
   function isArrayMixed(key: keyof SceneNode): boolean {
     const all = nodes.value
     if (all.length <= 1) return false
-    const first = JSON.stringify(all[0][key])
-    return all.some((n) => JSON.stringify(n[key]) !== first)
+    const first = all[0][key]
+    if (!Array.isArray(first)) return all.some((n) => n[key] !== first)
+    for (let i = 1; i < all.length; i++) {
+      const current = all[i][key]
+      if (!Array.isArray(current) || current.length !== first.length) return true
+      for (let j = 0; j < first.length; j++) {
+        const left = first[j]
+        const right = current[j]
+        if (
+          typeof left === 'object' &&
+          left != null &&
+          typeof right === 'object' &&
+          right != null
+        ) {
+          if (!areArrayItemsEqual(left as ArrayItem, right as ArrayItem)) return true
+        } else if (left !== right) {
+          return true
+        }
+      }
+    }
+    return false
   }
 
   type ArrayPropKey = 'fills' | 'strokes' | 'effects'

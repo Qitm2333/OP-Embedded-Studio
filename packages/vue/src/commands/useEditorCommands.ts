@@ -169,7 +169,10 @@ export function useEditorCommands() {
       id: 'selection.moveToPage',
       label: 'Move to page',
       enabled: capabilities.canMoveToPage,
-      run: () => {}
+      run: () => {
+        const targetPage = otherPages.value[0]
+        if (targetPage) moveSelectionToPage(targetPage.id)
+      }
     },
     'view.zoom100': {
       id: 'view.zoom100',

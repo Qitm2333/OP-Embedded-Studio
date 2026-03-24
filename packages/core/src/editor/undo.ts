@@ -131,26 +131,32 @@ export function createUndoActions(ctx: EditorContext) {
   }
 
   function restorePageFromSnapshot(snapshot: Map<string, SceneNode>) {
-    const page = ctx.graph.getNode(ctx.state.currentPageId)
-    if (!page) return
+    const pageId = ctx.state.currentPageId
+    const page = ctx.graph.getNode(pageId)
+    const pageSnap = snapshot.get(pageId)
+    if (!page || !pageSnap) return
 
     for (const childId of page.childIds.slice()) {
       ctx.graph.deleteNode(childId)
     }
 
-    const pageSnap = snapshot.get(ctx.state.currentPageId)
-    if (pageSnap) page.childIds = [...pageSnap.childIds]
-
-    for (const [id, snap] of snapshot) {
-      if (id === ctx.state.currentPageId) continue
-      ctx.graph.nodes.set(id, structuredClone(snap))
+    const restoreChildren = (parentId: string, childIds: string[]) => {
+      for (const childId of childIds) {
+        const snap = snapshot.get(childId)
+        if (!snap) continue
+        const { id: _snapId, parentId: _snapParentId, childIds: snapChildIds, ...rest } = snap
+        const restored = ctx.graph.createNode(snap.type, parentId, rest)
+        ctx.graph.reorderChild(restored.id, parentId, childIds.indexOf(childId))
+        restoreChildren(restored.id, snapChildIds)
+      }
     }
 
+    restoreChildren(pageId, pageSnap.childIds)
+
     ctx.graph.clearAbsPosCache()
-    computeAllLayouts(ctx.graph, ctx.state.currentPageId)
+    computeAllLayouts(ctx.graph, pageId)
     ctx.state.selectedIds = new Set()
     ctx.state.hoveredNodeId = null
-    ctx.graph.emitter.emit('node:reordered', ctx.state.currentPageId, ctx.graph.rootId, 0)
     ctx.requestRender()
   }
 

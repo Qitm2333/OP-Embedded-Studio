@@ -1,5 +1,6 @@
 import { computed } from 'vue'
 
+import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
 import { useSelectionState } from '@open-pencil/vue/selection/useSelectionState'
 
 export function useSelectionCapabilities() {
@@ -30,9 +31,11 @@ export function useSelectionCapabilities() {
   const canToggleLock = computed(() => hasSelection.value)
   const canGoToMainComponent = computed(() => isInstance.value)
   const canCreateInstance = computed(() => selectedNode.value?.type === 'COMPONENT')
-  const canMoveToPage = computed(() => hasSelection.value && editor.graph.getPages().length > 1)
+  const canMoveToPage = useSceneComputed(
+    () => hasSelection.value && editor.graph.getPages().length > 1
+  )
   const canPaste = computed(() => true)
-  const canSelectAll = computed(
+  const canSelectAll = useSceneComputed(
     () => editor.graph.getChildren(editor.state.currentPageId).length > 0
   )
   const canUndo = computed(() => editor.undo.canUndo)

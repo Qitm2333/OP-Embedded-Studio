@@ -1,12 +1,9 @@
 import { computed } from 'vue'
 
 import { useEditor } from '@open-pencil/vue/context/editorContext'
-import { MIXED } from '@open-pencil/vue/controls/useNodeProps'
-import { usePropScrub } from '@open-pencil/vue/controls/usePropScrub'
-import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
+import { MIXED, useNodeProps } from '@open-pencil/vue/controls/useNodeProps'
 
 import type { SceneNode } from '@open-pencil/core'
-import type { MixedValue } from '@open-pencil/vue/controls/useNodeProps'
 
 const CORNER_RADIUS_TYPES = new Set([
   'RECTANGLE',
@@ -18,21 +15,7 @@ const CORNER_RADIUS_TYPES = new Set([
 
 export function useAppearance() {
   const editor = useEditor()
-
-  const nodes = useSceneComputed(() => editor.getSelectedNodes())
-  const node = useSceneComputed<SceneNode | null>(() => editor.getSelectedNode() ?? null)
-  const active = computed(() => nodes.value.length > 0)
-  const isMulti = computed(() => nodes.value.length > 1)
-
-  function merged<K extends keyof SceneNode>(key: K): MixedValue<SceneNode[K]> {
-    const all = nodes.value
-    if (all.length === 0) return MIXED
-    const first = all[0][key]
-    for (let i = 1; i < all.length; i++) {
-      if (all[i][key] !== first) return MIXED
-    }
-    return first
-  }
+  const { nodes, node, active, isMulti, merged, updateProp, commitProp } = useNodeProps()
 
   const hasCornerRadius = computed(() => {
     if (isMulti.value) return nodes.value.every((n) => CORNER_RADIUS_TYPES.has(n.type))
@@ -59,16 +42,6 @@ export function useAppearance() {
     if (v === MIXED) return 'mixed'
     return v ? 'visible' : 'hidden'
   })
-
-  const { updateProp: _updateProp, commitProp: _commitProp } = usePropScrub(editor)
-
-  function updateProp(key: string, value: number | string) {
-    _updateProp(nodes.value, key, value)
-  }
-
-  function commitProp(key: string, value: number | string, previous: number | string) {
-    _commitProp(nodes.value, key, value, previous)
-  }
 
   function toggleVisibility() {
     if (isMulti.value) {
