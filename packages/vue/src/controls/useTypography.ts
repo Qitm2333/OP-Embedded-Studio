@@ -14,10 +14,21 @@ const WEIGHTS = Object.entries(FONT_WEIGHT_NAMES).map(([value, label]) => ({
   label
 }))
 
+/**
+ * Options for {@link useTypography}.
+ */
 export interface UseTypographyOptions {
+  /**
+   * Optional font loader invoked before changing family or weight.
+   */
   loadFont?: (family: string, style: string) => Promise<unknown>
 }
 
+/**
+ * Returns typography-related state and actions for the current text selection.
+ *
+ * This composable is designed for text property panels and formatting controls.
+ */
 export function useTypography(options: UseTypographyOptions = {}) {
   const editor = useEditor()
 

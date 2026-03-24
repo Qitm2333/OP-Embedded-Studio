@@ -19,6 +19,12 @@ function gradientCSS(stops: GradientStop[]): string {
   return stops.map((s) => `${colorToCSS(s.color)} ${s.position * 100}%`).join(', ')
 }
 
+/**
+ * Returns category and conversion helpers for a single fill value.
+ *
+ * This composable is useful for fill pickers that switch between solid,
+ * gradient, and image modes while keeping a live fill model in sync.
+ */
 export function useFillPicker(fill: Ref<Fill>, onUpdate: (fill: Fill) => void) {
   const category = computed(() => FILL_CATEGORY[fill.value.type] ?? 'SOLID')
 

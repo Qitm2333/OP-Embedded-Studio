@@ -5,6 +5,12 @@ import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
 
 import type { SceneNode } from '@open-pencil/core'
 
+/**
+ * Returns reactive selection-derived state for the current editor.
+ *
+ * Use this composable to drive UI from the current selection without manually
+ * reading graph state in every component.
+ */
 export function useSelectionState() {
   const editor = useEditor()
 

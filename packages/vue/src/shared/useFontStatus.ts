@@ -4,6 +4,12 @@ import { isFontLoaded, DEFAULT_FONT_FAMILY } from '@open-pencil/core'
 
 import type { SceneNode } from '@open-pencil/core'
 
+/**
+ * Returns missing-font information for a text node getter.
+ *
+ * This is useful for typography panels and warnings that need to surface fonts
+ * that are referenced by a node but not yet loaded in the current runtime.
+ */
 export function useNodeFontStatus(node: () => SceneNode | null | undefined) {
   const missingFonts = computed(() => {
     const n = node()

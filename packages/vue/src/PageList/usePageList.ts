@@ -3,6 +3,12 @@ import { computed } from 'vue'
 import { useEditor } from '@open-pencil/vue/context/editorContext'
 import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
 
+/**
+ * Returns reactive page state and page-management actions.
+ *
+ * Use this composable to build page switchers, page lists, or navigation
+ * panels without manually reading the graph in each component.
+ */
 export function usePageList() {
   const editor = useEditor()
 

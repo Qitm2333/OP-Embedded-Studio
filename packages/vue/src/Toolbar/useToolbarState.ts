@@ -4,6 +4,12 @@ import type { Tool, EditorToolDef } from '@open-pencil/core/editor'
 
 const CATEGORY_COUNT = 3
 
+/**
+ * Returns responsive toolbar UI state for mobile category paging.
+ *
+ * This composable is presentation-oriented and complements {@link useToolbar}
+ * when building toolbar shells.
+ */
 export function useToolbarState() {
   const mobileCategory = ref(0)
   const slideDirection = ref(1)

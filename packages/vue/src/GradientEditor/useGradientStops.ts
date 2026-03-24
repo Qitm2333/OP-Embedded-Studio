@@ -24,6 +24,12 @@ const DEFAULT_TRANSFORMS: Record<GradientSubtype, GradientTransform> = {
   GRADIENT_DIAMOND: { m00: 0.5, m01: 0, m02: 0.5, m10: 0, m11: 0.5, m12: 0.5 }
 }
 
+/**
+ * Returns gradient-stop state and mutation helpers for a fill.
+ *
+ * Use this composable for gradient editors that need subtype switching,
+ * active-stop selection, stop dragging, and stop color/opacity editing.
+ */
 export function useGradientStops(fill: Ref<Fill>, onUpdate: (fill: Fill) => void) {
   const activeStopIndex = ref(0)
   const stops = computed(() => fill.value.gradientStops ?? [])

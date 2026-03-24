@@ -16,6 +16,12 @@ const EFFECT_LABELS: Record<string, string> = {
 
 const EFFECT_TYPES = Object.keys(EFFECT_LABELS) as EffectType[]
 
+/**
+ * Returns effect-editing helpers for property panels.
+ *
+ * This composable manages default effect creation, expanded-row state,
+ * scrub-preview behavior, and effect type/color updates.
+ */
 export function useEffectsControls() {
   const editor = useEditor()
 

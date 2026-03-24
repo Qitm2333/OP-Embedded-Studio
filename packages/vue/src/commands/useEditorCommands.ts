@@ -7,6 +7,9 @@ import { useSelectionState } from '@open-pencil/vue/selection/useSelectionState'
 
 import type { Component, ComputedRef } from 'vue'
 
+/**
+ * Stable command identifiers exposed by {@link useEditorCommands}.
+ */
 export type EditorCommandId =
   | 'edit.undo'
   | 'edit.redo'
@@ -30,10 +33,17 @@ export type EditorCommandId =
   | 'view.zoomFit'
   | 'view.zoomSelection'
 
+/**
+ * Reactive editor command descriptor.
+ */
 export interface EditorCommand {
+  /** Stable command id. */
   id: EditorCommandId
+  /** Human-readable label for UI. */
   label: string
+  /** Whether the command can currently run. */
   enabled: ComputedRef<boolean>
+  /** Executes the command. */
   run: () => void
 }
 
@@ -53,6 +63,13 @@ export interface EditorCommandMenuSeparator {
 
 export type EditorCommandMenuEntry = EditorCommandMenuItem | EditorCommandMenuSeparator
 
+/**
+ * Builds a command-oriented interface on top of the current editor.
+ *
+ * Use this composable when building menus, toolbars, keyboard handlers, or
+ * any other UI that should talk in terms of commands instead of raw editor
+ * method calls.
+ */
 export function useEditorCommands() {
   const editor = useEditor()
   const selection = useSelectionState()

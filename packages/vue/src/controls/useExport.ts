@@ -5,14 +5,25 @@ import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
 
 import type { ExportFormat } from '@open-pencil/core'
 
+/**
+ * Single export preset row managed by {@link useExport}.
+ */
 interface ExportSetting {
+  /** Export scale multiplier. */
   scale: number
+  /** Output file format. */
   format: ExportFormat
 }
 
 const SCALES = [0.5, 0.75, 1, 1.5, 2, 3, 4] as const
 const FORMATS: ExportFormat[] = ['PNG', 'JPG', 'WEBP', 'SVG']
 
+/**
+ * Returns selection-aware export settings for export panel UIs.
+ *
+ * This composable manages export presets such as scale and format while also
+ * exposing the current export target label derived from the selection.
+ */
 export function useExport() {
   const editor = useEditor()
 

@@ -2,10 +2,8 @@
 import { ref } from 'vue'
 
 import { useEditor } from '@open-pencil/vue/context/editorContext'
-import { useCanvas } from '@open-pencil/vue/shared/useCanvas'
+import { useCanvas, type UseCanvasOptions } from '@open-pencil/vue'
 import { provideCanvas } from './context'
-
-import type { UseCanvasOptions } from '@open-pencil/vue/shared/useCanvas'
 
 const props = withDefaults(defineProps<UseCanvasOptions>(), {
   showRulers: undefined

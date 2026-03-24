@@ -3,6 +3,13 @@ import { computed } from 'vue'
 import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
 import { useSelectionState } from '@open-pencil/vue/selection/useSelectionState'
 
+/**
+ * Returns reactive booleans describing which selection-dependent actions are
+ * currently available.
+ *
+ * This is useful for menus, toolbars, shortcuts, and action buttons that need
+ * command-friendly capability checks.
+ */
 export function useSelectionCapabilities() {
   const {
     editor,

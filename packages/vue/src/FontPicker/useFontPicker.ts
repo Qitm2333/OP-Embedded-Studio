@@ -1,12 +1,21 @@
 import { useFilter } from 'reka-ui'
 import { computed, onMounted, ref, watch } from 'vue'
 
+/**
+ * Options for {@link useFontPicker}.
+ */
 export interface UseFontPickerOptions {
+  /** Writable model for the selected font family. */
   modelValue: { value: string }
+  /** Async source for available font families. */
   listFamilies: () => Promise<string[]>
+  /** Optional callback fired after a family is selected. */
   onSelect?: (family: string) => void
 }
 
+/**
+ * Returns searchable font-picker state and selection helpers.
+ */
 export function useFontPicker(options: UseFontPickerOptions) {
   const families = ref<string[]>([])
   const searchTerm = ref('')

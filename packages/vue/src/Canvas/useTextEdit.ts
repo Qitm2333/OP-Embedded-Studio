@@ -14,6 +14,13 @@ import type { Editor } from '@open-pencil/core/editor'
 
 const CARET_BLINK_MS = 530
 
+/**
+ * Bridges DOM text input and the editor's canvas text-editing model.
+ *
+ * This composable manages textarea-backed input, IME composition, caret
+ * blinking, keyboard editing behavior, text formatting shortcuts, and syncing
+ * text/style-run updates back into the scene graph.
+ */
 export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, store: Editor) {
   const textareaRef = shallowRef<HTMLTextAreaElement | null>(null)
   let isComposing = false

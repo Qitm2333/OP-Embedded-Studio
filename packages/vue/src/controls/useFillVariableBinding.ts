@@ -5,6 +5,12 @@ import { useEditor } from '@open-pencil/vue/context/editorContext'
 
 import type { Variable } from '@open-pencil/core'
 
+/**
+ * Returns helpers for binding fill colors to color variables.
+ *
+ * This composable is used by fill editing UIs that need variable search,
+ * binding, and unbinding behavior.
+ */
 export function useFillVariableBinding() {
   const store = useEditor()
   const colorVariables = computed(() => store.getVariablesByType('COLOR'))

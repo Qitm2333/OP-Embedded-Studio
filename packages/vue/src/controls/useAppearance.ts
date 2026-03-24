@@ -13,6 +13,12 @@ const CORNER_RADIUS_TYPES = new Set([
   'INSTANCE'
 ])
 
+/**
+ * Returns appearance-related state and actions for the current selection.
+ *
+ * Use this composable for visibility, opacity, and corner-radius controls in
+ * property panels.
+ */
 export function useAppearance() {
   const editor = useEditor()
   const { nodes, node, active, isMulti, merged, updateProp, commitProp } = useNodeProps()

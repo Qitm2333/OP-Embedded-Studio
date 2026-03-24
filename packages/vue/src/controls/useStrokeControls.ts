@@ -30,6 +30,12 @@ const DEFAULT_STROKE: Stroke = {
   align: 'CENTER'
 }
 
+/**
+ * Returns stroke-related helpers for property panels.
+ *
+ * This composable provides alignment options, side presets, a default stroke,
+ * and helpers for per-side border weight editing.
+ */
 export function useStrokeControls() {
   const store = useEditor()
   const sideMenuOpen = ref(false)

@@ -4,10 +4,18 @@ import { computed, type Component } from 'vue'
 import { useVariablesDialogState } from './useVariablesDialogState'
 import { useVariablesTable } from './useVariablesTable'
 
+/**
+ * Composes variables dialog state, table columns, and TanStack table wiring
+ * into a single higher-level variables editor API.
+ */
 export function useVariablesEditor(options: {
+  /** Component used for color variable editing. */
   colorInput: Component
+  /** Icon map keyed by variable resolved type. */
   icons: Record<string, Component>
+  /** Fallback icon when no specific icon matches a variable type. */
   fallbackIcon: Component
+  /** Icon used for destructive remove actions. */
   deleteIcon: Component
 }) {
   const ctx = useVariablesDialogState()

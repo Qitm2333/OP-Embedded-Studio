@@ -29,6 +29,13 @@ import type {
   DragState
 } from '@open-pencil/vue/shared/input/types'
 
+/**
+ * Wires pointer and mouse interaction to an OpenPencil canvas.
+ *
+ * This composable coordinates selection, dragging, resizing, rotation,
+ * panning, drawing tools, scoped hit testing, and text-edit interaction.
+ * It is primarily intended for editor shell components that own the canvas.
+ */
 export function useCanvasInput(
   canvasRef: Ref<HTMLCanvasElement | null>,
   editor: Editor,

@@ -44,6 +44,12 @@ const TRACK_SIZING_OPTIONS: { value: GridTrackSizing; label: string }[] = [
   { value: 'AUTO', label: 'Auto' }
 ]
 
+/**
+ * Returns layout-related state and actions for the current selection.
+ *
+ * Use this composable to build auto-layout and grid panels that need sizing,
+ * padding, alignment, and track editing behavior.
+ */
 export function useLayout() {
   const editor = useEditor()
 

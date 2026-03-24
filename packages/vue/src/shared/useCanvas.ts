@@ -39,12 +39,36 @@ async function initWebGPU(ck: CanvasKit): Promise<WebGPUContext | null> {
   return { device, deviceContext }
 }
 
+/**
+ * Options for {@link useCanvas}.
+ */
 export interface UseCanvasOptions {
+  /**
+   * Forces ruler visibility on or off for this canvas.
+   *
+   * When omitted, the composable falls back to viewport and URL-param logic.
+   */
   showRulers?: boolean
+  /**
+   * Keeps the drawing buffer after presenting frames.
+   *
+   * Useful for screenshot or pixel-readback workflows, but may increase memory
+   * usage depending on the browser and GPU backend.
+   */
   preserveDrawingBuffer?: boolean
+  /**
+   * Called once the rendering surface is ready.
+   */
   onReady?: () => void
 }
 
+/**
+ * Connects an OpenPencil editor to a real canvas element using CanvasKit.
+ *
+ * This composable owns renderer creation, surface recreation on resize,
+ * render scheduling, and renderer-backed hit testing helpers used by higher-
+ * level canvas interaction code.
+ */
 export function useCanvas(
   canvasRef: Ref<HTMLCanvasElement | null>,
   editor: Editor,

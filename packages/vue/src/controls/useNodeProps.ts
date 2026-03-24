@@ -5,11 +5,20 @@ import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
 
 import type { Effect, Fill, SceneNode, Stroke } from '@open-pencil/core'
 
+/** Sentinel value returned when a property differs across multiple selected nodes. */
 export const MIXED = Symbol('mixed')
+
+/** Property value that may either be concrete or mixed across the selection. */
 export type MixedValue<T> = T | typeof MIXED
 
 type ArrayItem = Fill | Stroke | Effect | Record<string, unknown>
 
+/**
+ * Returns shared property-panel helpers for the current selection.
+ *
+ * This composable centralizes mixed-value detection, multi-selection updates,
+ * array-item editing, and commit semantics used by higher-level controls.
+ */
 export function useNodeProps() {
   const store = useEditor()
   const node = useSceneComputed(() => store.getSelectedNode() ?? null)

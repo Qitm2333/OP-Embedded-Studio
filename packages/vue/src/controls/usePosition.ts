@@ -6,6 +6,12 @@ import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
 
 import type { SceneNode } from '@open-pencil/core'
 
+/**
+ * Returns position-related state and actions for the current selection.
+ *
+ * This composable is designed for property panels that edit x/y, size,
+ * rotation, alignment, flipping, and multi-node transforms.
+ */
 export function usePosition() {
   const editor = useEditor()
 

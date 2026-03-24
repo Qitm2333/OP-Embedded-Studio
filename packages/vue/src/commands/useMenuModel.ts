@@ -4,6 +4,9 @@ import { useEditorCommands } from '@open-pencil/vue/commands/useEditorCommands'
 import { useEditor } from '@open-pencil/vue/context/editorContext'
 import { useSelectionState } from '@open-pencil/vue/selection/useSelectionState'
 
+/**
+ * Action entry used by menu models returned from {@link useMenuModel}.
+ */
 export interface MenuActionNode {
   separator?: false
   label: string
@@ -21,6 +24,13 @@ export interface MenuSeparatorNode {
 
 export type MenuEntry = MenuActionNode | MenuSeparatorNode
 
+/**
+ * Returns ready-to-render menu models derived from the current editor state.
+ *
+ * This is a higher-level API than {@link useEditorCommands}: it groups
+ * commands into app and canvas menu structures and computes context-sensitive
+ * labels like Hide/Show and Lock/Unlock.
+ */
 export function useMenuModel() {
   const editor = useEditor()
   const { menuItem: commandMenuItem, otherPages, moveSelectionToPage } = useEditorCommands()
