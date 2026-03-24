@@ -1,6 +1,7 @@
+import { buildClonesMap } from './sync'
+
 import type { SceneGraph, SceneNode } from '../../scene-graph'
 import type { OverrideContext } from './types'
-import { buildClonesMap } from './sync'
 
 /**
  * Apply SCALE constraint resizing to children of instances whose size

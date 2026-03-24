@@ -47,22 +47,35 @@ export class LabelCache {
     this.components = []
   }
 
-  getSections(graph: SceneGraph, viewport: Viewport): Array<{ node: SceneNode; absX: number; absY: number; nested: boolean }> {
+  getSections(
+    graph: SceneGraph,
+    viewport: Viewport
+  ): Array<{ node: SceneNode; absX: number; absY: number; nested: boolean }> {
     const result: Array<{ node: SceneNode; absX: number; absY: number; nested: boolean }> = []
     for (const cached of this.sections) {
       const node = graph.getNode(cached.nodeId)
-      if (!node || !isInViewport(cached.absX, cached.absY, node.width, node.height, viewport)) continue
+      if (!node || !isInViewport(cached.absX, cached.absY, node.width, node.height, viewport))
+        continue
       result.push({ node, absX: cached.absX, absY: cached.absY, nested: cached.nested })
     }
     return result
   }
 
-  getComponents(graph: SceneGraph, viewport: Viewport): Array<{ node: SceneNode; absX: number; absY: number; inside: boolean }> {
+  getComponents(
+    graph: SceneGraph,
+    viewport: Viewport
+  ): Array<{ node: SceneNode; absX: number; absY: number; inside: boolean }> {
     const result: Array<{ node: SceneNode; absX: number; absY: number; inside: boolean }> = []
     for (const cached of this.components) {
       const node = graph.getNode(cached.nodeId)
-      if (!node || !isInViewport(cached.absX, cached.absY, node.width, node.height, viewport)) continue
-      result.push({ node, absX: cached.absX, absY: cached.absY, inside: cached.parentType === 'COMPONENT_SET' })
+      if (!node || !isInViewport(cached.absX, cached.absY, node.width, node.height, viewport))
+        continue
+      result.push({
+        node,
+        absX: cached.absX,
+        absY: cached.absY,
+        inside: cached.parentType === 'COMPONENT_SET'
+      })
     }
     return result
   }
@@ -77,7 +90,13 @@ export class LabelCache {
     this.walkChildren(graph, pageNode.id, 0, 0, false)
   }
 
-  private walkChildren(graph: SceneGraph, parentId: string, ox: number, oy: number, insideSection: boolean): void {
+  private walkChildren(
+    graph: SceneGraph,
+    parentId: string,
+    ox: number,
+    oy: number,
+    insideSection: boolean
+  ): void {
     const parent = graph.getNode(parentId)
     if (!parent) return
     const parentType = parent.type

@@ -69,7 +69,10 @@ const sideMenuCls = useMenuUI({
         <button :class="iconButton({ ui: { base: 'shrink-0' } })" @click="remove(i)">−</button>
       </div>
 
-      <div v-if="!isMixed && activeNode && activeNode.strokes.length > 0" class="mt-1 flex items-center gap-1.5">
+      <div
+        v-if="!isMixed && activeNode && activeNode.strokes.length > 0"
+        class="mt-1 flex items-center gap-1.5"
+      >
         <AppSelect
           class="w-[72px]"
           :model-value="strokeCtx.currentAlign(activeNode)"
@@ -165,7 +168,12 @@ const sideMenuCls = useMenuUI({
       </div>
 
       <div
-        v-if="!isMixed && activeNode && activeNode.strokes.length > 0 && activeNode.independentStrokeWeights"
+        v-if="
+          !isMixed &&
+          activeNode &&
+          activeNode.strokes.length > 0 &&
+          activeNode.independentStrokeWeights
+        "
         class="mt-1.5 grid grid-cols-2 gap-1.5"
       >
         <ScrubInput

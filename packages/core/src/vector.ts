@@ -6,8 +6,8 @@ import type {
   VectorVertex,
   WindingRule
 } from './scene-graph'
-import type { CanvasKit, Path } from 'canvaskit-wasm'
 import type { Rect } from './types'
+import type { CanvasKit, Path } from 'canvaskit-wasm'
 
 // --- vectorNetworkBlob binary format ---
 // Header:  [numVertices:u32, numSegments:u32, numRegions:u32]  (12 bytes)

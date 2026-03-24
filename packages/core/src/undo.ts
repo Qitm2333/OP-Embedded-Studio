@@ -89,5 +89,3 @@ export class UndoManager {
     return this.redoStack.at(-1)?.label ?? null
   }
 }
-
-

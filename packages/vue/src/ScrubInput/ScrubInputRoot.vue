@@ -4,20 +4,23 @@ import { useEventListener } from '@vueuse/core'
 
 import { provideScrubInput } from './context'
 
-const props = withDefaults(defineProps<{
-  modelValue: number | symbol
-  min?: number
-  max?: number
-  step?: number
-  sensitivity?: number
-  placeholder?: string
-}>(), {
-  min: -Infinity,
-  max: Infinity,
-  step: 1,
-  sensitivity: 1,
-  placeholder: 'Mixed'
-})
+const props = withDefaults(
+  defineProps<{
+    modelValue: number | symbol
+    min?: number
+    max?: number
+    step?: number
+    sensitivity?: number
+    placeholder?: string
+  }>(),
+  {
+    min: -Infinity,
+    max: Infinity,
+    step: 1,
+    sensitivity: 1,
+    placeholder: 'Mixed'
+  }
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: number]
@@ -29,8 +32,8 @@ const scrubbing = ref(false)
 const inputRef = ref<HTMLInputElement | null>(null)
 
 const isMixed = computed(() => typeof props.modelValue === 'symbol')
-const numericValue = computed(() => isMixed.value ? 0 : (props.modelValue as number))
-const displayValue = computed(() => isMixed.value ? '' : String(Math.round(numericValue.value)))
+const numericValue = computed(() => (isMixed.value ? 0 : (props.modelValue as number)))
+const displayValue = computed(() => (isMixed.value ? '' : String(Math.round(numericValue.value))))
 
 let stopMove: (() => void) | undefined
 let stopUp: (() => void) | undefined

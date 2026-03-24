@@ -1,5 +1,5 @@
-import type { IDomFacade } from 'fontoxpath'
 import type { SceneGraph, SceneNode } from './scene-graph'
+import type { IDomFacade } from 'fontoxpath'
 
 const NODE_TYPES = {
   ELEMENT_NODE: 1,
@@ -105,7 +105,9 @@ function getAttrs(wrapped: XPathNode): XPathAttr[] {
       const value = (node as unknown as Record<string, unknown>)[attrName]
       if (value === undefined || value === null || typeof value === 'symbol') continue
       const stringValue =
-        typeof value === 'object' ? JSON.stringify(value) : String(value as string | number | boolean)
+        typeof value === 'object'
+          ? JSON.stringify(value)
+          : String(value as string | number | boolean)
       attrs.push({
         nodeType: NODE_TYPES.ATTRIBUTE_NODE,
         nodeName: attrName,
@@ -152,7 +154,9 @@ function createDomFacade(graph: SceneGraph) {
       if (attributeName in sceneNode) {
         const value = (sceneNode as unknown as Record<string, unknown>)[attributeName]
         if (value === undefined || value === null || typeof value === 'symbol') return null
-        return typeof value === 'object' ? JSON.stringify(value) : String(value as string | number | boolean)
+        return typeof value === 'object'
+          ? JSON.stringify(value)
+          : String(value as string | number | boolean)
       }
       return null
     },
@@ -215,9 +219,7 @@ export async function queryByXPath(
 ): Promise<SceneNode[]> {
   const { limit = 1000 } = options
   const pages = graph.getPages()
-  const targetPages = options.page
-    ? pages.filter((p) => p.name === options.page)
-    : pages
+  const targetPages = options.page ? pages.filter((p) => p.name === options.page) : pages
 
   if (targetPages.length === 0) return []
 

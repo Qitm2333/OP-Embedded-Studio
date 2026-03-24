@@ -1,4 +1,5 @@
 import { type InjectionKey, inject, provide } from 'vue'
+
 import type { Ref } from 'vue'
 
 export interface ScrubInputContext {

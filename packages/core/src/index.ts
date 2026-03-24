@@ -1,15 +1,18 @@
 export type { GUID, Color, Vector, Matrix, Rect } from './types'
-export { computeBounds, computeAbsoluteBounds, degToRad, radToDeg, rotatePoint, rotatedCorners, rotatedBBox } from './geometry'
+export {
+  computeBounds,
+  computeAbsoluteBounds,
+  degToRad,
+  radToDeg,
+  rotatePoint,
+  rotatedCorners,
+  rotatedBBox
+} from './geometry'
 export { randomHex, randomInt, randomIndex } from './random'
 
 export * from './constants'
 
-export {
-  createDefaultEditorState,
-  createEditor,
-  EDITOR_TOOLS,
-  TOOL_SHORTCUTS
-} from './editor'
+export { createDefaultEditorState, createEditor, EDITOR_TOOLS, TOOL_SHORTCUTS } from './editor'
 export type {
   Editor,
   EditorContext,
@@ -68,19 +71,52 @@ export {
 } from './scene-graph'
 
 export { FigmaAPI, FigmaNodeProxy, computeImageHash, type FigmaFontName } from './figma-api'
-export { ALL_TOOLS, CORE_TOOLS, EXTENDED_TOOLS, defineTool, toolsToAI, buildDebugLog, requireNode, NodeNotFoundError, calcClusterConfidence } from './tools'
-export type { ToolDef, ParamDef, ParamType, ToolLogEntry, ToolDebugLog, AIAdapterOptions, StepBudget } from './tools'
+export {
+  ALL_TOOLS,
+  CORE_TOOLS,
+  EXTENDED_TOOLS,
+  defineTool,
+  toolsToAI,
+  buildDebugLog,
+  requireNode,
+  NodeNotFoundError,
+  calcClusterConfidence
+} from './tools'
+export type {
+  ToolDef,
+  ParamDef,
+  ParamType,
+  ToolLogEntry,
+  ToolDebugLog,
+  AIAdapterOptions,
+  StepBudget
+} from './tools'
 export { executeRpcCommand, ALL_RPC_COMMANDS } from './rpc'
 export { queryByXPath, matchByXPath } from './xpath'
 export type { XPathQueryOptions } from './xpath'
 export type {
-  InfoResult, PageItem, TreeArgs, TreeResult, TreeNodeResult,
-  FindArgs, FindNodeResult, QueryArgs, QueryNodeResult, NodeArgs, NodeResult,
-  VariablesArgs, VariablesResult,
-  AnalyzeColorsArgs, AnalyzeColorsResult,
-  AnalyzeTypographyArgs, AnalyzeTypographyResult,
-  AnalyzeSpacingResult, SpacingValue,
-  AnalyzeClustersArgs, AnalyzeClustersResult, TypographyStyle
+  InfoResult,
+  PageItem,
+  TreeArgs,
+  TreeResult,
+  TreeNodeResult,
+  FindArgs,
+  FindNodeResult,
+  QueryArgs,
+  QueryNodeResult,
+  NodeArgs,
+  NodeResult,
+  VariablesArgs,
+  VariablesResult,
+  AnalyzeColorsArgs,
+  AnalyzeColorsResult,
+  AnalyzeTypographyArgs,
+  AnalyzeTypographyResult,
+  AnalyzeSpacingResult,
+  SpacingValue,
+  AnalyzeClustersArgs,
+  AnalyzeClustersResult,
+  TypographyStyle
 } from './rpc'
 export { SkiaRenderer, type RenderOverlays } from './renderer/index'
 export { LabelCache, type CachedSection, type CachedComponent } from './renderer/label-cache'
@@ -152,7 +188,12 @@ export {
   adjustRunsForInsert,
   adjustRunsForDelete
 } from './style-runs'
-export { renderNodesToImage, renderThumbnail, computeContentBounds, type ExportFormat } from './render-image'
+export {
+  renderNodesToImage,
+  renderThumbnail,
+  computeContentBounds,
+  type ExportFormat
+} from './render-image'
 export { initCanvasKit, headlessRenderNodes, headlessRenderThumbnail } from './headless-render'
 export {
   renderNodesToSVG,
@@ -162,7 +203,16 @@ export {
 } from './svg-export'
 export { svg, renderSVGNode, type SVGNode } from './svg-node'
 export { parseSVGPath } from './svg-path-parse'
-export { fetchIcon, fetchIcons, searchIcons, searchIconsBatch, clearIconCache, type IconData, type IconPath, type IconSearchResult } from './iconify'
+export {
+  fetchIcon,
+  fetchIcons,
+  searchIcons,
+  searchIconsBatch,
+  clearIconCache,
+  type IconData,
+  type IconPath,
+  type IconSearchResult
+} from './iconify'
 export { exportFigFile, compressFigData, compressFigDataSync } from './fig-export'
 export {
   FIG_KIWI_VERSION,

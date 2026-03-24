@@ -1,9 +1,10 @@
 import { defineCommand } from 'citty'
 
-import { loadDocument } from '../headless'
+import { executeRpcCommand } from '@open-pencil/core'
+
 import { isAppMode, requireFile, rpc } from '../app-client'
 import { printNodeResults, printError } from '../format'
-import { executeRpcCommand } from '@open-pencil/core'
+import { loadDocument } from '../headless'
 
 import type { QueryNodeResult } from '@open-pencil/core'
 
@@ -18,7 +19,7 @@ async function getData(
   }
   if (isAppMode(file)) return rpc<QueryNodeResult[]>('query', rpcArgs)
   const graph = await loadDocument(requireFile(file))
-  return await executeRpcCommand(graph, 'query', rpcArgs) as QueryNodeResult[] | { error: string }
+  return (await executeRpcCommand(graph, 'query', rpcArgs)) as QueryNodeResult[] | { error: string }
 }
 
 export default defineCommand({
@@ -41,8 +42,7 @@ Examples:
     },
     selector: {
       type: 'positional',
-      description:
-        'XPath selector (e.g., //FRAME[@width < 300], //TEXT[contains(@name, "Label")])',
+      description: 'XPath selector (e.g., //FRAME[@width < 300], //TEXT[contains(@name, "Label")])',
       required: true
     },
     page: { type: 'string', description: 'Page name (default: all pages)' },

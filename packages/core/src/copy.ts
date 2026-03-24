@@ -32,7 +32,7 @@ export function copyEffect(e: Effect): Effect {
   return {
     ...e,
     color: { ...e.color },
-    offset: { ...e.offset },
+    offset: { ...e.offset }
   }
 }
 
@@ -41,8 +41,8 @@ export function copyStyleRun(r: StyleRun): StyleRun {
     ...r,
     style: {
       ...r.style,
-      fills: r.style.fills ? r.style.fills.map(copyFill) : undefined,
-    },
+      fills: r.style.fills ? r.style.fills.map(copyFill) : undefined
+    }
   }
 }
 
@@ -67,7 +67,7 @@ export function copyStyleRuns(runs: StyleRun[]): StyleRun[] {
 export function copyGeometryPaths(paths: GeometryPath[]): GeometryPath[] {
   return paths.map((p) => ({
     windingRule: p.windingRule,
-    commandsBlob: p.commandsBlob.slice(),
+    commandsBlob: p.commandsBlob.slice()
   }))
 }
 

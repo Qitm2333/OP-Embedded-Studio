@@ -1,11 +1,12 @@
 import { defineCommand } from 'citty'
 
-import { loadDocument } from '../headless'
+import { executeRpcCommand } from '@open-pencil/core'
+
 import { isAppMode, requireFile, rpc } from '../app-client'
 import { bold, fmtList, entity } from '../format'
+import { loadDocument } from '../headless'
 
 import type { PageItem } from '@open-pencil/core'
-import { executeRpcCommand } from '@open-pencil/core'
 
 async function getData(file?: string): Promise<PageItem[]> {
   if (isAppMode(file)) return rpc<PageItem[]>('pages')
@@ -16,7 +17,11 @@ async function getData(file?: string): Promise<PageItem[]> {
 export default defineCommand({
   meta: { description: 'List pages in a .fig file' },
   args: {
-    file: { type: 'positional', description: '.fig file path (omit to connect to running app)', required: false },
+    file: {
+      type: 'positional',
+      description: '.fig file path (omit to connect to running app)',
+      required: false
+    },
     json: { type: 'boolean', description: 'Output as JSON' }
   },
   async run({ args }) {

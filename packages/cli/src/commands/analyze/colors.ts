@@ -1,13 +1,17 @@
 import { defineCommand } from 'citty'
 
-import { loadDocument } from '../../headless'
+import { executeRpcCommand } from '@open-pencil/core'
+
 import { isAppMode, requireFile, rpc } from '../../app-client'
 import { bold, fmtHistogram, fmtList, fmtSummary } from '../../format'
-import { executeRpcCommand } from '@open-pencil/core'
+import { loadDocument } from '../../headless'
 
 import type { AnalyzeColorsResult } from '@open-pencil/core'
 
-async function getData(file: string | undefined, args: { threshold?: string; similar?: boolean }): Promise<AnalyzeColorsResult> {
+async function getData(
+  file: string | undefined,
+  args: { threshold?: string; similar?: boolean }
+): Promise<AnalyzeColorsResult> {
   const rpcArgs = { threshold: Number(args.threshold ?? 15), similar: args.similar }
   if (isAppMode(file)) return rpc<AnalyzeColorsResult>('analyze_colors', rpcArgs)
   const graph = await loadDocument(requireFile(file))
@@ -17,9 +21,17 @@ async function getData(file: string | undefined, args: { threshold?: string; sim
 export default defineCommand({
   meta: { description: 'Analyze color palette usage' },
   args: {
-    file: { type: 'positional', description: '.fig file path (omit to connect to running app)', required: false },
+    file: {
+      type: 'positional',
+      description: '.fig file path (omit to connect to running app)',
+      required: false
+    },
     limit: { type: 'string', description: 'Max colors to show', default: '30' },
-    threshold: { type: 'string', description: 'Distance threshold for clustering similar colors (0–50)', default: '15' },
+    threshold: {
+      type: 'string',
+      description: 'Distance threshold for clustering similar colors (0–50)',
+      default: '15'
+    },
     similar: { type: 'boolean', description: 'Show similar color clusters' },
     json: { type: 'boolean', description: 'Output as JSON' }
   },
@@ -57,7 +69,11 @@ export default defineCommand({
 
     console.log('')
     console.log(
-      fmtSummary({ 'unique colors': data.colors.length, 'from variables': fromVars.length, hardcoded: hardcoded.length })
+      fmtSummary({
+        'unique colors': data.colors.length,
+        'from variables': fromVars.length,
+        hardcoded: hardcoded.length
+      })
     )
 
     if (args.similar && data.clusters.length > 0) {

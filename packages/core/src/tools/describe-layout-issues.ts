@@ -3,8 +3,8 @@ import { wcagLuminance } from 'culori'
 import { colorToHex } from '../color'
 import { CONTAINER_TYPES, findAncestorBackground } from './describe-shared'
 
-import type { Color } from '../types'
 import type { SceneGraph, SceneNode } from '../scene-graph'
+import type { Color } from '../types'
 import type { DescribeIssue } from './describe-issues'
 
 const DARK_BG_LUMINANCE = 0.35
@@ -39,8 +39,11 @@ function checkAlignmentIssues(ctx: LayoutContext): void {
     })
   }
 
-  if (node.primaryAxisAlign === 'SPACE_BETWEEN' && node.primaryAxisSizing === 'HUG'
-    && !isEffectivelyFilling(node, isRow, ctx.graph)) {
+  if (
+    node.primaryAxisAlign === 'SPACE_BETWEEN' &&
+    node.primaryAxisSizing === 'HUG' &&
+    !isEffectivelyFilling(node, isRow, ctx.graph)
+  ) {
     issues.push({
       message: `justify="between" on "${node.name}" with HUG sizing — no effect when parent shrinks to fit`,
       suggestion: 'Set a fixed size or use w="fill"'
@@ -48,9 +51,9 @@ function checkAlignmentIssues(ctx: LayoutContext): void {
   }
 
   if (node.counterAxisAlign === 'STRETCH') {
-    const allFixed = children.length > 0 && children.every((c) =>
-      c.layoutAlignSelf === 'AUTO' && (isRow ? c.height > 0 : c.width > 0)
-    )
+    const allFixed =
+      children.length > 0 &&
+      children.every((c) => c.layoutAlignSelf === 'AUTO' && (isRow ? c.height > 0 : c.width > 0))
     if (allFixed) {
       issues.push({
         message: `items="stretch" on "${node.name}" but all children have fixed ${isRow ? 'height' : 'width'} — stretch ignored`,
@@ -59,10 +62,12 @@ function checkAlignmentIssues(ctx: LayoutContext): void {
     }
   }
 
-  const allSameSize = children.length >= 3 && children.every((c) => {
-    const dim = isRow ? c.width : c.height
-    return Math.abs(dim - (isRow ? children[0].width : children[0].height)) < 2
-  })
+  const allSameSize =
+    children.length >= 3 &&
+    children.every((c) => {
+      const dim = isRow ? c.width : c.height
+      return Math.abs(dim - (isRow ? children[0].width : children[0].height)) < 2
+    })
   if (allSameSize && node.primaryAxisAlign === 'MIN' && node.itemSpacing === 0) {
     const total = children.reduce((s, c) => s + (isRow ? c.width : c.height), 0)
     const pad = isRow ? node.paddingLeft + node.paddingRight : node.paddingTop + node.paddingBottom
@@ -94,9 +99,11 @@ function checkDividerOrientation(ctx: LayoutContext): void {
 }
 
 function willGetConcreteSize(node: SceneNode, isRow: boolean, graph: SceneGraph): boolean {
-  return node.layoutGrow > 0
-    || node.layoutAlignSelf === 'STRETCH'
-    || isEffectivelyFilling(node, isRow, graph)
+  return (
+    node.layoutGrow > 0 ||
+    node.layoutAlignSelf === 'STRETCH' ||
+    isEffectivelyFilling(node, isRow, graph)
+  )
 }
 
 function checkGrowInHug(ctx: LayoutContext): void {
@@ -165,7 +172,11 @@ function checkChildOverflow(ctx: LayoutContext): void {
 function checkHugCollapse(ctx: LayoutContext): void {
   const { node, isRow, graph, children, issues } = ctx
   if (children.length === 0) return
-  if (node.primaryAxisSizing === 'HUG' && !willGetConcreteSize(node, isRow, graph) && children.every((c) => c.layoutGrow > 0)) {
+  if (
+    node.primaryAxisSizing === 'HUG' &&
+    !willGetConcreteSize(node, isRow, graph) &&
+    children.every((c) => c.layoutGrow > 0)
+  ) {
     issues.push({
       message: `"${node.name}" is HUG but all children use grow — collapses to zero`,
       suggestion: 'Give at least one child a fixed size, or set parent to fixed'
@@ -173,7 +184,9 @@ function checkHugCollapse(ctx: LayoutContext): void {
   }
   if (node.counterAxisSizing === 'HUG') {
     const allStretch = children.every(
-      (c) => c.layoutAlignSelf === 'STRETCH' || (node.counterAxisAlign === 'STRETCH' && c.layoutAlignSelf === 'AUTO')
+      (c) =>
+        c.layoutAlignSelf === 'STRETCH' ||
+        (node.counterAxisAlign === 'STRETCH' && c.layoutAlignSelf === 'AUTO')
     )
     const noConcreteChild = children.every((c) => (isRow ? c.height : c.width) <= 0)
     if (allStretch && noConcreteChild) {
@@ -222,7 +235,11 @@ function checkTextOverflow(ctx: LayoutContext): void {
         suggestion: 'Use w="fill" or constrain width'
       })
     }
-    if (child.textAutoResize === 'HEIGHT' && child.height > child.fontSize * 1.8 && child.maxLines === 0) {
+    if (
+      child.textAutoResize === 'HEIGHT' &&
+      child.height > child.fontSize * 1.8 &&
+      child.maxLines === 0
+    ) {
       const approxLines = Math.round(child.height / (child.fontSize * 1.3))
       issues.push({
         message: `Text "${child.text.slice(0, 25)}" wraps to ~${approxLines} lines in ${Math.round(child.width)}px`,
@@ -256,7 +273,12 @@ function checkChildUndersize(ctx: LayoutContext): void {
   for (const childId of node.childIds) {
     const child = graph.getNode(childId)
     if (!child?.visible) continue
-    if (child.width > 0 && node.width > 0 && child.width < node.width * 0.3 && child.height >= node.height * 0.5) {
+    if (
+      child.width > 0 &&
+      node.width > 0 &&
+      child.width < node.width * 0.3 &&
+      child.height >= node.height * 0.5
+    ) {
       issues.push({
         message: `"${child.name}" is ${Math.round(child.width)}px wide inside ${Math.round(node.width)}px "${node.name}" (no auto-layout)`,
         suggestion: `Add flex="col" to "${node.name}" and w="fill" to "${child.name}"`
@@ -268,7 +290,9 @@ function checkChildUndersize(ctx: LayoutContext): void {
 function checkCrossAxisOverflow(ctx: LayoutContext): void {
   const { node, isRow, children, issues } = ctx
   if (node.clipsContent) return
-  const crossPad = isRow ? node.paddingTop + node.paddingBottom : node.paddingLeft + node.paddingRight
+  const crossPad = isRow
+    ? node.paddingTop + node.paddingBottom
+    : node.paddingLeft + node.paddingRight
   const crossAvailable = (isRow ? node.height : node.width) - crossPad
   for (const child of children) {
     const childCross = isRow ? child.height : child.width
@@ -320,11 +344,19 @@ function childNeedsFill(child: SceneNode, parent: SceneNode, isRow: boolean): bo
   if (effectivelyFillsCrossAxis(child, parent, isRow)) return false
   if (child.childIds.length === 0) return false
   return isRow
-    ? child.width < parent.width * 0.3 && child.counterAxisSizing !== 'FILL' && child.layoutGrow <= 0
-    : child.height < parent.height * 0.3 && child.primaryAxisSizing !== 'FILL' && child.layoutGrow <= 0
+    ? child.width < parent.width * 0.3 &&
+        child.counterAxisSizing !== 'FILL' &&
+        child.layoutGrow <= 0
+    : child.height < parent.height * 0.3 &&
+        child.primaryAxisSizing !== 'FILL' &&
+        child.layoutGrow <= 0
 }
 
-function hasSiblingWithGrowOrFill(children: SceneNode[], exclude: SceneNode, isRow: boolean): boolean {
+function hasSiblingWithGrowOrFill(
+  children: SceneNode[],
+  exclude: SceneNode,
+  isRow: boolean
+): boolean {
   return children.some((c) => {
     if (c === exclude) return false
     if (c.layoutGrow > 0) return true
@@ -366,7 +398,11 @@ function checkDuplicateNames(ctx: LayoutContext): void {
   }
 }
 
-export function detectLayoutIssues(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {
+export function detectLayoutIssues(
+  node: SceneNode,
+  graph: SceneGraph,
+  issues: DescribeIssue[]
+): void {
   if (!CONTAINER_TYPES.has(node.type)) return
 
   const isRow = node.layoutMode === 'HORIZONTAL'

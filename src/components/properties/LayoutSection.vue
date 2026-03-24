@@ -99,7 +99,9 @@ import { sectionWrapper } from '@/components/ui/section'
                     ? 'border-accent bg-accent/10 text-accent'
                     : 'border-border text-muted hover:bg-hover hover:text-surface'
                 "
-                @click="ctx.updateProp('layoutWrap', ctx.node.layoutWrap === 'WRAP' ? 'NO_WRAP' : 'WRAP')"
+                @click="
+                  ctx.updateProp('layoutWrap', ctx.node.layoutWrap === 'WRAP' ? 'NO_WRAP' : 'WRAP')
+                "
               >
                 <icon-lucide-wrap-text class="size-3.5" />
               </button>
@@ -137,7 +139,9 @@ import { sectionWrapper } from '@/components/ui/section'
                       :suffix="track.sizing === 'FR' ? 'fr' : 'px'"
                       @update:model-value="ctx.updateGridTrack(trackProp, i, { value: $event })"
                     />
-                    <span v-else class="flex-1 px-1 text-xs text-muted">{{ ctx.trackLabel(track) }}</span>
+                    <span v-else class="flex-1 px-1 text-xs text-muted">{{
+                      ctx.trackLabel(track)
+                    }}</span>
                     <AppSelect
                       :model-value="track.sizing"
                       :options="ctx.trackSizingOptions"
@@ -210,7 +214,11 @@ import { sectionWrapper } from '@/components/ui/section'
               </div>
             </template>
 
-            <template v-if="ctx.isGrid || (ctx.isFlex && (ctx.showIndividualPadding || !ctx.hasUniformPadding))">
+            <template
+              v-if="
+                ctx.isGrid || (ctx.isFlex && (ctx.showIndividualPadding || !ctx.hasUniformPadding))
+              "
+            >
               <div class="mt-1.5 grid grid-cols-2 gap-1.5">
                 <ScrubInput
                   v-for="side in [

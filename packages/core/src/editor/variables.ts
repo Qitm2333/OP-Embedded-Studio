@@ -34,7 +34,6 @@ export function createVariableActions(ctx: EditorContext) {
     return ctx.graph.variables.size
   }
 
-
   function renameCollection(id: string, newName: string) {
     const collection = ctx.graph.variableCollections.get(id)
     if (!collection) return

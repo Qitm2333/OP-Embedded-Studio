@@ -267,9 +267,7 @@ export const exportSvg = defineTool({
     const { renderNodesToSVG } = await import('../svg-export/index.js')
     const pageId = figma.currentPageId
     const ids =
-      args.ids && args.ids.length > 0
-        ? args.ids
-        : figma.currentPage.children.map((n) => n.id)
+      args.ids && args.ids.length > 0 ? args.ids : figma.currentPage.children.map((n) => n.id)
     const svg = renderNodesToSVG(figma.graph, pageId, ids)
     if (!svg) return { error: 'No visible nodes to export' }
     return { svg }
@@ -304,9 +302,7 @@ export const exportImage = defineTool({
       return { error: 'Image export is not available in this environment' }
     }
     const ids =
-      args.ids && args.ids.length > 0
-        ? args.ids
-        : figma.currentPage.children.map((n) => n.id)
+      args.ids && args.ids.length > 0 ? args.ids : figma.currentPage.children.map((n) => n.id)
     const format = (args.format ?? 'PNG').toUpperCase() as 'PNG' | 'JPG' | 'WEBP'
     const data = await figma.exportImage(ids, {
       scale: args.scale ?? 1,

@@ -1,7 +1,6 @@
 import { parseColor } from '../color'
 import { createIconFromPaths } from '../icon-render'
 import { fetchIcons, searchIconsBatch } from '../iconify'
-
 import { defineTool, nodeSummary } from './schema'
 
 import type { FigmaNodeProxy } from '../figma-api'
@@ -55,12 +54,18 @@ export const render = defineTool({
   description:
     'Render JSX to design nodes. Use replace_id to swap a skeleton placeholder with real content (keeps position in parent). Example: <Frame name="Card" w={320} h="hug" flex="col" gap={16} p={24} bg="#FFF" rounded={16}><Text size={18} weight="bold">Title</Text></Frame>',
   params: {
-    replace_id: { type: 'string', description: 'Node ID to replace — new node takes its position in parent, old node is deleted' },
+    replace_id: {
+      type: 'string',
+      description: 'Node ID to replace — new node takes its position in parent, old node is deleted'
+    },
     parent_id: { type: 'string', description: 'Parent node ID to render into' },
-    insert_index: { type: 'number', description: 'Position among siblings (0 = first child). Omit to append at end.' },
+    insert_index: {
+      type: 'number',
+      description: 'Position among siblings (0 = first child). Omit to append at end.'
+    },
     x: { type: 'number', description: 'X position of the root node' },
     y: { type: 'number', description: 'Y position of the root node' },
-    jsx: { type: 'string', description: 'JSX string to render', required: true },
+    jsx: { type: 'string', description: 'JSX string to render', required: true }
   },
   execute: async (figma, args) => {
     const { renderJSX } = await import('../render/render-jsx.js')
@@ -215,7 +220,6 @@ export const createSlice = defineTool({
   }
 })
 
-
 export const fetchIconsTool = defineTool({
   name: 'fetch_icons',
   description:
@@ -243,8 +247,6 @@ export const fetchIconsTool = defineTool({
   }
 })
 
-
-
 export const insertIcon = defineTool({
   name: 'insert_icon',
   mutates: true,
@@ -253,14 +255,18 @@ export const insertIcon = defineTool({
   params: {
     names: {
       type: 'string[]',
-      description: 'Icon names as prefix:name (e.g. ["lucide:heart"] or ["lucide:heart","lucide:home","lucide:star"])'
+      description:
+        'Icon names as prefix:name (e.g. ["lucide:heart"] or ["lucide:heart","lucide:home","lucide:star"])'
     },
     name: {
       type: 'string',
       description: 'Single icon name (shorthand for names with one icon)'
     },
     size: { type: 'number', description: 'Icon size in pixels (default: 24)' },
-    color: { type: 'color', description: 'Icon color hex (replaces currentColor). Default: #000000' },
+    color: {
+      type: 'color',
+      description: 'Icon color hex (replaces currentColor). Default: #000000'
+    },
     parent_id: { type: 'string', description: 'Parent node ID for all icons' }
   },
   execute: async (figma, args) => {

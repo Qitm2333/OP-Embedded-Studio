@@ -1,12 +1,11 @@
 import { colorDistance, colorToHex } from '../color'
-import { CONTAINER_TYPES, findAncestorBackground, looksLikeButton } from './describe-shared'
-
 import { detectLayoutIssues } from './describe-layout-issues'
+import { CONTAINER_TYPES, findAncestorBackground, looksLikeButton } from './describe-shared'
 
 import type { SceneGraph, SceneNode } from '../scene-graph'
 
 const MIN_FILL_OPACITY = 0.15
-const MIN_STROKE_OPACITY = 0.20
+const MIN_STROKE_OPACITY = 0.2
 const LOW_CONTRAST_THRESHOLD = 15
 const SHAPE_TYPES = new Set(['RECTANGLE', 'ELLIPSE', 'STAR', 'POLYGON', 'LINE'])
 const ICON_MAX_SIZE = 48
@@ -21,12 +20,16 @@ export interface DescribeIssue {
 
 function checkEmptyIcon(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {
   if (!CONTAINER_TYPES.has(node.type)) return
-  if (node.width > ICON_MAX_SIZE || node.height > ICON_MAX_SIZE || node.childIds.length === 0) return
+  if (node.width > ICON_MAX_SIZE || node.height > ICON_MAX_SIZE || node.childIds.length === 0)
+    return
   if (node.fills.some((f) => f.visible) || node.strokes.some((s) => s.visible)) return
 
   const hasVisibleChild = node.childIds.some((id) => {
     const c = graph.getNode(id)
-    return c?.visible && (c.fills.some((f) => f.visible) || c.strokes.some((s) => s.visible) || c.type === 'TEXT')
+    return (
+      c?.visible &&
+      (c.fills.some((f) => f.visible) || c.strokes.some((s) => s.visible) || c.type === 'TEXT')
+    )
   })
   if (!hasVisibleChild) {
     issues.push({
@@ -36,7 +39,12 @@ function checkEmptyIcon(node: SceneNode, graph: SceneGraph, issues: DescribeIssu
   }
 }
 
-function detectStructuralIssues(node: SceneNode, gridSize: number, graph: SceneGraph, issues: DescribeIssue[]): void {
+function detectStructuralIssues(
+  node: SceneNode,
+  gridSize: number,
+  graph: SceneGraph,
+  issues: DescribeIssue[]
+): void {
   if (node.x % 1 !== 0 || node.y % 1 !== 0) {
     issues.push({
       message: `Subpixel position (${node.x}, ${node.y})`,
@@ -56,11 +64,17 @@ function detectStructuralIssues(node: SceneNode, gridSize: number, graph: SceneG
   }
   checkEmptyIcon(node, graph, issues)
   if (looksLikeButton(node) && node.width < 44) {
-    issues.push({ message: `Touch target too small (${node.width}×${node.height})`, suggestion: 'Min 44×44' })
+    issues.push({
+      message: `Touch target too small (${node.width}×${node.height})`,
+      suggestion: 'Min 44×44'
+    })
   }
   if (node.itemSpacing > 0 && node.itemSpacing % gridSize !== 0) {
     const nearest = Math.round(node.itemSpacing / gridSize) * gridSize
-    issues.push({ message: `Gap ${node.itemSpacing} not on ${gridSize}px grid`, suggestion: `${nearest}` })
+    issues.push({
+      message: `Gap ${node.itemSpacing} not on ${gridSize}px grid`,
+      suggestion: `${nearest}`
+    })
   }
 
   checkStrokeMismatch(node, issues)
@@ -74,14 +88,24 @@ function checkStrokeMismatch(node: SceneNode, issues: DescribeIssue[]): void {
   const hasStrokeColor = node.strokes.some((s) => s.visible)
   const hasStrokeWeight = node.strokes.some((s) => s.weight > 0)
   if (hasStrokeColor && !hasStrokeWeight) {
-    issues.push({ message: `"${node.name}" has stroke color but zero weight`, suggestion: 'Set strokeWidth={1} or remove stroke' })
+    issues.push({
+      message: `"${node.name}" has stroke color but zero weight`,
+      suggestion: 'Set strokeWidth={1} or remove stroke'
+    })
   }
   if (!hasStrokeColor && hasStrokeWeight && node.strokes.length > 0) {
-    issues.push({ message: `"${node.name}" has stroke weight but no visible stroke`, suggestion: 'Add stroke="#hex" or remove strokeWidth' })
+    issues.push({
+      message: `"${node.name}" has stroke weight but no visible stroke`,
+      suggestion: 'Add stroke="#hex" or remove strokeWidth'
+    })
   }
 }
 
-function checkRoundedWithoutClip(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {
+function checkRoundedWithoutClip(
+  node: SceneNode,
+  graph: SceneGraph,
+  issues: DescribeIssue[]
+): void {
   if (!CONTAINER_TYPES.has(node.type)) return
   if (node.cornerRadius <= 0 || node.clipsContent) return
   const minDim = Math.min(node.width, node.height)
@@ -165,7 +189,11 @@ function checkNestedText(node: SceneNode, graph: SceneGraph, issues: DescribeIss
   }
 }
 
-function checkZeroPaddingContainer(node: SceneNode, graph: SceneGraph, issues: DescribeIssue[]): void {
+function checkZeroPaddingContainer(
+  node: SceneNode,
+  graph: SceneGraph,
+  issues: DescribeIssue[]
+): void {
   if (!CONTAINER_TYPES.has(node.type)) return
   if (node.layoutMode === 'NONE') return
   if (node.childIds.length < 3) return
@@ -184,7 +212,11 @@ function checkZeroPaddingContainer(node: SceneNode, graph: SceneGraph, issues: D
   }
 }
 
-function checkButtonWithoutPadding(node: SceneNode, _graph: SceneGraph, issues: DescribeIssue[]): void {
+function checkButtonWithoutPadding(
+  node: SceneNode,
+  _graph: SceneGraph,
+  issues: DescribeIssue[]
+): void {
   if (!looksLikeButton(node)) return
   if (node.layoutMode === 'NONE') return
   const hPad = node.paddingLeft + node.paddingRight
@@ -196,7 +228,11 @@ function checkButtonWithoutPadding(node: SceneNode, _graph: SceneGraph, issues: 
   }
 }
 
-function checkFlexContainerWithoutAlignment(node: SceneNode, _graph: SceneGraph, issues: DescribeIssue[]): void {
+function checkFlexContainerWithoutAlignment(
+  node: SceneNode,
+  _graph: SceneGraph,
+  issues: DescribeIssue[]
+): void {
   if (!CONTAINER_TYPES.has(node.type)) return
   if (node.layoutMode === 'NONE') return
   if (node.childIds.length === 0) return
@@ -260,13 +296,17 @@ function detectRadiusIssues(node: SceneNode, graph: SceneGraph, issues: Describe
 
   for (const childId of node.childIds) {
     const child = graph.getNode(childId)
-    if (!child?.visible || child.cornerRadius <= 0 || child.layoutPositioning === 'ABSOLUTE') continue
+    if (!child?.visible || child.cornerRadius <= 0 || child.layoutPositioning === 'ABSOLUTE')
+      continue
     if (child.cornerRadius > node.cornerRadius + RADIUS_TOLERANCE) {
       issues.push({
         message: `"${child.name}" radius ${child.cornerRadius} > parent ${node.cornerRadius}`,
         suggestion: `Use rounded={${expectedInner}}`
       })
-    } else if (child.cornerRadius > expectedInner + RADIUS_TOLERANCE && expectedInner < node.cornerRadius) {
+    } else if (
+      child.cornerRadius > expectedInner + RADIUS_TOLERANCE &&
+      expectedInner < node.cornerRadius
+    ) {
       issues.push({
         message: `"${child.name}" radius ${child.cornerRadius} should be ${expectedInner} (parent ${node.cornerRadius} − padding ${minPad})`,
         suggestion: `Use rounded={${expectedInner}}`
@@ -282,7 +322,12 @@ function detectTypographyIssues(node: SceneNode, graph: SceneGraph, issues: Desc
     const child = graph.getNode(childId)
     if (child?.type !== 'TEXT' || !child.visible) continue
     const text = child.text
-    if (text === text.toUpperCase() && text.length > 1 && /[A-ZА-ЯЁ]/.test(text) && child.fontSize > UPPERCASE_MAX_SIZE) {
+    if (
+      text === text.toUpperCase() &&
+      text.length > 1 &&
+      /[A-ZА-ЯЁ]/.test(text) &&
+      child.fontSize > UPPERCASE_MAX_SIZE
+    ) {
       issues.push({
         message: `"${text.slice(0, 30)}" is uppercase at ${child.fontSize}px — only for small labels ≤${UPPERCASE_MAX_SIZE}px`,
         suggestion: `Reduce size or use mixed case`
@@ -293,7 +338,12 @@ function detectTypographyIssues(node: SceneNode, graph: SceneGraph, issues: Desc
 
 const SPACING_GRID = 4
 
-function detectSpacingIssues(node: SceneNode, graph: SceneGraph, _gridSize: number, issues: DescribeIssue[]): void {
+function detectSpacingIssues(
+  node: SceneNode,
+  graph: SceneGraph,
+  _gridSize: number,
+  issues: DescribeIssue[]
+): void {
   if (node.layoutMode === 'NONE') return
   const children = node.childIds
     .map((id) => graph.getNode(id))
@@ -307,8 +357,13 @@ function detectSpacingIssues(node: SceneNode, graph: SceneGraph, _gridSize: numb
     })
   }
 
-  const spacingValues = [node.itemSpacing, node.paddingTop, node.paddingRight, node.paddingBottom, node.paddingLeft]
-    .filter((v) => v > 0)
+  const spacingValues = [
+    node.itemSpacing,
+    node.paddingTop,
+    node.paddingRight,
+    node.paddingBottom,
+    node.paddingLeft
+  ].filter((v) => v > 0)
   for (const v of spacingValues) {
     if (v % SPACING_GRID !== 0) {
       issues.push({
@@ -321,7 +376,9 @@ function detectSpacingIssues(node: SceneNode, graph: SceneGraph, _gridSize: numb
 
   const flexChildren = children.filter((c) => c.layoutMode !== 'NONE')
   if (flexChildren.length >= 3) {
-    const paddings = flexChildren.map((c) => c.paddingTop + c.paddingRight + c.paddingBottom + c.paddingLeft)
+    const paddings = flexChildren.map(
+      (c) => c.paddingTop + c.paddingRight + c.paddingBottom + c.paddingLeft
+    )
     const gaps = flexChildren.map((c) => c.itemSpacing)
     if (new Set(paddings).size > 2) {
       issues.push({
@@ -340,12 +397,22 @@ function detectSpacingIssues(node: SceneNode, graph: SceneGraph, _gridSize: numb
 }
 
 const ERROR_PATTERNS = [
-  /overflow/i, /invisible/i, /no color/i, /collapses/i, /no fill and no stroke/i,
-  /dark on dark/i, /Touch target too small/i, /Nested Text/i
+  /overflow/i,
+  /invisible/i,
+  /no color/i,
+  /collapses/i,
+  /no fill and no stroke/i,
+  /dark on dark/i,
+  /Touch target too small/i,
+  /Nested Text/i
 ]
 const INFO_PATTERNS = [
-  /children named/i, /uppercase at/i, /fill.*matches parent/i,
-  /radius.*should be/i, /width while siblings/i, /height while siblings/i,
+  /children named/i,
+  /uppercase at/i,
+  /fill.*matches parent/i,
+  /radius.*should be/i,
+  /width while siblings/i,
+  /height while siblings/i,
   /icon.*width/i
 ]
 
@@ -355,7 +422,11 @@ function classifySeverity(message: string): IssueSeverity {
   return 'warning'
 }
 
-export function detectIssues(node: SceneNode, gridSize: number, graph: SceneGraph): DescribeIssue[] {
+export function detectIssues(
+  node: SceneNode,
+  gridSize: number,
+  graph: SceneGraph
+): DescribeIssue[] {
   const issues: DescribeIssue[] = []
   detectStructuralIssues(node, gridSize, graph, issues)
   detectVisibilityIssues(node, graph, issues)

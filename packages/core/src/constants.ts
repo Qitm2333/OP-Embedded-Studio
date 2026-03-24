@@ -1,5 +1,5 @@
-import type { Color } from './types'
 import type { Fill, Stroke } from './scene-graph'
+import type { Color } from './types'
 
 export const IS_BROWSER = typeof window !== 'undefined'
 export const IS_TAURI = IS_BROWSER && '__TAURI_INTERNALS__' in window
@@ -282,7 +282,6 @@ export const CJK_FALLBACK_FAMILIES_LINUX = [
 ]
 
 export const CJK_GOOGLE_FONT = 'Noto Sans SC'
-
 
 export const DEFAULT_SHAPE_FILL: Fill = {
   type: 'SOLID',

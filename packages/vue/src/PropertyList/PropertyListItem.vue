@@ -18,9 +18,29 @@ const { update, patch, remove, toggleVisibility } = usePropertyList()
 <template>
   <slot
     :index="index"
-    :update="(item: unknown) => { emit('update', index, item); update(index, item) }"
-    :patch="(changes: Record<string, unknown>) => { emit('patch', index, changes); patch(index, changes) }"
-    :remove="() => { emit('remove', index); remove(index) }"
-    :toggle-visibility="() => { emit('toggleVisibility', index); toggleVisibility(index) }"
+    :update="
+      (item: unknown) => {
+        emit('update', index, item)
+        update(index, item)
+      }
+    "
+    :patch="
+      (changes: Record<string, unknown>) => {
+        emit('patch', index, changes)
+        patch(index, changes)
+      }
+    "
+    :remove="
+      () => {
+        emit('remove', index)
+        remove(index)
+      }
+    "
+    :toggle-visibility="
+      () => {
+        emit('toggleVisibility', index)
+        toggleVisibility(index)
+      }
+    "
   />
 </template>

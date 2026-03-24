@@ -1,7 +1,13 @@
 import type { SceneGraph, SceneNode, NodeType } from './scene-graph'
 
 const CONTAINER_TYPES = new Set<NodeType>([
-  'CANVAS', 'FRAME', 'GROUP', 'SECTION', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE'
+  'CANVAS',
+  'FRAME',
+  'GROUP',
+  'SECTION',
+  'COMPONENT',
+  'COMPONENT_SET',
+  'INSTANCE'
 ])
 const OPAQUE_CONTAINER_TYPES = new Set<NodeType>(['COMPONENT', 'INSTANCE'])
 
@@ -92,12 +98,22 @@ function hitTestChildren(
   return null
 }
 
-export function hitTest(graph: SceneGraph, px: number, py: number, scopeId?: string): SceneNode | null {
+export function hitTest(
+  graph: SceneGraph,
+  px: number,
+  py: number,
+  scopeId?: string
+): SceneNode | null {
   const scope = scopeId ?? graph.rootId
   return hitTestChildren(graph, px, py, scope, 0, 0, false)
 }
 
-export function hitTestDeep(graph: SceneGraph, px: number, py: number, scopeId?: string): SceneNode | null {
+export function hitTestDeep(
+  graph: SceneGraph,
+  px: number,
+  py: number,
+  scopeId?: string
+): SceneNode | null {
   const scope = scopeId ?? graph.rootId
   return hitTestChildren(graph, px, py, scope, 0, 0, true)
 }

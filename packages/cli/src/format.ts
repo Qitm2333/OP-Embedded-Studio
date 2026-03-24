@@ -13,10 +13,24 @@ import {
   histogram as fmtHistogram,
   summary as fmtSummary
 } from 'agentfmt'
-import type { TreeNode, ListItem, NodeData } from 'agentfmt'
-import type { SceneNode, SceneGraph } from '@open-pencil/core'
 
-export { ok, fail, dim, bold, cyan, entity, kv, fmtTree, fmtList, fmtNode, fmtHistogram, fmtSummary }
+import type { SceneNode, SceneGraph } from '@open-pencil/core'
+import type { TreeNode, ListItem, NodeData } from 'agentfmt'
+
+export {
+  ok,
+  fail,
+  dim,
+  bold,
+  cyan,
+  entity,
+  kv,
+  fmtTree,
+  fmtList,
+  fmtNode,
+  fmtHistogram,
+  fmtSummary
+}
 
 export function printNodeResults(
   results: Array<{ type: string; name: string; id: string }>,
@@ -63,7 +77,12 @@ export function formatType(type: string): string {
 }
 
 export function formatBox(node: SceneNode): string {
-  return fmtBox(Math.round(node.width), Math.round(node.height), Math.round(node.x), Math.round(node.y))
+  return fmtBox(
+    Math.round(node.width),
+    Math.round(node.height),
+    Math.round(node.x),
+    Math.round(node.y)
+  )
 }
 
 function formatFill(node: SceneNode): string | null {
@@ -71,7 +90,15 @@ function formatFill(node: SceneNode): string | null {
   const solid = node.fills.find((f) => f.type === 'SOLID' && f.visible)
   if (!solid?.color) return null
   const { r, g, b } = solid.color
-  const hex = '#' + [r, g, b].map((c) => Math.round(c * 255).toString(16).padStart(2, '0')).join('')
+  const hex =
+    '#' +
+    [r, g, b]
+      .map((c) =>
+        Math.round(c * 255)
+          .toString(16)
+          .padStart(2, '0')
+      )
+      .join('')
   return solid.opacity < 1 ? `${hex} ${Math.round(solid.opacity * 100)}%` : hex
 }
 
@@ -79,7 +106,15 @@ function formatStroke(node: SceneNode): string | null {
   if (!node.strokes.length) return null
   const s = node.strokes[0]
   const { r, g, b } = s.color
-  const hex = '#' + [r, g, b].map((c) => Math.round(c * 255).toString(16).padStart(2, '0')).join('')
+  const hex =
+    '#' +
+    [r, g, b]
+      .map((c) =>
+        Math.round(c * 255)
+          .toString(16)
+          .padStart(2, '0')
+      )
+      .join('')
   return `${hex} ${s.weight}px`
 }
 
@@ -143,7 +178,12 @@ export function nodeDetails(node: SceneNode): Record<string, unknown> {
   return details
 }
 
-export function nodeToTreeNode(graph: SceneGraph, node: SceneNode, maxDepth: number, depth = 0): TreeNode {
+export function nodeToTreeNode(
+  graph: SceneGraph,
+  node: SceneNode,
+  maxDepth: number,
+  depth = 0
+): TreeNode {
   const treeNode: TreeNode = {
     header: entity(formatType(node.type), node.name, node.id),
     details: nodeDetails(node)

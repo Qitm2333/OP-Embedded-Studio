@@ -96,7 +96,9 @@ const fillCtx = useFillControls()
           "
         >
           <Tip label="Apply variable">
-            <PopoverTrigger class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface">
+            <PopoverTrigger
+              class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
+            >
               <icon-lucide-link class="size-3.5" />
             </PopoverTrigger>
           </Tip>
@@ -130,10 +132,9 @@ const fillCtx = useFillControls()
                     <div
                       class="size-3 shrink-0 rounded-sm border border-border"
                       :style="{
-                        background:
-                          fillCtx.store.resolveColorVariable(v.id)
-                            ? colorToCSS(fillCtx.store.resolveColorVariable(v.id)!)
-                            : '#000'
+                        background: fillCtx.store.resolveColorVariable(v.id)
+                          ? colorToCSS(fillCtx.store.resolveColorVariable(v.id)!)
+                          : '#000'
                       }"
                     />
                     <span class="min-w-0 flex-1 truncate">{{ v.name }}</span>

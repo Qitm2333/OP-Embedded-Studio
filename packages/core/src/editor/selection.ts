@@ -1,6 +1,6 @@
-import type { Rect } from '../types'
 import type { SceneNode } from '../scene-graph'
 import type { SnapGuide } from '../snap'
+import type { Rect } from '../types'
 import type { EditorContext } from './types'
 
 export function createSelectionActions(ctx: EditorContext) {
@@ -110,9 +110,7 @@ export function createSelectionActions(ctx: EditorContext) {
         const abs = ctx.graph.getAbsolutePosition(scopeId)
         const lx = cx - abs.x
         const ly = cy - abs.y
-        return deep
-          ? ctx.graph.hitTestDeep(lx, ly, scopeId)
-          : ctx.graph.hitTest(lx, ly, scopeId)
+        return deep ? ctx.graph.hitTestDeep(lx, ly, scopeId) : ctx.graph.hitTest(lx, ly, scopeId)
       }
     }
     return deep

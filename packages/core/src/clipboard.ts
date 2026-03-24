@@ -1,7 +1,9 @@
 import { inflateSync, deflateSync } from 'fflate'
 
-import { randomInt } from './random'
-
+import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
+import { populateAndApplyOverrides } from './kiwi/instance-overrides'
+import { nodeChangeToProps, sortChildren } from './kiwi/kiwi-convert'
+import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
 import {
   sceneNodeToKiwi,
   buildFigKiwi,
@@ -10,13 +12,10 @@ import {
   makeDocumentNodeChange,
   makeCanvasNodeChange
 } from './kiwi/kiwi-serialize'
-import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
-import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
-import { nodeChangeToProps, sortChildren } from './kiwi/kiwi-convert'
-import { populateAndApplyOverrides } from './kiwi/instance-overrides'
-import type { InstanceNodeChange } from './kiwi/instance-overrides'
+import { randomInt } from './random'
 
 import type { NodeChange as KiwiNodeChange } from './kiwi/codec'
+import type { InstanceNodeChange } from './kiwi/instance-overrides'
 import type { SceneGraph, SceneNode } from './scene-graph'
 
 interface FigmaClipboardMeta {
@@ -85,7 +84,11 @@ function isChildOfVisualNode(nc: KiwiNodeChange, parentTypes: Map<string, string
   const parentId = nc.parentIndex?.guid
     ? `${nc.parentIndex.guid.sessionID}:${nc.parentIndex.guid.localID}`
     : null
-  return !!parentId && parentTypes.has(parentId) && !NON_VISUAL_TYPES.has(parentTypes.get(parentId) ?? '')
+  return (
+    !!parentId &&
+    parentTypes.has(parentId) &&
+    !NON_VISUAL_TYPES.has(parentTypes.get(parentId) ?? '')
+  )
 }
 
 export function figmaNodesBounds(
@@ -217,7 +220,11 @@ export function importClipboardNodes(
 ): string[] {
   const { guidMap, parentMap } = buildClipboardMaps(nodeChanges)
   const { internalCanvasIds, internalFigmaIds } = findInternalNodeIds(guidMap, parentMap)
-  const { topLevel, internalTopLevel } = classifyTopLevelNodes(guidMap, parentMap, internalCanvasIds)
+  const { topLevel, internalTopLevel } = classifyTopLevelNodes(
+    guidMap,
+    parentMap,
+    internalCanvasIds
+  )
 
   const created = new Map<string, string>()
   const createdIds: string[] = []
@@ -334,9 +341,7 @@ export interface OpenPencilClipboardData {
   images: Map<string, Uint8Array>
 }
 
-export function parseOpenPencilClipboard(
-  html: string
-): OpenPencilClipboardData | null {
+export function parseOpenPencilClipboard(html: string): OpenPencilClipboardData | null {
   const match = html.match(/<!--\(openpencil\)(.*?)\(\/openpencil\)-->/s)
   if (!match) return null
 

@@ -30,9 +30,7 @@ export function colorToHex(color: Color): string {
 export function colorToHex8(color: Color, alpha?: number): string {
   const a = alpha ?? color.a
   if (a >= 1) return colorToHex(color)
-  return (
-    formatHex8({ mode: 'rgb', r: color.r, g: color.g, b: color.b, alpha: a })
-  ).toUpperCase()
+  return formatHex8({ mode: 'rgb', r: color.r, g: color.g, b: color.b, alpha: a }).toUpperCase()
 }
 
 export function colorToHexRaw(color: Color): string {
@@ -76,8 +74,10 @@ export function colorToFill(color: string | Color) {
 const euclideanRgb255 = differenceEuclidean('rgb')
 
 export function colorDistance(c1: Color, c2: Color): number {
-  return euclideanRgb255(
-    { mode: 'rgb', r: c1.r, g: c1.g, b: c1.b },
-    { mode: 'rgb', r: c2.r, g: c2.g, b: c2.b }
-  ) * 255
+  return (
+    euclideanRgb255(
+      { mode: 'rgb', r: c1.r, g: c1.g, b: c1.b },
+      { mode: 'rgb', r: c2.r, g: c2.g, b: c2.b }
+    ) * 255
+  )
 }

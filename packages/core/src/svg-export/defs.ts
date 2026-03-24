@@ -1,10 +1,9 @@
 import { colorToHex, colorToHex8 } from '../color'
+import { svg } from '../svg-node'
 import { round } from './paths'
 
-import { svg } from '../svg-node'
-
-import type { SVGNode } from '../svg-node'
 import type { SceneGraph, SceneNode, Fill, Effect } from '../scene-graph'
+import type { SVGNode } from '../svg-node'
 import type { Color } from '../types'
 
 export interface SVGExportContext {
@@ -82,11 +81,7 @@ function createGradientDef(
     const r = Math.max(node.width, node.height)
     return {
       id,
-      node: svg(
-        'radialGradient',
-        { id, cx, cy, r, gradientUnits: 'userSpaceOnUse' },
-        ...stopNodes
-      )
+      node: svg('radialGradient', { id, cx, cy, r, gradientUnits: 'userSpaceOnUse' }, ...stopNodes)
     }
   }
 
@@ -133,7 +128,10 @@ function detectImageMime(data: Uint8Array): string {
   return 'image/png'
 }
 
-export function createFilterDef(effects: Effect[], ctx: SVGExportContext): { id: string; node: SVGNode } | null {
+export function createFilterDef(
+  effects: Effect[],
+  ctx: SVGExportContext
+): { id: string; node: SVGNode } | null {
   const visible = effects.filter((e) => e.visible)
   if (visible.length === 0) return null
 
@@ -193,11 +191,7 @@ export function createFilterDef(effects: Effect[], ctx: SVGExportContext): { id:
   }
 }
 
-export function resolveFill(
-  fill: Fill,
-  node: SceneNode,
-  ctx: SVGExportContext
-): string | null {
+export function resolveFill(fill: Fill, node: SceneNode, ctx: SVGExportContext): string | null {
   if (!fill.visible) return null
 
   if (fill.type === 'SOLID') {

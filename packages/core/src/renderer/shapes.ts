@@ -1,7 +1,8 @@
-import type { SceneNode } from '../scene-graph'
-import type { Canvas, Path } from 'canvaskit-wasm'
-import type { SkiaRenderer } from './renderer'
 import { vectorNetworkToPath, geometryBlobToPath } from '../vector'
+
+import type { SceneNode } from '../scene-graph'
+import type { SkiaRenderer } from './renderer'
+import type { Canvas, Path } from 'canvaskit-wasm'
 
 export function makeNodeShapePath(
   r: SkiaRenderer,
@@ -87,7 +88,11 @@ export function makeRRect(r: SkiaRenderer, node: SceneNode): Float32Array {
   )
 }
 
-export function makeRRectWithSpread(r: SkiaRenderer, node: SceneNode, spread: number): Float32Array {
+export function makeRRectWithSpread(
+  r: SkiaRenderer,
+  node: SceneNode,
+  spread: number
+): Float32Array {
   if (node.independentCorners) {
     return new Float32Array([
       -spread,

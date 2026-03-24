@@ -574,11 +574,7 @@ export function encodeNodeChangeWithVariables(nodeChange: NodeChange): Uint8Arra
 /**
  * Inject variable binding into a paint at the specified marker
  */
-function injectVariableBinding(
-  hex: string,
-  marker: string,
-  binding: { variableID: GUID }
-): string {
+function injectVariableBinding(hex: string, marker: string, binding: { variableID: GUID }): string {
   const markerIdx = hex.indexOf(marker)
   if (markerIdx === -1) return hex
 

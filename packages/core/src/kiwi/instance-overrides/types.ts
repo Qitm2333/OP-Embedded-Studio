@@ -1,6 +1,6 @@
 import type { SceneGraph } from '../../scene-graph'
-import type { GUID } from '../codec'
 import type { Matrix, Vector } from '../../types'
+import type { GUID } from '../codec'
 
 export interface SymbolOverride {
   guidPath?: { guids?: GUID[] }

@@ -36,7 +36,11 @@ const cls = usePopoverUI({ content: 'w-60 p-2' })
     <template #default="{ fill: currentFill, category, toSolid, toGradient, toImage, update }">
       <div class="mb-2 flex items-center gap-0.5">
         <Tip label="Solid">
-          <button :class="tabClass(category === 'SOLID')" data-test-id="fill-picker-tab-solid" @click="toSolid">
+          <button
+            :class="tabClass(category === 'SOLID')"
+            data-test-id="fill-picker-tab-solid"
+            @click="toSolid"
+          >
             <icon-lucide-square class="size-3.5" />
           </button>
         </Tip>
@@ -50,7 +54,11 @@ const cls = usePopoverUI({ content: 'w-60 p-2' })
           </button>
         </Tip>
         <Tip label="Image">
-          <button :class="tabClass(category === 'IMAGE')" data-test-id="fill-picker-tab-image" @click="toImage">
+          <button
+            :class="tabClass(category === 'IMAGE')"
+            data-test-id="fill-picker-tab-image"
+            @click="toImage"
+          >
             <icon-lucide-image class="size-3.5" />
           </button>
         </Tip>

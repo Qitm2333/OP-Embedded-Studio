@@ -8,13 +8,7 @@ export function radToDeg(radians: number): number {
   return (radians * 180) / Math.PI
 }
 
-export function rotatePoint(
-  px: number,
-  py: number,
-  cx: number,
-  cy: number,
-  rad: number
-): Vector {
+export function rotatePoint(px: number, py: number, cx: number, cy: number, rad: number): Vector {
   const cos = Math.cos(rad)
   const sin = Math.sin(rad)
   return {
@@ -73,7 +67,10 @@ export function rotatedBBox(
 }
 
 export function computeBounds(items: Iterable<Rect>): Rect {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity
   for (const item of items) {
     minX = Math.min(minX, item.x)
     minY = Math.min(minY, item.y)
@@ -88,7 +85,10 @@ export function computeAbsoluteBounds(
   nodes: Iterable<{ id: string; width: number; height: number }>,
   getAbsolutePosition: (id: string) => Vector
 ): Rect {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity
   for (const n of nodes) {
     const abs = getAbsolutePosition(n.id)
     minX = Math.min(minX, abs.x)

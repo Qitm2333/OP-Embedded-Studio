@@ -130,10 +130,15 @@ export async function exportFigFile(
     if (!internalCanvasGuid) {
       const internalLocalID = localIdCounter.value++
       internalCanvasGuid = { sessionID: 0, localID: internalLocalID }
-      nodeChanges.push(makeCanvasNodeChange(
-        internalCanvasGuid, docGuid, fractionalPosition(pages.length), 'Internal Only Canvas',
-        { internalOnly: true }
-      ))
+      nodeChanges.push(
+        makeCanvasNodeChange(
+          internalCanvasGuid,
+          docGuid,
+          fractionalPosition(pages.length),
+          'Internal Only Canvas',
+          { internalOnly: true }
+        )
+      )
     }
 
     const modeIdToGuid = new Map<string, GUID>()

@@ -1,6 +1,7 @@
 import { computeAbsoluteBounds } from '../geometry'
-import type { Vector } from '../types'
+
 import type { SceneNode } from '../scene-graph'
+import type { Vector } from '../types'
 import type { EditorContext } from './types'
 
 function computeAlignTarget(
@@ -50,9 +51,7 @@ function alignMultipleNodes(
   for (const n of nodes) {
     const abs = absPositions.get(n.id)
     if (!abs) continue
-    const parentAbs = n.parentId
-      ? ctx.graph.getAbsolutePosition(n.parentId)
-      : { x: 0, y: 0 }
+    const parentAbs = n.parentId ? ctx.graph.getAbsolutePosition(n.parentId) : { x: 0, y: 0 }
 
     if (axis === 'horizontal') {
       const target = computeAlignTarget(minX, maxX, n.width, align)
@@ -117,8 +116,7 @@ export function createAlignmentActions(ctx: EditorContext) {
       const node = ctx.graph.getNode(id)
       if (!node) continue
       originals.set(id, { flipX: node.flipX, flipY: node.flipY })
-      const changes =
-        axis === 'horizontal' ? { flipX: !node.flipX } : { flipY: !node.flipY }
+      const changes = axis === 'horizontal' ? { flipX: !node.flipX } : { flipY: !node.flipY }
       ctx.graph.updateNode(id, changes)
     }
 
@@ -149,7 +147,7 @@ export function createAlignmentActions(ctx: EditorContext) {
       const node = ctx.graph.getNode(id)
       if (!node) continue
       originals.set(id, node.rotation)
-      ctx.graph.updateNode(id, { rotation: ((node.rotation + degrees) % 360 + 360) % 360 })
+      ctx.graph.updateNode(id, { rotation: (((node.rotation + degrees) % 360) + 360) % 360 })
     }
 
     const finals = new Map<string, number>()

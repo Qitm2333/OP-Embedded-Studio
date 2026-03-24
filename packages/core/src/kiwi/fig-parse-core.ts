@@ -53,7 +53,7 @@ export function parseFigBuffer(buffer: ArrayBuffer): FigParseResult {
     filter: (file) =>
       file.name === 'canvas.fig' ||
       file.name === 'canvas' ||
-      (file.name.startsWith('images/') && file.name !== 'images/'),
+      (file.name.startsWith('images/') && file.name !== 'images/')
   })
   const entries = Object.keys(zip)
 

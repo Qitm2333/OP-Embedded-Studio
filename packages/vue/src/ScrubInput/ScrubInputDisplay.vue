@@ -6,11 +6,7 @@ const ctx = useScrubInput()
 
 <template>
   <span v-if="!ctx.editing.value" v-bind="$attrs">
-    <slot
-      :value="ctx.displayValue.value"
-      :is-mixed="ctx.isMixed.value"
-      :placeholder="''"
-    >
+    <slot :value="ctx.displayValue.value" :is-mixed="ctx.isMixed.value" :placeholder="''">
       {{ ctx.isMixed.value ? '' : ctx.displayValue.value }}
     </slot>
   </span>

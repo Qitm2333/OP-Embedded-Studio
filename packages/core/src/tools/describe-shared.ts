@@ -1,5 +1,5 @@
-import type { Color } from '../types'
 import type { SceneGraph, SceneNode } from '../scene-graph'
+import type { Color } from '../types'
 
 export const CONTAINER_TYPES = new Set(['FRAME', 'COMPONENT', 'INSTANCE'])
 
@@ -20,7 +20,12 @@ export function findAncestorBackground(node: SceneNode, graph: SceneGraph): Colo
 
 export function looksLikeButton(node: SceneNode): boolean {
   if (!CONTAINER_TYPES.has(node.type)) return false
-  if (node.width > BUTTON_MAX_WIDTH || node.height > BUTTON_MAX_HEIGHT || node.height < BUTTON_MIN_HEIGHT) return false
+  if (
+    node.width > BUTTON_MAX_WIDTH ||
+    node.height > BUTTON_MAX_HEIGHT ||
+    node.height < BUTTON_MIN_HEIGHT
+  )
+    return false
   if (node.fills.length === 0 && node.strokes.length === 0) return false
   if (node.cornerRadius < BUTTON_MIN_RADIUS) return false
   return node.childIds.length > 0

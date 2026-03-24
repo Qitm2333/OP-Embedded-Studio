@@ -8,7 +8,20 @@ import { PositionControlsRoot } from '@open-pencil/vue'
 
 <template>
   <PositionControlsRoot
-    v-slot="{ active, isMulti, xValue, yValue, wValue, hValue, rotationValue, updateProp, commitProp, align, flip, rotate }"
+    v-slot="{
+      active,
+      isMulti,
+      xValue,
+      yValue,
+      wValue,
+      hValue,
+      rotationValue,
+      updateProp,
+      commitProp,
+      align,
+      flip,
+      rotate
+    }"
   >
     <div v-if="active" data-test-id="position-section" :class="sectionWrapper()">
       <label class="mb-1.5 block text-[11px] text-muted">Position</label>

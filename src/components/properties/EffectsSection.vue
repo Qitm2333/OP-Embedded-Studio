@@ -57,7 +57,9 @@ const effectsCtx = useEffectsControls()
           <AppSelect
             :model-value="effect.type"
             :options="effectsCtx.effectOptions"
-            @update:model-value="effectsCtx.updateType(patch, activeNode, i, $event as Effect['type'])"
+            @update:model-value="
+              effectsCtx.updateType(patch, activeNode, i, $event as Effect['type'])
+            "
           />
 
           <button
@@ -80,7 +82,9 @@ const effectsCtx = useEffectsControls()
                   effectsCtx.scrubEffect(activeNode, i, { offset: { ...effect.offset, x: $event } })
                 "
                 @commit="
-                  effectsCtx.commitEffect(activeNode, i, { offset: { ...effect.offset, x: $event } })
+                  effectsCtx.commitEffect(activeNode, i, {
+                    offset: { ...effect.offset, x: $event }
+                  })
                 "
               />
               <ScrubInput
@@ -90,7 +94,9 @@ const effectsCtx = useEffectsControls()
                   effectsCtx.scrubEffect(activeNode, i, { offset: { ...effect.offset, y: $event } })
                 "
                 @commit="
-                  effectsCtx.commitEffect(activeNode, i, { offset: { ...effect.offset, y: $event } })
+                  effectsCtx.commitEffect(activeNode, i, {
+                    offset: { ...effect.offset, y: $event }
+                  })
                 "
               />
             </div>
@@ -112,7 +118,11 @@ const effectsCtx = useEffectsControls()
             </div>
 
             <div class="flex items-center gap-1.5">
-              <ColorInput :color="effect.color" editable @update="effectsCtx.updateColor(patch, i, $event)" />
+              <ColorInput
+                :color="effect.color"
+                editable
+                @update="effectsCtx.updateColor(patch, i, $event)"
+              />
               <ScrubInput
                 class="w-14"
                 suffix="%"

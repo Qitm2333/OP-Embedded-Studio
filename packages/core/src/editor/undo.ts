@@ -1,7 +1,7 @@
 import { computeAllLayouts } from '../layout'
 
-import type { Rect, Vector } from '../types'
 import type { SceneNode } from '../scene-graph'
+import type { Rect, Vector } from '../types'
 import type { UndoEntry } from '../undo'
 import type { EditorContext } from './types'
 

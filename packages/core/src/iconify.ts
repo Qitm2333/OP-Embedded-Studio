@@ -1,5 +1,5 @@
-import svgpath from 'svgpath'
 import { iconToSVG } from '@iconify/utils'
+import svgpath from 'svgpath'
 
 import { parseSVGPath } from './svg-path-parse'
 
@@ -58,7 +58,9 @@ export function clearIconCache(): void {
 function parseIconName(name: string): { prefix: string; iconName: string } {
   const colonIdx = name.indexOf(':')
   if (colonIdx === -1) {
-    throw new Error(`Invalid icon name "${name}". Use prefix:name format (e.g. lucide:heart, mdi:home)`)
+    throw new Error(
+      `Invalid icon name "${name}". Use prefix:name format (e.g. lucide:heart, mdi:home)`
+    )
   }
   return { prefix: name.slice(0, colonIdx), iconName: name.slice(colonIdx + 1) }
 }
@@ -77,32 +79,52 @@ function num(tag: string, attr: string, fallback = 0): number {
 function shapeToD(tagName: string, tag: string): string | null {
   switch (tagName) {
     case 'circle': {
-      const cx = num(tag, 'cx'), cy = num(tag, 'cy'), r = num(tag, 'r')
-      return r > 0 ? `M${cx - r},${cy}A${r},${r},0,1,0,${cx + r},${cy}A${r},${r},0,1,0,${cx - r},${cy}Z` : null
+      const cx = num(tag, 'cx'),
+        cy = num(tag, 'cy'),
+        r = num(tag, 'r')
+      return r > 0
+        ? `M${cx - r},${cy}A${r},${r},0,1,0,${cx + r},${cy}A${r},${r},0,1,0,${cx - r},${cy}Z`
+        : null
     }
     case 'ellipse': {
-      const cx = num(tag, 'cx'), cy = num(tag, 'cy'), rx = num(tag, 'rx'), ry = num(tag, 'ry')
-      return rx > 0 && ry > 0 ? `M${cx - rx},${cy}A${rx},${ry},0,1,0,${cx + rx},${cy}A${rx},${ry},0,1,0,${cx - rx},${cy}Z` : null
+      const cx = num(tag, 'cx'),
+        cy = num(tag, 'cy'),
+        rx = num(tag, 'rx'),
+        ry = num(tag, 'ry')
+      return rx > 0 && ry > 0
+        ? `M${cx - rx},${cy}A${rx},${ry},0,1,0,${cx + rx},${cy}A${rx},${ry},0,1,0,${cx - rx},${cy}Z`
+        : null
     }
     case 'rect': {
-      const x = num(tag, 'x'), y = num(tag, 'y'), w = num(tag, 'width'), h = num(tag, 'height')
+      const x = num(tag, 'x'),
+        y = num(tag, 'y'),
+        w = num(tag, 'width'),
+        h = num(tag, 'height')
       if (w <= 0 || h <= 0) return null
-      const rx = Math.min(num(tag, 'rx'), w / 2), ry = Math.min(num(tag, 'ry', rx), h / 2)
+      const rx = Math.min(num(tag, 'rx'), w / 2),
+        ry = Math.min(num(tag, 'ry', rx), h / 2)
       if (rx > 0 || ry > 0) {
-        const arx = rx || ry, ary = ry || rx
+        const arx = rx || ry,
+          ary = ry || rx
         return `M${x + arx},${y}H${x + w - arx}A${arx},${ary},0,0,1,${x + w},${y + ary}V${y + h - ary}A${arx},${ary},0,0,1,${x + w - arx},${y + h}H${x + arx}A${arx},${ary},0,0,1,${x},${y + h - ary}V${y + ary}A${arx},${ary},0,0,1,${x + arx},${y}Z`
       }
       return `M${x},${y}H${x + w}V${y + h}H${x}Z`
     }
     case 'line': {
-      const x1 = num(tag, 'x1'), y1 = num(tag, 'y1'), x2 = num(tag, 'x2'), y2 = num(tag, 'y2')
+      const x1 = num(tag, 'x1'),
+        y1 = num(tag, 'y1'),
+        x2 = num(tag, 'x2'),
+        y2 = num(tag, 'y2')
       return `M${x1},${y1}L${x2},${y2}`
     }
     case 'polygon':
     case 'polyline': {
       const points = attrValue(tag, 'points')
       if (!points) return null
-      const nums = points.trim().split(/[\s,]+/).map(Number)
+      const nums = points
+        .trim()
+        .split(/[\s,]+/)
+        .map(Number)
       if (nums.length < 4) return null
       let d = `M${nums[0]},${nums[1]}`
       for (let i = 2; i < nums.length; i += 2) d += `L${nums[i]},${nums[i + 1]}`
@@ -114,14 +136,24 @@ function shapeToD(tagName: string, tag: string): string | null {
   }
 }
 
-function resolveAttr(explicit: string | null, group: string | null, fallback: string | null): string | null {
+function resolveAttr(
+  explicit: string | null,
+  group: string | null,
+  fallback: string | null
+): string | null {
   if (explicit !== null) return explicit === 'none' ? null : explicit
   if (group !== null) return group === 'none' ? null : group
   return fallback
 }
 
 function extractPaths(svgBody: string): PathInfo[] {
-  const groupAttrs = { fill: null as string | null, stroke: null as string | null, strokeWidth: null as string | null, strokeCap: null as string | null, strokeJoin: null as string | null }
+  const groupAttrs = {
+    fill: null as string | null,
+    stroke: null as string | null,
+    strokeWidth: null as string | null,
+    strokeCap: null as string | null,
+    strokeJoin: null as string | null
+  }
   const groupRe = /<g\b[^>]*>/g
   let gm
   while ((gm = groupRe.exec(svgBody)) !== null) {
@@ -136,7 +168,8 @@ function extractPaths(svgBody: string): PathInfo[] {
   const shapeRe = /<(path|circle|ellipse|rect|line|polygon|polyline)\b[^>]*>/g
   let match
   while ((match = shapeRe.exec(svgBody)) !== null) {
-    const tag = match[0], tagName = match[1]
+    const tag = match[0],
+      tagName = match[1]
     const d = tagName === 'path' ? attrValue(tag, 'd') : shapeToD(tagName, tag)
     if (!d) continue
 
@@ -179,7 +212,7 @@ function buildIconData(
     width: size,
     height: size,
     paths: pathInfos.map((p) => {
-      const scaledD = (sx === 1 && sy === 1) ? p.d : svgpath(p.d).scale(sx, sy).round(2).toString()
+      const scaledD = sx === 1 && sy === 1 ? p.d : svgpath(p.d).scale(sx, sy).round(2).toString()
       return {
         vectorNetwork: parseSVGPath(scaledD, p.fillRule),
         fill: p.fill,
@@ -199,7 +232,8 @@ function fetchWithTimeout(url: string): Promise<Response> {
 export async function fetchIcon(name: string, size = 24): Promise<IconData> {
   const results = await fetchIcons([name], size)
   const result = results.get(name)
-  if (!result) throw new Error(`Icon "${name}" not found. Check the name at https://icon-sets.iconify.design/`)
+  if (!result)
+    throw new Error(`Icon "${name}" not found. Check the name at https://icon-sets.iconify.design/`)
   return result
 }
 
@@ -223,7 +257,8 @@ export async function fetchIcons(names: string[], size = 24): Promise<Map<string
   const fetches = [...toFetch.entries()].map(async ([prefix, iconNames]) => {
     const url = `${ICONIFY_API}/${prefix}.json?icons=${iconNames.map(encodeURIComponent).join(',')}`
     const response = await fetchWithTimeout(url)
-    if (!response.ok) throw new Error(`Iconify API error: ${response.status} for prefix "${prefix}"`)
+    if (!response.ok)
+      throw new Error(`Iconify API error: ${response.status} for prefix "${prefix}"`)
     const data = (await response.json()) as IconifyResponse
     const defaultW = data.width ?? 24
     const defaultH = data.height ?? 24
@@ -252,10 +287,13 @@ export interface IconSearchResult {
   collections: Record<string, { name: string; total: number; category?: string }>
 }
 
-export async function searchIcons(query: string, options?: {
-  limit?: number
-  prefix?: string
-}): Promise<IconSearchResult> {
+export async function searchIcons(
+  query: string,
+  options?: {
+    limit?: number
+    prefix?: string
+  }
+): Promise<IconSearchResult> {
   const params = new URLSearchParams({ query })
   if (options?.limit) params.set('limit', String(options.limit))
   if (options?.prefix) params.set('prefix', options.prefix)
@@ -272,14 +310,19 @@ export async function searchIcons(query: string, options?: {
   }
 }
 
-export async function searchIconsBatch(queries: string[], options?: {
-  limit?: number
-  prefix?: string
-}): Promise<Map<string, IconSearchResult>> {
+export async function searchIconsBatch(
+  queries: string[],
+  options?: {
+    limit?: number
+    prefix?: string
+  }
+): Promise<Map<string, IconSearchResult>> {
   const results = new Map<string, IconSearchResult>()
-  await Promise.all(queries.map(async (query) => {
-    const result = await searchIcons(query, options)
-    results.set(query, result)
-  }))
+  await Promise.all(
+    queries.map(async (query) => {
+      const result = await searchIcons(query, options)
+      results.set(query, result)
+    })
+  )
   return results
 }

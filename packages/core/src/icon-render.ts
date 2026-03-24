@@ -1,15 +1,19 @@
 import { parseColor } from './color'
 
-import type { Color } from './types'
-import type { SceneGraph, SceneNode, Stroke } from './scene-graph'
 import type { IconData } from './iconify'
+import type { SceneGraph, SceneNode, Stroke } from './scene-graph'
+import type { Color } from './types'
 
 const STROKE_CAP_MAP: Record<string, SceneNode['strokeCap']> = {
-  butt: 'NONE', round: 'ROUND', square: 'SQUARE'
+  butt: 'NONE',
+  round: 'ROUND',
+  square: 'SQUARE'
 }
 
 const STROKE_JOIN_MAP: Record<string, SceneNode['strokeJoin']> = {
-  miter: 'MITER', round: 'ROUND', bevel: 'BEVEL'
+  miter: 'MITER',
+  round: 'ROUND',
+  bevel: 'BEVEL'
 }
 
 export function createIconFromPaths(

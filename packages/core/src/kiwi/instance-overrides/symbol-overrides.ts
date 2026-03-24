@@ -1,7 +1,8 @@
-import type { OverrideContext } from './types'
 import { guidToString } from '../kiwi-convert'
 import { convertOverrideToProps } from '../kiwi-convert-overrides'
 import { resolveOverrideTarget, repopulateInstance } from './resolve'
+
+import type { OverrideContext } from './types'
 
 /**
  * Apply symbolOverrides from kiwi data.

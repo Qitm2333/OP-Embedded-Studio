@@ -2,8 +2,8 @@ import { createTwoFilesPatch } from 'diff'
 
 import { computeBounds } from '../geometry'
 import { sceneNodeToJSX } from '../render/export-jsx'
-import { defineTool, nodeSummary, nodeToResult } from './schema'
 import { queryByXPath } from '../xpath'
+import { defineTool, nodeSummary, nodeToResult } from './schema'
 
 import type { FigmaNodeProxy } from '../figma-api'
 
@@ -27,7 +27,13 @@ interface TreeEntry {
 }
 
 function nodeToTreeEntry(node: FigmaNodeProxy): TreeEntry {
-  const entry: TreeEntry = { id: node.id, type: node.type, name: node.name, w: node.width, h: node.height }
+  const entry: TreeEntry = {
+    id: node.id,
+    type: node.type,
+    name: node.name,
+    w: node.width,
+    h: node.height
+  }
   if (node.children.length > 0) {
     entry.children = node.children.map(nodeToTreeEntry)
   }
@@ -50,10 +56,14 @@ export const getPageTree = defineTool({
 
 export const getNode = defineTool({
   name: 'get_node',
-  description: 'Get detailed properties of a node by ID. Use depth to limit child recursion (0 = node only, 1 = direct children, etc). Default: unlimited.',
+  description:
+    'Get detailed properties of a node by ID. Use depth to limit child recursion (0 = node only, 1 = direct children, etc). Default: unlimited.',
   params: {
     id: { type: 'string', description: 'Node ID', required: true },
-    depth: { type: 'number', description: 'Max depth of children to include (0 = no children). Default: unlimited' }
+    depth: {
+      type: 'number',
+      description: 'Max depth of children to include (0 = no children). Default: unlimited'
+    }
   },
   execute: (figma, { id, depth }) => {
     const node = figma.getNodeById(id)

@@ -1,5 +1,5 @@
-import { computed, type Component } from 'vue'
 import { useVueTable, getCoreRowModel } from '@tanstack/vue-table'
+import { computed, type Component } from 'vue'
 
 import { useVariablesDialogState } from './useVariablesDialogState'
 import { useVariablesTable } from './useVariablesTable'

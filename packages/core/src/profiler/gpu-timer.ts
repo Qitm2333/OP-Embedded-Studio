@@ -24,8 +24,7 @@ export class GPUTimer {
     this.gl = gl
     if (gl) {
       this.ext =
-        (gl.getExtension('EXT_disjoint_timer_query_webgl2') as EXTDisjointTimerQuery | null) ??
-        null
+        (gl.getExtension('EXT_disjoint_timer_query_webgl2') as EXTDisjointTimerQuery | null) ?? null
     }
   }
 

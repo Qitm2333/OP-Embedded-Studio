@@ -3,6 +3,11 @@ import { createNanoEvents } from 'nanoevents'
 
 import { BLACK, DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from './constants'
 import {
+  hitTest as hitTestFn,
+  hitTestDeep as hitTestDeepFn,
+  hitTestFrame as hitTestFrameFn
+} from './scene-graph-hit-test'
+import {
   createInstance as createInstanceFn,
   populateInstanceChildren as populateInstanceChildrenFn,
   syncInstances as syncInstancesFn,
@@ -10,11 +15,6 @@ import {
   getMainComponent as getMainComponentFn,
   getInstances as getInstancesFn
 } from './scene-graph-instances'
-import {
-  hitTest as hitTestFn,
-  hitTestDeep as hitTestDeepFn,
-  hitTestFrame as hitTestFrameFn
-} from './scene-graph-hit-test'
 
 export type { GUID, Color } from './types'
 import type { Matrix, Vector, Color, Rect } from './types'
@@ -81,7 +81,6 @@ export type NodeType =
   | 'INSTANCE'
   | 'CONNECTOR'
   | 'SHAPE_WITH_TEXT'
-
 
 export type FillType =
   | 'SOLID'
@@ -747,17 +746,32 @@ export class SceneGraph {
   }
 
   static TEXT_PICTURE_KEYS: ReadonlySet<string> = new Set([
-    'text', 'fontSize', 'fontFamily', 'fontWeight', 'italic',
-    'textAlignHorizontal', 'textAlignVertical', 'lineHeight',
-    'letterSpacing', 'textDecoration', 'textCase', 'styleRuns', 'fills',
-    'width', 'height',
+    'text',
+    'fontSize',
+    'fontFamily',
+    'fontWeight',
+    'italic',
+    'textAlignHorizontal',
+    'textAlignVertical',
+    'lineHeight',
+    'letterSpacing',
+    'textDecoration',
+    'textCase',
+    'styleRuns',
+    'fills',
+    'width',
+    'height'
   ])
 
   updateNode(id: string, changes: Partial<SceneNode>): void {
     const node = this.nodes.get(id)
     if (!node) return
     this.absPosCache.clear()
-    if (node.type === 'INSTANCE' && 'componentId' in changes && changes.componentId !== node.componentId) {
+    if (
+      node.type === 'INSTANCE' &&
+      'componentId' in changes &&
+      changes.componentId !== node.componentId
+    ) {
       if (node.componentId) this.instanceIndex.get(node.componentId)?.delete(id)
       if (changes.componentId) {
         let set = this.instanceIndex.get(changes.componentId)
@@ -768,7 +782,11 @@ export class SceneGraph {
         set.add(id)
       }
     }
-    if (node.type === 'TEXT' && node.textPicture && Object.keys(changes).some((k) => SceneGraph.TEXT_PICTURE_KEYS.has(k))) {
+    if (
+      node.type === 'TEXT' &&
+      node.textPicture &&
+      Object.keys(changes).some((k) => SceneGraph.TEXT_PICTURE_KEYS.has(k))
+    ) {
       node.textPicture = null
     }
     Object.assign(node, changes)

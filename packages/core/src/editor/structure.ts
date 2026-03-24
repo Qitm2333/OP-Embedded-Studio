@@ -118,13 +118,18 @@ export function createStructureActions(ctx: EditorContext) {
     const nodeIds = selectedNodes.map((n) => n.id)
     const origPositions = selectedNodes.map((n) => ({ id: n.id, x: n.x, y: n.y }))
 
-    const { x: minX, y: minY, width: bw, height: bh } = computeAbsoluteBounds(
-      selectedNodes, (id) => ctx.graph.getAbsolutePosition(id)
-    )
+    const {
+      x: minX,
+      y: minY,
+      width: bw,
+      height: bh
+    } = computeAbsoluteBounds(selectedNodes, (id) => ctx.graph.getAbsolutePosition(id))
     const maxX = minX + bw
     const maxY = minY + bh
 
-    const parentAbs = isTopLevel(parentId) ? { x: 0, y: 0 } : ctx.graph.getAbsolutePosition(parentId)
+    const parentAbs = isTopLevel(parentId)
+      ? { x: 0, y: 0 }
+      : ctx.graph.getAbsolutePosition(parentId)
     const firstIndex = Math.min(...nodeIds.map((id) => parent.childIds.indexOf(id)))
 
     const padding = containerType === 'COMPONENT_SET' ? 40 : 0
@@ -140,9 +145,17 @@ export function createStructureActions(ctx: EditorContext) {
       y: minY - parentAbs.y - padding,
       width: maxX - minX + padding * 2,
       height: maxY - minY + padding * 2,
-      fills: containerType === 'COMPONENT_SET'
-        ? [{ type: 'SOLID', color: { r: 0.96, g: 0.96, b: 0.96, a: 1 }, opacity: 1, visible: true }]
-        : [],
+      fills:
+        containerType === 'COMPONENT_SET'
+          ? [
+              {
+                type: 'SOLID',
+                color: { r: 0.96, g: 0.96, b: 0.96, a: 1 },
+                opacity: 1,
+                visible: true
+              }
+            ]
+          : [],
       ...extraProps
     })
     const containerId = containerNode.id
@@ -158,7 +171,11 @@ export function createStructureActions(ctx: EditorContext) {
     ctx.undo.push({
       label: `Create ${containerType.toLowerCase().replace('_', ' ')}`,
       forward: () => {
-        const c = ctx.graph.createNode(containerType, parentId, { ...containerNode, ...extraProps, id: containerId })
+        const c = ctx.graph.createNode(containerType, parentId, {
+          ...containerNode,
+          ...extraProps,
+          id: containerId
+        })
         ctx.graph.insertChildAt(c.id, parentId, firstIndex)
         for (const n of origPositions) ctx.graph.reparentNode(n.id, c.id)
         ctx.state.selectedIds = new Set([c.id])
@@ -287,7 +304,11 @@ export function createStructureActions(ctx: EditorContext) {
         ctx.state.selectedIds = new Set(childIds)
       },
       inverse: () => {
-        const g = ctx.graph.createNode('GROUP', parentId, { ...groupSnapshot, childIds: [], id: groupId })
+        const g = ctx.graph.createNode('GROUP', parentId, {
+          ...groupSnapshot,
+          childIds: [],
+          id: groupId
+        })
         ctx.graph.insertChildAt(g.id, parentId, groupIndex)
         for (const orig of origPositions) {
           ctx.graph.reparentNode(orig.id, g.id)

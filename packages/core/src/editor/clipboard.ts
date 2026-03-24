@@ -1,14 +1,10 @@
+import { buildFigmaClipboardHTML, importClipboardNodes, parseFigmaClipboard } from '../clipboard'
+import { computeImageHash } from '../figma-api'
+import { collectFontKeys } from '../fonts'
 import { computeBounds } from '../geometry'
 import { computeAllLayouts } from '../layout'
-import {
-  buildFigmaClipboardHTML,
-  importClipboardNodes,
-  parseFigmaClipboard
-} from '../clipboard'
-import { collectFontKeys } from '../fonts'
-import { computeImageHash } from '../figma-api'
-import { renderNodesToSVG } from '../svg-export'
 import { selectionToJSX } from '../render'
+import { renderNodesToSVG } from '../svg-export'
 
 import type { Fill, SceneGraph, SceneNode } from '../scene-graph'
 import type { Vector } from '../types'
@@ -290,7 +286,8 @@ export function createClipboardActions(ctx: EditorContext) {
   }
 
   function copySelectionAsSVG(ids: string[]): string | null {
-    const nodeIds = ids.length > 0 ? ids : ctx.graph.getChildren(ctx.state.currentPageId).map((n) => n.id)
+    const nodeIds =
+      ids.length > 0 ? ids : ctx.graph.getChildren(ctx.state.currentPageId).map((n) => n.id)
     return renderNodesToSVG(ctx.graph, ctx.state.currentPageId, nodeIds)
   }
 

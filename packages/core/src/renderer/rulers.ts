@@ -12,9 +12,10 @@ import {
   RULER_MAJOR_TOLERANCE
 } from '../constants'
 import { computeAbsoluteBounds } from '../geometry'
+
 import type { SceneNode, SceneGraph } from '../scene-graph'
-import type { Canvas, CanvasKit } from 'canvaskit-wasm'
 import type { SkiaRenderer } from './renderer'
+import type { Canvas, CanvasKit } from 'canvaskit-wasm'
 
 interface SelectionScreenBounds {
   sx1: number
@@ -147,10 +148,42 @@ export function drawRulers(
     canvas.drawRect(r.ck.LTRBRect(Math.max(R, selBounds.sx1), 0, selBounds.sx2, R), r.rulerHlPaint)
     canvas.drawRect(r.ck.LTRBRect(0, Math.max(R, selBounds.sy1), R, selBounds.sy2), r.rulerHlPaint)
 
-    drawRulerBadge(r, canvas, font, Math.round((selBounds.sx1 - r.panX) / r.zoom).toString(), Math.max(R, selBounds.sx1), 0, 'horizontal')
-    drawRulerBadge(r, canvas, font, Math.round((selBounds.sx2 - r.panX) / r.zoom).toString(), selBounds.sx2, 0, 'horizontal')
-    drawRulerBadge(r, canvas, font, Math.round((selBounds.sy1 - r.panY) / r.zoom).toString(), 0, Math.max(R, selBounds.sy1), 'vertical')
-    drawRulerBadge(r, canvas, font, Math.round((selBounds.sy2 - r.panY) / r.zoom).toString(), 0, selBounds.sy2, 'vertical')
+    drawRulerBadge(
+      r,
+      canvas,
+      font,
+      Math.round((selBounds.sx1 - r.panX) / r.zoom).toString(),
+      Math.max(R, selBounds.sx1),
+      0,
+      'horizontal'
+    )
+    drawRulerBadge(
+      r,
+      canvas,
+      font,
+      Math.round((selBounds.sx2 - r.panX) / r.zoom).toString(),
+      selBounds.sx2,
+      0,
+      'horizontal'
+    )
+    drawRulerBadge(
+      r,
+      canvas,
+      font,
+      Math.round((selBounds.sy1 - r.panY) / r.zoom).toString(),
+      0,
+      Math.max(R, selBounds.sy1),
+      'vertical'
+    )
+    drawRulerBadge(
+      r,
+      canvas,
+      font,
+      Math.round((selBounds.sy2 - r.panY) / r.zoom).toString(),
+      0,
+      selBounds.sy2,
+      'vertical'
+    )
   }
 }
 

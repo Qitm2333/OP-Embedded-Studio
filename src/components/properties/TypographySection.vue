@@ -17,7 +17,11 @@ import { loadFont } from '@/engine/fonts'
       <label class="mb-1.5 block text-[11px] text-muted">Typography</label>
 
       <div class="mb-1.5 flex items-center gap-1.5">
-        <FontPicker class="min-w-0 flex-1" :model-value="ctx.node.value.fontFamily" @select="ctx.setFamily" />
+        <FontPicker
+          class="min-w-0 flex-1"
+          :model-value="ctx.node.value.fontFamily"
+          @select="ctx.setFamily"
+        />
         <Tip
           v-if="ctx.hasMissingFonts.value"
           :label="
@@ -53,7 +57,9 @@ import { loadFont } from '@/engine/fonts'
       <div class="mb-1.5 flex gap-1.5">
         <ScrubInput
           class="flex-1"
-          :model-value="ctx.node.value.lineHeight ?? Math.round((ctx.node.value.fontSize || 14) * 1.2)"
+          :model-value="
+            ctx.node.value.lineHeight ?? Math.round((ctx.node.value.fontSize || 14) * 1.2)
+          "
           :min="0"
           @update:model-value="ctx.updateProp('lineHeight', $event)"
           @commit="(v: number, p: number) => ctx.commitProp('lineHeight', v, p)"

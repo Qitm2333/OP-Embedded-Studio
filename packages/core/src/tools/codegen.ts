@@ -1,10 +1,15 @@
 import { colorToHex } from '../color'
-
 import { defineTool } from './schema'
 
-import type { Color } from '../types'
 import type { FigmaAPI } from '../figma-api'
-import type { SceneGraph, Variable, VariableCollection, VariableValue, SceneNode } from '../scene-graph'
+import type {
+  SceneGraph,
+  Variable,
+  VariableCollection,
+  VariableValue,
+  SceneNode
+} from '../scene-graph'
+import type { Color } from '../types'
 
 function slugify(name: string): string {
   return name
@@ -126,10 +131,7 @@ function renderCSS(
   return lines.join('\n') + '\n'
 }
 
-function renderTailwindTheme(
-  tokens: TokenEntry[],
-  modes: { id: string; name: string }[]
-): string {
+function renderTailwindTheme(tokens: TokenEntry[], modes: { id: string; name: string }[]): string {
   const defaultModeId = modes[0]?.id ?? ''
   const colors: Record<string, string> = {}
   const spacing: Record<string, string> = {}
@@ -152,10 +154,7 @@ export const designTokens = ${JSON.stringify(theme, null, 2)} as const
 `
 }
 
-function renderJSON(
-  tokens: TokenEntry[],
-  modes: { id: string; name: string }[]
-): string {
+function renderJSON(tokens: TokenEntry[], modes: { id: string; name: string }[]): string {
   const result: Record<string, Record<string, string>> = {}
 
   for (const mode of modes) {
@@ -247,10 +246,7 @@ interface ScreenInfo {
   topLevelSections: number
 }
 
-function collectInstanceCounts(
-  figma: FigmaAPI,
-  componentIds: Set<string>
-): Map<string, number> {
+function collectInstanceCounts(figma: FigmaAPI, componentIds: Set<string>): Map<string, number> {
   const counts = new Map<string, number>()
   const page = figma.currentPage
 
@@ -288,10 +284,7 @@ function detectPropCandidates(node: SceneNode, graph: SceneGraph): string[] {
   return props
 }
 
-function detectVariants(
-  componentNode: SceneNode,
-  graph: SceneGraph
-): string[] {
+function detectVariants(componentNode: SceneNode, graph: SceneGraph): string[] {
   if (componentNode.type !== 'COMPONENT_SET') return []
 
   const variants: string[] = []
@@ -421,5 +414,3 @@ export const designToComponentMap = defineTool({
     }
   }
 })
-
-

@@ -6,9 +6,9 @@ import { weightToStyle, getLoadedFontData } from '../fonts'
 import { encodeVectorNetworkBlob } from '../vector'
 import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi-convert'
 
-import type { NodeChange, Paint, VariableConsumptionEntry } from './codec'
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from '../scene-graph'
 import type { Color, GUID } from '../types'
+import type { NodeChange, Paint, VariableConsumptionEntry } from './codec'
 
 const fontDigestCache = new Map<string, Uint8Array>()
 
@@ -488,7 +488,19 @@ export function sceneNodeToKiwi(
   const result: KiwiNodeChange[] = [nc]
   const children = graph.getChildren(node.id)
   for (let i = 0; i < children.length; i++) {
-    result.push(...sceneNodeToKiwi(children[i], guid, i, localIdCounter, graph, blobs, nodeIdToGuid, fontDigestMap, varIdToGuid))
+    result.push(
+      ...sceneNodeToKiwi(
+        children[i],
+        guid,
+        i,
+        localIdCounter,
+        graph,
+        blobs,
+        nodeIdToGuid,
+        fontDigestMap,
+        varIdToGuid
+      )
+    )
   }
 
   return result

@@ -7,7 +7,11 @@ const ctx = useScrubInput()
 <template>
   <input
     v-if="ctx.editing.value"
-    :ref="(el) => { ctx.inputRef.value = el as HTMLInputElement | null }"
+    :ref="
+      (el) => {
+        ctx.inputRef.value = el as HTMLInputElement | null
+      }
+    "
     type="number"
     :value="ctx.isMixed.value ? '' : ctx.displayValue.value"
     v-bind="$attrs"

@@ -1,9 +1,10 @@
 import { defineCommand } from 'citty'
 
-import { loadDocument } from '../../headless'
+import { executeRpcCommand } from '@open-pencil/core'
+
 import { isAppMode, requireFile, rpc } from '../../app-client'
 import { bold, fmtHistogram, fmtSummary } from '../../format'
-import { executeRpcCommand } from '@open-pencil/core'
+import { loadDocument } from '../../headless'
 
 import type { AnalyzeTypographyResult } from '@open-pencil/core'
 
@@ -28,8 +29,15 @@ async function getData(file?: string): Promise<AnalyzeTypographyResult> {
 export default defineCommand({
   meta: { description: 'Analyze typography usage' },
   args: {
-    file: { type: 'positional', description: '.fig file path (omit to connect to running app)', required: false },
-    'group-by': { type: 'string', description: 'Group by: family, size, weight (default: show all styles)' },
+    file: {
+      type: 'positional',
+      description: '.fig file path (omit to connect to running app)',
+      required: false
+    },
+    'group-by': {
+      type: 'string',
+      description: 'Group by: family, size, weight (default: show all styles)'
+    },
     limit: { type: 'string', description: 'Max styles to show', default: '30' },
     json: { type: 'boolean', description: 'Output as JSON' }
   },
@@ -57,7 +65,9 @@ export default defineCommand({
       console.log('')
       console.log(
         fmtHistogram(
-          [...byFamily.entries()].sort((a, b) => b[1] - a[1]).map(([family, count]) => ({ label: family, value: count }))
+          [...byFamily.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .map(([family, count]) => ({ label: family, value: count }))
         )
       )
     } else if (groupBy === 'size') {
@@ -67,7 +77,9 @@ export default defineCommand({
       console.log('')
       console.log(
         fmtHistogram(
-          [...bySize.entries()].sort((a, b) => a[0] - b[0]).map(([size, count]) => ({ label: `${size}px`, value: count }))
+          [...bySize.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([size, count]) => ({ label: `${size}px`, value: count }))
         )
       )
     } else if (groupBy === 'weight') {
@@ -77,7 +89,9 @@ export default defineCommand({
       console.log('')
       console.log(
         fmtHistogram(
-          [...byWeight.entries()].sort((a, b) => b[1] - a[1]).map(([weight, count]) => ({ label: `${weight} ${weightName(weight)}`, value: count }))
+          [...byWeight.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .map(([weight, count]) => ({ label: `${weight} ${weightName(weight)}`, value: count }))
         )
       )
     } else {
@@ -91,7 +105,9 @@ export default defineCommand({
     }
 
     console.log('')
-    console.log(fmtSummary({ 'unique styles': data.styles.length, 'text nodes': data.totalTextNodes }))
+    console.log(
+      fmtSummary({ 'unique styles': data.styles.length, 'text nodes': data.totalTextNodes })
+    )
     console.log('')
   }
 })

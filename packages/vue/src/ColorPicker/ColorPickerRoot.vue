@@ -25,7 +25,12 @@ const swatchBg = computed(() => colorToCSS(props.color))
     </PopoverTrigger>
 
     <PopoverPortal>
-      <PopoverContent data-test-id="color-picker-popover" :class="contentClass" :side-offset="4" side="left">
+      <PopoverContent
+        data-test-id="color-picker-popover"
+        :class="contentClass"
+        :side-offset="4"
+        side="left"
+      >
         <slot :color="color" :update="(nextColor: Color) => emit('update', nextColor)" />
       </PopoverContent>
     </PopoverPortal>

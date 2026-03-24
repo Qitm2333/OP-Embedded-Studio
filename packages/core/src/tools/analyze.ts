@@ -2,12 +2,11 @@
 import { createTwoFilesPatch } from 'diff'
 
 import { colorDistance, colorToHex, parseColor } from '../color'
-
 import { defineTool } from './schema'
 
-import type { Color } from '../types'
-import type { SceneNode } from '../scene-graph'
 import type { FigmaAPI } from '../figma-api'
+import type { SceneNode } from '../scene-graph'
+import type { Color } from '../types'
 
 interface SizedItem {
   width: number
@@ -37,11 +36,7 @@ interface ColorEntry {
   variableName: string | null
 }
 
-function trackColor(
-  colorMap: Map<string, ColorEntry>,
-  color: Color,
-  variableName: string | null
-) {
+function trackColor(colorMap: Map<string, ColorEntry>, color: Color, variableName: string | null) {
   const hex = colorToHex(color)
   const entry = colorMap.get(hex)
   if (entry) {
@@ -155,7 +150,11 @@ function createUnifiedDiff(
   const patch = createTwoFilesPatch(oldFilename, newFilename, oldContent, newContent, '', '')
   return patch
     .split('\n')
-    .filter((l) => !l.startsWith('Index:') && l !== '===================================================================')
+    .filter(
+      (l) =>
+        !l.startsWith('Index:') &&
+        l !== '==================================================================='
+    )
     .join('\n')
     .trim()
 }
@@ -197,7 +196,11 @@ export const analyzeColors = defineTool({
       }
       for (const stroke of raw.strokes) {
         if (stroke.visible) {
-          trackColor(colorMap, stroke.color, boundVars['strokes'] ? String(boundVars['strokes']) : null)
+          trackColor(
+            colorMap,
+            stroke.color,
+            boundVars['strokes'] ? String(boundVars['strokes']) : null
+          )
         }
       }
       return false
@@ -401,7 +404,14 @@ export const analyzeClusters = defineTool({
 
     const signatureMap = new Map<
       string,
-      { id: string; name: string; type: string; width: number; height: number; childCount: number }[]
+      {
+        id: string
+        name: string
+        type: string
+        width: number
+        height: number
+        childCount: number
+      }[]
     >()
     let totalNodes = 0
 

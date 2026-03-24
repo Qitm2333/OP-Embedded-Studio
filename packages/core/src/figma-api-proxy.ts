@@ -1,3 +1,7 @@
+import { normalizeColor } from './color'
+import { copyFills, copyStrokes, copyEffects } from './copy'
+import { FONT_WEIGHT_NAMES } from './fonts'
+
 /* eslint-disable max-lines -- Figma Plugin API proxy; FigmaAPI already in separate file */
 import type {
   SceneGraph,
@@ -6,12 +10,9 @@ import type {
   Fill,
   Stroke,
   Effect,
-  LayoutMode,
+  LayoutMode
 } from './scene-graph'
-import { normalizeColor } from './color'
-import { FONT_WEIGHT_NAMES } from './fonts'
 import type { Rect } from './types'
-import { copyFills, copyStrokes, copyEffects } from './copy'
 
 const MIXED = Symbol('mixed')
 
@@ -728,9 +729,10 @@ export class FigmaNodeProxy {
     const layout = n.layoutMode !== 'NONE' ? n.layoutMode : this._parentLayout()
     const parentLayout = this._parentLayout()
     const isMainAxis = parentLayout === 'HORIZONTAL'
-    const updates: Partial<SceneNode> = layout === 'VERTICAL'
-      ? { counterAxisSizing: v as SceneNode['counterAxisSizing'] }
-      : { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] }
+    const updates: Partial<SceneNode> =
+      layout === 'VERTICAL'
+        ? { counterAxisSizing: v as SceneNode['counterAxisSizing'] }
+        : { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] }
     if (isMainAxis) updates.layoutGrow = v === 'FILL' ? 1 : 0
     this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], updates)
   }
@@ -747,9 +749,10 @@ export class FigmaNodeProxy {
     const layout = n.layoutMode !== 'NONE' ? n.layoutMode : this._parentLayout()
     const parentLayout = this._parentLayout()
     const isMainAxis = parentLayout === 'VERTICAL'
-    const updates: Partial<SceneNode> = layout === 'HORIZONTAL'
-      ? { counterAxisSizing: v as SceneNode['counterAxisSizing'] }
-      : { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] }
+    const updates: Partial<SceneNode> =
+      layout === 'HORIZONTAL'
+        ? { counterAxisSizing: v as SceneNode['counterAxisSizing'] }
+        : { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] }
     if (isMainAxis) updates.layoutGrow = v === 'FILL' ? 1 : 0
     this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], updates)
   }
@@ -959,7 +962,9 @@ export class FigmaNodeProxy {
       if (maxDepth !== undefined && currentDepth >= maxDepth) {
         obj.childCount = children.length
       } else {
-        obj.children = children.map((c) => this[INTERNAL_API].wrapNode(c.id).toJSON(maxDepth, currentDepth + 1))
+        obj.children = children.map((c) =>
+          this[INTERNAL_API].wrapNode(c.id).toJSON(maxDepth, currentDepth + 1)
+        )
       }
     }
     return obj

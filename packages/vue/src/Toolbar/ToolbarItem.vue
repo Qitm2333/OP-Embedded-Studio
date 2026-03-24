@@ -15,9 +15,5 @@ const isActive = computed(() => activeTool.value === tool)
 </script>
 
 <template>
-  <slot
-    :active="isActive"
-    :select="() => setTool(tool)"
-    :tool="tool"
-  />
+  <slot :active="isActive" :select="() => setTool(tool)" :tool="tool" />
 </template>

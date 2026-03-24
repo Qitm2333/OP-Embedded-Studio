@@ -1,7 +1,7 @@
 import { parseColor } from '../color'
-import type { VariableType, VariableValue } from '../scene-graph'
-
 import { defineTool } from './schema'
+
+import type { VariableType, VariableValue } from '../scene-graph'
 
 export const listVariables = defineTool({
   name: 'list_variables',

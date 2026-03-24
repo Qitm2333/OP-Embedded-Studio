@@ -1,11 +1,13 @@
-import { defineCommand } from 'citty'
 import { basename, extname, resolve } from 'node:path'
+
+import { defineCommand } from 'citty'
 
 import { renderNodesToSVG, sceneNodeToJSX, selectionToJSX } from '@open-pencil/core'
 
-import { loadDocument, exportNodes, exportThumbnail } from '../headless'
 import { isAppMode, requireFile, rpc } from '../app-client'
 import { ok, printError } from '../format'
+import { loadDocument, exportNodes, exportThumbnail } from '../headless'
+
 import type { ExportFormat, JSXFormat } from '@open-pencil/core'
 
 const RASTER_FORMATS = ['PNG', 'JPG', 'WEBP']
@@ -34,15 +36,27 @@ async function writeAndLog(path: string, content: string | Uint8Array) {
 
 async function exportViaApp(format: string, args: ExportArgs) {
   if (format === 'SVG') {
-    const result = await rpc<{ svg: string }>('tool', { name: 'export_svg', args: { ids: args.node ? [args.node] : undefined } })
-    if (!result.svg) { printError('Nothing to export.'); process.exit(1) }
+    const result = await rpc<{ svg: string }>('tool', {
+      name: 'export_svg',
+      args: { ids: args.node ? [args.node] : undefined }
+    })
+    if (!result.svg) {
+      printError('Nothing to export.')
+      process.exit(1)
+    }
     await writeAndLog(resolve(args.output ?? 'export.svg'), result.svg)
     return
   }
 
   if (format === 'JSX') {
-    const result = await rpc<{ jsx: string }>('export_jsx', { nodeIds: args.node ? [args.node] : undefined, style: args.style })
-    if (!result.jsx) { printError('Nothing to export.'); process.exit(1) }
+    const result = await rpc<{ jsx: string }>('export_jsx', {
+      nodeIds: args.node ? [args.node] : undefined,
+      style: args.style
+    })
+    if (!result.jsx) {
+      printError('Nothing to export.')
+      process.exit(1)
+    }
     await writeAndLog(resolve(args.output ?? 'export.jsx'), result.jsx)
     return
   }
@@ -63,16 +77,23 @@ async function exportFromFile(format: string, args: ExportArgs) {
 
   const pages = graph.getPages()
   const page = args.page ? pages.find((p) => p.name === args.page) : pages[0]
-  if (!page) { printError(`Page "${args.page}" not found.`); process.exit(1) }
+  if (!page) {
+    printError(`Page "${args.page}" not found.`)
+    process.exit(1)
+  }
 
   const defaultName = basename(file, extname(file))
 
   if (format === 'JSX') {
     const nodeIds = args.node ? [args.node] : page.childIds
-    const jsxStr = nodeIds.length === 1
-      ? sceneNodeToJSX(nodeIds[0], graph, args.style as JSXFormat)
-      : selectionToJSX(nodeIds, graph, args.style as JSXFormat)
-    if (!jsxStr) { printError('Nothing to export (empty page or no visible nodes).'); process.exit(1) }
+    const jsxStr =
+      nodeIds.length === 1
+        ? sceneNodeToJSX(nodeIds[0], graph, args.style as JSXFormat)
+        : selectionToJSX(nodeIds, graph, args.style as JSXFormat)
+    if (!jsxStr) {
+      printError('Nothing to export (empty page or no visible nodes).')
+      process.exit(1)
+    }
     await writeAndLog(resolve(args.output ?? `${defaultName}.jsx`), jsxStr)
     return
   }
@@ -83,7 +104,10 @@ async function exportFromFile(format: string, args: ExportArgs) {
   if (format === 'SVG') {
     const nodeIds = args.node ? [args.node] : page.childIds
     const svgStr = renderNodesToSVG(graph, page.id, nodeIds)
-    if (!svgStr) { printError('Nothing to export (empty page or no visible nodes).'); process.exit(1) }
+    if (!svgStr) {
+      printError('Nothing to export (empty page or no visible nodes).')
+      process.exit(1)
+    }
     await writeAndLog(output, svgStr)
     return
   }
@@ -100,21 +124,51 @@ async function exportFromFile(format: string, args: ExportArgs) {
     })
   }
 
-  if (!data) { printError('Nothing to export (empty page or no visible nodes).'); process.exit(1) }
+  if (!data) {
+    printError('Nothing to export (empty page or no visible nodes).')
+    process.exit(1)
+  }
   await writeAndLog(output, data)
 }
 
 export default defineCommand({
   meta: { description: 'Export a .fig file to PNG, JPG, WEBP, SVG, or JSX' },
   args: {
-    file: { type: 'positional', description: '.fig file path (omit to connect to running app)', required: false },
-    output: { type: 'string', alias: 'o', description: 'Output file path (default: <name>.<format>)', required: false },
-    format: { type: 'string', alias: 'f', description: 'Export format: png, jpg, webp, svg, jsx (default: png)', default: 'png' },
+    file: {
+      type: 'positional',
+      description: '.fig file path (omit to connect to running app)',
+      required: false
+    },
+    output: {
+      type: 'string',
+      alias: 'o',
+      description: 'Output file path (default: <name>.<format>)',
+      required: false
+    },
+    format: {
+      type: 'string',
+      alias: 'f',
+      description: 'Export format: png, jpg, webp, svg, jsx (default: png)',
+      default: 'png'
+    },
     scale: { type: 'string', alias: 's', description: 'Export scale (default: 1)', default: '1' },
-    quality: { type: 'string', alias: 'q', description: 'Quality 0-100 for JPG/WEBP (default: 90)', required: false },
+    quality: {
+      type: 'string',
+      alias: 'q',
+      description: 'Quality 0-100 for JPG/WEBP (default: 90)',
+      required: false
+    },
     page: { type: 'string', description: 'Page name (default: first page)', required: false },
-    node: { type: 'string', description: 'Node ID to export (default: all top-level nodes)', required: false },
-    style: { type: 'string', description: 'JSX style: openpencil, tailwind (default: openpencil)', default: 'openpencil' },
+    node: {
+      type: 'string',
+      description: 'Node ID to export (default: all top-level nodes)',
+      required: false
+    },
+    style: {
+      type: 'string',
+      description: 'JSX style: openpencil, tailwind (default: openpencil)',
+      default: 'openpencil'
+    },
     thumbnail: { type: 'boolean', description: 'Export page thumbnail instead of full render' },
     width: { type: 'string', description: 'Thumbnail width (default: 1920)', default: '1920' },
     height: { type: 'string', description: 'Thumbnail height (default: 1080)', default: '1080' }

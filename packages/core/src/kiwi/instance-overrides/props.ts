@@ -1,6 +1,12 @@
-import type { OverrideContext, ComponentPropAssignment, ComponentPropRef, ComponentPropValue } from './types'
 import { guidToString } from '../kiwi-convert'
 import { resolveOverrideTarget, repopulateInstance } from './resolve'
+
+import type {
+  OverrideContext,
+  ComponentPropAssignment,
+  ComponentPropRef,
+  ComponentPropValue
+} from './types'
 
 function isEmptyPropValue(v: ComponentPropValue): boolean {
   return v.boolValue === undefined && v.textValue === undefined && v.guidValue === undefined
@@ -124,7 +130,13 @@ function applyInstanceDirectAssignments(
     if (!ownFigmaId) continue
     const ownAssignments = assignmentSources.get(ownFigmaId)
     if (ownAssignments) {
-      applyPropAssignments(ctx, node.id, assignmentsToValueMap(ctx, ownAssignments), propRefsMap, modified)
+      applyPropAssignments(
+        ctx,
+        node.id,
+        assignmentsToValueMap(ctx, ownAssignments),
+        propRefsMap,
+        modified
+      )
     }
   }
 }
@@ -156,7 +168,13 @@ function applyOverrideAssignments(
       const targetId = resolveOverrideTarget(ctx, instanceNodeId, guids)
       if (!targetId) continue
 
-      applyPropAssignments(ctx, targetId, assignmentsToValueMap(ctx, ov.componentPropAssignments, true), propRefsMap, modified)
+      applyPropAssignments(
+        ctx,
+        targetId,
+        assignmentsToValueMap(ctx, ov.componentPropAssignments, true),
+        propRefsMap,
+        modified
+      )
     }
   }
 }

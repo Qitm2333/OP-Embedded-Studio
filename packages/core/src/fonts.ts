@@ -1,5 +1,3 @@
-import type { CanvasKit, TypefaceFontProvider } from 'canvaskit-wasm'
-
 import {
   DEFAULT_FONT_FAMILY,
   IS_BROWSER,
@@ -9,7 +7,9 @@ import {
   CJK_GOOGLE_FONT,
   GOOGLE_FONTS_API_KEY
 } from './constants'
+
 import type { SceneGraph } from './scene-graph'
+import type { CanvasKit, TypefaceFontProvider } from 'canvaskit-wasm'
 
 export interface FontInfo {
   family: string
@@ -124,10 +124,7 @@ async function fetchGoogleFont(family: string, style: string): Promise<ArrayBuff
   return response.arrayBuffer()
 }
 
-async function findLocalFont(
-  family: string,
-  style?: string
-): Promise<ArrayBuffer | null> {
+async function findLocalFont(family: string, style?: string): Promise<ArrayBuffer | null> {
   if (!IS_BROWSER || !window.queryLocalFonts) return null
   try {
     const fonts = await window.queryLocalFonts()
@@ -242,9 +239,12 @@ function registerFontInBrowser(family: string, style: string, data: ArrayBuffer)
     weight: String(weight),
     style: italic
   })
-  face.load().then(() => document.fonts.add(face)).catch(() => {
-    console.warn(`Failed to load font "${family}" (${style})`)
-  })
+  face
+    .load()
+    .then(() => document.fonts.add(face))
+    .catch(() => {
+      console.warn(`Failed to load font "${family}" (${style})`)
+    })
 }
 
 export function styleToWeight(style: string): number {

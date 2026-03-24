@@ -14,11 +14,7 @@ import { hitTestCornerRotation } from '../shared/input/geometry'
 import { handleMoveMove, handleMoveUp } from '../shared/input/move'
 import { setupPanZoom } from '../shared/input/pan-zoom'
 import { applyResize } from '../shared/input/resize'
-import {
-  handleSelectDown,
-  updateHoverCursor,
-  type HitTestFns
-} from '../shared/input/select'
+import { handleSelectDown, updateHoverCursor, type HitTestFns } from '../shared/input/select'
 import { TOOL_TO_NODE } from '../shared/input/types'
 
 import type { DragMarquee, DragPan, DragRotate, DragState } from '../shared/input/types'

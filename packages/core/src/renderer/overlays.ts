@@ -9,7 +9,6 @@ import {
   MARQUEE_FILL_ALPHA,
   SELECTION_DASH_ALPHA,
   LAYOUT_INDICATOR_STROKE,
-
   TEXT_SELECTION_COLOR,
   TEXT_CARET_COLOR,
   TEXT_CARET_WIDTH,
@@ -21,12 +20,13 @@ import {
 } from '../constants'
 import { rotatedCorners } from '../geometry'
 import { drawNodeHighlightRect } from './highlight-rect'
+
 import type { SceneNode, SceneGraph } from '../scene-graph'
 import type { SnapGuide } from '../snap'
 import type { TextEditor } from '../text-editor'
 import type { Rect, Vector } from '../types'
-import type { Canvas } from 'canvaskit-wasm'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
+import type { Canvas } from 'canvaskit-wasm'
 
 export function drawHoverHighlight(
   r: SkiaRenderer,
@@ -43,9 +43,7 @@ export function drawHoverHighlight(
   const sy = abs.y * r.zoom + r.panY
 
   r.auxStroke.setStrokeWidth(1 / r.zoom)
-  r.auxStroke.setColor(
-    r.isComponentType(node.type) ? r.compColor() : r.selColor()
-  )
+  r.auxStroke.setColor(r.isComponentType(node.type) ? r.compColor() : r.selColor())
   r.auxStroke.setPathEffect(null)
 
   canvas.save()
@@ -85,10 +83,7 @@ export function drawEnteredContainer(
     const cy = (node.height / 2) * r.zoom
     canvas.rotate(node.rotation, cx, cy)
   }
-  canvas.drawRect(
-    r.ck.LTRBRect(0, 0, node.width * r.zoom, node.height * r.zoom),
-    r.auxStroke
-  )
+  canvas.drawRect(r.ck.LTRBRect(0, 0, node.width * r.zoom, node.height * r.zoom), r.auxStroke)
   canvas.restore()
 
   r.auxStroke.setPathEffect(null)
@@ -230,8 +225,7 @@ export function drawSelectionLabels(
   if (nodes.length === 1) {
     const node = nodes[0]
     const parentNode = node.parentId ? graph.getNode(node.parentId) : null
-    const isTopLevel =
-      !parentNode || parentNode.type === 'CANVAS' || parentNode.type === 'SECTION'
+    const isTopLevel = !parentNode || parentNode.type === 'CANVAS' || parentNode.type === 'SECTION'
     if (node.type === 'FRAME' && isTopLevel) {
       r.auxFill.setColor(r.selColor())
       canvas.drawText(node.name, sx1, sy1 - LABEL_OFFSET_Y, r.auxFill, r.labelFont)
@@ -370,11 +364,7 @@ export function drawGroupBounds(
   r.drawHandle(canvas, maxX, gmy)
 }
 
-export function getRotatedCorners(
-  r: SkiaRenderer,
-  n: SceneNode,
-  abs: Vector
-): Vector[] {
+export function getRotatedCorners(r: SkiaRenderer, n: SceneNode, abs: Vector): Vector[] {
   const cx = (abs.x + n.width / 2) * r.zoom + r.panX
   const cy = (abs.y + n.height / 2) * r.zoom + r.panY
   const hw = (n.width / 2) * r.zoom
@@ -394,11 +384,7 @@ export function drawHandle(r: SkiaRenderer, canvas: Canvas, x: number, y: number
   canvas.drawRect(rect, r.selectionPaint)
 }
 
-export function drawSnapGuides(
-  r: SkiaRenderer,
-  canvas: Canvas,
-  guides?: SnapGuide[]
-): void {
+export function drawSnapGuides(r: SkiaRenderer, canvas: Canvas, guides?: SnapGuide[]): void {
   if (!guides || guides.length === 0) return
 
   for (const guide of guides) {
@@ -513,10 +499,7 @@ export function drawTextEditOverlay(
       )
     )
     for (const sel of selRects) {
-      canvas.drawRect(
-        r.ck.LTRBRect(sel.x, sel.y, sel.x + sel.width, sel.y + sel.height),
-        r.auxFill
-      )
+      canvas.drawRect(r.ck.LTRBRect(sel.x, sel.y, sel.x + sel.width, sel.y + sel.height), r.auxFill)
     }
   }
 
@@ -524,12 +507,7 @@ export function drawTextEditOverlay(
     const caret = editor.getCaretRect()
     if (caret) {
       r.auxFill.setColor(
-        r.ck.Color4f(
-          TEXT_CARET_COLOR.r,
-          TEXT_CARET_COLOR.g,
-          TEXT_CARET_COLOR.b,
-          TEXT_CARET_COLOR.a
-        )
+        r.ck.Color4f(TEXT_CARET_COLOR.r, TEXT_CARET_COLOR.g, TEXT_CARET_COLOR.b, TEXT_CARET_COLOR.a)
       )
       const w = TEXT_CARET_WIDTH / r.zoom
       canvas.drawRect(
