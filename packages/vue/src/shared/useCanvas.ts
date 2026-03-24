@@ -101,6 +101,8 @@ export function useCanvas(
 
     await new Promise((r) => requestAnimationFrame(r))
     createSurface(canvas)
+    await renderer?.loadFonts()
+    if (!destroyed) renderNow()
   }
 
   function sizeCanvas(canvas: HTMLCanvasElement) {
@@ -151,8 +153,6 @@ export function useCanvas(
     const glCtx = canvas.getContext('webgl2') ?? null
     renderer = new SkiaRenderer(ck, surface, glCtx)
     editor.setCanvasKit(ck, renderer)
-    void renderer.loadFonts().then(() => renderNow())
-    renderNow()
     canvas.dataset.ready = '1'
     options?.onReady?.()
   }
