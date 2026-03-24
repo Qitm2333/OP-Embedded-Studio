@@ -13,7 +13,7 @@ import {
   type AcceptableValue
 } from 'reka-ui'
 
-import { useFontPicker } from '../FontPicker/useFontPicker'
+import { useFontPicker } from '@open-pencil/vue/FontPicker/useFontPicker'
 
 const props = defineProps<{
   listFamilies: () => Promise<string[]>

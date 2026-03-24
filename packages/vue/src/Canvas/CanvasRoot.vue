@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { useEditor } from '../context/editorContext'
-import { useCanvas } from '../shared/useCanvas'
+import { useEditor } from '@open-pencil/vue/context/editorContext'
+import { useCanvas } from '@open-pencil/vue/shared/useCanvas'
 import { provideCanvas } from './context'
 
-import type { UseCanvasOptions } from '../shared/useCanvas'
+import type { UseCanvasOptions } from '@open-pencil/vue/shared/useCanvas'
 
 const props = withDefaults(defineProps<UseCanvasOptions>(), {
   showRulers: undefined

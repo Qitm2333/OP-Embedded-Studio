@@ -8,18 +8,26 @@ import {
   DEFAULT_TEXT_HEIGHT,
   degToRad
 } from '@open-pencil/core'
+import { handleDrawMove, handleDrawUp } from '@open-pencil/vue/shared/input/draw'
+import { hitTestCornerRotation } from '@open-pencil/vue/shared/input/geometry'
+import { handleMoveMove, handleMoveUp } from '@open-pencil/vue/shared/input/move'
+import { setupPanZoom } from '@open-pencil/vue/shared/input/pan-zoom'
+import { applyResize } from '@open-pencil/vue/shared/input/resize'
+import {
+  handleSelectDown,
+  updateHoverCursor,
+  type HitTestFns
+} from '@open-pencil/vue/shared/input/select'
+import { TOOL_TO_NODE } from '@open-pencil/vue/shared/input/types'
 
-import { handleDrawMove, handleDrawUp } from '../shared/input/draw'
-import { hitTestCornerRotation } from '../shared/input/geometry'
-import { handleMoveMove, handleMoveUp } from '../shared/input/move'
-import { setupPanZoom } from '../shared/input/pan-zoom'
-import { applyResize } from '../shared/input/resize'
-import { handleSelectDown, updateHoverCursor, type HitTestFns } from '../shared/input/select'
-import { TOOL_TO_NODE } from '../shared/input/types'
-
-import type { DragMarquee, DragPan, DragRotate, DragState } from '../shared/input/types'
 import type { SceneNode } from '@open-pencil/core'
 import type { Editor } from '@open-pencil/core/editor'
+import type {
+  DragMarquee,
+  DragPan,
+  DragRotate,
+  DragState
+} from '@open-pencil/vue/shared/input/types'
 
 export function useCanvasInput(
   canvasRef: Ref<HTMLCanvasElement | null>,

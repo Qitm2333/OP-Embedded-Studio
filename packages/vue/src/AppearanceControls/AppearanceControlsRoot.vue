@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useAppearance } from '../controls/useAppearance'
+import { useAppearance } from '@open-pencil/vue/controls/useAppearance'
 
 const ctx = useAppearance()
 </script>

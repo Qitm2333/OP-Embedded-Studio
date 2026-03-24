@@ -1,8 +1,8 @@
 import { computed } from 'vue'
 
-import { useEditor } from '../context/editorContext'
-import { useSelectionState } from '../selection/useSelectionState'
-import { useEditorCommands } from './useEditorCommands'
+import { useEditorCommands } from '@open-pencil/vue/commands/useEditorCommands'
+import { useEditor } from '@open-pencil/vue/context/editorContext'
+import { useSelectionState } from '@open-pencil/vue/selection/useSelectionState'
 
 export interface MenuActionNode {
   separator?: false

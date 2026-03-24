@@ -1,9 +1,9 @@
 import { computed } from 'vue'
 
-import { useEditor } from '../context/editorContext'
-import { usePageList } from '../PageList/usePageList'
-import { useSelectionCapabilities } from '../selection/useSelectionCapabilities'
-import { useSelectionState } from '../selection/useSelectionState'
+import { useEditor } from '@open-pencil/vue/context/editorContext'
+import { usePageList } from '@open-pencil/vue/PageList/usePageList'
+import { useSelectionCapabilities } from '@open-pencil/vue/selection/useSelectionCapabilities'
+import { useSelectionState } from '@open-pencil/vue/selection/useSelectionState'
 
 import type { Component, ComputedRef } from 'vue'
 

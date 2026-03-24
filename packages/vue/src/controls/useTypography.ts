@@ -1,10 +1,9 @@
 import { computed } from 'vue'
 
 import { FONT_WEIGHT_NAMES, weightToStyle } from '@open-pencil/core'
-
-import { useEditor } from '../context/editorContext'
-import { useSceneComputed } from '../internal/useSceneComputed'
-import { useNodeFontStatus } from '../shared/useFontStatus'
+import { useEditor } from '@open-pencil/vue/context/editorContext'
+import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
+import { useNodeFontStatus } from '@open-pencil/vue/shared/useFontStatus'
 
 import type { SceneNode, TextDecoration } from '@open-pencil/core'
 

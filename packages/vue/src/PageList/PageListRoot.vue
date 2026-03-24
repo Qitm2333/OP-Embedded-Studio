@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { usePageList } from '../PageList/usePageList'
+import { usePageList } from '@open-pencil/vue/PageList/usePageList'
 
 const props = defineProps<{
   dividerPattern?: RegExp

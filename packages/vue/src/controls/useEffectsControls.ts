@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 
-import { useEditor } from '../context/editorContext'
+import { useEditor } from '@open-pencil/vue/context/editorContext'
 
 import type { Color, Effect, SceneNode } from '@open-pencil/core'
 

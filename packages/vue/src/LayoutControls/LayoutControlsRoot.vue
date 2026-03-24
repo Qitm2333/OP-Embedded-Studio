@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useLayout } from '../controls/useLayout'
+import { useLayout } from '@open-pencil/vue/controls/useLayout'
 
 const ctx = useLayout()
 </script>

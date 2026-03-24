@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 
-import { useSelectionState } from '../selection/useSelectionState'
+import { useSelectionState } from '@open-pencil/vue/selection/useSelectionState'
 
 export function useSelectionCapabilities() {
   const {
