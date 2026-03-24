@@ -1,14 +1,22 @@
 ---
 layout: doc
-title: AI & Automation
-description: Every operation in OpenPencil is scriptable — AI chat, CLI, JSX renderer, MCP server, real-time collaboration.
+title: Automation
+description: AI chat, CLI, JSX renderer, MCP server, and other automation surfaces built on the OpenPencil editor engine.
 ---
 
-# AI & Automation
+# Automation
 
 OpenPencil treats design files as data. Every operation available in the editor — creating shapes, setting fills, managing auto-layout, exporting assets — is also available from the terminal, from AI agents, and from code. No plugins to install, no API keys, no waiting list.
 
 The editor UI and the automation interfaces use the same engine. If you can do it by clicking, you can do it by scripting.
+
+## The bigger idea
+
+OpenPencil is not just meant to be a design app.
+
+It is also meant to be a toolkit: something you can embed into other products, wrap with your own UI, and use to build editing workflows that fit your own domain.
+
+That is why the automation surface matters. The app, the CLI, the AI tools, the JSX renderer, the MCP server, and the SDK all build on the same underlying editor engine.
 
 ## AI Chat
 
@@ -21,6 +29,12 @@ The built-in assistant has access to 87 tools that cover the full surface of the
 Real-time multiplayer editing over peer-to-peer WebRTC. No server, no account. Share a room link and edit together with live cursors and follow mode. Document state syncs via CRDT, so edits merge automatically even on flaky connections.
 
 [Collaboration →](./collaboration)
+
+## Vue SDK
+
+Build OpenPencil-powered editors with the same Vue SDK the app uses internally. The SDK exposes editor context, canvas wiring, selection state, command models, property-panel composables, and headless primitives.
+
+[Vue SDK →](./sdk/)
 
 ## JSX Renderer
 

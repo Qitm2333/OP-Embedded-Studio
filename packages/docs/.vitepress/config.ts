@@ -26,6 +26,7 @@ interface SidebarLabels {
 }
 
 interface ProgrammableLabels {
+  overview: string
   cli: string
   inspecting: string
   exporting: string
@@ -38,12 +39,84 @@ interface ProgrammableLabels {
 }
 
 interface NavLabels {
+  guide: string
   userGuide: string
   programmable: string
+  sdk: string
   reference: string
   development: string
   openApp: string
 }
+
+const SDK_COMPONENT_PAGES = [
+  { text: 'CanvasRoot', slug: 'canvas-root' },
+  { text: 'CanvasSurface', slug: 'canvas-surface' },
+  { text: 'LayerTreeRoot', slug: 'layer-tree-root' },
+  { text: 'LayerTreeItem', slug: 'layer-tree-item' },
+  { text: 'ToolbarRoot', slug: 'toolbar-root' },
+  { text: 'ToolbarItem', slug: 'toolbar-item' },
+  { text: 'PageListRoot', slug: 'page-list-root' },
+  { text: 'PropertyListRoot', slug: 'property-list-root' },
+  { text: 'PropertyListItem', slug: 'property-list-item' },
+  { text: 'ColorPickerRoot', slug: 'color-picker-root' },
+  { text: 'ColorInputRoot', slug: 'color-input-root' },
+  { text: 'FillPickerRoot', slug: 'fill-picker-root' },
+  { text: 'FontPickerRoot', slug: 'font-picker-root' },
+  { text: 'GradientEditorRoot', slug: 'gradient-editor-root' },
+  { text: 'GradientEditorBar', slug: 'gradient-editor-bar' },
+  { text: 'GradientEditorStop', slug: 'gradient-editor-stop' },
+  { text: 'ScrubInputRoot', slug: 'scrub-input-root' },
+  { text: 'ScrubInputField', slug: 'scrub-input-field' },
+  { text: 'ScrubInputDisplay', slug: 'scrub-input-display' },
+  { text: 'LayoutControlsRoot', slug: 'layout-controls-root' },
+  { text: 'AppearanceControlsRoot', slug: 'appearance-controls-root' },
+  { text: 'PositionControlsRoot', slug: 'position-controls-root' },
+  { text: 'TypographyControlsRoot', slug: 'typography-controls-root' },
+] as const
+
+const SDK_COMPOSABLE_PAGES = [
+  { text: 'provideEditor', slug: 'provide-editor' },
+  { text: 'useEditor', slug: 'use-editor' },
+  { text: 'useCanvas', slug: 'use-canvas' },
+  { text: 'useCanvasInput', slug: 'use-canvas-input' },
+  { text: 'useTextEdit', slug: 'use-text-edit' },
+  { text: 'useSelectionState', slug: 'use-selection-state' },
+  { text: 'useSelectionCapabilities', slug: 'use-selection-capabilities' },
+  { text: 'useEditorCommands', slug: 'use-editor-commands' },
+  { text: 'useMenuModel', slug: 'use-menu-model' },
+  { text: 'usePosition', slug: 'use-position' },
+  { text: 'useLayout', slug: 'use-layout' },
+  { text: 'useAppearance', slug: 'use-appearance' },
+  { text: 'useTypography', slug: 'use-typography' },
+  { text: 'useExport', slug: 'use-export' },
+  { text: 'useFillControls', slug: 'use-fill-controls' },
+  { text: 'useStrokeControls', slug: 'use-stroke-controls' },
+  { text: 'useEffectsControls', slug: 'use-effects-controls' },
+  { text: 'useVariablesEditor', slug: 'use-variables-editor' },
+  { text: 'usePageList', slug: 'use-page-list' },
+] as const
+
+const SDK_ADVANCED_PAGES = [
+  { text: 'useNodeProps', slug: 'use-node-props' },
+  { text: 'useSceneComputed', slug: 'use-scene-computed' },
+  { text: 'useFillVariableBinding', slug: 'use-fill-variable-binding' },
+  { text: 'useFillPicker', slug: 'use-fill-picker' },
+  { text: 'useGradientStops', slug: 'use-gradient-stops' },
+  { text: 'useFontPicker', slug: 'use-font-picker' },
+  { text: 'usePropScrub', slug: 'use-prop-scrub' },
+  { text: 'useLayerDrag', slug: 'use-layer-drag' },
+  { text: 'useInlineRename', slug: 'use-inline-rename' },
+  { text: 'useToolbarState', slug: 'use-toolbar-state' },
+  { text: 'useNodeFontStatus', slug: 'use-node-font-status' },
+  { text: 'useCanvasDrop', slug: 'use-canvas-drop' },
+  { text: 'extractImageFilesFromClipboard', slug: 'extract-image-files-from-clipboard' },
+  { text: 'toolCursor', slug: 'tool-cursor' },
+  { text: 'useCanvasContext', slug: 'use-canvas-context' },
+  { text: 'useLayerTree', slug: 'use-layer-tree' },
+  { text: 'useToolbar', slug: 'use-toolbar' },
+  { text: 'usePropertyList', slug: 'use-property-list' },
+  { text: 'useScrubInput', slug: 'use-scrub-input' },
+] as const
 
 const userGuideSidebar = (prefix: string, l: SidebarLabels): DefaultTheme.SidebarItem[] => [
   {
@@ -78,7 +151,14 @@ const userGuideSidebar = (prefix: string, l: SidebarLabels): DefaultTheme.Sideba
   },
 ]
 
-const programmableSidebar = (prefix: string, p: ProgrammableLabels): DefaultTheme.SidebarItem[] => [
+const programmableSidebar = (
+  prefix: string,
+  p: ProgrammableLabels,
+): DefaultTheme.SidebarItem[] => [
+  {
+    text: p.overview,
+    link: `${prefix}/programmable/`,
+  },
   {
     text: p.aiChat,
     link: `${prefix}/programmable/ai-chat`,
@@ -106,6 +186,57 @@ const programmableSidebar = (prefix: string, p: ProgrammableLabels): DefaultThem
   },
 ]
 
+
+const sdkSidebar = (prefix: string): DefaultTheme.SidebarItem[] => [
+  {
+    text: 'Vue SDK',
+    items: [
+      { text: 'Overview', link: `${prefix}/programmable/sdk/` },
+      { text: 'Getting Started', link: `${prefix}/programmable/sdk/getting-started` },
+      { text: 'Architecture', link: `${prefix}/programmable/sdk/architecture` },
+      { text: 'Custom Shell', link: `${prefix}/programmable/sdk/guides/custom-editor-shell` },
+      { text: 'Property Panels', link: `${prefix}/programmable/sdk/guides/property-panels` },
+      { text: 'Navigation Panels', link: `${prefix}/programmable/sdk/guides/navigation-panels` },
+      {
+        text: 'API Reference',
+        items: [
+          { text: 'Overview', link: `${prefix}/programmable/sdk/api/` },
+          {
+            text: 'Components',
+            items: [
+              { text: 'Overview', link: `${prefix}/programmable/sdk/api/components/` },
+              ...SDK_COMPONENT_PAGES.map((page) => ({
+                text: page.text,
+                link: `${prefix}/programmable/sdk/api/components/${page.slug}`,
+              })),
+            ],
+          },
+          {
+            text: 'Composables',
+            items: [
+              { text: 'Overview', link: `${prefix}/programmable/sdk/api/composables/` },
+              ...SDK_COMPOSABLE_PAGES.map((page) => ({
+                text: page.text,
+                link: `${prefix}/programmable/sdk/api/composables/${page.slug}`,
+              })),
+            ],
+          },
+          {
+            text: 'Advanced',
+            items: [
+              { text: 'Overview', link: `${prefix}/programmable/sdk/api/advanced/` },
+              ...SDK_ADVANCED_PAGES.map((page) => ({
+                text: page.text,
+                link: `${prefix}/programmable/sdk/api/advanced/${page.slug}`,
+              })),
+            ],
+          },
+        ],
+      },
+    ],
+  },
+]
+
 const guideSidebar = (prefix: string, l: SidebarLabels): DefaultTheme.SidebarItem[] => [
   {
     text: l.guide,
@@ -120,12 +251,11 @@ const guideSidebar = (prefix: string, l: SidebarLabels): DefaultTheme.SidebarIte
   },
 ]
 
-const referenceSidebar = (prefix: string, label: string, l: SidebarLabels): DefaultTheme.SidebarItem[] => [
+const referenceSidebar = (prefix: string, label: string): DefaultTheme.SidebarItem[] => [
   {
     text: label,
     items: [
       { text: 'Keyboard Shortcuts', link: `${prefix}/reference/keyboard-shortcuts` },
-      { text: l.contextMenu, link: `${prefix}/user-guide/context-menu` },
       { text: 'CLI', link: `${prefix}/reference/cli` },
       { text: 'Node Types', link: `${prefix}/reference/node-types` },
       { text: 'Scene Graph', link: `${prefix}/reference/scene-graph` },
@@ -146,13 +276,13 @@ const developmentSidebar = (prefix: string, label: string): DefaultTheme.Sidebar
   },
 ]
 
-const EN_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Inspecting Files', exporting: 'Exporting', analyzing: 'Analyzing Designs', scripting: 'Scripting', jsxRenderer: 'JSX Renderer', mcpServer: 'MCP Server', aiChat: 'AI Chat', collaboration: 'Collaboration' }
-const DE_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Dateien inspizieren', exporting: 'Exportieren', analyzing: 'Designs analysieren', scripting: 'Skripte', jsxRenderer: 'JSX-Renderer', mcpServer: 'MCP-Server', aiChat: 'KI-Chat', collaboration: 'Zusammenarbeit' }
-const IT_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Ispezione file', exporting: 'Esportazione', analyzing: 'Analisi design', scripting: 'Scripting', jsxRenderer: 'Renderer JSX', mcpServer: 'Server MCP', aiChat: 'Chat IA', collaboration: 'Collaborazione' }
-const FR_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Inspecter les fichiers', exporting: 'Exporter', analyzing: 'Analyser les designs', scripting: 'Scripts', jsxRenderer: 'Moteur JSX', mcpServer: 'Serveur MCP', aiChat: 'Chat IA', collaboration: 'Collaboration' }
-const ES_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Inspeccionar archivos', exporting: 'Exportar', analyzing: 'Analizar diseños', scripting: 'Scripts', jsxRenderer: 'Renderizador JSX', mcpServer: 'Servidor MCP', aiChat: 'Chat IA', collaboration: 'Colaboración' }
-const PL_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Inspekcja plików', exporting: 'Eksportowanie', analyzing: 'Analiza projektów', scripting: 'Skrypty', jsxRenderer: 'Renderer JSX', mcpServer: 'Serwer MCP', aiChat: 'Czat AI', collaboration: 'Współpraca' }
-const RU_PROG: ProgrammableLabels = { cli: 'CLI', inspecting: 'Инспекция файлов', exporting: 'Экспорт', analyzing: 'Анализ дизайна', scripting: 'Скрипты', jsxRenderer: 'JSX-рендерер', mcpServer: 'MCP-сервер', aiChat: 'ИИ-чат', collaboration: 'Совместная работа' }
+const EN_PROG: ProgrammableLabels = { overview: 'Overview', cli: 'CLI', inspecting: 'Inspecting Files', exporting: 'Exporting', analyzing: 'Analyzing Designs', scripting: 'Scripting', jsxRenderer: 'JSX Renderer', mcpServer: 'MCP Server', aiChat: 'AI Chat', collaboration: 'Collaboration' }
+const DE_PROG: ProgrammableLabels = { overview: 'Überblick', cli: 'CLI', inspecting: 'Dateien inspizieren', exporting: 'Exportieren', analyzing: 'Designs analysieren', scripting: 'Skripte', jsxRenderer: 'JSX-Renderer', mcpServer: 'MCP-Server', aiChat: 'KI-Chat', collaboration: 'Zusammenarbeit' }
+const IT_PROG: ProgrammableLabels = { overview: 'Panoramica', cli: 'CLI', inspecting: 'Ispezione file', exporting: 'Esportazione', analyzing: 'Analisi design', scripting: 'Scripting', jsxRenderer: 'Renderer JSX', mcpServer: 'Server MCP', aiChat: 'Chat IA', collaboration: 'Collaborazione' }
+const FR_PROG: ProgrammableLabels = { overview: 'Vue d’ensemble', cli: 'CLI', inspecting: 'Inspecter les fichiers', exporting: 'Exporter', analyzing: 'Analyser les designs', scripting: 'Scripts', jsxRenderer: 'Moteur JSX', mcpServer: 'Serveur MCP', aiChat: 'Chat IA', collaboration: 'Collaboration' }
+const ES_PROG: ProgrammableLabels = { overview: 'Resumen', cli: 'CLI', inspecting: 'Inspeccionar archivos', exporting: 'Exportar', analyzing: 'Analizar diseños', scripting: 'Scripts', jsxRenderer: 'Renderizador JSX', mcpServer: 'Servidor MCP', aiChat: 'Chat IA', collaboration: 'Colaboración' }
+const PL_PROG: ProgrammableLabels = { overview: 'Przegląd', cli: 'CLI', inspecting: 'Inspekcja plików', exporting: 'Eksportowanie', analyzing: 'Analiza projektów', scripting: 'Skrypty', jsxRenderer: 'Renderer JSX', mcpServer: 'Serwer MCP', aiChat: 'Czat AI', collaboration: 'Współpraca' }
+const RU_PROG: ProgrammableLabels = { overview: 'Обзор', cli: 'CLI', inspecting: 'Инспекция файлов', exporting: 'Экспорт', analyzing: 'Анализ дизайна', scripting: 'Скрипты', jsxRenderer: 'JSX-рендерер', mcpServer: 'MCP-сервер', aiChat: 'ИИ-чат', collaboration: 'Совместная работа' }
 
 const localeThemeConfig = (
   prefix: string,
@@ -161,16 +291,19 @@ const localeThemeConfig = (
   prog: ProgrammableLabels,
 ): DefaultTheme.Config => ({
   nav: [
+    { text: nav.guide, link: `${prefix}/guide/getting-started` },
     { text: nav.userGuide, link: `${prefix}/user-guide/` },
     { text: nav.programmable, link: `${prefix}/programmable/` },
+    { text: nav.sdk, link: `${prefix}/programmable/sdk/` },
     { text: nav.reference, link: `${prefix}/reference/keyboard-shortcuts` },
     { text: nav.development, link: `${prefix}/development/contributing` },
     { text: nav.openApp, link: 'https://app.openpencil.dev' },
   ],
   sidebar: {
     [`${prefix}/user-guide/`]: userGuideSidebar(prefix, sidebar),
+    [`${prefix}/programmable/sdk/`]: sdkSidebar(prefix),
     [`${prefix}/programmable/`]: programmableSidebar(prefix, prog),
-    [`${prefix}/reference/`]: referenceSidebar(prefix, nav.reference, sidebar),
+    [`${prefix}/reference/`]: referenceSidebar(prefix, nav.reference),
     [`${prefix}/`]: [
       ...guideSidebar(prefix, sidebar),
       ...developmentSidebar(prefix, nav.development),
@@ -302,37 +435,37 @@ export default defineConfig({
       label: 'Deutsch',
       lang: 'de',
       description: 'Open-Source, KI-nativer Design-Editor. Figma-Alternative.',
-      themeConfig: localeThemeConfig('/de', { userGuide: 'Benutzerhandbuch', programmable: 'KI & Automatisierung', reference: 'Referenz', development: 'Entwicklung', openApp: 'App öffnen' }, DE, DE_PROG),
+      themeConfig: localeThemeConfig('/de', { guide: 'Guide', userGuide: 'Benutzerhandbuch', programmable: 'Automation', sdk: 'SDK', reference: 'Referenz', development: 'Entwicklung', openApp: 'App öffnen' }, DE, DE_PROG),
     },
     it: {
       label: 'Italiano',
       lang: 'it',
       description: 'Editor di design open-source, IA-nativo. Alternativa a Figma.',
-      themeConfig: localeThemeConfig('/it', { userGuide: 'Guida utente', programmable: 'IA & Automazione', reference: 'Riferimento', development: 'Sviluppo', openApp: 'Apri app' }, IT, IT_PROG),
+      themeConfig: localeThemeConfig('/it', { guide: 'Guida', userGuide: 'Guida utente', programmable: 'Automation', sdk: 'SDK', reference: 'Riferimento', development: 'Sviluppo', openApp: 'Apri app' }, IT, IT_PROG),
     },
     fr: {
       label: 'Français',
       lang: 'fr',
       description: 'Éditeur de design open-source, IA-natif. Alternative à Figma.',
-      themeConfig: localeThemeConfig('/fr', { userGuide: 'Guide utilisateur', programmable: 'IA & Automatisation', reference: 'Référence', development: 'Développement', openApp: "Ouvrir l'app" }, FR, FR_PROG),
+      themeConfig: localeThemeConfig('/fr', { guide: 'Guide', userGuide: 'Guide utilisateur', programmable: 'Automation', sdk: 'SDK', reference: 'Référence', development: 'Développement', openApp: "Ouvrir l'app" }, FR, FR_PROG),
     },
     es: {
       label: 'Español',
       lang: 'es',
       description: 'Editor de diseño open-source, IA-nativo. Alternativa a Figma.',
-      themeConfig: localeThemeConfig('/es', { userGuide: 'Guía del usuario', programmable: 'IA & Automatización', reference: 'Referencia', development: 'Desarrollo', openApp: 'Abrir app' }, ES, ES_PROG),
+      themeConfig: localeThemeConfig('/es', { guide: 'Guía', userGuide: 'Guía del usuario', programmable: 'Automation', sdk: 'SDK', reference: 'Referencia', development: 'Desarrollo', openApp: 'Abrir app' }, ES, ES_PROG),
     },
     pl: {
       label: 'Polski',
       lang: 'pl',
       description: "Open-source'owy edytor graficzny z natywnym AI. Alternatywa dla Figmy.",
-      themeConfig: localeThemeConfig('/pl', { userGuide: 'Podręcznik', programmable: 'AI i automatyzacja', reference: 'Referencja', development: 'Rozwój', openApp: 'Otwórz app' }, PL, PL_PROG),
+      themeConfig: localeThemeConfig('/pl', { guide: 'Przewodnik', userGuide: 'Podręcznik', programmable: 'Automation', sdk: 'SDK', reference: 'Referencja', development: 'Rozwój', openApp: 'Otwórz app' }, PL, PL_PROG),
     },
     ru: {
       label: 'Русский',
       lang: 'ru',
       description: 'Дизайн-редактор с открытым исходным кодом. Альтернатива Figma с встроенным ИИ.',
-      themeConfig: localeThemeConfig('/ru', { userGuide: 'Руководство', programmable: 'ИИ и автоматизация', reference: 'Справочник', development: 'Разработка', openApp: 'Открыть приложение' }, RU, RU_PROG),
+      themeConfig: localeThemeConfig('/ru', { guide: 'Руководство', userGuide: 'Руководство', programmable: 'Automation', sdk: 'SDK', reference: 'Справочник', development: 'Разработка', openApp: 'Открыть приложение' }, RU, RU_PROG),
     },
   },
 
@@ -340,8 +473,10 @@ export default defineConfig({
     search: { provider: 'local' },
 
     nav: [
+      { text: 'Guide', link: '/guide/getting-started' },
       { text: 'User Guide', link: '/user-guide/' },
-      { text: 'AI & Automation', link: '/programmable/' },
+      { text: 'Automation', link: '/programmable/' },
+      { text: 'SDK', link: '/programmable/sdk/' },
       { text: 'Reference', link: '/reference/keyboard-shortcuts' },
       { text: 'Development', link: '/development/contributing' },
       { text: 'Open App', link: 'https://app.openpencil.dev' },
@@ -349,8 +484,9 @@ export default defineConfig({
 
     sidebar: {
       '/user-guide/': userGuideSidebar('', EN),
+      '/programmable/sdk/': sdkSidebar(''),
       '/programmable/': programmableSidebar('', EN_PROG),
-      '/reference/': referenceSidebar('', 'Reference', EN),
+      '/reference/': referenceSidebar('', 'Reference'),
       '/': [
         ...guideSidebar('', EN),
         {

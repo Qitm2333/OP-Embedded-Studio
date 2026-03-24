@@ -1,6 +1,6 @@
 # OpenPencil
 
-Open-source design editor. Opens Figma files, built-in AI, fully programmable.
+Open-source design editor. Opens Figma files, built-in AI, fully programmable, and designed as a toolkit for building custom editors.
 
 > **Status:** Active development. Not ready for production use.
 
@@ -23,6 +23,7 @@ Or download from the [releases page](https://github.com/open-pencil/open-pencil/
 - **Opens .fig files** — read and write native Figma files, copy & paste nodes between apps
 - **AI builds designs** — describe what you want in chat, 90+ tools create and modify nodes. Connect Anthropic, OpenAI, Google AI, OpenRouter, or any compatible endpoint
 - **Fully programmable** — headless CLI, Figma Plugin API via `eval`, MCP server for AI agents
+- **Toolkit for custom editors** — Vue SDK primitives and composables for embedding OpenPencil into other apps or building workflow-specific editing surfaces
 - **Real-time collaboration** — P2P via WebRTC, no server, no account. Cursors, presence, follow mode
 - **Auto layout & CSS Grid** — flex and grid layout via Yoga WASM, with gap, padding, alignment, track sizing
 - **Tailwind CSS export** — export any selection as HTML with Tailwind v4 utility classes
