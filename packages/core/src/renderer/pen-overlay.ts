@@ -1,12 +1,9 @@
-import {
-  PEN_HANDLE_RADIUS,
-  PEN_VERTEX_RADIUS,
-  PEN_CLOSE_RADIUS_BOOST,
-} from '../constants'
+import { PEN_HANDLE_RADIUS, PEN_VERTEX_RADIUS, PEN_CLOSE_RADIUS_BOOST } from '../constants'
+
 import type { SceneGraph } from '../scene-graph'
 import type { Vector } from '../types'
-import type { Canvas, Paint } from 'canvaskit-wasm'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
+import type { Canvas, Paint } from 'canvaskit-wasm'
 
 type ToScreenFn = (x: number, y: number) => Vector
 

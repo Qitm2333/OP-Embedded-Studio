@@ -7,19 +7,20 @@ export type {
   ComponentPropValue,
   DerivedSymbolOverride,
   SymbolData,
-  SymbolOverride,
+  SymbolOverride
 } from './types'
 
-import type { SceneGraph } from '../../scene-graph'
-import type { InstanceNodeChange, OverrideContext, ComponentPropValue } from './types'
 import { guidToString } from '../kiwi-convert'
+import { applyConstraintScaling } from './constraints'
+import { applyDerivedSymbolData } from './dsd'
 import { populateInstances } from './populate'
+import { applyComponentProperties } from './props'
 import { preComputeRoots } from './resolve'
 import { applySymbolOverrides } from './symbol-overrides'
 import { propagateOverridesTransitively } from './sync'
-import { applyComponentProperties } from './props'
-import { applyDerivedSymbolData } from './dsd'
-import { applyConstraintScaling } from './constraints'
+
+import type { SceneGraph } from '../../scene-graph'
+import type { InstanceNodeChange, OverrideContext, ComponentPropValue } from './types'
 
 /**
  * Identify nodes whose kiwi NC has explicit property values that DIFFER
@@ -39,7 +40,8 @@ function buildKiwiPropertyNodes(
     const comp = graph.getNode(node.componentId)
     if (!comp) continue
     const hasDiffFills = nc.fillPaints !== undefined && node.fills !== comp.fills
-    const hasDiffRadius = (nc.cornerRadius !== undefined || nc.rectangleCornerRadiiIndependent !== undefined) &&
+    const hasDiffRadius =
+      (nc.cornerRadius !== undefined || nc.rectangleCornerRadiiIndependent !== undefined) &&
       node.cornerRadius !== comp.cornerRadius
     const hasDiffVisible = nc.visible === false && comp.visible
     if (hasDiffFills || hasDiffRadius || hasDiffVisible) result.add(nodeId)
@@ -86,7 +88,7 @@ function buildOverrideContext(
     preComputedRoot: new Map(),
     componentIdRoot: new Map(),
     swappedInstances: new Set(),
-    kiwiPropertyNodes,
+    kiwiPropertyNodes
   }
 }
 
@@ -127,7 +129,13 @@ export function populateAndApplyOverrides(
 
   const propModified = applyComponentProperties(ctx)
   if (propModified.size > 0) {
-    propagateOverridesTransitively(graph, propModified, ctx.swappedInstances, ctx.componentIdRoot, overriddenNodes)
+    propagateOverridesTransitively(
+      graph,
+      propModified,
+      ctx.swappedInstances,
+      ctx.componentIdRoot,
+      overriddenNodes
+    )
   }
 
   applyDerivedSymbolData(ctx)

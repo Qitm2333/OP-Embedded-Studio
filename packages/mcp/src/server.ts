@@ -185,15 +185,22 @@ export function startServer(options: ServerOptions = {}) {
   const app = new Hono()
 
   if (corsOrigin) {
-    app.use('*', cors({
-      origin: corsOrigin,
-      allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-      allowHeaders: [
-        'Content-Type', 'Authorization', 'x-mcp-token',
-        'mcp-session-id', 'Last-Event-ID', 'mcp-protocol-version'
-      ],
-      exposeHeaders: ['mcp-session-id', 'mcp-protocol-version']
-    }))
+    app.use(
+      '*',
+      cors({
+        origin: corsOrigin,
+        allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+        allowHeaders: [
+          'Content-Type',
+          'Authorization',
+          'x-mcp-token',
+          'mcp-session-id',
+          'Last-Event-ID',
+          'mcp-protocol-version'
+        ],
+        exposeHeaders: ['mcp-session-id', 'mcp-protocol-version']
+      })
+    )
   } else {
     app.use('*', cors())
   }
@@ -259,7 +266,13 @@ export function startServer(options: ServerOptions = {}) {
             const r = res.result as Record<string, unknown> | undefined
             if (r && 'base64' in r && 'mimeType' in r) {
               return {
-                content: [{ type: 'image' as const, data: r.base64 as string, mimeType: r.mimeType as string }]
+                content: [
+                  {
+                    type: 'image' as const,
+                    data: r.base64 as string,
+                    mimeType: r.mimeType as string
+                  }
+                ]
               }
             }
             return ok(r)
@@ -273,7 +286,8 @@ export function startServer(options: ServerOptions = {}) {
     register(
       'get_codegen_prompt',
       {
-        description: 'Get design-to-code generation guidelines. Call before generating frontend code.',
+        description:
+          'Get design-to-code generation guidelines. Call before generating frontend code.',
         inputSchema: z.object({})
       },
       async () => ok({ prompt: CODEGEN_PROMPT })
@@ -290,7 +304,9 @@ export function startServer(options: ServerOptions = {}) {
   app.all('/mcp', async (c) => {
     if (authToken) {
       const auth = c.req.header('authorization')
-      const token = auth?.startsWith('Bearer ') ? auth.slice('Bearer '.length) : c.req.header('x-mcp-token')
+      const token = auth?.startsWith('Bearer ')
+        ? auth.slice('Bearer '.length)
+        : c.req.header('x-mcp-token')
       if (token !== authToken) {
         return c.json({ error: 'Unauthorized' }, 401)
       }

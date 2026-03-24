@@ -1,3 +1,7 @@
+import { normalizeColor } from './color'
+import { copyFills, copyStrokes, copyEffects } from './copy'
+import { FONT_WEIGHT_NAMES } from './fonts'
+
 /* eslint-disable max-lines -- Figma Plugin API proxy; FigmaAPI already in separate file */
 import type {
   SceneGraph,
@@ -6,53 +10,33 @@ import type {
   Fill,
   Stroke,
   Effect,
-  LayoutMode,
+  LayoutMode
 } from './scene-graph'
-import { normalizeColor } from './color'
 import type { Rect } from './types'
-import { copyFills, copyStrokes, copyEffects } from './copy'
 
 const MIXED = Symbol('mixed')
 
 export type FigmaFontName = { family: string; style: string }
 
 export function weightToStyleName(weight: number, italic: boolean): string {
-  const names: Record<number, string> = {
-    100: 'Thin',
-    200: 'Extra Light',
-    300: 'Light',
-    400: 'Regular',
-    500: 'Medium',
-    600: 'Semi Bold',
-    700: 'Bold',
-    800: 'Extra Bold',
-    900: 'Black'
-  }
-  const base = names[weight] ?? 'Regular'
+  const base = FONT_WEIGHT_NAMES[weight] ?? 'Regular'
   return italic ? `${base} Italic` : base
 }
+
+const STYLE_NAME_TO_WEIGHT: Record<string, number> = Object.fromEntries([
+  ...Object.entries(FONT_WEIGHT_NAMES).map(([w, name]) => [name.toLowerCase(), Number(w)]),
+  ['ultra light', 200],
+  ['', 400],
+  ['demi bold', 600],
+  ['ultra bold', 800],
+  ['heavy', 900]
+])
 
 export function styleNameToWeight(style: string): { weight: number; italic: boolean } {
   const lower = style.toLowerCase()
   const italic = lower.includes('italic')
   const clean = lower.replace(/italic/i, '').trim()
-  const map: Record<string, number> = {
-    thin: 100,
-    'extra light': 200,
-    'ultra light': 200,
-    light: 300,
-    regular: 400,
-    '': 400,
-    medium: 500,
-    'semi bold': 600,
-    'demi bold': 600,
-    bold: 700,
-    'extra bold': 800,
-    'ultra bold': 800,
-    black: 900,
-    heavy: 900
-  }
-  return { weight: map[clean] ?? 400, italic }
+  return { weight: STYLE_NAME_TO_WEIGHT[clean] ?? 400, italic }
 }
 
 export const INTERNAL_ID = Symbol('id')
@@ -745,9 +729,10 @@ export class FigmaNodeProxy {
     const layout = n.layoutMode !== 'NONE' ? n.layoutMode : this._parentLayout()
     const parentLayout = this._parentLayout()
     const isMainAxis = parentLayout === 'HORIZONTAL'
-    const updates: Partial<SceneNode> = layout === 'VERTICAL'
-      ? { counterAxisSizing: v as SceneNode['counterAxisSizing'] }
-      : { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] }
+    const updates: Partial<SceneNode> =
+      layout === 'VERTICAL'
+        ? { counterAxisSizing: v as SceneNode['counterAxisSizing'] }
+        : { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] }
     if (isMainAxis) updates.layoutGrow = v === 'FILL' ? 1 : 0
     this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], updates)
   }
@@ -764,9 +749,10 @@ export class FigmaNodeProxy {
     const layout = n.layoutMode !== 'NONE' ? n.layoutMode : this._parentLayout()
     const parentLayout = this._parentLayout()
     const isMainAxis = parentLayout === 'VERTICAL'
-    const updates: Partial<SceneNode> = layout === 'HORIZONTAL'
-      ? { counterAxisSizing: v as SceneNode['counterAxisSizing'] }
-      : { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] }
+    const updates: Partial<SceneNode> =
+      layout === 'HORIZONTAL'
+        ? { counterAxisSizing: v as SceneNode['counterAxisSizing'] }
+        : { primaryAxisSizing: v as SceneNode['primaryAxisSizing'] }
     if (isMainAxis) updates.layoutGrow = v === 'FILL' ? 1 : 0
     this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], updates)
   }
@@ -976,7 +962,9 @@ export class FigmaNodeProxy {
       if (maxDepth !== undefined && currentDepth >= maxDepth) {
         obj.childCount = children.length
       } else {
-        obj.children = children.map((c) => this[INTERNAL_API].wrapNode(c.id).toJSON(maxDepth, currentDepth + 1))
+        obj.children = children.map((c) =>
+          this[INTERNAL_API].wrapNode(c.id).toJSON(maxDepth, currentDepth + 1)
+        )
       }
     }
     return obj

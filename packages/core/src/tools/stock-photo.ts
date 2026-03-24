@@ -12,11 +12,14 @@ export interface StockPhotoResult {
 
 export interface StockPhotoProvider {
   name: string
-  search(query: string, options: {
-    perPage: number
-    orientation: 'landscape' | 'portrait' | 'square'
-    targetDim: number
-  }): Promise<StockPhotoResult[]>
+  search(
+    query: string,
+    options: {
+      perPage: number
+      orientation: 'landscape' | 'portrait' | 'square'
+      targetDim: number
+    }
+  ): Promise<StockPhotoResult[]>
 }
 
 const providers = new Map<string, StockPhotoProvider>()
@@ -155,7 +158,13 @@ interface PhotoRequest {
 
 interface PhotoResult {
   id: string
-  photo?: { sourceId: string; photographer: string; width: number; height: number; provider: string }
+  photo?: {
+    sourceId: string
+    photographer: string
+    width: number
+    height: number
+    provider: string
+  }
   error?: string
 }
 
@@ -196,14 +205,16 @@ async function applyPhoto(
   }
 
   const image = figma.createImage(imageBytes)
-  node.fills = [{
-    type: 'IMAGE',
-    color: { r: 1, g: 1, b: 1, a: 1 },
-    imageHash: image.hash,
-    imageScaleMode: 'FILL',
-    visible: true,
-    opacity: 1
-  }]
+  node.fills = [
+    {
+      type: 'IMAGE',
+      color: { r: 1, g: 1, b: 1, a: 1 },
+      imageHash: image.hash,
+      imageScaleMode: 'FILL',
+      visible: true,
+      opacity: 1
+    }
+  ]
 
   return {
     id: node.id,

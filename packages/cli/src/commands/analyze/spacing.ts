@@ -1,9 +1,10 @@
 import { defineCommand } from 'citty'
 
-import { loadDocument } from '../../headless'
+import { executeRpcCommand } from '@open-pencil/core'
+
 import { isAppMode, requireFile, rpc } from '../../app-client'
 import { bold, kv, fmtHistogram, fmtSummary } from '../../format'
-import { executeRpcCommand } from '@open-pencil/core'
+import { loadDocument } from '../../headless'
 
 import type { AnalyzeSpacingResult } from '@open-pencil/core'
 
@@ -16,7 +17,11 @@ async function getData(file?: string): Promise<AnalyzeSpacingResult> {
 export default defineCommand({
   meta: { description: 'Analyze spacing values (gap, padding)' },
   args: {
-    file: { type: 'positional', description: '.fig file path (omit to connect to running app)', required: false },
+    file: {
+      type: 'positional',
+      description: '.fig file path (omit to connect to running app)',
+      required: false
+    },
     grid: { type: 'string', description: 'Base grid size to check against', default: '8' },
     json: { type: 'boolean', description: 'Output as JSON' }
   },
@@ -67,7 +72,9 @@ export default defineCommand({
       return
     }
 
-    console.log(fmtSummary({ 'gap values': data.gaps.length, 'padding values': data.paddings.length }))
+    console.log(
+      fmtSummary({ 'gap values': data.gaps.length, 'padding values': data.paddings.length })
+    )
 
     const offGridGaps = data.gaps.filter((g) => g.value % gridSize !== 0)
     const offGridPaddings = data.paddings.filter((p) => p.value % gridSize !== 0)

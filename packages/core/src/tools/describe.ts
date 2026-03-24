@@ -1,12 +1,10 @@
 import { colorToHex } from '../color'
-import { looksLikeButton } from './describe-shared'
-
 import { detectIssues } from './describe-issues'
-
-import type { DescribeIssue } from './describe-issues'
+import { looksLikeButton } from './describe-shared'
 import { defineTool } from './schema'
 
 import type { SceneGraph, SceneNode } from '../scene-graph'
+import type { DescribeIssue } from './describe-issues'
 
 const NAME_ROLE_PATTERNS: { pattern: RegExp; role: string }[] = [
   { pattern: /^icon$/i, role: 'icon' },
@@ -48,7 +46,7 @@ const NAME_ROLE_PATTERNS: { pattern: RegExp; role: string }[] = [
   { pattern: /^progress$/i, role: 'progressbar' },
   { pattern: /^spinner$/i, role: 'progressbar' },
   { pattern: /^divider$/i, role: 'separator' },
-  { pattern: /^separator$/i, role: 'separator' },
+  { pattern: /^separator$/i, role: 'separator' }
 ]
 
 function detectRoleFromName(name: string): string | null {
@@ -74,8 +72,6 @@ function looksLikeSeparator(node: SceneNode): boolean {
   return ratio > 10 && Math.min(node.width, node.height) <= 4
 }
 
-
-
 function describeVisual(node: SceneNode): string {
   const parts: string[] = []
   const fill = node.fills.find((f) => f.type === 'SOLID' && f.visible)
@@ -94,19 +90,28 @@ function describeVisual(node: SceneNode): string {
 }
 
 const JUSTIFY_LABELS: Record<string, string> = {
-  MIN: 'start', CENTER: 'center', MAX: 'end', SPACE_BETWEEN: 'between'
+  MIN: 'start',
+  CENTER: 'center',
+  MAX: 'end',
+  SPACE_BETWEEN: 'between'
 }
 
 const ITEMS_LABELS: Record<string, string> = {
-  MIN: 'start', CENTER: 'center', MAX: 'end', STRETCH: 'stretch', BASELINE: 'baseline'
+  MIN: 'start',
+  CENTER: 'center',
+  MAX: 'end',
+  STRETCH: 'stretch',
+  BASELINE: 'baseline'
 }
 
 function describeLayout(node: SceneNode): string | null {
   if (node.layoutMode === 'NONE') return null
   const dir = node.layoutMode === 'HORIZONTAL' ? 'horizontal' : 'vertical'
   const parts = [dir]
-  if (node.primaryAxisAlign !== 'MIN') parts.push(`justify=${JUSTIFY_LABELS[node.primaryAxisAlign] ?? node.primaryAxisAlign}`)
-  if (node.counterAxisAlign !== 'MIN') parts.push(`items=${ITEMS_LABELS[node.counterAxisAlign] ?? node.counterAxisAlign}`)
+  if (node.primaryAxisAlign !== 'MIN')
+    parts.push(`justify=${JUSTIFY_LABELS[node.primaryAxisAlign] ?? node.primaryAxisAlign}`)
+  if (node.counterAxisAlign !== 'MIN')
+    parts.push(`items=${ITEMS_LABELS[node.counterAxisAlign] ?? node.counterAxisAlign}`)
   if (node.itemSpacing > 0) parts.push(`${node.itemSpacing}px gap`)
   const pad = [node.paddingTop, node.paddingRight, node.paddingBottom, node.paddingLeft]
   const allSame = pad.every((p) => p === pad[0])
@@ -114,7 +119,8 @@ function describeLayout(node: SceneNode): string | null {
   if (allSame && first > 0) parts.push(`${first}px padding`)
   else if (pad.some((p) => p > 0)) parts.push(`padding ${pad.join('/')}`)
   if (node.primaryAxisSizing !== 'FIXED') parts.push(`${node.primaryAxisSizing.toLowerCase()} main`)
-  if (node.counterAxisSizing !== 'FIXED') parts.push(`${node.counterAxisSizing.toLowerCase()} cross`)
+  if (node.counterAxisSizing !== 'FIXED')
+    parts.push(`${node.counterAxisSizing.toLowerCase()} cross`)
   if (node.layoutWrap === 'WRAP') parts.push('wrap')
   return parts.join(', ')
 }
@@ -163,7 +169,12 @@ function summarizeText(node: SceneNode): string {
   return summary
 }
 
-function describeChild(node: SceneNode, graph: SceneGraph, depth: number, gridSize: number): ChildDescription {
+function describeChild(
+  node: SceneNode,
+  graph: SceneGraph,
+  depth: number,
+  gridSize: number
+): ChildDescription {
   const role = detectRole(node)
   const summary = node.type === 'TEXT' ? summarizeText(node) : summarizeContainer(node)
   const result: ChildDescription = { role, name: node.name, summary, id: node.id }
@@ -210,7 +221,7 @@ function describeOneNode(
     type: raw.type,
     role,
     size: `${raw.width}×${raw.height}`,
-    visual,
+    visual
   }
   if (layout) result.layout = layout
   if (children.length > 0) result.children = children

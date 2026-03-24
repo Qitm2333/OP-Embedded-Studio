@@ -1,6 +1,12 @@
 import svgpath from 'svgpath'
 
-import type { VectorNetwork, VectorVertex, VectorSegment, VectorRegion, WindingRule } from './scene-graph'
+import type {
+  VectorNetwork,
+  VectorVertex,
+  VectorSegment,
+  VectorRegion,
+  WindingRule
+} from './scene-graph'
 
 interface SubPath {
   startVertexIndex: number
@@ -36,10 +42,14 @@ export function parseSVGPath(d: string, windingRule: WindingRule = 'NONZERO'): V
   }
 
   function addSegment(
-    x1: number, y1: number,
-    x2: number, y2: number,
-    tx1: number, ty1: number,
-    tx2: number, ty2: number
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    tx1: number,
+    ty1: number,
+    tx2: number,
+    ty2: number
   ): void {
     const startIdx = getOrCreateVertex(x1, y1)
     const endIdx = getOrCreateVertex(x2, y2)
@@ -60,10 +70,14 @@ export function parseSVGPath(d: string, windingRule: WindingRule = 'NONZERO'): V
   }
 
   function addCubic(
-    x1: number, y1: number,
-    cp1x: number, cp1y: number,
-    cp2x: number, cp2y: number,
-    x2: number, y2: number
+    x1: number,
+    y1: number,
+    cp1x: number,
+    cp1y: number,
+    cp2x: number,
+    cp2y: number,
+    x2: number,
+    y2: number
   ): void {
     addSegment(x1, y1, x2, y2, cp1x, cp1y, cp2x, cp2y)
   }

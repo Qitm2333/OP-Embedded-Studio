@@ -1,21 +1,34 @@
-import { twMerge } from 'tailwind-merge'
 import { tv } from 'tailwind-variants'
 
-const content = tv({
-  base: 'z-50 rounded-lg border border-border bg-panel p-1 shadow-lg'
-})
-
-const item = tv({
-  base: 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none select-none data-[disabled]:cursor-default data-[disabled]:text-muted/50 data-[highlighted]:bg-hover',
+export const menu = tv({
+  slots: {
+    content: 'z-50 rounded-lg border border-border bg-panel p-1 shadow-lg',
+    item: 'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none select-none data-[disabled]:cursor-default data-[disabled]:text-muted/50 data-[highlighted]:bg-hover',
+    separator: 'mx-1 my-1 h-px bg-border',
+    shortcut: 'text-[11px] text-muted',
+    icon: 'size-3 text-muted',
+    subTrigger:
+      'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-none select-none'
+  },
   variants: {
     tone: {
-      default: 'text-surface',
-      component:
-        'text-component data-[disabled]:text-component/40 data-[highlighted]:bg-component/12'
+      default: {
+        item: 'text-surface',
+        subTrigger: 'text-surface'
+      },
+      component: {
+        item: 'text-component data-[disabled]:text-component/40 data-[highlighted]:bg-component/12',
+        shortcut: 'text-component/60',
+        subTrigger: 'text-component'
+      }
     },
     justify: {
-      between: 'justify-between gap-6',
-      start: 'justify-start'
+      between: {
+        item: 'justify-between gap-6'
+      },
+      start: {
+        item: 'justify-start'
+      }
     }
   },
   defaultVariants: {
@@ -24,12 +37,29 @@ const item = tv({
   }
 })
 
-const separator = tv({
-  base: 'mx-1 my-1 h-px bg-border'
-})
+interface MenuUi {
+  content?: string
+  item?: string
+  separator?: string
+  shortcut?: string
+  icon?: string
+  subTrigger?: string
+}
+
+export function useMenuUI(ui?: MenuUi) {
+  const cls = menu()
+  return {
+    content: cls.content({ class: ui?.content }),
+    item: cls.item({ class: ui?.item }),
+    separator: cls.separator({ class: ui?.separator }),
+    shortcut: cls.shortcut({ class: ui?.shortcut }),
+    icon: cls.icon({ class: ui?.icon }),
+    subTrigger: cls.subTrigger({ class: ui?.subTrigger })
+  }
+}
 
 export function menuContent(options?: { class?: string }) {
-  return twMerge(content(), options?.class)
+  return menu().content({ class: options?.class })
 }
 
 export function menuItem(options?: {
@@ -37,9 +67,9 @@ export function menuItem(options?: {
   justify?: 'between' | 'start'
   class?: string
 }) {
-  return twMerge(item(options), options?.class)
+  return menu(options).item({ class: options?.class })
 }
 
 export function menuSeparator(options?: { class?: string }) {
-  return twMerge(separator(), options?.class)
+  return menu().separator({ class: options?.class })
 }

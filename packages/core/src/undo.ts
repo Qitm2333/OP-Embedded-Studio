@@ -1,5 +1,3 @@
-import type { SceneNode } from './scene-graph'
-
 export interface UndoEntry {
   label: string
   forward: () => void
@@ -89,21 +87,5 @@ export class UndoManager {
 
   get redoLabel(): string | null {
     return this.redoStack.at(-1)?.label ?? null
-  }
-}
-
-export function createPropertyChange(
-  node: SceneNode,
-  changes: Partial<SceneNode>,
-  label: string
-): UndoEntry {
-  const previous = Object.fromEntries(
-    (Object.keys(changes) as (keyof SceneNode)[]).map((key) => [key, node[key]])
-  ) as Partial<SceneNode>
-
-  return {
-    label,
-    forward: () => Object.assign(node, changes),
-    inverse: () => Object.assign(node, previous)
   }
 }

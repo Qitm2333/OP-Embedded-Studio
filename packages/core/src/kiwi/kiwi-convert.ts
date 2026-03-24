@@ -3,7 +3,6 @@ import { normalizeColor } from '../color'
 import { DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from '../constants'
 import { styleToWeight } from '../fonts'
 import { decodeVectorNetworkBlob } from '../vector'
-import type { Color, Matrix, Vector } from '../types'
 
 import type {
   SceneNode,
@@ -34,9 +33,8 @@ import type {
   CharacterStyleOverride,
   WindingRule
 } from '../scene-graph'
+import type { Color, Matrix, Vector } from '../types'
 import type { NodeChange, Paint, Effect as KiwiEffect, GUID } from './codec'
-
-
 
 export function guidToString(guid: GUID): string {
   return `${guid.sessionID}:${guid.localID}`
@@ -149,16 +147,16 @@ export function convertStrokes(
   dashPattern?: number[]
 ): Stroke[] {
   if (!paints) return []
+  let strokeAlign: 'INSIDE' | 'OUTSIDE' | 'CENTER' = 'CENTER'
+  if (align === 'INSIDE') strokeAlign = 'INSIDE'
+  else if (align === 'OUTSIDE') strokeAlign = 'OUTSIDE'
+
   return paints.map((p) => ({
     color: convertColor(resolveColorVar(p) ?? p.color),
     weight: weight ?? 1,
     opacity: p.opacity ?? 1,
     visible: p.visible ?? true,
-    align: (align === 'INSIDE'
-      ? 'INSIDE'
-      : (align === 'OUTSIDE'
-        ? 'OUTSIDE'
-        : 'CENTER')),
+    align: strokeAlign,
     cap: (cap ?? 'NONE') as StrokeCap,
     join: (join ?? 'MITER') as StrokeJoin,
     dashPattern: dashPattern ?? []
@@ -343,7 +341,10 @@ function convertStyleOverride(
   }
   if (override.fontSize !== undefined) style.fontSize = override.fontSize
   if (override.letterSpacing) {
-    style.letterSpacing = convertLetterSpacing(override.letterSpacing, override.fontSize ?? fallbackFontSize)
+    style.letterSpacing = convertLetterSpacing(
+      override.letterSpacing,
+      override.fontSize ?? fallbackFontSize
+    )
   }
   if (override.lineHeight) {
     const lh = convertLineHeight(override.lineHeight, override.fontSize ?? fallbackFontSize)
@@ -408,10 +409,7 @@ export function importStyleRuns(nc: NodeChange): StyleRun[] {
   return collectStyleRuns(ids, styleMap)
 }
 
-function resolveVectorNetwork(
-  nc: NodeChange,
-  blobs: Uint8Array[]
-): VectorNetwork | null {
+function resolveVectorNetwork(nc: NodeChange, blobs: Uint8Array[]): VectorNetwork | null {
   const vectorData = nc.vectorData as
     | {
         vectorNetworkBlob?: number
@@ -488,7 +486,9 @@ function extractBoundVariables(nc: NodeChange): Record<string, string> {
   return bindings
 }
 
-function convertTransformProps(nc: NodeChange): Pick<SceneNode, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'flipX' | 'flipY'> {
+function convertTransformProps(
+  nc: NodeChange
+): Pick<SceneNode, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'flipX' | 'flipY'> {
   const x = nc.transform?.m02 ?? 0
   const y = nc.transform?.m12 ?? 0
   const width = nc.size?.x ?? 100
@@ -506,7 +506,18 @@ function convertTransformProps(nc: NodeChange): Pick<SceneNode, 'x' | 'y' | 'wid
   return { x, y, width, height, rotation, flipX, flipY: false }
 }
 
-function convertCornerProps(nc: NodeChange): Pick<SceneNode, 'cornerRadius' | 'topLeftRadius' | 'topRightRadius' | 'bottomRightRadius' | 'bottomLeftRadius' | 'independentCorners' | 'cornerSmoothing'> {
+function convertCornerProps(
+  nc: NodeChange
+): Pick<
+  SceneNode,
+  | 'cornerRadius'
+  | 'topLeftRadius'
+  | 'topRightRadius'
+  | 'bottomRightRadius'
+  | 'bottomLeftRadius'
+  | 'independentCorners'
+  | 'cornerSmoothing'
+> {
   return {
     cornerRadius: nc.cornerRadius ?? 0,
     topLeftRadius: nc.rectangleTopLeftCornerRadius ?? nc.cornerRadius ?? 0,
@@ -518,14 +529,37 @@ function convertCornerProps(nc: NodeChange): Pick<SceneNode, 'cornerRadius' | 't
   }
 }
 
-function convertTextProps(nc: NodeChange): Pick<SceneNode, 'text' | 'fontSize' | 'fontFamily' | 'fontWeight' | 'italic' | 'textAlignHorizontal' | 'textAlignVertical' | 'textAutoResize' | 'textCase' | 'textDecoration' | 'lineHeight' | 'letterSpacing' | 'maxLines' | 'styleRuns' | 'textTruncation'> {
+function convertTextProps(
+  nc: NodeChange
+): Pick<
+  SceneNode,
+  | 'text'
+  | 'fontSize'
+  | 'fontFamily'
+  | 'fontWeight'
+  | 'italic'
+  | 'textAlignHorizontal'
+  | 'textAlignVertical'
+  | 'textAutoResize'
+  | 'textCase'
+  | 'textDecoration'
+  | 'lineHeight'
+  | 'letterSpacing'
+  | 'maxLines'
+  | 'styleRuns'
+  | 'textTruncation'
+> {
   return {
     text: nc.textData?.characters ?? '',
     fontSize: nc.fontSize ?? 14,
     fontFamily: nc.fontName?.family ?? DEFAULT_FONT_FAMILY,
     fontWeight: styleToWeight(nc.fontName?.style ?? ''),
     italic: nc.fontName?.style.toLowerCase().includes('italic') ?? false,
-    textAlignHorizontal: (nc.textAlignHorizontal ?? 'LEFT') as 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED',
+    textAlignHorizontal: (nc.textAlignHorizontal ?? 'LEFT') as
+      | 'LEFT'
+      | 'CENTER'
+      | 'RIGHT'
+      | 'JUSTIFIED',
     textAlignVertical: (nc.textAlignVertical ?? 'TOP') as TextAlignVertical,
     textAutoResize: (nc.textAutoResize ?? 'NONE') as TextAutoResize,
     textCase: (nc.textCase ?? 'ORIGINAL') as TextCase,
@@ -538,7 +572,9 @@ function convertTextProps(nc: NodeChange): Pick<SceneNode, 'text' | 'fontSize' |
   }
 }
 
-function convertLayoutPadding(nc: NodeChange): Pick<SceneNode, 'paddingTop' | 'paddingBottom' | 'paddingLeft' | 'paddingRight'> {
+function convertLayoutPadding(
+  nc: NodeChange
+): Pick<SceneNode, 'paddingTop' | 'paddingBottom' | 'paddingLeft' | 'paddingRight'> {
   return {
     paddingTop: nc.stackVerticalPadding ?? nc.stackPadding ?? 0,
     paddingBottom: nc.stackPaddingBottom ?? nc.stackVerticalPadding ?? nc.stackPadding ?? 0,
@@ -547,7 +583,29 @@ function convertLayoutPadding(nc: NodeChange): Pick<SceneNode, 'paddingTop' | 'p
   }
 }
 
-function convertLayoutProps(nc: NodeChange): Pick<SceneNode, 'layoutMode' | 'itemSpacing' | 'paddingTop' | 'paddingBottom' | 'paddingLeft' | 'paddingRight' | 'primaryAxisSizing' | 'counterAxisSizing' | 'primaryAxisAlign' | 'counterAxisAlign' | 'layoutWrap' | 'counterAxisSpacing' | 'layoutPositioning' | 'layoutGrow' | 'layoutAlignSelf' | 'counterAxisAlignContent' | 'itemReverseZIndex' | 'strokesIncludedInLayout'> {
+function convertLayoutProps(
+  nc: NodeChange
+): Pick<
+  SceneNode,
+  | 'layoutMode'
+  | 'itemSpacing'
+  | 'paddingTop'
+  | 'paddingBottom'
+  | 'paddingLeft'
+  | 'paddingRight'
+  | 'primaryAxisSizing'
+  | 'counterAxisSizing'
+  | 'primaryAxisAlign'
+  | 'counterAxisAlign'
+  | 'layoutWrap'
+  | 'counterAxisSpacing'
+  | 'layoutPositioning'
+  | 'layoutGrow'
+  | 'layoutAlignSelf'
+  | 'counterAxisAlignContent'
+  | 'itemReverseZIndex'
+  | 'strokesIncludedInLayout'
+> {
   return {
     layoutMode: mapStackMode(nc.stackMode),
     itemSpacing: nc.stackSpacing ?? 0,
@@ -561,13 +619,32 @@ function convertLayoutProps(nc: NodeChange): Pick<SceneNode, 'layoutMode' | 'ite
     layoutPositioning: nc.stackPositioning === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO',
     layoutGrow: nc.stackChildPrimaryGrow ?? 0,
     layoutAlignSelf: mapAlignSelf(nc.stackChildAlignSelf),
-    counterAxisAlignContent: (nc.stackCounterAlignContent as string) === 'SPACE_BETWEEN' ? 'SPACE_BETWEEN' : 'AUTO',
+    counterAxisAlignContent:
+      (nc.stackCounterAlignContent as string) === 'SPACE_BETWEEN' ? 'SPACE_BETWEEN' : 'AUTO',
     itemReverseZIndex: (nc.stackReverseZIndex ?? false) as boolean,
     strokesIncludedInLayout: (nc.strokesIncludedInLayout ?? false) as boolean
   }
 }
 
-function convertVectorAndStrokeProps(nc: NodeChange, blobs: Uint8Array[]): Pick<SceneNode, 'vectorNetwork' | 'fillGeometry' | 'strokeGeometry' | 'arcData' | 'strokeCap' | 'strokeJoin' | 'dashPattern' | 'borderTopWeight' | 'borderRightWeight' | 'borderBottomWeight' | 'borderLeftWeight' | 'independentStrokeWeights' | 'strokeMiterLimit'> {
+function convertVectorAndStrokeProps(
+  nc: NodeChange,
+  blobs: Uint8Array[]
+): Pick<
+  SceneNode,
+  | 'vectorNetwork'
+  | 'fillGeometry'
+  | 'strokeGeometry'
+  | 'arcData'
+  | 'strokeCap'
+  | 'strokeJoin'
+  | 'dashPattern'
+  | 'borderTopWeight'
+  | 'borderRightWeight'
+  | 'borderBottomWeight'
+  | 'borderLeftWeight'
+  | 'independentStrokeWeights'
+  | 'strokeMiterLimit'
+> {
   return {
     vectorNetwork: resolveVectorNetwork(nc, blobs),
     fillGeometry: resolveGeometryPaths(nc.fillGeometry, blobs),
@@ -601,7 +678,14 @@ export function nodeChangeToProps(
     locked: nc.locked ?? false,
     blendMode: (nc.blendMode as Fill['blendMode']) ?? 'PASS_THROUGH',
     fills: convertFills(nc.fillPaints),
-    strokes: convertStrokes(nc.strokePaints, nc.strokeWeight, nc.strokeAlign, nc.strokeCap, nc.strokeJoin, nc.dashPattern ?? []),
+    strokes: convertStrokes(
+      nc.strokePaints,
+      nc.strokeWeight,
+      nc.strokeAlign,
+      nc.strokeCap,
+      nc.strokeJoin,
+      nc.dashPattern ?? []
+    ),
     effects: convertEffects(nc.effects),
     ...convertCornerProps(nc),
     ...convertTextProps(nc),
@@ -646,16 +730,15 @@ export function sortChildren(
     children.sort((a, b) => {
       const aPos = nodeMap.get(a)?.parentIndex?.position ?? ''
       const bPos = nodeMap.get(b)?.parentIndex?.position ?? ''
-      return aPos < bPos ? -1 : (aPos > bPos ? 1 : 0)
+      if (aPos < bPos) return -1
+      if (aPos > bPos) return 1
+      return 0
     })
   }
 }
 
 function extractSymbolId(nc: NodeChange): string {
-  const sd = nc.symbolData as
-    | { symbolID?: GUID }
-    | undefined
+  const sd = nc.symbolData as { symbolID?: GUID } | undefined
   if (!sd?.symbolID) return ''
   return guidToString(sd.symbolID)
 }
-

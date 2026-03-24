@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, provide, ref } from 'vue'
-import { useBreakpoints, useEventListener, useUrlSearchParams } from '@vueuse/core'
+import { useEventListener, useUrlSearchParams } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 
+import { useViewportKind } from '@open-pencil/vue'
 import { useKeyboard } from '@/composables/use-keyboard'
 import { useMenu } from '@/composables/use-menu'
 import { useCollab, COLLAB_KEY } from '@/composables/use-collab'
@@ -31,8 +32,7 @@ const showChrome = !('no-chrome' in params)
 
 const firstTab = createTab()
 const store = useEditorStore()
-const breakpoints = useBreakpoints({ mobile: 768 })
-const isMobile = breakpoints.smaller('mobile')
+const { isMobile } = useViewportKind()
 
 if (route.meta.demo && !('test' in params)) {
   createDemoShapes(firstTab.store)

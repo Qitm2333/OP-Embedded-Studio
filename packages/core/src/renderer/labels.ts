@@ -8,9 +8,10 @@ import {
   COMPONENT_LABEL_ICON_SIZE,
   COMPONENT_LABEL_ICON_GAP
 } from '../constants'
+
 import type { SceneNode, SceneGraph } from '../scene-graph'
-import type { Canvas, Font } from 'canvaskit-wasm'
 import type { SkiaRenderer } from './renderer'
+import type { Canvas, Font } from 'canvaskit-wasm'
 
 export function drawSectionTitles(r: SkiaRenderer, canvas: Canvas, graph: SceneGraph): void {
   if (!r.sectionTitleFont) return
@@ -81,10 +82,7 @@ function drawSectionTitle(
     r.auxFill.setColor(r.ck.Color4f(0.37, 0.37, 0.37, 1))
   }
   const pillRect = r.ck.LTRBRect(pillX, pillY, pillX + pillW, pillY + pillH)
-  canvas.drawRRect(
-    r.ck.RRectXY(pillRect, SECTION_TITLE_RADIUS, SECTION_TITLE_RADIUS),
-    r.auxFill
-  )
+  canvas.drawRRect(r.ck.RRectXY(pillRect, SECTION_TITLE_RADIUS, SECTION_TITLE_RADIUS), r.auxFill)
 
   const pillColor =
     node.fills.length > 0 && node.fills[0].visible
@@ -157,12 +155,6 @@ export function drawComponentLabels(r: SkiaRenderer, canvas: Canvas, graph: Scen
       path.delete()
     }
 
-    canvas.drawText(
-      node.name,
-      labelX + iconS + COMPONENT_LABEL_ICON_GAP,
-      labelY,
-      r.auxFill,
-      font
-    )
+    canvas.drawText(node.name, labelX + iconS + COMPONENT_LABEL_ICON_GAP, labelY, r.auxFill, font)
   }
 }

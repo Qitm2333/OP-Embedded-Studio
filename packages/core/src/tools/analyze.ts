@@ -2,12 +2,32 @@
 import { createTwoFilesPatch } from 'diff'
 
 import { colorDistance, colorToHex, parseColor } from '../color'
-
 import { defineTool } from './schema'
 
-import type { Color } from '../types'
-import type { SceneNode } from '../scene-graph'
 import type { FigmaAPI } from '../figma-api'
+import type { SceneNode } from '../scene-graph'
+import type { Color } from '../types'
+
+interface SizedItem {
+  width: number
+  height: number
+  childCount: number
+}
+
+export function calcClusterConfidence(nodes: SizedItem[]): number {
+  if (nodes.length < 2) return 100
+  const base = nodes[0]
+  let score = 0
+  for (const n of nodes.slice(1)) {
+    const sizeDiff = Math.abs(n.width - base.width) + Math.abs(n.height - base.height)
+    const childDiff = Math.abs(n.childCount - base.childCount)
+    if (sizeDiff <= 4 && childDiff === 0) score++
+    else if (sizeDiff <= 10 && childDiff <= 1) score += 0.8
+    else if (sizeDiff <= 20 && childDiff <= 2) score += 0.6
+    else score += 0.4
+  }
+  return Math.round((score / (nodes.length - 1)) * 100)
+}
 
 interface ColorEntry {
   hex: string
@@ -16,11 +36,7 @@ interface ColorEntry {
   variableName: string | null
 }
 
-function trackColor(
-  colorMap: Map<string, ColorEntry>,
-  color: Color,
-  variableName: string | null
-) {
+function trackColor(colorMap: Map<string, ColorEntry>, color: Color, variableName: string | null) {
   const hex = colorToHex(color)
   const entry = colorMap.get(hex)
   if (entry) {
@@ -134,7 +150,11 @@ function createUnifiedDiff(
   const patch = createTwoFilesPatch(oldFilename, newFilename, oldContent, newContent, '', '')
   return patch
     .split('\n')
-    .filter((l) => !l.startsWith('Index:') && l !== '===================================================================')
+    .filter(
+      (l) =>
+        !l.startsWith('Index:') &&
+        l !== '==================================================================='
+    )
     .join('\n')
     .trim()
 }
@@ -176,7 +196,11 @@ export const analyzeColors = defineTool({
       }
       for (const stroke of raw.strokes) {
         if (stroke.visible) {
-          trackColor(colorMap, stroke.color, boundVars['strokes'] ? String(boundVars['strokes']) : null)
+          trackColor(
+            colorMap,
+            stroke.color,
+            boundVars['strokes'] ? String(boundVars['strokes']) : null
+          )
         }
       }
       return false
@@ -380,7 +404,14 @@ export const analyzeClusters = defineTool({
 
     const signatureMap = new Map<
       string,
-      { id: string; name: string; type: string; width: number; height: number; childCount: number }[]
+      {
+        id: string
+        name: string
+        type: string
+        width: number
+        height: number
+        childCount: number
+      }[]
     >()
     let totalNodes = 0
 
@@ -428,20 +459,7 @@ export const analyzeClusters = defineTool({
         const widthRange = Math.max(...widths) - Math.min(...widths)
         const heightRange = Math.max(...heights) - Math.min(...heights)
 
-        let confidence = 100
-        if (nodes.length >= 2) {
-          const base = nodes[0]
-          let score = 0
-          for (const n of nodes.slice(1)) {
-            const sizeDiff = Math.abs(n.width - base.width) + Math.abs(n.height - base.height)
-            const childDiff = Math.abs(n.childCount - base.childCount)
-            if (sizeDiff <= 4 && childDiff === 0) score++
-            else if (sizeDiff <= 10 && childDiff <= 1) score += 0.8
-            else if (sizeDiff <= 20 && childDiff <= 2) score += 0.6
-            else score += 0.4
-          }
-          confidence = Math.round((score / (nodes.length - 1)) * 100)
-        }
+        const confidence = calcClusterConfidence(nodes)
 
         return {
           signature,

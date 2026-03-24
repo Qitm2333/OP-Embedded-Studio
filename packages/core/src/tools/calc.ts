@@ -4,7 +4,9 @@ import { defineTool } from './schema'
 
 const parser = new ExprEval.Parser()
 
-function evalExpr(expr: string): { expr: string; result: number } | { expr: string; error: string } {
+function evalExpr(
+  expr: string
+): { expr: string; result: number } | { expr: string; error: string } {
   try {
     const result = parser.evaluate(expr)
     if (!Number.isFinite(result)) {

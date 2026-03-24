@@ -17,12 +17,7 @@ export function createElement(
     type,
     props: {
       ...props,
-      children:
-        flatChildren.length === 1
-          ? flatChildren
-          : (flatChildren.length > 0
-            ? flatChildren
-            : undefined)
+      children: flatChildren.length > 0 ? flatChildren : undefined
     }
   }
 }

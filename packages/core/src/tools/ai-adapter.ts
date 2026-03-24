@@ -78,8 +78,10 @@ function extractNodeIds(result: unknown): string[] {
   if ('deleted' in result && typeof result.deleted === 'string') return []
   const ids: string[] = []
   if ('id' in result && typeof result.id === 'string') ids.push(result.id)
-  if ('selection' in result && Array.isArray(result.selection)) ids.push(...extractIdsFromArray(result.selection))
-  if ('results' in result && Array.isArray(result.results)) ids.push(...extractIdsFromArray(result.results))
+  if ('selection' in result && Array.isArray(result.selection))
+    ids.push(...extractIdsFromArray(result.selection))
+  if ('results' in result && Array.isArray(result.results))
+    ids.push(...extractIdsFromArray(result.results))
   return ids
 }
 
@@ -140,7 +142,7 @@ export function toolsToAI(
     // eslint-disable-next-line typescript-eslint/no-explicit-any -- Vercel AI tool() has complex overloads that can't be expressed without any
     tool: (...args: any[]) => unknown
   }
-// eslint-disable-next-line typescript-eslint/no-explicit-any -- return type must be any to satisfy Vercel AI SDK's ToolSet which uses any internally
+  // eslint-disable-next-line typescript-eslint/no-explicit-any -- return type must be any to satisfy Vercel AI SDK's ToolSet which uses any internally
 ): Record<string, any> {
   const { v, valibotSchema, tool } = deps
   // eslint-disable-next-line typescript-eslint/no-explicit-any -- matches return type
@@ -228,7 +230,13 @@ const SKIP_ARGS: Partial<Record<string, Set<string>>> = {
   set_effects: new Set(['type', 'color', 'offset_x', 'offset_y', 'radius', 'spread']),
   set_fill: new Set(['type', 'color']),
   set_stroke: new Set(['type', 'color']),
-  set_layout: new Set(['align', 'counter_align', 'padding', 'padding_horizontal', 'padding_vertical']),
+  set_layout: new Set([
+    'align',
+    'counter_align',
+    'padding',
+    'padding_horizontal',
+    'padding_vertical'
+  ])
 }
 
 function detectUnchangedProps(

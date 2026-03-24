@@ -1,4 +1,4 @@
-const hasPerformance = typeof performance !== "undefined"
+const hasPerformance = typeof performance !== 'undefined'
 
 export interface NodeProfile {
   nodeId: string
@@ -41,7 +41,7 @@ export class CaptureStack {
       selfTime: 0,
       drawCalls: 0,
       culled,
-      children: [],
+      children: []
     }
     this.stack.push(profile)
   }
@@ -84,7 +84,7 @@ interface SpeedscopeFrame {
 }
 
 interface SpeedscopeEvent {
-  type: "O" | "C"
+  type: 'O' | 'C'
   at: number
   frame: number
 }
@@ -107,11 +107,11 @@ export function toSpeedscopeJSON(capture: FrameCapture): string {
 
   function walk(profile: NodeProfile): void {
     const idx = getFrameIdx(profile.nodeId, profile.name)
-    events.push({ type: "O", at: profile.startTime, frame: idx })
+    events.push({ type: 'O', at: profile.startTime, frame: idx })
     for (const child of profile.children) {
       walk(child)
     }
-    events.push({ type: "C", at: profile.endTime, frame: idx })
+    events.push({ type: 'C', at: profile.endTime, frame: idx })
   }
 
   for (const root of capture.rootProfiles) {
@@ -120,20 +120,20 @@ export function toSpeedscopeJSON(capture: FrameCapture): string {
 
   return JSON.stringify(
     {
-      $schema: "https://www.speedscope.app/file-format-schema.json",
+      $schema: 'https://www.speedscope.app/file-format-schema.json',
       shared: { frames },
       profiles: [
         {
-          type: "evented",
-          name: "Frame Render",
-          unit: "milliseconds",
+          type: 'evented',
+          name: 'Frame Render',
+          unit: 'milliseconds',
           startValue: 0,
           endValue: capture.totalTimeMs,
-          events,
-        },
-      ],
+          events
+        }
+      ]
     },
     null,
-    2,
+    2
   )
 }

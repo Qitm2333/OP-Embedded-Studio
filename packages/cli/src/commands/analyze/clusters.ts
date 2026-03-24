@@ -1,26 +1,12 @@
 import { defineCommand } from 'citty'
 
-import { loadDocument } from '../../headless'
+import { executeRpcCommand, calcClusterConfidence } from '@open-pencil/core'
+
 import { isAppMode, requireFile, rpc } from '../../app-client'
 import { bold, fmtList, fmtSummary } from '../../format'
-import { executeRpcCommand } from '@open-pencil/core'
+import { loadDocument } from '../../headless'
 
 import type { AnalyzeClustersResult } from '@open-pencil/core'
-
-function calcConfidence(nodes: Array<{ width: number; height: number; childCount: number }>): number {
-  if (nodes.length < 2) return 100
-  const base = nodes[0]
-  let score = 0
-  for (const node of nodes.slice(1)) {
-    const sizeDiff = Math.abs(node.width - base.width) + Math.abs(node.height - base.height)
-    const childDiff = Math.abs(node.childCount - base.childCount)
-    if (sizeDiff <= 4 && childDiff === 0) score++
-    else if (sizeDiff <= 10 && childDiff <= 1) score += 0.8
-    else if (sizeDiff <= 20 && childDiff <= 2) score += 0.6
-    else score += 0.4
-  }
-  return Math.round((score / (nodes.length - 1)) * 100)
-}
 
 function formatSignature(sig: string): string {
   const [typeSize, children] = sig.split('|')
@@ -39,8 +25,15 @@ function formatSignature(sig: string): string {
   return `${typeName} > [${childParts.join(', ')}]`
 }
 
-async function getData(file: string | undefined, args: { limit?: string; 'min-size'?: string; 'min-count'?: string }): Promise<AnalyzeClustersResult> {
-  const rpcArgs = { limit: Number(args.limit ?? 20), minSize: Number(args['min-size'] ?? 30), minCount: Number(args['min-count'] ?? 2) }
+async function getData(
+  file: string | undefined,
+  args: { limit?: string; 'min-size'?: string; 'min-count'?: string }
+): Promise<AnalyzeClustersResult> {
+  const rpcArgs = {
+    limit: Number(args.limit ?? 20),
+    minSize: Number(args['min-size'] ?? 30),
+    minCount: Number(args['min-count'] ?? 2)
+  }
   if (isAppMode(file)) return rpc<AnalyzeClustersResult>('analyze_clusters', rpcArgs)
   const graph = await loadDocument(requireFile(file))
   return executeRpcCommand(graph, 'analyze_clusters', rpcArgs) as AnalyzeClustersResult
@@ -49,7 +42,11 @@ async function getData(file: string | undefined, args: { limit?: string; 'min-si
 export default defineCommand({
   meta: { description: 'Find repeated design patterns (potential components)' },
   args: {
-    file: { type: 'positional', description: '.fig file path (omit to connect to running app)', required: false },
+    file: {
+      type: 'positional',
+      description: '.fig file path (omit to connect to running app)',
+      required: false
+    },
     limit: { type: 'string', description: 'Max clusters to show', default: '20' },
     'min-size': { type: 'string', description: 'Min node size in px', default: '30' },
     'min-count': { type: 'string', description: 'Min instances to form cluster', default: '2' },
@@ -74,7 +71,7 @@ export default defineCommand({
 
     const items = data.clusters.map((c) => {
       const first = c.nodes[0]
-      const confidence = calcConfidence(c.nodes)
+      const confidence = calcClusterConfidence(c.nodes)
 
       const widths = c.nodes.map((n) => n.width)
       const heights = c.nodes.map((n) => n.height)
@@ -93,7 +90,10 @@ export default defineCommand({
         details: {
           size: sizeStr,
           structure: formatSignature(c.signature),
-          examples: c.nodes.slice(0, 3).map((n) => n.id).join(', ')
+          examples: c.nodes
+            .slice(0, 3)
+            .map((n) => n.id)
+            .join(', ')
         }
       }
     })
@@ -102,11 +102,13 @@ export default defineCommand({
 
     const clusteredNodes = data.clusters.reduce((sum, c) => sum + c.nodes.length, 0)
     console.log('')
-    console.log(fmtSummary({
-      clusters: data.clusters.length,
-      'total nodes': data.totalNodes,
-      clustered: clusteredNodes
-    }))
+    console.log(
+      fmtSummary({
+        clusters: data.clusters.length,
+        'total nodes': data.totalNodes,
+        clustered: clusteredNodes
+      })
+    )
     console.log('')
   }
 })

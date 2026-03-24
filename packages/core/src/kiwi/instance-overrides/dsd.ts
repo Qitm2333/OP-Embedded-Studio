@@ -1,9 +1,10 @@
-import type { SceneNode, GeometryPath } from '../../scene-graph'
 import { copyGeometryPaths } from '../../copy'
-import type { OverrideContext, DerivedSymbolOverride } from './types'
 import { resolveGeometryPaths } from '../kiwi-convert'
 import { resolveOverrideTarget } from './resolve'
 import { buildClonesMap } from './sync'
+
+import type { SceneNode, GeometryPath } from '../../scene-graph'
+import type { OverrideContext, DerivedSymbolOverride } from './types'
 
 function scaleGeometryBlobs(geom: GeometryPath[], sx: number, sy: number): GeometryPath[] {
   if (sx === 1 && sy === 1) return geom
@@ -14,7 +15,9 @@ function scaleGeometryBlobs(geom: GeometryPath[], sx: number, sy: number): Geome
     while (o < scaled.length) {
       const cmd = scaled[o++]
       if (cmd === 0) continue
-      const coords = cmd === 1 || cmd === 2 ? 1 : (cmd === 4 ? 3 : -1)
+      let coords = -1
+      if (cmd === 1 || cmd === 2) coords = 1
+      else if (cmd === 4) coords = 3
       if (coords < 0) {
         console.warn(`scaleGeometryBlobs: unknown path command ${cmd} at offset ${o - 1}`)
         break
@@ -41,13 +44,21 @@ function resolveDsdGeometry(
   if (fg.length > 0) {
     result.fillGeometry = fg
   } else if (d.size && target.fillGeometry.length > 0 && target.width > 0 && target.height > 0) {
-    result.fillGeometry = scaleGeometryBlobs(target.fillGeometry, d.size.x / target.width, d.size.y / target.height)
+    result.fillGeometry = scaleGeometryBlobs(
+      target.fillGeometry,
+      d.size.x / target.width,
+      d.size.y / target.height
+    )
   }
 
   if (sg.length > 0) {
     result.strokeGeometry = sg
   } else if (d.size && target.strokeGeometry.length > 0 && target.width > 0 && target.height > 0) {
-    result.strokeGeometry = scaleGeometryBlobs(target.strokeGeometry, d.size.x / target.width, d.size.y / target.height)
+    result.strokeGeometry = scaleGeometryBlobs(
+      target.strokeGeometry,
+      d.size.x / target.width,
+      d.size.y / target.height
+    )
   }
 
   return result
@@ -97,7 +108,11 @@ function resolveDsdUpdates(ctx: OverrideContext): { modified: Set<string>; sizeS
   return { modified, sizeSet }
 }
 
-function propagateDsdChanges(ctx: OverrideContext, modified: Set<string>, sizeSet: Set<string>): void {
+function propagateDsdChanges(
+  ctx: OverrideContext,
+  modified: Set<string>,
+  sizeSet: Set<string>
+): void {
   if (modified.size === 0) return
 
   const clonesOf = buildClonesMap(ctx.graph)
@@ -120,8 +135,10 @@ function propagateDsdChanges(ctx: OverrideContext, modified: Set<string>, sizeSe
         if (source.height !== clone.height) cu.height = source.height
         if (source.x !== clone.x) cu.x = source.x
         if (source.y !== clone.y) cu.y = source.y
-        if (source.fillGeometry !== clone.fillGeometry) cu.fillGeometry = copyGeometryPaths(source.fillGeometry)
-        if (source.strokeGeometry !== clone.strokeGeometry) cu.strokeGeometry = copyGeometryPaths(source.strokeGeometry)
+        if (source.fillGeometry !== clone.fillGeometry)
+          cu.fillGeometry = copyGeometryPaths(source.fillGeometry)
+        if (source.strokeGeometry !== clone.strokeGeometry)
+          cu.strokeGeometry = copyGeometryPaths(source.strokeGeometry)
         if (Object.keys(cu).length > 0) ctx.graph.updateNode(cloneId, cu)
       }
       queue.push(cloneId)

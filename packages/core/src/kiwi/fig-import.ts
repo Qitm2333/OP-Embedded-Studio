@@ -1,6 +1,5 @@
-import type { VariableType, VariableValue } from '../scene-graph'
 import { SceneGraph } from '../scene-graph'
-
+import { populateAndApplyOverrides } from './instance-overrides'
 import {
   guidToString,
   nodeChangeToProps,
@@ -8,12 +7,14 @@ import {
   setVariableColorResolver,
   VARIABLE_BINDING_FIELDS_INVERSE
 } from './kiwi-convert'
-import { populateAndApplyOverrides } from './instance-overrides'
+
+import type { VariableType, VariableValue } from '../scene-graph'
+import type { NodeChange, VariableDataValuesEntry, Color, GUID } from './codec'
 import type { InstanceNodeChange } from './instance-overrides'
 
-import type { NodeChange, VariableDataValuesEntry, Color, GUID } from './codec'
-
-function buildVariableColorResolver(changeMap: Map<string, NodeChange>): (guid: GUID) => Color | null {
+function buildVariableColorResolver(
+  changeMap: Map<string, NodeChange>
+): (guid: GUID) => Color | null {
   // Collect variable data: GUID → entries
   const varEntries = new Map<string, VariableDataValuesEntry[]>()
   const varSetId = new Map<string, string>()
@@ -44,7 +45,7 @@ function buildVariableColorResolver(changeMap: Map<string, NodeChange>): (guid: 
     const setId = varSetId.get(id)
     const defaultMode = setId ? defaultModes.get(setId) : undefined
     let entry = defaultMode
-      ? entries.find(e => guidToString(e.modeID) === defaultMode)
+      ? entries.find((e) => guidToString(e.modeID) === defaultMode)
       : undefined
     if (!entry) entry = entries[0]
 
@@ -124,10 +125,7 @@ function resolveDefaultValue(type: VariableType): VariableValue {
   return 0
 }
 
-function importCollections(
-  changeMap: Map<string, NodeChange>,
-  graph: SceneGraph
-): void {
+function importCollections(changeMap: Map<string, NodeChange>, graph: SceneGraph): void {
   for (const [id, nc] of changeMap) {
     if (nc.type !== 'VARIABLE_SET') continue
 
@@ -155,7 +153,9 @@ function importVariableEntries(
   for (const [id, nc] of changeMap) {
     if (nc.type !== 'VARIABLE') continue
 
-    const collectionId = nc.variableSetID?.guid ? guidToString(nc.variableSetID.guid) : (parentMap.get(id) ?? '')
+    const collectionId = nc.variableSetID?.guid
+      ? guidToString(nc.variableSetID.guid)
+      : (parentMap.get(id) ?? '')
 
     if (!graph.variableCollections.has(collectionId)) {
       const parentNc = changeMap.get(collectionId)
@@ -204,6 +204,7 @@ function importPages(
   parentMap: Map<string, string>,
   childrenMap: Map<string, string[]>,
   created: Set<string>,
+  canvasIdToPageId: Map<string, string>,
   createSceneNode: (ncId: string, graphParentId: string) => void
 ): void {
   let docId: string | null = null
@@ -220,6 +221,7 @@ function importPages(
       if (!canvasNc) continue
       if (canvasNc.type === 'CANVAS') {
         const page = graph.addPage(canvasNc.name ?? 'Page')
+        canvasIdToPageId.set(canvasId, page.id)
         if (canvasNc.internalOnly) page.internalOnly = true
         created.add(canvasId)
         for (const childId of childrenMap.get(canvasId) ?? []) {
@@ -260,10 +262,7 @@ function importVariableBindings(
   }
 }
 
-function remapComponentIds(
-  graph: SceneGraph,
-  guidToNodeId: Map<string, string>
-): void {
+function remapComponentIds(graph: SceneGraph, guidToNodeId: Map<string, string>): void {
   for (const node of graph.getAllNodes()) {
     if (node.type !== 'INSTANCE' || !node.componentId) continue
     const remapped = guidToNodeId.get(node.componentId)
@@ -290,6 +289,7 @@ export function importNodeChanges(
 
   const { changeMap, parentMap, childrenMap } = buildChangeMaps(nodeChanges)
 
+  const canvasIdToPageId = new Map<string, string>()
   const created = new Set<string>()
   const guidToNodeId = new Map<string, string>()
   const getChildren = (ncId: string): string[] => childrenMap.get(ncId) ?? []
@@ -304,7 +304,8 @@ export function importNodeChanges(
     const { nodeType, ...props } = nodeChangeToProps(nc, blobs)
     if (nodeType === 'DOCUMENT' || nodeType === 'VARIABLE' || nc.type === 'VARIABLE_SET') return
 
-    const node = graph.createNode(nodeType, graphParentId, props)
+    const parentId = canvasIdToPageId.get(graphParentId) ?? graphParentId
+    const node = graph.createNode(nodeType, parentId, props)
     guidToNodeId.set(ncId, node.id)
 
     for (const childId of getChildren(ncId)) {
@@ -312,7 +313,7 @@ export function importNodeChanges(
     }
   }
 
-  importPages(graph, changeMap, parentMap, childrenMap, created, createSceneNode)
+  importPages(graph, changeMap, parentMap, childrenMap, created, canvasIdToPageId, createSceneNode)
 
   importCollections(changeMap, graph)
   importVariableEntries(changeMap, parentMap, graph)

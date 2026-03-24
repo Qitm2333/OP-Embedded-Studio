@@ -1,14 +1,5 @@
 import { computeContentBounds } from '../render-image'
 import {
-  round,
-  geometryBlobToSVGPath,
-  vectorNetworkToSVGPaths,
-  makePolygonPoints,
-  hasRadius,
-  roundedRectPath,
-  arcPath
-} from './paths'
-import {
   nextDefId,
   formatColor,
   createFilterDef,
@@ -17,13 +8,22 @@ import {
   SVG_STROKE_JOIN,
   SVG_BLEND_MODE
 } from './defs'
+import {
+  round,
+  geometryBlobToSVGPath,
+  vectorNetworkToSVGPaths,
+  makePolygonPoints,
+  hasRadius,
+  roundedRectPath,
+  arcPath
+} from './paths'
 
 export { geometryBlobToSVGPath, vectorNetworkToSVGPaths } from './paths'
 
 import { svg, renderSVGNode } from '../svg-node'
 
-import type { SVGNode } from '../svg-node'
 import type { SceneGraph, SceneNode, Fill, Stroke, CharacterStyleOverride } from '../scene-graph'
+import type { SVGNode } from '../svg-node'
 import type { SVGExportContext } from './defs'
 
 // --- Node rendering ---
@@ -138,7 +138,9 @@ function nodeShapeElements(
   }
 }
 
-function styleOverrideToTspanAttrs(style: CharacterStyleOverride): Record<string, string | number | undefined> {
+function styleOverrideToTspanAttrs(
+  style: CharacterStyleOverride
+): Record<string, string | number | undefined> {
   const attrs: Record<string, string | number | undefined> = {}
   if (style.fontFamily) attrs['font-family'] = style.fontFamily
   if (style.fontSize) attrs['font-size'] = style.fontSize
@@ -157,33 +159,28 @@ function styleOverrideToTspanAttrs(style: CharacterStyleOverride): Record<string
 }
 
 function renderTextNode(node: SceneNode, fillAttr: string | null): SVGNode {
+  let textAnchor: 'middle' | 'end' | undefined
+  if (node.textAlignHorizontal === 'CENTER') textAnchor = 'middle'
+  else if (node.textAlignHorizontal === 'RIGHT') textAnchor = 'end'
+
+  let textDecoration: 'underline' | 'line-through' | undefined
+  if (node.textDecoration === 'UNDERLINE') textDecoration = 'underline'
+  else if (node.textDecoration === 'STRIKETHROUGH') textDecoration = 'line-through'
+
   const attrs: Record<string, string | number | undefined> = {
     'font-family': node.fontFamily || undefined,
     'font-size': node.fontSize || undefined,
     'font-weight': node.fontWeight !== 400 ? node.fontWeight : undefined,
     'font-style': node.italic ? 'italic' : undefined,
     fill: fillAttr ?? undefined,
-    'text-anchor':
-      node.textAlignHorizontal === 'CENTER'
-        ? 'middle'
-        : (node.textAlignHorizontal === 'RIGHT'
-          ? 'end'
-          : undefined),
-    'text-decoration':
-      node.textDecoration === 'UNDERLINE'
-        ? 'underline'
-        : (node.textDecoration === 'STRIKETHROUGH'
-          ? 'line-through'
-          : undefined),
+    'text-anchor': textAnchor,
+    'text-decoration': textDecoration,
     'letter-spacing': node.letterSpacing ? round(node.letterSpacing) : undefined
   }
 
-  const x =
-    node.textAlignHorizontal === 'CENTER'
-      ? round(node.width / 2)
-      : (node.textAlignHorizontal === 'RIGHT'
-        ? round(node.width)
-        : 0)
+  let x = 0
+  if (node.textAlignHorizontal === 'CENTER') x = round(node.width / 2)
+  else if (node.textAlignHorizontal === 'RIGHT') x = round(node.width)
   const y = node.fontSize || 14
 
   if (node.styleRuns.length > 0) {
@@ -258,7 +255,9 @@ function buildGroupAttrs(
   return { attrs, clipId }
 }
 
-function buildSVGStrokeAttrs(visibleStrokes: Stroke[]): Record<string, string | number | undefined> {
+function buildSVGStrokeAttrs(
+  visibleStrokes: Stroke[]
+): Record<string, string | number | undefined> {
   if (visibleStrokes.length === 0) return {}
   const stroke = visibleStrokes[0]
   const attrs: Record<string, string | number | undefined> = {
@@ -329,7 +328,12 @@ function renderNode(node: SceneNode, ctx: SVGExportContext): SVGNode | null {
   const strokeAttrs = buildSVGStrokeAttrs(visibleStrokes)
 
   const children: (SVGNode | null)[] = buildShapeChildren(
-    node, visibleFills, fillAttr, strokeAttrs, visibleStrokes.length, ctx
+    node,
+    visibleFills,
+    fillAttr,
+    strokeAttrs,
+    visibleStrokes.length,
+    ctx
   )
 
   const childNodes = ctx.graph.getChildren(node.id)
@@ -399,9 +403,7 @@ export function renderNodesToSVG(
     const offsetY = abs.y - minY
 
     const needsOffset = offsetX !== node.x || offsetY !== node.y
-    const clone = needsOffset
-      ? { ...node, x: round(offsetX), y: round(offsetY) }
-      : node
+    const clone = needsOffset ? { ...node, x: round(offsetX), y: round(offsetY) } : node
 
     const rendered = renderNode(clone, ctx)
     if (rendered) contentNodes.push(rendered)

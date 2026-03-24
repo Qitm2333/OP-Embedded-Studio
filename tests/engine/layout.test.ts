@@ -1,6 +1,8 @@
 import { describe, test, expect } from 'bun:test'
 
-import { SceneGraph, type SceneNode, type GridTrack, computeLayout, computeAllLayouts, setTextMeasurer, FigmaAPI } from '@open-pencil/core'
+import { SceneGraph, type SceneNode, type GridTrack, computeLayout, computeAllLayouts, setTextMeasurer, FigmaAPI, readFigFile } from '@open-pencil/core'
+
+import { createEditorStore } from '@/stores/editor'
 
 function pageId(graph: SceneGraph) {
   return graph.getPages()[0].id
@@ -34,6 +36,13 @@ function rect(
     height: h,
     ...overrides,
   })
+}
+
+async function loadFixtureGraph(name: string) {
+  const path = new URL(`../fixtures/${name}`, import.meta.url)
+  const buffer = await Bun.file(path).arrayBuffer()
+  const file = new File([buffer], name, { type: 'application/octet-stream' })
+  return readFigFile(file)
 }
 
 describe('Auto Layout', () => {
@@ -970,6 +979,75 @@ describe('Auto Layout', () => {
   })
 
   describe('text measurement', () => {
+    test('opening imported fig keeps stored text bounds before CanvasKit measurement', async () => {
+      const graph = await loadFixtureGraph('gold-preview.fig')
+      const store = createEditorStore(graph)
+      const title = [...store.graph.getAllNodes()].find(
+        (node) => node.type === 'TEXT' && node.text === "World's largest"
+      )
+      const subtitle = [...store.graph.getAllNodes()].find(
+        (node) =>
+          node.type === 'TEXT' && node.text === 'Preline UI Figma - crafted with Tailwind CSS styles'
+      )
+      const description = [...store.graph.getAllNodes()].find(
+        (node) =>
+          node.type === 'TEXT' &&
+          node.text.startsWith('Preline UI Figma is the largest free design system for Figma')
+      )
+
+      if (!title || !subtitle || !description) {
+        throw new Error('Expected imported text nodes in gold-preview.fig')
+      }
+
+      expect(title.width).toBe(444)
+      expect(title.height).toBe(73)
+      expect(subtitle.width).toBe(439)
+      expect(subtitle.height).toBe(22)
+      expect(description.width).toBe(878)
+      expect(description.height).toBe(60)
+
+      await store.switchPage(store.graph.getPages()[0].id)
+
+      expect(store.graph.getNode(title.id)?.width).toBe(444)
+      expect(store.graph.getNode(title.id)?.height).toBe(73)
+      expect(store.graph.getNode(subtitle.id)?.width).toBe(439)
+      expect(store.graph.getNode(subtitle.id)?.height).toBe(22)
+      expect(store.graph.getNode(description.id)?.width).toBe(878)
+      expect(store.graph.getNode(description.id)?.height).toBe(60)
+    })
+
+    test('imported nested instance layout recomputes hidden sibling offsets', async () => {
+      const graph = await loadFixtureGraph('gold-preview.fig')
+      const previewRoot = graph.getChildren(graph.getPages()[0].id)[0]
+      const wysiwygEditor = graph.getChildren(previewRoot.id).find((node) => node.name === '_WYSIWYG-editor')
+      const toolbarVariant = wysiwygEditor
+        ? graph.getChildren(wysiwygEditor.id).find((node) => node.name === '_on-text-WYSIWYG-toolbar')
+        : undefined
+      const toolbarRow = toolbarVariant
+        ? graph.getChildren(toolbarVariant.id).find((node) => node.name === 'Toolbar')
+        : undefined
+      const hiddenInput = toolbarRow
+        ? graph.getChildren(toolbarRow.id).find((node) => node.name === 'Input')
+        : undefined
+      const visibleToolbar = toolbarRow
+        ? graph.getChildren(toolbarRow.id).find(
+            (node) => node.name === 'Toolbar' && node.id !== toolbarRow.id
+          )
+        : undefined
+
+      if (!toolbarRow || !hiddenInput || !visibleToolbar) {
+        throw new Error('Expected imported WYSIWYG toolbar nodes in gold-preview.fig')
+      }
+
+      expect(hiddenInput.visible).toBe(false)
+      expect(visibleToolbar.x).toBe(298)
+
+      computeAllLayouts(graph, graph.getPages()[0].id)
+
+      expect(graph.getNode(visibleToolbar.id)?.x).toBe(8)
+      expect(graph.getNode(visibleToolbar.id)?.y).toBe(8)
+    })
+
     test('WIDTH_AND_HEIGHT text uses measured width in centered layout', () => {
       const graph = new SceneGraph()
       const pid = pageId(graph)

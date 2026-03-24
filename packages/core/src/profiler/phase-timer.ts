@@ -37,10 +37,7 @@ export class PhaseTimer {
 
     const duration = performance.now() - startTime
     const prev = this.averages.get(name)
-    this.averages.set(
-      name,
-      prev === undefined ? duration : prev + (duration - prev) * SMOOTH
-    )
+    this.averages.set(name, prev === undefined ? duration : prev + (duration - prev) * SMOOTH)
 
     performance.measure(name, {
       start: startTime,

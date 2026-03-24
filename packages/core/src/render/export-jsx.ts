@@ -189,8 +189,7 @@ function collectGridSizingProps(node: SceneNode, props: [string, unknown][]): vo
   props.push(['grid', true])
   if (node.gridTemplateColumns.length > 0)
     props.push(['columns', formatTracks(node.gridTemplateColumns)])
-  if (node.gridTemplateRows.length > 0)
-    props.push(['rows', formatTracks(node.gridTemplateRows)])
+  if (node.gridTemplateRows.length > 0) props.push(['rows', formatTracks(node.gridTemplateRows)])
   if (node.width > 0) props.push(['w', node.width])
   if (node.gridTemplateRows.length > 0 && node.height > 0) props.push(['h', node.height])
   if (node.gridColumnGap > 0) props.push(['columnGap', node.gridColumnGap])
@@ -202,13 +201,11 @@ function collectFlexSizingProps(node: SceneNode, props: [string, unknown][]): vo
   const primaryAxis = node.layoutMode === 'HORIZONTAL' ? 'width' : 'height'
   const crossAxis = node.layoutMode === 'HORIZONTAL' ? 'height' : 'width'
 
-  if (node.primaryAxisSizing === 'FILL')
-    props.push([primaryAxis === 'width' ? 'w' : 'h', 'fill'])
+  if (node.primaryAxisSizing === 'FILL') props.push([primaryAxis === 'width' ? 'w' : 'h', 'fill'])
   else if (node.primaryAxisSizing !== 'HUG')
     props.push([primaryAxis === 'width' ? 'w' : 'h', node[primaryAxis]])
 
-  if (node.counterAxisSizing === 'FILL')
-    props.push([crossAxis === 'width' ? 'w' : 'h', 'fill'])
+  if (node.counterAxisSizing === 'FILL') props.push([crossAxis === 'width' ? 'w' : 'h', 'fill'])
   else if (node.counterAxisSizing !== 'HUG')
     props.push([crossAxis === 'width' ? 'w' : 'h', node[crossAxis]])
 }
@@ -246,7 +243,11 @@ function collectAutoLayoutPaddingProps(node: SceneNode, props: [string, unknown]
     ...emitPadding(
       pad,
       (v) => ['p', v] as [string, unknown],
-      (y, x) => [['py', y], ['px', x]] as [string, unknown][],
+      (y, x) =>
+        [
+          ['py', y],
+          ['px', x]
+        ] as [string, unknown][],
       ({ pt, pr, pb, pl }) => {
         const r: [string, unknown][] = []
         if (pt > 0) r.push(['pt', pt])
@@ -339,20 +340,28 @@ function collectSizingProps(
   }
 }
 
-function collectTextSizingProps(node: SceneNode, graph: SceneGraph, props: [string, unknown][]): void {
+function collectTextSizingProps(
+  node: SceneNode,
+  graph: SceneGraph,
+  props: [string, unknown][]
+): void {
   const autoResize = node.textAutoResize
   const emitH = autoResize === 'NONE' || autoResize === 'TRUNCATE'
   // Don't emit fixed w when text stretches to fill parent — the layoutAlignSelf
   // check below will emit w="fill" instead. Without this guard, w={computedPx}
   // gets emitted first and blocks the fill detection.
-  const isFillWidth = node.layoutAlignSelf === 'STRETCH' && (() => {
-    const parent = node.parentId ? graph.getNode(node.parentId) : null
-    return parent?.layoutMode === 'VERTICAL'
-  })()
-  const isGrowWidth = node.layoutGrow > 0 && (() => {
-    const parent = node.parentId ? graph.getNode(node.parentId) : null
-    return parent?.layoutMode === 'HORIZONTAL'
-  })()
+  const isFillWidth =
+    node.layoutAlignSelf === 'STRETCH' &&
+    (() => {
+      const parent = node.parentId ? graph.getNode(node.parentId) : null
+      return parent?.layoutMode === 'VERTICAL'
+    })()
+  const isGrowWidth =
+    node.layoutGrow > 0 &&
+    (() => {
+      const parent = node.parentId ? graph.getNode(node.parentId) : null
+      return parent?.layoutMode === 'HORIZONTAL'
+    })()
   const emitW = autoResize !== 'WIDTH_AND_HEIGHT' && !isFillWidth && !isGrowWidth
   if (emitW && node.width > 0) props.push(['w', node.width])
   if (emitH && node.height > 0) props.push(['h', node.height])
@@ -372,7 +381,8 @@ function collectTextNodeProps(node: SceneNode, props: [string, unknown][]): void
   }
   if (node.lineHeight != null) props.push(['lineHeight', node.lineHeight])
   if (node.letterSpacing !== 0) props.push(['letterSpacing', node.letterSpacing])
-  if (node.textDecoration !== 'NONE') props.push(['textDecoration', node.textDecoration.toLowerCase()])
+  if (node.textDecoration !== 'NONE')
+    props.push(['textDecoration', node.textDecoration.toLowerCase()])
   if (node.textCase !== 'ORIGINAL') props.push(['textCase', node.textCase.toLowerCase()])
   if (node.maxLines != null) props.push(['maxLines', node.maxLines])
   if (node.textTruncation === 'ENDING' && node.maxLines == null) props.push(['truncate', true])

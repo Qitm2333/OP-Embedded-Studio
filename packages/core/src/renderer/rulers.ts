@@ -11,9 +11,11 @@ import {
   RULER_TARGET_PIXEL_SPACING,
   RULER_MAJOR_TOLERANCE
 } from '../constants'
+import { computeAbsoluteBounds } from '../geometry'
+
 import type { SceneNode, SceneGraph } from '../scene-graph'
-import type { Canvas, CanvasKit } from 'canvaskit-wasm'
 import type { SkiaRenderer } from './renderer'
+import type { Canvas, CanvasKit } from 'canvaskit-wasm'
 
 interface SelectionScreenBounds {
   sx1: number
@@ -27,22 +29,12 @@ function getSelectionScreenBounds(
   graph: SceneGraph,
   selNodes: SceneNode[]
 ): SelectionScreenBounds {
-  let minX = Infinity,
-    minY = Infinity,
-    maxX = -Infinity,
-    maxY = -Infinity
-  for (const n of selNodes) {
-    const abs = graph.getAbsolutePosition(n.id)
-    minX = Math.min(minX, abs.x)
-    minY = Math.min(minY, abs.y)
-    maxX = Math.max(maxX, abs.x + n.width)
-    maxY = Math.max(maxY, abs.y + n.height)
-  }
+  const b = computeAbsoluteBounds(selNodes, (id) => graph.getAbsolutePosition(id))
   return {
-    sx1: minX * r.zoom + r.panX,
-    sx2: maxX * r.zoom + r.panX,
-    sy1: minY * r.zoom + r.panY,
-    sy2: maxY * r.zoom + r.panY
+    sx1: b.x * r.zoom + r.panX,
+    sx2: (b.x + b.width) * r.zoom + r.panX,
+    sy1: b.y * r.zoom + r.panY,
+    sy2: (b.y + b.height) * r.zoom + r.panY
   }
 }
 
@@ -156,10 +148,42 @@ export function drawRulers(
     canvas.drawRect(r.ck.LTRBRect(Math.max(R, selBounds.sx1), 0, selBounds.sx2, R), r.rulerHlPaint)
     canvas.drawRect(r.ck.LTRBRect(0, Math.max(R, selBounds.sy1), R, selBounds.sy2), r.rulerHlPaint)
 
-    drawRulerBadge(r, canvas, font, Math.round((selBounds.sx1 - r.panX) / r.zoom).toString(), Math.max(R, selBounds.sx1), 0, 'horizontal')
-    drawRulerBadge(r, canvas, font, Math.round((selBounds.sx2 - r.panX) / r.zoom).toString(), selBounds.sx2, 0, 'horizontal')
-    drawRulerBadge(r, canvas, font, Math.round((selBounds.sy1 - r.panY) / r.zoom).toString(), 0, Math.max(R, selBounds.sy1), 'vertical')
-    drawRulerBadge(r, canvas, font, Math.round((selBounds.sy2 - r.panY) / r.zoom).toString(), 0, selBounds.sy2, 'vertical')
+    drawRulerBadge(
+      r,
+      canvas,
+      font,
+      Math.round((selBounds.sx1 - r.panX) / r.zoom).toString(),
+      Math.max(R, selBounds.sx1),
+      0,
+      'horizontal'
+    )
+    drawRulerBadge(
+      r,
+      canvas,
+      font,
+      Math.round((selBounds.sx2 - r.panX) / r.zoom).toString(),
+      selBounds.sx2,
+      0,
+      'horizontal'
+    )
+    drawRulerBadge(
+      r,
+      canvas,
+      font,
+      Math.round((selBounds.sy1 - r.panY) / r.zoom).toString(),
+      0,
+      Math.max(R, selBounds.sy1),
+      'vertical'
+    )
+    drawRulerBadge(
+      r,
+      canvas,
+      font,
+      Math.round((selBounds.sy2 - r.panY) / r.zoom).toString(),
+      0,
+      selBounds.sy2,
+      'vertical'
+    )
   }
 }
 

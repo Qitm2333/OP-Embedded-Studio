@@ -129,14 +129,26 @@ export class HudRenderer {
     const cacheStatus = stats.scenePictureCacheHit ? 'HIT' : 'MISS'
 
     canvas.drawText(`FPS: ${fps} (${avgFrame}ms)`, col1, y, this.textPaint, this.hudFont)
-    canvas.drawText(`Nodes: ${stats.totalNodes} (${stats.culledNodes} culled)`, col2, y, this.textPaint, this.hudFont)
+    canvas.drawText(
+      `Nodes: ${stats.totalNodes} (${stats.culledNodes} culled)`,
+      col2,
+      y,
+      this.textPaint,
+      this.hudFont
+    )
     y += LINE_HEIGHT
 
     canvas.drawText(`CPU: ${avgCpu}ms`, col1, y, this.textPaint, this.hudFont)
     canvas.drawText(`Draws: ${stats.drawCalls}`, col2, y, this.textPaint, this.hudFont)
     y += LINE_HEIGHT
 
-    canvas.drawText(`GPU: ${avgGpu}${gpuAvailable ? 'ms' : ''}`, col1, y, this.textPaint, this.hudFont)
+    canvas.drawText(
+      `GPU: ${avgGpu}${gpuAvailable ? 'ms' : ''}`,
+      col1,
+      y,
+      this.textPaint,
+      this.hudFont
+    )
     canvas.drawText(`Cache: ${cacheStatus}`, col2, y, this.textPaint, this.hudFont)
 
     if (visiblePhases.length > 0) {
@@ -168,10 +180,7 @@ export class HudRenderer {
     let cx = x
     for (const [paint, label] of items) {
       const swatchY = y - SWATCH_SIZE + 1
-      canvas.drawRect(
-        this.ck.LTRBRect(cx, swatchY, cx + SWATCH_SIZE, swatchY + SWATCH_SIZE),
-        paint
-      )
+      canvas.drawRect(this.ck.LTRBRect(cx, swatchY, cx + SWATCH_SIZE, swatchY + SWATCH_SIZE), paint)
       cx += SWATCH_SIZE + SWATCH_GAP
       canvas.drawText(label, cx, y, this.dimTextPaint, this.hudFont)
       cx += label.length * 5.5 + LEGEND_ITEM_GAP
@@ -208,16 +217,18 @@ export class HudRenderer {
         paint = this.redPaint
       }
 
-      canvas.drawRect(
-        this.ck.LTRBRect(barX, barY, barX + BAR_WIDTH, graphY + GRAPH_HEIGHT),
-        paint
-      )
+      canvas.drawRect(this.ck.LTRBRect(barX, barY, barX + BAR_WIDTH, graphY + GRAPH_HEIGHT), paint)
 
       const gpuTime = gpuHistory[histIndex]
       if (!Number.isNaN(gpuTime) && gpuTime > 0) {
         const gpuBarHeight = Math.min((gpuTime / MAX_SCALE_MS) * GRAPH_HEIGHT, GRAPH_HEIGHT)
         canvas.drawRect(
-          this.ck.LTRBRect(barX, graphY + GRAPH_HEIGHT - gpuBarHeight, barX + BAR_WIDTH, graphY + GRAPH_HEIGHT),
+          this.ck.LTRBRect(
+            barX,
+            graphY + GRAPH_HEIGHT - gpuBarHeight,
+            barX + BAR_WIDTH,
+            graphY + GRAPH_HEIGHT
+          ),
           this.gpuPaint
         )
       }

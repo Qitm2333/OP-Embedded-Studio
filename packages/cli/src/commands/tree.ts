@@ -1,9 +1,10 @@
 import { defineCommand } from 'citty'
 
-import { loadDocument } from '../headless'
+import { executeRpcCommand } from '@open-pencil/core'
+
 import { isAppMode, requireFile, rpc } from '../app-client'
 import { fmtTree, printError, entity, formatType } from '../format'
-import { executeRpcCommand } from '@open-pencil/core'
+import { loadDocument } from '../headless'
 
 import type { TreeResult, TreeNodeResult } from '@open-pencil/core'
 import type { TreeNode } from 'agentfmt'
@@ -18,7 +19,10 @@ function toAgentfmtTree(node: TreeNodeResult, maxDepth: number, depth = 0): Tree
   return treeNode
 }
 
-async function getData(file: string | undefined, args: { page?: string; depth?: string }): Promise<TreeResult | { error: string }> {
+async function getData(
+  file: string | undefined,
+  args: { page?: string; depth?: string }
+): Promise<TreeResult | { error: string }> {
   const rpcArgs = { page: args.page, depth: args.depth ? Number(args.depth) : undefined }
   if (isAppMode(file)) return rpc<TreeResult>('tree', rpcArgs)
   const graph = await loadDocument(requireFile(file))
@@ -28,7 +32,11 @@ async function getData(file: string | undefined, args: { page?: string; depth?: 
 export default defineCommand({
   meta: { description: 'Print the node tree' },
   args: {
-    file: { type: 'positional', description: '.fig file path (omit to connect to running app)', required: false },
+    file: {
+      type: 'positional',
+      description: '.fig file path (omit to connect to running app)',
+      required: false
+    },
     page: { type: 'string', description: 'Page name (default: first page)' },
     depth: { type: 'string', description: 'Max depth (default: unlimited)' },
     json: { type: 'boolean', description: 'Output as JSON' }

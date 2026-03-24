@@ -1,6 +1,6 @@
 import type { SceneNode, SceneGraph, Fill } from '../scene-graph'
-import type { Canvas, Paint } from 'canvaskit-wasm'
 import type { SkiaRenderer } from './renderer'
+import type { Canvas, Paint } from 'canvaskit-wasm'
 
 export function drawNodeFill(
   r: SkiaRenderer,
@@ -105,10 +105,17 @@ export function applyGradientFill(r: SkiaRenderer, fill: Fill, node: SceneNode):
     // Figma's gradientTransform maps gradient space (center 0.5,0.5, radius 0.5)
     // to the node's normalized [0,1] coordinate space. The full local matrix
     // converts to pixel coordinates: scale(w, h) * gradientTransform.
-    const localMatrix = r.ck.Matrix.multiply(
-      r.ck.Matrix.scaled(w, h),
-      [t.m00, t.m01, t.m02, t.m10, t.m11, t.m12, 0, 0, 1]
-    )
+    const localMatrix = r.ck.Matrix.multiply(r.ck.Matrix.scaled(w, h), [
+      t.m00,
+      t.m01,
+      t.m02,
+      t.m10,
+      t.m11,
+      t.m12,
+      0,
+      0,
+      1
+    ])
     const shader = r.ck.Shader.MakeRadialGradient(
       [0.5, 0.5],
       0.5,
@@ -119,10 +126,17 @@ export function applyGradientFill(r: SkiaRenderer, fill: Fill, node: SceneNode):
     )
     r.fillPaint.setShader(shader)
   } else if (fill.type === 'GRADIENT_ANGULAR') {
-    const localMatrix = r.ck.Matrix.multiply(
-      r.ck.Matrix.scaled(w, h),
-      [t.m00, t.m01, t.m02, t.m10, t.m11, t.m12, 0, 0, 1]
-    )
+    const localMatrix = r.ck.Matrix.multiply(r.ck.Matrix.scaled(w, h), [
+      t.m00,
+      t.m01,
+      t.m02,
+      t.m10,
+      t.m11,
+      t.m12,
+      0,
+      0,
+      1
+    ])
     const shader = r.ck.Shader.MakeSweepGradient(
       0.5,
       0.5,
@@ -157,12 +171,7 @@ export function applyImageFill(
   const scaleMode = fill.imageScaleMode ?? 'FILL'
 
   if (scaleMode === 'TILE') {
-    const shader = img.makeShaderCubic(
-      r.ck.TileMode.Repeat,
-      r.ck.TileMode.Repeat,
-      1 / 3,
-      1 / 3
-    )
+    const shader = img.makeShaderCubic(r.ck.TileMode.Repeat, r.ck.TileMode.Repeat, 1 / 3, 1 / 3)
     r.fillPaint.setShader(shader)
     return true
   }

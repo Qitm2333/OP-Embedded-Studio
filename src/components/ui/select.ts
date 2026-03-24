@@ -33,6 +33,20 @@ const item = tv({
   base: 'relative flex cursor-pointer items-center text-surface outline-none data-[highlighted]:bg-hover'
 })
 
+interface SelectUi {
+  trigger?: string
+  content?: string
+  item?: string
+}
+
+export function useSelectUI(ui?: SelectUi) {
+  return {
+    trigger: twMerge(trigger(), ui?.trigger),
+    content: twMerge(content(), ui?.content),
+    item: twMerge(item(), ui?.item)
+  }
+}
+
 export function selectTrigger(options?: { class?: string }) {
   return twMerge(trigger(), options?.class)
 }

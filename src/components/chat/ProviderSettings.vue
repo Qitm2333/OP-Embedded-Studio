@@ -12,9 +12,12 @@ import {
 } from 'reka-ui'
 import { computed, ref, watch } from 'vue'
 
-import ProviderSelect from '@/components/chat/ProviderSelect.vue'
+import ProviderSelectField from '@/components/chat/ProviderSelectField.vue'
 import { uiInput } from '@/components/ui/input'
+import { usePopoverUI } from '@/components/ui/popover'
 import { useAIChat } from '@/composables/use-chat'
+
+const cls = usePopoverUI({ content: 'isolate z-[51] w-64 p-3' })
 
 const {
   providerID,
@@ -92,13 +95,14 @@ function clearUnsplashKey() {
 
 <template>
   <PopoverRoot>
-    <PopoverTrigger
-      data-test-id="provider-settings-trigger"
-      class="rounded p-0.5 text-muted hover:bg-hover hover:text-surface"
-      title="Provider settings"
-    >
-      <icon-lucide-settings class="size-3" />
-    </PopoverTrigger>
+    <Tip label="Provider settings">
+      <PopoverTrigger
+        data-test-id="provider-settings-trigger"
+        class="rounded p-0.5 text-muted hover:bg-hover hover:text-surface"
+      >
+        <icon-lucide-settings class="size-3" />
+      </PopoverTrigger>
+    </Tip>
 
     <PopoverPortal>
       <PopoverContent
@@ -107,7 +111,7 @@ function clearUnsplashKey() {
         align="end"
         :collision-padding="16"
         :avoid-collisions="true"
-        class="isolate z-[51] w-64 rounded-lg border border-border bg-panel p-3 shadow-lg"
+        :class="cls.content"
         @interact-outside="
           (e: Event) => {
             const target = e.target as HTMLElement | null
@@ -122,7 +126,7 @@ function clearUnsplashKey() {
         <div class="flex flex-col gap-2.5">
           <h3 class="text-[11px] font-semibold text-surface">AI Provider</h3>
 
-          <ProviderSelect test-id="provider-settings-provider" />
+          <ProviderSelectField test-id="provider-settings-provider" />
 
           <!-- Max output tokens -->
           <div v-if="!isACP" class="flex flex-col gap-1">

@@ -2,9 +2,9 @@ import { defineCommand } from 'citty'
 
 import { FigmaAPI } from '@open-pencil/core'
 
-import { loadDocument } from '../headless'
 import { isAppMode, requireFile, rpc } from '../app-client'
 import { printError } from '../format'
+import { loadDocument } from '../headless'
 
 function printResult(value: unknown, json: boolean) {
   if (json || !process.stdout.isTTY) {
@@ -26,13 +26,22 @@ function serializeResult(value: unknown): unknown {
 export default defineCommand({
   meta: { description: 'Execute JavaScript with Figma plugin API' },
   args: {
-    file: { type: 'positional', description: '.fig file path (omit to connect to running app)', required: false },
+    file: {
+      type: 'positional',
+      description: '.fig file path (omit to connect to running app)',
+      required: false
+    },
     code: { type: 'string', alias: 'c', description: 'JavaScript code to execute' },
     stdin: { type: 'boolean', description: 'Read code from stdin' },
     write: { type: 'boolean', alias: 'w', description: 'Write changes back to the input file' },
-    output: { type: 'string', alias: 'o', description: 'Write to a different file', required: false },
+    output: {
+      type: 'string',
+      alias: 'o',
+      description: 'Write to a different file',
+      required: false
+    },
     json: { type: 'boolean', description: 'Output as JSON' },
-    quiet: { type: 'boolean', alias: 'q', description: 'Suppress output' },
+    quiet: { type: 'boolean', alias: 'q', description: 'Suppress output' }
   },
   async run({ args }) {
     let code = args.code
@@ -88,5 +97,5 @@ export default defineCommand({
         console.error(`Written to ${outPath}`)
       }
     }
-  },
+  }
 })

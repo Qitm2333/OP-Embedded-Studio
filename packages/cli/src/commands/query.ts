@@ -1,9 +1,10 @@
 import { defineCommand } from 'citty'
 
-import { loadDocument } from '../headless'
-import { isAppMode, requireFile, rpc } from '../app-client'
-import { fmtList, printError, bold, entity, formatType } from '../format'
 import { executeRpcCommand } from '@open-pencil/core'
+
+import { isAppMode, requireFile, rpc } from '../app-client'
+import { printNodeResults, printError } from '../format'
+import { loadDocument } from '../headless'
 
 import type { QueryNodeResult } from '@open-pencil/core'
 
@@ -18,7 +19,7 @@ async function getData(
   }
   if (isAppMode(file)) return rpc<QueryNodeResult[]>('query', rpcArgs)
   const graph = await loadDocument(requireFile(file))
-  return await executeRpcCommand(graph, 'query', rpcArgs) as QueryNodeResult[] | { error: string }
+  return (await executeRpcCommand(graph, 'query', rpcArgs)) as QueryNodeResult[] | { error: string }
 }
 
 export default defineCommand({
@@ -41,8 +42,7 @@ Examples:
     },
     selector: {
       type: 'positional',
-      description:
-        'XPath selector (e.g., //FRAME[@width < 300], //TEXT[contains(@name, "Label")])',
+      description: 'XPath selector (e.g., //FRAME[@width < 300], //TEXT[contains(@name, "Label")])',
       required: true
     },
     page: { type: 'string', description: 'Page name (default: all pages)' },
@@ -66,25 +66,9 @@ Examples:
       return
     }
 
-    if (results.length === 0) {
-      console.log('No nodes found.')
-      return
-    }
-
-    console.log('')
-    console.log(bold(`  Found ${results.length} node${results.length > 1 ? 's' : ''}`))
-    console.log('')
-    console.log(
-      fmtList(
-        results.map((n) => ({
-          header: entity(
-            formatType(n.type),
-            `${n.name}  ${n.width}×${n.height}`,
-            n.id
-          )
-        }))
-      )
-    )
-    console.log('')
+    printNodeResults(results, (n) => {
+      const q = n as { width?: number; height?: number; name: string }
+      return `${q.name}  ${q.width}×${q.height}`
+    })
   }
 })

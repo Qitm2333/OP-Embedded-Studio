@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useHead } from '@unhead/vue'
+import { TooltipProvider } from 'reka-ui'
 
+import { provideEditor } from '@open-pencil/vue'
 import AppToast from '@/components/AppToast.vue'
-import { toast } from '@/composables/use-toast'
+import { useEditorStore } from '@/stores/editor'
+import { toast } from '@/utils/toast'
 
 useHead({ titleTemplate: (title) => (title ? `${title} — OpenPencil` : 'OpenPencil') })
+
+const store = useEditorStore()
+provideEditor(store)
 
 onMounted(() => {
   toast.setupGlobalErrorHandler()
@@ -13,6 +19,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <RouterView />
-  <AppToast />
+  <TooltipProvider :delay-duration="400">
+    <RouterView />
+    <AppToast />
+  </TooltipProvider>
 </template>

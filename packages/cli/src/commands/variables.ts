@@ -1,13 +1,17 @@
 import { defineCommand } from 'citty'
 
-import { loadDocument } from '../headless'
+import { executeRpcCommand } from '@open-pencil/core'
+
 import { isAppMode, requireFile, rpc } from '../app-client'
 import { bold, entity, fmtList, fmtSummary } from '../format'
-import { executeRpcCommand } from '@open-pencil/core'
+import { loadDocument } from '../headless'
 
 import type { VariablesResult } from '@open-pencil/core'
 
-async function getData(file: string | undefined, args: { collection?: string; type?: string }): Promise<VariablesResult> {
+async function getData(
+  file: string | undefined,
+  args: { collection?: string; type?: string }
+): Promise<VariablesResult> {
   const rpcArgs = { collection: args.collection, type: args.type }
   if (isAppMode(file)) return rpc<VariablesResult>('variables', rpcArgs)
   const graph = await loadDocument(requireFile(file))
@@ -17,7 +21,11 @@ async function getData(file: string | undefined, args: { collection?: string; ty
 export default defineCommand({
   meta: { description: 'List design variables and collections' },
   args: {
-    file: { type: 'positional', description: '.fig file path (omit to connect to running app)', required: false },
+    file: {
+      type: 'positional',
+      description: '.fig file path (omit to connect to running app)',
+      required: false
+    },
     collection: { type: 'string', description: 'Filter by collection name' },
     type: { type: 'string', description: 'Filter by type: COLOR, FLOAT, STRING, BOOLEAN' },
     json: { type: 'boolean', description: 'Output as JSON' }

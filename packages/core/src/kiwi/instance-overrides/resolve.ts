@@ -1,7 +1,8 @@
+import { guidToString } from '../kiwi-convert'
+
 import type { SceneNode } from '../../scene-graph'
 import type { GUID } from '../codec'
 import type { OverrideContext } from './types'
-import { guidToString } from '../kiwi-convert'
 
 const MAX_CHAIN_DEPTH = 20
 
@@ -79,7 +80,11 @@ export function getComponentRoot(ctx: OverrideContext, nodeId: string, depth = 0
  *         ambiguity when multiple siblings share the same root).
  * Pass 3: recurse into children.
  */
-export function findNodeByComponentId(ctx: OverrideContext, parentId: string, componentId: string): string | null {
+export function findNodeByComponentId(
+  ctx: OverrideContext,
+  parentId: string,
+  componentId: string
+): string | null {
   const parent = ctx.graph.getNode(parentId)
   if (!parent) return null
 
@@ -95,9 +100,13 @@ export function findNodeByComponentId(ctx: OverrideContext, parentId: string, co
     for (const childId of parent.childIds) {
       const child = ctx.graph.getNode(childId)
       if (!child?.componentId) continue
-      const childRoot = ctx.preComputedRoot.get(child.componentId) ?? getComponentRoot(ctx, child.componentId)
+      const childRoot =
+        ctx.preComputedRoot.get(child.componentId) ?? getComponentRoot(ctx, child.componentId)
       if (childRoot === targetRoot) {
-        if (rootMatch) { ambiguous = true; break }
+        if (rootMatch) {
+          ambiguous = true
+          break
+        }
         rootMatch = childId
       }
     }
@@ -117,7 +126,11 @@ export function findNodeByComponentId(ctx: OverrideContext, parentId: string, co
  * Each GUID in the path identifies an overrideKey → figmaGuid → graph node.
  * The chain walks from the instance down to the target.
  */
-export function resolveOverrideTarget(ctx: OverrideContext, instanceId: string, guids: GUID[]): string | null {
+export function resolveOverrideTarget(
+  ctx: OverrideContext,
+  instanceId: string,
+  guids: GUID[]
+): string | null {
   let currentId = instanceId
   for (const guid of guids) {
     const key = guidToString(guid)

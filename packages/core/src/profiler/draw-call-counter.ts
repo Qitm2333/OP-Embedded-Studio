@@ -21,7 +21,10 @@ export class DrawCallCounter {
       const original = gl[method].bind(gl) as (...args: unknown[]) => void
       this.originals.set(method, original)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- monkey-patching overloaded WebGL draw methods
-      ;(gl[method] as Function) = (...args: unknown[]) => { this.count++; original(...args) }
+      ;(gl[method] as Function) = (...args: unknown[]) => {
+        this.count++
+        original(...args)
+      }
     }
   }
 

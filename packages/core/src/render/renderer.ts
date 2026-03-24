@@ -1,7 +1,7 @@
 import { parseColor, colorToFill } from '../color'
 import { TRANSPARENT } from '../constants'
-import { fetchIcons } from '../iconify'
 import { createIconFromPaths } from '../icon-render'
+import { fetchIcons } from '../iconify'
 import { computeAllLayouts } from '../layout'
 import { isTreeNode } from './tree'
 
@@ -180,7 +180,10 @@ function applySizeOverrides(
     if (isParentGrid) o.layoutAlignSelf = 'STRETCH'
     else if (isParentRow) o.layoutGrow = 1
     else if (isParentCol) o.layoutAlignSelf = 'STRETCH'
-    else { o.layoutGrow = 1; o.layoutAlignSelf = 'STRETCH' }
+    else {
+      o.layoutGrow = 1
+      o.layoutAlignSelf = 'STRETCH'
+    }
   }
   if (h === 'fill') {
     if (isParentGrid) o.layoutAlignSelf = 'STRETCH'
@@ -297,13 +300,19 @@ function applyGridOverrides(
   if (typeof props.columns === 'string') {
     o.gridTemplateColumns = parseTrackList(props.columns)
   } else if (typeof props.columns === 'number') {
-    o.gridTemplateColumns = Array.from({ length: props.columns }, () => ({ sizing: 'FR' as const, value: 1 }))
+    o.gridTemplateColumns = Array.from({ length: props.columns }, () => ({
+      sizing: 'FR' as const,
+      value: 1
+    }))
   }
 
   if (typeof props.rows === 'string') {
     o.gridTemplateRows = parseTrackList(props.rows)
   } else if (typeof props.rows === 'number') {
-    o.gridTemplateRows = Array.from({ length: props.rows }, () => ({ sizing: 'FR' as const, value: 1 }))
+    o.gridTemplateRows = Array.from({ length: props.rows }, () => ({
+      sizing: 'FR' as const,
+      value: 1
+    }))
   }
 
   if (typeof props.columnGap === 'number') o.gridColumnGap = props.columnGap
@@ -356,10 +365,7 @@ function applyAutoLayoutSizing(
   if (counterDim === 'hug') o.counterAxisSizing = 'HUG'
 }
 
-function shouldEnableAutoLayout(
-  props: Record<string, unknown>,
-  isText: boolean
-): boolean {
+function shouldEnableAutoLayout(props: Record<string, unknown>, isText: boolean): boolean {
   if (props.flex !== undefined) return true
   if (!isText && hasAutoLayoutTriggerProps(props)) return true
   return false
@@ -430,8 +436,10 @@ function applyTextStyleOverrides(props: Record<string, unknown>, o: Partial<Scen
 
   if (props.lineHeight !== undefined) o.lineHeight = props.lineHeight as number
   if (props.letterSpacing !== undefined) o.letterSpacing = props.letterSpacing as number
-  if (props.textDecoration !== undefined) o.textDecoration = (props.textDecoration as string).toUpperCase() as SceneNode['textDecoration']
-  if (props.textCase !== undefined) o.textCase = (props.textCase as string).toUpperCase() as SceneNode['textCase']
+  if (props.textDecoration !== undefined)
+    o.textDecoration = (props.textDecoration as string).toUpperCase() as SceneNode['textDecoration']
+  if (props.textCase !== undefined)
+    o.textCase = (props.textCase as string).toUpperCase() as SceneNode['textCase']
   if (props.maxLines !== undefined) {
     o.maxLines = props.maxLines as number
     o.textTruncation = 'ENDING'

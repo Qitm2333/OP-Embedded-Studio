@@ -29,9 +29,13 @@ function loadCanvasKitWebGPU(): Promise<(opts?: Record<string, unknown>) => Prom
     const script = document.createElement('script')
     script.src = '/canvaskit-webgpu/canvaskit.js'
     script.onload = () => {
-      const init = 'CanvasKitInit' in globalThis
-        ? ((globalThis as typeof globalThis & { CanvasKitInit: unknown }).CanvasKitInit as (opts?: { locateFile?: (file: string) => string }) => Promise<CanvasKit>)
-        : null
+      const init =
+        'CanvasKitInit' in globalThis
+          ? ((globalThis as typeof globalThis & { CanvasKitInit: unknown })
+              .CanvasKitInit as (opts?: {
+              locateFile?: (file: string) => string
+            }) => Promise<CanvasKit>)
+          : null
       if (!init) return reject(new Error('CanvasKitInit not found after loading WebGPU build'))
       resolve(init)
     }
@@ -54,9 +58,7 @@ export async function getCanvasKit(options?: CanvasKitOptions): Promise<CanvasKi
   if (backend === 'webgpu') {
     const init = await loadCanvasKitWebGPU()
     instance = await init({
-      locateFile:
-        options?.locateFile ??
-        ((file: string) => `/canvaskit-webgpu/${file}`)
+      locateFile: options?.locateFile ?? ((file: string) => `/canvaskit-webgpu/${file}`)
     })
   } else {
     instance = await CanvasKitInit({

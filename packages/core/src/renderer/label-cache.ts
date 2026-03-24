@@ -23,6 +23,10 @@ interface Viewport {
 
 const LABEL_TYPES = new Set(['COMPONENT', 'COMPONENT_SET'])
 
+function isInViewport(absX: number, absY: number, w: number, h: number, vp: Viewport): boolean {
+  return absX + w >= vp.x && absY + h >= vp.y && absX <= vp.x + vp.w && absY <= vp.y + vp.h
+}
+
 export class LabelCache {
   private sections: CachedSection[] = []
   private components: CachedComponent[] = []
@@ -43,36 +47,35 @@ export class LabelCache {
     this.components = []
   }
 
-  getSections(graph: SceneGraph, viewport: Viewport): Array<{ node: SceneNode; absX: number; absY: number; nested: boolean }> {
+  getSections(
+    graph: SceneGraph,
+    viewport: Viewport
+  ): Array<{ node: SceneNode; absX: number; absY: number; nested: boolean }> {
     const result: Array<{ node: SceneNode; absX: number; absY: number; nested: boolean }> = []
     for (const cached of this.sections) {
       const node = graph.getNode(cached.nodeId)
-      if (!node) continue
-      if (
-        cached.absX + node.width >= viewport.x &&
-        cached.absY + node.height >= viewport.y &&
-        cached.absX <= viewport.x + viewport.w &&
-        cached.absY <= viewport.y + viewport.h
-      ) {
-        result.push({ node, absX: cached.absX, absY: cached.absY, nested: cached.nested })
-      }
+      if (!node || !isInViewport(cached.absX, cached.absY, node.width, node.height, viewport))
+        continue
+      result.push({ node, absX: cached.absX, absY: cached.absY, nested: cached.nested })
     }
     return result
   }
 
-  getComponents(graph: SceneGraph, viewport: Viewport): Array<{ node: SceneNode; absX: number; absY: number; inside: boolean }> {
+  getComponents(
+    graph: SceneGraph,
+    viewport: Viewport
+  ): Array<{ node: SceneNode; absX: number; absY: number; inside: boolean }> {
     const result: Array<{ node: SceneNode; absX: number; absY: number; inside: boolean }> = []
     for (const cached of this.components) {
       const node = graph.getNode(cached.nodeId)
-      if (!node) continue
-      if (
-        cached.absX + node.width >= viewport.x &&
-        cached.absY + node.height >= viewport.y &&
-        cached.absX <= viewport.x + viewport.w &&
-        cached.absY <= viewport.y + viewport.h
-      ) {
-        result.push({ node, absX: cached.absX, absY: cached.absY, inside: cached.parentType === 'COMPONENT_SET' })
-      }
+      if (!node || !isInViewport(cached.absX, cached.absY, node.width, node.height, viewport))
+        continue
+      result.push({
+        node,
+        absX: cached.absX,
+        absY: cached.absY,
+        inside: cached.parentType === 'COMPONENT_SET'
+      })
     }
     return result
   }
@@ -87,7 +90,13 @@ export class LabelCache {
     this.walkChildren(graph, pageNode.id, 0, 0, false)
   }
 
-  private walkChildren(graph: SceneGraph, parentId: string, ox: number, oy: number, insideSection: boolean): void {
+  private walkChildren(
+    graph: SceneGraph,
+    parentId: string,
+    ox: number,
+    oy: number,
+    insideSection: boolean
+  ): void {
     const parent = graph.getNode(parentId)
     if (!parent) return
     const parentType = parent.type

@@ -1,36 +1,41 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import Tip from '@/components/ui/Tip.vue'
+import { sectionWrapper } from '@/components/ui/section'
+import { useSceneComputed } from '@open-pencil/vue'
+
 import { useEditorStore } from '@/stores/editor'
 
-const store = useEditorStore()
 const emit = defineEmits<{ openDialog: [] }>()
 
-const collectionCount = computed(() => {
-  void store.state.sceneVersion
-  return store.graph.variableCollections.size
+const editor = useEditorStore()
+const collectionCount = useSceneComputed(() => {
+  void editor.state.sceneVersion
+  return editor.getCollectionCount()
 })
-
-const variableCount = computed(() => {
-  void store.state.sceneVersion
-  return store.graph.variables.size
+const variableCount = useSceneComputed(() => {
+  void editor.state.sceneVersion
+  return editor.getVariableCount()
 })
+const hasVariables = computed(() => variableCount.value > 0)
 </script>
 
 <template>
-  <div data-test-id="variables-section" class="border-b border-border px-3 py-2">
+  <div data-test-id="variables-section" :class="sectionWrapper()">
     <div class="flex items-center justify-between">
       <label class="text-[11px] font-medium text-surface">Variables</label>
-      <button
-        data-test-id="variables-section-open"
-        class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
-        title="Open variables"
-        @click="emit('openDialog')"
-      >
-        <icon-lucide-settings-2 class="size-3.5" />
-      </button>
+      <Tip label="Open variables">
+        <button
+          data-test-id="variables-section-open"
+          class="flex size-5 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
+          @click="emit('openDialog')"
+        >
+          <icon-lucide-settings-2 class="size-3.5" />
+        </button>
+      </Tip>
     </div>
-    <div v-if="variableCount > 0" class="mt-1 text-[11px] text-muted">
+    <div v-if="hasVariables" class="mt-1 text-[11px] text-muted">
       {{ variableCount }} variable{{ variableCount !== 1 ? 's' : '' }} in
       {{ collectionCount }} collection{{ collectionCount !== 1 ? 's' : '' }}
     </div>

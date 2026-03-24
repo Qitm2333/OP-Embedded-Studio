@@ -1,124 +1,66 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import type { ListboxFilter } from 'reka-ui'
-import {
-  ListboxContent,
-  ListboxItem,
-  ListboxRoot,
-  ListboxVirtualizer,
-  PopoverAnchor,
-  PopoverContent,
-  PopoverRoot,
-  useFilter
-} from 'reka-ui'
+import { FontPickerRoot } from '@open-pencil/vue'
 
-import { selectContent, selectItem, selectTrigger } from '@/components/ui/select'
-import { panelSurface } from '@/components/ui/surface'
+import { useSelectUI } from '@/components/ui/select'
+import { usePopoverUI } from '@/components/ui/popover'
 import { listFamilies } from '@/engine/fonts'
 
 const modelValue = defineModel<string>({ required: true })
 const emit = defineEmits<{ select: [family: string] }>()
 
-const families = ref<string[]>([])
-const searchTerm = ref('')
-const open = ref(false)
-const filterRef = ref<InstanceType<typeof ListboxFilter> | null>(null)
-
-const { contains } = useFilter({ sensitivity: 'base' })
-const filtered = computed(() => {
-  if (!searchTerm.value) return families.value
-  return families.value.filter((f) => contains(f, searchTerm.value))
+const cls = usePopoverUI({
+  content: 'w-[var(--reka-combobox-trigger-width)] min-w-56 overflow-hidden p-0'
 })
-
-onMounted(async () => {
-  families.value = await listFamilies()
+const selectCls = useSelectUI({
+  trigger: 'w-full rounded px-2 py-1 text-xs',
+  item: 'w-full gap-2 px-2 py-2 text-sm'
 })
-
-watch(open, (isOpen) => {
-  if (isOpen) {
-    searchTerm.value = ''
-    nextTick(() => filterRef.value?.$el?.focus())
-  }
-})
-
-function onSelect(val: string) {
-  modelValue.value = val
-  emit('select', val)
-  open.value = false
-}
 </script>
 
 <template>
-  <PopoverRoot v-model:open="open">
-    <PopoverAnchor>
-      <button
-        data-test-id="font-picker-trigger"
-        :class="selectTrigger({ class: 'w-full rounded px-2 py-1 text-xs' })"
-        @click="open = !open"
-      >
+  <FontPickerRoot
+    v-model="modelValue"
+    data-test-id="font-picker-root"
+    :list-families="listFamilies"
+    :trigger-class="selectCls.trigger"
+    :content-class="cls.content"
+    item-class=""
+    search-class="min-w-0 flex-1 border-none bg-transparent text-xs text-surface outline-none placeholder:text-muted"
+    empty-class="px-2 py-3 text-center text-xs text-muted"
+    empty-fonts-hint="Use the desktop app or Chrome/Edge to access system fonts."
+    @select="emit('select', $event)"
+  >
+    <template #trigger>
+      <button data-test-id="font-picker-trigger" :class="selectCls.trigger">
         <span class="truncate">{{ modelValue }}</span>
         <icon-lucide-chevron-down class="size-3 shrink-0 text-muted" />
       </button>
-    </PopoverAnchor>
-    <PopoverContent
-      :side-offset="2"
-      align="start"
-      :class="
-        panelSurface({
-          radius: 'md',
-          padding: 'none',
-          class: 'z-50 flex w-[var(--reka-popper-anchor-width)] min-w-56 flex-col overflow-hidden'
-        })
-      "
-      @open-auto-focus.prevent
-    >
-      <ListboxRoot :model-value="modelValue" @update:model-value="onSelect">
-        <div class="flex items-center gap-1 border-b border-border px-2 py-1">
-          <icon-lucide-search class="size-3 shrink-0 text-muted" />
-          <ListboxFilter
-            ref="filterRef"
-            v-model="searchTerm"
-            data-test-id="font-picker-search"
-            class="min-w-0 flex-1 border-none bg-transparent text-xs text-surface outline-none placeholder:text-muted"
-            placeholder="Search fonts…"
-            autocomplete="off"
-            autocorrect="off"
-            autocapitalize="off"
-            spellcheck="false"
-          />
-        </div>
-        <ListboxContent class="h-72 overflow-y-auto">
-          <ListboxVirtualizer
-            v-slot="{ option }"
-            :options="filtered"
-            :text-content="(f: string) => f"
-            :estimate-size="36"
-          >
-            <ListboxItem
-              :value="option"
-              data-test-id="font-picker-item"
-              :class="selectItem({ class: 'w-full gap-2 px-2 py-2 text-sm' })"
-              :style="{ fontFamily: `'${option}', sans-serif` }"
-            >
-              <icon-lucide-check v-if="option === modelValue" class="size-3 shrink-0 text-accent" />
-              <span v-else class="size-3 shrink-0" />
-              <span class="truncate">{{ option }}</span>
-            </ListboxItem>
-          </ListboxVirtualizer>
-          <div
-            v-if="families.length === 0"
-            class="flex h-full items-center justify-center px-3 text-center text-xs text-muted"
-          >
-            <div>
-              <p>No local fonts available.</p>
-              <p class="mt-1">Use the desktop app or Chrome/Edge to access system fonts.</p>
-            </div>
-          </div>
-          <div v-else-if="filtered.length === 0" class="px-2 py-3 text-center text-xs text-muted">
-            No fonts found
-          </div>
-        </ListboxContent>
-      </ListboxRoot>
-    </PopoverContent>
-  </PopoverRoot>
+    </template>
+
+    <template #search>
+      <div class="flex items-center gap-1 border-b border-border px-2 py-1">
+        <icon-lucide-search class="size-3 shrink-0 text-muted" />
+        <input
+          class="min-w-0 flex-1 border-none bg-transparent text-xs text-surface outline-none placeholder:text-muted"
+          placeholder="Search fonts…"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+      </div>
+    </template>
+
+    <template #item="{ family, selected }">
+      <div
+        data-test-id="font-picker-item"
+        :class="selectCls.item"
+        :style="{ fontFamily: `'${family}', sans-serif` }"
+      >
+        <icon-lucide-check v-if="selected" class="size-3 shrink-0 text-accent" />
+        <span v-else class="size-3 shrink-0" />
+        <span class="truncate">{{ family }}</span>
+      </div>
+    </template>
+  </FontPickerRoot>
 </template>

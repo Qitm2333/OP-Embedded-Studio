@@ -1,9 +1,9 @@
+import { DrawCallCounter } from './draw-call-counter'
+import { CaptureStack, toSpeedscopeJSON } from './frame-capture'
 import { FrameStats } from './frame-stats'
 import { GPUTimer } from './gpu-timer'
-import { DrawCallCounter } from './draw-call-counter'
-import { PhaseTimer } from './phase-timer'
 import { HudRenderer } from './hud-renderer'
-import { CaptureStack, toSpeedscopeJSON } from './frame-capture'
+import { PhaseTimer } from './phase-timer'
 
 import type { FrameCapture } from './frame-capture'
 import type { CanvasKit, Canvas, Typeface } from 'canvaskit-wasm'

@@ -11,14 +11,14 @@ export async function getAppToken(): Promise<string> {
   if (!res || !res.ok) {
     throw new Error(
       `Could not connect to OpenPencil app on localhost:${AUTOMATION_HTTP_PORT}.\n` +
-      'Is the app running? Start it with: bun run tauri dev'
+        'Is the app running? Start it with: bun run tauri dev'
     )
   }
   const data = (await res.json()) as { status: string; token?: string }
   if (data.status !== 'ok' || !data.token) {
     throw new Error(
       'OpenPencil app is running but no document is open.\n' +
-      'Open a document in the app, or provide a .fig file path.'
+        'Open a document in the app, or provide a .fig file path.'
     )
   }
   cachedToken = data.token
@@ -37,7 +37,10 @@ export async function rpc<T = unknown>(command: string, args: unknown = {}): Pro
   })
 
   if (!res.ok) {
-    const body = (await res.json().catch(() => ({ error: `HTTP ${res.status}` }))) as { error?: string; ok?: boolean }
+    const body = (await res.json().catch(() => ({ error: `HTTP ${res.status}` }))) as {
+      error?: string
+      ok?: boolean
+    }
     throw new Error(body.error ?? `RPC failed: HTTP ${res.status}`)
   }
 
