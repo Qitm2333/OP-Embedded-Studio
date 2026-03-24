@@ -1,5 +1,6 @@
-import type { SceneGraph, SceneNode } from '../../scene-graph'
 import { copyFills, copyStrokes, copyEffects, copyStyleRuns } from '../../copy'
+
+import type { SceneGraph, SceneNode } from '../../scene-graph'
 
 /**
  * Copy appearance props from source to target (text, visibility, fills, etc.).
@@ -15,7 +16,8 @@ export function syncNodeProps(graph: SceneGraph, source: SceneNode, target: Scen
   if (source.effects !== target.effects) updates.effects = copyEffects(source.effects)
   if (source.styleRuns !== target.styleRuns) updates.styleRuns = copyStyleRuns(source.styleRuns)
   if (source.layoutGrow !== target.layoutGrow) updates.layoutGrow = source.layoutGrow
-  if (source.textAutoResize !== target.textAutoResize) updates.textAutoResize = source.textAutoResize
+  if (source.textAutoResize !== target.textAutoResize)
+    updates.textAutoResize = source.textAutoResize
   if (source.locked !== target.locked) updates.locked = source.locked
   if (Object.keys(updates).length > 0) graph.updateNode(target.id, updates)
 }
@@ -63,7 +65,11 @@ export function syncChildrenDeep(
     const tgtNode = graph.getNode(tgt.childIds[i])
     if (!srcNode || !tgtNode || srcNode.type !== tgtNode.type) continue
 
-    if (srcNode.type === 'INSTANCE' && swappedInstances.has(src.childIds[i]) && srcNode.componentId !== tgtNode.componentId) {
+    if (
+      srcNode.type === 'INSTANCE' &&
+      swappedInstances.has(src.childIds[i]) &&
+      srcNode.componentId !== tgtNode.componentId
+    ) {
       recloneChildren(graph, src.childIds[i], tgtNode, swappedInstances)
       continue
     }
@@ -106,7 +112,10 @@ function expandSeedsToParents(graph: SceneGraph, seeds: Set<string>): Set<string
 }
 
 /** BFS from expanded seeds through clone chains to find all nodes needing sync. */
-function buildNeedsSyncSet(expandedSeeds: Set<string>, clonesOf: Map<string, string[]>): Set<string> {
+function buildNeedsSyncSet(
+  expandedSeeds: Set<string>,
+  clonesOf: Map<string, string[]>
+): Set<string> {
   const needsSync = new Set<string>()
   const queue = [...expandedSeeds]
   for (let id = queue.pop(); id !== undefined; id = queue.pop()) {
@@ -142,9 +151,7 @@ export function propagateOverridesTransitively(
   const needsSync = buildNeedsSyncSet(expandedSeeds, clonesOf)
 
   // Merge seeds + protect into a single skip set for syncChildrenDeep
-  const skip = protect && protect.size > 0
-    ? new Set([...seeds, ...protect])
-    : seeds
+  const skip = protect && protect.size > 0 ? new Set([...seeds, ...protect]) : seeds
 
   const visited = new Set<string>()
   const syncQueue = [...expandedSeeds]

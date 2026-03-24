@@ -3,9 +3,10 @@ import { computed } from 'vue'
 
 import ColorInput from '@/components/ColorInput.vue'
 import { sectionWrapper } from '@/components/ui/section'
-import { useEditor } from '@open-pencil/vue'
 
-const editor = useEditor()
+import { useEditorStore } from '@/stores/editor'
+
+const editor = useEditorStore()
 const pageColor = computed(() => editor.state.pageColor)
 </script>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useLayout } from '../shared/useLayout'
+import { useLayout } from '../controls/useLayout'
 
 const ctx = useLayout()
 </script>

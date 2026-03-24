@@ -1,15 +1,23 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import Tip from '@/components/Tip.vue'
+import Tip from '@/components/ui/Tip.vue'
 import { sectionWrapper } from '@/components/ui/section'
-import { useEditor, useSceneComputed } from '@open-pencil/vue'
+import { useSceneComputed } from '@open-pencil/vue'
+
+import { useEditorStore } from '@/stores/editor'
 
 const emit = defineEmits<{ openDialog: [] }>()
 
-const editor = useEditor()
-const collectionCount = useSceneComputed(() => editor.getCollectionCount())
-const variableCount = useSceneComputed(() => editor.getVariableCount())
+const editor = useEditorStore()
+const collectionCount = useSceneComputed(
+  () => editor.getCollectionCount(),
+  () => editor.state.sceneVersion
+)
+const variableCount = useSceneComputed(
+  () => editor.getVariableCount(),
+  () => editor.state.sceneVersion
+)
 const hasVariables = computed(() => variableCount.value > 0)
 </script>
 

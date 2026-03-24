@@ -3,10 +3,15 @@ import { onMounted } from 'vue'
 import { useHead } from '@unhead/vue'
 import { TooltipProvider } from 'reka-ui'
 
+import { provideEditor } from '@open-pencil/vue'
 import AppToast from '@/components/AppToast.vue'
+import { useEditorStore } from '@/stores/editor'
 import { toast } from '@/utils/toast'
 
 useHead({ titleTemplate: (title) => (title ? `${title} — OpenPencil` : 'OpenPencil') })
+
+const store = useEditorStore()
+provideEditor(store)
 
 onMounted(() => {
   toast.setupGlobalErrorHandler()

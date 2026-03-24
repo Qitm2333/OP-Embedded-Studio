@@ -1,5 +1,6 @@
 import { CANVAS_BG_COLOR } from '../constants'
 import { collectFontKeys } from '../fonts'
+import { computeAllLayouts } from '../layout'
 
 import type { Color } from '../types'
 import type { EditorContext } from './types'
@@ -42,9 +43,15 @@ export function createPageActions(ctx: EditorContext) {
       ctx.state.pageColor = { ...CANVAS_BG_COLOR }
     }
 
-    const toLoad = collectFontKeys(ctx.graph, ctx.graph.getChildren(pageId).map((n) => n.id))
+    const toLoad = collectFontKeys(
+      ctx.graph,
+      ctx.graph.getChildren(pageId).map((n) => n.id)
+    )
     if (toLoad.length > 0) {
       await Promise.all(toLoad.map(([family, style]) => ctx.loadFont(family, style)))
+    }
+    if (ctx.getRenderer()) {
+      computeAllLayouts(ctx.graph, pageId)
     }
     ctx.requestRender()
   }

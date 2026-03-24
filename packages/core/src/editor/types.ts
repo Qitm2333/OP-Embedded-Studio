@@ -1,9 +1,9 @@
-import type { Color, Rect, Vector } from '../types'
+import type { SkiaRenderer } from '../renderer/renderer'
 import type { SceneGraph, VectorSegment, VectorVertex } from '../scene-graph'
 import type { SnapGuide } from '../snap'
-import type { SkiaRenderer } from '../renderer/renderer'
-import type { UndoManager } from '../undo'
 import type { TextEditor } from '../text-editor'
+import type { Color, Rect, Vector } from '../types'
+import type { UndoManager } from '../undo'
 import type { CanvasKit } from 'canvaskit-wasm'
 
 export type Tool =
@@ -101,6 +101,7 @@ export interface EditorOptions {
   state?: EditorState
   loadFont?: (family: string, style: string) => Promise<ArrayBuffer | null>
   getViewportSize?: () => { width: number; height: number }
+  skipInitialGraphSetup?: boolean
 }
 
 export interface EditorContext {

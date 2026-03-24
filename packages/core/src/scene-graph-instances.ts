@@ -59,7 +59,11 @@ function copyProp(
   }
 }
 
-function cloneChildrenWithMapping(graph: SceneGraph, sourceParentId: string, destParentId: string): void {
+function cloneChildrenWithMapping(
+  graph: SceneGraph,
+  sourceParentId: string,
+  destParentId: string
+): void {
   const sourceParent = graph.nodes.get(sourceParentId)
   if (!sourceParent) return
 
@@ -164,7 +168,11 @@ export function createInstance(
   return instance
 }
 
-export function populateInstanceChildren(graph: SceneGraph, instanceId: string, componentId: string): void {
+export function populateInstanceChildren(
+  graph: SceneGraph,
+  instanceId: string,
+  componentId: string
+): void {
   const instance = graph.nodes.get(instanceId)
   const component = graph.nodes.get(componentId)
   if (!instance || !component || instance.type !== 'INSTANCE') return

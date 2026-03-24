@@ -1,5 +1,6 @@
 import { computed } from 'vue'
 
+import { openFileDialog } from '@/composables/use-menu'
 import { useEditorStore } from '@/stores/editor'
 import { useEditorCommands, useMenuModel } from '@open-pencil/vue'
 
@@ -20,14 +21,15 @@ export function useAppMenu(mod: string) {
       shortcut: `${mod}N`,
       action: () => import('@/stores/tabs').then((m) => m.createTab())
     },
-    { label: 'Open…', shortcut: `${mod}O` },
+    { label: 'Open…', shortcut: `${mod}O`, action: () => void openFileDialog() },
     { separator: true as const },
-    { label: 'Save', shortcut: `${mod}S` },
-    { label: 'Save as…', shortcut: `${mod}⇧S` },
+    { label: 'Save', shortcut: `${mod}S`, action: () => void store.saveFigFile() },
+    { label: 'Save as…', shortcut: `${mod}⇧S`, action: () => void store.saveFigFileAs() },
     { separator: true as const },
     {
       label: 'Export selection…',
       shortcut: `${mod}⇧E`,
+      action: () => void store.exportSelection(1, 'PNG'),
       disabled: store.state.selectedIds.size === 0
     },
     { separator: true as const },

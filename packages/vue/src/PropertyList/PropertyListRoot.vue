@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { useEditor } from '../shared/editorContext'
+import { useEditor } from '../context/editorContext'
 import { providePropertyList } from './context'
 
 import type { Fill, Stroke, Effect, SceneNode } from '@open-pencil/core'
@@ -25,7 +25,9 @@ const emit = defineEmits<{
 const editor = useEditor()
 
 const selectedNodes = computed(() => editor.getSelectedNodes())
-const activeNode = computed<SceneNode | null>(() => editor.getSelectedNode() ?? selectedNodes.value[0] ?? null)
+const activeNode = computed<SceneNode | null>(
+  () => editor.getSelectedNode() ?? selectedNodes.value[0] ?? null
+)
 const isMulti = computed(() => selectedNodes.value.length > 1)
 const active = computed(() => selectedNodes.value.length > 0)
 
@@ -55,7 +57,11 @@ function add(defaults: ArrayItemType) {
   emit('add', defaults)
   for (const n of targetNodes()) {
     const arr = isMulti.value ? [defaults] : [...n[propKey], defaults]
-    editor.updateNodeWithUndo(n.id, { [propKey]: arr } as Partial<SceneNode>, isMulti.value ? `Set ${propKey}` : `Add ${propKey}`)
+    editor.updateNodeWithUndo(
+      n.id,
+      { [propKey]: arr } as Partial<SceneNode>,
+      isMulti.value ? `Set ${propKey}` : `Add ${propKey}`
+    )
   }
 }
 
@@ -64,7 +70,9 @@ function remove(index: number) {
   for (const n of targetNodes()) {
     editor.updateNodeWithUndo(
       n.id,
-      { [propKey]: (n[propKey] as ArrayItemType[]).filter((_, i) => i !== index) } as Partial<SceneNode>,
+      {
+        [propKey]: (n[propKey] as ArrayItemType[]).filter((_, i) => i !== index)
+      } as Partial<SceneNode>,
       `Remove ${propKey}`
     )
   }
@@ -95,7 +103,11 @@ function toggleVisibility(index: number) {
     if (!arr[index]) continue
     const newArr = [...n[propKey]] as Array<{ visible: boolean }>
     newArr[index] = { ...newArr[index], visible: !arr[index].visible }
-    editor.updateNodeWithUndo(n.id, { [propKey]: newArr } as Partial<SceneNode>, `Toggle ${propKey} visibility`)
+    editor.updateNodeWithUndo(
+      n.id,
+      { [propKey]: newArr } as Partial<SceneNode>,
+      `Toggle ${propKey} visibility`
+    )
   }
 }
 

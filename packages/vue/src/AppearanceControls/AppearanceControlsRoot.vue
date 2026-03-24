@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useAppearance } from '../shared/useAppearance'
+import { useAppearance } from '../controls/useAppearance'
 
 const ctx = useAppearance()
 </script>

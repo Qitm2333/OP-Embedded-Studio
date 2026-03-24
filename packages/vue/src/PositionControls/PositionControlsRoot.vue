@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { MIXED, useNodeProps } from '../shared/useNodeProps'
+import { MIXED, useNodeProps } from '../controls/useNodeProps'
 
 const {
   updateProp,
@@ -14,8 +14,12 @@ const {
   store
 } = useNodeProps()
 
-const xValue = computed(() => (isMulti.value ? multiProp('x').value : Math.round(node.value?.x ?? 0)))
-const yValue = computed(() => (isMulti.value ? multiProp('y').value : Math.round(node.value?.y ?? 0)))
+const xValue = computed(() =>
+  isMulti.value ? multiProp('x').value : Math.round(node.value?.x ?? 0)
+)
+const yValue = computed(() =>
+  isMulti.value ? multiProp('y').value : Math.round(node.value?.y ?? 0)
+)
 const wValue = multiProp('width')
 const hValue = multiProp('height')
 const rotationValue = computed(() =>

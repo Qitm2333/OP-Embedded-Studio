@@ -1,9 +1,9 @@
 import { computed } from 'vue'
 
-import { useEditor } from '../shared/editorContext'
-import { usePageList } from '../shared/usePageList'
+import { useEditor } from '../context/editorContext'
+import { usePageList } from '../PageList/usePageList'
 import { useSelectionCapabilities } from '../selection/useSelectionCapabilities'
-import { useSelectionState } from '../shared/useSelectionState'
+import { useSelectionState } from '../selection/useSelectionState'
 
 import type { Component, ComputedRef } from 'vue'
 
@@ -191,7 +191,9 @@ export function useEditorCommands() {
     }
   }
 
-  const otherPages = computed(() => pages.value.filter((page) => page.id !== editor.state.currentPageId))
+  const otherPages = computed(() =>
+    pages.value.filter((page) => page.id !== editor.state.currentPageId)
+  )
 
   function getCommand(id: EditorCommandId) {
     return commands[id]

@@ -13,6 +13,10 @@ const pageActions = ref<{
   renamePage: (pageId: string, name: string) => void
 } | null>(null)
 
+function setPageActions(renamePage: (pageId: string, name: string) => void) {
+  pageActions.value = { renamePage }
+}
+
 function setPageInputRef(pageId: string, el: HTMLInputElement | null) {
   if (el) pageInputRefs.set(pageId, el)
   else pageInputRefs.delete(pageId)
@@ -26,6 +30,14 @@ function setPageInputRef(pageId: string, el: HTMLInputElement | null) {
 function startRename(pg: { id: string; name: string }) {
   rename.start(pg.id, pg.name)
   activeRenameId.value = pg.id
+}
+
+function handlePageDblClick(
+  pg: { id: string; name: string },
+  renamePage: (pageId: string, name: string) => void
+) {
+  setPageActions(renamePage)
+  startRename(pg)
 }
 </script>
 
@@ -62,7 +74,11 @@ function startRename(pg: { id: string; name: string }) {
               @keydown="rename.onKeydown"
             />
           </div>
-          <div v-else-if="isDivider(pg)" class="my-1 flex items-center px-2" @dblclick="startRename(pg)">
+          <div
+            v-else-if="isDivider(pg)"
+            class="my-1 flex items-center px-2"
+            @dblclick="startRename(pg)"
+          >
             <div class="h-px flex-1 bg-border" />
           </div>
           <button
@@ -75,10 +91,7 @@ function startRename(pg: { id: string; name: string }) {
                 : 'bg-transparent text-muted hover:bg-hover hover:text-surface'
             "
             @click="switchPage(pg.id)"
-            @dblclick="
-              pageActions = { renamePage }
-              startRename(pg)
-            "
+            @dblclick="handlePageDblClick(pg, renamePage)"
           >
             <icon-lucide-file class="size-3 shrink-0" />
             <span class="truncate">{{ pg.name }}</span>

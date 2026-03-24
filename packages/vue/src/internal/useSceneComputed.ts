@@ -1,7 +1,5 @@
 import { computed, type ComputedRef } from 'vue'
 
-import { useEditor } from '../context/editorContext'
-
 /**
  * Creates a computed ref that re-evaluates when the scene graph changes.
  *
@@ -10,10 +8,11 @@ import { useEditor } from '../context/editorContext'
  * requestRender(). Vue tracks the read automatically, so the computed
  * re-evaluates in the same tick as the change. Zero latency.
  */
-export function useSceneComputed<T>(fn: () => T): ComputedRef<T> {
-  const editor = useEditor()
+export function useSceneComputed<T>(fn: () => T, sceneVersion?: () => number): ComputedRef<T> {
   return computed(() => {
-    void editor.state.sceneVersion
+    if (sceneVersion) {
+      void sceneVersion()
+    }
     return fn()
   })
 }

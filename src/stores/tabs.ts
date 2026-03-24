@@ -1,8 +1,9 @@
-import { shallowRef, computed } from 'vue'
+import { shallowRef, computed, triggerRef } from 'vue'
 
 import { createEditorStore, setActiveEditorStore } from './editor'
 
 import type { EditorStore } from './editor'
+import type { SceneGraph } from '@open-pencil/core'
 
 export interface Tab {
   id: string
@@ -34,8 +35,8 @@ export function getActiveStore(): EditorStore {
   return tab.store
 }
 
-export function createTab(store?: EditorStore): Tab {
-  const s = store ?? createEditorStore()
+export function createTab(store?: EditorStore, initialGraph?: SceneGraph): Tab {
+  const s = store ?? createEditorStore(initialGraph)
   const tab: Tab = { id: generateTabId(), store: s }
   tabsRef.value = [...tabsRef.value, tab]
   activateTab(tab)
@@ -45,6 +46,7 @@ export function createTab(store?: EditorStore): Tab {
 function activateTab(tab: Tab) {
   activeTabId.value = tab.id
   setActiveEditorStore(tab.store)
+  triggerRef(tabsRef)
   window.__OPEN_PENCIL_STORE__ = tab.store
 }
 
@@ -74,19 +76,32 @@ export function closeTab(tabId: string) {
 
 export async function openFileInNewTab(
   file: File,
-  handle?: FileSystemFileHandle,
-  path?: string
+  _handle?: FileSystemFileHandle,
+  _path?: string
 ): Promise<void> {
   const current = activeTab.value
   const isUntouched =
     current?.store.state.documentName === 'Untitled' && !current.store.undo.canUndo
 
   if (isUntouched) {
-    await current.store.openFigFile(file, handle, path)
+    const { readFigFile } = await import('@open-pencil/core')
+    const imported = await readFigFile(file)
+    current.store.replaceGraph(imported)
+    current.store.undo.clear()
+    current.store.state.documentName = file.name.replace(/\.fig$/i, '')
+    current.store.state.selectedIds = new Set()
+    const pageId = current.store.graph.getPages()[0]?.id ?? current.store.graph.rootId
+    await current.store.switchPage(pageId)
   } else {
-    const store = createEditorStore()
+    const { readFigFile } = await import('@open-pencil/core')
+    const imported = await readFigFile(file)
+    const store = createEditorStore(imported)
     createTab(store)
-    await store.openFigFile(file, handle, path)
+    store.undo.clear()
+    store.state.documentName = file.name.replace(/\.fig$/i, '')
+    store.state.selectedIds = new Set()
+    const pageId = store.graph.getPages()[0]?.id ?? store.graph.rootId
+    await store.switchPage(pageId)
   }
 }
 

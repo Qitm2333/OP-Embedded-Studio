@@ -1,8 +1,8 @@
 import { computed } from 'vue'
 
+import { useEditor } from '../context/editorContext'
+import { useSelectionState } from '../selection/useSelectionState'
 import { useEditorCommands } from './useEditorCommands'
-import { useSelectionState } from '../shared/useSelectionState'
-import { useEditor } from '../shared/editorContext'
 
 export interface MenuActionNode {
   separator?: false
@@ -85,7 +85,9 @@ export function useMenuModel() {
       ...(hasSelection.value ? [commandMenuItem('selection.wrapInAutoLayout', '⇧A')] : []),
       { separator: true },
       commandMenuItem('selection.createComponent', '⌥⌘K'),
-      ...(canCreateComponentSet.value ? [commandMenuItem('selection.createComponentSet', '⇧⌘K')] : []),
+      ...(canCreateComponentSet.value
+        ? [commandMenuItem('selection.createComponentSet', '⇧⌘K')]
+        : []),
       ...(isComponent.value && selectedNode.value
         ? [
             {
@@ -108,8 +110,8 @@ export function useMenuModel() {
   })
 
   const selectionLabelMenu = computed(() => ({
-    visibility: editor.getSelectedNode()?.visible ?? true ? 'Hide' : 'Show',
-    lock: editor.getSelectedNode()?.locked ?? false ? 'Unlock' : 'Lock'
+    visibility: (editor.getSelectedNode()?.visible ?? true) ? 'Hide' : 'Show',
+    lock: (editor.getSelectedNode()?.locked ?? false) ? 'Unlock' : 'Lock'
   }))
 
   return {

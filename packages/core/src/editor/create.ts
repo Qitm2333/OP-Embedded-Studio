@@ -1,11 +1,10 @@
-import { CANVAS_BG_COLOR, IS_BROWSER } from '../constants'
-import { computeLayout, setTextMeasurer } from '../layout'
-import { loadFont as defaultLoadFont } from '../fonts'
 import { prefetchFigmaSchema } from '../clipboard'
+import { CANVAS_BG_COLOR, IS_BROWSER } from '../constants'
+import { loadFont as defaultLoadFont } from '../fonts'
+import { computeLayout, setTextMeasurer } from '../layout'
 import { SceneGraph } from '../scene-graph'
 import { TextEditor } from '../text-editor'
 import { UndoManager } from '../undo'
-
 import { createAlignmentActions } from './alignment'
 import { createClipboardActions } from './clipboard'
 import { createComponentActions } from './components'
@@ -19,10 +18,10 @@ import { createUndoActions } from './undo'
 import { createVariableActions } from './variables'
 import { createViewportActions } from './viewport'
 
-import type { SceneNode } from '../scene-graph'
 import type { SkiaRenderer } from '../renderer/renderer'
-import type { CanvasKit } from 'canvaskit-wasm'
+import type { SceneNode } from '../scene-graph'
 import type { EditorContext, EditorOptions, EditorState } from './types'
+import type { CanvasKit } from 'canvaskit-wasm'
 
 export function createDefaultEditorState(pageId: string): EditorState {
   return {
@@ -54,12 +53,15 @@ export function createDefaultEditorState(pageId: string): EditorState {
 
 export function createEditor(options?: EditorOptions) {
   let _graph = options?.graph ?? new SceneGraph()
+  const skipInitialGraphSetup = options?.skipInitialGraphSetup ?? false
   const undo = new UndoManager()
   const _loadFont = options?.loadFont ?? defaultLoadFont
-  const _getViewportSize = options?.getViewportSize ?? (() => {
-    if (IS_BROWSER) return { width: window.innerWidth, height: window.innerHeight }
-    return { width: 800, height: 600 }
-  })
+  const _getViewportSize =
+    options?.getViewportSize ??
+    (() => {
+      if (IS_BROWSER) return { width: window.innerWidth, height: window.innerHeight }
+      return { width: 800, height: 600 }
+    })
   let _ck: CanvasKit | null = null
   let _renderer: SkiaRenderer | null = null
   let _textEditor: TextEditor | null = null
@@ -153,12 +155,18 @@ export function createEditor(options?: EditorOptions) {
     ]
   }
 
-  subscribeToGraph()
+  if (!skipInitialGraphSetup) {
+    subscribeToGraph()
+  }
 
   // Build the shared context
   const ctx: EditorContext = {
-    get graph() { return _graph },
-    set graph(g) { _graph = g },
+    get graph() {
+      return _graph
+    },
+    set graph(g) {
+      _graph = g
+    },
     undo,
     state,
     loadFont: _loadFont,
@@ -204,9 +212,15 @@ export function createEditor(options?: EditorOptions) {
   }
 
   return {
-    get graph() { return _graph },
-    get renderer() { return _renderer },
-    get textEditor() { return _textEditor },
+    get graph() {
+      return _graph
+    },
+    get renderer() {
+      return _renderer
+    },
+    get textEditor() {
+      return _textEditor
+    },
     undo,
     state,
 
@@ -221,6 +235,7 @@ export function createEditor(options?: EditorOptions) {
     requestRepaint,
     setCanvasKit,
     replaceGraph,
+    subscribeToGraph,
 
     // Selection
     ...selection,
@@ -263,7 +278,8 @@ export function createEditor(options?: EditorOptions) {
 
     // Clipboard — bridge functions that need selectedNodes
     duplicateSelected: () => clipboard.duplicateSelected(selection.getSelectedNodes()),
-    writeCopyData: (data: DataTransfer) => clipboard.writeCopyData(data, selection.getSelectedNodes()),
+    writeCopyData: (data: DataTransfer) =>
+      clipboard.writeCopyData(data, selection.getSelectedNodes()),
     pasteFromHTML: clipboard.pasteFromHTML,
     deleteSelected: clipboard.deleteSelected,
     storeImage: clipboard.storeImage,

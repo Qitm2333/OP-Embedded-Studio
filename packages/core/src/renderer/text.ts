@@ -24,14 +24,11 @@ export function measureTextNode(
   node: SceneNode,
   maxWidth?: number
 ): { width: number; height: number } | null {
-  if (!r.fontsLoaded || !r.fontProvider) return null
+  if (!r.fontsLoaded || !r.fontProvider || !isNodeFontLoaded(r, node)) return null
   if (node.type !== 'TEXT' || !node.text) return null
 
   const paragraph = buildParagraph(r, node)
-  let layoutWidth = node.width || 1e6
-  if (maxWidth !== undefined) layoutWidth = maxWidth
-  else if (node.textAutoResize === 'WIDTH_AND_HEIGHT') layoutWidth = 1e6
-  paragraph.layout(layoutWidth)
+  paragraph.layout(resolveParagraphLayoutWidth(node, maxWidth))
   const width = paragraph.getLongestLine()
   const height = paragraph.getHeight()
   paragraph.delete()
@@ -39,7 +36,7 @@ export function measureTextNode(
 }
 
 export function buildTextPicture(r: TextRenderer, node: SceneNode): Uint8Array | null {
-  if (!r.fontsLoaded || !r.fontProvider) return null
+  if (!r.fontsLoaded || !r.fontProvider || !isNodeFontLoaded(r, node)) return null
   if (node.type !== 'TEXT' || !node.text) return null
 
   const ck = r.ck
@@ -47,7 +44,7 @@ export function buildTextPicture(r: TextRenderer, node: SceneNode): Uint8Array |
   const bounds = ck.LTRBRect(0, 0, node.width || 1e6, node.height || 1e6)
   const recCanvas = recorder.beginRecording(bounds)
 
-  const paragraph = buildParagraph(r, node, undefined, { halfLeading: true })
+  const paragraph = buildParagraph(r, node)
   recCanvas.drawParagraph(paragraph, 0, 0)
   paragraph.delete()
 
@@ -57,6 +54,12 @@ export function buildTextPicture(r: TextRenderer, node: SceneNode): Uint8Array |
   const bytes = picture.serialize()
   picture.delete()
   return bytes ?? null
+}
+
+function resolveParagraphLayoutWidth(node: SceneNode, maxWidth?: number): number {
+  if (maxWidth !== undefined) return maxWidth
+  if (node.textAutoResize === 'WIDTH_AND_HEIGHT') return 1e6
+  return node.width || 1e6
 }
 
 function buildTruncateOpts(
@@ -202,7 +205,12 @@ export function buildParagraph(
   }
 
   const paragraph = builder.build()
-  paragraph.layout(node.width || 1e6)
+  if (node.textAutoResize === 'WIDTH_AND_HEIGHT') {
+    paragraph.layout(1e6)
+    paragraph.layout(Math.max(node.width || 1, Math.ceil(paragraph.getLongestLine())))
+  } else {
+    paragraph.layout(resolveParagraphLayoutWidth(node))
+  }
   builder.delete()
   return paragraph
 }

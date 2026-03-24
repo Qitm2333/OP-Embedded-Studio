@@ -1,7 +1,7 @@
 import { useFileDialog } from '@vueuse/core'
 import { onUnmounted } from 'vue'
 
-import { IS_TAURI } from '@/constants'
+import { IS_BROWSER, IS_TAURI } from '@/constants'
 import { useEditorStore } from '@/stores/editor'
 import { openFileInNewTab, createTab, closeTab, activeTab } from '@/stores/tabs'
 
@@ -10,6 +10,18 @@ fileDialog.onChange((files) => {
   const file = files?.[0]
   if (file) void openFileInNewTab(file)
 })
+
+if (IS_BROWSER) {
+  ;(
+    window as Window & { __OPEN_PENCIL_OPEN_FILE__?: (path: string) => Promise<void> }
+  ).__OPEN_PENCIL_OPEN_FILE__ = async (path: string) => {
+    const response = await fetch(path)
+    const blob = await response.blob()
+    const name = path.split('/').pop() ?? 'file.fig'
+    const file = new File([blob], name, { type: 'application/octet-stream' })
+    await openFileInNewTab(file, undefined, path)
+  }
+}
 
 export async function openFileDialog() {
   if (IS_TAURI) {

@@ -1,11 +1,10 @@
 import { useDebounceFn } from '@vueuse/core'
-import { shallowReactive, shallowRef, computed, watch } from 'vue'
+import { shallowReactive, shallowRef, computed, watch, triggerRef } from 'vue'
 
-import { IS_TAURI, CANVAS_BG_COLOR } from '@/constants'
+import { IS_TAURI } from '@/constants'
 import { loadFont } from '@/engine/fonts'
 import { toast } from '@/utils/toast'
 import {
-  computeAllLayouts,
   createDefaultEditorState,
   createEditor,
   exportFigFile,
@@ -21,8 +20,8 @@ export type { Tool } from '@open-pencil/core'
 export type { EditorToolDef as ToolDef } from '@open-pencil/core'
 export { EDITOR_TOOLS as TOOLS, TOOL_SHORTCUTS } from '@open-pencil/core'
 
-export function createEditorStore() {
-  const graph = new SceneGraph()
+export function createEditorStore(initialGraph?: SceneGraph) {
+  const graph = initialGraph ?? new SceneGraph()
 
   const state = shallowReactive<
     EditorState & {
@@ -49,7 +48,11 @@ export function createEditorStore() {
     cursorCanvasY: null
   })
 
-  const editor = createEditor({ graph, state, loadFont })
+  const editor = createEditor({ graph, state, loadFont, skipInitialGraphSetup: !!initialGraph })
+
+  if (initialGraph) {
+    editor.subscribeToGraph()
+  }
 
   // ─── Vue computed refs ────────────────────────────────────────
 
@@ -167,7 +170,6 @@ export function createEditorStore() {
       const imported = await readFigFile(file)
       await yieldToUI()
       editor.replaceGraph(imported)
-      computeAllLayouts(editor.graph)
       editor.undo.clear()
       fileHandle = handle ?? null
       filePath = path ?? null
@@ -176,12 +178,7 @@ export function createEditorStore() {
       state.selectedIds = new Set()
       const firstPage = editor.graph.getPages()[0] as SceneNode | undefined
       const pageId = firstPage?.id ?? editor.graph.rootId
-      state.currentPageId = pageId
-      state.panX = 0
-      state.panY = 0
-      state.zoom = 1
-      state.pageColor = { ...CANVAS_BG_COLOR }
-      await editor.loadFontsForNodes(editor.graph.getChildren(pageId).map((n) => n.id))
+      await editor.switchPage(pageId)
       editor.requestRender()
       void startWatchingFile()
     } catch (e) {
@@ -286,12 +283,10 @@ export function createEditorStore() {
       const file = new File([blob], state.documentName + '.fig')
       const imported = await readFigFile(file)
       editor.replaceGraph(imported)
-      computeAllLayouts(editor.graph)
     } else if (fileHandle) {
       const file = await fileHandle.getFile()
       const imported = await readFigFile(file)
       editor.replaceGraph(imported)
-      computeAllLayouts(editor.graph)
     } else {
       return
     }
@@ -500,7 +495,7 @@ export function createEditorStore() {
   // ─── Public API ───────────────────────────────────────────────
   // Spread all core Editor methods, then override getters and add app-specific.
 
-  return {
+  const store = {
     ...editor,
     state,
     selectedNodes,
@@ -523,6 +518,23 @@ export function createEditorStore() {
     mobileCut,
     mobilePaste
   }
+
+  Object.defineProperties(store, {
+    graph: {
+      enumerable: true,
+      get: () => editor.graph
+    },
+    renderer: {
+      enumerable: true,
+      get: () => editor.renderer
+    },
+    textEditor: {
+      enumerable: true,
+      get: () => editor.textEditor
+    }
+  })
+
+  return store
 }
 
 export type EditorStore = ReturnType<typeof createEditorStore>
@@ -531,6 +543,7 @@ const storeRef = shallowRef<EditorStore>()
 
 export function setActiveEditorStore(store: EditorStore) {
   storeRef.value = store
+  triggerRef(storeRef)
 }
 
 export function getActiveEditorStore(): EditorStore {

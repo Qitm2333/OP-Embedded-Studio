@@ -2,8 +2,9 @@
 import { computed, shallowRef, watch } from 'vue'
 import { useFileDialog, useObjectUrl } from '@vueuse/core'
 
-import AppSelect from './AppSelect.vue'
-import { useEditor } from '@open-pencil/vue'
+import AppSelect from './ui/AppSelect.vue'
+
+import { useEditorStore } from '@/stores/editor'
 
 import type { Fill, ImageScaleMode } from '@open-pencil/core'
 
@@ -17,7 +18,7 @@ const IMAGE_SCALE_MODES: { value: ImageScaleMode; label: string }[] = [
 const { fill } = defineProps<{ fill: Fill }>()
 const emit = defineEmits<{ update: [fill: Fill] }>()
 
-const store = useEditor()
+const store = useEditorStore()
 
 const imageBlob = shallowRef<Blob | null>(null)
 const imagePreviewUrl = useObjectUrl(imageBlob)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useTypography } from '../shared/useTypography'
+import { useTypography } from '../controls/useTypography'
 
 import type { AcceptableValue } from 'reka-ui'
 

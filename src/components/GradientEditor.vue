@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import AppSelect from './AppSelect.vue'
-import Tip from './Tip.vue'
+import AppSelect from './ui/AppSelect.vue'
+import Tip from './ui/Tip.vue'
 import HsvColorArea from './HsvColorArea.vue'
 import ScrubInput from './ScrubInput.vue'
 import { colorToCSS } from '@open-pencil/core'
