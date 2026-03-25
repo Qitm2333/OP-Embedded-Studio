@@ -6,8 +6,10 @@ import type { SceneGraph } from '../scene-graph'
 import type { FigParseResult } from './fig-parse-core'
 
 function parseFigFileSync(buffer: ArrayBuffer): SceneGraph {
-  const { nodeChanges, blobs, images: imageEntries } = parseFigBuffer(buffer)
-  return importNodeChanges(nodeChanges, blobs, new Map(imageEntries))
+  const { nodeChanges, blobs, images: imageEntries, figKiwiVersion } = parseFigBuffer(buffer)
+  const graph = importNodeChanges(nodeChanges, blobs, new Map(imageEntries))
+  graph.figKiwiVersion = figKiwiVersion
+  return graph
 }
 
 function parseViaWorker(buffer: ArrayBuffer): Promise<SceneGraph> {
@@ -20,9 +22,11 @@ function parseViaWorker(buffer: ArrayBuffer): Promise<SceneGraph> {
         reject(new Error(e.data.error))
         return
       }
-      const { nodeChanges, blobs, images: imageEntries } = e.data
+      const { nodeChanges, blobs, images: imageEntries, figKiwiVersion } = e.data
       const images = new Map<string, Uint8Array>(imageEntries)
-      resolve(importNodeChanges(nodeChanges, blobs, images))
+      const graph = importNodeChanges(nodeChanges, blobs, images)
+      graph.figKiwiVersion = figKiwiVersion
+      resolve(graph)
     }
 
     worker.onerror = (err) => {

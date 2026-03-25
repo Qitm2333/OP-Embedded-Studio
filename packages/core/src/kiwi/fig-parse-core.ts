@@ -9,6 +9,7 @@ import type { FigmaMessage, NodeChange } from './codec'
 interface FigKiwiPayload {
   schemaDeflated: Uint8Array
   dataRaw: Uint8Array
+  version: number
 }
 
 export function parseFigKiwiContainer(data: Uint8Array): FigKiwiPayload | null {
@@ -16,6 +17,7 @@ export function parseFigKiwiContainer(data: Uint8Array): FigKiwiPayload | null {
   if (header !== 'fig-kiwi') return null
 
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength)
+  const version = view.getUint32(8, true)
   let offset = 12
 
   const chunks: Uint8Array[] = []
@@ -39,13 +41,14 @@ export function parseFigKiwiContainer(data: Uint8Array): FigKiwiPayload | null {
     }
   }
 
-  return { schemaDeflated: chunks[0], dataRaw }
+  return { schemaDeflated: chunks[0], dataRaw, version }
 }
 
 export interface FigParseResult {
   nodeChanges: NodeChange[]
   blobs: Uint8Array[]
   images: Array<[string, Uint8Array]>
+  figKiwiVersion: number
 }
 
 export function parseFigBuffer(buffer: ArrayBuffer): FigParseResult {
@@ -104,5 +107,5 @@ export function parseFigBuffer(buffer: ArrayBuffer): FigParseResult {
     }
   }
 
-  return { nodeChanges, blobs, images }
+  return { nodeChanges, blobs, images, figKiwiVersion: payload.version }
 }

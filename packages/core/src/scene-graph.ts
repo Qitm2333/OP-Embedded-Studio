@@ -479,6 +479,7 @@ export class SceneGraph {
   variableCollections = new Map<string, VariableCollection>()
   activeMode = new Map<string, string>()
   rootId: string
+  figKiwiVersion: number | null = null
   readonly emitter: Emitter<SceneGraphEvents> = createNanoEvents()
   private absPosCache = new Map<string, Vector>()
   instanceIndex = new Map<string, Set<string>>()

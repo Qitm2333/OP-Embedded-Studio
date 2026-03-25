@@ -1,4 +1,4 @@
-export const FIG_KIWI_VERSION = 106
+export const FIG_KIWI_DEFAULT_VERSION = 101
 
 import { deflateSync, inflateSync } from 'fflate'
 
@@ -90,7 +90,11 @@ export async function decompressFigKiwiDataAsync(compressed: Uint8Array): Promis
   }
 }
 
-export function buildFigKiwi(schemaDeflated: Uint8Array, dataRaw: Uint8Array): Uint8Array {
+export function buildFigKiwi(
+  schemaDeflated: Uint8Array,
+  dataRaw: Uint8Array,
+  version = FIG_KIWI_DEFAULT_VERSION
+): Uint8Array {
   const dataDeflated = deflateSync(dataRaw)
 
   const total = 8 + 4 + 4 + schemaDeflated.length + 4 + dataDeflated.length
@@ -98,7 +102,7 @@ export function buildFigKiwi(schemaDeflated: Uint8Array, dataRaw: Uint8Array): U
   const view = new DataView(out.buffer)
 
   out.set(new TextEncoder().encode('fig-kiwi'), 0)
-  view.setUint32(8, FIG_KIWI_VERSION, true)
+  view.setUint32(8, version, true)
 
   let offset = 12
   view.setUint32(offset, schemaDeflated.length, true)

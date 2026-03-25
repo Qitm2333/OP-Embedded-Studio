@@ -145,6 +145,7 @@ fn build_fig_file(
     thumbnail_png: Vec<u8>,
     meta_json: String,
     images: Option<Vec<ImageEntry>>,
+    fig_kiwi_version: Option<u32>,
 ) -> Result<Vec<u8>, String> {
     use std::io::{Cursor, Write};
 
@@ -160,7 +161,7 @@ fn build_fig_file(
     let zstd_data = encoder.finish().map_err(|e| e.to_string())?;
 
     // Build fig-kiwi container
-    let version: u32 = 106;
+    let version: u32 = fig_kiwi_version.unwrap_or(101);
     let fig_kiwi_len = 8 + 4 + 4 + schema_deflated.len() + 4 + zstd_data.len();
     let mut fig_kiwi = Vec::with_capacity(fig_kiwi_len);
     fig_kiwi.extend_from_slice(b"fig-kiwi");

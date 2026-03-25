@@ -216,7 +216,7 @@ export {
 } from './iconify'
 export { exportFigFile, compressFigData, compressFigDataSync } from './fig-export'
 export {
-  FIG_KIWI_VERSION,
+  FIG_KIWI_DEFAULT_VERSION,
   buildFigKiwi,
   parseFigKiwiChunks,
   decompressFigKiwiData,

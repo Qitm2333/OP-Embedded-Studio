@@ -227,6 +227,8 @@ export async function exportFigFile(
 
   const imageEntries = collectImageEntries(graph)
 
+  const version = graph.figKiwiVersion ?? undefined
+
   if (IS_TAURI) {
     const { invoke } = await import('@tauri-apps/api/core')
     return new Uint8Array(
@@ -235,12 +237,13 @@ export async function exportFigFile(
         kiwiData: Array.from(kiwiData),
         thumbnailPng: Array.from(thumbnailPng),
         metaJson,
-        images: imageEntries.map((e) => ({ name: e.name, data: Array.from(e.data) }))
+        images: imageEntries.map((e) => ({ name: e.name, data: Array.from(e.data) })),
+        figKiwiVersion: version
       })
     )
   }
 
-  return compressFigData(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries)
+  return compressFigData(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries, version)
 }
 
 export { compressFigDataSync } from './fig-compress'
@@ -294,12 +297,13 @@ export function compressFigData(
   kiwiData: Uint8Array,
   thumbnailPng: Uint8Array,
   metaJson: string,
-  imageEntries: Array<{ name: string; data: Uint8Array }>
+  imageEntries: Array<{ name: string; data: Uint8Array }>,
+  figKiwiVersion?: number
 ): Promise<Uint8Array> {
   if (canUseWorker()) {
     return compressViaWorker(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries)
   }
   return Promise.resolve(
-    compressFigDataSync(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries)
+    compressFigDataSync(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries, figKiwiVersion)
   )
 }
