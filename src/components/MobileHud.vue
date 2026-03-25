@@ -27,7 +27,7 @@ import { toast } from '@/utils/toast'
 import { useEditorStore } from '@/stores/editor'
 import Tip from '@/components/ui/Tip.vue'
 import { colorToCSS } from '@open-pencil/core'
-import { useEditorCommands } from '@open-pencil/vue'
+import { useEditorCommands, useI18n } from '@open-pencil/vue'
 import { toolIcons } from '@/utils/tools'
 import { initials } from '@/utils/text'
 
@@ -37,6 +37,7 @@ const router = useRouter()
 const collab = useCollabInjected()
 const store = useEditorStore()
 const { copy } = useClipboard()
+const { dialogs } = useI18n()
 
 const collabState = computed(() => collab?.state.value ?? DEFAULT_COLLAB_STATE)
 const collabPeers = computed(() => collab?.remotePeers.value ?? [])
@@ -217,7 +218,7 @@ const onlineCount = computed(() => collabPeers.value.length + 1)
         @click="onShare"
       >
         <icon-lucide-share-2 class="size-3.5 text-surface" />
-        <span class="text-xs text-surface">Share</span>
+        <span class="text-xs text-surface">{{ dialogs.share }}</span>
       </button>
 
       <DropdownMenuRoot>

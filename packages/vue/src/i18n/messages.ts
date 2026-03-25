@@ -143,6 +143,13 @@ export const dialogMessages = i18n('dialogs', {
   apply: 'Apply',
   close: 'Close',
   ok: 'OK',
+  copy: 'Copy',
+  copied: 'Copied',
+  createCollection: 'Create collection',
+  localVariables: 'Local variables',
+  noVariableCollections: 'No variable collections',
+  selectLayerForJSX: 'Select a layer to see its JSX code',
   search: 'Search…',
-  noResults: 'No results'
+  noResults: 'No results',
+  share: 'Share'
 })

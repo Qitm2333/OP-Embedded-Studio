@@ -124,7 +124,14 @@
     "apply": "Применить",
     "close": "Закрыть",
     "ok": "ОК",
+    "copy": "Копировать",
+    "copied": "Скопировано",
+    "createCollection": "Создать коллекцию",
+    "localVariables": "Локальные переменные",
+    "noVariableCollections": "Нет коллекций переменных",
+    "selectLayerForJSX": "Выберите слой, чтобы увидеть его JSX-код",
     "search": "Поиск…",
-    "noResults": "Ничего не найдено"
+    "noResults": "Ничего не найдено",
+    "share": "Поделиться"
   }
 }

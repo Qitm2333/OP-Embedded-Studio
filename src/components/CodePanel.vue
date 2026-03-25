@@ -6,7 +6,7 @@ import { useClipboard } from '@vueuse/core'
 import { computed, ref } from 'vue'
 
 import { selectionToJSX } from '@open-pencil/core'
-import { useSceneComputed } from '@open-pencil/vue'
+import { useI18n, useSceneComputed } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/stores/editor'
 
@@ -14,6 +14,7 @@ import type { JSXFormat } from '@open-pencil/core'
 
 const store = useEditorStore()
 const { copy, copied } = useClipboard({ copiedDuring: 2000 })
+const { dialogs } = useI18n()
 const jsxFormat = ref<JSXFormat>('openpencil')
 
 function toggleFormat() {
@@ -44,7 +45,7 @@ function copyCode() {
     data-test-id="code-panel-empty"
     class="flex flex-1 items-center justify-center px-4 text-center"
   >
-    <span class="text-xs text-muted">Select a layer to see its JSX code</span>
+    <span class="text-xs text-muted">{{ dialogs.selectLayerForJSX }}</span>
   </div>
 
   <div v-else data-test-id="code-panel" class="flex min-h-0 flex-1 flex-col">
@@ -69,7 +70,7 @@ function copyCode() {
       >
         <icon-lucide-check v-if="copied" class="size-3 text-green-400" />
         <icon-lucide-copy v-else class="size-3" />
-        {{ copied ? 'Copied' : 'Copy' }}
+        {{ copied ? dialogs.copied : dialogs.copy }}
       </button>
     </div>
 
