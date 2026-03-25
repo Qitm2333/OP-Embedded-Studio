@@ -173,8 +173,31 @@ export {
   geometryBlobToPath,
   decodeVectorNetworkBlob,
   encodeVectorNetworkBlob,
+  buildStyleOverrideTable,
   computeVectorBounds
 } from './vector'
+export {
+  evalCubic,
+  splitCubicAt,
+  segmentToAbsolute,
+  isLineSegment,
+  cubicExtrema,
+  computeAccurateBounds,
+  nearestPointOnCubic,
+  nearestPointOnNetwork,
+  splitSegmentAt,
+  removeVertex,
+  breakAtVertex,
+  deleteVertex,
+  mirrorHandle,
+  findOppositeHandle,
+  findAllHandles,
+  findConnectedComponents,
+  extractSubNetwork,
+  type CubicPoints,
+  type NearestResult,
+  type NetworkNearestResult
+} from './bezier-math'
 export { computeSelectionBounds, computeSnap, type SnapGuide } from './snap'
 export { UndoManager, type UndoEntry } from './undo'
 export { TextEditor, type TextCaret, type TextEditorState } from './text-editor'

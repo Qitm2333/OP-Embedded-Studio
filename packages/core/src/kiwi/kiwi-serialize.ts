@@ -3,7 +3,7 @@ export const FIG_KIWI_DEFAULT_VERSION = 101
 import { deflateSync, inflateSync } from 'fflate'
 
 import { getLoadedFontData, normalizeFontFamily, weightToStyle } from '../fonts'
-import { encodeVectorNetworkBlob } from '../vector'
+import { encodeVectorNetworkBlob, buildStyleOverrideTable } from '../vector'
 import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi-convert'
 
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from '../scene-graph'
@@ -304,10 +304,10 @@ function resolveTextAutoResize(node: SceneNode, graph: SceneGraph): SceneNode['t
   if (node.textAutoResize === 'NONE') return 'NONE'
   const parent = node.parentId ? graph.getNode(node.parentId) : undefined
   if (
-    parent
-    && parent.layoutMode !== 'NONE'
-    && parent.layoutMode !== 'GRID'
-    && node.layoutPositioning !== 'ABSOLUTE'
+    parent &&
+    parent.layoutMode !== 'NONE' &&
+    parent.layoutMode !== 'GRID' &&
+    node.layoutPositioning !== 'ABSOLUTE'
   ) {
     return 'NONE'
   }
@@ -367,12 +367,17 @@ function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
 
 function serializeGeometry(node: SceneNode, nc: KiwiNodeChange, blobs: Uint8Array[]): void {
   if (node.vectorNetwork && node.type === 'VECTOR') {
+    const { table, mirroringToId } = buildStyleOverrideTable(node.vectorNetwork)
     const blobIdx = blobs.length
-    blobs.push(encodeVectorNetworkBlob(node.vectorNetwork))
-    nc.vectorData = {
+    blobs.push(encodeVectorNetworkBlob(node.vectorNetwork, mirroringToId))
+    const vectorData: Record<string, unknown> = {
       vectorNetworkBlob: blobIdx,
       normalizedSize: { x: node.width, y: node.height }
     }
+    if (table.length > 0) {
+      vectorData.styleOverrideTable = table
+    }
+    nc.vectorData = vectorData
   }
   if (node.fillGeometry.length > 0) {
     nc.fillGeometry = node.fillGeometry.map((g) => {
@@ -418,10 +423,7 @@ function serializeVariableBindings(
   if (entries.length > 0) nc.variableConsumptionMap = { entries }
 }
 
-function computeExportTransform(
-  node: SceneNode,
-  graph: SceneGraph
-): Matrix {
+function computeExportTransform(node: SceneNode, graph: SceneGraph): Matrix {
   const sx = node.flipX ? -1 : 1
   const cos = Math.cos((node.rotation * Math.PI) / 180)
   const sin = Math.sin((node.rotation * Math.PI) / 180)
@@ -429,15 +431,18 @@ function computeExportTransform(
   // Auto-layout children should have (0,0) transform — Figma computes
   // their positions from the layout engine at render time.
   const parent = node.parentId ? graph.getNode(node.parentId) : undefined
-  const isAutoLayoutChild = parent
-    && parent.layoutMode !== 'NONE'
-    && parent.layoutMode !== 'GRID'
-    && node.layoutPositioning !== 'ABSOLUTE'
+  const isAutoLayoutChild =
+    parent &&
+    parent.layoutMode !== 'NONE' &&
+    parent.layoutMode !== 'GRID' &&
+    node.layoutPositioning !== 'ABSOLUTE'
 
   return {
-    m00: cos * sx, m01: -sin,
+    m00: cos * sx,
+    m01: -sin,
     m02: isAutoLayoutChild ? 0 : node.x,
-    m10: sin * sx, m11: cos,
+    m10: sin * sx,
+    m11: cos,
     m12: isAutoLayoutChild ? 0 : node.y
   }
 }
@@ -477,7 +482,7 @@ export function sceneNodeToKiwi(
     size: { x: node.width, y: node.height },
     transform: computeExportTransform(node, graph),
     strokeWeight: node.strokes.length > 0 ? node.strokes[0].weight : 1,
-    strokeAlign: node.strokes.length > 0 ? node.strokes[0].align : 'INSIDE',
+    strokeAlign: node.strokes.length > 0 ? node.strokes[0].align : 'INSIDE'
   }
 
   if (node.independentStrokeWeights) {

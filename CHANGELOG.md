@@ -9,6 +9,9 @@
 - Nested container navigation — each double-click goes one level deeper
 - Dashed border around entered container for visual feedback
 - Layer panel click syncs canvas scope automatically
+- Added a vector curve editor and improved drawing experience with the pen tool
+- Resume pen drawing from existing open path endpoints — click an endpoint to continue the curve
+- Close open paths by dragging one endpoint to the other
 
 ### Fixes
 

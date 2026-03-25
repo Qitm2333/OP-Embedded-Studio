@@ -27,8 +27,8 @@ export const RULER_MAJOR_TICK = 0.5
 export const RULER_MINOR_TICK = 0.25
 export const RULER_HIGHLIGHT_ALPHA = 0.3
 
-export const PEN_HANDLE_RADIUS = 3
-export const PEN_VERTEX_RADIUS = 4
+export const PEN_HANDLE_RADIUS = 2.5
+export const PEN_VERTEX_RADIUS = 3
 export const PEN_CLOSE_RADIUS_BOOST = 2
 export const PEN_PATH_STROKE_WIDTH = 2
 export const PARENT_OUTLINE_ALPHA = 0.5

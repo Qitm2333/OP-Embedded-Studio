@@ -1,3 +1,5 @@
+import { computeAccurateBounds } from './bezier-math'
+
 import type {
   HandleMirroring,
   VectorNetwork,
@@ -106,7 +108,33 @@ export function decodeVectorNetworkBlob(
   return { vertices, segments, regions }
 }
 
-export function encodeVectorNetworkBlob(network: VectorNetwork): Uint8Array {
+/** Build a styleOverrideTable from vertex handleMirroring values.
+ *  Returns a map from handleMirroring value to styleID, plus the table array. */
+export function buildStyleOverrideTable(network: VectorNetwork): {
+  table: StyleOverride[]
+  mirroringToId: Map<string, number>
+} {
+  const mirroringToId = new Map<string, number>()
+  const table: StyleOverride[] = []
+  let nextId = 1
+
+  for (const v of network.vertices) {
+    const hm = v.handleMirroring ?? 'NONE'
+    if (hm === 'NONE') continue
+    if (!mirroringToId.has(hm)) {
+      mirroringToId.set(hm, nextId)
+      table.push({ styleID: nextId, handleMirroring: hm })
+      nextId++
+    }
+  }
+
+  return { table, mirroringToId }
+}
+
+export function encodeVectorNetworkBlob(
+  network: VectorNetwork,
+  mirroringToId?: Map<string, number>
+): Uint8Array {
   const { vertices, segments, regions } = network
 
   let regionBytes = 0
@@ -130,8 +158,10 @@ export function encodeVectorNetworkBlob(network: VectorNetwork): Uint8Array {
   o += 4
 
   for (const v of vertices) {
-    view.setUint32(o, 0, true)
-    o += 4 // styleOverrideIdx (TODO: encode handleMirroring)
+    const hm = v.handleMirroring ?? 'NONE'
+    const styleIdx = (hm !== 'NONE' && mirroringToId?.get(hm)) || 0
+    view.setUint32(o, styleIdx, true)
+    o += 4
     view.setFloat32(o, v.x, true)
     o += 4
     view.setFloat32(o, v.y, true)
@@ -338,38 +368,7 @@ function buildChains(segments: VectorSegment[], _vertexCount: number): number[][
 }
 
 export function computeVectorBounds(network: VectorNetwork): Rect {
-  if (network.vertices.length === 0) {
-    return { x: 0, y: 0, width: 0, height: 0 }
-  }
-
-  let minX = Infinity
-  let minY = Infinity
-  let maxX = -Infinity
-  let maxY = -Infinity
-
-  for (const v of network.vertices) {
-    minX = Math.min(minX, v.x)
-    minY = Math.min(minY, v.y)
-    maxX = Math.max(maxX, v.x)
-    maxY = Math.max(maxY, v.y)
-  }
-
-  // Also consider bezier control points for tighter bounds
-  for (const seg of network.segments) {
-    const start = network.vertices[seg.start]
-    const end = network.vertices[seg.end]
-    const cp1x = start.x + seg.tangentStart.x
-    const cp1y = start.y + seg.tangentStart.y
-    const cp2x = end.x + seg.tangentEnd.x
-    const cp2y = end.y + seg.tangentEnd.y
-
-    minX = Math.min(minX, cp1x, cp2x)
-    minY = Math.min(minY, cp1y, cp2y)
-    maxX = Math.max(maxX, cp1x, cp2x)
-    maxY = Math.max(maxY, cp1y, cp2y)
-  }
-
-  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+  return computeAccurateBounds(network)
 }
 
 const CMD_CLOSE = 0

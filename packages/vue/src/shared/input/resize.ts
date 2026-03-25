@@ -1,7 +1,7 @@
 import { hitTestHandle } from './geometry'
 
 import type { DragResize, HandlePosition } from './types'
-import type { Rect } from '@open-pencil/core'
+import type { Rect, SceneNode } from '@open-pencil/core'
 import type { Editor } from '@open-pencil/core/editor'
 
 export function constrainToAspectRatio(
@@ -75,12 +75,38 @@ export function applyResize(
     height = -height
   }
 
-  editor.updateNode(d.nodeId, {
+  const newW = Math.round(Math.max(1, width))
+  const newH = Math.round(Math.max(1, height))
+  const changes: Partial<SceneNode> = {
     x: Math.round(x),
     y: Math.round(y),
-    width: Math.round(Math.max(1, width)),
-    height: Math.round(Math.max(1, height))
-  })
+    width: newW,
+    height: newH
+  }
+
+  // Scale vectorNetwork vertices + tangents proportionally
+  if (d.origVectorNetwork && origRect.width > 0 && origRect.height > 0) {
+    const sx = newW / origRect.width
+    const sy = newH / origRect.height
+    if (sx !== 1 || sy !== 1) {
+      const vn = d.origVectorNetwork
+      changes.vectorNetwork = {
+        vertices: vn.vertices.map((v) => ({
+          ...v,
+          x: v.x * sx,
+          y: v.y * sy
+        })),
+        segments: vn.segments.map((s) => ({
+          ...s,
+          tangentStart: { x: s.tangentStart.x * sx, y: s.tangentStart.y * sy },
+          tangentEnd: { x: s.tangentEnd.x * sx, y: s.tangentEnd.y * sy }
+        })),
+        regions: vn.regions
+      }
+    }
+  }
+
+  editor.updateNode(d.nodeId, changes)
 }
 
 export function tryStartResize(
@@ -113,7 +139,8 @@ export function tryStartResize(
         startX: cx,
         startY: cy,
         origRect: { x: node.x, y: node.y, width: node.width, height: node.height },
-        nodeId: id
+        nodeId: id,
+        origVectorNetwork: node.vectorNetwork ? structuredClone(node.vectorNetwork) : null
       }
     }
   }

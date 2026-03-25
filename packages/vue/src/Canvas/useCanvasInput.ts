@@ -14,13 +14,18 @@ import { handleMoveMove, handleMoveUp } from '@open-pencil/vue/shared/input/move
 import { setupPanZoom } from '@open-pencil/vue/shared/input/pan-zoom'
 import { applyResize } from '@open-pencil/vue/shared/input/resize'
 import {
+  handlePenNodeEditDown,
+  handleNodeEditMove,
   handleSelectDown,
   updateHoverCursor,
+  hitTestEditHandle,
+  isEndpoint,
+  NODE_HIT_THRESHOLD,
   type HitTestFns
 } from '@open-pencil/vue/shared/input/select'
 import { TOOL_TO_NODE } from '@open-pencil/vue/shared/input/types'
 
-import type { SceneNode } from '@open-pencil/core'
+import type { SceneNode, Vector, VectorSegment } from '@open-pencil/core'
 import type { Editor } from '@open-pencil/core/editor'
 import type {
   DragMarquee,
@@ -28,6 +33,29 @@ import type {
   DragRotate,
   DragState
 } from '@open-pencil/vue/shared/input/types'
+
+type NodeEditState = {
+  segments: VectorSegment[]
+  vertices: Vector[]
+  hoveredHandleInfo: {
+    segmentIndex: number
+    tangentField: 'tangentStart' | 'tangentEnd'
+  } | null
+}
+
+type NodeEditMethods = Partial<{
+  nodeEditBendHandle: (
+    vertexIndex: number,
+    dx: number,
+    dy: number,
+    independent: boolean,
+    targetSegmentIndex: number | null,
+    targetTangentField: 'tangentStart' | 'tangentEnd' | null
+  ) => void
+  nodeEditZeroVertexHandles: (vertexIndex: number) => void
+  nodeEditConnectEndpoints: (a: number, b: number) => void
+  enterNodeEditMode: (nodeId: string) => void
+}>
 
 /**
  * Wires pointer and mouse interaction to an OpenPencil canvas.
@@ -256,6 +284,66 @@ export function useCanvasInput(
     editor.setMarquee({ x: minX, y: minY, width: maxX - minX, height: maxY - minY })
   }
 
+  function resolveBendTargetHandle(
+    es: NodeEditState | null | undefined,
+    vertexIndex: number,
+    samples: Vector[]
+  ): { segmentIndex: number; tangentField: 'tangentStart' | 'tangentEnd' } | null {
+    if (!es || samples.length === 0) return null
+    const vx = es.vertices[vertexIndex]?.x
+    const vy = es.vertices[vertexIndex]?.y
+    if (vx == null || vy == null) return null
+
+    const sampleVector = samples.reduce(
+      (acc, p) => ({ x: acc.x + (p.x - vx), y: acc.y + (p.y - vy) }),
+      { x: 0, y: 0 }
+    )
+    const sampleLen = Math.hypot(sampleVector.x, sampleVector.y)
+    if (sampleLen < 1e-6) return null
+    const sampleDir = { x: sampleVector.x / sampleLen, y: sampleVector.y / sampleLen }
+
+    let best: { segmentIndex: number; tangentField: 'tangentStart' | 'tangentEnd' } | null = null
+    let bestDot = -Infinity
+    for (let i = 0; i < es.segments.length; i++) {
+      const seg = es.segments[i]
+      let tangentField: 'tangentStart' | 'tangentEnd'
+      let neighborIndex: number
+      let tangent: Vector
+      if (seg.start === vertexIndex) {
+        tangentField = 'tangentStart'
+        neighborIndex = seg.end
+        tangent = seg.tangentStart
+      } else if (seg.end === vertexIndex) {
+        tangentField = 'tangentEnd'
+        neighborIndex = seg.start
+        tangent = seg.tangentEnd
+      } else {
+        continue
+      }
+
+      const neighbor = es.vertices[neighborIndex]
+      if (!neighbor) continue
+
+      const tangentLen = Math.hypot(tangent.x, tangent.y)
+      const base =
+        tangentLen > 1e-6
+          ? tangent
+          : {
+              x: neighbor.x - vx,
+              y: neighbor.y - vy
+            }
+      const baseLen = Math.hypot(base.x, base.y)
+      if (baseLen < 1e-6) continue
+      const dir = { x: base.x / baseLen, y: base.y / baseLen }
+      const dot = dir.x * sampleDir.x + dir.y * sampleDir.y
+      if (dot > bestDot) {
+        bestDot = dot
+        best = { segmentIndex: i, tangentField }
+      }
+    }
+    return best
+  }
+
   function onMouseDown(e: MouseEvent) {
     editor.setHoveredNode(null)
     const { sx, sy, cx, cy } = getCoords(e)
@@ -280,11 +368,6 @@ export function useCanvasInput(
       return
     }
 
-    if (tool === 'SELECT' && e.altKey && !editor.state.selectedIds.size) {
-      startPanDrag(e)
-      return
-    }
-
     if (tool === 'SELECT') {
       handleSelectDown(
         e,
@@ -302,8 +385,42 @@ export function useCanvasInput(
     }
 
     if (tool === 'PEN') {
+      // In node edit mode with pen tool: click curve to add point, click vertex to remove
+      const nodeEditState = (
+        editor.state as Editor['state'] & { nodeEditState?: NodeEditState | null }
+      ).nodeEditState
+      if (nodeEditState) {
+        handlePenNodeEditDown(e, cx, cy, editor)
+        return
+      }
+
+      const penState = editor.state.penState
+      if (penState && penState.vertices.length > 2) {
+        const first = penState.vertices[0]
+        const dist = Math.hypot(cx - first.x, cy - first.y)
+        if (dist < PEN_CLOSE_THRESHOLD) {
+          editor.penSetPendingClose(true)
+          editor.penSetClosingToFirst(true)
+          drag.value = {
+            type: 'pen-drag',
+            startX: first.x,
+            startY: first.y,
+            modifierMode: 'default',
+            frozenOppositeTangent: null
+          } as DragState
+          return
+        }
+      }
+
+      editor.penSetPendingClose(false)
       editor.penAddVertex(cx, cy)
-      drag.value = { type: 'pen-drag', startX: cx, startY: cy } as DragState
+      drag.value = {
+        type: 'pen-drag',
+        startX: cx,
+        startY: cy,
+        modifierMode: 'default',
+        frozenOppositeTangent: null
+      } as DragState
       return
     }
 
@@ -327,6 +444,7 @@ export function useCanvasInput(
   }
 
   function onMouseMove(e: MouseEvent) {
+    const nodeEditEditor = editor as Editor & NodeEditMethods
     if (onCursorMove) {
       const { cx, cy } = getCoords(e)
       onCursorMove(cx, cy)
@@ -343,6 +461,30 @@ export function useCanvasInput(
         editor.penSetClosingToFirst(dist < PEN_CLOSE_THRESHOLD)
       }
       editor.requestRepaint()
+    }
+
+    // Track hovered handle in node edit mode
+    const nodeEditState = (
+      editor.state as Editor['state'] & { nodeEditState?: NodeEditState | null }
+    ).nodeEditState
+    if (!drag.value && nodeEditState) {
+      const { cx, cy } = getCoords(e)
+      const hit = hitTestEditHandle(editor, cx, cy)
+      const es = nodeEditState
+      const prev = es.hoveredHandleInfo
+      if (hit) {
+        if (
+          !prev ||
+          prev.segmentIndex !== hit.segmentIndex ||
+          prev.tangentField !== hit.tangentField
+        ) {
+          es.hoveredHandleInfo = { segmentIndex: hit.segmentIndex, tangentField: hit.tangentField }
+          editor.requestRepaint()
+        }
+      } else if (prev) {
+        es.hoveredHandleInfo = null
+        editor.requestRepaint()
+      }
     }
 
     if (!drag.value && editor.state.activeTool === 'SELECT') {
@@ -381,8 +523,94 @@ export function useCanvasInput(
       const tx = cx - d.startX
       const ty = cy - d.startY
       if (Math.hypot(tx, ty) > 2) {
-        editor.penSetDragTangent(tx, ty)
+        const penState = editor.state.penState
+        const firstSeg = penState?.segments[0]
+        const closingOpposite =
+          penState?.pendingClose && firstSeg
+            ? firstSeg.start === 0
+              ? firstSeg.tangentStart
+              : firstSeg.end === 0
+                ? firstSeg.tangentEnd
+                : null
+            : null
+        const mode = e.metaKey || e.ctrlKey ? 'continuous' : e.altKey ? 'independent' : 'default'
+        if (mode !== d.modifierMode) {
+          if (mode === 'default') {
+            d.frozenOppositeTangent = null
+          } else if (!d.frozenOppositeTangent) {
+            const lastSeg = penState?.segments[penState.segments.length - 1]
+            d.frozenOppositeTangent = lastSeg
+              ? closingOpposite
+                ? { ...closingOpposite }
+                : { ...lastSeg.tangentEnd }
+              : penState?.dragTangent
+                ? { x: -penState.dragTangent.x, y: -penState.dragTangent.y }
+                : { x: 0, y: 0 }
+          }
+          d.modifierMode = mode
+        }
+
+        if (mode === 'continuous') {
+          editor.penSetDragTangent(tx, ty, {
+            keepOpposite: true,
+            constrainToOpposite: true,
+            oppositeTangent: d.frozenOppositeTangent
+          })
+        } else if (mode === 'independent') {
+          editor.penSetDragTangent(tx, ty, {
+            keepOpposite: true,
+            oppositeTangent: d.frozenOppositeTangent
+          })
+        } else {
+          editor.penSetDragTangent(
+            tx,
+            ty,
+            penState?.pendingClose
+              ? {
+                  keepOpposite: true,
+                  oppositeTangent: closingOpposite
+                }
+              : undefined
+          )
+        }
       }
+      return
+    }
+
+    if (d.type === 'edit-node' || d.type === 'edit-handle') {
+      handleNodeEditMove(d, cx, cy, editor, e.altKey, e.metaKey || e.ctrlKey, e.shiftKey)
+      return
+    }
+
+    if (d.type === 'bend-handle') {
+      const dx = cx - d.startX
+      const dy = cy - d.startY
+      if (Math.hypot(dx, dy) < 2) return
+      // Lock mode on first meaningful move — persists for the rest of the drag
+      if (d.lockedMode === null) {
+        d.lockedMode = e.altKey ? 'independent' : 'symmetric'
+      }
+      if (d.dragSamples.length < 3) {
+        d.dragSamples.push({ x: cx, y: cy })
+      }
+      if (d.targetSegmentIndex === null && d.dragSamples.length >= 3) {
+        const target = resolveBendTargetHandle(nodeEditState, d.vertexIndex, d.dragSamples)
+        if (target) {
+          d.targetSegmentIndex = target.segmentIndex
+          d.targetTangentField = target.tangentField
+        }
+      }
+      if (d.targetSegmentIndex === null || d.targetTangentField === null) {
+        return
+      }
+      nodeEditEditor.nodeEditBendHandle?.(
+        d.vertexIndex,
+        dx,
+        dy,
+        d.lockedMode === 'independent',
+        d.targetSegmentIndex,
+        d.targetTangentField
+      )
       return
     }
 
@@ -395,15 +623,60 @@ export function useCanvasInput(
   }
 
   function onMouseUp() {
+    const nodeEditEditor = editor as Editor & NodeEditMethods
     if (!drag.value) return
     const d = drag.value
 
+    if (d.type === 'bend-handle') {
+      // If no drag happened (lockedMode never set), zero all handles on this vertex
+      if (d.lockedMode === null) {
+        nodeEditEditor.nodeEditZeroVertexHandles?.(d.vertexIndex)
+      }
+      drag.value = null
+      return
+    }
+    if (d.type === 'edit-node') {
+      // Check if a single endpoint was dragged onto another endpoint → connect
+      const es = (editor.state as Editor['state'] & { nodeEditState?: NodeEditState | null })
+        .nodeEditState
+      if (es && d.origPositions.size === 1) {
+        const [draggedIdx] = d.origPositions.keys()
+        if (isEndpoint(draggedIdx, es.segments)) {
+          const v = es.vertices[draggedIdx]
+          const iz = 1 / editor.state.zoom
+          for (let i = 0; i < es.vertices.length; i++) {
+            if (i === draggedIdx) continue
+            if (!isEndpoint(i, es.segments)) continue
+            const t = es.vertices[i]
+            if (Math.hypot(v.x - t.x, v.y - t.y) < NODE_HIT_THRESHOLD * iz) {
+              nodeEditEditor.nodeEditConnectEndpoints?.(draggedIdx, i)
+              drag.value = null
+              return
+            }
+          }
+        }
+      }
+      drag.value = null
+      return
+    }
+    if (d.type === 'edit-handle') {
+      drag.value = null
+      return
+    }
     if (d.type === 'move') handleMoveUp(d, editor)
     else if (d.type === 'text-select') {
       drag.value = null
       return
     } else if (d.type === 'resize') editor.commitResize(d.nodeId, d.origRect)
     else if (d.type === 'pen-drag') {
+      const penState = editor.state.penState as
+        | (typeof editor.state.penState & {
+            pendingClose?: boolean
+          })
+        | null
+      if (penState?.pendingClose) {
+        editor.penCommit(true)
+      }
       drag.value = null
       return
     } else if (d.type === 'rotate') {
@@ -421,6 +694,7 @@ export function useCanvasInput(
   }
 
   function onDblClick(e: MouseEvent) {
+    const nodeEditEditor = editor as Editor & NodeEditMethods
     if (editor.state.editingTextId) return
 
     const { cx, cy } = getCoords(e)
@@ -456,6 +730,11 @@ export function useCanvasInput(
         textEd.selectWordAt(cx - abs.x, cy - abs.y)
         editor.requestRender()
       }
+      return
+    }
+
+    if (hit.type === 'VECTOR') {
+      nodeEditEditor.enterNodeEditMode?.(hit.id)
       return
     }
 

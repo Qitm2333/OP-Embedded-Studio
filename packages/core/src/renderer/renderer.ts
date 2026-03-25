@@ -50,6 +50,7 @@ import {
   drawSectionTitles as drawSectionTitlesFn,
   drawComponentLabels as drawComponentLabelsFn
 } from './labels'
+import { drawNodeEditOverlay as drawNodeEditOverlayFn } from './node-edit-overlay'
 import {
   drawHoverHighlight as drawHoverHighlightFn,
   drawEnteredContainer as drawEnteredContainerFn,
@@ -107,10 +108,18 @@ import {
 } from './text'
 
 import type { EditorState } from '../editor/types'
-import type { SceneNode, SceneGraph, Fill, Stroke } from '../scene-graph'
+import type {
+  SceneNode,
+  SceneGraph,
+  Fill,
+  Stroke,
+  VectorVertex,
+  VectorRegion
+} from '../scene-graph'
 import type { SnapGuide } from '../snap'
 import type { TextEditor } from '../text-editor'
 import type { Color, Rect, Vector } from '../types'
+import type { NodeEditOverlayState } from './node-edit-overlay'
 import type {
   Image as CKImage,
   Path,
@@ -151,9 +160,26 @@ export interface RenderOverlays {
       tangentEnd: Vector
     }>
     dragTangent: Vector | null
+    oppositeDragTangent?: Vector | null
     closingToFirst: boolean
+    pendingClose?: boolean
     cursorX?: number
     cursorY?: number
+  } | null
+  nodeEditState?: {
+    nodeId: string
+    vertices: VectorVertex[]
+    segments: Array<{
+      start: number
+      end: number
+      tangentStart: Vector
+      tangentEnd: Vector
+    }>
+    regions: VectorRegion[]
+    selectedVertexIndices: Set<number>
+    /** Set of selected handles as "segIdx:tangentField" strings */
+    selectedHandles?: Set<string>
+    hoveredHandleInfo?: { segmentIndex: number; tangentField: 'tangentStart' | 'tangentEnd' } | null
   } | null
   remoteCursors?: Array<{
     name: string
@@ -206,6 +232,7 @@ export class SkiaRenderer {
   rulerBadgePaint: Paint
   rulerLabelPaint: Paint
   penPathPaint: Paint
+  penLiveStrokePaint: Paint
   penHandlePaint: Paint
   penVertexFill: Paint
   penVertexStroke: Paint
@@ -361,11 +388,19 @@ export class SkiaRenderer {
     this.rulerLabelPaint.setColor(ck.Color4f(1, 1, 1, 1))
     this.rulerLabelPaint.setAntiAlias(true)
 
+    // Technical outline: 1px grey (same as node-edit techStroke)
     this.penPathPaint = new ck.Paint()
     this.penPathPaint.setStyle(ck.PaintStyle.Stroke)
-    this.penPathPaint.setStrokeWidth(PEN_PATH_STROKE_WIDTH)
-    this.penPathPaint.setColor(this.selColor())
+    this.penPathPaint.setStrokeWidth(1)
+    this.penPathPaint.setColor(ck.Color4f(0.698, 0.698, 0.698, 1))
     this.penPathPaint.setAntiAlias(true)
+
+    // Live stroke preview: 2px black (actual object style)
+    this.penLiveStrokePaint = new ck.Paint()
+    this.penLiveStrokePaint.setStyle(ck.PaintStyle.Stroke)
+    this.penLiveStrokePaint.setStrokeWidth(PEN_PATH_STROKE_WIDTH)
+    this.penLiveStrokePaint.setColor(ck.Color4f(0, 0, 0, 1))
+    this.penLiveStrokePaint.setAntiAlias(true)
 
     this.penHandlePaint = new ck.Paint()
     this.penHandlePaint.setStyle(ck.PaintStyle.Stroke)
@@ -378,9 +413,10 @@ export class SkiaRenderer {
     this.penVertexFill.setColor(ck.WHITE)
     this.penVertexFill.setAntiAlias(true)
 
+    // Vertex circle outline: 1px blue
     this.penVertexStroke = new ck.Paint()
     this.penVertexStroke.setStyle(ck.PaintStyle.Stroke)
-    this.penVertexStroke.setStrokeWidth(PEN_PATH_STROKE_WIDTH)
+    this.penVertexStroke.setStrokeWidth(1)
     this.penVertexStroke.setColor(this.selColor())
     this.penVertexStroke.setAntiAlias(true)
   }
@@ -682,6 +718,9 @@ export class SkiaRenderer {
     viewportHeight: number,
     showRulers = true
   ): void {
+    const extendedState = state as EditorState & {
+      nodeEditState?: RenderOverlays['nodeEditState']
+    }
     this.dpr = IS_BROWSER ? window.devicePixelRatio || 1 : 1
     this.panX = state.panX
     this.panY = state.panY
@@ -711,6 +750,7 @@ export class SkiaRenderer {
               cursorY: state.penCursorY ?? undefined
             } as RenderOverlays['penState'])
           : null,
+        nodeEditState: extendedState.nodeEditState ?? null,
         remoteCursors: state.remoteCursors
       },
       state.sceneVersion
@@ -741,7 +781,8 @@ export class SkiaRenderer {
     const hasVolatileOverlays =
       overlays.dropTargetId != null ||
       overlays.rotationPreview != null ||
-      overlays.editingTextId != null
+      overlays.editingTextId != null ||
+      overlays.nodeEditState != null
 
     const canUsePicture =
       !hasVolatileOverlays &&
@@ -797,7 +838,11 @@ export class SkiaRenderer {
     canvas.save()
     canvas.scale(this.dpr, this.dpr)
 
-    this.drawHoverHighlight(canvas, graph, overlays.hoveredNodeId)
+    this.drawHoverHighlight(
+      canvas,
+      graph,
+      overlays.hoveredNodeId === overlays.nodeEditState?.nodeId ? null : overlays.hoveredNodeId
+    )
     this.drawEnteredContainer(canvas, graph, overlays.enteredContainerId)
     p.beginPhase('render:selection')
     this.drawSelection(canvas, graph, selectedIds, overlays)
@@ -806,6 +851,7 @@ export class SkiaRenderer {
     this.drawSnapGuides(canvas, overlays.snapGuides)
     this.drawMarquee(canvas, overlays.marquee)
     this.drawLayoutInsertIndicator(canvas, overlays.layoutInsertIndicator)
+    this.drawNodeEditOverlay(canvas, graph, overlays.nodeEditState)
     this.drawPenOverlay(canvas, overlays.penState)
     this.drawRemoteCursors(canvas, graph, overlays.remoteCursors)
     p.beginPhase('render:rulers')
@@ -958,6 +1004,7 @@ export class SkiaRenderer {
     this.rulerBadgePaint.delete()
     this.rulerLabelPaint.delete()
     this.penPathPaint.delete()
+    this.penLiveStrokePaint.delete()
     this.penHandlePaint.delete()
     this.penVertexFill.delete()
     this.penVertexStroke.delete()
@@ -1051,6 +1098,14 @@ export class SkiaRenderer {
 
   drawTextEditOverlay(canvas: Canvas, node: SceneNode, editor: TextEditor): void {
     drawTextEditOverlayFn(this, canvas, node, editor)
+  }
+
+  private drawNodeEditOverlay(
+    canvas: Canvas,
+    graph: SceneGraph,
+    editState: RenderOverlays['nodeEditState']
+  ): void {
+    drawNodeEditOverlayFn(this, canvas, graph, editState as NodeEditOverlayState | null)
   }
 
   private drawPenOverlay(canvas: Canvas, penState: RenderOverlays['penState']): void {

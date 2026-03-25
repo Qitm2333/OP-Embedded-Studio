@@ -5,16 +5,38 @@ import { IS_TAURI } from '@/constants'
 import { loadFont } from '@/engine/fonts'
 import { toast } from '@/utils/toast'
 import {
+  breakAtVertex,
+  computeAccurateBounds,
   createDefaultEditorState,
   createEditor,
+  deleteVertex,
   exportFigFile,
+  findAllHandles,
+  findOppositeHandle,
+  mirrorHandle,
+  nearestPointOnNetwork,
   readFigFile,
+  removeVertex,
   renderNodesToImage,
   renderNodesToSVG,
-  SceneGraph
+  SceneGraph,
+  splitSegmentAt,
+  prefetchFigmaSchema
 } from '@open-pencil/core'
 
-import type { EditorState, ExportFormat, SceneNode } from '@open-pencil/core'
+import type {
+  EditorState,
+  ExportFormat,
+  Fill,
+  Rect,
+  SceneNode,
+  Vector,
+  VectorNetwork,
+  VectorRegion,
+  VectorSegment,
+  VectorVertex,
+  Tool
+} from '@open-pencil/core'
 
 export type { Tool } from '@open-pencil/core'
 export type { EditorToolDef as ToolDef } from '@open-pencil/core'
@@ -24,7 +46,18 @@ export function createEditorStore(initialGraph?: SceneGraph) {
   const graph = initialGraph ?? new SceneGraph()
 
   const state = shallowReactive<
-    EditorState & {
+    Omit<EditorState, 'penState'> & {
+      penState: {
+        vertices: VectorVertex[]
+        segments: VectorSegment[]
+        dragTangent: Vector | null
+        oppositeDragTangent: Vector | null
+        closingToFirst: boolean
+        pendingClose?: boolean
+        resumingNodeId?: string
+        resumedFills?: Fill[]
+        resumedStrokes?: SceneNode['strokes']
+      } | null
       showUI: boolean
       activeRibbonTab: 'panels' | 'code' | 'ai'
       panelMode: 'layers' | 'design'
@@ -34,6 +67,26 @@ export function createEditorStore(initialGraph?: SceneGraph) {
       autosaveEnabled: boolean
       cursorCanvasX: number | null
       cursorCanvasY: number | null
+      nodeEditState: {
+        nodeId: string
+        origNetwork: VectorNetwork
+        origBounds: Rect
+        vertices: VectorVertex[]
+        segments: VectorSegment[]
+        regions: VectorRegion[]
+        selectedVertexIndices: Set<number>
+        draggedHandleInfo: {
+          vertexIndex: number
+          handleType: 'tangentStart' | 'tangentEnd'
+          segmentIndex: number
+        } | null
+        /** Set of selected handles as "segIdx:tangentField" strings */
+        selectedHandles: Set<string>
+        hoveredHandleInfo: {
+          segmentIndex: number
+          tangentField: 'tangentStart' | 'tangentEnd'
+        } | null
+      } | null
     }
   >({
     ...createDefaultEditorState(graph.getPages()[0].id),
@@ -45,7 +98,8 @@ export function createEditorStore(initialGraph?: SceneGraph) {
     clipboardHtml: '',
     autosaveEnabled: false,
     cursorCanvasX: null,
-    cursorCanvasY: null
+    cursorCanvasY: null,
+    nodeEditState: null
   })
 
   const editor = createEditor({ graph, state, loadFont, skipInitialGraphSetup: !!initialGraph })
@@ -78,6 +132,23 @@ export function createEditorStore(initialGraph?: SceneGraph) {
   let savedVersion = 0
   let lastWriteTime = 0
   let unwatchFile: (() => void) | null = null
+
+  void prefetchFigmaSchema()
+
+  function downloadBlob(data: Uint8Array, filename: string, mime: string) {
+    const blob = new Blob([data.buffer as ArrayBuffer], { type: mime })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => {
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }, 100)
+  }
 
   const AUTOSAVE_DELAY = 3000
 
@@ -142,22 +213,605 @@ export function createEditorStore(initialGraph?: SceneGraph) {
     flashRafId = requestAnimationFrame(pumpFlashes)
   }
 
-  // ─── File I/O ─────────────────────────────────────────────────
+  // ─── Tool override (commit pen on tool switch) ────────────────
 
-  function downloadBlob(data: Uint8Array, filename: string, mime: string) {
-    const blob = new Blob([data.buffer as ArrayBuffer], { type: mime })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    a.style.display = 'none'
-    document.body.appendChild(a)
-    a.click()
-    setTimeout(() => {
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    }, 100)
+  function setTool(tool: Tool) {
+    // If switching away from PEN while drawing, commit the open path
+    if (state.penState && tool !== 'PEN') {
+      editor.penCommit(false)
+    }
+    state.activeTool = tool
   }
+
+  // ─── Pen resume (vector editor) ────────────────────────────────
+
+  function penResumeOnPath(nodeId: string) {
+    const node = graph.getNode(nodeId)
+    if (node?.type !== 'VECTOR' || !node.vectorNetwork) return
+
+    const vn = node.vectorNetwork
+
+    // Convert to absolute coords
+    const absVertices: VectorVertex[] = vn.vertices.map((v) => ({
+      ...v,
+      x: v.x + node.x,
+      y: v.y + node.y
+    }))
+
+    state.penState = {
+      vertices: absVertices,
+      segments: vn.segments.map((s) => ({
+        ...s,
+        tangentStart: { ...s.tangentStart },
+        tangentEnd: { ...s.tangentEnd }
+      })),
+      dragTangent: null,
+      oppositeDragTangent: null,
+      closingToFirst: false,
+      pendingClose: false,
+      resumingNodeId: nodeId,
+      resumedFills: [...node.fills],
+      resumedStrokes: [...node.strokes]
+    }
+
+    // Remove the original node (will be recreated on commit)
+    graph.deleteNode(nodeId)
+    state.selectedIds = new Set()
+    state.activeTool = 'PEN'
+    editor.requestRender()
+  }
+
+  /** Walk a chain from `start` and return the last vertex reached. */
+  function walkChainToEnd(segments: { start: number; end: number }[], start: number): number {
+    let current = start
+    const visited = new Set<number>([start])
+    for (;;) {
+      let found = false
+      for (const seg of segments) {
+        let next = -1
+        if (seg.start === current && !visited.has(seg.end)) next = seg.end
+        else if (seg.end === current && !visited.has(seg.start)) next = seg.start
+        if (next === -1) continue
+        visited.add(next)
+        current = next
+        found = true
+        break
+      }
+      if (!found) break
+    }
+    return current
+  }
+
+  /** Walk from `start` and return ordered vertices/segments (remapped to 0-based indices). */
+  function walkChainOrdered(
+    absVertices: VectorVertex[],
+    absSegments: VectorSegment[],
+    start: number
+  ): { orderedVertices: VectorVertex[]; orderedSegments: VectorSegment[] } {
+    const orderedVertices: VectorVertex[] = []
+    const orderedSegments: VectorSegment[] = []
+    const visited = new Set<number>()
+    let current = start
+
+    orderedVertices.push(absVertices[current])
+    visited.add(current)
+
+    for (;;) {
+      let foundSeg = false
+      for (const seg of absSegments) {
+        let next = -1
+        let isForward = false
+        if (seg.start === current && !visited.has(seg.end)) {
+          next = seg.end
+          isForward = true
+        } else if (seg.end === current && !visited.has(seg.start)) {
+          next = seg.start
+          isForward = false
+        }
+        if (next === -1) continue
+
+        const fromIdx = orderedVertices.length - 1
+        orderedVertices.push(absVertices[next])
+        const toIdx = orderedVertices.length - 1
+
+        orderedSegments.push({
+          start: fromIdx,
+          end: toIdx,
+          tangentStart: isForward ? { ...seg.tangentStart } : { ...seg.tangentEnd },
+          tangentEnd: isForward ? { ...seg.tangentEnd } : { ...seg.tangentStart }
+        })
+
+        visited.add(next)
+        current = next
+        foundSeg = true
+        break
+      }
+      if (!foundSeg) break
+    }
+    return { orderedVertices, orderedSegments }
+  }
+
+  /**
+   * Resume pen drawing from an endpoint of an existing VECTOR node.
+   * Reorders vertices/segments so the endpoint is the last vertex,
+   * then sets up penState for continuing the drawing.
+   */
+  function penResumeFromEndpoint(nodeId: string, endpointVertexIndex: number) {
+    const node = graph.getNode(nodeId)
+    if (node?.type !== 'VECTOR' || !node.vectorNetwork) return
+
+    const vn = node.vectorNetwork
+
+    // Convert to absolute coords
+    const absVertices: VectorVertex[] = vn.vertices.map((v) => ({
+      ...v,
+      x: v.x + node.x,
+      y: v.y + node.y
+    }))
+    const absSegments: VectorSegment[] = vn.segments.map((s) => ({
+      ...s,
+      tangentStart: { ...s.tangentStart },
+      tangentEnd: { ...s.tangentEnd }
+    }))
+
+    // Find the OTHER endpoint, then walk from it so the clicked one ends up last.
+    const otherEnd = walkChainToEnd(absSegments, endpointVertexIndex)
+    const { orderedVertices, orderedSegments } = walkChainOrdered(
+      absVertices,
+      absSegments,
+      otherEnd
+    )
+
+    state.penState = {
+      vertices: orderedVertices,
+      segments: orderedSegments,
+      dragTangent: null,
+      oppositeDragTangent: null,
+      closingToFirst: false,
+      pendingClose: false,
+      resumingNodeId: nodeId,
+      resumedFills: [...node.fills],
+      resumedStrokes: [...node.strokes]
+    }
+
+    graph.deleteNode(nodeId)
+    state.selectedIds = new Set()
+    state.activeTool = 'PEN'
+    editor.requestRender()
+  }
+
+  // ─── Node edit mode (vector geometry) ──────────────────────────
+
+  const NODE_EDIT_HIT_THRESHOLD = 8
+
+  function getNodeEditState() {
+    return state.nodeEditState
+  }
+
+  function setNodeEditNetwork(es: NonNullable<typeof state.nodeEditState>, network: VectorNetwork) {
+    es.vertices = network.vertices.map((v) => ({ ...v }))
+    es.segments = network.segments.map((s) => ({
+      ...s,
+      tangentStart: { ...s.tangentStart },
+      tangentEnd: { ...s.tangentEnd }
+    }))
+    es.regions = network.regions.map((r) => ({
+      windingRule: r.windingRule,
+      loops: r.loops.map((l) => [...l])
+    }))
+  }
+
+  function getLiveNetwork(es: NonNullable<typeof state.nodeEditState>): VectorNetwork {
+    return {
+      vertices: es.vertices.map((v) => ({ ...v })),
+      segments: es.segments.map((s) => ({
+        ...s,
+        tangentStart: { ...s.tangentStart },
+        tangentEnd: { ...s.tangentEnd }
+      })),
+      regions: es.regions.map((r) => ({
+        windingRule: r.windingRule,
+        loops: r.loops.map((l) => [...l])
+      }))
+    }
+  }
+
+  function applyNodeEditToNode(es: NonNullable<typeof state.nodeEditState>) {
+    const node = graph.getNode(es.nodeId)
+    if (node?.type !== 'VECTOR') return
+
+    const live = getLiveNetwork(es)
+    const bounds = computeAccurateBounds(live)
+    const relativeNetwork: VectorNetwork = {
+      vertices: live.vertices.map((v) => ({
+        ...v,
+        x: v.x - bounds.x,
+        y: v.y - bounds.y
+      })),
+      segments: live.segments,
+      regions: live.regions
+    }
+
+    graph.updateNode(node.id, {
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height,
+      vectorNetwork: relativeNetwork
+    })
+    editor.requestRender()
+  }
+
+  function enterNodeEditMode(nodeId: string) {
+    const node = graph.getNode(nodeId)
+    if (node?.type !== 'VECTOR' || !node.vectorNetwork) return
+
+    const absVertices = node.vectorNetwork.vertices.map((v) => ({
+      ...v,
+      x: v.x + node.x,
+      y: v.y + node.y
+    }))
+
+    state.nodeEditState = {
+      nodeId,
+      origNetwork: structuredClone(node.vectorNetwork),
+      origBounds: { x: node.x, y: node.y, width: node.width, height: node.height },
+      vertices: absVertices,
+      segments: node.vectorNetwork.segments.map((s) => ({
+        ...s,
+        tangentStart: { ...s.tangentStart },
+        tangentEnd: { ...s.tangentEnd }
+      })),
+      regions: node.vectorNetwork.regions.map((r) => ({
+        windingRule: r.windingRule,
+        loops: r.loops.map((l) => [...l])
+      })),
+      selectedVertexIndices: new Set(),
+      draggedHandleInfo: null,
+      selectedHandles: new Set(),
+      hoveredHandleInfo: null
+    }
+
+    state.selectedIds = new Set([nodeId])
+    editor.requestRender()
+  }
+
+  function exitNodeEditMode(commit: boolean) {
+    const es = getNodeEditState()
+    if (!es) return
+
+    const node = graph.getNode(es.nodeId)
+    if (node?.type !== 'VECTOR') {
+      state.nodeEditState = null
+      editor.requestRender()
+      return
+    }
+
+    if (commit) {
+      applyNodeEditToNode(es)
+    } else {
+      graph.updateNode(es.nodeId, {
+        x: es.origBounds.x,
+        y: es.origBounds.y,
+        width: es.origBounds.width,
+        height: es.origBounds.height,
+        vectorNetwork: structuredClone(es.origNetwork)
+      })
+      editor.requestRender()
+    }
+
+    state.nodeEditState = null
+  }
+
+  function nodeEditSelectVertex(vertexIndex: number, addToSelection: boolean) {
+    const es = getNodeEditState()
+    if (!es) return
+    if (addToSelection) {
+      const next = new Set(es.selectedVertexIndices)
+      if (next.has(vertexIndex)) next.delete(vertexIndex)
+      else next.add(vertexIndex)
+      es.selectedVertexIndices = next
+    } else {
+      es.selectedVertexIndices = new Set([vertexIndex])
+    }
+    editor.requestRepaint()
+  }
+
+  type HandleInfo = {
+    segmentIndex: number
+    tangentField: 'tangentStart' | 'tangentEnd'
+    neighborIndex: number
+  }
+
+  /** Resolve the base direction vector for a handle, falling back to neighbor direction. */
+  function handleBaseVector(tangent: Vector, neighbor: Vector, origin: Vector): Vector {
+    return Math.hypot(tangent.x, tangent.y) > 1e-6
+      ? tangent
+      : { x: neighbor.x - origin.x, y: neighbor.y - origin.y }
+  }
+
+  /** Among sibling handles, find the one most opposite to the active handle direction. */
+  function findSisterHandle(
+    es: NonNullable<typeof state.nodeEditState>,
+    siblings: HandleInfo[],
+    activeBase: Vector,
+    vertexIndex: number
+  ): HandleInfo {
+    let sister = siblings[0]
+    const activeBaseLen = Math.hypot(activeBase.x, activeBase.y)
+    if (activeBaseLen <= 1e-6) return sister
+
+    const activeDir = { x: activeBase.x / activeBaseLen, y: activeBase.y / activeBaseLen }
+    let bestDot = Infinity
+    for (const s of siblings) {
+      const sSeg = es.segments[s.segmentIndex]
+      const sVertex = es.vertices[vertexIndex]
+      const sNeighbor = es.vertices[s.neighborIndex]
+      const sBase = handleBaseVector(sSeg[s.tangentField], sNeighbor, sVertex)
+      const sLen = Math.hypot(sBase.x, sBase.y)
+      if (sLen < 1e-6) continue
+      const sDir = { x: sBase.x / sLen, y: sBase.y / sLen }
+      const dot = activeDir.x * sDir.x + activeDir.y * sDir.y
+      if (dot < bestDot) {
+        bestDot = dot
+        sister = s
+      }
+    }
+    return sister
+  }
+
+  /** Constrain a tangent to be continuous with the sister handle. Returns the constrained vector, or null if no constraint applied. */
+  function constrainContinuousTangent(
+    es: NonNullable<typeof state.nodeEditState>,
+    newTangent: Vector,
+    active: HandleInfo,
+    all: HandleInfo[],
+    seg: VectorSegment,
+    tangentField: 'tangentStart' | 'tangentEnd',
+    vertexIndex: number,
+    vertex: VectorVertex
+  ): Vector | null {
+    const siblings = all.filter(
+      (h) => !(h.segmentIndex === active.segmentIndex && h.tangentField === active.tangentField)
+    )
+    if (siblings.length === 0) return null
+
+    const activeNeighbor = es.vertices[active.neighborIndex]
+    const activeBase = handleBaseVector(seg[tangentField], activeNeighbor, vertex)
+    const sister = findSisterHandle(es, siblings, activeBase, vertexIndex)
+
+    const sisterSeg = es.segments[sister.segmentIndex]
+    const sisterNeighbor = es.vertices[sister.neighborIndex]
+    const sisterBase = handleBaseVector(sisterSeg[sister.tangentField], sisterNeighbor, vertex)
+    const sisterLen = Math.hypot(sisterBase.x, sisterBase.y)
+    if (sisterLen <= 1e-6) return null
+
+    const desiredDir = { x: -sisterBase.x / sisterLen, y: -sisterBase.y / sisterLen }
+    const len = Math.max(0, newTangent.x * desiredDir.x + newTangent.y * desiredDir.y)
+    vertex.handleMirroring = 'ANGLE'
+    return { x: desiredDir.x * len, y: desiredDir.y * len }
+  }
+
+  function nodeEditSetHandle(
+    segmentIndex: number,
+    tangentField: 'tangentStart' | 'tangentEnd',
+    newTangent: Vector,
+    options?: {
+      breakMirroring?: boolean
+      continuous?: boolean
+      lockDirection?: boolean
+    }
+  ) {
+    const es = getNodeEditState()
+    if (!es) return
+    const seg = es.segments[segmentIndex]
+
+    const breakMirroring = options?.breakMirroring ?? false
+    const continuous = options?.continuous ?? false
+    const lockDirection = options?.lockDirection ?? false
+    const vertexIndex = tangentField === 'tangentStart' ? seg.start : seg.end
+    const vertex = es.vertices[vertexIndex]
+    const live = getLiveNetwork(es)
+
+    const all = findAllHandles(live, vertexIndex)
+    const active = all.find(
+      (h) => h.segmentIndex === segmentIndex && h.tangentField === tangentField
+    )
+
+    let applied = { x: newTangent.x, y: newTangent.y }
+    if (continuous && active) {
+      applied =
+        constrainContinuousTangent(
+          es,
+          newTangent,
+          active,
+          all,
+          seg,
+          tangentField,
+          vertexIndex,
+          vertex
+        ) ?? applied
+    }
+
+    seg[tangentField] = applied
+    const mode = vertex.handleMirroring ?? 'NONE'
+    if (lockDirection && mode === 'NONE') {
+      seg[tangentField] = { x: newTangent.x, y: newTangent.y }
+      editor.requestRepaint()
+      return
+    }
+    if (breakMirroring) {
+      vertex.handleMirroring = 'NONE'
+      editor.requestRepaint()
+      return
+    }
+    if (mode === 'NONE') {
+      editor.requestRepaint()
+      return
+    }
+
+    const opposite = findOppositeHandle(live, vertexIndex, segmentIndex)
+    if (!opposite) {
+      editor.requestRepaint()
+      return
+    }
+
+    const oppositeSeg = es.segments[opposite.segmentIndex]
+    const oppositeCurrent = oppositeSeg[opposite.tangentField]
+    const oppositeLength =
+      mode === 'ANGLE' ? Math.hypot(oppositeCurrent.x, oppositeCurrent.y) : undefined
+    const mirrored = mirrorHandle(applied, mode, oppositeLength)
+    if (mirrored) {
+      oppositeSeg[opposite.tangentField] = mirrored
+    }
+    editor.requestRepaint()
+  }
+
+  function nodeEditBendHandle(
+    vertexIndex: number,
+    dx: number,
+    dy: number,
+    independent: boolean,
+    targetSegmentIndex: number | null,
+    targetTangentField: 'tangentStart' | 'tangentEnd' | null
+  ) {
+    const es = getNodeEditState()
+    if (!es) return
+    if (targetSegmentIndex == null || targetTangentField == null) return
+    const live = getLiveNetwork(es)
+    const handles = findAllHandles(live, vertexIndex)
+    if (handles.length === 0) return
+
+    const effectiveTargets = handles.filter(
+      (h) => h.segmentIndex === targetSegmentIndex && h.tangentField === targetTangentField
+    )
+    if (effectiveTargets.length === 0) return
+
+    const primary = { x: dx, y: dy }
+    const opposite = independent ? { x: dx, y: dy } : { x: -dx, y: -dy }
+
+    const first = effectiveTargets[0]
+    es.segments[first.segmentIndex][first.tangentField] = primary
+    for (let i = 1; i < effectiveTargets.length; i++) {
+      const h = effectiveTargets[i]
+      es.segments[h.segmentIndex][h.tangentField] = primary
+    }
+    if (!independent) {
+      for (const h of handles) {
+        if (effectiveTargets.includes(h)) continue
+        es.segments[h.segmentIndex][h.tangentField] = opposite
+      }
+    }
+
+    es.vertices[vertexIndex].handleMirroring = independent ? 'NONE' : 'ANGLE_AND_LENGTH'
+    editor.requestRepaint()
+  }
+
+  function nodeEditZeroVertexHandles(vertexIndex: number) {
+    const es = getNodeEditState()
+    if (!es) return
+    const live = getLiveNetwork(es)
+    const handles = findAllHandles(live, vertexIndex)
+    for (const h of handles) {
+      es.segments[h.segmentIndex][h.tangentField] = { x: 0, y: 0 }
+    }
+    es.vertices[vertexIndex].handleMirroring = 'NONE'
+    editor.requestRepaint()
+  }
+
+  function nodeEditConnectEndpoints(a: number, b: number) {
+    const es = getNodeEditState()
+    if (!es || a === b) return
+    if (a < 0 || b < 0 || a >= es.vertices.length || b >= es.vertices.length) return
+
+    const removeIndex = a
+    const keepIndex = b
+    const remap = (idx: number): number => {
+      if (idx === removeIndex) return keepIndex
+      return idx > removeIndex ? idx - 1 : idx
+    }
+
+    const nextVertices = es.vertices.filter((_, idx) => idx !== removeIndex)
+    const nextSegments = es.segments
+      .map((seg) => ({
+        ...seg,
+        tangentStart: { ...seg.tangentStart },
+        tangentEnd: { ...seg.tangentEnd },
+        start: remap(seg.start),
+        end: remap(seg.end)
+      }))
+      .filter((seg) => seg.start !== seg.end)
+
+    setNodeEditNetwork(es, { vertices: nextVertices, segments: nextSegments, regions: [] })
+    es.selectedVertexIndices = new Set([remap(keepIndex)])
+    es.selectedHandles = new Set()
+    editor.requestRender()
+  }
+
+  function nodeEditAddVertex(cx: number, cy: number) {
+    const es = getNodeEditState()
+    if (!es) return
+    const live = getLiveNetwork(es)
+    const nearest = nearestPointOnNetwork(cx, cy, live, NODE_EDIT_HIT_THRESHOLD / state.zoom)
+    if (!nearest) return
+    const split = splitSegmentAt(live, nearest.segmentIndex, nearest.t)
+    setNodeEditNetwork(es, split.network)
+    es.selectedVertexIndices = new Set([split.newVertexIndex])
+    es.selectedHandles = new Set()
+    editor.requestRender()
+  }
+
+  function nodeEditRemoveVertex(vertexIndex: number) {
+    const es = getNodeEditState()
+    if (!es) return
+    const live = getLiveNetwork(es)
+    const next = removeVertex(live, vertexIndex)
+    if (!next) return
+    setNodeEditNetwork(es, next)
+    es.selectedVertexIndices = new Set()
+    es.selectedHandles = new Set()
+    editor.requestRender()
+  }
+
+  function nodeEditDeleteSelected() {
+    const es = getNodeEditState()
+    if (!es) return
+    let live = getLiveNetwork(es)
+
+    for (const key of es.selectedHandles) {
+      const [siStr, tf] = key.split(':')
+      const si = Number(siStr)
+      const seg = live.segments[si]
+      if (tf === 'tangentStart') seg.tangentStart = { x: 0, y: 0 }
+      else seg.tangentEnd = { x: 0, y: 0 }
+    }
+
+    const verticesToDelete = [...es.selectedVertexIndices].sort((a, b) => b - a)
+    for (const vi of verticesToDelete) {
+      const next = deleteVertex(live, vi)
+      if (!next) break
+      live = next
+    }
+
+    setNodeEditNetwork(es, live)
+    es.selectedVertexIndices = new Set()
+    es.selectedHandles = new Set()
+    editor.requestRender()
+  }
+
+  function nodeEditBreakAtVertex() {
+    const es = getNodeEditState()
+    if (!es || es.selectedVertexIndices.size === 0) return
+    const [vertexIndex] = es.selectedVertexIndices
+    const live = getLiveNetwork(es)
+    const next = breakAtVertex(live, vertexIndex)
+    setNodeEditNetwork(es, next)
+    es.selectedHandles = new Set()
+    es.selectedVertexIndices = new Set([vertexIndex])
+    editor.requestRender()
+  }
+
+  // ─── File I/O ──────────────────────────────────────────────────
 
   function yieldToUI(): Promise<void> {
     return new Promise((r) => requestAnimationFrame(() => r()))
@@ -502,13 +1156,26 @@ export function createEditorStore(initialGraph?: SceneGraph) {
     selectedNode,
     layerTree,
 
-    // App-specific methods
+    // App-specific overrides and additions
     flashNodes,
     aiMarkActive,
     aiMarkDone,
     aiFlashDone,
     aiClearAll,
-    toggleProfiler,
+    setTool,
+    penResumeOnPath,
+    penResumeFromEndpoint,
+    enterNodeEditMode,
+    exitNodeEditMode,
+    nodeEditSelectVertex,
+    nodeEditSetHandle,
+    nodeEditBendHandle,
+    nodeEditZeroVertexHandles,
+    nodeEditConnectEndpoints,
+    nodeEditAddVertex,
+    nodeEditRemoveVertex,
+    nodeEditDeleteSelected,
+    nodeEditBreakAtVertex,
     openFigFile,
     saveFigFile,
     saveFigFileAs,
@@ -516,7 +1183,8 @@ export function createEditorStore(initialGraph?: SceneGraph) {
     exportSelection,
     mobileCopy,
     mobileCut,
-    mobilePaste
+    mobilePaste,
+    toggleProfiler
   }
 
   Object.defineProperties(store, {

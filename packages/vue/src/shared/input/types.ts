@@ -1,4 +1,5 @@
-import type { NodeType, Rect } from '@open-pencil/core'
+import type { NodeType, Rect, VectorNetwork } from '@open-pencil/core'
+import type { Vector } from '@open-pencil/core'
 import type { Tool } from '@open-pencil/core/editor'
 
 export type HandlePosition = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
@@ -37,6 +38,7 @@ export interface DragResize {
   startY: number
   origRect: Rect
   nodeId: string
+  origVectorNetwork: VectorNetwork | null
 }
 
 export interface DragMarquee {
@@ -58,12 +60,42 @@ export interface DragPen {
   type: 'pen-drag'
   startX: number
   startY: number
+  modifierMode: 'default' | 'continuous' | 'independent'
+  frozenOppositeTangent: Vector | null
 }
 
 export interface DragTextSelect {
   type: 'text-select'
   startX: number
   startY: number
+}
+
+export interface DragEditNode {
+  type: 'edit-node'
+  startX: number
+  startY: number
+  origPositions: Map<number, { x: number; y: number }>
+}
+
+export interface DragEditHandle {
+  type: 'edit-handle'
+  segmentIndex: number
+  tangentField: 'tangentStart' | 'tangentEnd'
+  vertexIndex: number
+  startX: number
+  startY: number
+  initialTangent: Vector | null
+}
+
+export interface DragBendHandle {
+  type: 'bend-handle'
+  vertexIndex: number
+  startX: number
+  startY: number
+  lockedMode: 'symmetric' | 'independent' | null
+  dragSamples: Vector[]
+  targetSegmentIndex: number | null
+  targetTangentField: 'tangentStart' | 'tangentEnd' | null
 }
 
 export type DragState =
@@ -75,6 +107,9 @@ export type DragState =
   | DragRotate
   | DragPen
   | DragTextSelect
+  | DragEditNode
+  | DragEditHandle
+  | DragBendHandle
 
 export const TOOL_TO_NODE: Partial<Record<Tool, NodeType>> = {
   FRAME: 'FRAME',
