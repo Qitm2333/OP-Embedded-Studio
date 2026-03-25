@@ -1,6 +1,8 @@
+import { useStore } from '@nanostores/vue'
 import { computed } from 'vue'
 
 import { useEditor } from '@open-pencil/vue/context/editorContext'
+import { commandMessages } from '@open-pencil/vue/i18n'
 import { usePageList } from '@open-pencil/vue/PageList/usePageList'
 import { useSelectionCapabilities } from '@open-pencil/vue/selection/useSelectionCapabilities'
 import { useSelectionState } from '@open-pencil/vue/selection/useSelectionState'
@@ -76,64 +78,86 @@ export function useEditorCommands() {
   const capabilities = useSelectionCapabilities()
   const { pages } = usePageList()
 
+  const t = useStore(commandMessages)
+
   const commands: Record<EditorCommandId, EditorCommand> = {
     'edit.undo': {
       id: 'edit.undo',
-      label: 'Undo',
+      get label() {
+        return t.value.undo
+      },
       enabled: capabilities.canUndo,
       run: () => editor.undoAction()
     },
     'edit.redo': {
       id: 'edit.redo',
-      label: 'Redo',
+      get label() {
+        return t.value.redo
+      },
       enabled: capabilities.canRedo,
       run: () => editor.redoAction()
     },
     'selection.selectAll': {
       id: 'selection.selectAll',
-      label: 'Select all',
+      get label() {
+        return t.value.selectAll
+      },
       enabled: capabilities.canSelectAll,
       run: () => editor.selectAll()
     },
     'selection.duplicate': {
       id: 'selection.duplicate',
-      label: 'Duplicate',
+      get label() {
+        return t.value.duplicate
+      },
       enabled: capabilities.canDuplicate,
       run: () => editor.duplicateSelected()
     },
     'selection.delete': {
       id: 'selection.delete',
-      label: 'Delete',
+      get label() {
+        return t.value.delete
+      },
       enabled: capabilities.canDelete,
       run: () => editor.deleteSelected()
     },
     'selection.group': {
       id: 'selection.group',
-      label: 'Group',
+      get label() {
+        return t.value.group
+      },
       enabled: capabilities.canGroup,
       run: () => editor.groupSelected()
     },
     'selection.ungroup': {
       id: 'selection.ungroup',
-      label: 'Ungroup',
+      get label() {
+        return t.value.ungroup
+      },
       enabled: capabilities.canUngroup,
       run: () => editor.ungroupSelected()
     },
     'selection.createComponent': {
       id: 'selection.createComponent',
-      label: 'Create component',
+      get label() {
+        return t.value.createComponent
+      },
       enabled: capabilities.canCreateComponent,
       run: () => editor.createComponentFromSelection()
     },
     'selection.createComponentSet': {
       id: 'selection.createComponentSet',
-      label: 'Create component set',
+      get label() {
+        return t.value.createComponentSet
+      },
       enabled: capabilities.canCreateComponentSet,
       run: () => editor.createComponentSetFromComponents()
     },
     'selection.createInstance': {
       id: 'selection.createInstance',
-      label: 'Create instance',
+      get label() {
+        return t.value.createInstance
+      },
       enabled: capabilities.canCreateInstance,
       run: () => {
         const node = selection.selectedNode.value
@@ -142,49 +166,65 @@ export function useEditorCommands() {
     },
     'selection.detachInstance': {
       id: 'selection.detachInstance',
-      label: 'Detach instance',
+      get label() {
+        return t.value.detachInstance
+      },
       enabled: capabilities.canDetachInstance,
       run: () => editor.detachInstance()
     },
     'selection.goToMainComponent': {
       id: 'selection.goToMainComponent',
-      label: 'Go to main component',
+      get label() {
+        return t.value.goToMainComponent
+      },
       enabled: capabilities.canGoToMainComponent,
       run: () => editor.goToMainComponent()
     },
     'selection.wrapInAutoLayout': {
       id: 'selection.wrapInAutoLayout',
-      label: 'Add auto layout',
+      get label() {
+        return t.value.addAutoLayout
+      },
       enabled: capabilities.canWrapInAutoLayout,
       run: () => editor.wrapInAutoLayout()
     },
     'selection.bringToFront': {
       id: 'selection.bringToFront',
-      label: 'Bring to front',
+      get label() {
+        return t.value.bringToFront
+      },
       enabled: capabilities.canBringToFront,
       run: () => editor.bringToFront()
     },
     'selection.sendToBack': {
       id: 'selection.sendToBack',
-      label: 'Send to back',
+      get label() {
+        return t.value.sendToBack
+      },
       enabled: capabilities.canSendToBack,
       run: () => editor.sendToBack()
     },
     'selection.toggleVisibility': {
       id: 'selection.toggleVisibility',
-      label: 'Toggle visibility',
+      get label() {
+        return t.value.toggleVisibility
+      },
       enabled: capabilities.canToggleVisibility,
       run: () => editor.toggleVisibility()
     },
     'selection.toggleLock': {
       id: 'selection.toggleLock',
-      label: 'Toggle lock',
+      get label() {
+        return t.value.toggleLock
+      },
       enabled: capabilities.canToggleLock,
       run: () => editor.toggleLock()
     },
     'selection.moveToPage': {
       id: 'selection.moveToPage',
-      label: 'Move to page',
+      get label() {
+        return t.value.moveToPage
+      },
       enabled: capabilities.canMoveToPage,
       run: () => {
         const targetPage = otherPages.value[0]
@@ -193,19 +233,25 @@ export function useEditorCommands() {
     },
     'view.zoom100': {
       id: 'view.zoom100',
-      label: 'Zoom to 100%',
+      get label() {
+        return t.value.zoomTo100
+      },
       enabled: computed(() => true),
       run: () => editor.zoomTo100()
     },
     'view.zoomFit': {
       id: 'view.zoomFit',
-      label: 'Zoom to fit',
+      get label() {
+        return t.value.zoomToFit
+      },
       enabled: computed(() => true),
       run: () => editor.zoomToFit()
     },
     'view.zoomSelection': {
       id: 'view.zoomSelection',
-      label: 'Zoom to selection',
+      get label() {
+        return t.value.zoomToSelection
+      },
       enabled: capabilities.canZoomToSelection,
       run: () => editor.zoomToSelection()
     }
