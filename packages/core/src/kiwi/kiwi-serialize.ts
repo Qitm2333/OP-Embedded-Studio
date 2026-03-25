@@ -300,9 +300,24 @@ function serializeCornerRadii(node: SceneNode, nc: KiwiNodeChange): void {
   }
 }
 
+function resolveTextAutoResize(node: SceneNode, graph: SceneGraph): SceneNode['textAutoResize'] {
+  if (node.textAutoResize === 'NONE') return 'NONE'
+  const parent = node.parentId ? graph.getNode(node.parentId) : undefined
+  if (
+    parent
+    && parent.layoutMode !== 'NONE'
+    && parent.layoutMode !== 'GRID'
+    && node.layoutPositioning !== 'ABSOLUTE'
+  ) {
+    return 'NONE'
+  }
+  return node.textAutoResize
+}
+
 function serializeTextProps(
   node: SceneNode,
   nc: KiwiNodeChange,
+  graph: SceneGraph,
   fontDigestMap?: Map<string, Uint8Array>
 ): void {
   nc.fontSize = node.fontSize
@@ -312,7 +327,8 @@ function serializeTextProps(
     postscript: ''
   }
   nc.textData = exportTextData(node)
-  if (node.textAutoResize !== 'NONE') nc.textAutoResize = node.textAutoResize
+  const autoResize = resolveTextAutoResize(node, graph)
+  if (autoResize !== 'NONE') nc.textAutoResize = autoResize
   nc.textAlignHorizontal = node.textAlignHorizontal
   nc.textUserLayoutVersion = 3
   if (fontDigestMap) nc.derivedTextData = buildDerivedTextData(node, fontDigestMap)
@@ -488,7 +504,7 @@ export function sceneNodeToKiwi(
     }))
   }
 
-  if (node.type === 'TEXT') serializeTextProps(node, nc, fontDigestMap)
+  if (node.type === 'TEXT') serializeTextProps(node, nc, graph, fontDigestMap)
 
   nc.frameMaskDisabled = !node.clipsContent
 
