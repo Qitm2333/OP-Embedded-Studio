@@ -8,10 +8,12 @@ import Tip from '@/components/ui/Tip.vue'
 import { uiButton } from '@/components/ui/button'
 import { uiInput } from '@/components/ui/input'
 import { useAIChat } from '@/composables/use-chat'
+import { useI18n } from '@open-pencil/vue'
 
 import { ACP_AGENTS } from '@open-pencil/core'
 
 const { providerID, providerDef, modelID, customModelID } = useAIChat()
+const { dialogs } = useI18n()
 
 const { status } = defineProps<{
   status: 'ready' | 'submitted' | 'streaming' | 'error'
@@ -83,14 +85,14 @@ function handleSubmit(e: Event) {
           v-model="input"
           type="text"
           data-test-id="chat-input"
-          placeholder="Describe a change…"
+          :placeholder="dialogs.describeChange"
           :class="uiInput({ ui: { base: 'min-w-0 flex-1 placeholder:text-muted' } })"
           :disabled="isStreaming"
           @paste.stop
           @copy.stop
           @cut.stop
         />
-        <Tip v-if="isStreaming" label="Stop generating">
+        <Tip v-if="isStreaming" :label="dialogs.stopGenerating">
           <button
             type="button"
             data-test-id="chat-stop-button"
@@ -107,7 +109,7 @@ function handleSubmit(e: Event) {
             <icon-lucide-square class="size-3" />
           </button>
         </Tip>
-        <Tip v-else label="Send message">
+        <Tip v-else :label="dialogs.sendMessage">
           <button
             type="submit"
             data-test-id="chat-send-button"
