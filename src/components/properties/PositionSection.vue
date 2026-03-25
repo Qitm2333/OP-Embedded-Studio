@@ -3,7 +3,9 @@ import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/ui/Tip.vue'
 import { iconButton } from '@/components/ui/icon-button'
 import { sectionWrapper } from '@/components/ui/section'
-import { PositionControlsRoot } from '@open-pencil/vue'
+import { PositionControlsRoot, useI18n } from '@open-pencil/vue'
+
+const { panels } = useI18n()
 </script>
 
 <template>
@@ -24,11 +26,11 @@ import { PositionControlsRoot } from '@open-pencil/vue'
     }"
   >
     <div v-if="active" data-test-id="position-section" :class="sectionWrapper()">
-      <label class="mb-1.5 block text-[11px] text-muted">Position</label>
+      <label class="mb-1.5 block text-[11px] text-muted">{{ panels.position }}</label>
 
       <div class="mb-1.5 flex gap-2">
         <div class="flex gap-0.5">
-          <Tip label="Align left">
+          <Tip :label="panels.alignLeft">
             <button
               :class="iconButton({ size: 'md' })"
               data-test-id="position-align-left"
@@ -37,7 +39,7 @@ import { PositionControlsRoot } from '@open-pencil/vue'
               <icon-lucide-align-horizontal-justify-start class="size-3.5" />
             </button>
           </Tip>
-          <Tip label="Align center horizontally">
+          <Tip :label="panels.alignCenterHorizontally">
             <button
               :class="iconButton({ size: 'md' })"
               data-test-id="position-align-center-h"
@@ -46,7 +48,7 @@ import { PositionControlsRoot } from '@open-pencil/vue'
               <icon-lucide-align-horizontal-justify-center class="size-3.5" />
             </button>
           </Tip>
-          <Tip label="Align right">
+          <Tip :label="panels.alignRight">
             <button
               :class="iconButton({ size: 'md' })"
               data-test-id="position-align-right"
@@ -57,7 +59,7 @@ import { PositionControlsRoot } from '@open-pencil/vue'
           </Tip>
         </div>
         <div class="flex gap-0.5">
-          <Tip label="Align top">
+          <Tip :label="panels.alignTop">
             <button
               :class="iconButton({ size: 'md' })"
               data-test-id="position-align-top"
@@ -66,7 +68,7 @@ import { PositionControlsRoot } from '@open-pencil/vue'
               <icon-lucide-align-vertical-justify-start class="size-3.5" />
             </button>
           </Tip>
-          <Tip label="Align center vertically">
+          <Tip :label="panels.alignCenterVertically">
             <button
               :class="iconButton({ size: 'md' })"
               data-test-id="position-align-center-v"
@@ -75,7 +77,7 @@ import { PositionControlsRoot } from '@open-pencil/vue'
               <icon-lucide-align-vertical-justify-center class="size-3.5" />
             </button>
           </Tip>
-          <Tip label="Align bottom">
+          <Tip :label="panels.alignBottom">
             <button
               :class="iconButton({ size: 'md' })"
               data-test-id="position-align-bottom"
@@ -133,7 +135,7 @@ import { PositionControlsRoot } from '@open-pencil/vue'
             <icon-lucide-rotate-ccw class="size-3" />
           </template>
         </ScrubInput>
-        <Tip label="Flip horizontal">
+        <Tip :label="panels.flipHorizontal">
           <button
             :class="iconButton({ size: 'md', ui: { base: 'shrink-0' } })"
             data-test-id="position-flip-horizontal"
@@ -142,7 +144,7 @@ import { PositionControlsRoot } from '@open-pencil/vue'
             <icon-lucide-flip-horizontal class="size-3.5" />
           </button>
         </Tip>
-        <Tip label="Flip vertical">
+        <Tip :label="panels.flipVertical">
           <button
             :class="iconButton({ size: 'md', ui: { base: 'shrink-0' } })"
             data-test-id="position-flip-vertical"
@@ -151,7 +153,7 @@ import { PositionControlsRoot } from '@open-pencil/vue'
             <icon-lucide-flip-vertical class="size-3.5" />
           </button>
         </Tip>
-        <Tip label="Rotate 90°">
+        <Tip :label="panels.rotate90">
           <button
             :class="iconButton({ size: 'md', ui: { base: 'shrink-0' } })"
             data-test-id="position-rotate-90"

@@ -49,7 +49,7 @@ function save() {
         v-model="baseURLInput"
         type="text"
         data-test-id="provider-base-url"
-        placeholder="Base URL (e.g. http://localhost:11434/v1)"
+        :placeholder="dialogs.baseURLPlaceholder"
         :class="uiInput()"
       />
 
@@ -59,7 +59,7 @@ function save() {
         v-model="customModelInput"
         type="text"
         data-test-id="provider-custom-model"
-        placeholder="Model ID (e.g. llama-3.3-70b)"
+        :placeholder="dialogs.modelIDPlaceholder"
         :class="uiInput()"
       />
 

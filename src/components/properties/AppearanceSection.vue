@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { AppearanceControlsRoot } from '@open-pencil/vue'
+import { AppearanceControlsRoot, useI18n } from '@open-pencil/vue'
 
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/ui/Tip.vue'
 import { sectionWrapper } from '@/components/ui/section'
+
+const { panels } = useI18n()
 </script>
 
 <template>
@@ -27,8 +29,8 @@ import { sectionWrapper } from '@/components/ui/section'
   >
     <div v-if="active" data-test-id="appearance-section" :class="sectionWrapper()">
       <div class="mb-1.5 flex items-center justify-between">
-        <label class="text-[11px] text-muted">Appearance</label>
-        <Tip label="Toggle visibility">
+        <label class="text-[11px] text-muted">{{ panels.appearance }}</label>
+        <Tip :label="panels.toggleVisibility">
           <button
             data-test-id="appearance-visibility"
             class="flex cursor-pointer items-center justify-center rounded border-none bg-transparent p-0.5 text-muted hover:bg-hover hover:text-surface"
@@ -67,7 +69,7 @@ import { sectionWrapper } from '@/components/ui/section'
               <icon-lucide-radius class="size-3" />
             </template>
           </ScrubInput>
-          <Tip label="Independent corner radii">
+          <Tip :label="panels.independentCornerRadii">
             <button
               data-test-id="independent-corners-toggle"
               class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"

@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger
 } from 'reka-ui'
 
-import { PropertyListRoot, useStrokeControls } from '@open-pencil/vue'
+import { PropertyListRoot, useStrokeControls, useI18n } from '@open-pencil/vue'
 
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
@@ -20,6 +20,7 @@ import { sectionLabel, sectionWrapper } from '@/components/ui/section'
 import type { SceneNode, Stroke } from '@open-pencil/core'
 
 const strokeCtx = useStrokeControls()
+const { panels } = useI18n()
 const sideMenuCls = useMenuUI({
   content: 'min-w-[140px] rounded-md p-0.5',
   item: 'relative px-2'
@@ -30,11 +31,11 @@ const sideMenuCls = useMenuUI({
   <PropertyListRoot
     v-slot="{ items, isMixed, activeNode, add, remove, patch, toggleVisibility }"
     prop-key="strokes"
-    label="Stroke"
+    :label="panels.stroke"
   >
     <div data-test-id="stroke-section" :class="sectionWrapper()">
       <div class="flex items-center justify-between">
-        <label :class="sectionLabel()">Stroke</label>
+        <label :class="sectionLabel()">{{ panels.stroke }}</label>
         <button
           data-test-id="stroke-section-add"
           :class="iconButton()"
@@ -44,7 +45,7 @@ const sideMenuCls = useMenuUI({
         </button>
       </div>
 
-      <p v-if="isMixed" class="text-[11px] text-muted">Click + to replace mixed strokes</p>
+      <p v-if="isMixed" class="text-[11px] text-muted">{{ panels.mixedStrokesHelp }}</p>
 
       <div
         v-for="(stroke, i) in items as Stroke[]"
@@ -101,7 +102,7 @@ const sideMenuCls = useMenuUI({
           </template>
         </ScrubInput>
         <DropdownMenuRoot v-model:open="strokeCtx.sideMenuOpen.value">
-          <Tip label="Stroke sides">
+          <Tip :label="panels.strokeSides">
             <DropdownMenuTrigger as-child>
               <button
                 class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"

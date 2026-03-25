@@ -12,7 +12,7 @@ import {
 } from 'reka-ui'
 
 import { colorToCSS, colorToHexRaw } from '@open-pencil/core'
-import { PropertyListRoot, useFillControls } from '@open-pencil/vue'
+import { PropertyListRoot, useFillControls, useI18n } from '@open-pencil/vue'
 
 import FillPicker from '@/components/FillPicker.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
@@ -23,17 +23,18 @@ import { sectionLabel, sectionWrapper } from '@/components/ui/section'
 import type { Fill, Variable } from '@open-pencil/core'
 
 const fillCtx = useFillControls()
+const { panels, dialogs } = useI18n()
 </script>
 
 <template>
   <PropertyListRoot
     v-slot="{ items, isMixed, activeNode, add, remove, update, patch, toggleVisibility }"
     prop-key="fills"
-    label="Fill"
+    :label="panels.fill"
   >
     <div data-test-id="fill-section" :class="sectionWrapper()">
       <div class="flex items-center justify-between">
-        <label :class="sectionLabel()">Fill</label>
+        <label :class="sectionLabel()">{{ panels.fill }}</label>
         <button
           data-test-id="fill-section-add"
           :class="iconButton()"
@@ -42,7 +43,7 @@ const fillCtx = useFillControls()
           +
         </button>
       </div>
-      <p v-if="isMixed" class="text-[11px] text-muted">Click + to replace mixed fills</p>
+      <p v-if="isMixed" class="text-[11px] text-muted">{{ panels.mixedFillsHelp }}</p>
       <div
         v-for="(fill, i) in items as Fill[]"
         :key="i"
@@ -58,7 +59,7 @@ const fillCtx = useFillControls()
           >
             {{ fillCtx.getBoundVariable(activeNode.id, i)!.name }}
           </span>
-          <Tip label="Detach variable">
+          <Tip :label="panels.detachVariable">
             <button
               data-test-id="fill-unbind-variable"
               class="cursor-pointer border-none bg-transparent p-0 text-violet-400 hover:text-surface"
@@ -95,7 +96,7 @@ const fillCtx = useFillControls()
             !fillCtx.getBoundVariable(activeNode.id, i)
           "
         >
-          <Tip label="Apply variable">
+          <Tip :label="panels.applyVariable">
             <PopoverTrigger
               class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
             >
@@ -115,13 +116,13 @@ const fillCtx = useFillControls()
               >
                 <ComboboxInput
                   :model-value="fillCtx.searchTerm.value"
-                  placeholder="Search variables…"
+                  :placeholder="dialogs.search"
                   class="w-full border-b border-border bg-transparent px-2 py-1.5 text-[11px] text-surface outline-none placeholder:text-muted"
                   @update:model-value="fillCtx.searchTerm.value = String($event)"
                 />
                 <ComboboxContent class="max-h-48 overflow-y-auto p-1">
                   <ComboboxEmpty class="px-2 py-3 text-center text-[11px] text-muted"
-                    >No variables found</ComboboxEmpty
+                    >{{ panels.noVariablesFound }}</ComboboxEmpty
                   >
                   <ComboboxItem
                     v-for="v in fillCtx.filteredVariables.value"
