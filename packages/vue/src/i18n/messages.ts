@@ -23,6 +23,7 @@ export const menuMessages = i18n('menu', {
   zoomIn: 'Zoom in',
   zoomOut: 'Zoom out',
   profiler: 'Performance profiler',
+  language: 'Language',
 
   moveToPage: 'Move to page',
   createInstance: 'Create instance',

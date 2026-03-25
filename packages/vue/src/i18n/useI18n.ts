@@ -1,6 +1,6 @@
 import { useStore } from '@nanostores/vue'
 
-import { locale, setLocale, AVAILABLE_LOCALES } from './locale'
+import { locale, setLocale, AVAILABLE_LOCALES, LOCALE_LABELS } from './locale'
 import {
   menuMessages,
   commandMessages,
@@ -41,6 +41,7 @@ export function useI18n() {
     dialogs: useStore(dialogMessages),
     locale: useStore(locale) as Ref<Locale>,
     availableLocales: AVAILABLE_LOCALES,
+    localeLabels: LOCALE_LABELS,
     setLocale
   }
 }

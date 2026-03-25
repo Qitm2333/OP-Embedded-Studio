@@ -14,7 +14,17 @@ export interface AppMenuGroup {
 export function useAppMenu(mod: string) {
   const store = useEditorStore()
   const { menuItem: commandMenuItem } = useEditorCommands()
-  const { menu: t, panels: p } = useI18n()
+  const { menu: t, panels: p, locale, availableLocales, localeLabels, setLocale } = useI18n()
+
+  const languageMenu = computed<MenuEntry[]>(() =>
+    availableLocales.map((code) => ({
+      label: localeLabels[code],
+      checked: locale.value === code,
+      onCheckedChange: (checked: boolean) => {
+        if (checked) setLocale(code)
+      }
+    }))
+  )
 
   const topMenus = computed<AppMenuGroup[]>(() => [
     {
@@ -95,6 +105,11 @@ export function useAppMenu(mod: string) {
           onCheckedChange: () => {
             store.toggleProfiler()
           }
+        },
+        { separator: true as const },
+        {
+          label: t.value.language,
+          sub: languageMenu.value
         }
       ]
     },
