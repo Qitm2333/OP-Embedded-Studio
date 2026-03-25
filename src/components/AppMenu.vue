@@ -134,6 +134,17 @@ const subMenuCls = useMenuUI({ content: 'min-w-44' })
                           v-if="'separator' in sub && sub.separator"
                           :class="menuCls.separator"
                         />
+                        <MenubarCheckboxItem
+                          v-else-if="'onCheckedChange' in sub && sub.onCheckedChange"
+                          :model-value="'checked' in sub ? sub.checked : undefined"
+                          :class="menuCls.item"
+                          @update:model-value="sub.onCheckedChange?.($event as boolean)"
+                        >
+                          <span class="flex-1">{{ 'label' in sub ? sub.label : '' }}</span>
+                          <MenubarItemIndicator class="text-surface">
+                            <icon-lucide-check class="size-3.5" />
+                          </MenubarItemIndicator>
+                        </MenubarCheckboxItem>
                         <MenubarItem
                           v-else
                           :class="menuCls.item"
