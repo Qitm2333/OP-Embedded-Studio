@@ -81,10 +81,13 @@ export const toolMessages = i18n('tools', {
 
 export const panelMessages = i18n('panels', {
   layers: 'Layers',
+  pages: 'Pages',
   design: 'Design',
   code: 'Code',
+  ai: 'AI',
   assets: 'Assets',
 
+  page: 'Page',
   position: 'Position',
   layout: 'Layout',
   appearance: 'Appearance',
@@ -107,7 +110,13 @@ export const panelMessages = i18n('panels', {
   backgroundBlur: 'Background blur',
 
   noSelection: 'No selection',
+  noLocalVariables: 'No local variables',
+  openVariables: 'Open variables',
+  addPage: 'Add page',
   mixed: 'Mixed',
+  layersCount: params('{count} layers'),
+  goToMainComponent: 'Go to Main Component',
+  detachInstance: 'Detach Instance',
 
   solid: 'Solid',
   linearGradient: 'Linear',
