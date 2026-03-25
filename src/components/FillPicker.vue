@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { twMerge } from 'tailwind-merge'
 
-import { FillPickerRoot } from '@open-pencil/vue'
+import { FillPickerRoot, useI18n } from '@open-pencil/vue'
 
 import GradientEditor from './GradientEditor.vue'
 import HsvColorArea from './HsvColorArea.vue'
@@ -24,6 +24,7 @@ function tabClass(active: boolean) {
 const { fill } = defineProps<{ fill: Fill }>()
 const emit = defineEmits<{ update: [fill: Fill] }>()
 const cls = usePopoverUI({ content: 'w-60 p-2' })
+const { panels } = useI18n()
 </script>
 
 <template>
@@ -35,7 +36,7 @@ const cls = usePopoverUI({ content: 'w-60 p-2' })
   >
     <template #default="{ fill: currentFill, category, toSolid, toGradient, toImage, update }">
       <div class="mb-2 flex items-center gap-0.5">
-        <Tip label="Solid">
+        <Tip :label="panels.solid">
           <button
             :class="tabClass(category === 'SOLID')"
             data-test-id="fill-picker-tab-solid"
@@ -44,7 +45,7 @@ const cls = usePopoverUI({ content: 'w-60 p-2' })
             <icon-lucide-square class="size-3.5" />
           </button>
         </Tip>
-        <Tip label="Gradient">
+        <Tip :label="panels.linearGradient">
           <button
             :class="tabClass(category === 'GRADIENT')"
             data-test-id="fill-picker-tab-gradient"
@@ -53,7 +54,7 @@ const cls = usePopoverUI({ content: 'w-60 p-2' })
             <icon-lucide-blend class="size-3.5" />
           </button>
         </Tip>
-        <Tip label="Image">
+        <Tip :label="panels.image">
           <button
             :class="tabClass(category === 'IMAGE')"
             data-test-id="fill-picker-tab-image"

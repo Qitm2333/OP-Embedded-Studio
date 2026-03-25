@@ -12,7 +12,6 @@ import {
 
 import { openFileDialog } from './use-menu'
 
-import type { Tool } from '@open-pencil/core/editor'
 import type { ComputedRef } from 'vue'
 
 type NodeEditKeyboardMethods = Partial<{
@@ -102,20 +101,12 @@ export function useKeyboard() {
     if (html) store.pasteFromHTML(html, cursorPos)
   })
 
-  // Space hold-to-pan: temporarily switch to HAND while Space is held,
-  // without losing object/node selections
-  let toolBeforeSpace: Tool | null = null
+  // Spacebar hold → temporary Hand tool (Figma-style canvas pan)
+  let toolBeforeSpace: (typeof store.state.activeTool) | null = null
 
   useEventListener(window, 'keydown', (e: KeyboardEvent) => {
     if (isEditing(e)) return
-    if (
-      e.code === 'Space' &&
-      !e.metaKey &&
-      !e.ctrlKey &&
-      !e.altKey &&
-      !e.repeat &&
-      toolBeforeSpace === null
-    ) {
+    if (e.code === 'Space' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat && toolBeforeSpace === null) {
       if (store.state.activeTool !== 'HAND') {
         toolBeforeSpace = store.state.activeTool
         store.setTool('HAND')
@@ -131,6 +122,7 @@ export function useKeyboard() {
       e.preventDefault()
     }
   })
+
   const keys = useMagicKeys({
     passive: false,
     onEventFired(e) {
@@ -141,7 +133,7 @@ export function useKeyboard() {
       if (!e.metaKey && !e.ctrlKey && !e.altKey) {
         // Space is handled by hold-to-pan above
         if (e.code === 'Space') return
-        const tool = TOOL_SHORTCUTS[e.code]
+        const tool = TOOL_SHORTCUTS[e.key.toLowerCase()]
         if (tool) {
           // Permanent tool switch cancels space-hold
           toolBeforeSpace = null
@@ -246,8 +238,8 @@ export function useKeyboard() {
     )
   }
 
-  whenever(plain('bracketright'), () => store.bringToFront())
-  whenever(plain('bracketleft'), () => store.sendToBack())
+  whenever(plain('bracketright'), () => runCommand('selection.bringToFront'))
+  whenever(plain('bracketleft'), () => runCommand('selection.sendToBack'))
   whenever(plain('backspace'), () => {
     if (
       store.state.nodeEditState &&

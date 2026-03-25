@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 
+import { useI18n } from '@open-pencil/vue'
 import { useAIChat } from '@/composables/use-chat'
 import { useEditorStore } from '@/stores/editor'
 
@@ -10,6 +11,7 @@ import DesignPanel from './DesignPanel.vue'
 
 const store = useEditorStore()
 const { activeTab } = useAIChat()
+const { panels } = useI18n()
 </script>
 
 <template>
@@ -25,7 +27,7 @@ const { activeTab } = useAIChat()
           data-test-id="properties-tab-design"
           class="rounded px-2.5 py-1 text-xs text-muted hover:text-surface data-[state=active]:font-semibold data-[state=active]:text-surface"
         >
-          Design
+          {{ panels.design }}
         </TabsTrigger>
         <TabsTrigger
           value="code"
@@ -33,7 +35,7 @@ const { activeTab } = useAIChat()
           class="flex items-center gap-1 rounded px-2.5 py-1 text-xs text-muted hover:text-surface data-[state=active]:font-semibold data-[state=active]:text-surface"
         >
           <icon-lucide-code class="size-3" />
-          Code
+          {{ panels.code }}
         </TabsTrigger>
         <TabsTrigger
           value="ai"
@@ -41,7 +43,7 @@ const { activeTab } = useAIChat()
           class="flex items-center gap-1 rounded px-2.5 py-1 text-xs text-muted hover:text-surface data-[state=active]:font-semibold data-[state=active]:text-surface"
         >
           <icon-lucide-sparkles class="size-3" />
-          AI
+          {{ panels.ai }}
         </TabsTrigger>
         <span
           v-if="activeTab === 'design'"

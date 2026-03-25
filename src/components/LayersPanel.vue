@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 
+import { useI18n } from '@open-pencil/vue'
+
 import AppMenu from './AppMenu.vue'
 import LayerTree from './LayerTree.vue'
 import PagesPanel from './PagesPanel.vue'
+
+const { panels } = useI18n()
 </script>
 
 <template>
@@ -32,7 +36,7 @@ import PagesPanel from './PagesPanel.vue'
           data-test-id="layers-header"
           class="shrink-0 px-3 py-2 text-[11px] tracking-wider text-muted uppercase"
         >
-          Layers
+          {{ panels.layers }}
         </header>
         <LayerTree data-test-id="layers-tree" />
       </SplitterPanel>

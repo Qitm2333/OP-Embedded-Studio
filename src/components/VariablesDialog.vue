@@ -14,7 +14,7 @@ import {
 } from 'reka-ui'
 import { FlexRender } from '@tanstack/vue-table'
 
-import { useVariablesEditor } from '@open-pencil/vue'
+import { useI18n, useVariablesEditor } from '@open-pencil/vue'
 
 import IconHash from '~icons/lucide/hash'
 import IconPalette from '~icons/lucide/palette'
@@ -35,6 +35,8 @@ const variableTypeIcons: Record<string, Component> = {
   BOOLEAN: IconToggleLeft
 }
 
+const { dialogs } = useI18n()
+
 const ctx = useVariablesEditor({
   colorInput: ColorInput,
   icons: variableTypeIcons,
@@ -50,7 +52,7 @@ const ctx = useVariablesEditor({
       <DialogContent data-test-id="variables-dialog" :class="cls.content">
         <div v-if="!ctx.hasCollections" class="flex flex-1 flex-col">
           <div class="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
-            <DialogTitle class="text-sm font-semibold text-surface">Local variables</DialogTitle>
+            <DialogTitle class="text-sm font-semibold text-surface">{{ dialogs.localVariables }}</DialogTitle>
             <DialogClose
               class="flex size-6 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
             >
@@ -59,13 +61,13 @@ const ctx = useVariablesEditor({
           </div>
           <div class="flex flex-1 items-center justify-center">
             <div class="text-center">
-              <p class="text-sm text-muted">No variable collections</p>
+              <p class="text-sm text-muted">{{ dialogs.noVariableCollections }}</p>
               <button
                 data-test-id="variables-create-collection"
                 class="mt-2 cursor-pointer rounded bg-hover px-3 py-1.5 text-xs text-surface hover:bg-border"
                 @click="ctx.addCollection"
               >
-                Create collection
+                {{ dialogs.createCollection }}
               </button>
             </div>
           </div>
@@ -107,10 +109,10 @@ const ctx = useVariablesEditor({
                     v-model="ctx.searchTerm.value"
                     data-test-id="variables-search-input"
                     class="w-24 border-none bg-transparent text-xs text-surface outline-none placeholder:text-muted"
-                    placeholder="Search"
+                    :placeholder="dialogs.search"
                   />
                 </div>
-                <Tip label="Add collection">
+                <Tip :label="dialogs.createCollection">
                   <button
                     data-test-id="variables-add-collection"
                     class="flex size-6 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"

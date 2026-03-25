@@ -1,7 +1,9 @@
+import { useStore } from '@nanostores/vue'
 import { computed } from 'vue'
 
 import { useEditorCommands } from '@open-pencil/vue/commands/useEditorCommands'
 import { useEditor } from '@open-pencil/vue/context/editorContext'
+import { menuMessages } from '@open-pencil/vue/i18n'
 import { useSelectionState } from '@open-pencil/vue/selection/useSelectionState'
 
 /**
@@ -37,6 +39,8 @@ export function useMenuModel() {
   const { hasSelection, isGroup, isInstance, isComponent, canCreateComponentSet, selectedNode } =
     useSelectionState()
 
+  const t = useStore(menuMessages)
+
   const editMenu = computed<MenuEntry[]>(() => [
     commandMenuItem('edit.undo'),
     commandMenuItem('edit.redo'),
@@ -68,10 +72,10 @@ export function useMenuModel() {
   const arrangeMenu = computed<MenuEntry[]>(() => [commandMenuItem('selection.wrapInAutoLayout')])
 
   const appMenu = computed(() => [
-    { label: 'Edit', items: editMenu.value },
-    { label: 'View', items: viewMenu.value },
-    { label: 'Object', items: objectMenu.value },
-    { label: 'Arrange', items: arrangeMenu.value }
+    { label: t.value.edit, items: editMenu.value },
+    { label: t.value.view, items: viewMenu.value },
+    { label: t.value.object, items: objectMenu.value },
+    { label: t.value.arrange, items: arrangeMenu.value }
   ])
 
   const canvasMenu = computed<MenuEntry[]>(() => {
@@ -81,11 +85,11 @@ export function useMenuModel() {
     }))
 
     return [
-      { ...commandMenuItem('selection.duplicate', '⌘D'), label: 'Duplicate' },
+      commandMenuItem('selection.duplicate', '⌘D'),
       commandMenuItem('selection.delete', '⌫'),
       { separator: true },
       ...(moveToPageSubmenu.length > 0 && hasSelection.value
-        ? [{ label: 'Move to page', sub: moveToPageSubmenu } satisfies MenuActionNode]
+        ? [{ label: t.value.moveToPage, sub: moveToPageSubmenu } satisfies MenuActionNode]
         : []),
       commandMenuItem('selection.bringToFront', ']'),
       commandMenuItem('selection.sendToBack', '['),
@@ -101,7 +105,7 @@ export function useMenuModel() {
       ...(isComponent.value && selectedNode.value
         ? [
             {
-              label: 'Create instance',
+              label: t.value.createInstance,
               action: () => commandMenuItem('selection.createInstance').action?.(),
               disabled: !commandMenuItem('selection.createInstance').disabled
             } satisfies MenuActionNode
@@ -120,8 +124,8 @@ export function useMenuModel() {
   })
 
   const selectionLabelMenu = computed(() => ({
-    visibility: (editor.getSelectedNode()?.visible ?? true) ? 'Hide' : 'Show',
-    lock: (editor.getSelectedNode()?.locked ?? false) ? 'Unlock' : 'Lock'
+    visibility: (editor.getSelectedNode()?.visible ?? true) ? t.value.hide : t.value.show,
+    lock: (editor.getSelectedNode()?.locked ?? false) ? t.value.unlock : t.value.lock
   }))
 
   return {

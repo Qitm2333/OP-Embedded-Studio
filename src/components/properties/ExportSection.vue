@@ -5,11 +5,12 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import { iconButton } from '@/components/ui/icon-button'
 import { sectionLabel, sectionWrapper } from '@/components/ui/section'
 import { useEditorStore } from '@/stores/editor'
-import { useExport } from '@open-pencil/vue'
+import { useExport, useI18n } from '@open-pencil/vue'
 
 import type { ExportFormat } from '@open-pencil/core'
 
 const editorStore = useEditorStore()
+const { panels } = useI18n()
 const { settings, nodeName, addSetting, removeSetting, updateScale, updateFormat } = useExport()
 
 const SCALE_OPTIONS = [0.5, 0.75, 1, 1.5, 2, 3, 4].map((s) => ({ value: s, label: `${s}x` }))
@@ -72,7 +73,7 @@ onScopeDispose(() => {
 <template>
   <div data-test-id="export-section" :class="sectionWrapper()">
     <div class="flex items-center justify-between">
-      <label :class="sectionLabel()">Export</label>
+      <label :class="sectionLabel()">{{ panels.export }}</label>
       <button data-test-id="export-section-add" :class="iconButton()" @click="addSetting">+</button>
     </div>
 

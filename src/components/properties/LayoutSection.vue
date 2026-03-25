@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { LayoutControlsRoot } from '@open-pencil/vue'
+import { LayoutControlsRoot, useI18n } from '@open-pencil/vue'
 
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/ui/Tip.vue'
 import { sectionWrapper } from '@/components/ui/section'
+
+const { panels } = useI18n()
 </script>
 
 <template>
   <LayoutControlsRoot v-slot="ctx">
     <template v-if="ctx.node">
       <div data-test-id="layout-section" :class="sectionWrapper()">
-        <label class="mb-1.5 block text-[11px] text-muted">Layout</label>
+        <label class="mb-1.5 block text-[11px] text-muted">{{ panels.layout }}</label>
         <div class="flex gap-1.5">
           <div class="flex min-w-0 flex-1 items-center gap-1">
             <ScrubInput
@@ -49,8 +51,8 @@ import { sectionWrapper } from '@/components/ui/section'
       <template v-if="ctx.node.type === 'FRAME'">
         <div :class="sectionWrapper()">
           <div class="flex items-center justify-between">
-            <label class="mb-1.5 block text-[11px] text-muted">Auto layout</label>
-            <Tip v-if="ctx.node.layoutMode === 'NONE'" label="Add auto layout (Shift+A)">
+            <label class="mb-1.5 block text-[11px] text-muted">{{ panels.autoLayout }}</label>
+            <Tip v-if="ctx.node.layoutMode === 'NONE'" :label="panels.addAutoLayout">
               <button
                 class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
                 data-test-id="layout-add-auto"
@@ -59,7 +61,7 @@ import { sectionWrapper } from '@/components/ui/section'
                 +
               </button>
             </Tip>
-            <Tip v-else label="Remove auto layout">
+            <Tip v-else :label="panels.removeAutoLayout">
               <button
                 class="cursor-pointer rounded border-none bg-transparent px-1 text-base leading-none text-muted hover:bg-hover hover:text-surface"
                 data-test-id="layout-remove-auto"
@@ -238,7 +240,7 @@ import { sectionWrapper } from '@/components/ui/section'
             </template>
 
             <div v-if="ctx.isFlex" class="mt-2">
-              <label class="mb-1 block text-[11px] text-muted">Alignment</label>
+              <label class="mb-1 block text-[11px] text-muted">{{ panels.alignment }}</label>
               <div data-test-id="layout-alignment-grid" class="grid w-fit grid-cols-3 gap-0.5">
                 <button
                   v-for="cell in ctx.alignGrid"

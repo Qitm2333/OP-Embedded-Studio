@@ -18,7 +18,7 @@ import IconChevronRight from '~icons/lucide/chevron-right'
 
 import { computed } from 'vue'
 
-import { useInlineRename } from '@open-pencil/vue'
+import { useI18n, useInlineRename } from '@open-pencil/vue'
 import { useMenuUI } from '@/components/ui/menu'
 import { IS_TAURI } from '@/constants'
 import { useAppMenu } from '@/composables/use-app-menu'
@@ -46,6 +46,7 @@ function commitRename(input: HTMLInputElement) {
 
 const isMac = navigator.platform.includes('Mac')
 const mod = isMac ? '⌘' : 'Ctrl+'
+const { menu: t } = useI18n()
 
 interface MenuAction {
   separator?: false
@@ -91,7 +92,7 @@ const subMenuCls = useMenuUI({ content: 'min-w-44' })
         @dblclick="startRename"
         >{{ store.state.documentName }}</span
       >
-      <Tip label="Toggle UI (⌘\)">
+      <Tip :label="`${t.toggleUI} (${mod}\\)`">
         <button
           data-test-id="app-toggle-ui"
           class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
@@ -133,6 +134,17 @@ const subMenuCls = useMenuUI({ content: 'min-w-44' })
                           v-if="'separator' in sub && sub.separator"
                           :class="menuCls.separator"
                         />
+                        <MenubarCheckboxItem
+                          v-else-if="'onCheckedChange' in sub && sub.onCheckedChange"
+                          :model-value="'checked' in sub ? sub.checked : undefined"
+                          :class="menuCls.item"
+                          @update:model-value="sub.onCheckedChange?.($event as boolean)"
+                        >
+                          <span class="flex-1">{{ 'label' in sub ? sub.label : '' }}</span>
+                          <MenubarItemIndicator class="text-surface">
+                            <icon-lucide-check class="size-3.5" />
+                          </MenubarItemIndicator>
+                        </MenubarCheckboxItem>
                         <MenubarItem
                           v-else
                           :class="menuCls.item"

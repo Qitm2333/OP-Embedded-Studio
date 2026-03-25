@@ -10,6 +10,7 @@ import ChatInput from '@/components/chat/ChatInput.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
 import ProviderSetup from '@/components/chat/ProviderSetup.vue'
 import { useAIChat } from '@/composables/use-chat'
+import { useI18n } from '@open-pencil/vue'
 
 import type { Chat } from '@ai-sdk/vue'
 import type { UIMessage } from 'ai'
@@ -17,6 +18,7 @@ import type { UIMessage } from 'ai'
 const IS_DEV = import.meta.env.DEV
 
 const { isConfigured, ensureChat, resetChat } = useAIChat()
+const { dialogs } = useI18n()
 
 const chat = ref<Chat<UIMessage> | null>(null)
 
@@ -120,7 +122,7 @@ function handleClearChat() {
             class="flex h-full flex-col items-center justify-center gap-3 text-muted"
           >
             <icon-lucide-message-circle class="size-8 opacity-50" />
-            <p class="text-center text-xs">Describe what you want to create or change.</p>
+            <p class="text-center text-xs">{{ dialogs.describeCreateOrChange }}</p>
           </div>
 
           <!-- Messages -->

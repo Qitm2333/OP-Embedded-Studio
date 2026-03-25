@@ -1,8 +1,19 @@
 import { onClickOutside } from '@vueuse/core'
 import { nextTick, ref, type Ref } from 'vue'
 
-export function useInlineRename<T extends string>(onCommit: (id: T, newName: string) => void) {
-  const editingId = ref<T | null>(null)
+export interface InlineRenameState<T extends string> {
+  editingId: Ref<T | null>
+  start: (id: T, currentName: string) => void
+  focusInput: (input: HTMLInputElement | null) => Promise<void>
+  commit: (id: T, input: HTMLInputElement) => void
+  cancel: () => void
+  onKeydown: (e: KeyboardEvent) => void
+}
+
+export function useInlineRename<T extends string>(
+  onCommit: (id: T, newName: string) => void
+): InlineRenameState<T> {
+  const editingId: Ref<T | null> = ref(null)
   const inputRef: Ref<HTMLInputElement | null> = ref(null)
   let originalName = ''
   let cleanupOutsideClick: (() => void) | undefined
