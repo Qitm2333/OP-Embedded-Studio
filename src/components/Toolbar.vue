@@ -31,9 +31,12 @@ import {
   ToolbarRoot,
   ToolbarItem,
   useEditorCommands,
+  useI18n,
   useToolbarState,
   useViewportKind
 } from '@open-pencil/vue'
+import { computed } from 'vue'
+
 import type { Component } from 'vue'
 import type { Tool } from '@open-pencil/vue'
 
@@ -41,20 +44,21 @@ const store = useEditorStore()
 const { isMobile } = useViewportKind()
 const { getCommand } = useEditorCommands()
 const { showActionToast } = useActionToast()
+const { menu: t, tools: toolTexts } = useI18n()
 
-const toolLabels: Record<Tool, string> = {
-  SELECT: 'Move',
-  FRAME: 'Frame',
-  SECTION: 'Section',
-  RECTANGLE: 'Rectangle',
-  ELLIPSE: 'Ellipse',
-  LINE: 'Line',
-  POLYGON: 'Polygon',
-  STAR: 'Star',
-  PEN: 'Pen',
-  TEXT: 'Text',
-  HAND: 'Hand'
-}
+const toolLabels = computed<Record<Tool, string>>(() => ({
+  SELECT: toolTexts.value.move,
+  FRAME: toolTexts.value.frame,
+  SECTION: toolTexts.value.section,
+  RECTANGLE: toolTexts.value.rectangle,
+  ELLIPSE: toolTexts.value.ellipse,
+  LINE: toolTexts.value.line,
+  POLYGON: toolTexts.value.polygon,
+  STAR: toolTexts.value.star,
+  PEN: toolTexts.value.pen,
+  TEXT: toolTexts.value.text,
+  HAND: toolTexts.value.hand
+}))
 
 const toolShortcuts: Record<Tool, string> = {
   SELECT: 'V',
@@ -78,29 +82,49 @@ interface ActionItem {
 
 const flyoutMenuCls = useMenuUI({ content: 'min-w-32' })
 
-const editActions: ActionItem[] = [
-  { icon: IconCopy, label: 'Copy', action: () => store.mobileCopy() },
-  { icon: IconClipboard, label: 'Paste', action: () => store.mobilePaste() },
-  { icon: IconScissors, label: 'Cut', action: () => store.mobileCut() },
-  { icon: IconCopyPlus, label: 'Duplicate', action: () => getCommand('selection.duplicate').run() },
-  { icon: IconTrash2, label: 'Delete', action: () => getCommand('selection.delete').run() }
-]
+const editActions = computed<ActionItem[]>(() => [
+  { icon: IconCopy, label: t.value.copy, action: () => store.mobileCopy() },
+  { icon: IconClipboard, label: t.value.paste, action: () => store.mobilePaste() },
+  { icon: IconScissors, label: t.value.cut, action: () => store.mobileCut() },
+  {
+    icon: IconCopyPlus,
+    label: getCommand('selection.duplicate').label,
+    action: () => getCommand('selection.duplicate').run()
+  },
+  {
+    icon: IconTrash2,
+    label: getCommand('selection.delete').label,
+    action: () => getCommand('selection.delete').run()
+  }
+])
 
-const arrangeActions: ActionItem[] = [
+const arrangeActions = computed<ActionItem[]>(() => [
   {
     icon: IconArrowUpToLine,
-    label: 'Front',
+    label: t.value.front,
     action: () => getCommand('selection.bringToFront').run()
   },
   {
     icon: IconArrowDownToLine,
-    label: 'Back',
+    label: t.value.back,
     action: () => getCommand('selection.sendToBack').run()
   },
-  { icon: IconGroup, label: 'Group', action: () => getCommand('selection.group').run() },
-  { icon: IconUngroup, label: 'Ungroup', action: () => getCommand('selection.ungroup').run() },
-  { icon: IconLock, label: 'Lock', action: () => getCommand('selection.toggleLock').run() }
-]
+  {
+    icon: IconGroup,
+    label: getCommand('selection.group').label,
+    action: () => getCommand('selection.group').run()
+  },
+  {
+    icon: IconUngroup,
+    label: getCommand('selection.ungroup').label,
+    action: () => getCommand('selection.ungroup').run()
+  },
+  {
+    icon: IconLock,
+    label: t.value.lock,
+    action: () => getCommand('selection.toggleLock').run()
+  }
+])
 
 const {
   mobileCategory,

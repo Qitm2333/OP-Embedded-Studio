@@ -18,7 +18,7 @@ import IconChevronRight from '~icons/lucide/chevron-right'
 
 import { computed } from 'vue'
 
-import { useInlineRename } from '@open-pencil/vue'
+import { useI18n, useInlineRename } from '@open-pencil/vue'
 import { useMenuUI } from '@/components/ui/menu'
 import { IS_TAURI } from '@/constants'
 import { useAppMenu } from '@/composables/use-app-menu'
@@ -46,6 +46,7 @@ function commitRename(input: HTMLInputElement) {
 
 const isMac = navigator.platform.includes('Mac')
 const mod = isMac ? '⌘' : 'Ctrl+'
+const { menu: t } = useI18n()
 
 interface MenuAction {
   separator?: false
@@ -91,7 +92,7 @@ const subMenuCls = useMenuUI({ content: 'min-w-44' })
         @dblclick="startRename"
         >{{ store.state.documentName }}</span
       >
-      <Tip label="Toggle UI (⌘\)">
+      <Tip :label="`${t.toggleUi} (${mod}\\)`">
         <button
           data-test-id="app-toggle-ui"
           class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"

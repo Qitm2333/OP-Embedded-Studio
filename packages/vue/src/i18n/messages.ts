@@ -26,6 +26,14 @@ export const menuMessages = i18n('menu', {
 
   moveToPage: 'Move to page',
   createInstance: 'Create instance',
+  hide: 'Hide',
+  show: 'Show',
+  lock: 'Lock',
+  unlock: 'Unlock',
+  cut: 'Cut',
+  front: 'Front',
+  back: 'Back',
+  toggleUi: 'Toggle UI',
 
   bold: 'Bold',
   italic: 'Italic',

@@ -124,8 +124,8 @@ export function useMenuModel() {
   })
 
   const selectionLabelMenu = computed(() => ({
-    visibility: (editor.getSelectedNode()?.visible ?? true) ? 'Hide' : 'Show',
-    lock: (editor.getSelectedNode()?.locked ?? false) ? 'Unlock' : 'Lock'
+    visibility: (editor.getSelectedNode()?.visible ?? true) ? t.value.hide : t.value.show,
+    lock: (editor.getSelectedNode()?.locked ?? false) ? t.value.unlock : t.value.lock
   }))
 
   return {

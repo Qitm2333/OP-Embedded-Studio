@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { TreeRoot, TreeItem, ContextMenuRoot, ContextMenuTrigger, ContextMenuPortal } from 'reka-ui'
 
-import { LayerTreeRoot, LayerTreeItem, useInlineRename, useLayerDrag } from '@open-pencil/vue'
+import {
+  LayerTreeRoot,
+  LayerTreeItem,
+  useI18n,
+  useInlineRename,
+  useLayerDrag
+} from '@open-pencil/vue'
 import { useEditorStore } from '@/stores/editor'
 import { nodeIcon, COMPONENT_TYPES } from '@/utils/layer-icons'
 import CanvasMenu from './CanvasMenu.vue'
@@ -10,6 +16,7 @@ import Tip from './ui/Tip.vue'
 const INDENT = 16
 const store = useEditorStore()
 const rename = useInlineRename((id, name) => store.renameNode(id, name))
+const { menu: t } = useI18n()
 const { draggingId, instruction, instructionTargetId } = useLayerDrag(store, INDENT)
 
 function onLayerRightClick(e: MouseEvent) {
@@ -142,7 +149,7 @@ function onLayerRightClick(e: MouseEvent) {
                       !node.locked && node.visible ? 'opacity-0 group-hover/row:opacity-100' : ''
                     "
                   >
-                    <Tip :label="node.locked ? 'Unlock' : 'Lock'">
+                    <Tip :label="node.locked ? t.unlock : t.lock">
                       <span
                         class="flex size-4 items-center justify-center rounded hover:bg-white/15"
                         @pointerdown.stop
@@ -160,7 +167,7 @@ function onLayerRightClick(e: MouseEvent) {
                         />
                       </span>
                     </Tip>
-                    <Tip :label="node.visible ? 'Hide' : 'Show'">
+                    <Tip :label="node.visible ? t.hide : t.show">
                       <span
                         class="flex size-4 items-center justify-center rounded hover:bg-white/15"
                         @pointerdown.stop
