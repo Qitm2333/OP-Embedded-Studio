@@ -33,7 +33,7 @@ export const menuMessages = i18n('menu', {
   cut: 'Cut',
   front: 'Front',
   back: 'Back',
-  toggleUi: 'Toggle UI',
+  toggleUI: 'Toggle UI',
 
   bold: 'Bold',
   italic: 'Italic',
