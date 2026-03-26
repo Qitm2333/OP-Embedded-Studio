@@ -86,7 +86,7 @@ function onToggleCorners() {
           @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
         >
           <template #icon>
-            <icon-lucide-radius class="size-3" />
+            <icon-lucide-square-round-corner class="size-3" />
           </template>
         </ScrubInput>
 

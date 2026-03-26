@@ -132,7 +132,7 @@ const { panels } = useI18n()
           @commit="(v: number, p: number) => commitProp('rotation', v, p)"
         >
           <template #icon>
-            <icon-lucide-rotate-ccw class="size-3" />
+            <icon-lucide-rotate-cw class="size-3" />
           </template>
         </ScrubInput>
         <Tip :label="panels.flipHorizontal">
@@ -159,7 +159,7 @@ const { panels } = useI18n()
             data-test-id="position-rotate-90"
             @click="rotate(90)"
           >
-            <icon-lucide-rotate-cw class="size-3.5" />
+            <icon-lucide-rotate-cw-square class="size-3.5" />
           </button>
         </Tip>
       </div>
