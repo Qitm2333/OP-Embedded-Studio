@@ -6,6 +6,7 @@ import { loadFont } from '@/engine/fonts'
 import { toast } from '@/utils/toast'
 import {
   breakAtVertex,
+  cloneVectorNetwork,
   computeAccurateBounds,
   createDefaultEditorState,
   createEditor,
@@ -454,7 +455,7 @@ export function createEditorStore(initialGraph?: SceneGraph) {
 
     state.nodeEditState = {
       nodeId,
-      origNetwork: structuredClone(node.vectorNetwork),
+      origNetwork: cloneVectorNetwork(node.vectorNetwork),
       origBounds: { x: node.x, y: node.y, width: node.width, height: node.height },
       vertices: absVertices,
       segments: node.vectorNetwork.segments.map((s) => ({
@@ -495,7 +496,7 @@ export function createEditorStore(initialGraph?: SceneGraph) {
         y: es.origBounds.y,
         width: es.origBounds.width,
         height: es.origBounds.height,
-        vectorNetwork: structuredClone(es.origNetwork)
+        vectorNetwork: cloneVectorNetwork(es.origNetwork)
       })
       editor.requestRender()
     }
@@ -771,6 +772,28 @@ export function createEditorStore(initialGraph?: SceneGraph) {
     es.selectedVertexIndices = new Set()
     es.selectedHandles = new Set()
     editor.requestRender()
+  }
+
+  function nodeEditAlignVertices(axis: 'horizontal' | 'vertical', align: 'min' | 'center' | 'max') {
+    const es = getNodeEditState()
+    if (!es || es.selectedVertexIndices.size < 2) return
+
+    const indices = [...es.selectedVertexIndices]
+    const prop = axis === 'horizontal' ? 'x' : 'y'
+
+    let lo = Infinity
+    let hi = -Infinity
+    for (const i of indices) {
+      const v = es.vertices[i][prop]
+      if (v < lo) lo = v
+      if (v > hi) hi = v
+    }
+
+    const target = align === 'min' ? lo : (align === 'max' ? hi : (lo + hi) / 2)
+    for (const i of indices) {
+      es.vertices[i] = { ...es.vertices[i], [prop]: target }
+    }
+    editor.requestRepaint()
   }
 
   function nodeEditDeleteSelected() {
@@ -1174,6 +1197,7 @@ export function createEditorStore(initialGraph?: SceneGraph) {
     nodeEditConnectEndpoints,
     nodeEditAddVertex,
     nodeEditRemoveVertex,
+    nodeEditAlignVertices,
     nodeEditDeleteSelected,
     nodeEditBreakAtVertex,
     openFigFile,

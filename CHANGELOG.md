@@ -14,6 +14,7 @@
 - Added a vector curve editor and improved drawing experience with the pen tool
 - Resume pen drawing from existing open path endpoints — click an endpoint to continue the curve
 - Close open paths by dragging one endpoint to the other
+- Align selected anchor points relative to each other in vector edit mode — the standard alignment buttons in the position panel now operate on selected vertices when 2 or more are selected
 
 ### Fixes
 

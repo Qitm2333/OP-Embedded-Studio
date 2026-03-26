@@ -28,22 +28,14 @@ export function duplicateAndDrag(
   for (const id of editor.state.selectedIds) {
     const src = editor.graph.getNode(id)
     if (!src) continue
-    const newId = editor.createShape(src.type, src.x, src.y, src.width, src.height)
-    editor.graph.updateNode(newId, {
-      name: src.name + ' copy',
-      fills: [...src.fills],
-      strokes: [...src.strokes],
-      effects: [...src.effects],
-      cornerRadius: src.cornerRadius,
-      opacity: src.opacity,
-      rotation: src.rotation
-    })
-    newIds.push(newId)
-    const newNode = editor.graph.getNode(newId)
-    newOriginals.set(newId, {
+    const parentId = src.parentId ?? editor.state.currentPageId
+    const clone = editor.graph.cloneTree(id, parentId, { name: src.name + ' copy' })
+    if (!clone) continue
+    newIds.push(clone.id)
+    newOriginals.set(clone.id, {
       x: src.x,
       y: src.y,
-      parentId: newNode?.parentId ?? editor.state.currentPageId
+      parentId
     })
   }
   editor.select(newIds)

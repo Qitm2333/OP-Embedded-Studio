@@ -25,6 +25,7 @@ export type {
 export {
   SceneGraph,
   generateId,
+  cloneVectorNetwork,
   type SceneNode,
   type NodeType,
   type Fill,

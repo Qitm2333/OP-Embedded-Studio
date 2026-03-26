@@ -126,6 +126,48 @@ With Pen active inside curve edit mode, contour insertion, endpoint resume, and 
 - **WHEN** Pen is active and user `Alt/Option`-clicks an anchor in curve edit mode
 - **THEN** anchor is removed and neighboring segments are reconnected if topology allows
 
+### Requirement: Align selected anchors relative to each other
+When two or more anchors are selected in curve edit mode, alignment buttons in the position panel SHALL reposition those anchors relative to each other instead of operating on the parent node.
+
+#### Scenario: Align left (min X)
+- **WHEN** 2+ anchors are selected and user clicks Align Left
+- **THEN** all selected anchors move to the X coordinate of the leftmost anchor
+- **AND** unselected anchors and tangents are unaffected
+
+#### Scenario: Align right (max X)
+- **WHEN** 2+ anchors are selected and user clicks Align Right
+- **THEN** all selected anchors move to the X coordinate of the rightmost anchor
+- **AND** unselected anchors and tangents are unaffected
+
+#### Scenario: Align center horizontally
+- **WHEN** 2+ anchors are selected and user clicks Align Center Horizontally
+- **THEN** all selected anchors move to the midpoint X between leftmost and rightmost selected anchor
+- **AND** unselected anchors and tangents are unaffected
+
+#### Scenario: Align top (min Y)
+- **WHEN** 2+ anchors are selected and user clicks Align Top
+- **THEN** all selected anchors move to the Y coordinate of the topmost anchor
+- **AND** unselected anchors and tangents are unaffected
+
+#### Scenario: Align bottom (max Y)
+- **WHEN** 2+ anchors are selected and user clicks Align Bottom
+- **THEN** all selected anchors move to the Y coordinate of the bottommost anchor
+- **AND** unselected anchors and tangents are unaffected
+
+#### Scenario: Align center vertically
+- **WHEN** 2+ anchors are selected and user clicks Align Center Vertically
+- **THEN** all selected anchors move to the midpoint Y between topmost and bottommost selected anchor
+- **AND** unselected anchors and tangents are unaffected
+
+#### Scenario: Single anchor selected — no vertex alignment
+- **WHEN** exactly 1 anchor is selected and user clicks any alignment button
+- **THEN** alignment operates on the parent node as in normal selection mode
+- **AND** no vertex repositioning occurs
+
+#### Scenario: No anchors selected — no vertex alignment
+- **WHEN** no anchors are selected and user clicks any alignment button
+- **THEN** alignment operates on the parent node as in normal selection mode
+
 ### Requirement: Visual preview correctness during curve edit
 Interactive preview in curve edit mode SHALL render active tangent feedback from anchor to active tangent endpoint.
 

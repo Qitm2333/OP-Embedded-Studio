@@ -1,6 +1,7 @@
 import { hitTestHandle } from './geometry'
 
 import type { DragResize, HandlePosition } from './types'
+import { cloneVectorNetwork } from '@open-pencil/core'
 import type { Rect, SceneNode } from '@open-pencil/core'
 import type { Editor } from '@open-pencil/core/editor'
 
@@ -140,7 +141,7 @@ export function tryStartResize(
         startY: cy,
         origRect: { x: node.x, y: node.y, width: node.width, height: node.height },
         nodeId: id,
-        origVectorNetwork: node.vectorNetwork ? structuredClone(node.vectorNetwork) : null
+        origVectorNetwork: node.vectorNetwork ? cloneVectorNetwork(node.vectorNetwork) : null
       }
     }
   }

@@ -223,8 +223,12 @@ export function createShapeActions(ctx: EditorContext) {
       : []
 
     const network: VectorNetwork = {
-      vertices: ps.vertices,
-      segments: ps.segments,
+      vertices: ps.vertices.map((v) => ({ ...v })),
+      segments: ps.segments.map((s) => ({
+        ...s,
+        tangentStart: { ...s.tangentStart },
+        tangentEnd: { ...s.tangentEnd }
+      })),
       regions
     }
 

@@ -1,6 +1,7 @@
 import { defineTool, nodeSummary } from './schema'
 
 import type { FigmaAPI } from '../figma-api'
+import { cloneVectorNetwork } from '../scene-graph'
 import type { SceneNode, VectorNetwork } from '../scene-graph'
 
 function getVectorNode(
@@ -10,7 +11,7 @@ function getVectorNode(
   const node = figma.graph.getNode(id)
   if (!node) return { error: `Node "${id}" not found` }
   if (!node.vectorNetwork) return { error: `Node "${id}" has no vector data` }
-  return { node, vn: structuredClone(node.vectorNetwork) }
+  return { node, vn: cloneVectorNetwork(node.vectorNetwork) }
 }
 
 const CHUNK_SIZE = 0x8000
