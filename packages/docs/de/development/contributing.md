@@ -21,7 +21,6 @@ tests/
   e2e/               Playwright visuelle Regression
   engine/            Unit-Tests (bun:test)
 packages/docs/       VitePress-Dokumentationsseite
-openspec/
   specs/             Fähigkeitsspezifikationen (Wahrheitsquelle)
   changes/           Aktive und archivierte Änderungen
 ```
@@ -64,11 +63,9 @@ Entwickler und KI-Agenten sollten `AGENTS.md` im Repo-Root lesen ([auf GitHub an
 
 ## Änderungen vornehmen
 
-1. Vorhandene [OpenSpec-Spezifikationen](/de/development/openspec) für die zu ändernde Fähigkeit prüfen
-2. Bei neuem Verhalten eine OpenSpec-Änderung erstellen: `openspec new change "meine-aenderung"`
-3. Änderung implementieren
-4. `bun run check` und `bun run test` ausführen
-5. Pull Request einreichen
+1. Änderung implementieren
+2. `bun run check` und `bun run test` ausführen
+3. Pull Request einreichen
 
 ## Schlüsseldateien
 

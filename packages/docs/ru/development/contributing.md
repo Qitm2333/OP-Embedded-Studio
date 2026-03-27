@@ -24,7 +24,6 @@ tests/
   e2e/               Визуальная регрессия Playwright
   engine/            Юнит-тесты (bun:test)
 docs/                Сайт документации VitePress
-openspec/
   specs/             Спецификации возможностей (источник истины)
   changes/           Активные и архивные изменения
 ```
@@ -67,8 +66,6 @@ bun run check
 
 ## Внесение изменений
 
-1. Проверьте существующие [спецификации openspec](/ru/development/openspec) для изменяемой возможности
-2. Создайте openspec-изменение при добавлении нового поведения: `openspec new change "my-change"`
 3. Реализуйте изменение
 4. Запустите `bun run check` и `bun run test`
 5. Создайте pull request

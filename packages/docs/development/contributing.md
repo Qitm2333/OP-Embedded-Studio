@@ -24,9 +24,6 @@ tests/
   e2e/               Playwright visual regression
   engine/            Unit tests (bun:test)
 docs/                VitePress documentation site
-openspec/
-  specs/             Capability specifications (source of truth)
-  changes/           Active and archived changes
 ```
 
 ## Development Setup
@@ -67,11 +64,9 @@ Developers and AI agents working on the codebase should read `AGENTS.md` in the 
 
 ## Making Changes
 
-1. Check existing [openspec specs](/development/openspec) for the capability you're modifying
-2. Create an openspec change if adding new behavior: `openspec new change "my-change"`
-3. Implement the change
-4. Run `bun run check` and `bun run test`
-5. Submit a pull request
+1. Implement the change
+2. Run `bun run check` and `bun run test`
+3. Submit a pull request
 
 ## Key Files
 

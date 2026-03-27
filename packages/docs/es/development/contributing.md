@@ -24,7 +24,6 @@ tests/
   e2e/               Regresión visual Playwright
   engine/            Tests unitarios (bun:test)
 docs/                Sitio de documentación VitePress
-openspec/
   specs/             Especificaciones de capacidades (fuente de verdad)
   changes/           Cambios activos y archivados
 ```
@@ -67,8 +66,6 @@ Desarrolladores y agentes IA deben leer `AGENTS.md` en la raíz del repo ([ver e
 
 ## Realizar cambios
 
-1. Consultar las [specs de openspec](/development/openspec) existentes para la capacidad que estás modificando
-2. Crear un cambio openspec si añades nuevo comportamiento: `openspec new change "mi-cambio"`
 3. Implementar el cambio
 4. Ejecutar `bun run check` y `bun run test`
 5. Enviar un pull request
