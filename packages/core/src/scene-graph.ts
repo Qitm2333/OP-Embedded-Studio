@@ -58,6 +58,22 @@ export interface VectorNetwork {
   regions: VectorRegion[]
 }
 
+/** Deep-copy a VectorNetwork, stripping any Vue Proxy wrappers. */
+export function cloneVectorNetwork(vn: VectorNetwork): VectorNetwork {
+  return {
+    vertices: vn.vertices.map((v) => ({ ...v })),
+    segments: vn.segments.map((s) => ({
+      ...s,
+      tangentStart: { ...s.tangentStart },
+      tangentEnd: { ...s.tangentEnd }
+    })),
+    regions: vn.regions.map((r) => ({
+      windingRule: r.windingRule,
+      loops: r.loops.map((l) => [...l])
+    }))
+  }
+}
+
 export interface GeometryPath {
   windingRule: WindingRule
   commandsBlob: Uint8Array

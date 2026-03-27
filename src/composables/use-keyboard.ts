@@ -99,7 +99,14 @@ export function useKeyboard() {
 
   useEventListener(window, 'keydown', (e: KeyboardEvent) => {
     if (isEditing(e)) return
-    if (e.code === 'Space' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat) {
+    if (
+      e.code === 'Space' &&
+      !e.metaKey &&
+      !e.ctrlKey &&
+      !e.altKey &&
+      !e.repeat &&
+      toolBeforeSpace === null
+    ) {
       if (store.state.activeTool !== 'HAND') {
         toolBeforeSpace = store.state.activeTool
         store.setTool('HAND')
@@ -109,7 +116,7 @@ export function useKeyboard() {
   })
 
   useEventListener(window, 'keyup', (e: KeyboardEvent) => {
-    if (e.code === 'Space' && toolBeforeSpace) {
+    if (e.code === 'Space' && toolBeforeSpace !== null) {
       store.setTool(toolBeforeSpace)
       toolBeforeSpace = null
       e.preventDefault()
@@ -124,8 +131,12 @@ export function useKeyboard() {
       if (store.state.editingTextId) return
 
       if (!e.metaKey && !e.ctrlKey && !e.altKey) {
+        // Space is handled by hold-to-pan above
+        if (e.code === 'Space') return
         const tool = TOOL_SHORTCUTS[e.code]
         if (tool) {
+          // Permanent tool switch cancels space-hold
+          toolBeforeSpace = null
           store.setTool(tool)
           return
         }
@@ -214,28 +225,61 @@ export function useKeyboard() {
   )
 
   // --- Plain keys (no modifiers) ---
-  function plain(key: string): ComputedRef<boolean> {
+  function plain(key: string, options?: { allowAlt?: boolean }): ComputedRef<boolean> {
+    const allowAlt = options?.allowAlt ?? false
     return computed(
       () =>
         keys[key].value &&
         !keys['meta'].value &&
         !keys['control'].value &&
         !keys['shift'].value &&
-        !keys['alt'].value &&
+        (allowAlt || !keys['alt'].value) &&
         !store.state.editingTextId
     )
   }
 
   whenever(plain('BracketRight'), () => runCommand('selection.bringToFront'))
   whenever(plain('BracketLeft'), () => runCommand('selection.sendToBack'))
-  whenever(plain('Backspace'), () => runCommand('selection.delete'))
-  whenever(plain('Delete'), () => runCommand('selection.delete'))
+  whenever(plain('Backspace'), () => {
+    if (
+      store.state.nodeEditState &&
+      (store.state.nodeEditState.selectedVertexIndices.size > 0 ||
+        store.state.nodeEditState.selectedHandles.size > 0)
+    ) {
+      store.nodeEditDeleteSelected()
+      return
+    }
+    runCommand('selection.delete')
+  })
+  whenever(plain('Delete', { allowAlt: true }), () => {
+    if (
+      store.state.nodeEditState &&
+      (store.state.nodeEditState.selectedVertexIndices.size > 0 ||
+        store.state.nodeEditState.selectedHandles.size > 0)
+    ) {
+      if (keys['alt'].value) {
+        store.nodeEditBreakAtVertex()
+      } else {
+        store.nodeEditDeleteSelected()
+      }
+      return
+    }
+    runCommand('selection.delete')
+  })
   whenever(plain('Enter'), () => {
+    if (store.state.nodeEditState) {
+      store.exitNodeEditMode(true)
+      return
+    }
     if (store.state.penState) store.penCommit(false)
   })
   whenever(plain('Escape'), () => {
+    if (store.state.nodeEditState) {
+      store.exitNodeEditMode(true)
+      return
+    }
     if (store.state.penState) {
-      store.penCancel()
+      store.penCommit(false)
       return
     }
     if (store.state.enteredContainerId) {

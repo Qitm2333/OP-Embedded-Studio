@@ -4,7 +4,12 @@ import Tip from './ui/Tip.vue'
 import HsvColorArea from './HsvColorArea.vue'
 import ScrubInput from './ScrubInput.vue'
 import { colorToCSS } from '@open-pencil/core'
-import { GradientEditorRoot, GradientEditorBar, GradientEditorStop, useI18n } from '@open-pencil/vue'
+import {
+  GradientEditorRoot,
+  GradientEditorBar,
+  GradientEditorStop,
+  useI18n
+} from '@open-pencil/vue'
 
 import type { Fill } from '@open-pencil/core'
 

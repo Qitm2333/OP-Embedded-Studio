@@ -11,6 +11,10 @@
 - Layer panel click syncs canvas scope automatically
 - Vue SDK internationalization primitives — `useI18n()`, locale detection, persisted locale selection, lazy-loaded locale JSON files, and exported locale metadata for custom editor shells
 - App language picker in the menu bar — switch UI locale without reloading
+- Added a vector curve editor and improved drawing experience with the pen tool
+- Resume pen drawing from existing open path endpoints — click an endpoint to continue the curve
+- Close open paths by dragging one endpoint to the other
+- Align selected anchor points relative to each other in vector edit mode — the standard alignment buttons in the position panel now operate on selected vertices when 2 or more are selected
 
 ### Fixes
 

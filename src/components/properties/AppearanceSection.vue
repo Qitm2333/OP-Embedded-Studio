@@ -126,7 +126,13 @@ function onToggleCorners() {
         @commit="(v: number, p: number) => commitCornerProp('topLeftRadius', v, p)"
       >
         <template #icon>
-          <svg class="size-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg
+            class="size-3"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
             <path d="M1 11V4a3 3 0 0 1 3-3h7" />
           </svg>
         </template>
@@ -138,7 +144,13 @@ function onToggleCorners() {
         @commit="(v: number, p: number) => commitCornerProp('topRightRadius', v, p)"
       >
         <template #icon>
-          <svg class="size-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg
+            class="size-3"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
             <path d="M11 11V4a3 3 0 0 0-3-3H1" />
           </svg>
         </template>
@@ -150,7 +162,13 @@ function onToggleCorners() {
         @commit="(v: number, p: number) => commitCornerProp('bottomLeftRadius', v, p)"
       >
         <template #icon>
-          <svg class="size-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg
+            class="size-3"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
             <path d="M1 1v7a3 3 0 0 0 3 3h7" />
           </svg>
         </template>
@@ -162,7 +180,13 @@ function onToggleCorners() {
         @commit="(v: number, p: number) => commitCornerProp('bottomRightRadius', v, p)"
       >
         <template #icon>
-          <svg class="size-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg
+            class="size-3"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
             <path d="M11 1v7a3 3 0 0 1-3 3H1" />
           </svg>
         </template>

@@ -77,12 +77,12 @@ function onToggleSides(activeNode: SceneNode) {
           class="w-[72px]"
           :model-value="strokeCtx.currentAlign(activeNode)"
           :options="strokeCtx.alignOptions"
-          @update:model-value="strokeCtx.updateAlign($event as Stroke['align'], activeNode)"
+          @update:model-value="strokeCtx.updateAlign($event as Stroke['align'], activeNode!)"
         />
         <ScrubInput
           v-if="!expandedSides"
           class="flex-1"
-          :model-value="activeNode.strokes[0]?.weight ?? 1"
+          :model-value="activeNode!.strokes[0]?.weight ?? 1"
           :min="0"
           @update:model-value="patch(0, { weight: $event })"
         >
@@ -105,7 +105,7 @@ function onToggleSides(activeNode: SceneNode) {
             data-test-id="stroke-sides-toggle"
             class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
             :class="{ '!border-accent !text-accent': expandedSides }"
-            @click="onToggleSides(activeNode)"
+            @click="onToggleSides(activeNode!)"
           >
             <svg class="size-3.5" viewBox="0 0 14 14" fill="currentColor">
               <rect x="1" y="1" width="5" height="5" rx="1" />
@@ -125,12 +125,12 @@ function onToggleSides(activeNode: SceneNode) {
           v-for="side in strokeCtx.borderSides"
           :key="side"
           :model-value="
-            activeNode[
+            activeNode![
               `border${side[0].toUpperCase()}${side.slice(1)}Weight` as keyof SceneNode
             ] as number
           "
           :min="0"
-          @update:model-value="strokeCtx.updateBorderWeight(side, $event, activeNode)"
+          @update:model-value="strokeCtx.updateBorderWeight(side, $event, activeNode!)"
         >
           <template #icon>
             <svg class="size-3" viewBox="0 0 12 12" fill="none" stroke-width="1.5">

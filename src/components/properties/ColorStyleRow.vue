@@ -32,7 +32,7 @@ type BindingApi = {
   unbindVariable: (nodeId: string, index: number) => void
 }
 
-const props = defineProps<{
+const { item, index, activeNodeId, bindingApi, visibilityTestId, unbindTestId } = defineProps<{
   item: { opacity: number; visible: boolean }
   index: number
   activeNodeId?: string | null
@@ -97,9 +97,9 @@ const { panels, dialogs } = useI18n()
               @update:model-value="bindingApi.searchTerm.value = String($event)"
             />
             <ComboboxContent class="max-h-48 overflow-y-auto p-1">
-              <ComboboxEmpty class="px-2 py-3 text-center text-[11px] text-muted"
-                >{{ panels.noVariablesFound }}</ComboboxEmpty
-              >
+              <ComboboxEmpty class="px-2 py-3 text-center text-[11px] text-muted">{{
+                panels.noVariablesFound
+              }}</ComboboxEmpty>
               <ComboboxItem
                 v-for="v in bindingApi.filteredVariables.value"
                 :key="v.id"

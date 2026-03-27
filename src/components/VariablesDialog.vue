@@ -52,7 +52,9 @@ const ctx = useVariablesEditor({
       <DialogContent data-test-id="variables-dialog" :class="cls.content">
         <div v-if="!ctx.hasCollections" class="flex flex-1 flex-col">
           <div class="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
-            <DialogTitle class="text-sm font-semibold text-surface">{{ dialogs.localVariables }}</DialogTitle>
+            <DialogTitle class="text-sm font-semibold text-surface">{{
+              dialogs.localVariables
+            }}</DialogTitle>
             <DialogClose
               class="flex size-6 cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface"
             >

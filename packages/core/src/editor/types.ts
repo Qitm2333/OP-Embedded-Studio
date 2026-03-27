@@ -74,6 +74,8 @@ export interface EditorState {
     vertices: VectorVertex[]
     segments: VectorSegment[]
     dragTangent: Vector | null
+    oppositeDragTangent: Vector | null
+    pendingClose?: boolean
     closingToFirst: boolean
   } | null
   penCursorX: number | null

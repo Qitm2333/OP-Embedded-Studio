@@ -97,12 +97,14 @@ export function drawSelection(
   overlays: RenderOverlays
 ): void {
   if (selectedIds.size === 0) return
+  const nodeEditId = overlays.nodeEditState?.nodeId ?? null
 
   r.drawParentFrameOutlines(canvas, graph, selectedIds)
 
   if (selectedIds.size === 1) {
     const id = [...selectedIds][0]
     if (overlays.editingTextId === id) return
+    if (nodeEditId === id) return
     const node = graph.getNode(id)
     if (!node) return
 
@@ -120,6 +122,7 @@ export function drawSelection(
   }
 
   for (const id of selectedIds) {
+    if (nodeEditId === id) continue
     const node = graph.getNode(id)
     if (!node) continue
 
@@ -135,8 +138,10 @@ export function drawSelection(
   r.selectionPaint.setColor(r.selColor())
 
   const nodes = [...selectedIds]
+    .filter((id) => id !== nodeEditId)
     .map((id) => graph.getNode(id))
     .filter((n): n is SceneNode => n !== undefined)
+  if (nodes.length === 0) return
   r.drawGroupBounds(canvas, nodes, graph)
 
   r.drawSelectionLabels(canvas, graph, selectedIds)
@@ -519,3 +524,4 @@ export function drawTextEditOverlay(
 }
 
 export { drawPenOverlay, drawRemoteCursors } from './pen-overlay'
+export { drawNodeEditOverlay } from './node-edit-overlay'

@@ -123,6 +123,9 @@ export function renderNode(
   const node = graph.getNode(nodeId)
   if (!node || !node.visible) return
 
+  // Hide the node being edited in node-edit mode (overlay draws it live)
+  if (overlays.nodeEditState?.nodeId === nodeId) return
+
   r._nodeCount++
 
   const absX = parentAbsX + node.x

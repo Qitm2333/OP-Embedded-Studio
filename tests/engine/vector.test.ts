@@ -158,7 +158,7 @@ describe('computeVectorBounds', () => {
     expect(bounds).toEqual({ x: 0, y: 0, width: 100, height: 50 })
   })
 
-  test('bezier control points extend bounds', () => {
+  test('bezier curve extrema extend bounds', () => {
     const bounds = computeVectorBounds({
       vertices: [
         { x: 0, y: 0, handleMirroring: 'NONE' },
@@ -169,7 +169,8 @@ describe('computeVectorBounds', () => {
       ],
       regions: []
     })
-    expect(bounds.y).toBe(-50)
-    expect(bounds.height).toBe(100)
+    // Curve extrema at t=(3±√3)/6, not at control points
+    expect(bounds.y).toBeCloseTo(-14.4338, 3)
+    expect(bounds.height).toBeCloseTo(28.8675, 3)
   })
 })

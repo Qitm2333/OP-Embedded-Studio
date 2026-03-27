@@ -3,7 +3,7 @@ export const FIG_KIWI_DEFAULT_VERSION = 101
 import { deflateSync, inflateSync } from 'fflate'
 
 import { getLoadedFontData, normalizeFontFamily, weightToStyle } from '../fonts'
-import { encodeVectorNetworkBlob } from '../vector'
+import { encodeVectorNetworkBlob, buildStyleOverrideTable } from '../vector'
 import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi-convert'
 
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from '../scene-graph'
@@ -367,12 +367,17 @@ function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
 
 function serializeGeometry(node: SceneNode, nc: KiwiNodeChange, blobs: Uint8Array[]): void {
   if (node.vectorNetwork && node.type === 'VECTOR') {
+    const { table, mirroringToId } = buildStyleOverrideTable(node.vectorNetwork)
     const blobIdx = blobs.length
-    blobs.push(encodeVectorNetworkBlob(node.vectorNetwork))
-    nc.vectorData = {
+    blobs.push(encodeVectorNetworkBlob(node.vectorNetwork, mirroringToId))
+    const vectorData: Record<string, unknown> = {
       vectorNetworkBlob: blobIdx,
       normalizedSize: { x: node.width, y: node.height }
     }
+    if (table.length > 0) {
+      vectorData.styleOverrideTable = table
+    }
+    nc.vectorData = vectorData
   }
   if (node.fillGeometry.length > 0) {
     nc.fillGeometry = node.fillGeometry.map((g) => {

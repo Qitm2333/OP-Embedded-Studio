@@ -10,6 +10,7 @@ description: Tracés vectoriels avec courbes de Bézier in OpenPencil.
 ## Placer des points
 - **Click** — corner point
 - **Click + drag** — curve point with Bézier tangent handles
+  - **Hold <kbd>Space</kbd>** while dragging to move the point itself
 
 ## Fermer un tracé
 Click the first point to close into a loop.
