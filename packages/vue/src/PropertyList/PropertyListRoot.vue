@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import { useEditor } from '@open-pencil/vue/context/editorContext'
 import { useNodeProps } from '@open-pencil/vue/controls/useNodeProps'
+import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
 import { providePropertyList } from './context'
 
 import type { Fill, Stroke, Effect, SceneNode } from '@open-pencil/core'
@@ -26,16 +27,21 @@ const emit = defineEmits<{
 const editor = useEditor()
 const { isArrayMixed } = useNodeProps()
 
-const selectedNodes = computed(() => editor.getSelectedNodes())
-const activeNode = computed<SceneNode | null>(
-  () => editor.getSelectedNode() ?? selectedNodes.value[0] ?? null
-)
+const selectedNodes = useSceneComputed(() => {
+  void editor.state.sceneVersion
+  return editor.getSelectedNodes()
+})
+const activeNode = useSceneComputed<SceneNode | null>(() => {
+  void editor.state.sceneVersion
+  return editor.getSelectedNode() ?? selectedNodes.value[0] ?? null
+})
 const isMulti = computed(() => selectedNodes.value.length > 1)
 const active = computed(() => selectedNodes.value.length > 0)
 
 const isMixed = computed(() => isArrayMixed(propKey))
 
-const items = computed(() => {
+const items = useSceneComputed(() => {
+  void editor.state.sceneVersion
   if (isMixed.value) return []
   return (activeNode.value?.[propKey] ?? []) as ArrayItemType[]
 })
@@ -90,16 +96,26 @@ function patch(index: number, changes: Record<string, unknown>) {
 
 function toggleVisibility(index: number) {
   emit('toggleVisibility', index)
-  for (const n of targetNodes()) {
-    const arr = n[propKey] as Array<{ visible: boolean }>
+  const nodes = targetNodes()
+  if (nodes.length === 0) return
+  if (nodes.length > 1) {
+    editor.undo.beginBatch(`Toggle ${propKey} visibility`)
+  }
+  for (const n of nodes) {
+    const liveNode = editor.getNode(n.id)
+    if (!liveNode) continue
+    const arr = liveNode[propKey] as Array<{ visible: boolean }>
     if (!arr[index]) continue
-    const newArr = [...n[propKey]] as Array<{ visible: boolean }>
+    const newArr = [...liveNode[propKey]] as Array<{ visible: boolean }>
     newArr[index] = { ...newArr[index], visible: !arr[index].visible }
     editor.updateNodeWithUndo(
       n.id,
       { [propKey]: newArr } as Partial<SceneNode>,
       `Toggle ${propKey} visibility`
     )
+  }
+  if (nodes.length > 1) {
+    editor.undo.commitBatch()
   }
 }
 

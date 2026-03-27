@@ -1,30 +1,34 @@
 <script setup lang="ts">
-import {
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuRoot,
-  DropdownMenuTrigger
-} from 'reka-ui'
+import { ref } from 'vue'
 
-import { PropertyListRoot, useStrokeControls, useI18n } from '@open-pencil/vue'
+import { PropertyListRoot, useColorVariableBinding, useStrokeControls, useI18n } from '@open-pencil/vue'
 
+import ColorStyleRow from '@/components/properties/ColorStyleRow.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/ui/Tip.vue'
 import { iconButton } from '@/components/ui/icon-button'
-import { menu, useMenuUI } from '@/components/ui/menu'
 import { sectionLabel, sectionWrapper } from '@/components/ui/section'
 
 import type { SceneNode, Stroke } from '@open-pencil/core'
 
 const strokeCtx = useStrokeControls()
+const strokeVarCtx = useColorVariableBinding('strokes')
 const { panels } = useI18n()
-const sideMenuCls = useMenuUI({
-  content: 'min-w-[140px] rounded-md p-0.5',
-  item: 'relative px-2'
-})
+
+const expandedSides = ref(false)
+
+function onToggleSides(activeNode: SceneNode) {
+  const next = !expandedSides.value
+  expandedSides.value = next
+  if (next && !activeNode.independentStrokeWeights) {
+    const weight = activeNode.strokes[0]?.weight ?? 1
+    strokeCtx.selectSide('CUSTOM', { ...activeNode, borderTopWeight: weight, borderRightWeight: weight, borderBottomWeight: weight, borderLeftWeight: weight } as SceneNode)
+  } else if (!next && activeNode.independentStrokeWeights) {
+    strokeCtx.selectSide('ALL', activeNode)
+  }
+}
 </script>
 
 <template>
@@ -47,31 +51,26 @@ const sideMenuCls = useMenuUI({
 
       <p v-if="isMixed" class="text-[11px] text-muted">{{ panels.mixedStrokesHelp }}</p>
 
-      <div
+      <ColorStyleRow
         v-for="(stroke, i) in items as Stroke[]"
-        :key="i"
+        :key="`${i}:${stroke.visible ? 'visible' : 'hidden'}`"
+        :item="stroke"
+        :index="i"
+        :active-node-id="activeNode?.id ?? null"
+        :binding-api="strokeVarCtx"
+        :visibility-test-id="`stroke-visibility-${i}`"
+        unbind-test-id="stroke-unbind-variable"
         data-test-id="stroke-item"
         :data-test-index="i"
-        class="group flex items-center gap-1.5 py-0.5"
+        @patch="patch(i, $event)"
+        @toggle-visibility="toggleVisibility(i)"
+        @remove="remove(i)"
       >
-        <ColorInput
-          class="min-w-0 flex-1"
-          :color="stroke.color"
-          editable
-          @update="patch(i, { color: $event })"
-        />
-        <button
-          class="shrink-0 cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
-          @click="toggleVisibility(i)"
-        >
-          <icon-lucide-eye v-if="stroke.visible" class="size-3.5" />
-          <icon-lucide-eye-off v-else class="size-3.5" />
-        </button>
-        <button :class="iconButton({ ui: { base: 'shrink-0' } })" @click="remove(i)">−</button>
-      </div>
+        <ColorInput class="min-w-0 flex-1" :color="stroke.color" editable @update="patch(i, { color: $event })" />
+      </ColorStyleRow>
 
       <div
-        v-if="!isMixed && activeNode && activeNode.strokes.length > 0"
+        v-if="!isMixed && (items as unknown[]).length > 0"
         class="mt-1 flex items-center gap-1.5"
       >
         <AppSelect
@@ -81,7 +80,7 @@ const sideMenuCls = useMenuUI({
           @update:model-value="strokeCtx.updateAlign($event as Stroke['align'], activeNode)"
         />
         <ScrubInput
-          v-if="!activeNode.independentStrokeWeights"
+          v-if="!expandedSides"
           class="flex-1"
           :model-value="activeNode.strokes[0]?.weight ?? 1"
           :min="0"
@@ -101,80 +100,25 @@ const sideMenuCls = useMenuUI({
             </svg>
           </template>
         </ScrubInput>
-        <DropdownMenuRoot v-model:open="strokeCtx.sideMenuOpen.value">
-          <Tip :label="panels.strokeSides">
-            <DropdownMenuTrigger as-child>
-              <button
-                class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-                :class="{ '!border-accent !text-accent': activeNode.independentStrokeWeights }"
-              >
-                <svg class="size-3.5" viewBox="0 0 14 14" fill="currentColor">
-                  <rect x="1" y="1" width="5" height="5" rx="1" />
-                  <rect x="8" y="1" width="5" height="5" rx="1" />
-                  <rect x="1" y="8" width="5" height="5" rx="1" />
-                  <rect x="8" y="8" width="5" height="5" rx="1" />
-                </svg>
-              </button>
-            </DropdownMenuTrigger>
-          </Tip>
-          <DropdownMenuPortal>
-            <DropdownMenuContent :side-offset="4" align="end" :class="sideMenuCls.content">
-              <DropdownMenuItem
-                v-for="opt in strokeCtx.sideOptions"
-                :key="opt.value"
-                :class="menu({ justify: 'start' }).item({ class: sideMenuCls.item })"
-                @click="strokeCtx.selectSide(opt.value, activeNode)"
-              >
-                <icon-lucide-check
-                  v-if="strokeCtx.currentSides(activeNode) === opt.value"
-                  class="absolute left-2 size-3 text-accent"
-                />
-                <span class="flex items-center gap-2 pl-5">
-                  <svg
-                    class="size-3.5"
-                    viewBox="0 0 14 14"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                  >
-                    <template v-if="opt.value === 'ALL'">
-                      <rect x="1" y="1" width="12" height="12" rx="1" />
-                    </template>
-                    <template v-else-if="opt.value === 'CUSTOM'">
-                      <line x1="4" y1="7" x2="10" y2="7" />
-                      <line x1="7" y1="4" x2="7" y2="10" />
-                    </template>
-                    <template v-else>
-                      <rect
-                        x="1"
-                        y="1"
-                        width="12"
-                        height="12"
-                        rx="1"
-                        stroke-opacity="0.3"
-                        stroke-dasharray="2 2"
-                      />
-                      <line v-if="opt.value === 'TOP'" x1="1" y1="1" x2="13" y2="1" />
-                      <line v-else-if="opt.value === 'BOTTOM'" x1="1" y1="13" x2="13" y2="13" />
-                      <line v-else-if="opt.value === 'LEFT'" x1="1" y1="1" x2="1" y2="13" />
-                      <line v-else-if="opt.value === 'RIGHT'" x1="13" y1="1" x2="13" y2="13" />
-                    </template>
-                  </svg>
-                  <span>{{ opt.label }}</span>
-                </span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenuPortal>
-        </DropdownMenuRoot>
+        <Tip :label="panels.strokeSides">
+          <button
+            data-test-id="stroke-sides-toggle"
+            class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+            :class="{ '!border-accent !text-accent': expandedSides }"
+            @click="onToggleSides(activeNode)"
+          >
+            <svg class="size-3.5" viewBox="0 0 14 14" fill="currentColor">
+              <rect x="1" y="1" width="5" height="5" rx="1" />
+              <rect x="8" y="1" width="5" height="5" rx="1" />
+              <rect x="1" y="8" width="5" height="5" rx="1" />
+              <rect x="8" y="8" width="5" height="5" rx="1" />
+            </svg>
+          </button>
+        </Tip>
       </div>
 
       <div
-        v-if="
-          !isMixed &&
-          activeNode &&
-          activeNode.strokes.length > 0 &&
-          activeNode.independentStrokeWeights
-        "
+        v-if="!isMixed && (items as unknown[]).length > 0 && expandedSides"
         class="mt-1.5 grid grid-cols-2 gap-1.5"
       >
         <ScrubInput

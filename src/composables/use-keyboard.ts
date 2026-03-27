@@ -56,16 +56,15 @@ function shouldPreventDefault(e: KeyboardEvent, hasPenState: boolean): boolean {
     if (!e.shiftKey && !e.altKey && PREVENT_MOD_ONLY.has(e.code)) return true
   } else {
     if (e.shiftKey && PREVENT_SHIFT_ONLY.has(e.code)) return true
-    if (!e.shiftKey && PREVENT_PLAIN_KEY.has(e.key)) return true
+    if (!e.shiftKey && PREVENT_PLAIN_KEY.has(e.code)) return true
   }
 
-  return PREVENT_DELETE_KEY.has(e.key) || (e.key === 'Enter' && hasPenState)
+  return PREVENT_DELETE_KEY.has(e.code) || (e.code === 'Enter' && hasPenState)
 }
 
 export function useKeyboard() {
   const { activeTab } = useAIChat()
   const store = useEditorStore()
-  const nodeEditStore = store as typeof store & NodeEditKeyboardMethods
   const { isMobile } = useViewportKind()
   const { runCommand } = useEditorCommands()
 
@@ -102,7 +101,7 @@ export function useKeyboard() {
   })
 
   // Spacebar hold → temporary Hand tool (Figma-style canvas pan)
-  let toolBeforeSpace: (typeof store.state.activeTool) | null = null
+  let toolBeforeSpace: typeof store.state.activeTool | null = null
 
   useEventListener(window, 'keydown', (e: KeyboardEvent) => {
     if (isEditing(e)) return
@@ -133,7 +132,7 @@ export function useKeyboard() {
       if (!e.metaKey && !e.ctrlKey && !e.altKey) {
         // Space is handled by hold-to-pan above
         if (e.code === 'Space') return
-        const tool = TOOL_SHORTCUTS[e.key.toLowerCase()]
+        const tool = TOOL_SHORTCUTS[e.code]
         if (tool) {
           // Permanent tool switch cancels space-hold
           toolBeforeSpace = null
@@ -238,9 +237,9 @@ export function useKeyboard() {
     )
   }
 
-  whenever(plain('bracketright'), () => runCommand('selection.bringToFront'))
-  whenever(plain('bracketleft'), () => runCommand('selection.sendToBack'))
-  whenever(plain('backspace'), () => {
+  whenever(plain('BracketRight'), () => runCommand('selection.bringToFront'))
+  whenever(plain('BracketLeft'), () => runCommand('selection.sendToBack'))
+  whenever(plain('Backspace'), () => {
     if (
       store.state.nodeEditState &&
       (store.state.nodeEditState.selectedVertexIndices.size > 0 ||
@@ -251,7 +250,7 @@ export function useKeyboard() {
     }
     runCommand('selection.delete')
   })
-  whenever(plain('delete', { allowAlt: true }), () => {
+  whenever(plain('Delete', { allowAlt: true }), () => {
     if (
       store.state.nodeEditState &&
       (store.state.nodeEditState.selectedVertexIndices.size > 0 ||
@@ -266,14 +265,14 @@ export function useKeyboard() {
     }
     runCommand('selection.delete')
   })
-  whenever(plain('enter'), () => {
+  whenever(plain('Enter'), () => {
     if (store.state.nodeEditState) {
       nodeEditStore.exitNodeEditMode(true)
       return
     }
     if (store.state.penState) store.penCommit(false)
   })
-  whenever(plain('escape'), () => {
+  whenever(plain('Escape'), () => {
     if (store.state.nodeEditState) {
       nodeEditStore.exitNodeEditMode(true)
       return

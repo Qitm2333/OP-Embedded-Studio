@@ -5,13 +5,9 @@ import { useEditor } from '@open-pencil/vue/context/editorContext'
 
 import type { Variable } from '@open-pencil/core'
 
-/**
- * Returns helpers for binding fill colors to color variables.
- *
- * This composable is used by fill editing UIs that need variable search,
- * binding, and unbinding behavior.
- */
-export function useFillVariableBinding() {
+type ColorBindingKind = 'fills' | 'strokes'
+
+export function useColorVariableBinding(kind: ColorBindingKind) {
   const store = useEditor()
   const colorVariables = computed(() => store.getVariablesByType('COLOR'))
   const searchTerm = ref('')
@@ -21,19 +17,23 @@ export function useFillVariableBinding() {
     return colorVariables.value.filter((v) => contains(v.name, searchTerm.value))
   })
 
+  function bindingPath(index: number) {
+    return `${kind}/${index}/color`
+  }
+
   function getBoundVariable(nodeId: string, index: number): Variable | undefined {
     const n = store.getNode(nodeId)
     if (!n) return undefined
-    const varId = n.boundVariables[`fills/${index}/color`]
+    const varId = n.boundVariables[bindingPath(index)]
     return varId ? store.getVariable(varId) : undefined
   }
 
-  function bindFillVariable(nodeId: string, index: number, variableId: string) {
-    store.bindVariable(nodeId, `fills/${index}/color`, variableId)
+  function bindVariable(nodeId: string, index: number, variableId: string) {
+    store.bindVariable(nodeId, bindingPath(index), variableId)
   }
 
-  function unbindFillVariable(nodeId: string, index: number) {
-    store.unbindVariable(nodeId, `fills/${index}/color`)
+  function unbindVariable(nodeId: string, index: number) {
+    store.unbindVariable(nodeId, bindingPath(index))
   }
 
   return {
@@ -42,7 +42,7 @@ export function useFillVariableBinding() {
     searchTerm,
     filteredVariables,
     getBoundVariable,
-    bindFillVariable,
-    unbindFillVariable
+    bindVariable,
+    unbindVariable
   }
 }

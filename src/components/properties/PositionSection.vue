@@ -51,7 +51,7 @@ function handleAlign(
               data-test-id="position-align-left"
               @click="handleAlign(align, 'horizontal', 'min')"
             >
-              <icon-lucide-align-horizontal-justify-start class="size-3.5" />
+              <icon-lucide-align-start-vertical class="size-3.5" />
             </button>
           </Tip>
           <Tip :label="panels.alignCenterHorizontally">
@@ -60,7 +60,7 @@ function handleAlign(
               data-test-id="position-align-center-h"
               @click="handleAlign(align, 'horizontal', 'center')"
             >
-              <icon-lucide-align-horizontal-justify-center class="size-3.5" />
+              <icon-lucide-align-center-vertical class="size-3.5" />
             </button>
           </Tip>
           <Tip :label="panels.alignRight">
@@ -69,7 +69,7 @@ function handleAlign(
               data-test-id="position-align-right"
               @click="handleAlign(align, 'horizontal', 'max')"
             >
-              <icon-lucide-align-horizontal-justify-end class="size-3.5" />
+              <icon-lucide-align-end-vertical class="size-3.5" />
             </button>
           </Tip>
         </div>
@@ -80,7 +80,7 @@ function handleAlign(
               data-test-id="position-align-top"
               @click="handleAlign(align, 'vertical', 'min')"
             >
-              <icon-lucide-align-vertical-justify-start class="size-3.5" />
+              <icon-lucide-align-start-horizontal class="size-3.5" />
             </button>
           </Tip>
           <Tip :label="panels.alignCenterVertically">
@@ -89,7 +89,7 @@ function handleAlign(
               data-test-id="position-align-center-v"
               @click="handleAlign(align, 'vertical', 'center')"
             >
-              <icon-lucide-align-vertical-justify-center class="size-3.5" />
+              <icon-lucide-align-center-horizontal class="size-3.5" />
             </button>
           </Tip>
           <Tip :label="panels.alignBottom">
@@ -98,7 +98,7 @@ function handleAlign(
               data-test-id="position-align-bottom"
               @click="handleAlign(align, 'vertical', 'max')"
             >
-              <icon-lucide-align-vertical-justify-end class="size-3.5" />
+              <icon-lucide-align-end-horizontal class="size-3.5" />
             </button>
           </Tip>
         </div>
@@ -147,7 +147,7 @@ function handleAlign(
           @commit="(v: number, p: number) => commitProp('rotation', v, p)"
         >
           <template #icon>
-            <icon-lucide-rotate-ccw class="size-3" />
+            <icon-lucide-rotate-cw class="size-3" />
           </template>
         </ScrubInput>
         <Tip :label="panels.flipHorizontal">
@@ -156,7 +156,7 @@ function handleAlign(
             data-test-id="position-flip-horizontal"
             @click="flip('horizontal')"
           >
-            <icon-lucide-flip-horizontal class="size-3.5" />
+            <icon-lucide-flip-horizontal-2 class="size-3.5" />
           </button>
         </Tip>
         <Tip :label="panels.flipVertical">
@@ -165,7 +165,7 @@ function handleAlign(
             data-test-id="position-flip-vertical"
             @click="flip('vertical')"
           >
-            <icon-lucide-flip-vertical class="size-3.5" />
+            <icon-lucide-flip-vertical-2 class="size-3.5" />
           </button>
         </Tip>
         <Tip :label="panels.rotate90">
@@ -174,7 +174,7 @@ function handleAlign(
             data-test-id="position-rotate-90"
             @click="rotate(90)"
           >
-            <icon-lucide-rotate-cw class="size-3.5" />
+            <icon-lucide-rotate-cw-square class="size-3.5" />
           </button>
         </Tip>
       </div>

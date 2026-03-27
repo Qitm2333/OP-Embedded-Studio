@@ -51,15 +51,24 @@ export function useAppearance() {
 
   function toggleVisibility() {
     if (isMulti.value) {
-      const allVisible = nodes.value.every((n) => n.visible)
-      for (const n of nodes.value) {
+      const liveNodes = nodes.value
+        .map((n) => editor.getNode(n.id))
+        .filter((n): n is SceneNode => n != null)
+      if (liveNodes.length === 0) return
+      const allVisible = liveNodes.every((n) => n.visible)
+      editor.undo.beginBatch('Toggle visibility')
+      for (const n of liveNodes) {
         editor.updateNodeWithUndo(n.id, { visible: !allVisible }, 'Toggle visibility')
       }
-    } else {
-      const n = node.value
-      if (!n) return
-      editor.updateNodeWithUndo(n.id, { visible: !n.visible }, 'Toggle visibility')
+      editor.undo.commitBatch()
+      return
     }
+
+    const selected = node.value
+    if (!selected) return
+    const liveNode = editor.getNode(selected.id)
+    if (!liveNode) return
+    editor.updateNodeWithUndo(liveNode.id, { visible: !liveNode.visible }, 'Toggle visibility')
   }
 
   function toggleIndependentCorners() {

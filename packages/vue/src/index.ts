@@ -52,7 +52,7 @@ export { useTypography } from './controls/useTypography'
 export type { UseTypographyOptions } from './controls/useTypography'
 export { useExport } from './controls/useExport'
 export { useFillControls } from './controls/useFillControls'
-export { useFillVariableBinding } from './controls/useFillVariableBinding'
+export { useColorVariableBinding } from './controls/useColorVariableBinding'
 export { useEffectsControls } from './controls/useEffectsControls'
 export { useStrokeControls } from './controls/useStrokeControls'
 
