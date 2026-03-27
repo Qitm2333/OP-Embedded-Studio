@@ -10,6 +10,7 @@ description: Ścieżki wektorowe z krzywymi Béziera in OpenPencil.
 ## Stawianie punktów
 - **Click** — corner point
 - **Click + drag** — curve point with Bézier tangent handles
+  - **Hold <kbd>Space</kbd>** while dragging to move the point itself
 
 ## Zamykanie ścieżki
 Click the first point to close into a loop.

@@ -14,6 +14,7 @@ Press <kbd>P</kbd> to activate the pen tool.
 
 - **Click** to place a corner point (straight-line segment)
 - **Click + drag** to place a curve point with bezier tangent handles — the drag direction and length control the curve shape
+  - **Hold <kbd>Space</kbd>** while dragging (without releasing the mouse button) to move the point itself
 
 Click multiple points to build a path segment by segment. A preview line extends from the last placed point to your cursor as you move.
 

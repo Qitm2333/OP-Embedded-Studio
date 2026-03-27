@@ -74,6 +74,13 @@ export function useCanvasInput(
 ) {
   const drag = ref<DragState | null>(null)
   const cursorOverride = ref<string | null>(null)
+  const spaceHeld = ref(false)
+  useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+    if (e.code === 'Space') spaceHeld.value = true
+  })
+  useEventListener(window, 'keyup', (e: KeyboardEvent) => {
+    if (e.code === 'Space') spaceHeld.value = false
+  })
   let lastClickTime = 0
   let lastClickX = 0
   let lastClickY = 0
@@ -385,6 +392,10 @@ export function useCanvasInput(
     }
 
     if (tool === 'PEN') {
+      // Hide draft segment during drag
+      editor.state.penCursorX = null
+      editor.state.penCursorY = null
+
       // In node edit mode with pen tool: click curve to add point, click vertex to remove
       const nodeEditState = (
         editor.state as Editor['state'] & { nodeEditState?: NodeEditState | null }
@@ -406,8 +417,14 @@ export function useCanvasInput(
             startX: first.x,
             startY: first.y,
             modifierMode: 'default',
-            frozenOppositeTangent: null
+            frozenOppositeTangent: null,
+            spaceDown: false,
+            spaceStartX: 0,
+            spaceStartY: 0,
+            knotStartX: first.x,
+            knotStartY: first.y
           } as DragState
+          cursorOverride.value = 'crosshair'
           return
         }
       }
@@ -419,8 +436,14 @@ export function useCanvasInput(
         startX: cx,
         startY: cy,
         modifierMode: 'default',
-        frozenOppositeTangent: null
+        frozenOppositeTangent: null,
+        spaceDown: false,
+        spaceStartX: 0,
+        spaceStartY: 0,
+        knotStartX: cx,
+        knotStartY: cy
       } as DragState
+      cursorOverride.value = 'crosshair'
       return
     }
 
@@ -455,10 +478,12 @@ export function useCanvasInput(
       editor.state.penCursorX = cx
       editor.state.penCursorY = cy
 
-      const first = editor.state.penState.vertices[0]
-      if (editor.state.penState.vertices.length > 2) {
-        const dist = Math.hypot(cx - first.x, cy - first.y)
-        editor.penSetClosingToFirst(dist < PEN_CLOSE_THRESHOLD)
+      if (!drag.value) {
+        const first = editor.state.penState.vertices[0]
+        if (editor.state.penState.vertices.length > 2) {
+          const dist = Math.hypot(cx - first.x, cy - first.y)
+          editor.penSetClosingToFirst(dist < PEN_CLOSE_THRESHOLD)
+        }
       }
       editor.requestRepaint()
     }
@@ -520,58 +545,88 @@ export function useCanvasInput(
     }
 
     if (d.type === 'pen-drag') {
-      const tx = cx - d.startX
-      const ty = cy - d.startY
-      if (Math.hypot(tx, ty) > 2) {
-        const penState = editor.state.penState
-        const firstSeg = penState?.segments[0]
-        const closingOpposite =
-          penState?.pendingClose && firstSeg
-            ? firstSeg.start === 0
-              ? firstSeg.tangentStart
-              : firstSeg.end === 0
-                ? firstSeg.tangentEnd
-                : null
-            : null
-        const mode = e.metaKey || e.ctrlKey ? 'continuous' : e.altKey ? 'independent' : 'default'
-        if (mode !== d.modifierMode) {
-          if (mode === 'default') {
-            d.frozenOppositeTangent = null
-          } else if (!d.frozenOppositeTangent) {
-            const lastSeg = penState?.segments[penState.segments.length - 1]
-            d.frozenOppositeTangent = lastSeg
-              ? closingOpposite
-                ? { ...closingOpposite }
-                : { ...lastSeg.tangentEnd }
-              : penState?.dragTangent
-                ? { x: -penState.dragTangent.x, y: -penState.dragTangent.y }
-                : { x: 0, y: 0 }
-          }
-          d.modifierMode = mode
+      const isSpace = spaceHeld.value
+      const penState = editor.state.penState
+
+      if (!penState) return
+      const isClosing = !!penState.pendingClose && penState.vertices.length > 2
+      const anchorIndex = isClosing ? 0 : penState.vertices.length - 1
+      const anchor = penState.vertices[anchorIndex]
+
+      if (isSpace) {
+        if (!d.spaceDown) {
+          d.spaceDown = true
+          d.spaceStartX = cx
+          d.spaceStartY = cy
+          d.knotStartX = anchor.x
+          d.knotStartY = anchor.y
         }
 
-        if (mode === 'continuous') {
-          editor.penSetDragTangent(tx, ty, {
-            keepOpposite: true,
-            constrainToOpposite: true,
-            oppositeTangent: d.frozenOppositeTangent
-          })
-        } else if (mode === 'independent') {
-          editor.penSetDragTangent(tx, ty, {
-            keepOpposite: true,
-            oppositeTangent: d.frozenOppositeTangent
-          })
-        } else {
-          editor.penSetDragTangent(
-            tx,
-            ty,
-            penState?.pendingClose
-              ? {
-                  keepOpposite: true,
-                  oppositeTangent: closingOpposite
-                }
-              : undefined
-          )
+        const dx = cx - d.spaceStartX
+        const dy = cy - d.spaceStartY
+        editor.penSetKnotPosition?.(d.knotStartX + dx, d.knotStartY + dy)
+      } else {
+        if (d.spaceDown) {
+          d.spaceDown = false
+          // Adjust startX/startY so the tangent pull is relative to the new knot position
+          const dx = anchor.x - d.knotStartX
+          const dy = anchor.y - d.knotStartY
+          d.startX += dx
+          d.startY += dy
+        }
+
+        const tx = cx - d.startX
+        const ty = cy - d.startY
+        if (Math.hypot(tx, ty) > 2) {
+          const firstSeg = penState.segments[0]
+          const closingOpposite =
+            penState.pendingClose && firstSeg
+              ? firstSeg.start === 0
+                ? firstSeg.tangentStart
+                : firstSeg.end === 0
+                  ? firstSeg.tangentEnd
+                  : null
+              : null
+          const mode = e.metaKey || e.ctrlKey ? 'continuous' : e.altKey ? 'independent' : 'default'
+          if (mode !== d.modifierMode) {
+            if (mode === 'default') {
+              d.frozenOppositeTangent = null
+            } else if (!d.frozenOppositeTangent) {
+              const lastSeg = penState.segments[penState.segments.length - 1]
+              d.frozenOppositeTangent = lastSeg
+                ? closingOpposite
+                  ? { ...closingOpposite }
+                  : { ...lastSeg.tangentEnd }
+                : penState.dragTangent
+                  ? { x: -penState.dragTangent.x, y: -penState.dragTangent.y }
+                  : { x: 0, y: 0 }
+            }
+            d.modifierMode = mode
+          }
+
+          if (mode === 'continuous') {
+            editor.penSetDragTangent(tx, ty, {
+              keepOpposite: true,
+              constrainToOpposite: true,
+              oppositeTangent: d.frozenOppositeTangent
+            })
+          } else if (mode === 'independent') {
+            editor.penSetDragTangent(tx, ty, {
+              keepOpposite: true,
+              oppositeTangent: d.frozenOppositeTangent
+            })
+          } else {
+            editor.penSetDragTangent(
+              tx,
+              ty,
+              penState.pendingClose
+                ? {
+                    keepOpposite: true,
+                    oppositeTangent: closingOpposite
+                  }
+                : undefined
+            )
+          }
         }
       }
       return

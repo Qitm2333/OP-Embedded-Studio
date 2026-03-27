@@ -218,7 +218,8 @@ export function createEditorStore(initialGraph?: SceneGraph) {
 
   function setTool(tool: Tool) {
     // If switching away from PEN while drawing, commit the open path
-    if (state.penState && tool !== 'PEN') {
+    // except when switching to HAND (e.g. holding Space to pan)
+    if (state.penState && tool !== 'PEN' && tool !== 'HAND') {
       editor.penCommit(false)
     }
     state.activeTool = tool
@@ -789,7 +790,7 @@ export function createEditorStore(initialGraph?: SceneGraph) {
       if (v > hi) hi = v
     }
 
-    const target = align === 'min' ? lo : (align === 'max' ? hi : (lo + hi) / 2)
+    const target = align === 'min' ? lo : align === 'max' ? hi : (lo + hi) / 2
     for (const i of indices) {
       es.vertices[i] = { ...es.vertices[i], [prop]: target }
     }

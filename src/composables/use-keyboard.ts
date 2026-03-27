@@ -14,12 +14,6 @@ import { openFileDialog } from './use-menu'
 
 import type { ComputedRef } from 'vue'
 
-type NodeEditKeyboardMethods = Partial<{
-  nodeEditDeleteSelected: () => void
-  nodeEditBreakAtVertex: () => void
-  exitNodeEditMode: (commit: boolean) => void
-}>
-
 function isEditing(e: Event) {
   return e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement
 }
@@ -105,7 +99,14 @@ export function useKeyboard() {
 
   useEventListener(window, 'keydown', (e: KeyboardEvent) => {
     if (isEditing(e)) return
-    if (e.code === 'Space' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat && toolBeforeSpace === null) {
+    if (
+      e.code === 'Space' &&
+      !e.metaKey &&
+      !e.ctrlKey &&
+      !e.altKey &&
+      !e.repeat &&
+      toolBeforeSpace === null
+    ) {
       if (store.state.activeTool !== 'HAND') {
         toolBeforeSpace = store.state.activeTool
         store.setTool('HAND')
@@ -245,7 +246,7 @@ export function useKeyboard() {
       (store.state.nodeEditState.selectedVertexIndices.size > 0 ||
         store.state.nodeEditState.selectedHandles.size > 0)
     ) {
-      nodeEditStore.nodeEditDeleteSelected()
+      store.nodeEditDeleteSelected()
       return
     }
     runCommand('selection.delete')
@@ -257,9 +258,9 @@ export function useKeyboard() {
         store.state.nodeEditState.selectedHandles.size > 0)
     ) {
       if (keys['alt'].value) {
-        nodeEditStore.nodeEditBreakAtVertex()
+        store.nodeEditBreakAtVertex()
       } else {
-        nodeEditStore.nodeEditDeleteSelected()
+        store.nodeEditDeleteSelected()
       }
       return
     }
@@ -267,14 +268,14 @@ export function useKeyboard() {
   })
   whenever(plain('Enter'), () => {
     if (store.state.nodeEditState) {
-      nodeEditStore.exitNodeEditMode(true)
+      store.exitNodeEditMode(true)
       return
     }
     if (store.state.penState) store.penCommit(false)
   })
   whenever(plain('Escape'), () => {
     if (store.state.nodeEditState) {
-      nodeEditStore.exitNodeEditMode(true)
+      store.exitNodeEditMode(true)
       return
     }
     if (store.state.penState) {

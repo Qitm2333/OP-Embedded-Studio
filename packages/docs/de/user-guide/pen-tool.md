@@ -15,6 +15,7 @@ Drücken Sie <kbd>P</kbd>, um das Stiftwerkzeug zu aktivieren.
 
 - **Klicken** setzt einen Eckpunkt (gerades Segment)
 - **Klicken + Ziehen** setzt einen Kurvenpunkt mit Bézier-Tangentengriffen
+  - **<kbd>Space</kbd> gedrückt halten** beim Ziehen (ohne die Maustaste loszulassen), um den Punkt selbst zu verschieben
 
 Klicken Sie mehrere Punkte, um einen Pfad Segment für Segment aufzubauen. Eine Vorschaulinie erstreckt sich vom letzten Punkt zu Ihrem Cursor.
 

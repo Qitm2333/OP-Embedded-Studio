@@ -14,6 +14,7 @@ Pulsa <kbd>P</kbd> para activar la herramienta pluma.
 
 - **Clic** — punto de esquina (segmento recto)
 - **Clic + arrastrar** — punto de curva con manejadores de tangente Bézier — la dirección y longitud del arrastre controlan la forma de la curva
+  - **Mantener <kbd>Space</kbd>** mientras arrastras (sin soltar el botón del ratón) para mover el punto en sí
 
 ## Cerrar un trazado
 

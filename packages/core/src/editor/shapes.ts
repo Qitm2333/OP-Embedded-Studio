@@ -161,7 +161,9 @@ export function createShapeActions(ctx: EditorContext) {
     const anchorIndex = isClosing ? 0 : ps.vertices.length - 1
     const lastSeg = ps.segments.length > 0 ? ps.segments[ps.segments.length - 1] : undefined
     const firstSeg = ps.segments.length > 0 ? ps.segments[0] : undefined
-    const opposite = options?.oppositeTangent ?? ps.oppositeDragTangent ??
+    const opposite =
+      options?.oppositeTangent ??
+      ps.oppositeDragTangent ??
       (lastSeg ? lastSeg.tangentEnd : { x: -tx, y: -ty })
 
     if (options?.constrainToOpposite) {
@@ -197,6 +199,16 @@ export function createShapeActions(ctx: EditorContext) {
     if (!ctx.state.penState) return
     ctx.state.penState.pendingClose = closing
     ctx.requestRepaint()
+  }
+
+  function penSetKnotPosition(x: number, y: number) {
+    if (!ctx.state.penState) return
+    const ps = ctx.state.penState
+    const isClosing = !!ps.pendingClose && ps.vertices.length > 2
+    const anchorIndex = isClosing ? 0 : ps.vertices.length - 1
+    ps.vertices[anchorIndex].x = x
+    ps.vertices[anchorIndex].y = y
+    ctx.requestRender()
   }
 
   function penCommit(closed: boolean) {
@@ -350,6 +362,7 @@ export function createShapeActions(ctx: EditorContext) {
     penSetDragTangent,
     penSetClosingToFirst,
     penSetPendingClose,
+    penSetKnotPosition,
     penCommit,
     penCancel,
     adoptNodesIntoSection,

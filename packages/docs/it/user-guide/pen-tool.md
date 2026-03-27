@@ -10,6 +10,7 @@ description: Percorsi vettoriali con curve di Bézier in OpenPencil.
 ## Posizionare punti
 - **Click** — punto angolare (segmento rettilineo)
 - **Click + trascina** — punto curvo con maniglie tangenti di Bézier
+  - **Tieni premuto <kbd>Space</kbd>** mentre trascini per spostare il punto stesso
 
 ## Chiudere un percorso
 Clicca sul primo punto del percorso per chiuderlo in un anello. I percorsi chiusi possono essere riempiti.

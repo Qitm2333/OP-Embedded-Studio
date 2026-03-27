@@ -1,7 +1,8 @@
+import { cloneVectorNetwork } from '@open-pencil/core'
+
 import { hitTestHandle } from './geometry'
 
 import type { DragResize, HandlePosition } from './types'
-import { cloneVectorNetwork } from '@open-pencil/core'
 import type { Rect, SceneNode } from '@open-pencil/core'
 import type { Editor } from '@open-pencil/core/editor'
 

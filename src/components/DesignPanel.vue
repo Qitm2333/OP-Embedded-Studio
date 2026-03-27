@@ -39,7 +39,9 @@ const { panels } = useI18n()
       class="flex items-center gap-1.5 border-b border-border px-3 py-2"
     >
       <span class="text-[11px] text-muted">{{ panels.mixed }}</span>
-      <span class="text-xs font-semibold">{{ panels.layersCount({ count: String(multiCount) }) }}</span>
+      <span class="text-xs font-semibold">{{
+        panels.layersCount({ count: String(multiCount) })
+      }}</span>
     </div>
     <PositionSection />
     <AppearanceSection />

@@ -19,6 +19,15 @@ Pressing `P` SHALL activate the Pen tool. Pen-created vectors SHALL use vector-n
 - **WHEN** user drags while placing a new point
 - **THEN** non-zero tangents are recorded for bezier curvature
 
+### Requirement: Vertex manipulation during creation
+While drawing with the Pen tool, users SHALL be able to relocate the currently placed vertex without exiting the active curve drag.
+
+#### Scenario: Relocate vertex with Space
+- **WHEN** user drags to create a curve segment and holds `Space`
+- **THEN** the active vertex moves with the cursor
+- **AND** the tangent handle pull distance remains locked relative to the new vertex position
+- **AND** cursor visually remains a crosshair, not switching to the hand tool
+
 ### Requirement: Open and closed path commit behavior
 Path close intent SHALL be detected near the first vertex, but final close commit SHALL happen on `mouseUp`, not `mouseDown`.
 

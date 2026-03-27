@@ -1,7 +1,7 @@
+import { cloneVectorNetwork } from '../scene-graph'
 import { defineTool, nodeSummary } from './schema'
 
 import type { FigmaAPI } from '../figma-api'
-import { cloneVectorNetwork } from '../scene-graph'
 import type { SceneNode, VectorNetwork } from '../scene-graph'
 
 function getVectorNode(

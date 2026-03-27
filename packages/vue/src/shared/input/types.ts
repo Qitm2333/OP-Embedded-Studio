@@ -62,6 +62,11 @@ export interface DragPen {
   startY: number
   modifierMode: 'default' | 'continuous' | 'independent'
   frozenOppositeTangent: Vector | null
+  spaceDown: boolean
+  spaceStartX: number
+  spaceStartY: number
+  knotStartX: number
+  knotStartY: number
 }
 
 export interface DragTextSelect {
