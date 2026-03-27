@@ -198,8 +198,9 @@ export const AI_PROVIDERS: AIProviderDef[] = [
     name: 'Z.ai',
     keyPlaceholder: 'API key',
     keyURL: 'https://docs.z.ai/api-reference/introduction',
-    defaultModel: 'glm-5',
+    defaultModel: 'glm-5.1',
     models: [
+      { id: 'glm-5.1', name: 'GLM-5.1' },
       { id: 'glm-5', name: 'GLM-5' },
       { id: 'glm-5-code', name: 'GLM-5-Code' },
       { id: 'glm-4.7', name: 'GLM-4.7' },
