@@ -1,29 +1,16 @@
 <script setup lang="ts">
-import {
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxRoot,
-  PopoverContent,
-  PopoverPortal,
-  PopoverRoot,
-  PopoverTrigger
-} from 'reka-ui'
-
-import { colorToCSS, colorToHexRaw } from '@open-pencil/core'
+import { colorToHexRaw } from '@open-pencil/core'
 import { PropertyListRoot, useFillControls, useI18n } from '@open-pencil/vue'
 
 import FillPicker from '@/components/FillPicker.vue'
-import ScrubInput from '@/components/ScrubInput.vue'
-import Tip from '@/components/ui/Tip.vue'
+import ColorStyleRow from '@/components/properties/ColorStyleRow.vue'
 import { iconButton } from '@/components/ui/icon-button'
 import { sectionLabel, sectionWrapper } from '@/components/ui/section'
 
-import type { Fill, Variable } from '@open-pencil/core'
+import type { Fill } from '@open-pencil/core'
 
 const fillCtx = useFillControls()
-const { panels, dialogs } = useI18n()
+const { panels } = useI18n()
 </script>
 
 <template>
@@ -44,12 +31,20 @@ const { panels, dialogs } = useI18n()
         </button>
       </div>
       <p v-if="isMixed" class="text-[11px] text-muted">{{ panels.mixedFillsHelp }}</p>
-      <div
+      <ColorStyleRow
         v-for="(fill, i) in items as Fill[]"
-        :key="i"
+        :key="`${i}:${fill.visible ? 'visible' : 'hidden'}`"
+        :item="fill"
+        :index="i"
+        :active-node-id="activeNode?.id ?? null"
+        :binding-api="fillCtx"
+        :visibility-test-id="`fill-visibility-${i}`"
+        unbind-test-id="fill-unbind-variable"
         data-test-id="fill-item"
         :data-test-index="i"
-        class="group flex items-center gap-1.5 py-0.5"
+        @patch="patch(i, $event)"
+        @toggle-visibility="toggleVisibility(i)"
+        @remove="remove(i)"
       >
         <FillPicker :fill="fill" @update="update(i, $event)" />
 
@@ -59,15 +54,6 @@ const { panels, dialogs } = useI18n()
           >
             {{ fillCtx.getBoundVariable(activeNode.id, i)!.name }}
           </span>
-          <Tip :label="panels.detachVariable">
-            <button
-              data-test-id="fill-unbind-variable"
-              class="cursor-pointer border-none bg-transparent p-0 text-violet-400 hover:text-surface"
-              @click="fillCtx.unbindFillVariable(activeNode.id, i)"
-            >
-              <icon-lucide-unlink class="size-3" />
-            </button>
-          </Tip>
         </template>
         <template v-else>
           <span class="min-w-0 flex-1 font-mono text-xs text-surface">
@@ -78,83 +64,7 @@ const { panels, dialogs } = useI18n()
             <template v-else>{{ fill.type }}</template>
           </span>
         </template>
-
-        <ScrubInput
-          class="w-12"
-          suffix="%"
-          :model-value="Math.round(fill.opacity * 100)"
-          :min="0"
-          :max="100"
-          @update:model-value="patch(i, { opacity: Math.max(0, Math.min(1, $event / 100)) })"
-        />
-
-        <PopoverRoot
-          v-if="
-            fillCtx.colorVariables.value.length > 0 &&
-            fill.type === 'SOLID' &&
-            activeNode &&
-            !fillCtx.getBoundVariable(activeNode.id, i)
-          "
-        >
-          <Tip :label="panels.applyVariable">
-            <PopoverTrigger
-              class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
-            >
-              <icon-lucide-link class="size-3.5" />
-            </PopoverTrigger>
-          </Tip>
-          <PopoverPortal>
-            <PopoverContent
-              side="left"
-              :side-offset="8"
-              class="z-50 w-56 rounded-lg border border-border bg-panel shadow-lg"
-            >
-              <ComboboxRoot
-                @update:model-value="
-                  activeNode && fillCtx.bindFillVariable(activeNode.id, i, ($event as Variable).id)
-                "
-              >
-                <ComboboxInput
-                  :model-value="fillCtx.searchTerm.value"
-                  :placeholder="dialogs.search"
-                  class="w-full border-b border-border bg-transparent px-2 py-1.5 text-[11px] text-surface outline-none placeholder:text-muted"
-                  @update:model-value="fillCtx.searchTerm.value = String($event)"
-                />
-                <ComboboxContent class="max-h-48 overflow-y-auto p-1">
-                  <ComboboxEmpty class="px-2 py-3 text-center text-[11px] text-muted"
-                    >{{ panels.noVariablesFound }}</ComboboxEmpty
-                  >
-                  <ComboboxItem
-                    v-for="v in fillCtx.filteredVariables.value"
-                    :key="v.id"
-                    :value="v"
-                    class="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-[11px] text-surface data-[highlighted]:bg-hover"
-                  >
-                    <div
-                      class="size-3 shrink-0 rounded-sm border border-border"
-                      :style="{
-                        background: fillCtx.store.resolveColorVariable(v.id)
-                          ? colorToCSS(fillCtx.store.resolveColorVariable(v.id)!)
-                          : '#000'
-                      }"
-                    />
-                    <span class="min-w-0 flex-1 truncate">{{ v.name }}</span>
-                  </ComboboxItem>
-                </ComboboxContent>
-              </ComboboxRoot>
-            </PopoverContent>
-          </PopoverPortal>
-        </PopoverRoot>
-
-        <button
-          class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
-          @click="toggleVisibility(i)"
-        >
-          <icon-lucide-eye v-if="fill.visible" class="size-3.5" />
-          <icon-lucide-eye-off v-else class="size-3.5" />
-        </button>
-        <button :class="iconButton()" @click="remove(i)">−</button>
-      </div>
+      </ColorStyleRow>
     </div>
   </PropertyListRoot>
 </template>

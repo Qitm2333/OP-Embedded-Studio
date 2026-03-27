@@ -15,7 +15,7 @@ These APIs are public, but they are more specialized than the main component and
 
 ## Picker and editor internals
 
-- [useFillVariableBinding](./use-fill-variable-binding)
+- [useColorVariableBinding](./use-color-variable-binding)
 - [useFillPicker](./use-fill-picker)
 - [useGradientStops](./use-gradient-stops)
 - [useFontPicker](./use-font-picker)

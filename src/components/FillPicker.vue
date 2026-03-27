@@ -34,6 +34,13 @@ const { panels } = useI18n()
     swatch-class="size-5 shrink-0 cursor-pointer rounded border border-border p-0"
     @update="emit('update', $event)"
   >
+    <template #trigger="{ style }">
+      <button
+        data-test-id="fill-picker-swatch"
+        class="size-5 shrink-0 cursor-pointer rounded border border-border p-0"
+        :style="style"
+      />
+    </template>
     <template #default="{ fill: currentFill, category, toSolid, toGradient, toImage, update }">
       <div class="mb-2 flex items-center gap-0.5">
         <Tip :label="panels.solid">

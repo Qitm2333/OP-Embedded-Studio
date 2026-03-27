@@ -1,13 +1,13 @@
 ---
 title: useFillControls
-description: Fill-panel composable with default fill behavior and variable binding support.
+description: Fill-panel composable with default fill behavior.
 ---
 
 # useFillControls
 
 `useFillControls()` is the fill-property composable used by fill editing UIs.
 
-It builds on variable-binding support and adds a reusable default fill value.
+It adds a reusable default fill value.
 
 ## Usage
 
@@ -19,11 +19,9 @@ const fills = useFillControls()
 
 ## What it gives you
 
-Along with fill binding behavior, it exposes:
+It exposes:
 
 - `defaultFill`
-- fill variable-binding helpers
-- selection-aware fill editing state
 
 ## Practical examples
 

@@ -140,7 +140,7 @@ These exports are intentionally public, but they are lower-level or more special
 
 - `useNodeProps()`
 - `useSceneComputed()`
-- `useFillVariableBinding()`
+- `useColorVariableBinding()`
 - `useFillPicker()`
 - `useGradientStops()`
 - `useFontPicker()`

@@ -130,7 +130,7 @@ test('adding an effect creates effect item', async () => {
   await addBtn.click()
   await canvas.waitForRender()
 
-  const effectItems = effectsSection().locator('[data-test-id="effects-item"]')
+  const effectItems = effectsSection().locator('[data-test-id="effect-item"]')
   await expect(effectItems.first()).toBeVisible()
 
   const id = await getSelectedId()
@@ -170,6 +170,78 @@ test('visibility toggle in appearance section works', async () => {
 
   const restored = await getNode(id!)
   expect(restored!.visible).toBe(true)
+})
+
+test('fill stroke and effect visibility toggles update on repeated clicks and support undo redo', async () => {
+  const id = await getSelectedId()
+  expect(id).toBeTruthy()
+
+  const fillButton = page.locator('[data-test-id="fill-visibility-0"]')
+  await expect(fillButton).toBeVisible()
+
+  const initial = await getNode(id!)
+  expect(initial!.fills[0]?.visible).toBe(true)
+
+  await fillButton.click()
+  await canvas.waitForRender()
+  await expect(fillButton.locator('icon-lucide-eye-off')).toBeVisible()
+  expect((await getNode(id!))!.fills[0]?.visible).toBe(false)
+
+  await fillButton.click()
+  await canvas.waitForRender()
+  await expect(fillButton.locator('icon-lucide-eye')).toBeVisible()
+  expect((await getNode(id!))!.fills[0]?.visible).toBe(true)
+
+  await canvas.undo()
+  expect((await getNode(id!))!.fills[0]?.visible).toBe(false)
+  await canvas.redo()
+  expect((await getNode(id!))!.fills[0]?.visible).toBe(true)
+
+  const strokeAddButton = strokeSection().locator('[data-test-id="stroke-section-add"]')
+  await strokeAddButton.click()
+  await canvas.waitForRender()
+
+  const strokeButton = page.locator('[data-test-id="stroke-visibility-0"]')
+  await expect(strokeButton).toBeVisible()
+  expect((await getNode(id!))!.strokes[0]?.visible).toBe(true)
+
+  await strokeButton.click()
+  await canvas.waitForRender()
+  await expect(strokeButton.locator('icon-lucide-eye-off')).toBeVisible()
+  expect((await getNode(id!))!.strokes[0]?.visible).toBe(false)
+
+  await strokeButton.click()
+  await canvas.waitForRender()
+  await expect(strokeButton.locator('icon-lucide-eye')).toBeVisible()
+  expect((await getNode(id!))!.strokes[0]?.visible).toBe(true)
+
+  await canvas.undo()
+  expect((await getNode(id!))!.strokes[0]?.visible).toBe(false)
+  await canvas.redo()
+  expect((await getNode(id!))!.strokes[0]?.visible).toBe(true)
+
+  const effectAddButton = effectsSection().locator('[data-test-id="effects-section-add"]')
+  await effectAddButton.click()
+  await canvas.waitForRender()
+
+  const effectButton = page.locator('[data-test-id="effect-visibility-0"]')
+  await expect(effectButton).toBeVisible()
+  expect((await getNode(id!))!.effects[0]?.visible).toBe(true)
+
+  await effectButton.click()
+  await canvas.waitForRender()
+  await expect(effectButton.locator('icon-lucide-eye-off')).toBeVisible()
+  expect((await getNode(id!))!.effects[0]?.visible).toBe(false)
+
+  await effectButton.click()
+  await canvas.waitForRender()
+  await expect(effectButton.locator('icon-lucide-eye')).toBeVisible()
+  expect((await getNode(id!))!.effects[0]?.visible).toBe(true)
+
+  await canvas.undo()
+  expect((await getNode(id!))!.effects[0]?.visible).toBe(false)
+  await canvas.redo()
+  expect((await getNode(id!))!.effects[0]?.visible).toBe(true)
 })
 
 test('deselecting shows empty design panel', async () => {

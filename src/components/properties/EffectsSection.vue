@@ -36,8 +36,8 @@ const { panels } = useI18n()
 
       <div
         v-for="(effect, i) in items as Effect[]"
-        :key="i"
-        data-test-id="effects-item"
+        :key="`${i}:${effect.visible ? 'visible' : 'hidden'}`"
+        data-test-id="effect-item"
         :data-test-index="i"
       >
         <div class="group flex items-center gap-1.5 py-0.5">
@@ -64,6 +64,7 @@ const { panels } = useI18n()
           />
 
           <button
+            :data-test-id="`effect-visibility-${i}`"
             class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
             @click="toggleVisibility(i)"
           >

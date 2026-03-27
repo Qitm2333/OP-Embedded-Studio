@@ -1,6 +1,6 @@
 import { DEFAULT_SHAPE_FILL } from '@open-pencil/core'
 
-import { useFillVariableBinding } from './useFillVariableBinding'
+import { useColorVariableBinding } from './useColorVariableBinding'
 
 /**
  * Returns fill-related panel helpers and a reusable default fill value.
@@ -9,7 +9,7 @@ import { useFillVariableBinding } from './useFillVariableBinding'
  * fill editing UIs.
  */
 export function useFillControls() {
-  const ctx = useFillVariableBinding()
+  const ctx = useColorVariableBinding('fills')
 
   return {
     ...ctx,
