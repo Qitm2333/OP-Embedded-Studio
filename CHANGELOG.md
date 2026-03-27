@@ -16,6 +16,7 @@
 - Close open paths by dragging one endpoint to the other
 - Align selected anchor points relative to each other in vector edit mode — the standard alignment buttons in the position panel now operate on selected vertices when 2 or more are selected
 - Add GLM-5.1 model id to the z.ai provider
+- Add MiniMax M2.7 model id to the minimax provider
 
 ### Fixes
 
