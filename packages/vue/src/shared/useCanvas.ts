@@ -1,43 +1,12 @@
 import { useRafFn, useResizeObserver } from '@vueuse/core'
 import { onMounted, onScopeDispose, type Ref } from 'vue'
 
-import { getCanvasKit, getGpuBackend, SkiaRenderer } from '@open-pencil/core'
+import { getCanvasKit, SkiaRenderer } from '@open-pencil/core'
 
 import { useViewportKind } from '../viewport/useViewportKind'
 
 import type { Editor } from '@open-pencil/core/editor'
 import type { CanvasKit } from 'canvaskit-wasm'
-
-interface WebGPUContext {
-  device: GPUDevice
-  deviceContext: unknown
-}
-
-interface CanvasKitWebGPU {
-  MakeGPUDeviceContext(device: GPUDevice): unknown
-  MakeGPUCanvasContext(ctx: unknown, canvas: HTMLCanvasElement, opts?: unknown): unknown
-  MakeGPUCanvasSurface(
-    ctx: unknown,
-    colorSpace?: unknown,
-    width?: number,
-    height?: number
-  ): ReturnType<CanvasKit['MakeSurface']>
-}
-
-function asWebGPU(ck: CanvasKit): CanvasKitWebGPU {
-  return ck as unknown as CanvasKitWebGPU
-}
-
-async function initWebGPU(ck: CanvasKit): Promise<WebGPUContext | null> {
-  if (!('gpu' in navigator)) return null
-  const adapter = await navigator.gpu.requestAdapter()
-  if (!adapter) return null
-  const device = await adapter.requestDevice()
-  // oxlint-disable-next-line typescript/no-unnecessary-condition -- WebGPU CanvasKit API may not exist at runtime
-  const deviceContext = asWebGPU(ck).MakeGPUDeviceContext?.(device)
-  if (!deviceContext) return null
-  return { device, deviceContext }
-}
 
 /**
  * Options for {@link useCanvas}.
@@ -76,7 +45,6 @@ export function useCanvas(
 ) {
   let renderer: SkiaRenderer | null = null
   let ck: CanvasKit | null = null
-  let gpuCtx: WebGPUContext | null = null
   let glContext: ReturnType<CanvasKit['MakeGrContext']> | null = null
   let destroyed = false
   let dirty = true
@@ -88,16 +56,7 @@ export function useCanvas(
     if (!canvas || destroyed) return
 
     ck = await getCanvasKit()
-    // oxlint-disable-next-line typescript/no-unnecessary-condition -- async race: destroyed may change during await
     if (destroyed) return
-
-    if (getGpuBackend() === 'webgpu') {
-      gpuCtx = await initWebGPU(ck)
-      if (!gpuCtx) {
-        console.warn('WebGPU init failed, reload without ?gpu=webgpu to use WebGL')
-        return
-      }
-    }
 
     await new Promise((r) => requestAnimationFrame(r))
     createSurface(canvas)
@@ -133,21 +92,10 @@ export function useCanvas(
 
     sizeCanvas(canvas)
 
-    let surface
-    if (getGpuBackend() === 'webgpu' && gpuCtx) {
-      const gpu = asWebGPU(ck)
-      const canvasCtx = gpu.MakeGPUCanvasContext(gpuCtx.deviceContext, canvas)
-      surface = gpu.MakeGPUCanvasSurface(canvasCtx, ck.ColorSpace.SRGB, canvas.width, canvas.height)
-      if (!surface) {
-        console.error('Failed to create WebGPU surface')
-        return
-      }
-    } else {
-      surface = makeGLSurface(canvas)
-      if (!surface) {
-        console.error('Failed to create WebGL surface')
-        return
-      }
+    const surface = makeGLSurface(canvas)
+    if (!surface) {
+      console.error('Failed to create WebGL surface')
+      return
     }
 
     const glCtx = canvas.getContext('webgl2') ?? null

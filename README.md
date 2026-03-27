@@ -213,7 +213,6 @@ OpenPencil is the alternative: open source (MIT), reads .fig files natively, eve
 - Grid child positioning UI — column/row span controls, grid overlay on canvas
 - Skewing and OkHCL color support
 - Windows code signing (Azure Authenticode certificates)
-- Experimental WebGPU/Graphite rendering backend
 
 ## Contributing
 
