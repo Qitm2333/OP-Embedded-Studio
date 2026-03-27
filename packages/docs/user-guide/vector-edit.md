@@ -1,6 +1,6 @@
 ---
 title: Vector Object Editing
-description: How to edit vector path geometry: anchors, bezier handles, modifiers, and Pen tool actions in edit mode.
+description: "How to edit vector path geometry: anchors, bezier handles, modifiers, and Pen tool actions in edit mode."
 ---
 
 # Vector Object Editing
