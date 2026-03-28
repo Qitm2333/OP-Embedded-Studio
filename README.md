@@ -241,7 +241,8 @@ bun run tauri dev  # Desktop app (requires Rust)
 
 ```
 packages/
-  core/           @open-pencil/core — engine (scene graph, renderer, layout, codec)
+  core/           @open-pencil/core — engine (scene graph, renderer, layout, file formats, tools)
+  vue/            @open-pencil/vue — headless Vue SDK
   cli/            @open-pencil/cli — headless CLI
   mcp/            @open-pencil/mcp — MCP server (stdio + HTTP)
   docs/           Documentation site (openpencil.dev)
