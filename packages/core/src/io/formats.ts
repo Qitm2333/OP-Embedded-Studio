@@ -1,6 +1,7 @@
 import { exportFigFile } from '../fig-export'
 import { headlessRenderNodes } from '../headless-render'
 import { parseFigFile } from '../kiwi'
+import { parsePenFile } from '../pen-file'
 import { sceneNodeToJSX, selectionToJSX } from '../render'
 import { renderNodesToImage } from '../render-image'
 import { renderNodesToSVG } from '../svg-export'
@@ -195,6 +196,26 @@ export const figFormat: IOFormatAdapter = {
   }
 }
 
+export const penFormat: IOFormatAdapter = {
+  id: 'pen',
+  label: 'Pencil Document',
+  role: 'interchange-document',
+  category: 'document',
+  extensions: ['pen'],
+  mimeTypes: ['application/json', 'text/plain'],
+  support: {
+    readDocument: true
+  },
+  matchesFile(fileName, mimeType) {
+    return lowerExt(fileName) === 'pen' || mimeType === 'application/json'
+  },
+  async readDocument(input) {
+    const text = new TextDecoder().decode(input.data)
+    const graph = parsePenFile(text)
+    return { graph, sourceFormat: 'pen' }
+  }
+}
+
 export const pngFormat = rasterFormat('PNG')
 export const jpgFormat = rasterFormat('JPG')
 export const webpFormat = rasterFormat('WEBP')
@@ -268,6 +289,7 @@ export const jsxFormat: IOFormatAdapter = {
 
 export const BUILTIN_IO_FORMATS: IOFormatAdapter[] = [
   figFormat,
+  penFormat,
   pngFormat,
   jpgFormat,
   webpFormat,

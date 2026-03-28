@@ -297,6 +297,8 @@ export {
   type OpenPencilClipboardData
 } from './clipboard'
 
+export { readPenFile, parsePenFile } from './pen-file'
+
 export {
   readFigFile,
   parseFigFile,

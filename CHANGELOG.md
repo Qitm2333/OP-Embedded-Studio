@@ -19,6 +19,7 @@
 - Export selection or current page as `.fig` from the app export UI and app menu
 - New CLI commands: `open-pencil convert` for document conversion and `open-pencil formats` to inspect readable/writable/exportable formats
 - CLI export now supports `.fig` output and routes PNG/JPG/WEBP/SVG/JSX/`.fig` through the shared IO layer
+- `Open…` now supports `.pen` Pencil documents through the shared document reader pipeline while keeping `.fig` as the native save format
 
 ### Fixes
 

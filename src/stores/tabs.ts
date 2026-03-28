@@ -1,5 +1,7 @@
 import { shallowRef, computed, triggerRef } from 'vue'
 
+import { BUILTIN_IO_FORMATS, IORegistry } from '@open-pencil/core'
+
 import { createEditorStore, setActiveEditorStore } from './editor'
 
 import type { EditorStore } from './editor'
@@ -9,6 +11,8 @@ export interface Tab {
   id: string
   store: EditorStore
 }
+
+const io = new IORegistry(BUILTIN_IO_FORMATS)
 
 let nextTabId = 1
 
@@ -82,23 +86,26 @@ export async function openFileInNewTab(
   const current = activeTab.value
   const isUntouched =
     current?.store.state.documentName === 'Untitled' && !current.store.undo.canUndo
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  const { graph: imported } = await io.readDocument({
+    name: file.name,
+    mimeType: file.type || undefined,
+    data: bytes
+  })
+  const documentName = file.name.replace(/\.[^.]+$/i, '')
 
   if (isUntouched) {
-    const { readFigFile } = await import('@open-pencil/core')
-    const imported = await readFigFile(file)
     current.store.replaceGraph(imported)
     current.store.undo.clear()
-    current.store.state.documentName = file.name.replace(/\.fig$/i, '')
+    current.store.state.documentName = documentName
     current.store.state.selectedIds = new Set()
     const pageId = current.store.graph.getPages()[0]?.id ?? current.store.graph.rootId
     await current.store.switchPage(pageId)
   } else {
-    const { readFigFile } = await import('@open-pencil/core')
-    const imported = await readFigFile(file)
     const store = createEditorStore(imported)
     createTab(store)
     store.undo.clear()
-    store.state.documentName = file.name.replace(/\.fig$/i, '')
+    store.state.documentName = documentName
     store.state.selectedIds = new Set()
     const pageId = store.graph.getPages()[0]?.id ?? store.graph.rootId
     await store.switchPage(pageId)

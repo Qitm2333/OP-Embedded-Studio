@@ -3,6 +3,7 @@ export { extractExportGraph } from './subgraph'
 export {
   BUILTIN_IO_FORMATS,
   figFormat,
+  penFormat,
   pngFormat,
   jpgFormat,
   webpFormat,

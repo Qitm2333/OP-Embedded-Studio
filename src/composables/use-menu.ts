@@ -5,7 +5,7 @@ import { IS_BROWSER, IS_TAURI } from '@/constants'
 import { useEditorStore } from '@/stores/editor'
 import { openFileInNewTab, createTab, closeTab, activeTab } from '@/stores/tabs'
 
-const fileDialog = useFileDialog({ accept: '.fig', multiple: false, reset: true })
+const fileDialog = useFileDialog({ accept: '.fig,.pen', multiple: false, reset: true })
 fileDialog.onChange((files) => {
   const file = files?.[0]
   if (file) void openFileInNewTab(file)
@@ -28,7 +28,7 @@ export async function openFileDialog() {
     const { open } = await import('@tauri-apps/plugin-dialog')
     const { readFile } = await import('@tauri-apps/plugin-fs')
     const path = await open({
-      filters: [{ name: 'Figma file', extensions: ['fig'] }],
+      filters: [{ name: 'Design file', extensions: ['fig', 'pen'] }],
       multiple: false
     })
     if (!path) return
@@ -43,8 +43,12 @@ export async function openFileDialog() {
       const [handle] = await window.showOpenFilePicker({
         types: [
           {
-            description: 'Figma file',
-            accept: { 'application/octet-stream': ['.fig'] }
+            description: 'Design file',
+            accept: {
+              'application/octet-stream': ['.fig'],
+              'application/json': ['.pen'],
+              'text/plain': ['.pen']
+            }
           }
         ]
       })
@@ -59,11 +63,16 @@ export async function openFileDialog() {
   fileDialog.open()
 }
 
+export async function importFileDialog() {
+  await openFileDialog()
+}
+
 const store = useEditorStore()
 
 const MENU_ACTIONS: Partial<Record<string, () => void>> = {
   new: () => createTab(),
   open: () => void openFileDialog(),
+  import: () => void importFileDialog(),
   close: () => {
     if (activeTab.value) closeTab(activeTab.value.id)
   },
