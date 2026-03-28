@@ -3,10 +3,12 @@ import { computed } from 'vue'
 import { colorToHexRaw, parseColor } from '@open-pencil/core'
 
 import type { Color } from '@open-pencil/core'
+import type { OkHCLControls } from './types'
 
 const props = defineProps<{
   color: Color
   editable?: boolean
+  okhcl?: OkHCLControls | null
 }>()
 
 const emit = defineEmits<{ update: [color: Color] }>()
@@ -26,5 +28,6 @@ function updateFromHex(value: string) {
     :hex="hex"
     :update-from-hex="updateFromHex"
     :update-color="(nextColor: Color) => emit('update', nextColor)"
+    :okhcl="props.okhcl ?? null"
   />
 </template>

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import {
+  colorDistance,
   exportFigFile,
   FigmaAPI,
   getFillOkHCL,
@@ -8,6 +9,7 @@ import {
   initCodec,
   okhclToRGBA,
   parseFigFile,
+  rgbaToOkHCL,
   SceneGraph
 } from '@open-pencil/core'
 
@@ -44,6 +46,15 @@ describe('OkHCL metadata', () => {
       index: 0,
       color: { h: 20, c: 0.08, l: 0.6, a: 1 }
     })
+  })
+
+  test('preserves visible color closely when converting rgba to okhcl', () => {
+    const rgba = { r: 0.31, g: 0.52, b: 0.83, a: 0.72 }
+    const okhcl = rgbaToOkHCL(rgba)
+    const roundtrip = okhclToRGBA(okhcl)
+
+    expect(colorDistance(rgba, roundtrip)).toBeLessThan(1)
+    expect(Math.abs((roundtrip.a ?? 1) - rgba.a)).toBeLessThan(0.001)
   })
 
   test('roundtrips okhcl metadata through fig export/import', async () => {

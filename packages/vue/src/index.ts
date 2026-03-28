@@ -55,6 +55,7 @@ export { useFillControls } from './controls/useFillControls'
 export { useColorVariableBinding } from './controls/useColorVariableBinding'
 export { useEffectsControls } from './controls/useEffectsControls'
 export { useStrokeControls } from './controls/useStrokeControls'
+export { useOkHCL } from './controls/useOkHCL'
 
 /** Variables, page navigation, and picker helpers. */
 export { useVariables } from './VariablesEditor/useVariables'

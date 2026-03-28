@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { PropertyListRoot, useColorVariableBinding, useStrokeControls, useI18n } from '@open-pencil/vue'
+import {
+  PropertyListRoot,
+  useColorVariableBinding,
+  useStrokeControls,
+  useOkHCL,
+  useI18n
+} from '@open-pencil/vue'
 
 import ColorStyleRow from '@/components/properties/ColorStyleRow.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -15,6 +21,7 @@ import type { SceneNode, Stroke } from '@open-pencil/core'
 
 const strokeCtx = useStrokeControls()
 const strokeVarCtx = useColorVariableBinding('strokes')
+const okhcl = useOkHCL()
 const { panels } = useI18n()
 
 const expandedSides = ref(false)
@@ -24,7 +31,13 @@ function onToggleSides(activeNode: SceneNode) {
   expandedSides.value = next
   if (next && !activeNode.independentStrokeWeights) {
     const weight = activeNode.strokes[0]?.weight ?? 1
-    strokeCtx.selectSide('CUSTOM', { ...activeNode, borderTopWeight: weight, borderRightWeight: weight, borderBottomWeight: weight, borderLeftWeight: weight } as SceneNode)
+    strokeCtx.selectSide('CUSTOM', {
+      ...activeNode,
+      borderTopWeight: weight,
+      borderRightWeight: weight,
+      borderBottomWeight: weight,
+      borderLeftWeight: weight
+    } as SceneNode)
   } else if (!next && activeNode.independentStrokeWeights) {
     strokeCtx.selectSide('ALL', activeNode)
   }
@@ -66,7 +79,26 @@ function onToggleSides(activeNode: SceneNode) {
         @toggle-visibility="toggleVisibility(i)"
         @remove="remove(i)"
       >
-        <ColorInput class="min-w-0 flex-1" :color="stroke.color" editable @update="patch(i, { color: $event })" />
+        <ColorInput
+          class="min-w-0 flex-1"
+          :color="stroke.color"
+          :okhcl="
+            activeNode
+              ? {
+                  model: okhcl.getStrokeColorModel(activeNode, i),
+                  modelOptions: okhcl.modelOptions,
+                  okhcl: okhcl.getStrokeOkHCLColor(activeNode, i),
+                  setModel: ($event) =>
+                    $event === 'okhcl'
+                      ? okhcl.enableStrokeOkHCL(activeNode, i)
+                      : okhcl.disableStrokeOkHCL(activeNode, i),
+                  updateOkHCL: ($event) => okhcl.updateStrokeOkHCL(activeNode, i, $event)
+                }
+              : null
+          "
+          editable
+          @update="patch(i, { color: $event })"
+        />
       </ColorStyleRow>
 
       <div

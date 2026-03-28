@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { colorToHexRaw } from '@open-pencil/core'
-import { PropertyListRoot, useFillControls, useI18n } from '@open-pencil/vue'
+import { PropertyListRoot, useFillControls, useOkHCL, useI18n } from '@open-pencil/vue'
 
 import FillPicker from '@/components/FillPicker.vue'
 import ColorStyleRow from '@/components/properties/ColorStyleRow.vue'
@@ -10,6 +10,7 @@ import { sectionLabel, sectionWrapper } from '@/components/ui/section'
 import type { Fill } from '@open-pencil/core'
 
 const fillCtx = useFillControls()
+const okhcl = useOkHCL()
 const { panels } = useI18n()
 </script>
 
@@ -46,7 +47,24 @@ const { panels } = useI18n()
         @toggle-visibility="toggleVisibility(i)"
         @remove="remove(i)"
       >
-        <FillPicker :fill="fill" @update="update(i, $event)" />
+        <FillPicker
+          :fill="fill"
+          :okhcl="
+            activeNode
+              ? {
+                  model: okhcl.getFillColorModel(activeNode, i),
+                  modelOptions: okhcl.modelOptions,
+                  okhcl: okhcl.getFillOkHCLColor(activeNode, i),
+                  setModel: ($event) =>
+                    $event === 'okhcl'
+                      ? okhcl.enableFillOkHCL(activeNode, i)
+                      : okhcl.disableFillOkHCL(activeNode, i),
+                  updateOkHCL: ($event) => okhcl.updateFillOkHCL(activeNode, i, $event)
+                }
+              : null
+          "
+          @update="update(i, $event)"
+        />
 
         <template v-if="activeNode && fillCtx.getBoundVariable(activeNode.id, i)">
           <span

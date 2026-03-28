@@ -1,4 +1,4 @@
-import { converter } from 'culori'
+import { converter, toGamut } from 'culori'
 
 import { normalizeColor } from './color'
 import { copyFill, copyStroke } from './copy'
@@ -21,6 +21,8 @@ export interface OkHCLPayload {
 }
 
 const toRgb = converter('rgb')
+const toOklch = converter('oklch')
+const toDisplayableRgb = toGamut('rgb', 'oklch')
 const OKHCL_PLUGIN_KEY = 'okhcl'
 
 function clampUnit(value: number): number {
@@ -34,19 +36,47 @@ function normalizeHue(value: number): number {
   return hue < 0 ? hue + 360 : hue
 }
 
-export function okhclToRGBA(color: OkHCLColor): Color {
-  const rgb = toRgb({
-    mode: 'oklch',
-    l: clampUnit(color.l),
-    c: Math.max(0, color.c),
+function normalizeOkHCLColor(color: OkHCLColor): OkHCLColor {
+  return {
     h: normalizeHue(color.h),
-    alpha: color.a ?? 1
-  })
+    c: Math.max(0, color.c),
+    l: clampUnit(color.l),
+    a: clampUnit(color.a ?? 1)
+  }
+}
+
+export function okhclToRGBA(color: OkHCLColor): Color {
+  const normalized = normalizeOkHCLColor(color)
+  const rgb = toRgb(
+    toDisplayableRgb({
+      mode: 'oklch',
+      l: normalized.l,
+      c: normalized.c,
+      h: normalized.h,
+      alpha: normalized.a
+    })
+  )
   return normalizeColor({
     r: rgb.r,
     g: rgb.g,
     b: rgb.b,
-    a: rgb.alpha ?? color.a ?? 1
+    a: rgb.alpha ?? normalized.a
+  })
+}
+
+export function rgbaToOkHCL(color: Color): OkHCLColor {
+  const oklch = toOklch({
+    mode: 'rgb',
+    r: color.r,
+    g: color.g,
+    b: color.b,
+    alpha: color.a
+  })
+  return normalizeOkHCLColor({
+    h: oklch.h ?? 0,
+    c: oklch.c,
+    l: oklch.l,
+    a: oklch.alpha ?? color.a
   })
 }
 
@@ -86,19 +116,16 @@ function createOkHCLPayload(kind: 'fill' | 'stroke', index: number, color: OkHCL
     version: 1,
     kind,
     index,
-    color: {
-      h: normalizeHue(color.h),
-      c: Math.max(0, color.c),
-      l: clampUnit(color.l),
-      a: color.a ?? 1
-    }
+    color: normalizeOkHCLColor(color)
   }
 }
 
-function filterOkHCLPayloads(entries: string[], kind: 'fill' | 'stroke', index: number): string[] {
+function filterOkHCLPayloads(entries: string[], kind?: 'fill' | 'stroke', index?: number): string[] {
   return entries.filter((entry) => {
     const payload = parseOkHCLPayload(entry)
-    return !payload || payload.kind !== kind || payload.index !== index
+    if (!payload) return true
+    if (kind === undefined || index === undefined) return false
+    return payload.kind !== kind || payload.index !== index
   })
 }
 
@@ -139,6 +166,20 @@ export function setNodeStrokeOkHCL(node: SceneNode, index: number, color: OkHCLC
   return {
     strokes,
     pluginData: payloads.map((value) => ({ pluginId: 'open-pencil', key: OKHCL_PLUGIN_KEY, value }))
+  }
+}
+
+export function clearNodeFillOkHCL(node: SceneNode, index: number): Partial<SceneNode> {
+  const okhclValues = filterOkHCLPayloads(node.pluginData.map((entry) => entry.value), 'fill', index)
+  return {
+    pluginData: okhclValues.map((value) => ({ pluginId: 'open-pencil', key: OKHCL_PLUGIN_KEY, value }))
+  }
+}
+
+export function clearNodeStrokeOkHCL(node: SceneNode, index: number): Partial<SceneNode> {
+  const okhclValues = filterOkHCLPayloads(node.pluginData.map((entry) => entry.value), 'stroke', index)
+  return {
+    pluginData: okhclValues.map((value) => ({ pluginId: 'open-pencil', key: OKHCL_PLUGIN_KEY, value }))
   }
 }
 

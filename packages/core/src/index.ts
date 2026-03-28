@@ -97,10 +97,13 @@ export { queryByXPath, matchByXPath } from './xpath'
 export type { XPathQueryOptions } from './xpath'
 export {
   okhclToRGBA,
+  rgbaToOkHCL,
   serializeOkHCLPayload,
   parseOkHCLPayload,
   setNodeFillOkHCL,
   setNodeStrokeOkHCL,
+  clearNodeFillOkHCL,
+  clearNodeStrokeOkHCL,
   getNodeOkHCLPayloads,
   getFillOkHCL,
   getStrokeOkHCL,

@@ -10,6 +10,7 @@ import Tip from './ui/Tip.vue'
 import { usePopoverUI } from './ui/popover'
 
 import type { Fill } from '@open-pencil/core'
+import type { OkHCLControls } from '@open-pencil/vue/ColorPicker/types'
 
 const TAB_BASE =
   'flex size-6 cursor-pointer items-center justify-center rounded border-none p-0 transition-colors'
@@ -21,7 +22,7 @@ function tabClass(active: boolean) {
   )
 }
 
-const { fill } = defineProps<{ fill: Fill }>()
+const { fill, okhcl = null } = defineProps<{ fill: Fill; okhcl?: OkHCLControls | null }>()
 const emit = defineEmits<{ update: [fill: Fill] }>()
 const cls = usePopoverUI({ content: 'w-60 p-2' })
 const { panels } = useI18n()
@@ -75,6 +76,7 @@ const { panels } = useI18n()
       <HsvColorArea
         v-if="category === 'SOLID'"
         :color="currentFill.color"
+        :okhcl="okhcl"
         @update="update({ ...currentFill, color: $event })"
       />
 
