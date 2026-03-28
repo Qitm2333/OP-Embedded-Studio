@@ -347,6 +347,7 @@ export {
 } from './kiwi'
 
 export * from './io'
+export * from './lint'
 
 export { CODEGEN_PROMPT } from './tools/prompts/codegen-prompt'
 export {

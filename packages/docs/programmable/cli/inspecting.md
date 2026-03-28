@@ -5,7 +5,7 @@ description: Browse node trees, search by name or type, and dig into properties 
 
 # Inspecting Files
 
-The CLI lets you explore `.fig` files without opening the editor. Every command also works on the live app — just omit the file argument.
+The CLI lets you explore design documents without opening the editor. Every command also works on the live app — just omit the file argument.
 
 ::: tip Install
 ```sh
@@ -147,6 +147,19 @@ When the desktop app is running, omit the file argument — the CLI connects via
 open-pencil tree              # inspect the live document
 open-pencil eval -c "..."     # query the editor
 ```
+
+## Lint Designs
+
+Check documents for naming, layout, structure, and accessibility issues:
+
+```sh
+open-pencil lint design.fig
+open-pencil lint design.pen --preset strict
+open-pencil lint design.fig --rule color-contrast
+open-pencil lint design.fig --list-rules
+```
+
+Use `--json` for machine-readable output.
 
 ## JSON Output
 

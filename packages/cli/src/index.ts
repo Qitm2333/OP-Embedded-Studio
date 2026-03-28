@@ -8,6 +8,7 @@ import exportCmd from './commands/export'
 import find from './commands/find'
 import formats from './commands/formats'
 import info from './commands/info'
+import lint from './commands/lint'
 import node from './commands/node'
 import pages from './commands/pages'
 import query from './commands/query'
@@ -30,6 +31,7 @@ const main = defineCommand({
     find,
     formats,
     info,
+    lint,
     query,
     node,
     pages,

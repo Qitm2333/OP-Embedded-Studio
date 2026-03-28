@@ -88,6 +88,17 @@ open-pencil convert design.pen output.fig               # Convert between docume
 </div>
 ```
 
+### Lint design files
+
+Catch naming, layout, structure, and accessibility issues from the terminal:
+
+```sh
+open-pencil lint design.fig
+open-pencil lint design.pen --preset strict
+open-pencil lint design.fig --rule color-contrast
+open-pencil lint design.fig --list-rules
+```
+
 ### Analyze design tokens
 
 Audit an entire design system from the terminal — find inconsistencies, extract the real palette, spot components waiting to be extracted:
