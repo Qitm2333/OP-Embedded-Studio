@@ -1,6 +1,6 @@
 import { SkiaRenderer } from '@open-pencil/core/renderer'
 
-import { renderNodesToImage, renderThumbnail, type ExportFormat } from './render-image'
+import { renderNodesToImage, renderThumbnail, type ExportFormat } from './render'
 
 import type { SceneGraph } from '@open-pencil/core/scene-graph'
 import type { CanvasKit } from 'canvaskit-wasm'

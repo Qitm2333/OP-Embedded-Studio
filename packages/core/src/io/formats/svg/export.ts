@@ -21,9 +21,10 @@ import {
 
 export { geometryBlobToSVGPath, vectorNetworkToSVGPaths } from './paths'
 
-import { svg, renderSVGNode } from '@open-pencil/core/svg-node'
+import { svg, renderSVGNode } from './node'
 
 import type { SVGExportContext } from './defs'
+import type { SVGNode } from './node'
 import type {
   SceneGraph,
   SceneNode,
@@ -31,7 +32,6 @@ import type {
   Stroke,
   CharacterStyleOverride
 } from '@open-pencil/core/scene-graph'
-import type { SVGNode } from '@open-pencil/core/svg-node'
 
 // --- Node rendering ---
 

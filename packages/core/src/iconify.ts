@@ -1,7 +1,7 @@
 import { iconToSVG } from '@iconify/utils'
 import svgpath from 'svgpath'
 
-import { parseSVGPath } from './svg-path-parse'
+import { parseSVGPath } from './io/formats/svg/parse-path'
 
 import type { VectorNetwork, WindingRule } from './scene-graph'
 

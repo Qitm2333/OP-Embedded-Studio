@@ -1,10 +1,10 @@
 import { deflateSync } from 'fflate'
 
-import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from './constants'
-import { compressFigDataSync } from './fig-compress'
-import { renderThumbnail } from './io/formats/raster'
-import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
-import { stringToGuid } from './kiwi/kiwi-convert'
+import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from '@open-pencil/core/constants'
+import { compressFigDataSync } from '@open-pencil/core/fig-compress'
+import { renderThumbnail } from '@open-pencil/core/io/formats/raster'
+import { initCodec, getCompiledSchema, getSchemaBytes } from '@open-pencil/core/kiwi/codec'
+import { stringToGuid } from '@open-pencil/core/kiwi/kiwi-convert'
 import {
   sceneNodeToKiwi,
   fractionalPosition,
@@ -12,12 +12,12 @@ import {
   safeColor,
   makeDocumentNodeChange,
   makeCanvasNodeChange
-} from './kiwi/kiwi-serialize'
+} from '@open-pencil/core/kiwi/kiwi-serialize'
 
-import type { NodeChange } from './kiwi/codec'
-import type { SkiaRenderer } from './renderer'
-import type { SceneGraph, VariableValue } from './scene-graph'
-import type { GUID } from './types'
+import type { NodeChange } from '@open-pencil/core/kiwi/codec'
+import type { SkiaRenderer } from '@open-pencil/core/renderer'
+import type { SceneGraph, VariableValue } from '@open-pencil/core/scene-graph'
+import type { GUID } from '@open-pencil/core/types'
 import type { CanvasKit } from 'canvaskit-wasm'
 
 const THUMBNAIL_1X1 = Uint8Array.from(
@@ -246,7 +246,7 @@ export async function exportFigFile(
   return compressFigData(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries, version)
 }
 
-export { compressFigDataSync } from './fig-compress'
+export { compressFigDataSync } from '@open-pencil/core/fig-compress'
 
 function canUseWorker(): boolean {
   return typeof Worker !== 'undefined' && IS_BROWSER
@@ -260,7 +260,7 @@ function compressViaWorker(
   imageEntries: Array<{ name: string; data: Uint8Array }>
 ): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL('./fig-export-worker.ts', import.meta.url), {
+    const worker = new Worker(new URL('./export-worker.ts', import.meta.url), {
       type: 'module'
     })
 

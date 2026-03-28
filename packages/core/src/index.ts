@@ -229,8 +229,8 @@ export {
   vectorNetworkToSVGPaths,
   type SVGExportOptions
 } from './io/formats/svg/export'
-export { svg, renderSVGNode, type SVGNode } from './svg-node'
-export { parseSVGPath } from './svg-path-parse'
+export { svg, renderSVGNode, type SVGNode } from './io/formats/svg/node'
+export { parseSVGPath } from './io/formats/svg/parse-path'
 export {
   fetchIcon,
   fetchIcons,
@@ -241,7 +241,7 @@ export {
   type IconPath,
   type IconSearchResult
 } from './iconify'
-export { exportFigFile, compressFigData, compressFigDataSync } from './fig-export'
+export { exportFigFile, compressFigData, compressFigDataSync } from './io/formats/fig/export'
 export {
   FIG_KIWI_DEFAULT_VERSION,
   buildFigKiwi,

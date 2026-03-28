@@ -20,9 +20,9 @@ import {
   type PenNode,
   type VarContext
 } from '@open-pencil/core/io/formats/pen/convert'
+import { parseSVGPath } from '@open-pencil/core/io/formats/svg/parse-path'
 import { SceneGraph } from '@open-pencil/core/scene-graph'
 import { populateInstanceChildren } from '@open-pencil/core/scene-graph-instances'
-import { parseSVGPath } from '@open-pencil/core/svg-path-parse'
 
 import type {
   LayoutMode,

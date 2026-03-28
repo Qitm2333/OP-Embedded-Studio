@@ -60,11 +60,6 @@
       "bun": "./src/color.ts",
       "default": "./src/color.ts"
     },
-    "./render-image": {
-      "types": "./src/render-image.ts",
-      "bun": "./src/render-image.ts",
-      "default": "./src/render-image.ts"
-    },
     "./profiler": {
       "types": "./src/profiler/index.ts",
       "bun": "./src/profiler/index.ts",
@@ -176,11 +171,6 @@
         "types": "./dist/color.d.ts",
         "import": "./dist/color.js",
         "default": "./dist/color.js"
-      },
-      "./render-image": {
-        "types": "./dist/render-image.d.ts",
-        "import": "./dist/render-image.js",
-        "default": "./dist/render-image.js"
       },
       "./profiler": {
         "types": "./dist/profiler/index.d.ts",

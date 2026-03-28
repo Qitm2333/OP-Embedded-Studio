@@ -1,6 +1,6 @@
 import { colorToHex, colorToHex8 } from '@open-pencil/core/color'
-import { svg, type SVGNode } from '@open-pencil/core/svg-node'
 
+import { svg, type SVGNode } from './node'
 import { round } from './paths'
 
 import type { Effect, Fill, SceneGraph, SceneNode } from '@open-pencil/core/scene-graph'
