@@ -68,7 +68,7 @@ export const render = defineTool({
     jsx: { type: 'string', description: 'JSX string to render', required: true }
   },
   execute: async (figma, args) => {
-    const { renderJSX } = await import('../render/render-jsx.js')
+    const { renderJSX } = await import('../render/render.js')
 
     let parentId = args.parent_id ?? figma.currentPageId
     let replaceIndex = -1

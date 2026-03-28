@@ -1,4 +1,4 @@
-import { guidToString } from '../kiwi-convert'
+import { guidToString } from '../convert'
 
 import type { SceneNode } from '../../scene-graph'
 import type { GUID } from '../codec'

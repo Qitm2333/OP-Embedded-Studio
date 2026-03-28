@@ -251,7 +251,7 @@ export {
   sceneNodeToKiwi,
   fractionalPosition,
   mapToFigmaType
-} from './kiwi/kiwi-serialize'
+} from './kiwi/serialize'
 
 export {
   createElement,

@@ -4,7 +4,7 @@ import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from '@open-pencil/core/constan
 import { compressFigDataSync } from '@open-pencil/core/fig-compress'
 import { renderThumbnail } from '@open-pencil/core/io/formats/raster'
 import { initCodec, getCompiledSchema, getSchemaBytes } from '@open-pencil/core/kiwi/codec'
-import { stringToGuid } from '@open-pencil/core/kiwi/kiwi-convert'
+import { stringToGuid } from '@open-pencil/core/kiwi/convert'
 import {
   sceneNodeToKiwi,
   fractionalPosition,
@@ -12,7 +12,7 @@ import {
   safeColor,
   makeDocumentNodeChange,
   makeCanvasNodeChange
-} from '@open-pencil/core/kiwi/kiwi-serialize'
+} from '@open-pencil/core/kiwi/serialize'
 
 import type { NodeChange } from '@open-pencil/core/kiwi/codec'
 import type { SkiaRenderer } from '@open-pencil/core/renderer'

@@ -10,7 +10,7 @@ export type {
   SymbolOverride
 } from './types'
 
-import { guidToString } from '../kiwi-convert'
+import { guidToString } from '../convert'
 import { applyConstraintScaling } from './constraints'
 import { applyDerivedSymbolData } from './dsd'
 import { populateInstances } from './populate'

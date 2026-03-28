@@ -12,7 +12,7 @@ import {
   importStyleRuns,
   convertStrokes,
   convertEffects
-} from './kiwi-convert'
+} from './convert'
 
 import type { SceneNode, ArcData, TextAutoResize } from '../scene-graph'
 import type { NodeChange, Paint, Effect as KiwiEffect } from './codec'

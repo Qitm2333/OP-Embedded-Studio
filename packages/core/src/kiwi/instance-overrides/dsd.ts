@@ -1,5 +1,5 @@
 import { copyGeometryPaths } from '../../copy'
-import { resolveGeometryPaths } from '../kiwi-convert'
+import { resolveGeometryPaths } from '../convert'
 import { resolveOverrideTarget } from './resolve'
 import { buildClonesMap } from './sync'
 

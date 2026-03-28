@@ -1,5 +1,5 @@
-import { guidToString } from '../kiwi-convert'
-import { convertOverrideToProps } from '../kiwi-convert-overrides'
+import { guidToString } from '../convert'
+import { convertOverrideToProps } from '../convert-overrides'
 import { resolveOverrideTarget, repopulateInstance } from './resolve'
 
 import type { OverrideContext } from './types'

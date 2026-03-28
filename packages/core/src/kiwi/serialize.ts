@@ -4,7 +4,7 @@ import { deflateSync, inflateSync } from 'fflate'
 
 import { getLoadedFontData, normalizeFontFamily, weightToStyle } from '../fonts'
 import { encodeVectorNetworkBlob, buildStyleOverrideTable } from '../vector'
-import { stringToGuid, VARIABLE_BINDING_FIELDS } from './kiwi-convert'
+import { stringToGuid, VARIABLE_BINDING_FIELDS } from './convert'
 
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from '../scene-graph'
 import type { Color, GUID, Matrix } from '../types'

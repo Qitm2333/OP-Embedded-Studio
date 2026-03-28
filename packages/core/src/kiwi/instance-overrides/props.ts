@@ -1,4 +1,4 @@
-import { guidToString } from '../kiwi-convert'
+import { guidToString } from '../convert'
 import { resolveOverrideTarget, repopulateInstance } from './resolve'
 
 import type {

@@ -1,12 +1,12 @@
 import { SceneGraph } from '../scene-graph'
-import { populateAndApplyOverrides } from './instance-overrides'
 import {
   guidToString,
   nodeChangeToProps,
   sortChildren,
   setVariableColorResolver,
   VARIABLE_BINDING_FIELDS_INVERSE
-} from './kiwi-convert'
+} from './convert'
+import { populateAndApplyOverrides } from './instance-overrides'
 
 import type { VariableType, VariableValue } from '../scene-graph'
 import type { NodeChange, VariableDataValuesEntry, Color, GUID } from './codec'
