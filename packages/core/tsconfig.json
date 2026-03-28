@@ -11,7 +11,11 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "paths": {
+      "@open-pencil/core": ["./src/index.ts"],
+      "@open-pencil/core/*": ["./src/*"]
+    }
   },
   "include": ["src"]
 }

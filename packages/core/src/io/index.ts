@@ -10,6 +10,20 @@ export {
   svgFormat,
   jsxFormat
 } from './formats'
+export { exportFigFile, parseFigFile, readFigFile } from './formats/fig'
+export { parsePenFile, readPenFile } from './formats/pen'
+export { sceneNodeToJSX, selectionToJSX, type JSXFormat } from './formats/jsx'
+export {
+  computeContentBounds,
+  renderNodesToImage,
+  renderThumbnail,
+  initCanvasKit,
+  headlessRenderNodes,
+  headlessRenderThumbnail,
+  type RasterExportFormat,
+  type ExportFormat
+} from './formats/raster'
+export { renderNodesToSVG, geometryBlobToSVGPath, vectorNetworkToSVGPaths } from './formats/svg'
 export type {
   IOFormatRole,
   IOFormatCategory,

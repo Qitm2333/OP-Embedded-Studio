@@ -2,9 +2,9 @@ import { buildFigmaClipboardHTML, importClipboardNodes, parseFigmaClipboard } fr
 import { computeImageHash } from '../figma-api'
 import { collectFontKeys } from '../fonts'
 import { computeBounds } from '../geometry'
+import { renderNodesToSVG } from '../io/formats/svg'
 import { computeAllLayouts } from '../layout'
 import { selectionToJSX } from '../render'
-import { renderNodesToSVG } from '../svg-export'
 
 import type { Fill, SceneGraph, SceneNode } from '../scene-graph'
 import type { Vector } from '../types'

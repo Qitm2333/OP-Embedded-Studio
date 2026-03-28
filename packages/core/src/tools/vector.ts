@@ -2,7 +2,7 @@ import { cloneVectorNetwork } from '../scene-graph'
 import { defineTool, nodeSummary } from './schema'
 
 import type { FigmaAPI } from '../figma-api'
-import type { RasterExportFormat } from '../render-image'
+import type { RasterExportFormat } from '../io/formats/raster'
 import type { SceneNode, VectorNetwork } from '../scene-graph'
 
 function getVectorNode(
@@ -266,7 +266,7 @@ export const exportSvg = defineTool({
     }
   },
   execute: async (figma, args) => {
-    const { renderNodesToSVG } = await import('../svg-export/index.js')
+    const { renderNodesToSVG } = await import('../io/formats/svg/index.js')
     const pageId = figma.currentPageId
     const ids =
       args.ids && args.ids.length > 0 ? args.ids : figma.currentPage.children.map((n) => n.id)

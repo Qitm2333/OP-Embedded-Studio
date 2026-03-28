@@ -1,13 +1,11 @@
-import { exportFigFile } from '../fig-export'
-import { headlessRenderNodes } from '../headless-render'
-import { parseFigFile } from '../kiwi'
-import { parsePenFile } from '../pen-file'
-import { sceneNodeToJSX, selectionToJSX } from '../render'
-import { renderNodesToImage } from '../render-image'
-import { renderNodesToSVG } from '../svg-export'
+import { sceneNodeToJSX, selectionToJSX } from '@open-pencil/core/render'
+
+import { exportFigFile, parseFigFile } from './formats/fig'
+import { parsePenFile } from './formats/pen'
+import { headlessRenderNodes, renderNodesToImage, type RasterExportFormat } from './formats/raster'
+import { renderNodesToSVG } from './formats/svg'
 import { extractExportGraph } from './subgraph'
 
-import type { RasterExportFormat } from '../render-image'
 import type {
   ExportRequest,
   ExportResult,

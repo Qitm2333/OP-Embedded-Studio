@@ -1,10 +1,10 @@
-import { colorToHex, colorToHex8 } from '../color'
-import { svg } from '../svg-node'
+import { colorToHex, colorToHex8 } from '@open-pencil/core/color'
+import { svg, type SVGNode } from '@open-pencil/core/svg-node'
+
 import { round } from './paths'
 
-import type { SceneGraph, SceneNode, Fill, Effect } from '../scene-graph'
-import type { SVGNode } from '../svg-node'
-import type { Color } from '../types'
+import type { Effect, Fill, SceneGraph, SceneNode } from '@open-pencil/core/scene-graph'
+import type { Color } from '@open-pencil/core/types'
 
 export interface SVGExportContext {
   defs: SVGNode[]

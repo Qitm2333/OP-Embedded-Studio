@@ -79,6 +79,31 @@
       "types": "./src/io/index.ts",
       "bun": "./src/io/index.ts",
       "default": "./src/io/index.ts"
+    },
+    "./io/formats/fig": {
+      "types": "./src/io/formats/fig/index.ts",
+      "bun": "./src/io/formats/fig/index.ts",
+      "default": "./src/io/formats/fig/index.ts"
+    },
+    "./io/formats/pen": {
+      "types": "./src/io/formats/pen/index.ts",
+      "bun": "./src/io/formats/pen/index.ts",
+      "default": "./src/io/formats/pen/index.ts"
+    },
+    "./io/formats/jsx": {
+      "types": "./src/io/formats/jsx/index.ts",
+      "bun": "./src/io/formats/jsx/index.ts",
+      "default": "./src/io/formats/jsx/index.ts"
+    },
+    "./io/formats/raster": {
+      "types": "./src/io/formats/raster/index.ts",
+      "bun": "./src/io/formats/raster/index.ts",
+      "default": "./src/io/formats/raster/index.ts"
+    },
+    "./io/formats/svg": {
+      "types": "./src/io/formats/svg/index.ts",
+      "bun": "./src/io/formats/svg/index.ts",
+      "default": "./src/io/formats/svg/index.ts"
     }
   },
   "main": "./src/index.ts",
@@ -171,6 +196,31 @@
         "types": "./dist/io/index.d.ts",
         "import": "./dist/io/index.js",
         "default": "./dist/io/index.js"
+      },
+      "./io/formats/fig": {
+        "types": "./dist/io/formats/fig/index.d.ts",
+        "import": "./dist/io/formats/fig/index.js",
+        "default": "./dist/io/formats/fig/index.js"
+      },
+      "./io/formats/pen": {
+        "types": "./dist/io/formats/pen/index.d.ts",
+        "import": "./dist/io/formats/pen/index.js",
+        "default": "./dist/io/formats/pen/index.js"
+      },
+      "./io/formats/jsx": {
+        "types": "./dist/io/formats/jsx/index.d.ts",
+        "import": "./dist/io/formats/jsx/index.js",
+        "default": "./dist/io/formats/jsx/index.js"
+      },
+      "./io/formats/raster": {
+        "types": "./dist/io/formats/raster/index.d.ts",
+        "import": "./dist/io/formats/raster/index.js",
+        "default": "./dist/io/formats/raster/index.js"
+      },
+      "./io/formats/svg": {
+        "types": "./dist/io/formats/svg/index.d.ts",
+        "import": "./dist/io/formats/svg/index.js",
+        "default": "./dist/io/formats/svg/index.js"
       }
     },
     "main": "./dist/index.js",

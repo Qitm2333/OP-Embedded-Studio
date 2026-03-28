@@ -2,6 +2,7 @@ import { deflateSync } from 'fflate'
 
 import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from './constants'
 import { compressFigDataSync } from './fig-compress'
+import { renderThumbnail } from './io/formats/raster'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/codec'
 import { stringToGuid } from './kiwi/kiwi-convert'
 import {
@@ -12,7 +13,6 @@ import {
   makeDocumentNodeChange,
   makeCanvasNodeChange
 } from './kiwi/kiwi-serialize'
-import { renderThumbnail } from './render-image'
 
 import type { NodeChange } from './kiwi/codec'
 import type { SkiaRenderer } from './renderer'

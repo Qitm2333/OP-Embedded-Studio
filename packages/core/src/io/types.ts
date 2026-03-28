@@ -1,7 +1,7 @@
 import type { JSXFormat } from '../render'
-import type { RasterExportFormat } from '../render-image'
 import type { SkiaRenderer } from '../renderer'
 import type { SceneGraph } from '../scene-graph'
+import type { RasterExportFormat } from './formats/raster'
 import type { CanvasKit } from 'canvaskit-wasm'
 
 export type IOFormatRole = 'native-document' | 'interchange-document' | 'derived-export'

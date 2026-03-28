@@ -9,7 +9,7 @@ import {
 } from './figma-api-proxy'
 import { computeBounds } from './geometry'
 
-import type { RasterExportFormat } from './render-image'
+import type { RasterExportFormat } from './io/formats/raster'
 import type {
   SceneGraph,
   NodeType,

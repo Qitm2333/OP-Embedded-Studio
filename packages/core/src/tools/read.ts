@@ -1,7 +1,7 @@
 import { createTwoFilesPatch } from 'diff'
 
 import { computeBounds } from '../geometry'
-import { sceneNodeToJSX } from '../render/export-jsx'
+import { sceneNodeToJSX } from '../io/formats/jsx'
 import { queryByXPath } from '../xpath'
 import { defineTool, nodeSummary, nodeToResult } from './schema'
 

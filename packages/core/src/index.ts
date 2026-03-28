@@ -217,16 +217,18 @@ export {
   renderNodesToImage,
   renderThumbnail,
   computeContentBounds,
+  initCanvasKit,
+  headlessRenderNodes,
+  headlessRenderThumbnail,
   type RasterExportFormat,
   type ExportFormat
-} from './render-image'
-export { initCanvasKit, headlessRenderNodes, headlessRenderThumbnail } from './headless-render'
+} from './io/formats/raster'
 export {
   renderNodesToSVG,
   geometryBlobToSVGPath,
   vectorNetworkToSVGPaths,
   type SVGExportOptions
-} from './svg-export'
+} from './io/formats/svg/export'
 export { svg, renderSVGNode, type SVGNode } from './svg-node'
 export { parseSVGPath } from './svg-path-parse'
 export {
@@ -297,7 +299,7 @@ export {
   type OpenPencilClipboardData
 } from './clipboard'
 
-export { readPenFile, parsePenFile } from './pen-file'
+export { readPenFile, parsePenFile } from './io/formats/pen'
 
 export {
   readFigFile,
