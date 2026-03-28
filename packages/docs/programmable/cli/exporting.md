@@ -1,19 +1,21 @@
 ---
 title: Exporting
-description: Render .fig files to PNG, JPG, WEBP, SVG, or JSX with Tailwind classes.
+description: Export document content to PNG, JPG, WEBP, SVG, `.fig`, or JSX, and convert between document formats.
 ---
 
 # Exporting
 
-Export designs from the terminal — raster images, vectors, or JSX code.
+Export designs from the terminal — raster images, vectors, `.fig` subsets, or JSX code.
 
 ## Image Export
 
 ```sh
-open-pencil export design.fig                          # PNG (default)
-open-pencil export design.fig -f jpg -s 2 -q 90       # JPG at 2×, quality 90
+open-pencil export design.fig                           # PNG (default)
+open-pencil export design.fig -f jpg -s 2 -q 90        # JPG at 2×, quality 90
 open-pencil export design.fig -f webp -s 3             # WEBP at 3×
 open-pencil export design.fig -f svg                   # SVG vector
+open-pencil export design.fig -f fig --page "Page 1"   # export one page as .fig
+open-pencil export design.fig -f fig --node 1:23        # export one node as .fig
 ```
 
 Options:

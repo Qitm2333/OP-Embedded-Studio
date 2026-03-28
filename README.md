@@ -1,8 +1,10 @@
 # OpenPencil
 
-Open-source design editor. Opens Figma files, built-in AI, fully programmable, and designed as a toolkit for building custom editors.
+Open-source design editor. Opens `.fig` and `.pen` design files, includes built-in AI, and ships as a programmable toolkit with a headless Vue SDK for building custom editors.
 
 > **Status:** Active development. Not ready for production use.
+>
+> There is another open-source project with the same name — [OpenPencil by ZSeven-W](https://github.com/ZSeven-W/openpencil), focused on AI-native design-to-code workflows. This project focuses on Figma-compatible visual design with real-time collaboration.
 
 **[Try it online →](https://app.openpencil.dev/demo)** · [Download](https://github.com/open-pencil/open-pencil/releases/latest) · [Documentation](https://openpencil.dev)
 
@@ -20,10 +22,10 @@ Or download from the [releases page](https://github.com/open-pencil/open-pencil/
 
 ## What it does
 
-- **Opens .fig files** — read and write native Figma files, copy & paste nodes between apps
-- **AI builds designs** — describe what you want in chat, 90+ tools create and modify nodes. Connect Anthropic, OpenAI, Google AI, OpenRouter, or any compatible endpoint
+- **Opens `.fig` and `.pen` files** — read and write native Figma files, open Pencil documents, copy & paste nodes between apps
+- **AI builds designs** — describe what you want in chat, 90+ tools create and modify nodes. Connect OpenRouter, Anthropic, OpenAI, Google AI, Z.ai, MiniMax, or compatible endpoints
 - **Fully programmable** — headless CLI, Figma Plugin API via `eval`, MCP server for AI agents
-- **Toolkit for custom editors** — Vue SDK primitives and composables for embedding OpenPencil into other apps or building workflow-specific editing surfaces
+- **Vue SDK for custom editors** — headless components and composables for embedding OpenPencil into other apps or building workflow-specific editing surfaces. [Read the SDK docs →](https://openpencil.dev/programmable/sdk/)
 - **Real-time collaboration** — P2P via WebRTC, no server, no account. Cursors, presence, follow mode
 - **Auto layout & CSS Grid** — flex and grid layout via Yoga WASM, with gap, padding, alignment, track sizing
 - **Tailwind CSS export** — export any selection as HTML with Tailwind v4 utility classes
@@ -35,13 +37,13 @@ Or download from the [releases page](https://github.com/open-pencil/open-pencil/
 bun add -g @open-pencil/cli
 ```
 
-### Inspect .fig files
+### Inspect design files
 
 Browse node trees, search by name or type, dig into properties — all without opening the editor:
 
 ```sh
 open-pencil tree design.fig
-open-pencil find design.fig --type TEXT
+open-pencil find design.pen --type TEXT
 open-pencil node design.fig --id 1:23
 open-pencil info design.fig
 ```
@@ -69,12 +71,14 @@ open-pencil query design.fig "//SECTION//TEXT"                       # Text insi
 
 ### Export
 
-Render to PNG, JPG, WEBP, SVG — or export as JSX with Tailwind utility classes:
+Render to PNG, JPG, WEBP, SVG, `.fig`, or JSX — or export selections/pages as `.fig` and convert whole documents between supported formats:
 
 ```sh
-open-pencil export design.fig                          # PNG
-open-pencil export design.fig -f jpg -s 2 -q 90       # JPG at 2x, quality 90
-open-pencil export design.fig -f jsx --style tailwind  # Tailwind JSX
+open-pencil export design.fig                           # PNG
+open-pencil export design.fig -f jpg -s 2 -q 90        # JPG at 2x, quality 90
+open-pencil export design.fig -f fig --page "Page 1"   # Export a page as .fig
+open-pencil export design.fig -f jsx --style tailwind   # Tailwind JSX
+open-pencil convert design.pen output.fig               # Convert between document formats
 ```
 
 ```html
@@ -133,7 +137,7 @@ All commands support `--json` for machine-readable output.
 
 ### Built-in chat
 
-Press <kbd>⌘</kbd><kbd>J</kbd> to open the AI assistant. It has 87 tools that can create shapes, set fills and strokes, manage auto-layout, work with components and variables, run boolean operations, analyze design tokens, and export assets. Bring your own OpenRouter API key — no backend, no account.
+Press <kbd>⌘</kbd><kbd>J</kbd> to open the AI assistant. It has 90+ tools that can create shapes, set fills and strokes, manage auto-layout, work with components and variables, run boolean operations, analyze design tokens, and export assets. Bring your own API key for OpenRouter, Anthropic, OpenAI, Google AI, Z.ai, MiniMax, or compatible endpoints. No backend, no account.
 
 ### Coding agents (desktop)
 
@@ -154,7 +158,7 @@ Use Claude Code, Codex, or Gemini CLI directly in the chat panel. The agent conn
 
 ### MCP server
 
-Connect Claude Code, Cursor, Windsurf, or any MCP client to read and write `.fig` files headlessly. 90 tools (87 core + 3 file management). [Full docs →](https://openpencil.dev/reference/mcp-tools)
+Connect Claude Code, Cursor, Windsurf, or any MCP client to inspect, modify, and export design documents headlessly. 90 tools (87 core + 3 file management). [Full docs →](https://openpencil.dev/reference/mcp-tools)
 
 **Stdio** (Claude Code, Cursor, Windsurf):
 

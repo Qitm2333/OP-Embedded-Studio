@@ -55,12 +55,15 @@ Figma's schema uses non-contiguous field IDs (e.g. 1, 2, 5, 10 with gaps). The k
 
 ## Supported Formats
 
-| Format | Import | Export |
-|--------|--------|--------|
-| `.fig` (Figma) | ✅ | ✅ |
-| `.svg` | Planned | Planned |
-| `.png` | Planned | Planned |
-| `.pdf` | — | Planned |
+| Format | Open / Read | Save / Write | Export |
+|--------|-------------|--------------|--------|
+| `.fig` (Figma) | ✅ | ✅ | ✅ |
+| `.pen` (Pencil) | ✅ | — | — |
+| `.png` | — | — | ✅ |
+| `.jpg` | — | — | ✅ |
+| `.webp` | — | — | ✅ |
+| `.svg` | — | — | ✅ |
+| `.jsx` | — | — | ✅ |
 
 ## Clipboard Format
 

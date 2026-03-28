@@ -1,11 +1,12 @@
 ---
 title: Exporting
-description: Exporting images (PNG, JPG, WEBP) and saving/opening .fig files in OpenPencil.
+description: Export images, SVG, and .fig subsets, and open .fig or .pen documents in OpenPencil.
 ---
 
 # Exporting
 
-Export individual nodes as images, or save and open entire documents as .fig files.
+Export individual nodes as images or `.fig` subsets, and open full `.fig` or `.pen` documents.
+
 ## Image Export
 
 Select a node and use the Export section in the properties panel.
@@ -13,7 +14,7 @@ Select a node and use the Export section in the properties panel.
 ### Export Settings
 
 - **Scale** — 0.5×, 0.75×, 1×, 1.5×, 2×, 3×, or 4× (hidden for SVG — vectors are resolution-independent)
-- **Format** — PNG (transparent background), JPG (white background), WEBP (transparent background), SVG (vector)
+- **Format** — PNG (transparent background), JPG (white background), WEBP (transparent background), SVG (vector), `.fig` (native document subset)
 
 You can add multiple export settings to export the same node at different scales or formats in one go. A live preview with a checkerboard background shows what will be exported.
 
@@ -53,7 +54,7 @@ OpenPencil uses the .fig format for full documents — the same binary format as
 |--------|-----|-----------------|
 | Open file | <kbd>⌘</kbd><kbd>O</kbd> | <kbd>Ctrl</kbd> + <kbd>O</kbd> |
 
-A file picker dialog opens, filtered for .fig files. On the desktop app, this uses the native OS dialog.
+A file picker dialog opens, filtered for `.fig` and `.pen` files. On the desktop app, this uses the native OS dialog.
 
 ### Saving Files
 
