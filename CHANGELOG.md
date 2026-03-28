@@ -20,6 +20,7 @@
 - New CLI commands: `open-pencil convert` for document conversion and `open-pencil formats` to inspect readable/writable/exportable formats
 - CLI export now supports `.fig` output and routes PNG/JPG/WEBP/SVG/JSX/`.fig` through the shared IO layer
 - `Open…` now supports `.pen` Pencil documents through the shared document reader pipeline while keeping `.fig` as the native save format
+- Update built-in Z.ai and MiniMax model lists — Z.ai now uses the Anthropic-compatible endpoint for GLM coding models, adds GLM-5.1, and MiniMax adds M2.7 / M2.7-highspeed
 
 ### Fixes
 
