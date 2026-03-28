@@ -197,10 +197,10 @@ export const AI_PROVIDERS: AIProviderDef[] = [
     id: 'zai',
     name: 'Z.ai',
     keyPlaceholder: 'API key',
-    keyURL: 'https://docs.z.ai/api-reference/introduction',
+    keyURL: 'https://docs.z.ai/devpack/quick-start',
     defaultModel: 'glm-5.1',
     models: [
-      { id: 'glm-5.1', name: 'GLM-5.1' },
+      { id: 'glm-5.1', name: 'GLM-5.1', tag: 'Best' },
       { id: 'glm-5', name: 'GLM-5' },
       { id: 'glm-5-code', name: 'GLM-5-Code' },
       { id: 'glm-4.7', name: 'GLM-4.7' },
@@ -220,7 +220,7 @@ export const AI_PROVIDERS: AIProviderDef[] = [
     name: 'MiniMax',
     keyPlaceholder: 'API key',
     keyURL: 'https://platform.minimax.io/user-center/basic-information/interface-key',
-    defaultModel: 'MiniMax-M2.5',
+    defaultModel: 'MiniMax-M2.7',
     models: [
       { id: 'MiniMax-M2.7', name: 'MiniMax-M2.7', tag: 'Best' },
       { id: 'MiniMax-M2.7-highspeed', name: 'MiniMax-M2.7-highspeed', tag: 'Fast' },
