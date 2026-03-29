@@ -63,6 +63,8 @@ export function createEditorStore(initialGraph?: SceneGraph) {
         resumedStrokes?: SceneNode['strokes']
       } | null
       showUI: boolean
+      showRulers: boolean
+      showRemoteCursors: boolean
       activeRibbonTab: 'panels' | 'code' | 'ai'
       panelMode: 'layers' | 'design'
       actionToast: string | null
@@ -95,6 +97,8 @@ export function createEditorStore(initialGraph?: SceneGraph) {
   >({
     ...createDefaultEditorState(graph.getPages()[0].id),
     showUI: true,
+    showRulers: true,
+    showRemoteCursors: true,
     activeRibbonTab: 'panels',
     panelMode: 'design',
     actionToast: null,
@@ -1183,6 +1187,15 @@ export function createEditorStore(initialGraph?: SceneGraph) {
 
   // ─── Profiler toggle ─────────────────────────────────────────
 
+  function viewportScreenCenter() {
+    const canvas = document.querySelector<HTMLCanvasElement>('[data-test-id="canvas-element"]')
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect()
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+    }
+    return { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+  }
+
   function toggleProfiler() {
     editor.renderer?.profiler.toggle()
     editor.requestRepaint()
@@ -1229,6 +1242,7 @@ export function createEditorStore(initialGraph?: SceneGraph) {
     mobileCopy,
     mobileCut,
     mobilePaste,
+    viewportScreenCenter,
     toggleProfiler
   }
 

@@ -131,7 +131,9 @@
     "mixedFillsHelp": "Klicke auf +, um gemischte Füllungen zu ersetzen",
     "mixedStrokesHelp": "Klicke auf +, um gemischte Konturen zu ersetzen",
     "mixedEffectsHelp": "Klicke auf +, um gemischte Effekte zu ersetzen",
-    "strokeSides": "Konturseiten"
+    "strokeSides": "Konturseiten",
+    "rulers": "Lineale",
+    "multiplayerCursors": "Cursor anderer Teilnehmer"
   },
   "pages": {
     "newPage": "Neue Seite",

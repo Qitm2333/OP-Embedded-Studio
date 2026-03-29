@@ -51,15 +51,19 @@ export function createViewportActions(ctx: EditorContext) {
     zoomToBounds(b.x, b.y, b.x + b.width, b.y + b.height)
   }
 
-  function zoomTo100() {
+  function zoomToLevel(level: number) {
     const { width: viewW, height: viewH } = ctx.getViewportSize()
     const centerX = (-ctx.state.panX + viewW / 2) / ctx.state.zoom
     const centerY = (-ctx.state.panY + viewH / 2) / ctx.state.zoom
 
-    ctx.state.zoom = 1
+    ctx.state.zoom = Math.max(0.02, Math.min(256, level))
     ctx.state.panX = viewW / 2 - centerX
     ctx.state.panY = viewH / 2 - centerY
     ctx.requestRepaint()
+  }
+
+  function zoomTo100() {
+    zoomToLevel(1)
   }
 
   function zoomToSelection() {
@@ -74,5 +78,14 @@ export function createViewportActions(ctx: EditorContext) {
     zoomToBounds(b.x, b.y, b.x + b.width, b.y + b.height)
   }
 
-  return { screenToCanvas, applyZoom, pan, zoomToBounds, zoomToFit, zoomTo100, zoomToSelection }
+  return {
+    screenToCanvas,
+    applyZoom,
+    pan,
+    zoomToBounds,
+    zoomToFit,
+    zoomTo100,
+    zoomToLevel,
+    zoomToSelection
+  }
 }
