@@ -157,7 +157,9 @@ export const panelMessages = i18n('panels', {
   colorHintHsl: 'H hue · S saturation · L lightness',
   colorHintHsb: 'H hue · S saturation · B brightness',
   colorHintOkhcl: 'H hue · C chroma · L lightness · A alpha',
-  colorPreviewClipped: params('Clipped to {space} preview gamut')
+  colorPreviewClipped: params('Clipped to {space} preview gamut'),
+  rulers: 'Rulers',
+  multiplayerCursors: 'Multiplayer cursors'
 })
 
 export const pageMessages = i18n('pages', {

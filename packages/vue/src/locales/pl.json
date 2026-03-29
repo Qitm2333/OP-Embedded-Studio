@@ -131,7 +131,9 @@
     "mixedFillsHelp": "Kliknij +, aby zastąpić mieszane wypełnienia",
     "mixedStrokesHelp": "Kliknij +, aby zastąpić mieszane obrysy",
     "mixedEffectsHelp": "Kliknij +, aby zastąpić mieszane efekty",
-    "strokeSides": "Boki obrysu"
+    "strokeSides": "Boki obrysu",
+    "rulers": "Linijki",
+    "multiplayerCursors": "Kursory innych uczestników"
   },
   "pages": {
     "newPage": "Nowa strona",

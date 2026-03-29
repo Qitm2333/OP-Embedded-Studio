@@ -144,7 +144,9 @@
     "colorHintHsl": "H тон · S насыщенность · L светлота",
     "colorHintHsb": "H тон · S насыщенность · B яркость",
     "colorHintOkhcl": "H тон · C хрома · L светлота · A альфа",
-    "colorPreviewClipped": "Обрезано до гаммы предпросмотра {space}"
+    "colorPreviewClipped": "Обрезано до гаммы предпросмотра {space}",
+    "rulers": "Линейки",
+    "multiplayerCursors": "Курсоры участников"
   },
   "pages": {
     "newPage": "Новая страница",

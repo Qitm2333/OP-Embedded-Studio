@@ -131,7 +131,9 @@
     "mixedFillsHelp": "Fai clic su + per sostituire i riempimenti misti",
     "mixedStrokesHelp": "Fai clic su + per sostituire i contorni misti",
     "mixedEffectsHelp": "Fai clic su + per sostituire gli effetti misti",
-    "strokeSides": "Lati del contorno"
+    "strokeSides": "Lati del contorno",
+    "rulers": "Righelli",
+    "multiplayerCursors": "Cursori degli altri partecipanti"
   },
   "pages": {
     "newPage": "Nuova pagina",
