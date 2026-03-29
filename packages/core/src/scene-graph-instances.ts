@@ -16,6 +16,7 @@ const INSTANCE_SYNC_PROPS: (keyof SceneNode)[] = [
   'bottomLeftRadius',
   'independentCorners',
   'layoutMode',
+  'layoutDirection',
   'layoutWrap',
   'primaryAxisAlign',
   'counterAxisAlign',
@@ -126,7 +127,14 @@ function syncChildren(
       copyProp(instChild, compChild, key)
     }
 
-    for (const key of ['name', 'text', 'fontSize', 'fontWeight', 'fontFamily'] as const) {
+    for (const key of [
+      'name',
+      'text',
+      'fontSize',
+      'fontWeight',
+      'fontFamily',
+      'textDirection'
+    ] as const) {
       const overrideKey = `${instChild.id}:${key}`
       if (overrideKey in overrides) continue
       copyProp(instChild, compChild, key)

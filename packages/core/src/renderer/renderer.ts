@@ -429,7 +429,8 @@ export class SkiaRenderer {
   async loadFonts(): Promise<void> {
     this.fontProvider = this.ck.TypefaceFontProvider.Make()
 
-    const { initFontService, loadFont, ensureCJKFallback } = await import('../fonts')
+    const { initFontService, loadFont, ensureArabicFallback, ensureCJKFallback } =
+      await import('../fonts')
     initFontService(this.ck, this.fontProvider)
 
     const fontData = await loadFont(DEFAULT_FONT_FAMILY, 'Regular')
@@ -455,6 +456,9 @@ export class SkiaRenderer {
     this.invalidateAllPictures()
 
     void ensureCJKFallback().then((families) => {
+      if (families.length > 0) this.invalidateAllPictures()
+    })
+    void ensureArabicFallback().then((families) => {
       if (families.length > 0) this.invalidateAllPictures()
     })
   }

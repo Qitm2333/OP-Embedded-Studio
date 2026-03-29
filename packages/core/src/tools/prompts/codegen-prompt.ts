@@ -118,6 +118,7 @@ export_svg ids=[<icon_ids>]  → extract vector assets
 - For Tailwind: use utility classes directly for spacing, font sizes, weights, radius — do NOT wrap them in \`var()\` indirection
 - Match measurements exactly: font sizes, spacing, border radii, colors
 - Use auto-layout data to determine flex direction, gap, padding, alignment
+- Preserve text direction and container flow direction separately when the design uses RTL.
 - Absolute positioning only when \`layoutPositioning\` is \`ABSOLUTE\` or layout mode is \`NONE\`
 - If a node has \`clipsContent: true\`, use \`overflow: hidden\`
 - Text nodes: preserve font family, size, weight, line height, letter spacing, alignment

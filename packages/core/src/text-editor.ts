@@ -1,4 +1,5 @@
 import type { SkiaRenderer } from './renderer'
+import { resolveNodeTextDirection } from './direction'
 import type { SceneNode } from './scene-graph'
 import type { Rect } from './types'
 import type { CanvasKit, Paragraph } from 'canvaskit-wasm'
@@ -15,6 +16,7 @@ export interface TextEditorState {
   cursor: number
   selectionAnchor: number | null
   paragraph: Paragraph | null
+  textDirection: 'LTR' | 'RTL'
 }
 
 export class TextEditor {
@@ -57,7 +59,8 @@ export class TextEditor {
       text: node.text,
       cursor: node.text.length,
       selectionAnchor: null,
-      paragraph: null
+      paragraph: null,
+      textDirection: resolveNodeTextDirection(node)
     }
     this.rebuildParagraph(node)
   }
@@ -74,6 +77,7 @@ export class TextEditor {
     const s = this._state
     if (!s || !this.renderer) return
     s.paragraph?.delete()
+    s.textDirection = resolveNodeTextDirection(node)
     s.paragraph = this.renderer.buildParagraph(node)
   }
 
@@ -206,7 +210,9 @@ export class TextEditor {
       return
     }
     this.prepareMove(extend)
-    if (s.cursor > 0) s.cursor--
+    if (s.textDirection === 'RTL') {
+      if (s.cursor < s.text.length) s.cursor++
+    } else if (s.cursor > 0) s.cursor--
   }
 
   moveRight(extend = false): void {
@@ -219,7 +225,9 @@ export class TextEditor {
       return
     }
     this.prepareMove(extend)
-    if (s.cursor < s.text.length) s.cursor++
+    if (s.textDirection === 'RTL') {
+      if (s.cursor > 0) s.cursor--
+    } else if (s.cursor < s.text.length) s.cursor++
   }
 
   moveUp(extend = false): void {
@@ -249,7 +257,9 @@ export class TextEditor {
     const lineNum = s.paragraph.getLineNumberAt(s.cursor)
     if (lineNum < 0) return
     const metrics = s.paragraph.getLineMetricsAt(lineNum)
-    if (metrics) s.cursor = metrics.startIndex
+    if (!metrics) return
+    s.cursor =
+      s.textDirection === 'RTL' ? metrics.endExcludingWhitespaces : metrics.startIndex
   }
 
   moveToLineEnd(extend = false): void {
@@ -259,7 +269,9 @@ export class TextEditor {
     const lineNum = s.paragraph.getLineNumberAt(s.cursor)
     if (lineNum < 0) return
     const metrics = s.paragraph.getLineMetricsAt(lineNum)
-    if (metrics) s.cursor = metrics.endExcludingWhitespaces
+    if (!metrics) return
+    s.cursor =
+      s.textDirection === 'RTL' ? metrics.startIndex : metrics.endExcludingWhitespaces
   }
 
   moveWordLeft(extend = false): void {
@@ -301,10 +313,11 @@ export class TextEditor {
     if (cursor === 0) {
       lo = 0
       hi = 1
+      useRight = s.textDirection === 'RTL'
     } else if (cursor >= text.length) {
       lo = text.length - 1
       hi = text.length
-      useRight = true
+      useRight = s.textDirection !== 'RTL'
     } else {
       lo = cursor
       hi = cursor + 1

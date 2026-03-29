@@ -50,9 +50,11 @@ export {
   type GridPosition,
   type ConstraintType,
   type TextAutoResize,
+  type TextDirection,
   type TextAlignVertical,
   type TextCase,
   type TextDecoration,
+  type LayoutDirection,
   type ArcData,
   type VectorNetwork,
   type VectorVertex,
@@ -151,6 +153,14 @@ export { computeLayout, computeAllLayouts, setTextMeasurer } from './layout'
 export type { TextMeasurer } from './layout'
 export { getCanvasKit, type CanvasKitOptions } from './canvaskit'
 export {
+  detectTextDirection,
+  resolveTextDirection,
+  resolveNodeTextDirection,
+  resolveNodeLayoutDirection,
+  isLogicalTextAlignStart,
+  isLogicalTextAlignEnd
+} from './direction'
+export {
   FONT_WEIGHT_NAMES,
   collectFontKeys,
   loadFont,
@@ -162,9 +172,12 @@ export {
   markFontLoaded,
   ensureNodeFont,
   ensureCJKFallback,
+  ensureArabicFallback,
   getCJKFallbackFamily,
   getCJKFallbackFamilies,
+  getArabicFallbackFamilies,
   setCJKFallbackFamily,
+  setArabicFallbackFamily,
   styleToWeight,
   weightToStyle,
   normalizeFontFamily,

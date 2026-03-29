@@ -57,6 +57,17 @@ const TEXT_AUTO_RESIZE_MAP: Record<string, SceneNode['textAutoResize']> = {
   height: 'HEIGHT'
 }
 
+const DIRECTION_MAP: Record<string, SceneNode['textDirection']> = {
+  auto: 'AUTO',
+  ltr: 'LTR',
+  rtl: 'RTL'
+}
+
+function parseDirection(value: unknown): SceneNode['textDirection'] | undefined {
+  if (typeof value !== 'string') return undefined
+  return DIRECTION_MAP[value.toLowerCase()] ?? 'AUTO'
+}
+
 function parseStroke(value: string, width: number): Stroke {
   const color = parseColor(value)
   return {
@@ -394,6 +405,8 @@ function applyLayoutOverrides(
     applyAutoLayoutSizing(o, props, w, h)
   }
 
+  o.layoutDirection = parseDirection(props.flow ?? (!isText ? props.dir : undefined)) ?? o.layoutDirection
+
   if (props.gap !== undefined) o.itemSpacing = props.gap as number
 
   if (props.wrap) {
@@ -482,6 +495,7 @@ function applyTextOverrides(
   parentLayout: SceneNode['layoutMode']
 ): void {
   applyTextStyleOverrides(props, o)
+  o.textDirection = parseDirection(props.dir) ?? o.textDirection
   applyTextAutoResize(props, o, parentLayout)
 }
 

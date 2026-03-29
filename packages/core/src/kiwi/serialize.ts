@@ -12,6 +12,17 @@ import type { Color, GUID, Matrix } from '../types'
 import type { NodeChange, Paint, VariableConsumptionEntry } from './codec'
 
 const fontDigestCache = new Map<string, Uint8Array>()
+const OPEN_PENCIL_PLUGIN_ID = 'open-pencil'
+const TEXT_DIRECTION_PLUGIN_KEY = 'textDirection'
+const LAYOUT_DIRECTION_PLUGIN_KEY = 'layoutDirection'
+
+function upsertPluginData(node: SceneNode, key: string, value: string): void {
+  const pluginData = node.pluginData.filter(
+    (entry) => !(entry.pluginId === OPEN_PENCIL_PLUGIN_ID && entry.key === key)
+  )
+  pluginData.push({ pluginId: OPEN_PENCIL_PLUGIN_ID, key, value })
+  node.pluginData = pluginData
+}
 
 async function computeFontDigest(data: ArrayBuffer): Promise<Uint8Array> {
   if (typeof crypto !== 'undefined') {
@@ -319,6 +330,7 @@ function serializeTextProps(
   graph: SceneGraph,
   fontDigestMap?: Map<string, Uint8Array>
 ): void {
+  upsertPluginData(node, TEXT_DIRECTION_PLUGIN_KEY, node.textDirection)
   nc.fontSize = node.fontSize
   nc.fontName = {
     family: normalizeFontFamily(node.fontFamily),
@@ -342,6 +354,7 @@ function serializeTextProps(
 }
 
 function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
+  upsertPluginData(node, LAYOUT_DIRECTION_PLUGIN_KEY, node.layoutDirection)
   if (node.layoutMode !== 'NONE' && node.layoutMode !== 'GRID') {
     nc.stackMode = node.layoutMode
     nc.stackSpacing = node.itemSpacing

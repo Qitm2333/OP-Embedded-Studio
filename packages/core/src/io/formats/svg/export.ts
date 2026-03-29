@@ -19,6 +19,7 @@ import {
   roundedRectPath,
   arcPath
 } from './paths'
+import { resolveNodeTextDirection } from '../../../direction'
 
 export { geometryBlobToSVGPath, vectorNetworkToSVGPaths } from './paths'
 
@@ -166,10 +167,28 @@ function styleOverrideToTspanAttrs(
   return attrs
 }
 
+function isLogicalTextEnd(node: SceneNode, direction: 'LTR' | 'RTL'): boolean {
+  return (
+    (direction === 'LTR' && node.textAlignHorizontal === 'RIGHT') ||
+    (direction === 'RTL' && node.textAlignHorizontal === 'LEFT')
+  )
+}
+
+function textAnchorForNode(node: SceneNode, direction: 'LTR' | 'RTL'): 'middle' | 'end' | undefined {
+  if (node.textAlignHorizontal === 'CENTER') return 'middle'
+  if (isLogicalTextEnd(node, direction)) return 'end'
+  return undefined
+}
+
+function textXForNode(node: SceneNode, direction: 'LTR' | 'RTL'): number {
+  if (node.textAlignHorizontal === 'CENTER') return round(node.width / 2)
+  if (isLogicalTextEnd(node, direction)) return round(node.width)
+  return 0
+}
+
 function renderTextNode(node: SceneNode, fillAttr: string | null): SVGNode {
-  let textAnchor: 'middle' | 'end' | undefined
-  if (node.textAlignHorizontal === 'CENTER') textAnchor = 'middle'
-  else if (node.textAlignHorizontal === 'RIGHT') textAnchor = 'end'
+  const direction = resolveNodeTextDirection(node)
+  const textAnchor = textAnchorForNode(node, direction)
 
   let textDecoration: 'underline' | 'line-through' | undefined
   if (node.textDecoration === 'UNDERLINE') textDecoration = 'underline'
@@ -181,14 +200,13 @@ function renderTextNode(node: SceneNode, fillAttr: string | null): SVGNode {
     'font-weight': node.fontWeight !== 400 ? node.fontWeight : undefined,
     'font-style': node.italic ? 'italic' : undefined,
     fill: fillAttr ?? undefined,
+    direction: direction === 'RTL' ? 'rtl' : undefined,
     'text-anchor': textAnchor,
     'text-decoration': textDecoration,
     'letter-spacing': node.letterSpacing ? round(node.letterSpacing) : undefined
   }
 
-  let x = 0
-  if (node.textAlignHorizontal === 'CENTER') x = round(node.width / 2)
-  else if (node.textAlignHorizontal === 'RIGHT') x = round(node.width)
+  const x = textXForNode(node, direction)
   const y = node.fontSize || 14
 
   if (node.styleRuns.length > 0) {

@@ -81,7 +81,7 @@
     "autoLayout": "Auto-layout",
     "alignment": "Alignement",
     "appearance": "Apparence",
-    "fill": "Remplissage",
+    "sizingFill": "Remplissage",
     "stroke": "Contour",
     "effects": "Effets",
     "export": "Export",
@@ -133,7 +133,17 @@
     "mixedEffectsHelp": "Cliquez sur + pour remplacer les effets mixtes",
     "strokeSides": "Côtés du contour",
     "rulers": "Règles",
-    "multiplayerCursors": "Curseurs des participants"
+    "multiplayerCursors": "Curseurs des participants",
+    "direction": "Direction",
+    "flow": "Flux",
+    "auto": "Auto",
+    "columns": "Colonnes",
+    "rows": "Lignes",
+    "sizingFixed": "Fixe",
+    "sizingHug": "Ajuster au contenu",
+    "sizingFill": "Remplir",
+    "sizingFillFr": "Remplir (fr)",
+    "sizingFixedPx": "Fixe (px)"
   },
   "pages": {
     "newPage": "Nouvelle page",

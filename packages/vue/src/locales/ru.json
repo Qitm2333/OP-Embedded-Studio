@@ -81,7 +81,7 @@
     "autoLayout": "Автораскладка",
     "alignment": "Выравнивание",
     "appearance": "Внешний вид",
-    "fill": "Заливка",
+    "sizingFill": "Заливка",
     "stroke": "Обводка",
     "effects": "Эффекты",
     "export": "Экспорт",
@@ -146,7 +146,17 @@
     "colorHintOkhcl": "H тон · C хрома · L светлота · A альфа",
     "colorPreviewClipped": "Обрезано до гаммы предпросмотра {space}",
     "rulers": "Линейки",
-    "multiplayerCursors": "Курсоры участников"
+    "multiplayerCursors": "Курсоры участников",
+    "direction": "Направление",
+    "flow": "Поток",
+    "auto": "Авто",
+    "columns": "Столбцы",
+    "rows": "Строки",
+    "sizingFixed": "Фиксированный",
+    "sizingHug": "По содержимому",
+    "sizingFill": "Заполнить",
+    "sizingFillFr": "Заполнить (fr)",
+    "sizingFixedPx": "Фиксированный (px)"
   },
   "pages": {
     "newPage": "Новая страница",

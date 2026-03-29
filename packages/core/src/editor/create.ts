@@ -1,7 +1,7 @@
 import { prefetchFigmaSchema } from '../clipboard'
 import { CANVAS_BG_COLOR, IS_BROWSER } from '../constants'
 import { loadFont as defaultLoadFont } from '../fonts'
-import { computeLayout, setTextMeasurer } from '../layout'
+import { computeAllLayouts, computeLayout, setTextMeasurer } from '../layout'
 import { SceneGraph } from '../scene-graph'
 import { TextEditor } from '../text-editor'
 import { UndoManager } from '../undo'
@@ -84,9 +84,7 @@ export function createEditor(options?: EditorOptions) {
     const node = _graph.getNode(id)
     if (!node) return
 
-    if (node.layoutMode !== 'NONE') {
-      computeLayout(_graph, id)
-    }
+    computeAllLayouts(_graph, id)
 
     let parent = node.parentId ? _graph.getNode(node.parentId) : undefined
     while (parent) {

@@ -6,6 +6,8 @@ import type { DragMove, DragState } from './types'
 import type { SceneNode } from '@open-pencil/core'
 import type { Editor } from '@open-pencil/core/editor'
 
+const AUTO_LAYOUT_REORDER_CLICK_SLOP = 3
+
 export function detectAutoLayoutParent(editor: Editor): string | undefined {
   if (editor.state.selectedIds.size !== 1) return undefined
   const selectedId = [...editor.state.selectedIds][0]
@@ -46,6 +48,8 @@ export function duplicateAndDrag(
       type: 'move',
       startX: cx,
       startY: cy,
+      currentX: cx,
+      currentY: cy,
       originals: newOriginals,
       duplicated: true
     }
@@ -120,6 +124,9 @@ function applyMoveSnap(
 }
 
 export function handleMoveMove(d: DragMove, cx: number, cy: number, editor: Editor) {
+  d.currentX = cx
+  d.currentY = cy
+
   let dx = cx - d.startX
   let dy = cy - d.startY
 
@@ -162,6 +169,10 @@ export function handleMoveMove(d: DragMove, cx: number, cy: number, editor: Edit
   editor.setDropTarget(dropTarget?.id ?? null)
 }
 
+function getMoveDistance(d: DragMove) {
+  return Math.hypot(d.currentX - d.startX, d.currentY - d.startY)
+}
+
 function reparentOutsideNodes(editor: Editor) {
   for (const id of editor.state.selectedIds) {
     const node = editor.graph.getNode(id)
@@ -183,6 +194,10 @@ export function handleMoveUp(d: DragMove, editor: Editor) {
   editor.setSnapGuides([])
 
   if (indicator) {
+    if (getMoveDistance(d) < AUTO_LAYOUT_REORDER_CLICK_SLOP) {
+      editor.setDropTarget(null)
+      return
+    }
     for (const id of editor.state.selectedIds) {
       editor.reorderInAutoLayout(id, indicator.parentId, indicator.index)
     }

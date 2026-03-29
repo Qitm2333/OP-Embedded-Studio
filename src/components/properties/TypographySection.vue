@@ -83,6 +83,19 @@ const { panels } = useI18n()
         </ScrubInput>
       </div>
 
+      <div class="mb-1.5">
+        <label class="mb-1 block text-[11px] text-muted">{{ panels.direction }}</label>
+        <AppSelect
+          :model-value="ctx.node.value.textDirection"
+          :options="[
+            { value: 'AUTO', label: panels.auto },
+            { value: 'LTR', label: 'LTR' },
+            { value: 'RTL', label: 'RTL' }
+          ]"
+          @update:model-value="ctx.setDirection($event as 'AUTO' | 'LTR' | 'RTL')"
+        />
+      </div>
+
       <div class="flex items-center gap-3">
         <ToggleGroupRoot
           type="single"

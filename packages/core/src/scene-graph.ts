@@ -177,6 +177,8 @@ export type TextAutoResize = 'NONE' | 'HEIGHT' | 'WIDTH_AND_HEIGHT' | 'TRUNCATE'
 export type TextAlignVertical = 'TOP' | 'CENTER' | 'BOTTOM'
 export type TextCase = 'ORIGINAL' | 'UPPER' | 'LOWER' | 'TITLE'
 export type TextDecoration = 'NONE' | 'UNDERLINE' | 'STRIKETHROUGH'
+export type TextDirection = 'AUTO' | 'LTR' | 'RTL'
+export type LayoutDirection = 'AUTO' | 'LTR' | 'RTL'
 
 export interface CharacterStyleOverride {
   fontWeight?: number
@@ -279,6 +281,7 @@ export interface SceneNode {
   fontWeight: number
   italic: boolean
   textAlignHorizontal: 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED'
+  textDirection: TextDirection
   textAlignVertical: TextAlignVertical
   textAutoResize: TextAutoResize
   textCase: TextCase
@@ -292,6 +295,7 @@ export interface SceneNode {
   verticalConstraint: ConstraintType
 
   layoutMode: LayoutMode
+  layoutDirection: LayoutDirection
   layoutWrap: LayoutWrap
   primaryAxisAlign: LayoutAlign
   counterAxisAlign: LayoutCounterAlign
@@ -435,9 +439,11 @@ function createDefaultNode(type: NodeType, overrides: Partial<SceneNode> = {}): 
     fontWeight: 400,
     italic: false,
     textAlignHorizontal: 'LEFT',
+    textDirection: 'AUTO',
     lineHeight: null,
     letterSpacing: 0,
     layoutMode: 'NONE',
+    layoutDirection: 'AUTO',
     layoutWrap: 'NO_WRAP',
     primaryAxisAlign: 'MIN',
     counterAxisAlign: 'MIN',
@@ -801,6 +807,7 @@ export class SceneGraph {
     'fontWeight',
     'italic',
     'textAlignHorizontal',
+    'textDirection',
     'textAlignVertical',
     'lineHeight',
     'letterSpacing',

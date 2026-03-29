@@ -81,7 +81,7 @@
     "autoLayout": "Auto-layout",
     "alignment": "Allineamento",
     "appearance": "Aspetto",
-    "fill": "Riempimento",
+    "sizingFill": "Riempimento",
     "stroke": "Contorno",
     "effects": "Effetti",
     "export": "Esporta",
@@ -133,7 +133,17 @@
     "mixedEffectsHelp": "Fai clic su + per sostituire gli effetti misti",
     "strokeSides": "Lati del contorno",
     "rulers": "Righelli",
-    "multiplayerCursors": "Cursori degli altri partecipanti"
+    "multiplayerCursors": "Cursori degli altri partecipanti",
+    "direction": "Direzione",
+    "flow": "Flusso",
+    "auto": "Auto",
+    "columns": "Colonne",
+    "rows": "Righe",
+    "sizingFixed": "Fisso",
+    "sizingHug": "Adatta al contenuto",
+    "sizingFill": "Riempi",
+    "sizingFillFr": "Riempi (fr)",
+    "sizingFixedPx": "Fisso (px)"
   },
   "pages": {
     "newPage": "Nuova pagina",

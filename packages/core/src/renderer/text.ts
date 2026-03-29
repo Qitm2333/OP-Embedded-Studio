@@ -1,6 +1,7 @@
-import { DEFAULT_FONT_SIZE, DEFAULT_FONT_FAMILY } from '../constants'
-import { isFontLoaded, getCJKFallbackFamilies } from '../fonts'
 import { resolveRGBAForPreview } from '../color-management'
+import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE } from '../constants'
+import { resolveNodeTextDirection } from '../direction'
+import { getArabicFallbackFamilies, getCJKFallbackFamilies, isFontLoaded } from '../fonts'
 
 import type { SceneNode } from '../scene-graph'
 import type { CanvasKit, FontWeight, Paragraph, TypefaceFontProvider } from 'canvaskit-wasm'
@@ -79,16 +80,20 @@ function buildTruncateOpts(
   return opts
 }
 
-function getTextAlign(ck: CanvasKit, align: string) {
-  switch (align) {
+function getParagraphTextAlign(
+  ck: CanvasKit,
+  node: Pick<SceneNode, 'textAlignHorizontal' | 'textDirection' | 'text'>
+) {
+  const direction = resolveNodeTextDirection(node)
+  switch (node.textAlignHorizontal) {
     case 'CENTER':
       return ck.TextAlign.Center
     case 'RIGHT':
-      return ck.TextAlign.Right
+      return direction === 'RTL' ? ck.TextAlign.Left : ck.TextAlign.Right
     case 'JUSTIFIED':
       return ck.TextAlign.Justify
     default:
-      return ck.TextAlign.Left
+      return direction === 'RTL' ? ck.TextAlign.Right : ck.TextAlign.Left
   }
 }
 
@@ -168,18 +173,22 @@ export function buildParagraph(
   const baseColor = color ?? ck.BLACK
   const baseFontSize = node.fontSize || DEFAULT_FONT_SIZE
   const cjkFallbacks = getCJKFallbackFamilies()
+  const arabicFallbacks = getArabicFallbackFamilies()
+  const textDirection = resolveNodeTextDirection(node)
 
   const truncateOpts = buildTruncateOpts(node, baseFontSize)
 
   const fontFamilies = (primary: string) => {
     const families = [primary]
     if (primary !== DEFAULT_FONT_FAMILY) families.push(DEFAULT_FONT_FAMILY)
+    families.push(...arabicFallbacks)
     families.push(...cjkFallbacks)
-    return families
+    return [...new Set(families)]
   }
 
   const paraStyle = new ck.ParagraphStyle({
-    textAlign: getTextAlign(ck, node.textAlignHorizontal),
+    textAlign: getParagraphTextAlign(ck, node),
+    textDirection: textDirection === 'RTL' ? ck.TextDirection.RTL : ck.TextDirection.LTR,
     ...truncateOpts,
     textStyle: {
       color: baseColor,

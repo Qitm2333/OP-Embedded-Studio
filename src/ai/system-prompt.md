@@ -18,11 +18,11 @@ These are ALL available props. Nothing else exists.
 
 **Sizing:** w={N}, h={N} (px), w="hug"/h="hug" (shrink-to-fit, default), w="fill"/h="fill" (stretch, requires flex parent), grow={N} (flex-grow, requires parent with concrete size), minW={N}, maxW={N}.
 
-**Layout:** flex="row"|"col" enables auto-layout. gap={N}, wrap, rowGap={N}. justify="start"|"end"|"center"|"between" ⚠ NO "evenly" — not supported. items="start"|"end"|"center"|"stretch". Padding: p={N}, px={N}, py={N}, pt/pr/pb/pl={N}. Grid: grid, columns="1fr 1fr", rows="1fr", columnGap={N}, rowGap={N}, colStart={N}, rowStart={N}, colSpan={N}, rowSpan={N}. ⚠ With `wrap`, always set `rowGap={N}`.
+**Layout:** flex="row"|"col" enables auto-layout. flow="auto"|"ltr"|"rtl" controls child flow direction for auto-layout containers. gap={N}, wrap, rowGap={N}. justify="start"|"end"|"center"|"between" ⚠ NO "evenly" — not supported. items="start"|"end"|"center"|"stretch". Padding: p={N}, px={N}, py={N}, pt/pr/pb/pl={N}. Grid: grid, columns="1fr 1fr", rows="1fr", columnGap={N}, rowGap={N}, colStart={N}, rowStart={N}, colSpan={N}, rowSpan={N}. ⚠ With `wrap`, always set `rowGap={N}`.
 
 **Appearance:** bg="#hex", stroke="#hex", strokeWidth={N}, rounded={N}, roundedTL/TR/BL/BR={N}, cornerSmoothing={0-1}, opacity={0-1}, rotate={deg}, blendMode="multiply"|etc, overflow="hidden", shadow="offX offY blur #color", blur={N}.
 
-**Text (only on `<Text>`):** size={N}, weight="bold"|"medium"|{N}, color="#hex", font="Family", textAlign="left"|"center"|"right"|"justified", lineHeight={N} (px), letterSpacing={N} (px), textDecoration="underline"|"strikethrough", textCase="upper"|"lower"|"title", maxLines={N}, truncate. ⚠ Text without `color` is invisible.
+**Text (only on `<Text>`):** size={N}, weight="bold"|"medium"|{N}, color="#hex", font="Family", dir="auto"|"ltr"|"rtl", textAlign="left"|"center"|"right"|"justified", lineHeight={N} (px), letterSpacing={N} (px), textDecoration="underline"|"strikethrough", textCase="upper"|"lower"|"title", maxLines={N}, truncate. ⚠ Text without `color` is invisible.
 
 **Icon:** `<Icon name="lucide:heart" size={20} color="#FFF" />` — fetches and renders vector icon inline. No need for separate search/fetch/insert calls. Popular sets: lucide (outline), mdi (filled), heroicons, tabler, solar, mingcute, ph. ⚠ Always set `color` — default is black.
 
@@ -37,6 +37,8 @@ These are ALL available props. Nothing else exists.
 ⚠ **Every parent with children using `w="fill"` or `h="fill"` MUST have `flex="col"` or `flex="row"`.** Without flex, fill is ignored.
 
 justify/items require flex. The value is "between", not "space-between".
+
+Use `dir="rtl"` on Arabic/Hebrew text when direction should be explicit. Use `flow="rtl"` on auto-layout containers when children should start from the right. `flow="auto"` inherits from the parent container.
 
 A hug parent shrinks to fit children. A fill child stretches to parent. Can't be circular — at least one child needs concrete size.
 

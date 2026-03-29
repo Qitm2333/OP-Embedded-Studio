@@ -58,7 +58,8 @@ export async function listFamilies(): Promise<string[]> {
 }
 
 const BUNDLED_FONTS: Record<string, string> = {
-  'Inter|Regular': '/Inter-Regular.ttf'
+  'Inter|Regular': '/Inter-Regular.ttf',
+  'Noto Naskh Arabic|Regular': '/NotoNaskhArabic-Regular.ttf'
 }
 
 const googleFontsCache = new Map<string, Record<string, string>>()
@@ -196,7 +197,7 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
   if (bundledUrl) {
     try {
       const buffer = await fetchBundledFont(bundledUrl)
-      if (buffer) return registerAndCache(family, style, buffer)
+      if (buffer && !isVariableFont(buffer)) return registerAndCache(family, style, buffer)
     } catch (e) {
       console.warn(`Bundled font load failed for "${family}" ${style}:`, e)
     }
@@ -303,6 +304,8 @@ export function collectFontKeys(graph: SceneGraph, nodeIds: string[]): Array<[st
 
 const cjkFallbackFamilies: string[] = []
 let cjkFallbackPromise: Promise<string[]> | null = null
+const arabicFallbackFamilies: string[] = []
+let arabicFallbackPromise: Promise<string[]> | null = null
 
 function getCJKCandidates(): string[] {
   if (typeof navigator === 'undefined') return [...CJK_FALLBACK_FAMILIES_LINUX]
@@ -358,6 +361,46 @@ export function getCJKFallbackFamilies(): string[] {
 export function setCJKFallbackFamily(family: string): void {
   if (!cjkFallbackFamilies.includes(family)) {
     cjkFallbackFamilies.push(family)
+  }
+}
+
+export async function ensureArabicFallback(): Promise<string[]> {
+  if (arabicFallbackFamilies.length > 0) return arabicFallbackFamilies
+  if (arabicFallbackPromise) return arabicFallbackPromise
+
+  arabicFallbackPromise = (async () => {
+    for (const family of [
+      'Noto Naskh Arabic',
+      'Noto Sans Arabic',
+      'Geeza Pro',
+      'Arial',
+      'Tahoma',
+      'Amiri'
+    ]) {
+      const buffer = await findLocalFont(family)
+      if (buffer && registerAndCache(family, 'Regular', buffer)) {
+        arabicFallbackFamilies.push(family)
+      }
+    }
+
+    if (arabicFallbackFamilies.length === 0) {
+      const data = await loadFont('Noto Naskh Arabic', 'Regular')
+      if (data) arabicFallbackFamilies.push('Noto Naskh Arabic')
+    }
+
+    return arabicFallbackFamilies
+  })()
+
+  return arabicFallbackPromise
+}
+
+export function getArabicFallbackFamilies(): string[] {
+  return arabicFallbackFamilies
+}
+
+export function setArabicFallbackFamily(family: string): void {
+  if (!arabicFallbackFamilies.includes(family)) {
+    arabicFallbackFamilies.push(family)
   }
 }
 

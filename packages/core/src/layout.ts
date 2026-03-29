@@ -15,6 +15,8 @@ import Yoga, {
   type Node as YogaNode
 } from 'yoga-layout'
 
+import { resolveNodeLayoutDirection } from './direction'
+
 import type { GridTrack, SceneGraph, SceneNode } from './scene-graph'
 
 export type TextMeasurer = (
@@ -52,11 +54,27 @@ export function computeLayout(graph: SceneGraph, frameId: string): void {
   const frame = graph.getNode(frameId)
   if (!frame || frame.layoutMode === 'NONE') return
 
+  const rootDirection = resolveComputedLayoutDirection(graph, frame)
   const yogaRoot =
-    frame.layoutMode === 'GRID' ? buildGridTree(graph, frame) : buildYogaTree(graph, frame)
-  yogaRoot.calculateLayout(undefined, undefined, Direction.LTR)
+    frame.layoutMode === 'GRID'
+      ? buildGridTree(graph, frame, rootDirection)
+      : buildYogaTree(graph, frame, rootDirection)
+  yogaRoot.calculateLayout(
+    undefined,
+    undefined,
+    rootDirection === 'RTL' ? Direction.RTL : Direction.LTR
+  )
   applyYogaLayout(graph, frame, yogaRoot)
   freeYogaTree(yogaRoot)
+}
+
+function resolveComputedLayoutDirection(
+  graph: SceneGraph,
+  node: Pick<SceneNode, 'layoutDirection' | 'parentId'>
+): 'LTR' | 'RTL' {
+  const parent = node.parentId ? graph.getNode(node.parentId) : null
+  const inheritedDirection = parent ? resolveComputedLayoutDirection(graph, parent) : 'LTR'
+  return resolveNodeLayoutDirection(node, inheritedDirection)
 }
 
 export function computeAllLayouts(graph: SceneGraph, scopeId?: string): void {
@@ -91,8 +109,13 @@ function mapGridTrack(track: GridTrack): { type: GridTrackType; value: number } 
   }
 }
 
-function configureAsGrid(yogaNode: YogaNode, node: SceneNode): void {
+function configureAsGrid(
+  yogaNode: YogaNode,
+  node: SceneNode,
+  direction: Exclude<SceneNode['layoutDirection'], 'AUTO'>
+): void {
   yogaNode.setDisplay(Display.Grid)
+  yogaNode.setDirection(direction === 'RTL' ? Direction.RTL : Direction.LTR)
   yogaNode.setWidth(node.width)
   if (node.gridTemplateRows.length > 0 || node.height > 0) {
     yogaNode.setHeight(node.height)
@@ -143,9 +166,14 @@ function createGridChildNode(child: SceneNode): YogaNode {
   return yogaChild
 }
 
-function buildGridTree(graph: SceneGraph, frame: SceneNode): YogaNode {
+function buildGridTree(
+  graph: SceneGraph,
+  frame: SceneNode,
+  inheritedDirection: 'LTR' | 'RTL'
+): YogaNode {
   const root = Yoga.Node.create()
-  configureAsGrid(root, frame)
+  const direction = resolveNodeLayoutDirection(frame, inheritedDirection)
+  configureAsGrid(root, frame, direction)
 
   const children = graph.getChildren(frame.id)
   for (const child of children) {
@@ -154,7 +182,12 @@ function buildGridTree(graph: SceneGraph, frame: SceneNode): YogaNode {
       configureAbsoluteChild(yogaChild, child)
       root.insertChild(yogaChild, root.getChildCount())
     } else {
-      root.insertChild(createGridChildNode(child), root.getChildCount())
+      const yogaChild = createGridChildNode(child)
+      if (child.layoutMode === 'GRID' || child.layoutMode === 'HORIZONTAL' || child.layoutMode === 'VERTICAL') {
+        const childDirection = resolveNodeLayoutDirection(child, direction)
+        yogaChild.setDirection(childDirection === 'RTL' ? Direction.RTL : Direction.LTR)
+      }
+      root.insertChild(yogaChild, root.getChildCount())
     }
   }
 
@@ -163,8 +196,13 @@ function buildGridTree(graph: SceneGraph, frame: SceneNode): YogaNode {
 
 // --- Flex layout ---
 
-function buildYogaTree(graph: SceneGraph, frame: SceneNode): YogaNode {
+function buildYogaTree(
+  graph: SceneGraph,
+  frame: SceneNode,
+  inheritedDirection: 'LTR' | 'RTL'
+): YogaNode {
   const root = Yoga.Node.create()
+  const direction = resolveNodeLayoutDirection(frame, inheritedDirection)
 
   if (frame.primaryAxisSizing === 'FIXED') {
     if (frame.layoutMode === 'HORIZONTAL') root.setWidth(frame.width)
@@ -175,7 +213,7 @@ function buildYogaTree(graph: SceneGraph, frame: SceneNode): YogaNode {
     else root.setWidth(frame.width)
   }
 
-  configureFlexContainer(root, frame)
+  configureFlexContainer(root, frame, direction)
 
   const children = graph.getChildren(frame.id)
   for (const child of children) {
@@ -186,9 +224,9 @@ function buildYogaTree(graph: SceneGraph, frame: SceneNode): YogaNode {
     } else if (!child.visible) {
       yogaChild.setDisplay(Display.None)
     } else if (child.layoutMode === 'GRID') {
-      configureChildAsGrid(yogaChild, child, frame, graph)
+      configureChildAsGrid(yogaChild, child, frame, graph, direction)
     } else if (child.layoutMode !== 'NONE') {
-      configureChildAsAutoLayout(yogaChild, child, frame, graph)
+      configureChildAsAutoLayout(yogaChild, child, frame, graph, direction)
     } else {
       configureChildAsLeaf(yogaChild, child, frame)
     }
@@ -207,7 +245,12 @@ function configureAbsoluteChild(yogaChild: YogaNode, child: SceneNode): void {
   yogaChild.setHeight(child.height)
 }
 
-function configureFlexContainer(yogaNode: YogaNode, node: SceneNode): void {
+function configureFlexContainer(
+  yogaNode: YogaNode,
+  node: SceneNode,
+  direction: Exclude<SceneNode['layoutDirection'], 'AUTO'>
+): void {
+  yogaNode.setDirection(direction === 'RTL' ? Direction.RTL : Direction.LTR)
   yogaNode.setFlexDirection(
     node.layoutMode === 'HORIZONTAL' ? FlexDirection.Row : FlexDirection.Column
   )
@@ -241,9 +284,12 @@ function configureChildAsGrid(
   yogaChild: YogaNode,
   child: SceneNode,
   parent: SceneNode,
-  graph: SceneGraph
+  graph: SceneGraph,
+  inheritedDirection: 'LTR' | 'RTL'
 ): void {
+  const direction = resolveNodeLayoutDirection(child, inheritedDirection)
   yogaChild.setDisplay(Display.Grid)
+  yogaChild.setDirection(direction === 'RTL' ? Direction.RTL : Direction.LTR)
 
   if (child.gridTemplateColumns.length > 0) {
     yogaChild.setGridTemplateColumns(child.gridTemplateColumns.map(mapGridTrack))
@@ -312,8 +358,10 @@ function configureChildAsAutoLayout(
   yogaChild: YogaNode,
   child: SceneNode,
   parent: SceneNode,
-  graph: SceneGraph
+  graph: SceneGraph,
+  inheritedDirection: 'LTR' | 'RTL'
 ): void {
+  const direction = resolveNodeLayoutDirection(child, inheritedDirection)
   const isParentRow = parent.layoutMode === 'HORIZONTAL'
   const isChildRow = child.layoutMode === 'HORIZONTAL'
 
@@ -333,7 +381,7 @@ function configureChildAsAutoLayout(
   const selfAlign = mapAlignSelf(child.layoutAlignSelf)
   if (selfAlign != null) yogaChild.setAlignSelf(selfAlign)
 
-  configureFlexContainer(yogaChild, child)
+  configureFlexContainer(yogaChild, child, direction)
 
   const grandchildren = graph.getChildren(child.id)
   for (const gc of grandchildren) {
@@ -343,9 +391,9 @@ function configureChildAsAutoLayout(
     } else if (!gc.visible) {
       yogaGC.setDisplay(Display.None)
     } else if (gc.layoutMode === 'GRID') {
-      configureChildAsGrid(yogaGC, gc, child, graph)
+      configureChildAsGrid(yogaGC, gc, child, graph, direction)
     } else if (gc.layoutMode !== 'NONE') {
-      configureChildAsAutoLayout(yogaGC, gc, child, graph)
+      configureChildAsAutoLayout(yogaGC, gc, child, graph, direction)
     } else {
       configureChildAsLeaf(yogaGC, gc, child)
     }

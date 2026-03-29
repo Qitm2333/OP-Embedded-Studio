@@ -1,6 +1,18 @@
+import { resolveNodeLayoutDirection } from '@open-pencil/core'
+
 import type { DragMove } from './types'
 import type { SceneNode, Vector } from '@open-pencil/core'
 import type { Editor } from '@open-pencil/core/editor'
+
+function resolveLayoutDirection(parent: SceneNode, editor: Editor): 'LTR' | 'RTL' {
+  const ancestor = parent.parentId ? editor.graph.getNode(parent.parentId) : null
+  const inheritedDirection = ancestor ? resolveLayoutDirection(ancestor, editor) : 'LTR'
+  return resolveNodeLayoutDirection(parent, inheritedDirection)
+}
+
+function isRtlRow(parent: SceneNode, isRow: boolean, editor: Editor) {
+  return isRow && resolveLayoutDirection(parent, editor) === 'RTL'
+}
 
 export function computeIndicatorPosition(
   children: SceneNode[],
@@ -10,27 +22,45 @@ export function computeIndicatorPosition(
   isRow: boolean,
   editor: Editor
 ): number {
+  const rtlRow = isRtlRow(parent, isRow, editor)
+
   if (children.length === 0) {
-    return isRow ? parentAbs.x + parent.paddingLeft : parentAbs.y + parent.paddingTop
+    if (isRow) {
+      return rtlRow
+        ? parentAbs.x + parent.width - parent.paddingRight
+        : parentAbs.x + parent.paddingLeft
+    }
+    return parentAbs.y + parent.paddingTop
   }
   if (insertIndex === 0) {
     const firstAbs = editor.graph.getAbsolutePosition(children[0].id)
-    return (isRow ? firstAbs.x : firstAbs.y) - parent.itemSpacing / 2
+    if (isRow) {
+      return rtlRow
+        ? firstAbs.x + children[0].width + parent.itemSpacing / 2
+        : firstAbs.x - parent.itemSpacing / 2
+    }
+    return firstAbs.y - parent.itemSpacing / 2
   }
   if (insertIndex >= children.length) {
     const last = children[children.length - 1]
     const lastAbs = editor.graph.getAbsolutePosition(last.id)
-    return isRow
-      ? lastAbs.x + last.width + parent.itemSpacing / 2
-      : lastAbs.y + last.height + parent.itemSpacing / 2
+    if (isRow) {
+      return rtlRow
+        ? lastAbs.x - parent.itemSpacing / 2
+        : lastAbs.x + last.width + parent.itemSpacing / 2
+    }
+    return lastAbs.y + last.height + parent.itemSpacing / 2
   }
   const prev = children[insertIndex - 1]
   const next = children[insertIndex]
   const prevAbs = editor.graph.getAbsolutePosition(prev.id)
   const nextAbs = editor.graph.getAbsolutePosition(next.id)
-  return isRow
-    ? (prevAbs.x + prev.width + nextAbs.x) / 2
-    : (prevAbs.y + prev.height + nextAbs.y) / 2
+  if (isRow) {
+    return rtlRow
+      ? (prevAbs.x + nextAbs.x + next.width) / 2
+      : (prevAbs.x + prev.width + nextAbs.x) / 2
+  }
+  return (prevAbs.y + prev.height + nextAbs.y) / 2
 }
 
 export function filteredToRealIndex(parentId: string, insertIndex: number, editor: Editor): number {
@@ -62,12 +92,15 @@ export function computeAutoLayoutIndicatorForFrame(
 
   const parentAbs = editor.graph.getAbsolutePosition(parent.id)
   const isRow = parent.layoutMode === 'HORIZONTAL'
+  const rtlRow = isRtlRow(parent, isRow, editor)
 
   let insertIndex = children.length
   for (let i = 0; i < children.length; i++) {
     const childAbs = editor.graph.getAbsolutePosition(children[i].id)
     const mid = isRow ? childAbs.x + children[i].width / 2 : childAbs.y + children[i].height / 2
-    if ((isRow ? cx : cy) < mid) {
+    const cursor = isRow ? cx : cy
+    const shouldInsertBefore = rtlRow ? cursor > mid : cursor < mid
+    if (shouldInsertBefore) {
       insertIndex = i
       break
     }

@@ -17,6 +17,8 @@ export interface DragMove {
   type: 'move'
   startX: number
   startY: number
+  currentX: number
+  currentY: number
   originals: Map<string, { x: number; y: number; parentId: string }>
   duplicated?: boolean
   autoLayoutParentId?: string

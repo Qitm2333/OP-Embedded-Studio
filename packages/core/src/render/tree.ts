@@ -83,6 +83,8 @@ export function node(
 
 export type StyleProps = {
   flex?: 'row' | 'col' | 'column'
+  flow?: 'auto' | 'ltr' | 'rtl'
+  dir?: 'auto' | 'ltr' | 'rtl'
   gap?: number
   wrap?: boolean
   rowGap?: number

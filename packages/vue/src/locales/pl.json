@@ -81,7 +81,7 @@
     "autoLayout": "Auto-layout",
     "alignment": "Wyrównanie",
     "appearance": "Wygląd",
-    "fill": "Wypełnienie",
+    "sizingFill": "Wypełnienie",
     "stroke": "Obrys",
     "effects": "Efekty",
     "export": "Eksport",
@@ -133,7 +133,17 @@
     "mixedEffectsHelp": "Kliknij +, aby zastąpić mieszane efekty",
     "strokeSides": "Boki obrysu",
     "rulers": "Linijki",
-    "multiplayerCursors": "Kursory innych uczestników"
+    "multiplayerCursors": "Kursory innych uczestników",
+    "direction": "Kierunek",
+    "flow": "Przepływ",
+    "auto": "Auto",
+    "columns": "Kolumny",
+    "rows": "Wiersze",
+    "sizingFixed": "Stały",
+    "sizingHug": "Dopasuj do zawartości",
+    "sizingFill": "Wypełnij",
+    "sizingFillFr": "Wypełnij (fr)",
+    "sizingFixedPx": "Stały (px)"
   },
   "pages": {
     "newPage": "Nowa strona",
