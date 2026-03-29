@@ -1,6 +1,7 @@
 /* eslint-disable max-lines -- JSX export formats share helpers and node walking logic */
 import { colorToHex8, colorToCSSCompact } from '@open-pencil/core/color'
 import { DEFAULT_FONT_FAMILY } from '@open-pencil/core/constants'
+import { resolveNodeTextDirection } from '../../../direction'
 import {
   pxToSpacing,
   colorToTwClass,
@@ -198,6 +199,7 @@ function collectGridSizingProps(node: SceneNode, props: [string, unknown][]): vo
 
 function collectFlexSizingProps(node: SceneNode, props: [string, unknown][]): void {
   props.push(['flex', node.layoutMode === 'HORIZONTAL' ? 'row' : 'col'])
+  if (node.layoutDirection === 'RTL') props.push(['dir', 'rtl'])
   const primaryAxis = node.layoutMode === 'HORIZONTAL' ? 'width' : 'height'
   const crossAxis = node.layoutMode === 'HORIZONTAL' ? 'height' : 'width'
 
@@ -368,6 +370,7 @@ function collectTextSizingProps(
 }
 
 function collectTextNodeProps(node: SceneNode, props: [string, unknown][]): void {
+  const direction = resolveNodeTextDirection(node)
   if (node.fontSize !== 14) props.push(['size', node.fontSize])
   if (node.fontFamily && node.fontFamily !== DEFAULT_FONT_FAMILY)
     props.push(['font', node.fontFamily])
@@ -376,6 +379,7 @@ function collectTextNodeProps(node: SceneNode, props: [string, unknown][]): void
     else if (node.fontWeight === 500) props.push(['weight', 'medium'])
     else props.push(['weight', node.fontWeight])
   }
+  if (direction === 'RTL') props.push(['dir', 'rtl'])
   if (node.textAlignHorizontal !== 'LEFT') {
     props.push(['textAlign', node.textAlignHorizontal.toLowerCase()])
   }
@@ -450,6 +454,7 @@ function collectTwGridClasses(node: SceneNode, classes: string[]): void {
 
 function collectTwFlexSizingClasses(node: SceneNode, classes: string[]): void {
   classes.push('flex')
+  if (node.layoutDirection === 'RTL') classes.push('[direction:rtl]')
   if (node.layoutMode === 'VERTICAL') classes.push('flex-col')
 
   const primaryAxis = node.layoutMode === 'HORIZONTAL' ? 'width' : 'height'
@@ -558,6 +563,7 @@ function collectTwAppearanceClasses(node: SceneNode, classes: string[]): void {
 
 function collectTwTextClasses(node: SceneNode, classes: string[]): void {
   classes.push(`text-${fontSizeToTw(node.fontSize)}`)
+  if (resolveNodeTextDirection(node) === 'RTL') classes.push('[direction:rtl]')
   if (node.fontFamily && node.fontFamily !== DEFAULT_FONT_FAMILY) {
     classes.push(`font-${formatTailwindFontFamily(node.fontFamily)}`)
   }

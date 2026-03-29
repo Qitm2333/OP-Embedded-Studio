@@ -4,7 +4,13 @@ import type { SceneNode } from '../../packages/core/src/scene-graph'
 import type { SkiaRenderer } from '../../packages/core/src/renderer/renderer'
 import { initCanvasKit } from '../../packages/cli/src/headless'
 import { SceneGraph, SkiaRenderer as SkiaRendererClass } from '@open-pencil/core'
-import { initFontService, setCJKFallbackFamily, markFontLoaded } from '../../packages/core/src/fonts'
+import {
+  initFontService,
+  setArabicFallbackFamily,
+  setCJKFallbackFamily,
+  markFontLoaded
+} from '../../packages/core/src/fonts'
+import { detectTextDirection, resolveTextDirection } from '@open-pencil/core'
 
 function createMockCanvas() {
   return {
@@ -112,6 +118,13 @@ describe('renderText', () => {
 })
 
 describe('renderText headless visual', () => {
+  test('detects base direction for Arabic and mixed text', () => {
+    expect(detectTextDirection('مرحبا')).toBe('RTL')
+    expect(resolveTextDirection('AUTO', 'مرحبا world')).toBe('RTL')
+    expect(resolveTextDirection('AUTO', 'Hello مرحبا')).toBe('LTR')
+    expect(resolveTextDirection('RTL', 'Hello')).toBe('RTL')
+  })
+
   test('renders CJK text via fallback font through paragraph shaper', async () => {
     const ck = await initCanvasKit()
     const fontProvider = ck.TypefaceFontProvider.Make()
@@ -177,5 +190,72 @@ describe('renderText headless visual', () => {
     // CJK characters are dense — should have many dark pixels if rendering correctly
     // Tofu boxes would have far fewer (just outlines)
     expect(darkPixels).toBeGreaterThan(500)
+  })
+
+  test('renders Arabic text via fallback font through paragraph shaper', async () => {
+    const ck = await initCanvasKit()
+    const fontProvider = ck.TypefaceFontProvider.Make()
+    initFontService(ck, fontProvider)
+
+    const interData = await Bun.file('public/Inter-Regular.ttf').arrayBuffer()
+    fontProvider.registerFont(interData, 'Inter')
+    markFontLoaded('Inter', 'Regular', interData)
+
+    const arabicPath = new URL('../fixtures/fonts/NotoNaskhArabic-Regular.ttf', import.meta.url)
+      .pathname
+    const arabicData = await Bun.file(arabicPath).arrayBuffer()
+    fontProvider.registerFont(arabicData, 'Noto Naskh Arabic')
+    setArabicFallbackFamily('Noto Naskh Arabic')
+
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const node = graph.createNode('TEXT', page.id, {
+      text: 'مرحبا بالعالم',
+      textDirection: 'AUTO',
+      fontFamily: 'Inter',
+      fontSize: 32,
+      fontWeight: 400,
+      width: 220,
+      height: 60,
+      fills: [{ type: 'SOLID', color: { r: 0, g: 0, b: 0, a: 1 }, opacity: 1, visible: true }]
+    })
+
+    const surface = ck.MakeSurface(220, 60)!
+    const renderer = new SkiaRendererClass(ck, surface)
+    renderer.viewportWidth = 220
+    renderer.viewportHeight = 60
+    renderer.dpr = 1
+    renderer.fontsLoaded = true
+    ;(renderer as unknown as Record<string, unknown>).fontProvider = fontProvider
+
+    const canvas = surface.getCanvas()
+    canvas.clear(ck.WHITE)
+    renderText(renderer, canvas, graph.getNode(node.id)!)
+    surface.flush()
+
+    const image = surface.makeImageSnapshot()
+    const encoded = image.encodeToBytes(ck.ImageFormat.PNG, 100)!
+    image.delete()
+    surface.delete()
+
+    expect(encoded.length).toBeGreaterThan(200)
+
+    const decodedImage = ck.MakeImageFromEncoded(encoded)!
+    const pixels = decodedImage.readPixels(0, 0, {
+      width: 220,
+      height: 60,
+      colorType: ck.ColorType.RGBA_8888,
+      alphaType: ck.AlphaType.Unpremul,
+      colorSpace: ck.ColorSpace.SRGB
+    })!
+    decodedImage.delete()
+
+    let darkPixels = 0
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (pixels[i] < 128 && pixels[i + 1] < 128 && pixels[i + 2] < 128) {
+        darkPixels++
+      }
+    }
+    expect(darkPixels).toBeGreaterThan(450)
   })
 })

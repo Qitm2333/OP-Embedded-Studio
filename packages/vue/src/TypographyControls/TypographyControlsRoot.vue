@@ -27,6 +27,7 @@ function onFormattingChange(val: AcceptableValue | AcceptableValue[]) {
     :active-formatting="ctx.activeFormatting"
     :set-family="ctx.setFamily"
     :set-weight="ctx.setWeight"
+    :set-direction="ctx.setDirection"
     :update-prop="ctx.updateProp"
     :commit-prop="ctx.commitProp"
     :on-align-change="onAlignChange"

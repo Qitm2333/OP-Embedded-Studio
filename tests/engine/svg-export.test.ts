@@ -358,6 +358,23 @@ describe('renderNodesToSVG()', () => {
     expect(result).toContain('>Hello World</text>')
   })
 
+  test('rtl text node exports direction and logical anchor', () => {
+    const graph = makeGraph()
+    const node = graph.createNode('TEXT', pageId(graph), {
+      width: 180,
+      height: 24,
+      text: 'مرحبا',
+      fontSize: 18,
+      textDirection: 'RTL',
+      textAlignHorizontal: 'LEFT',
+      fills: [{ type: 'SOLID', color: { r: 0, g: 0, b: 0, a: 1 }, opacity: 1, visible: true }]
+    })
+    const result = exportSVG(graph, [node.id])!
+    expect(result).toContain('direction="rtl"')
+    expect(result).toContain('text-anchor="end"')
+    expect(result).toContain('x="180"')
+  })
+
   test('text with style runs', () => {
     const graph = makeGraph()
     const node = graph.createNode('TEXT', pageId(graph), {

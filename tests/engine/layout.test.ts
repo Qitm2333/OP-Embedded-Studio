@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 
-import { SceneGraph, type SceneNode, type GridTrack, computeLayout, computeAllLayouts, setTextMeasurer, FigmaAPI, readFigFile } from '@open-pencil/core'
+import { SceneGraph, type SceneNode, type GridTrack, computeLayout, computeAllLayouts, createEditor, setTextMeasurer, FigmaAPI, readFigFile } from '@open-pencil/core'
 
 import { createEditorStore } from '@/stores/editor'
 
@@ -111,6 +111,101 @@ describe('Auto Layout', () => {
       expect(children[0].y).toBe(15)
       expect(children[1].x).toBe(80)
       expect(children[1].y).toBe(15)
+    })
+
+    test('positions children right-to-left when layoutDirection is RTL', () => {
+      const graph = new SceneGraph()
+      const frame = autoFrame(graph, pageId(graph), {
+        width: 300,
+        height: 80,
+        layoutDirection: 'RTL',
+        paddingLeft: 20,
+        paddingRight: 30,
+        itemSpacing: 10
+      })
+      rect(graph, frame.id, 50, 30)
+      rect(graph, frame.id, 60, 30)
+
+      computeLayout(graph, frame.id)
+
+      const children = graph.getChildren(frame.id)
+      expect(children[0].x).toBe(220)
+      expect(children[1].x).toBe(150)
+    })
+
+    test('inherits RTL flow when layoutDirection is AUTO inside an RTL parent', () => {
+      const graph = new SceneGraph()
+      const outer = autoFrame(graph, pageId(graph), {
+        width: 320,
+        height: 120,
+        layoutDirection: 'RTL'
+      })
+      const inner = autoFrame(graph, outer.id, {
+        width: 240,
+        height: 80,
+        layoutDirection: 'AUTO'
+      })
+      rect(graph, inner.id, 50, 30)
+      rect(graph, inner.id, 60, 30)
+
+      computeAllLayouts(graph, outer.id)
+
+      const children = graph.getChildren(inner.id)
+      expect(children[0].x).toBe(190)
+      expect(children[1].x).toBe(130)
+    })
+
+    test('allows nested frame to override parent flow direction', () => {
+      const graph = new SceneGraph()
+      const outer = autoFrame(graph, pageId(graph), {
+        width: 320,
+        height: 120,
+        layoutDirection: 'LTR'
+      })
+      const inner = autoFrame(graph, outer.id, {
+        width: 240,
+        height: 80,
+        layoutDirection: 'RTL'
+      })
+      rect(graph, inner.id, 50, 30)
+      rect(graph, inner.id, 60, 30)
+
+      computeAllLayouts(graph, outer.id)
+
+      const children = graph.getChildren(inner.id)
+      expect(children[0].x).toBe(190)
+      expect(children[1].x).toBe(130)
+    })
+
+    test('recomputes deep auto descendants when parent flow changes', () => {
+      const graph = new SceneGraph()
+      const outer = graph.createNode('FRAME', pageId(graph), {
+        layoutMode: 'VERTICAL',
+        primaryAxisSizing: 'FIXED',
+        counterAxisSizing: 'FIXED',
+        width: 320,
+        height: 200,
+        layoutDirection: 'LTR'
+      })
+      const wrapper = graph.createNode('FRAME', outer.id, {
+        layoutMode: 'NONE',
+        width: 280,
+        height: 120
+      })
+      const inner = autoFrame(graph, wrapper.id, {
+        width: 240,
+        height: 80,
+        layoutDirection: 'AUTO'
+      })
+      rect(graph, inner.id, 50, 30)
+      rect(graph, inner.id, 60, 30)
+
+      const editor = createEditor({ graph })
+      editor.updateNodeWithUndo(outer.id, { layoutDirection: 'RTL' }, 'Change layout direction')
+
+      const children = graph.getChildren(inner.id)
+      expect(children[0].x).toBe(190)
+      expect(children[1].x).toBe(130)
     })
   })
 

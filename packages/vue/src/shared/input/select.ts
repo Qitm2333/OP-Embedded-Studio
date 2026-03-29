@@ -410,6 +410,8 @@ export function handleSelectDown(
     type: 'move',
     startX: cx,
     startY: cy,
+    currentX: cx,
+    currentY: cy,
     originals,
     autoLayoutParentId: detectAutoLayoutParent(editor)
   })

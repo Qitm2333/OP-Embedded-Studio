@@ -63,6 +63,19 @@ describe('sceneNodeToJSX', () => {
     expect(jsx).toContain('>Hello World</Text>')
   })
 
+  test('rtl text node', () => {
+    const graph = makeGraph()
+    const node = graph.createNode('TEXT', pageId(graph), {
+      name: 'Arabic Title',
+      width: 200,
+      height: 24,
+      text: 'مرحبا',
+      textDirection: 'RTL'
+    })
+    const jsx = sceneNodeToJSX(node.id, graph)
+    expect(jsx).toContain('dir="rtl"')
+  })
+
   test('frame with auto-layout', () => {
     const graph = makeGraph()
     const frame = graph.createNode('FRAME', pageId(graph), {
@@ -83,6 +96,19 @@ describe('sceneNodeToJSX', () => {
     expect(jsx).toContain('gap={16}')
     expect(jsx).toContain('p={12}')
     expect(jsx).toContain('w={400}')
+  })
+
+  test('frame with rtl auto-layout', () => {
+    const graph = makeGraph()
+    const frame = graph.createNode('FRAME', pageId(graph), {
+      name: 'Row RTL',
+      width: 400,
+      height: 100,
+      layoutMode: 'HORIZONTAL',
+      layoutDirection: 'RTL'
+    })
+    const jsx = sceneNodeToJSX(frame.id, graph)
+    expect(jsx).toContain('dir="rtl"')
   })
 
   test('frame with children', () => {

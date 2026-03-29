@@ -8,6 +8,7 @@ import { useNodeFontStatus } from '@open-pencil/vue/shared/useFontStatus'
 import type { SceneNode, TextDecoration } from '@open-pencil/core'
 
 type TextAlign = 'LEFT' | 'CENTER' | 'RIGHT'
+type TextDirection = SceneNode['textDirection']
 
 const WEIGHTS = Object.entries(FONT_WEIGHT_NAMES).map(([value, label]) => ({
   value: Number(value),
@@ -81,6 +82,11 @@ export function useTypography(options: UseTypographyOptions = {}) {
     )
   }
 
+  function setDirection(direction: TextDirection) {
+    if (!node.value) return
+    editor.updateNodeWithUndo(node.value.id, { textDirection: direction }, 'Change text direction')
+  }
+
   function toggleBold() {
     if (!node.value) return
     setWeight(node.value.fontWeight >= 700 ? 400 : 700)
@@ -142,6 +148,7 @@ export function useTypography(options: UseTypographyOptions = {}) {
     setFamily,
     setWeight,
     setAlign,
+    setDirection,
     toggleBold,
     toggleItalic,
     toggleDecoration,

@@ -8,6 +8,7 @@ const ctx = useLayout()
   <slot
     :editor="ctx.editor"
     :node="ctx.node.value"
+    :layout-direction="ctx.layoutDirection.value"
     :is-in-auto-layout="ctx.isInAutoLayout.value"
     :is-grid="ctx.isGrid.value"
     :is-flex="ctx.isFlex.value"
@@ -26,6 +27,7 @@ const ctx = useLayout()
     :set-uniform-padding="ctx.setUniformPadding"
     :commit-uniform-padding="ctx.commitUniformPadding"
     :set-alignment="ctx.setAlignment"
+    :set-layout-direction="ctx.setLayoutDirection"
     :update-grid-track="ctx.updateGridTrack"
     :add-track="ctx.addTrack"
     :remove-track="ctx.removeTrack"

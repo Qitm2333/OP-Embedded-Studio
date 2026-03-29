@@ -462,6 +462,16 @@ export class FigmaNodeProxy {
     })
   }
 
+  get textDirection(): string {
+    return this._raw().textDirection
+  }
+
+  set textDirection(v: string) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], {
+      textDirection: v as SceneNode['textDirection']
+    })
+  }
+
   get textAlignVertical(): string {
     return this._raw().textAlignVertical
   }
@@ -562,6 +572,17 @@ export class FigmaNodeProxy {
 
   set layoutMode(v: LayoutMode) {
     this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], { layoutMode: v })
+  }
+
+  get layoutDirection(): string {
+    const raw = this._raw()
+    return Object.hasOwn(raw, 'layoutDirection') ? raw.layoutDirection : 'AUTO'
+  }
+
+  set layoutDirection(v: string) {
+    this[INTERNAL_GRAPH].updateNode(this[INTERNAL_ID], {
+      layoutDirection: v as SceneNode['layoutDirection']
+    })
   }
 
   get primaryAxisAlignItems(): string {
@@ -1021,8 +1042,10 @@ export class FigmaNodeProxy {
     if (n.cornerRadius > 0) obj.cornerRadius = n.cornerRadius
     if (!n.visible) obj.visible = false
     if (n.text) obj.characters = n.text
+    if (n.type === 'TEXT') obj.textDirection = n.textDirection
     if (n.layoutMode !== 'NONE') {
       obj.layoutMode = n.layoutMode
+      obj.layoutDirection = n.layoutDirection
       obj.itemSpacing = n.itemSpacing
     }
     const children = this[INTERNAL_GRAPH].getChildren(this[INTERNAL_ID])

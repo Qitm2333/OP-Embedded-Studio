@@ -276,9 +276,11 @@ export interface NodeResult {
   cornerRadius: number
   blendMode: string
   layoutMode: string
+  layoutDirection: string
   fontFamily: string
   fontSize: number
   fontWeight: number
+  textDirection: string
   text: string | null
   parent: { id: string; name: string; type: string } | null
   children: number
@@ -316,9 +318,11 @@ export const nodeCommand: RpcCommand<NodeArgs, NodeResult | { error: string }> =
       cornerRadius: node.cornerRadius,
       blendMode: node.blendMode,
       layoutMode: node.layoutMode,
+      layoutDirection: node.layoutDirection,
       fontFamily: node.fontFamily,
       fontSize: node.fontSize,
       fontWeight: node.fontWeight,
+      textDirection: node.textDirection,
       text: (() => {
         if (!node.text.length) return null
         if (node.text.length > 200) return node.text.slice(0, 200) + '…'

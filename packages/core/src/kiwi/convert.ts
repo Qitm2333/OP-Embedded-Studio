@@ -39,6 +39,10 @@ import type {
 import type { Color, Matrix, Vector } from '../types'
 import type { NodeChange, Paint, Effect as KiwiEffect, GUID } from './codec'
 
+const OPEN_PENCIL_PLUGIN_ID = 'open-pencil'
+const TEXT_DIRECTION_PLUGIN_KEY = 'textDirection'
+const LAYOUT_DIRECTION_PLUGIN_KEY = 'layoutDirection'
+
 export function guidToString(guid: GUID): string {
   return `${guid.sessionID}:${guid.localID}`
 }
@@ -497,6 +501,13 @@ function extractPluginData(nc: NodeChange): PluginDataEntry[] {
   }))
 }
 
+function getOpenPencilPluginValue(nc: NodeChange, key: string): string | null {
+  return (
+    nc.pluginData?.find((entry) => entry.pluginID === OPEN_PENCIL_PLUGIN_ID && entry.key === key)
+      ?.value ?? null
+  )
+}
+
 function extractSharedPluginData(nc: NodeChange): SharedPluginDataEntry[] {
   return extractPluginData(nc).map((entry) => {
     const slashIndex = entry.key.indexOf('/')
@@ -586,6 +597,7 @@ function convertTextProps(
   | 'maxLines'
   | 'styleRuns'
   | 'textTruncation'
+  | 'textDirection'
 > {
   return {
     text: nc.textData?.characters ?? '',
@@ -606,7 +618,10 @@ function convertTextProps(
     letterSpacing: convertLetterSpacing(nc.letterSpacing, nc.fontSize),
     maxLines: (nc.maxLines ?? null) as number | null,
     styleRuns: importStyleRuns(nc),
-    textTruncation: (nc.textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED'
+    textTruncation: (nc.textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED',
+    textDirection:
+      (getOpenPencilPluginValue(nc, TEXT_DIRECTION_PLUGIN_KEY) as SceneNode['textDirection'] | null) ||
+      'AUTO'
   }
 }
 
@@ -643,6 +658,7 @@ function convertLayoutProps(
   | 'counterAxisAlignContent'
   | 'itemReverseZIndex'
   | 'strokesIncludedInLayout'
+  | 'layoutDirection'
 > {
   return {
     layoutMode: mapStackMode(nc.stackMode),
@@ -660,7 +676,12 @@ function convertLayoutProps(
     counterAxisAlignContent:
       (nc.stackCounterAlignContent as string) === 'SPACE_BETWEEN' ? 'SPACE_BETWEEN' : 'AUTO',
     itemReverseZIndex: (nc.stackReverseZIndex ?? false) as boolean,
-    strokesIncludedInLayout: (nc.strokesIncludedInLayout ?? false) as boolean
+    strokesIncludedInLayout: (nc.strokesIncludedInLayout ?? false) as boolean,
+    layoutDirection:
+      (getOpenPencilPluginValue(nc, LAYOUT_DIRECTION_PLUGIN_KEY) as
+        | SceneNode['layoutDirection']
+        | null) ||
+      'AUTO'
   }
 }
 

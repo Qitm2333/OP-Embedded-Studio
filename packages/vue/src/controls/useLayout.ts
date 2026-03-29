@@ -54,6 +54,7 @@ export function useLayout() {
   const editor = useEditor()
 
   const node = useSceneComputed<SceneNode | null>(() => editor.getSelectedNode() ?? null)
+  const layoutDirection = computed<SceneNode['layoutDirection']>(() => node.value?.layoutDirection ?? 'AUTO')
 
   const isInAutoLayout = computed(() => {
     const n = node.value
@@ -180,6 +181,11 @@ export function useLayout() {
     )
   }
 
+  function setLayoutDirection(direction: SceneNode['layoutDirection']) {
+    if (!node.value) return
+    editor.updateNodeWithUndo(node.value.id, { layoutDirection: direction }, 'Change layout direction')
+  }
+
   function updateGridTrack(
     prop: 'gridTemplateColumns' | 'gridTemplateRows',
     index: number,
@@ -222,6 +228,7 @@ export function useLayout() {
   return {
     editor,
     node,
+    layoutDirection,
     isInAutoLayout,
     isGrid,
     isFlex,
@@ -240,6 +247,7 @@ export function useLayout() {
     setUniformPadding,
     commitUniformPadding,
     setAlignment,
+    setLayoutDirection,
     updateGridTrack,
     addTrack,
     removeTrack,

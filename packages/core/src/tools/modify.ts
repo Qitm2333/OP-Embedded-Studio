@@ -3,7 +3,7 @@ import { parseColor } from '../color'
 import { DEFAULT_SHADOW_COLOR } from '../constants'
 import { defineTool } from './schema'
 
-import type { CharacterStyleOverride, Effect, StyleRun } from '../scene-graph'
+import type { CharacterStyleOverride, Effect, SceneNode, StyleRun } from '../scene-graph'
 import type { Matrix } from '../types'
 
 export const setFill = defineTool({
@@ -149,6 +149,16 @@ export const updateNode = defineTool({
     corner_radius: { type: 'number', description: 'Corner radius', min: 0 },
     visible: { type: 'boolean', description: 'Visibility' },
     text: { type: 'string', description: 'Text content (TEXT nodes)' },
+    text_direction: {
+      type: 'string',
+      description: 'Text direction for TEXT nodes',
+      enum: ['AUTO', 'LTR', 'RTL']
+    },
+    flow_direction: {
+      type: 'string',
+      description: 'Auto-layout flow direction for FRAME nodes',
+      enum: ['AUTO', 'LTR', 'RTL']
+    },
     font_size: { type: 'number', description: 'Font size', min: 1 },
     font_weight: { type: 'number', description: 'Font weight (100-900)' },
     name: { type: 'string', description: 'Layer name' }
@@ -188,6 +198,18 @@ export const updateNode = defineTool({
     if (args.text !== undefined) {
       figma.graph.updateNode(node.id, { text: args.text })
       updated.push('text')
+    }
+    if (args.text_direction !== undefined) {
+      figma.graph.updateNode(node.id, {
+        textDirection: args.text_direction as SceneNode['textDirection']
+      })
+      updated.push('textDirection')
+    }
+    if (args.flow_direction !== undefined) {
+      figma.graph.updateNode(node.id, {
+        layoutDirection: args.flow_direction as SceneNode['layoutDirection']
+      })
+      updated.push('layoutDirection')
     }
     if (args.font_size !== undefined) {
       figma.graph.updateNode(node.id, { fontSize: args.font_size })
@@ -233,6 +255,11 @@ export const setLayout = defineTool({
       type: 'string',
       description: 'Cross axis alignment (only changes if provided)',
       enum: ['MIN', 'CENTER', 'MAX', 'STRETCH']
+    },
+    flow_direction: {
+      type: 'string',
+      description: 'Child flow direction for auto-layout. AUTO inherits from parent.',
+      enum: ['AUTO', 'LTR', 'RTL']
     }
   },
   execute: (figma, args) => {
@@ -255,6 +282,8 @@ export const setLayout = defineTool({
     if (args.spacing !== undefined) node.itemSpacing = args.spacing
     if (args.align !== undefined) node.primaryAxisAlignItems = args.align
     if (args.counter_align !== undefined) node.counterAxisAlignItems = args.counter_align
+    if (args.flow_direction !== undefined)
+      node.layoutDirection = args.flow_direction as SceneNode['layoutDirection']
 
     if (args.padding !== undefined) {
       node.paddingTop = args.padding
@@ -608,6 +637,11 @@ export const setTextProperties = defineTool({
       description: 'Text auto-resize mode',
       enum: ['NONE', 'WIDTH_AND_HEIGHT', 'HEIGHT', 'TRUNCATE']
     },
+    direction: {
+      type: 'string',
+      description: 'Text direction',
+      enum: ['AUTO', 'LTR', 'RTL']
+    },
     text_decoration: {
       type: 'string',
       description: 'Text decoration',
@@ -630,6 +664,10 @@ export const setTextProperties = defineTool({
     if (args.auto_resize !== undefined) {
       node.textAutoResize = args.auto_resize
       updated.push('textAutoResize')
+    }
+    if (args.direction !== undefined) {
+      node.textDirection = args.direction as SceneNode['textDirection']
+      updated.push('textDirection')
     }
     if (args.text_decoration !== undefined) {
       node.textDecoration = args.text_decoration

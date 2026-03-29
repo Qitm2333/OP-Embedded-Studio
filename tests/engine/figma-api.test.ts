@@ -237,6 +237,13 @@ describe('FigmaAPI', () => {
       expect(text.textAlignHorizontal).toBe('CENTER')
     })
 
+    test('textDirection', () => {
+      const api = createAPI()
+      const text = api.createText()
+      text.textDirection = 'RTL'
+      expect(text.textDirection).toBe('RTL')
+    })
+
     test('textAutoResize', () => {
       const api = createAPI()
       const text = api.createText()
@@ -251,6 +258,24 @@ describe('FigmaAPI', () => {
       const frame = api.createFrame()
       frame.layoutMode = 'VERTICAL'
       expect(frame.layoutMode).toBe('VERTICAL')
+    })
+
+    test('layoutDirection', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      expect(frame.layoutDirection).toBe('AUTO')
+      frame.layoutDirection = 'RTL'
+      expect(frame.layoutDirection).toBe('RTL')
+    })
+
+    test('layoutDirection falls back to AUTO for legacy nodes with no stored value', () => {
+      const api = createAPI()
+      const frame = api.createFrame()
+      const raw = api.graph.getNode(frame.id)
+      expect(raw).toBeDefined()
+      if (!raw) return
+      Reflect.deleteProperty(raw as object, 'layoutDirection')
+      expect(frame.layoutDirection).toBe('AUTO')
     })
 
     test('itemSpacing', () => {

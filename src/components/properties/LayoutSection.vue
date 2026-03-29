@@ -109,6 +109,19 @@ const { panels } = useI18n()
               </button>
             </div>
 
+            <div v-if="ctx.isFlex" class="mt-2">
+              <label class="mb-1 block text-[11px] text-muted">Flow</label>
+              <AppSelect
+                :model-value="ctx.layoutDirection"
+                :options="[
+                  { value: 'AUTO', label: 'Auto' },
+                  { value: 'LTR', label: 'LTR' },
+                  { value: 'RTL', label: 'RTL' }
+                ]"
+                @update:model-value="ctx.setLayoutDirection($event as 'AUTO' | 'LTR' | 'RTL')"
+              />
+            </div>
+
             <template v-if="ctx.isGrid">
               <div
                 v-for="trackProp in ['gridTemplateColumns', 'gridTemplateRows'] as const"
