@@ -22,10 +22,11 @@ interface SelectUi {
   indicator?: string
 }
 
-const { options, placeholder, ui } = defineProps<{
+const { options, placeholder, ui, testId = 'app-select-trigger' } = defineProps<{
   options: { value: T; label: string }[]
   placeholder?: string
   ui?: SelectUi
+  testId?: string
 }>()
 
 const modelValue = defineModel<T>({ required: true })
@@ -41,7 +42,7 @@ const cls = useComponentUI(ui, {
 
 <template>
   <SelectRoot v-model="modelValue">
-    <SelectTrigger data-test-id="app-select-trigger" :class="selectTrigger({ class: cls.trigger })">
+    <SelectTrigger :data-test-id="testId" :class="selectTrigger({ class: cls.trigger })">
       <SelectValue :placeholder="placeholder" />
       <icon-lucide-chevron-down class="ml-1 size-3 shrink-0 text-muted" />
     </SelectTrigger>

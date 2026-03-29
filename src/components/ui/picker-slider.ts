@@ -7,7 +7,7 @@ const pickerSlider = tv({
     label: 'w-4 shrink-0 text-[10px] font-medium text-muted',
     track: 'relative flex h-3 flex-1 items-center rounded-md',
     gradient: 'absolute inset-0 rounded-md',
-    range: 'absolute inset-0 h-full w-full cursor-pointer opacity-0',
+    range: 'absolute inset-0 z-10 h-full w-full cursor-pointer appearance-none opacity-0',
     thumb: 'pointer-events-none absolute top-1/2 size-3.5 -translate-y-1/2 rounded-full border-2 border-white shadow-sm',
     input: 'w-14 rounded border border-border bg-input px-1 py-0.5 text-right text-xs text-surface'
   },

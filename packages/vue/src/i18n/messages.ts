@@ -148,7 +148,16 @@ export const panelMessages = i18n('panels', {
   addStop: 'Add stop',
 
   alignCenter: 'Align center',
-  alignMiddle: 'Align middle'
+  alignMiddle: 'Align middle',
+  clipContent: 'Clip content',
+  colorFormatRgb: 'RGB',
+  colorFormatHsl: 'HSL',
+  colorFormatHsb: 'HSB',
+  colorFormatOkhcl: 'OkHCL',
+  colorHintHsl: 'H hue · S saturation · L lightness',
+  colorHintHsb: 'H hue · S saturation · B brightness',
+  colorHintOkhcl: 'H hue · C chroma · L lightness · A alpha',
+  colorPreviewClipped: params('Clipped to {space} preview gamut')
 })
 
 export const pageMessages = i18n('pages', {

@@ -52,13 +52,11 @@ const { panels } = useI18n()
           :okhcl="
             activeNode
               ? {
-                  model: okhcl.getFillColorModel(activeNode, i),
-                  modelOptions: okhcl.modelOptions,
+                  fieldFormat: okhcl.getFieldFormat(activeNode, i, 'fill'),
+                  fieldOptions: okhcl.fieldOptions,
                   okhcl: okhcl.getFillOkHCLColor(activeNode, i),
-                  setModel: ($event) =>
-                    $event === 'okhcl'
-                      ? okhcl.enableFillOkHCL(activeNode, i)
-                      : okhcl.disableFillOkHCL(activeNode, i),
+                  ...okhcl.getFillPreviewInfo(activeNode, i),
+                  setFieldFormat: ($event) => okhcl.setFillFieldFormat(activeNode, i, $event),
                   updateOkHCL: ($event) => okhcl.updateFillOkHCL(activeNode, i, $event)
                 }
               : null

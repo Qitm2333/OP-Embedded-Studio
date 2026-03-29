@@ -276,7 +276,7 @@ const { panels } = useI18n()
                 )
               "
             />
-            Clip content
+            {{ panels.clipContent }}
           </label>
         </div>
       </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ColorPickerRoot } from '@open-pencil/vue'
 
-import HsvColorArea from './HsvColorArea.vue'
+import ColorPickerPanel from './ColorPickerPanel.vue'
 import { usePopoverUI } from './ui/popover'
 
 import type { Color } from '@open-pencil/core'
@@ -20,7 +20,7 @@ const cls = usePopoverUI({ content: 'w-56 p-2' })
     @update="emit('update', $event)"
   >
     <template #default="{ color: currentColor, update }">
-      <HsvColorArea :color="currentColor" :okhcl="okhcl" @update="update($event)" />
+      <ColorPickerPanel :color="currentColor" :okhcl="okhcl" @update="update($event)" />
     </template>
   </ColorPickerRoot>
 </template>

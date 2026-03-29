@@ -10,6 +10,7 @@ import {
 } from '@open-pencil/vue'
 
 import ColorStyleRow from '@/components/properties/ColorStyleRow.vue'
+import { applySolidStrokeColor } from '@/components/color-picker/solid-color-commit'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
@@ -85,19 +86,17 @@ function onToggleSides(activeNode: SceneNode) {
           :okhcl="
             activeNode
               ? {
-                  model: okhcl.getStrokeColorModel(activeNode, i),
-                  modelOptions: okhcl.modelOptions,
+                  fieldFormat: okhcl.getFieldFormat(activeNode, i, 'stroke'),
+                  fieldOptions: okhcl.fieldOptions,
                   okhcl: okhcl.getStrokeOkHCLColor(activeNode, i),
-                  setModel: ($event) =>
-                    $event === 'okhcl'
-                      ? okhcl.enableStrokeOkHCL(activeNode, i)
-                      : okhcl.disableStrokeOkHCL(activeNode, i),
+                  ...okhcl.getStrokePreviewInfo(activeNode, i),
+                  setFieldFormat: ($event) => okhcl.setStrokeFieldFormat(activeNode, i, $event),
                   updateOkHCL: ($event) => okhcl.updateStrokeOkHCL(activeNode, i, $event)
                 }
               : null
           "
           editable
-          @update="patch(i, { color: $event })"
+          @update="patch(i, applySolidStrokeColor($event))"
         />
       </ColorStyleRow>
 

@@ -1,11 +1,18 @@
-import type { OkHCLColor } from '@open-pencil/core'
+import type { OkHCLColor, RenderColorSpace } from '@open-pencil/core'
 
-export type ColorModel = 'rgba' | 'okhcl'
+export type ColorFieldFormat = 'rgb' | 'hsl' | 'hsb' | 'okhcl'
+
+export interface ColorFieldOption {
+  value: ColorFieldFormat
+  label: string
+}
 
 export interface OkHCLControls {
-  model: ColorModel
-  modelOptions: { value: ColorModel; label: string }[]
+  fieldFormat: ColorFieldFormat
+  fieldOptions: ColorFieldOption[]
   okhcl: OkHCLColor | null
-  setModel: (model: ColorModel) => void
+  previewColorSpace?: RenderColorSpace
+  clipped?: boolean
+  setFieldFormat: (format: ColorFieldFormat) => void
   updateOkHCL: (patch: Partial<OkHCLColor>) => void
 }

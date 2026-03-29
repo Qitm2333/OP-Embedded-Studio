@@ -1,8 +1,9 @@
+import { ref } from 'vue'
+
 import {
-  clearNodeFillOkHCL,
-  clearNodeStrokeOkHCL,
   getFillOkHCL,
   getStrokeOkHCL,
+  resolveOkHCLForPreview,
   rgbaToOkHCL,
   setNodeFillOkHCL,
   setNodeStrokeOkHCL
@@ -10,20 +11,14 @@ import {
 import { useEditor } from '@open-pencil/vue/context/editorContext'
 
 import type { OkHCLColor, SceneNode } from '@open-pencil/core'
-
-export type ColorModel = 'rgba' | 'okhcl'
+import type { ColorFieldFormat } from '@open-pencil/vue/ColorPicker/types'
 
 export function useOkHCL() {
   const editor = useEditor()
+  const fieldFormats = ref(new Map<string, ColorFieldFormat>())
 
-  function getFillColorModel(node: SceneNode | null, index: number): ColorModel {
-    if (!node) return 'rgba'
-    return getFillOkHCL(node, index) ? 'okhcl' : 'rgba'
-  }
-
-  function getStrokeColorModel(node: SceneNode | null, index: number): ColorModel {
-    if (!node) return 'rgba'
-    return getStrokeOkHCL(node, index) ? 'okhcl' : 'rgba'
+  function fieldKey(kind: 'fill' | 'stroke', nodeId: string, index: number) {
+    return `${kind}:${nodeId}:${index}`
   }
 
   function getFillOkHCLColor(node: SceneNode | null, index: number): OkHCLColor | null {
@@ -34,26 +29,28 @@ export function useOkHCL() {
     return node ? getStrokeOkHCL(node, index)?.color ?? null : null
   }
 
-  function enableFillOkHCL(node: SceneNode, index: number) {
-    const color = getFillOkHCLColor(node, index) ?? rgbaToOkHCL(node.fills[index]?.color ?? { r: 0, g: 0, b: 0, a: 1 })
-    editor.updateNodeWithUndo(node.id, setNodeFillOkHCL(node, index, color), 'Enable fill OkHCL')
+  function ensureFillOkHCL(node: SceneNode, index: number) {
+    const color =
+      getFillOkHCLColor(node, index) ??
+      rgbaToOkHCL(node.fills[index]?.color ?? { r: 0, g: 0, b: 0, a: 1 })
+    editor.updateNodeWithUndo(node.id, setNodeFillOkHCL(node, index, color), 'Update fill color model')
   }
 
-  function disableFillOkHCL(node: SceneNode, index: number) {
-    editor.updateNodeWithUndo(node.id, clearNodeFillOkHCL(node, index), 'Disable fill OkHCL')
-  }
-
-  function enableStrokeOkHCL(node: SceneNode, index: number) {
-    const color = getStrokeOkHCLColor(node, index) ?? rgbaToOkHCL(node.strokes[index]?.color ?? { r: 0, g: 0, b: 0, a: 1 })
-    editor.updateNodeWithUndo(node.id, setNodeStrokeOkHCL(node, index, color), 'Enable stroke OkHCL')
-  }
-
-  function disableStrokeOkHCL(node: SceneNode, index: number) {
-    editor.updateNodeWithUndo(node.id, clearNodeStrokeOkHCL(node, index), 'Disable stroke OkHCL')
+  function ensureStrokeOkHCL(node: SceneNode, index: number) {
+    const color =
+      getStrokeOkHCLColor(node, index) ??
+      rgbaToOkHCL(node.strokes[index]?.color ?? { r: 0, g: 0, b: 0, a: 1 })
+    editor.updateNodeWithUndo(
+      node.id,
+      setNodeStrokeOkHCL(node, index, color),
+      'Update stroke color model'
+    )
   }
 
   function updateFillOkHCL(node: SceneNode, index: number, patch: Partial<OkHCLColor>) {
-    const current = getFillOkHCLColor(node, index) ?? { h: 0, c: 0.1, l: 0.5, a: 1 }
+    const current =
+      getFillOkHCLColor(node, index) ??
+      rgbaToOkHCL(node.fills[index]?.color ?? { r: 0, g: 0, b: 0, a: 1 })
     editor.updateNodeWithUndo(
       node.id,
       setNodeFillOkHCL(node, index, { ...current, ...patch }),
@@ -62,7 +59,9 @@ export function useOkHCL() {
   }
 
   function updateStrokeOkHCL(node: SceneNode, index: number, patch: Partial<OkHCLColor>) {
-    const current = getStrokeOkHCLColor(node, index) ?? { h: 0, c: 0.1, l: 0.5, a: 1 }
+    const current =
+      getStrokeOkHCLColor(node, index) ??
+      rgbaToOkHCL(node.strokes[index]?.color ?? { r: 0, g: 0, b: 0, a: 1 })
     editor.updateNodeWithUndo(
       node.id,
       setNodeStrokeOkHCL(node, index, { ...current, ...patch }),
@@ -70,19 +69,56 @@ export function useOkHCL() {
     )
   }
 
+  function getFillPreviewInfo(node: SceneNode | null, index: number) {
+    const documentColorSpace = editor.graph.documentColorSpace
+    const okhcl = getFillOkHCLColor(node, index)
+    if (!okhcl) return { previewColorSpace: documentColorSpace, clipped: false }
+    const resolved = resolveOkHCLForPreview(okhcl, { documentColorSpace })
+    return { previewColorSpace: resolved.targetSpace, clipped: resolved.clipped }
+  }
+
+  function getStrokePreviewInfo(node: SceneNode | null, index: number) {
+    const documentColorSpace = editor.graph.documentColorSpace
+    const okhcl = getStrokeOkHCLColor(node, index)
+    if (!okhcl) return { previewColorSpace: documentColorSpace, clipped: false }
+    const resolved = resolveOkHCLForPreview(okhcl, { documentColorSpace })
+    return { previewColorSpace: resolved.targetSpace, clipped: resolved.clipped }
+  }
+
+  function getFieldFormat(node: SceneNode | null, index: number, kind: 'fill' | 'stroke') {
+    if (!node) return 'rgb' as const
+    const key = fieldKey(kind, node.id, index)
+    const stored = fieldFormats.value.get(key)
+    if (stored) return stored
+    return (kind === 'fill' ? getFillOkHCL(node, index) : getStrokeOkHCL(node, index))
+      ? 'okhcl'
+      : 'rgb'
+  }
+
+  function setFillFieldFormat(node: SceneNode, index: number, format: ColorFieldFormat) {
+    fieldFormats.value.set(fieldKey('fill', node.id, index), format)
+    if (format === 'okhcl') ensureFillOkHCL(node, index)
+  }
+
+  function setStrokeFieldFormat(node: SceneNode, index: number, format: ColorFieldFormat) {
+    fieldFormats.value.set(fieldKey('stroke', node.id, index), format)
+    if (format === 'okhcl') ensureStrokeOkHCL(node, index)
+  }
+
   return {
-    getFillColorModel,
-    getStrokeColorModel,
     getFillOkHCLColor,
     getStrokeOkHCLColor,
-    enableFillOkHCL,
-    disableFillOkHCL,
-    enableStrokeOkHCL,
-    disableStrokeOkHCL,
+    getFillPreviewInfo,
+    getStrokePreviewInfo,
+    getFieldFormat,
+    setFillFieldFormat,
+    setStrokeFieldFormat,
     updateFillOkHCL,
     updateStrokeOkHCL,
-    modelOptions: [
-      { value: 'rgba' as const, label: 'RGBA' },
+    fieldOptions: [
+      { value: 'rgb' as const, label: 'RGB' },
+      { value: 'hsl' as const, label: 'HSL' },
+      { value: 'hsb' as const, label: 'HSB' },
       { value: 'okhcl' as const, label: 'OkHCL' }
     ]
   }

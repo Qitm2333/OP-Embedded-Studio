@@ -135,7 +135,16 @@
     "alignRight": "По правому краю",
     "alignTop": "По верхнему краю",
     "alignMiddle": "По середине",
-    "alignBottom": "По нижнему краю"
+    "alignBottom": "По нижнему краю",
+    "clipContent": "Обрезать содержимое",
+    "colorFormatRgb": "RGB",
+    "colorFormatHsl": "HSL",
+    "colorFormatHsb": "HSB",
+    "colorFormatOkhcl": "OkHCL",
+    "colorHintHsl": "H тон · S насыщенность · L светлота",
+    "colorHintHsb": "H тон · S насыщенность · B яркость",
+    "colorHintOkhcl": "H тон · C хрома · L светлота · A альфа",
+    "colorPreviewClipped": "Обрезано до гаммы предпросмотра {space}"
   },
   "pages": {
     "newPage": "Новая страница",

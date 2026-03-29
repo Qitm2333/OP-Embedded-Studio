@@ -16,6 +16,7 @@ const {
   gradientStyle,
   checkerboard = false,
   thumbFill = '#fff',
+  testId,
   ui
 } = defineProps<{
   label: string
@@ -32,6 +33,7 @@ const {
   gradientStyle?: string
   checkerboard?: boolean
   thumbFill?: string
+  testId?: string
   ui?: Partial<Record<'root' | 'label' | 'track' | 'gradient' | 'range' | 'thumb' | 'input', string>>
 }>()
 
@@ -53,12 +55,13 @@ function handleNumberChange(value: number) {
 function thumbLeft(): string {
   const range = max - min
   const ratio = range === 0 ? 0 : (modelValue - min) / range
-  return `calc(${Math.max(0, Math.min(1, ratio)) * 100}% - 7px)`
+  const clampedRatio = Math.max(0, Math.min(1, ratio))
+  return `calc(${clampedRatio * 100}% - ${clampedRatio * 14}px)`
 }
 </script>
 
 <template>
-  <div :class="cls.root">
+  <div :class="cls.root" :data-test-id="testId">
     <span :class="cls.label">{{ label }}</span>
     <div :class="cls.track">
       <div :class="cls.gradient" :style="gradientStyle" />
