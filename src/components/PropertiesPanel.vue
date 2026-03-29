@@ -3,13 +3,12 @@ import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 
 import { useI18n } from '@open-pencil/vue'
 import { useAIChat } from '@/composables/use-chat'
-import { useEditorStore } from '@/stores/editor'
 
 import ChatPanel from './ChatPanel.vue'
 import CodePanel from './CodePanel.vue'
 import DesignPanel from './DesignPanel.vue'
+import ZoomDropdown from './ZoomDropdown.vue'
 
-const store = useEditorStore()
 const { activeTab } = useAIChat()
 const { panels } = useI18n()
 </script>
@@ -45,13 +44,7 @@ const { panels } = useI18n()
           <icon-lucide-sparkles class="size-3" />
           {{ panels.ai }}
         </TabsTrigger>
-        <span
-          v-if="activeTab === 'design'"
-          data-test-id="properties-zoom"
-          class="ml-auto cursor-pointer rounded px-1.5 py-0.5 text-[11px] text-muted hover:bg-hover"
-        >
-          {{ Math.round(store.state.zoom * 100) }}%
-        </span>
+        <ZoomDropdown v-if="activeTab === 'design'" />
       </TabsList>
 
       <TabsContent
