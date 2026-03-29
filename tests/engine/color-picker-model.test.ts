@@ -9,7 +9,7 @@ import {
   updateHSLChannel,
   updateHue,
   updateRGBChannel
-} from '@/components/color-picker/model'
+} from '@open-pencil/vue'
 
 import type { Color } from '@open-pencil/core'
 

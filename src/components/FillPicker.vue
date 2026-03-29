@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { twMerge } from 'tailwind-merge'
 
-import { FillPickerRoot, useI18n } from '@open-pencil/vue'
+import { applySolidFillColor, FillPickerRoot, useI18n } from '@open-pencil/vue'
 
 import GradientEditor from './GradientEditor.vue'
 import ColorPickerPanel from './ColorPickerPanel.vue'
 import ImageFillPicker from './ImageFillPicker.vue'
-import { applySolidFillColor } from './color-picker/solid-color-commit'
 import Tip from './ui/Tip.vue'
 import { usePopoverUI } from './ui/popover'
 

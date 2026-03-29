@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 
 import {
+  applySolidStrokeColor,
   PropertyListRoot,
   useColorVariableBinding,
   useStrokeControls,
@@ -10,7 +11,6 @@ import {
 } from '@open-pencil/vue'
 
 import ColorStyleRow from '@/components/properties/ColorStyleRow.vue'
-import { applySolidStrokeColor } from '@/components/color-picker/solid-color-commit'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'

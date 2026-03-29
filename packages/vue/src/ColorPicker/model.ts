@@ -38,6 +38,11 @@ export interface OkHCLSliderGradientModel {
   okhclLightness: string
 }
 
+const OKHCL_CHROMA_MAX = 0.4
+const OKHCL_LIGHTNESS_MID = 0.5
+const OKHCL_HUE_PREVIEW_MIN_CHROMA = 0.15
+const OKHCL_HUE_PREVIEW_FALLBACK_LIGHTNESS = 0.7
+
 export function createColorPickerModel(color: Color): ColorPickerModel {
   const rekaColor = {
     space: 'rgb' as const,
@@ -136,11 +141,6 @@ export function createOkHCLSliderPreviewModel(color: OkHCLColor): OkHCLSliderPre
     okhclLightness: okhclToRGBA(color)
   }
 }
-
-const OKHCL_CHROMA_MAX = 0.4
-const OKHCL_LIGHTNESS_MID = 0.5
-const OKHCL_HUE_PREVIEW_MIN_CHROMA = 0.15
-const OKHCL_HUE_PREVIEW_FALLBACK_LIGHTNESS = 0.7
 
 export function createOkHCLSliderGradientModel(color: OkHCLColor): OkHCLSliderGradientModel {
   const lowChroma = okhclToRGBA({ ...color, c: 0 })

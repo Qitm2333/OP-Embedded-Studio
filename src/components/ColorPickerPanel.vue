@@ -5,8 +5,6 @@ import { ColorAreaRoot, ColorAreaArea, ColorAreaThumb } from 'reka-ui'
 import type { Color } from '@open-pencil/core'
 import { colorToCSS } from '@open-pencil/core'
 import type { OkHCLControls } from '@open-pencil/vue/ColorPicker/types'
-import { useI18n } from '@open-pencil/vue'
-
 import {
   createColorPickerModel,
   createOkHCLSliderGradientModel,
@@ -20,8 +18,9 @@ import {
   updateHSBChannel,
   updateHSLChannel,
   updateHue,
-  updateRGBChannel
-} from './color-picker/model'
+  updateRGBChannel,
+  useI18n
+} from '@open-pencil/vue'
 import PickerSlider from './PickerSlider.vue'
 import AppSelect from './ui/AppSelect.vue'
 
