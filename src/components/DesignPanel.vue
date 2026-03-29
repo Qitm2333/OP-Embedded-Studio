@@ -105,6 +105,7 @@ const { panels } = useI18n()
   >
     <PageSection />
     <VariablesSection @open-dialog="variablesOpen = true" />
+    <ExportSection />
   </div>
 
   <VariablesDialog v-model:open="variablesOpen" />

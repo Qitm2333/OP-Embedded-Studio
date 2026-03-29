@@ -12,12 +12,17 @@ import type { ExportFormatId } from '@open-pencil/vue/controls/useExport'
 const editorStore = useEditorStore()
 const { panels } = useI18n()
 const {
-  settings,
-  nodeName,
-  addSetting,
-  removeSetting,
-  updateScale,
-  updateFormat,
+  activeTarget,
+  activeName,
+  activeSettings,
+  addSelectionSetting,
+  addPageSetting,
+  removeSelectionSetting,
+  removePageSetting,
+  updateSelectionScale,
+  updatePageScale,
+  updateSelectionFormat,
+  updatePageFormat,
   formatSupportsScale
 } = useExport()
 
@@ -36,10 +41,41 @@ const exporting = ref(false)
 
 const PREVIEW_WIDTH = 480
 
-async function doExport(exportSettings: Array<{ scale: number; format: ExportFormatId }>) {
+function addSetting() {
+  if (activeTarget.value === 'selection') addSelectionSetting()
+  else addPageSetting()
+}
+
+function removeSetting(index: number) {
+  if (activeTarget.value === 'selection') removeSelectionSetting(index)
+  else removePageSetting(index)
+}
+
+function updateScale(index: number, scale: number) {
+  if (activeTarget.value === 'selection') updateSelectionScale(index, scale)
+  else updatePageScale(index, scale)
+}
+
+function updateFormat(index: number, format: ExportFormatId) {
+  if (activeTarget.value === 'selection') updateSelectionFormat(index, format)
+  else updatePageFormat(index, format)
+}
+
+async function doExport() {
   exporting.value = true
   try {
-    for (const s of exportSettings) await editorStore.exportSelection(s.scale, s.format)
+    if (activeTarget.value === 'selection') {
+      for (const s of activeSettings.value) await editorStore.exportSelection(s.scale, s.format)
+      return
+    }
+
+    for (const s of activeSettings.value) {
+      await editorStore.exportTarget(
+        { scope: 'page', pageId: editorStore.state.currentPageId },
+        s.format,
+        { scale: s.scale }
+      )
+    }
   } finally {
     exporting.value = false
   }
@@ -47,12 +83,18 @@ async function doExport(exportSettings: Array<{ scale: number; format: ExportFor
 
 async function updatePreview() {
   if (!showPreview.value) return
-  const ids = [...editorStore.state.selectedIds]
+
+  const ids =
+    activeTarget.value === 'selection'
+      ? [...editorStore.state.selectedIds]
+      : editorStore.graph.getChildren(editorStore.state.currentPageId).map((n) => n.id)
+
   if (ids.length === 0) {
     if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
     previewUrl.value = null
     return
   }
+
   let maxW = 0
   for (const id of ids) {
     const node = editorStore.getNode(id)
@@ -68,7 +110,12 @@ async function updatePreview() {
 }
 
 const previewKey = computed(
-  () => `${editorStore.state.sceneVersion}:${[...editorStore.state.selectedIds].sort().join(',')}`
+  () =>
+    `${activeTarget.value}:${editorStore.state.sceneVersion}:${editorStore.state.currentPageId}:${[
+      ...editorStore.state.selectedIds
+    ]
+      .sort()
+      .join(',')}`
 )
 
 watch(() => showPreview.value, updatePreview, { flush: 'post' })
@@ -87,8 +134,8 @@ onScopeDispose(() => {
     </div>
 
     <div
-      v-for="(setting, i) in settings"
-      :key="i"
+      v-for="(setting, i) in activeSettings"
+      :key="`${activeTarget}:${i}`"
       data-test-id="export-item"
       :data-test-index="i"
       class="flex items-center gap-1.5 py-0.5"
@@ -108,17 +155,17 @@ onScopeDispose(() => {
     </div>
 
     <button
-      v-if="settings.length > 0"
+      v-if="activeSettings.length > 0"
       data-test-id="export-button"
       class="mt-1.5 w-full cursor-pointer truncate rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-default disabled:opacity-50"
       :disabled="exporting"
-      @click="doExport(settings)"
+      @click="doExport"
     >
-      Export {{ nodeName }}
+      Export {{ activeName }}
     </button>
 
     <button
-      v-if="settings.length > 0"
+      v-if="activeSettings.length > 0"
       data-test-id="export-preview-toggle"
       class="mt-1 flex w-full cursor-pointer items-center gap-1 rounded border-none bg-transparent px-0 py-1 text-[11px] text-muted hover:text-surface"
       @click="showPreview = !showPreview"
