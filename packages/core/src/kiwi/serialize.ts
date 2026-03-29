@@ -480,7 +480,10 @@ export function sceneNodeToKiwi(
 const IDENTITY_TRANSFORM = { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 }
 const DEFAULT_STROKE_WEIGHT = 1
 
-export function makeDocumentNodeChange(guid: GUID): NodeChange & Record<string, unknown> {
+export function makeDocumentNodeChange(
+  guid: GUID,
+  documentColorSpace: 'srgb' | 'display-p3' = 'display-p3'
+): NodeChange & Record<string, unknown> {
   return {
     guid,
     type: 'DOCUMENT',
@@ -492,7 +495,7 @@ export function makeDocumentNodeChange(guid: GUID): NodeChange & Record<string, 
     strokeWeight: DEFAULT_STROKE_WEIGHT,
     strokeAlign: 'CENTER',
     strokeJoin: 'MITER',
-    documentColorProfile: 'SRGB'
+    documentColorProfile: documentColorSpace === 'display-p3' ? 'DISPLAY_P3' : 'SRGB'
   }
 }
 

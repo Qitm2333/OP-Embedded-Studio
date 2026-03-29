@@ -84,7 +84,7 @@ export async function exportFigFile(
   const docGuid = { sessionID: 0, localID: 0 }
   const localIdCounter = { value: 2 }
 
-  const nodeChanges: KiwiNodeChange[] = [makeDocumentNodeChange(docGuid)]
+  const nodeChanges: KiwiNodeChange[] = [makeDocumentNodeChange(docGuid, graph.documentColorSpace)]
 
   const blobs: Uint8Array[] = []
   const pages = graph.getPages(true)

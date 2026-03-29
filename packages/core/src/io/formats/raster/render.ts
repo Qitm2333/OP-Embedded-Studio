@@ -1,3 +1,4 @@
+import type { RenderColorSpace } from '@open-pencil/core/color-management'
 import type { SkiaRenderer } from '@open-pencil/core/renderer'
 import type { SceneGraph } from '@open-pencil/core/scene-graph'
 import type { CanvasKit, Canvas } from 'canvaskit-wasm'
@@ -9,6 +10,7 @@ interface RenderOptions {
   scale: number
   format: ExportFormat
   quality?: number
+  colorSpace?: RenderColorSpace
 }
 
 export function computeContentBounds(

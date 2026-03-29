@@ -294,7 +294,7 @@ export function buildFigmaClipboardHTML(nodes: SceneNode[], graph: SceneGraph): 
   const localIdCounter = { value: 100 }
 
   const nodeChanges: KiwiNodeChange[] = [
-    makeDocumentNodeChange(docGuid),
+    makeDocumentNodeChange(docGuid, graph.documentColorSpace),
     makeCanvasNodeChange(canvasGuid, docGuid, '!', 'Page 1')
   ]
 

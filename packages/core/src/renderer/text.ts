@@ -1,5 +1,6 @@
 import { DEFAULT_FONT_SIZE, DEFAULT_FONT_FAMILY } from '../constants'
 import { isFontLoaded, getCJKFallbackFamilies } from '../fonts'
+import { resolveRGBAForPreview } from '../color-management'
 
 import type { SceneNode } from '../scene-graph'
 import type { CanvasKit, FontWeight, Paragraph, TypefaceFontProvider } from 'canvaskit-wasm'
@@ -127,7 +128,7 @@ function addStyledRuns(
     if (s.fills) {
       const visibleFill = s.fills.find((f) => f.visible && f.type === 'SOLID')
       if (visibleFill) {
-        const c = visibleFill.color
+        const c = resolveRGBAForPreview(visibleFill.color).color
         runColor = ck.Color4f(c.r, c.g, c.b, c.a * visibleFill.opacity)
       }
     }

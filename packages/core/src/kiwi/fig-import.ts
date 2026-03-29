@@ -270,12 +270,18 @@ function remapComponentIds(graph: SceneGraph, guidToNodeId: Map<string, string>)
   }
 }
 
+function parseDocumentColorSpace(nodeChanges: NodeChange[]): 'srgb' | 'display-p3' {
+  const documentNode = nodeChanges.find((nc) => nc.type === 'DOCUMENT')
+  return documentNode?.documentColorProfile === 'DISPLAY_P3' ? 'display-p3' : 'srgb'
+}
+
 export function importNodeChanges(
   nodeChanges: NodeChange[],
   blobs: Uint8Array[] = [],
   images?: Map<string, Uint8Array>
 ): SceneGraph {
   const graph = new SceneGraph()
+  graph.documentColorSpace = parseDocumentColorSpace(nodeChanges)
 
   if (images) {
     for (const [hash, data] of images) {

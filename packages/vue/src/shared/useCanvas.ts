@@ -79,7 +79,19 @@ export function useCanvas(
       glContext = ck.MakeGrContext(handle)
     }
     if (!glContext) return null
-    return ck.MakeOnScreenGLSurface(glContext, canvas.width, canvas.height, ck.ColorSpace.SRGB)
+
+    const preferredSpace = editor.graph.documentColorSpace
+    const colorSpaces =
+      preferredSpace === 'display-p3'
+        ? [ck.ColorSpace.DISPLAY_P3, ck.ColorSpace.SRGB]
+        : [ck.ColorSpace.SRGB]
+
+    for (const colorSpace of colorSpaces) {
+      const surface = ck.MakeOnScreenGLSurface(glContext, canvas.width, canvas.height, colorSpace)
+      if (surface) return surface
+    }
+
+    return null
   }
 
   function createSurface(canvas: HTMLCanvasElement) {

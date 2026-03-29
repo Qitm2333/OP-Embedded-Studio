@@ -67,7 +67,7 @@ export function applyFill(
   }
 
   if (fill.type.startsWith('GRADIENT') && fill.gradientStops && fill.gradientTransform) {
-    r.applyGradientFill(fill, node)
+    r.applyGradientFill(fill, node, graph)
     return true
   }
 
@@ -78,11 +78,31 @@ export function applyFill(
   return false
 }
 
-export function applyGradientFill(r: SkiaRenderer, fill: Fill, node: SceneNode): void {
+export function applyGradientFill(
+  r: SkiaRenderer,
+  fill: Fill,
+  node: SceneNode,
+  graph: SceneGraph
+): void {
   const stops = fill.gradientStops
   const t = fill.gradientTransform
   if (!stops || !t) return
-  const colors = stops.map((s) => r.ck.Color4f(s.color.r, s.color.g, s.color.b, s.color.a))
+  const colors = stops.map((s, index) => {
+    const resolved = r.resolveFillColorInfo(
+      {
+        ...fill,
+        type: 'SOLID',
+        color: s.color,
+        opacity: s.color.a,
+        visible: true
+      },
+      index,
+      node,
+      graph
+    )
+    const c = resolved.color
+    return r.ck.Color4f(c.r, c.g, c.b, c.a)
+  })
   const positions = stops.map((s) => s.position)
 
   const w = node.width

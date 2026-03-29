@@ -25,7 +25,7 @@ export function drawSectionTitles(r: SkiaRenderer, canvas: Canvas, graph: SceneG
   const ellipsisWidth = font.getGlyphWidths(ellipsisGlyphs)[0]
 
   for (const { node, absX, absY, nested } of sections) {
-    drawSectionTitle(r, canvas, font, node, absX, absY, nested, ellipsis, ellipsisWidth)
+    drawSectionTitle(r, canvas, font, node, graph, absX, absY, nested, ellipsis, ellipsisWidth)
   }
 }
 
@@ -34,6 +34,7 @@ function drawSectionTitle(
   canvas: Canvas,
   font: Font,
   node: SceneNode,
+  graph: SceneGraph,
   absX: number,
   absY: number,
   nested: boolean,
@@ -76,7 +77,7 @@ function drawSectionTitle(
   const pillY = nested ? screenY + SECTION_TITLE_GAP : screenY - pillH - SECTION_TITLE_GAP
 
   if (node.fills.length > 0 && node.fills[0].visible) {
-    const c = node.fills[0].color
+    const c = r.resolveFillColor(node.fills[0], 0, node, graph)
     r.auxFill.setColor(r.ck.Color4f(c.r, c.g, c.b, node.fills[0].opacity))
   } else {
     r.auxFill.setColor(r.ck.Color4f(0.37, 0.37, 0.37, 1))
@@ -86,8 +87,8 @@ function drawSectionTitle(
 
   const pillColor =
     node.fills.length > 0 && node.fills[0].visible
-      ? node.fills[0].color
-      : { r: 0.37, g: 0.37, b: 0.37 }
+      ? r.resolveFillColor(node.fills[0], 0, node, graph)
+      : { r: 0.37, g: 0.37, b: 0.37, a: 1 }
   const lum = 0.299 * pillColor.r + 0.587 * pillColor.g + 0.114 * pillColor.b
   r.auxFill.setColor(lum > 0.5 ? r.ck.BLACK : r.ck.WHITE)
   const textY = pillY + pillH * 0.7

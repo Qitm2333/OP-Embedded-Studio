@@ -113,7 +113,8 @@ function rasterFormat(format: RasterExportFormat): IOFormatAdapter {
     },
     exportOptions: {
       scale: true,
-      quality: format !== 'PNG'
+      quality: format !== 'PNG',
+      colorSpace: true
     },
     async exportContent(request, options?: RasterExportOptions, context?: IOContext) {
       const data = await renderRaster(
@@ -121,7 +122,8 @@ function rasterFormat(format: RasterExportFormat): IOFormatAdapter {
         {
           format,
           scale: options?.scale,
-          quality: options?.quality
+          quality: options?.quality,
+          colorSpace: options?.colorSpace
         },
         context
       )
@@ -233,7 +235,8 @@ export const svgFormat: IOFormatAdapter = {
   },
   exportOptions: {
     scale: false,
-    quality: false
+    quality: false,
+    colorSpace: true
   },
   async exportContent(request, options?: SVGExportOptions) {
     const target = resolveExportNodes(request)

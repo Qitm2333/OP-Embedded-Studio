@@ -28,6 +28,8 @@ export interface SceneGraphEvents {
   'node:reordered': (nodeId: string, parentId: string, index: number) => void
 }
 
+export type DocumentColorSpace = 'srgb' | 'display-p3'
+
 export type HandleMirroring = 'NONE' | 'ANGLE' | 'ANGLE_AND_LENGTH'
 export type WindingRule = 'NONZERO' | 'EVENODD'
 
@@ -523,6 +525,7 @@ export class SceneGraph {
   activeMode = new Map<string, string>()
   rootId: string
   figKiwiVersion: number | null = null
+  documentColorSpace: DocumentColorSpace = 'display-p3'
   readonly emitter: Emitter<SceneGraphEvents> = createNanoEvents()
   private absPosCache = new Map<string, Vector>()
   instanceIndex = new Map<string, Set<string>>()

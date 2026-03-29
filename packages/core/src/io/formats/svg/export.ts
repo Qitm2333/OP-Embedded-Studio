@@ -1,3 +1,4 @@
+import { getDefaultRenderColorSpace } from '@open-pencil/core/color-management'
 import { computeContentBounds } from '@open-pencil/core/io/formats/raster'
 
 import {
@@ -378,6 +379,8 @@ function isGroupLike(node: SceneNode): boolean {
 export interface SVGExportOptions {
   /** Include XML declaration (default: true) */
   xmlDeclaration?: boolean
+  /** Target export color space (default: display-p3) */
+  colorSpace?: 'srgb' | 'display-p3'
 }
 
 export function renderNodesToSVG(
@@ -396,7 +399,8 @@ export function renderNodesToSVG(
   const ctx: SVGExportContext = {
     defs: [],
     defIdCounter: 0,
-    graph
+    graph,
+    colorSpace: options.colorSpace ?? getDefaultRenderColorSpace()
   }
 
   const contentNodes: SVGNode[] = []

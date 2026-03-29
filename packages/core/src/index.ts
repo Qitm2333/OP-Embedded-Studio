@@ -68,7 +68,8 @@ export {
   type VariableCollectionMode,
   type CharacterStyleOverride,
   type StyleRun,
-  type SceneGraphEvents
+  type SceneGraphEvents,
+  type DocumentColorSpace
 } from './scene-graph'
 
 export { FigmaAPI, FigmaNodeProxy, computeImageHash, type FigmaFontName } from './figma-api'
@@ -184,6 +185,18 @@ export {
   colorToFill,
   colorDistance
 } from './color'
+export {
+  resolveOkHCLForPreview,
+  resolveRGBAForPreview,
+  resolveNodeFillColor,
+  resolveNodeStrokeColor,
+  colorToDisplayCss,
+  getDefaultRenderColorSpace,
+  type RenderColorSpace,
+  type ColorIntentSpace,
+  type ColorPreviewOptions,
+  type ResolvedRenderColor
+} from './color-management'
 export {
   vectorNetworkToPath,
   geometryBlobToPath,

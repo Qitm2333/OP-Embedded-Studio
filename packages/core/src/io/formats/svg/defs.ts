@@ -1,8 +1,10 @@
-import { colorToHex, colorToHex8 } from '@open-pencil/core/color'
+import { colorToHex } from '@open-pencil/core/color'
+import { colorToDisplayCss, getDefaultRenderColorSpace } from '@open-pencil/core/color-management'
 
 import { svg, type SVGNode } from './node'
 import { round } from './paths'
 
+import type { RenderColorSpace } from '@open-pencil/core/color-management'
 import type { Effect, Fill, SceneGraph, SceneNode } from '@open-pencil/core/scene-graph'
 import type { Color } from '@open-pencil/core/types'
 
@@ -10,14 +12,23 @@ export interface SVGExportContext {
   defs: SVGNode[]
   defIdCounter: number
   graph: SceneGraph
+  colorSpace: RenderColorSpace
 }
 
 export function nextDefId(ctx: SVGExportContext, prefix: string): string {
   return `${prefix}${ctx.defIdCounter++}`
 }
 
-export function formatColor(color: Color, opacity = 1): string {
-  return colorToHex8(color, opacity)
+export function formatColor(
+  color: Color,
+  opacity = 1,
+  colorSpace: RenderColorSpace = getDefaultRenderColorSpace()
+): string {
+  const alphaColor = { ...color, a: color.a * opacity }
+  if (colorSpace === 'display-p3') {
+    return colorToDisplayCss(alphaColor, { colorSpace })
+  }
+  return colorToHex(alphaColor)
 }
 
 function createGradientDef(
@@ -32,7 +43,7 @@ function createGradientDef(
   const stopNodes = stops.map((s) =>
     svg('stop', {
       offset: `${round(s.position * 100)}%`,
-      'stop-color': colorToHex(s.color),
+      'stop-color': formatColor(s.color, 1, ctx.colorSpace),
       'stop-opacity': s.color.a < 1 ? round(s.color.a) : undefined
     })
   )
@@ -146,7 +157,7 @@ export function createFilterDef(
           dx: round(effect.offset.x),
           dy: round(effect.offset.y),
           stdDeviation: stdDev,
-          'flood-color': colorToHex(effect.color),
+          'flood-color': formatColor(effect.color, 1, ctx.colorSpace),
           'flood-opacity': round(effect.color.a)
         })
       )
@@ -167,7 +178,7 @@ export function createFilterDef(
           result: `${sid}_inv`
         }),
         svg('feFlood', {
-          'flood-color': colorToHex(effect.color),
+          'flood-color': formatColor(effect.color, 1, ctx.colorSpace),
           'flood-opacity': round(effect.color.a)
         }),
         svg('feComposite', { in2: `${sid}_inv`, operator: 'in', result: `${sid}_shadow` }),
@@ -195,7 +206,7 @@ export function resolveFill(fill: Fill, node: SceneNode, ctx: SVGExportContext):
   if (!fill.visible) return null
 
   if (fill.type === 'SOLID') {
-    return formatColor(fill.color, fill.opacity)
+    return formatColor(fill.color, fill.opacity, ctx.colorSpace)
   }
 
   if (fill.type.startsWith('GRADIENT')) {

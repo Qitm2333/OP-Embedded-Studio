@@ -7,6 +7,7 @@ import { TextEditor } from '../text-editor'
 import { UndoManager } from '../undo'
 import { createAlignmentActions } from './alignment'
 import { createClipboardActions } from './clipboard'
+import { createColorSpaceActions } from './color-space'
 import { createComponentActions } from './components'
 import { createNodeActions } from './nodes'
 import { createPageActions } from './pages'
@@ -188,6 +189,7 @@ export function createEditor(options?: EditorOptions) {
   const structure = createStructureActions(ctx)
   const components = createComponentActions(ctx)
   const clipboard = createClipboardActions(ctx)
+  const colorSpace = createColorSpaceActions(ctx)
   const undoActions = createUndoActions(ctx)
   const text = createTextActions(ctx)
   const nodes = createNodeActions(ctx)
@@ -275,6 +277,8 @@ export function createEditor(options?: EditorOptions) {
     snapshotPage: undoActions.snapshotPage,
     restorePageFromSnapshot: undoActions.restorePageFromSnapshot,
     pushUndoEntry: undoActions.pushUndoEntry,
+
+    setDocumentColorSpace: colorSpace.setDocumentColorSpace,
 
     // Clipboard — bridge functions that need selectedNodes
     duplicateSelected: () => clipboard.duplicateSelected(selection.getSelectedNodes()),

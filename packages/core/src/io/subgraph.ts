@@ -23,6 +23,7 @@ function cloneIntoGraph(source: SceneGraph, ids: Set<string>): SceneGraph {
   graph.variableCollections = new Map()
   graph.activeMode = new Map(source.activeMode)
   graph.figKiwiVersion = source.figKiwiVersion
+  graph.documentColorSpace = source.documentColorSpace
 
   const sortedIds = [...ids].sort((a, b) => {
     if (a === source.rootId) return -1

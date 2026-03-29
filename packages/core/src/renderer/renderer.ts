@@ -30,6 +30,7 @@ import {
 } from '../constants'
 import { computeAbsoluteBounds } from '../geometry'
 import { RenderProfiler } from '../profiler'
+import { resolveNodeFillColor, resolveNodeStrokeColor, type ResolvedRenderColor } from '../color-management'
 import { drawAiOverlays as drawAiOverlaysFn } from './ai-overlays'
 import {
   getCachedDropShadow as getCachedDropShadowFn,
@@ -941,13 +942,56 @@ export class SkiaRenderer {
     return buildParagraphFn(this, node, color, opts)
   }
 
-  resolveFillColor(fill: Fill, fillIndex: number, node: SceneNode, graph: SceneGraph): Color {
+  resolveFillColorInfo(
+    fill: Fill,
+    fillIndex: number,
+    node: SceneNode,
+    graph: SceneGraph
+  ): ResolvedRenderColor {
     const varId = node.boundVariables[`fills/${fillIndex}/color`]
     if (varId) {
       const resolved = graph.resolveColorVariable(varId)
-      if (resolved) return resolved
+      if (resolved) {
+        return {
+          color: resolved,
+          cssColor: '',
+          sourceSpace: 'srgb',
+          targetSpace: graph.documentColorSpace,
+          clipped: false
+        }
+      }
     }
-    return fill.color
+    return resolveNodeFillColor(fill, fillIndex, node, {
+      documentColorSpace: graph.documentColorSpace
+    })
+  }
+
+  resolveFillColor(fill: Fill, fillIndex: number, node: SceneNode, graph: SceneGraph): Color {
+    return this.resolveFillColorInfo(fill, fillIndex, node, graph).color
+  }
+
+  resolveStrokeColorInfo(
+    stroke: Stroke,
+    strokeIndex: number,
+    node: SceneNode,
+    graph: SceneGraph
+  ): ResolvedRenderColor {
+    const varId = node.boundVariables[`strokes/${strokeIndex}/color`]
+    if (varId) {
+      const resolved = graph.resolveColorVariable(varId)
+      if (resolved) {
+        return {
+          color: resolved,
+          cssColor: '',
+          sourceSpace: 'srgb',
+          targetSpace: graph.documentColorSpace,
+          clipped: false
+        }
+      }
+    }
+    return resolveNodeStrokeColor(stroke, strokeIndex, node, {
+      documentColorSpace: graph.documentColorSpace
+    })
   }
 
   resolveStrokeColor(
@@ -956,12 +1000,7 @@ export class SkiaRenderer {
     node: SceneNode,
     graph: SceneGraph
   ): Color {
-    const varId = node.boundVariables[`strokes/${strokeIndex}/color`]
-    if (varId) {
-      const resolved = graph.resolveColorVariable(varId)
-      if (resolved) return resolved
-    }
-    return stroke.color
+    return this.resolveStrokeColorInfo(stroke, strokeIndex, node, graph).color
   }
 
   screenToCanvas(sx: number, sy: number): Vector {
@@ -1182,8 +1221,8 @@ export class SkiaRenderer {
     return applyFillFn(this, fill, node, graph, fillIndex)
   }
 
-  applyGradientFill(fill: Fill, node: SceneNode): void {
-    applyGradientFillFn(this, fill, node)
+  applyGradientFill(fill: Fill, node: SceneNode, graph: SceneGraph): void {
+    applyGradientFillFn(this, fill, node, graph)
   }
 
   applyImageFill(fill: Fill, node: SceneNode, graph: SceneGraph): boolean {

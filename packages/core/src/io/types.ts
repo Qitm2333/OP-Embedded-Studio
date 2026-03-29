@@ -1,3 +1,4 @@
+import type { RenderColorSpace } from '../color-management'
 import type { JSXFormat } from '../render'
 import type { SkiaRenderer } from '../renderer'
 import type { SceneGraph } from '../scene-graph'
@@ -68,11 +69,13 @@ export interface FigWriteOptions {
 export interface RasterExportOptions {
   scale?: number
   quality?: number
+  colorSpace?: RenderColorSpace
   format: RasterExportFormat
 }
 
 export interface SVGExportOptions {
   xmlDeclaration?: boolean
+  colorSpace?: RenderColorSpace
 }
 
 export interface JSXExportOptions {
@@ -99,6 +102,7 @@ export interface IOFormatSupport {
 export interface IOFormatExportOptions {
   scale?: boolean
   quality?: boolean
+  colorSpace?: boolean
 }
 
 export interface IOFormatAdapter {
