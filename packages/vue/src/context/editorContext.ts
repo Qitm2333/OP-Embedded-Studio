@@ -31,8 +31,8 @@ export function useEditor(): Editor {
   const editor = inject(EDITOR_KEY)
   if (!editor) {
     throw new Error(
-      '[open-pencil] useEditor() called outside <OpenPencilProvider>. ' +
-        'Wrap your component tree with <OpenPencilProvider :editor="editor">.'
+      '[open-pencil] useEditor() called without an injected editor. ' +
+        'Call provideEditor(editor) near the top of your Vue subtree first.'
     )
   }
   return editor

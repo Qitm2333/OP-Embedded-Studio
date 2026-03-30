@@ -7,7 +7,11 @@ description: Set up @open-pencil/vue with createEditor, provideEditor, and a can
 
 ## Installation
 
-The SDK lives in the monorepo today and is consumed by the app itself.
+```bash
+bun add @open-pencil/core @open-pencil/vue canvaskit-wasm
+```
+
+The SDK lives in the monorepo today and is also published as `@open-pencil/vue`.
 
 ```ts
 import { createEditor } from '@open-pencil/core/editor'
@@ -122,3 +126,4 @@ useCanvas(canvasRef, editor, {
 - [API Reference](./api/)
 - [useEditor](./api/composables/use-editor)
 - [useCanvas](./api/composables/use-canvas)
+- [useI18n](./api/composables/use-i18n)

@@ -6,7 +6,7 @@ Headless Vue 3 SDK for building OpenPencil-powered editors.
 
 - Vue editor injection via `provideEditor()` / `useEditor()`
 - canvas integration via `useCanvas()`, `useCanvasInput()`, and `useTextEdit()`
-- selection, command, and panel composables
+- selection, command, panel, variables, and i18n composables
 - headless structural primitives like `CanvasRoot`, `LayerTreeRoot`, `PageListRoot`, and `ToolbarRoot`
 
 The SDK is headless by design: it provides logic and structure, while your app owns styling and product-specific UI.
@@ -121,10 +121,11 @@ These are the main APIs most SDK consumers should start with.
 - `useStrokeControls()`
 - `useEffectsControls()`
 
-#### Variables and navigation
+#### Variables, navigation, and localization
 
 - `useVariablesEditor()`
 - `usePageList()`
+- `useI18n()`
 
 #### Headless primitives
 
@@ -144,6 +145,10 @@ These exports are intentionally public, but they are lower-level or more special
 - `useFillPicker()`
 - `useGradientStops()`
 - `useFontPicker()`
+- `useOkHCL()`
+- `useVariables()`
+- `useVariablesDialogState()`
+- `useVariablesTable()`
 - `usePropScrub()`
 - `useLayerDrag()`
 - `useInlineRename()`
@@ -151,9 +156,10 @@ These exports are intentionally public, but they are lower-level or more special
 - `useNodeFontStatus()`
 - `useCanvasDrop()`
 - `extractImageFilesFromClipboard()`
+- `useViewportKind()`
 - `toolCursor()`
 
-### Primitive context helpers
+### Primitive context helpers and low-level stores
 
 These are mostly useful when extending SDK primitives rather than building from top-level composables.
 
@@ -162,6 +168,11 @@ These are mostly useful when extending SDK primitives rather than building from 
 - `useToolbar()`
 - `usePropertyList()`
 - `useScrubInput()`
+- `locale`
+- `localeSetting`
+- `setLocale()`
+- `AVAILABLE_LOCALES`
+- `LOCALE_LABELS`
 
 ## Example patterns
 

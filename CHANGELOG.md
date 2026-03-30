@@ -10,6 +10,7 @@
 - Dashed border around entered container for visual feedback
 - Layer panel click syncs canvas scope automatically
 - Vue SDK internationalization primitives — `useI18n()`, locale detection, persisted locale selection, lazy-loaded locale JSON files, and exported locale metadata for custom editor shells
+- Vue SDK docs and public API audit — documented advanced exports (`useOkHCL()`, variables helpers, viewport and locale APIs), aligned docs with the actual `provideEditor()` injection model, and expanded release-ready SDK guidance
 - App language picker in the menu bar — switch UI locale without reloading
 - Added a vector curve editor and improved drawing experience with the pen tool
 - Resume pen drawing from existing open path endpoints — click an endpoint to continue the curve

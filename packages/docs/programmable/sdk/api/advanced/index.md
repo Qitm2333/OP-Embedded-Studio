@@ -13,12 +13,17 @@ These APIs are public, but they are more specialized than the main component and
 - [useSceneComputed](./use-scene-computed)
 - [usePropScrub](./use-prop-scrub)
 
-## Picker and editor internals
+## Picker, variables, locale, and editor internals
 
 - [useColorVariableBinding](./use-color-variable-binding)
 - [useFillPicker](./use-fill-picker)
 - [useGradientStops](./use-gradient-stops)
 - [useFontPicker](./use-font-picker)
+- [useOkHCL](./use-okhcl)
+- [useVariables](./use-variables)
+- [useVariablesDialogState](./use-variables-dialog-state)
+- [useVariablesTable](./use-variables-table)
+- [Locale APIs](./locale-apis)
 - [useToolbarState](./use-toolbar-state)
 - [useNodeFontStatus](./use-node-font-status)
 
@@ -28,6 +33,7 @@ These APIs are public, but they are more specialized than the main component and
 - [useInlineRename](./use-inline-rename)
 - [useCanvasDrop](./use-canvas-drop)
 - [extractImageFilesFromClipboard](./extract-image-files-from-clipboard)
+- [useViewportKind](./use-viewport-kind)
 - [toolCursor](./tool-cursor)
 
 ## Primitive context helpers

@@ -15,8 +15,9 @@ It gives you:
 
 - injected editor context
 - CanvasKit-backed canvas rendering
-- selection, commands, menu, and property-panel composables
+- selection, commands, menu, property-panel, and variables composables
 - headless structural primitives like `PageListRoot`, `PropertyListRoot`, and `ToolbarRoot`
+- built-in i18n primitives for menus, panels, dialogs, and custom locale pickers
 
 ## Start here
 
