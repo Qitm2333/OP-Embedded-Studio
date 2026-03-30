@@ -9,6 +9,7 @@
 - Stabilize npm publishing with isolated temp publish directories instead of mutating tracked package manifests in CI
 - Strip build-time scripts and dev dependencies from generated publish manifests so tarballs pack from verified artifacts only
 - Fix `@open-pencil/mcp` release packaging so the published npm tarball includes its built `dist/` CLI and server entrypoints deterministically
+- Fix `@open-pencil/core` release build configuration so CI publish jobs include Node and Bun ambient types when compiling package artifacts
 
 ## 0.11.1 — 2026-03-30
 
