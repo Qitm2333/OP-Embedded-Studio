@@ -150,7 +150,7 @@
     },
     {
       "files": [
-        "**/render/render-jsx.ts"
+        "**/render/render.ts"
       ],
       "rules": {
         "typescript/no-implied-eval": "off"
