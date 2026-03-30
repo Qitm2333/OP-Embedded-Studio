@@ -17,6 +17,12 @@ import type {
 import type { Vector } from '../types'
 import type { EditorContext } from './types'
 
+export interface PenDragOptions {
+  keepOpposite?: boolean
+  constrainToOpposite?: boolean
+  oppositeTangent?: Vector | null
+}
+
 const BLACK_FILL: Fill = {
   type: 'SOLID',
   color: { r: 0, g: 0, b: 0, a: 1 },
@@ -70,12 +76,6 @@ function applyAnchorTangent(
 }
 
 export function createShapeActions(ctx: EditorContext) {
-  interface PenDragOptions {
-    keepOpposite?: boolean
-    constrainToOpposite?: boolean
-    oppositeTangent?: Vector | null
-  }
-
   function createShape(
     type: NodeType,
     x: number,
