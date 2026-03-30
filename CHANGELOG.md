@@ -2,12 +2,20 @@
 
 ## Unreleased
 
+## 0.11.2 — 2026-03-30
+
+### Fixes
+
+- Stabilize npm publishing with isolated temp publish directories instead of mutating tracked package manifests in CI
+- Strip build-time scripts and dev dependencies from generated publish manifests so tarballs pack from verified artifacts only
+- Fix `@open-pencil/mcp` release packaging so the published npm tarball includes its built `dist/` CLI and server entrypoints deterministically
+
 ## 0.11.1 — 2026-03-30
 
 ### Fixes
 
 - Fix npm publishing pipeline to publish packed tarballs instead of raw package folders
-- Fix `@open-pencil/mcp` npm package contents so the published CLI includes its built `dist/` entrypoints
+- Attempt to fix `@open-pencil/mcp` npm package contents so the published CLI includes its built `dist/` entrypoints
 - Fix `@open-pencil/vue` npm package metadata and build output so the published package resolves from `dist/` while local workspace development keeps using source aliases
 
 ## 0.11.0 — 2026-03-30
