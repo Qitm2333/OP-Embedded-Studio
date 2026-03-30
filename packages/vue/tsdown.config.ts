@@ -15,7 +15,7 @@ export default defineConfig({
   sourcemap: true,
   hash: false,
   clean: true,
-  outDir: './packages/vue/dist',
+  outDir: './dist',
   treeshake: {
     moduleSideEffects: false
   },

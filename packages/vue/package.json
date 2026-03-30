@@ -5,18 +5,18 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "bun": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "sideEffects": false,
-  "files": ["src", "dist"],
+  "files": ["dist", "README.md"],
   "scripts": {
-    "build": "bunx tsdown --config ../vue/tsdown.config.ts",
-    "prepublishOnly": "bun run build"
+    "build": "bunx tsdown --config tsdown.config.ts",
+    "prepack": "bun run build"
   },
   "repository": {
     "type": "git",
@@ -25,16 +25,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "provenance": true,
-    "exports": {
-      ".": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/index.js",
-        "default": "./dist/index.js"
-      }
-    },
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts"
+    "provenance": true
   },
   "peerDependencies": {
     "vue": "^3.4.0",

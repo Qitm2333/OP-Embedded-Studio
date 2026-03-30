@@ -177,6 +177,25 @@ jobs:
             fi
           done
 
+      - name: Pack packages for publish
+        run: |
+          mkdir -p .npm-packages
+          pack_if_new() {
+            local dir=$1
+            local name=$(node -p "require('./$dir/package.json').name")
+            local version=$(node -p "require('./$dir/package.json').version")
+            if npm view "${name}@${version}" version 2>/dev/null; then
+              echo "${name}@${version} already published, skipping pack"
+            else
+              (cd "$dir" && npm pack --pack-destination ../../.npm-packages)
+            fi
+          }
+          pack_if_new packages/core
+          pack_if_new packages/cli
+          pack_if_new packages/mcp
+          pack_if_new packages/vue
+          ls -la .npm-packages
+
       - name: Publish packages to npm
         run: |
           publish_if_new() {
@@ -186,7 +205,9 @@ jobs:
             if npm view "${name}@${version}" version 2>/dev/null; then
               echo "${name}@${version} already published, skipping"
             else
-              npm publish "./$dir" --access public --provenance --ignore-scripts
+              local tarball
+              tarball=$(cd .npm-packages && ls open-pencil-$(basename "$dir")-${version}.tgz)
+              npm publish "./.npm-packages/${tarball}" --access public --provenance
             fi
           }
           publish_if_new packages/core
