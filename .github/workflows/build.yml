@@ -152,7 +152,7 @@ jobs:
           node -e "
             const fs = require('fs');
             const coreVersion = require('./packages/core/package.json').version;
-            for (const pkg of ['packages/cli', 'packages/mcp']) {
+            for (const pkg of ['packages/cli', 'packages/mcp', 'packages/vue']) {
               const path = pkg + '/package.json';
               const json = JSON.parse(fs.readFileSync(path, 'utf8'));
               for (const field of ['dependencies', 'devDependencies', 'peerDependencies']) {
@@ -170,7 +170,7 @@ jobs:
 
       - name: Build packages for publish
         run: |
-          for dir in packages/core packages/mcp; do
+          for dir in packages/core packages/mcp packages/vue; do
             if [ -f "$dir/package.json" ] && node -p "require('./$dir/package.json').scripts?.build" 2>/dev/null | grep -qv undefined; then
               echo "Building $dir..."
               cd "$dir" && bun run build && cd -
@@ -192,3 +192,4 @@ jobs:
           publish_if_new packages/core
           publish_if_new packages/cli
           publish_if_new packages/mcp
+          publish_if_new packages/vue

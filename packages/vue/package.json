@@ -15,7 +15,7 @@
   "sideEffects": false,
   "files": ["src", "dist"],
   "scripts": {
-    "build": "vue-tsc --emitDeclarationOnly",
+    "build": "bunx tsdown --config ../vue/tsdown.config.ts",
     "prepublishOnly": "bun run build"
   },
   "repository": {
@@ -29,7 +29,7 @@
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",
-        "node": "./dist/index.js",
+        "import": "./dist/index.js",
         "default": "./dist/index.js"
       }
     },
@@ -51,5 +51,10 @@
     "@nanostores/vue": "^1.1.0",
     "@vueuse/core": "^14.2.1",
     "nanostores": "^1.2.0"
+  },
+  "devDependencies": {
+    "tsdown": "^0.21.7",
+    "unplugin-raw": "^0.6.4",
+    "unplugin-vue": "^7.1.1"
   }
 }
