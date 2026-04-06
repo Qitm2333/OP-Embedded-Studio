@@ -82,14 +82,15 @@ function startEdit() {
 }
 
 function commitEdit(e: Event) {
+  if (!editing.value) return
   const val = +(e.target as HTMLInputElement).value
   const previous = numericValue.value
+  editing.value = false
   if (!Number.isNaN(val)) {
     const clamped = Math.min(props.max, Math.max(props.min, val))
     emit('update:modelValue', clamped)
     if (clamped !== previous) emit('commit', clamped, previous)
   }
-  editing.value = false
 }
 
 function onKeydown(e: KeyboardEvent) {
