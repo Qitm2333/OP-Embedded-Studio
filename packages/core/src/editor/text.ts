@@ -1,3 +1,5 @@
+import { copyStyleRuns } from '../scene-graph/copy'
+
 import type { SceneNode } from '../scene-graph'
 import type { EditorContext } from './types'
 
@@ -11,7 +13,7 @@ export function createTextActions(ctx: EditorContext) {
     const node = ctx.graph.getNode(nodeId)
     if (!node) return
     textBeforeEdit = node.text
-    styleRunsBeforeEdit = structuredClone(node.styleRuns)
+    styleRunsBeforeEdit = copyStyleRuns(node.styleRuns)
     ctx.state.editingTextId = nodeId
     if (te) {
       te.setRenderer(ctx.getRenderer())
@@ -40,7 +42,7 @@ export function createTextActions(ctx: EditorContext) {
     const prevRuns = styleRunsBeforeEdit ?? []
     const newText = result.text
     const node = ctx.graph.getNode(result.nodeId)
-    const newRuns = node ? structuredClone(node.styleRuns) : []
+    const newRuns = node ? copyStyleRuns(node.styleRuns) : []
     ctx.graph.updateNode(result.nodeId, { text: newText, styleRuns: newRuns })
     ctx.state.editingTextId = null
     textBeforeEdit = null

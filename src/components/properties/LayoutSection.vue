@@ -48,7 +48,7 @@ const { panels } = useI18n()
         </div>
       </div>
 
-      <template v-if="ctx.node.type === 'FRAME'">
+      <template v-if="['FRAME', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE'].includes(ctx.node.type)">
         <div :class="sectionWrapper()">
           <div class="flex items-center justify-between">
             <label class="mb-1.5 block text-[11px] text-muted">{{ panels.autoLayout }}</label>
