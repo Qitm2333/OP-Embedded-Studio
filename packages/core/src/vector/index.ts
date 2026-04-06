@@ -1,4 +1,4 @@
-import { computeAccurateBounds } from './bezier-math'
+import { computeAccurateBounds } from './bezier'
 
 import type {
   HandleMirroring,
@@ -7,8 +7,8 @@ import type {
   VectorSegment,
   VectorVertex,
   WindingRule
-} from './scene-graph'
-import type { Rect } from './types'
+} from '../scene-graph'
+import type { Rect } from '../types'
 import type { CanvasKit, Path } from 'canvaskit-wasm'
 
 // --- vectorNetworkBlob binary format ---

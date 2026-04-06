@@ -8,7 +8,7 @@
  * no shared references between source and copy.
  */
 
-import type { Effect, Fill, GeometryPath, GradientStop, Stroke, StyleRun } from './scene-graph'
+import type { Effect, Fill, GeometryPath, GradientStop, Stroke, StyleRun } from './'
 
 // --- Individual copy functions ---
 

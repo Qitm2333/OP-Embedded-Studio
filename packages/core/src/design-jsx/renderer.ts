@@ -1,7 +1,7 @@
 import { parseColor, colorToFill } from '../color'
 import { TRANSPARENT } from '../constants'
-import { createIconFromPaths } from '../icon-render'
-import { fetchIcons } from '../iconify'
+import { createIconFromPaths } from '../icons/render'
+import { fetchIcons } from '../icons'
 import { computeAllLayouts } from '../layout'
 import { isTreeNode } from './tree'
 

@@ -1,7 +1,7 @@
-import type { SkiaRenderer } from './renderer'
+import type { SkiaRenderer } from '../canvas'
 import { resolveNodeTextDirection } from './direction'
-import type { SceneNode } from './scene-graph'
-import type { Rect } from './types'
+import type { SceneNode } from '../scene-graph'
+import type { Rect } from '../types'
 import type { CanvasKit, Paragraph } from 'canvaskit-wasm'
 
 export interface TextCaret {

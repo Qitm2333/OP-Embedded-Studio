@@ -1,7 +1,7 @@
 import { describe, test, expect, mock } from 'bun:test'
-import { renderText } from '../../packages/core/src/renderer/scene'
+import { renderText } from '../../packages/core/src/canvas/scene'
 import type { SceneNode } from '../../packages/core/src/scene-graph'
-import type { SkiaRenderer } from '../../packages/core/src/renderer/renderer'
+import type { SkiaRenderer } from '../../packages/core/src/canvas/renderer'
 import { initCanvasKit } from '../../packages/cli/src/headless'
 import { SceneGraph, SkiaRenderer as SkiaRendererClass } from '@open-pencil/core'
 import {
@@ -9,7 +9,7 @@ import {
   setArabicFallbackFamily,
   setCJKFallbackFamily,
   markFontLoaded
-} from '../../packages/core/src/fonts'
+} from '../../packages/core/src/text/fonts'
 import { detectTextDirection, resolveTextDirection } from '@open-pencil/core'
 
 function createMockCanvas() {

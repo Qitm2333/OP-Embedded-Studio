@@ -267,7 +267,7 @@ export const nodeReplaceWith = defineTool({
     const x = node.x
     const y = node.y
     node.remove()
-    const { renderJSX } = await import('../render/render.js')
+    const { renderJSX } = await import('../design-jsx/render.js')
     const result = await renderJSX(figma.graph, args.jsx, { parentId, x, y })
     return { id: result.id, name: result.name, type: result.type }
   }

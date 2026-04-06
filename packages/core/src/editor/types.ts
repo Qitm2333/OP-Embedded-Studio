@@ -1,9 +1,9 @@
-import type { SkiaRenderer } from '../renderer/renderer'
+import type { SkiaRenderer } from '../canvas/renderer'
 import type { SceneGraph, VectorSegment, VectorVertex } from '../scene-graph'
-import type { SnapGuide } from '../snap'
-import type { TextEditor } from '../text-editor'
+import type { SnapGuide } from '../scene-graph/snap'
+import type { TextEditor } from '../text/editor'
 import type { Color, Rect, Vector } from '../types'
-import type { UndoManager } from '../undo'
+import type { UndoManager } from '../scene-graph/undo'
 import type { CanvasKit } from 'canvaskit-wasm'
 
 export type Tool =

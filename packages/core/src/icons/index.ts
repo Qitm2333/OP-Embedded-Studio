@@ -1,9 +1,9 @@
 import { iconToSVG } from '@iconify/utils'
 import svgpath from 'svgpath'
 
-import { parseSVGPath } from './io/formats/svg/parse-path'
+import { parseSVGPath } from '../io/formats/svg/parse-path'
 
-import type { VectorNetwork, WindingRule } from './scene-graph'
+import type { VectorNetwork, WindingRule } from '../scene-graph'
 
 const ICONIFY_API = 'https://api.iconify.design'
 const FETCH_TIMEOUT_MS = 10_000

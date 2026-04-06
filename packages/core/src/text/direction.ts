@@ -1,4 +1,4 @@
-import type { LayoutDirection, SceneNode, TextDirection } from './scene-graph'
+import type { LayoutDirection, SceneNode, TextDirection } from '../scene-graph'
 
 const RTL_CHAR_RE = /\p{Script=Arabic}|\p{Script=Hebrew}|\p{Script=Syriac}|\p{Script=Thaana}|\p{Script=Nko}|\p{Script=Adlam}/u
 const LTR_CHAR_RE = /\p{Script=Latin}|\p{Script=Cyrillic}|\p{Script=Greek}/u

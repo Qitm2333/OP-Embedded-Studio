@@ -6,7 +6,7 @@ import type {
   VectorSegment,
   VectorRegion,
   WindingRule
-} from '@open-pencil/core/scene-graph'
+} from '../../../scene-graph'
 
 interface SubPath {
   startVertexIndex: number

@@ -2,7 +2,7 @@ export const FIG_KIWI_DEFAULT_VERSION = 101
 
 import { deflateSync, inflateSync } from 'fflate'
 
-import { getLoadedFontData, normalizeFontFamily, weightToStyle } from '../fonts'
+import { getLoadedFontData, normalizeFontFamily, weightToStyle } from '../text/fonts'
 import { encodeVectorNetworkBlob, buildStyleOverrideTable } from '../vector'
 import { stringToGuid, VARIABLE_BINDING_FIELDS } from './convert'
 import { sceneNodeToKiwiWithContext, type KiwiNodeChange } from './node-export'

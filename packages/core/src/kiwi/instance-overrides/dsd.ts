@@ -1,4 +1,4 @@
-import { copyGeometryPaths } from '../../copy'
+import { copyGeometryPaths } from '../../scene-graph/copy'
 import { resolveGeometryPaths } from '../convert'
 import { resolveOverrideTarget } from './resolve'
 import { buildClonesMap } from './sync'

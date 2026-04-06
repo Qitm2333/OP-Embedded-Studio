@@ -2,7 +2,7 @@ import { computeAllLayouts } from '../layout'
 
 import type { SceneNode } from '../scene-graph'
 import type { Rect, Vector } from '../types'
-import type { UndoEntry } from '../undo'
+import type { UndoEntry } from '../scene-graph/undo'
 import type { EditorContext } from './types'
 
 export function createUndoActions(ctx: EditorContext) {

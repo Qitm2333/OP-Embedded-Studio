@@ -1,6 +1,6 @@
 import { parseColor } from '../color'
-import { createIconFromPaths } from '../icon-render'
-import { fetchIcons, searchIconsBatch } from '../iconify'
+import { createIconFromPaths } from '../icons/render'
+import { fetchIcons, searchIconsBatch } from '../icons'
 import { defineTool, nodeSummary } from './schema'
 
 import type { FigmaNodeProxy } from '../figma-api'
@@ -68,7 +68,7 @@ export const render = defineTool({
     jsx: { type: 'string', description: 'JSX string to render', required: true }
   },
   execute: async (figma, args) => {
-    const { renderJSX } = await import('../render/render.js')
+    const { renderJSX } = await import('../design-jsx/render.js')
 
     let parentId = args.parent_id ?? figma.currentPageId
     let replaceIndex = -1

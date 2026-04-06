@@ -3,7 +3,7 @@ import type {
   VectorNetwork,
   VectorSegment,
   VectorVertex
-} from '@open-pencil/core/scene-graph'
+} from '../../../scene-graph'
 
 const CMD_CLOSE = 0
 const CMD_MOVE_TO = 1

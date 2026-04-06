@@ -1,12 +1,12 @@
-import { colorToHex } from '@open-pencil/core/color'
-import { colorToDisplayCss, getDefaultRenderColorSpace } from '@open-pencil/core/color-management'
+import { colorToHex } from '../../../color'
+import { colorToDisplayCss, getDefaultRenderColorSpace } from '../../../color/management'
 
 import { svg, type SVGNode } from './node'
 import { round } from './paths'
 
-import type { RenderColorSpace } from '@open-pencil/core/color-management'
-import type { Effect, Fill, SceneGraph, SceneNode } from '@open-pencil/core/scene-graph'
-import type { Color } from '@open-pencil/core/types'
+import type { RenderColorSpace } from '../../../color/management'
+import type { Effect, Fill, SceneGraph, SceneNode } from '../../../scene-graph'
+import type { Color } from '../../../types'
 
 export interface SVGExportContext {
   defs: SVGNode[]

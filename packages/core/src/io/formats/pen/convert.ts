@@ -1,5 +1,5 @@
-import { parseColor } from '@open-pencil/core/color'
-import { generateId } from '@open-pencil/core/scene-graph'
+import { parseColor } from '../../../color'
+import { generateId } from '../../../scene-graph'
 
 import type {
   Color,
@@ -21,8 +21,8 @@ import type {
   VariableCollectionMode,
   VariableType,
   VariableValue
-} from '@open-pencil/core/scene-graph'
-import type { Vector } from '@open-pencil/core/types'
+} from '../../../scene-graph'
+import type { Vector } from '../../../types'
 
 export interface PenDocument {
   version: string

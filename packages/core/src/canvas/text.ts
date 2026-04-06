@@ -1,7 +1,7 @@
-import { resolveRGBAForPreview } from '../color-management'
+import { resolveRGBAForPreview } from '../color/management'
 import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE } from '../constants'
-import { resolveNodeTextDirection } from '../direction'
-import { getArabicFallbackFamilies, getCJKFallbackFamilies, isFontLoaded } from '../fonts'
+import { resolveNodeTextDirection } from '../text/direction'
+import { getArabicFallbackFamilies, getCJKFallbackFamilies, isFontLoaded } from '../text/fonts'
 
 import type { SceneNode } from '../scene-graph'
 import type { CanvasKit, FontWeight, Paragraph, TypefaceFontProvider } from 'canvaskit-wasm'

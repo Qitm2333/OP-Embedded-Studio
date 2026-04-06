@@ -1,5 +1,5 @@
 import type { SceneNode } from '../scene-graph'
-import type { SnapGuide } from '../snap'
+import type { SnapGuide } from '../scene-graph/snap'
 import type { Rect } from '../types'
 import type { EditorContext } from './types'
 

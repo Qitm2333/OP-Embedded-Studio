@@ -11,64 +11,69 @@
       "default": "./src/index.ts"
     },
     "./scene-graph": {
-      "types": "./src/scene-graph.ts",
-      "bun": "./src/scene-graph.ts",
-      "default": "./src/scene-graph.ts"
+      "types": "./src/scene-graph/index.ts",
+      "bun": "./src/scene-graph/index.ts",
+      "default": "./src/scene-graph/index.ts"
     },
-    "./kiwi": {
-      "types": "./src/kiwi/index.ts",
-      "bun": "./src/kiwi/index.ts",
-      "default": "./src/kiwi/index.ts"
+    "./color": {
+      "types": "./src/color/index.ts",
+      "bun": "./src/color/index.ts",
+      "default": "./src/color/index.ts"
+    },
+    "./text": {
+      "types": "./src/text/index.ts",
+      "bun": "./src/text/index.ts",
+      "default": "./src/text/index.ts"
+    },
+    "./vector": {
+      "types": "./src/vector/index.ts",
+      "bun": "./src/vector/index.ts",
+      "default": "./src/vector/index.ts"
+    },
+    "./figma-api": {
+      "types": "./src/figma-api/index.ts",
+      "bun": "./src/figma-api/index.ts",
+      "default": "./src/figma-api/index.ts"
+    },
+    "./icons": {
+      "types": "./src/icons/index.ts",
+      "bun": "./src/icons/index.ts",
+      "default": "./src/icons/index.ts"
+    },
+    "./canvas": {
+      "types": "./src/canvas/index.ts",
+      "bun": "./src/canvas/index.ts",
+      "default": "./src/canvas/index.ts"
+    },
+    "./design-jsx": {
+      "types": "./src/design-jsx/index.ts",
+      "bun": "./src/design-jsx/index.ts",
+      "default": "./src/design-jsx/index.ts"
+    },
+    "./editor": {
+      "types": "./src/editor/index.ts",
+      "bun": "./src/editor/index.ts",
+      "default": "./src/editor/index.ts"
     },
     "./tools": {
       "types": "./src/tools/index.ts",
       "bun": "./src/tools/index.ts",
       "default": "./src/tools/index.ts"
     },
-    "./renderer": {
-      "types": "./src/renderer/index.ts",
-      "bun": "./src/renderer/index.ts",
-      "default": "./src/renderer/index.ts"
-    },
-    "./render": {
-      "types": "./src/render/index.ts",
-      "bun": "./src/render/index.ts",
-      "default": "./src/render/index.ts"
+    "./profiler": {
+      "types": "./src/profiler/index.ts",
+      "bun": "./src/profiler/index.ts",
+      "default": "./src/profiler/index.ts"
     },
     "./rpc": {
       "types": "./src/rpc/index.ts",
       "bun": "./src/rpc/index.ts",
       "default": "./src/rpc/index.ts"
     },
-    "./figma-api": {
-      "types": "./src/figma-api.ts",
-      "bun": "./src/figma-api.ts",
-      "default": "./src/figma-api.ts"
-    },
-    "./canvaskit": {
-      "types": "./src/canvaskit.ts",
-      "bun": "./src/canvaskit.ts",
-      "default": "./src/canvaskit.ts"
-    },
-    "./layout": {
-      "types": "./src/layout.ts",
-      "bun": "./src/layout.ts",
-      "default": "./src/layout.ts"
-    },
-    "./color": {
-      "types": "./src/color.ts",
-      "bun": "./src/color.ts",
-      "default": "./src/color.ts"
-    },
-    "./profiler": {
-      "types": "./src/profiler/index.ts",
-      "bun": "./src/profiler/index.ts",
-      "default": "./src/profiler/index.ts"
-    },
-    "./editor": {
-      "types": "./src/editor/index.ts",
-      "bun": "./src/editor/index.ts",
-      "default": "./src/editor/index.ts"
+    "./lint": {
+      "types": "./src/lint/index.ts",
+      "bun": "./src/lint/index.ts",
+      "default": "./src/lint/index.ts"
     },
     "./io": {
       "types": "./src/io/index.ts",
@@ -100,6 +105,11 @@
       "bun": "./src/io/formats/svg/index.ts",
       "default": "./src/io/formats/svg/index.ts"
     },
+    "./kiwi": {
+      "types": "./src/kiwi/index.ts",
+      "bun": "./src/kiwi/index.ts",
+      "default": "./src/kiwi/index.ts"
+    },
     "./constants": {
       "types": "./src/constants.ts",
       "bun": "./src/constants.ts",
@@ -110,65 +120,20 @@
       "bun": "./src/types.ts",
       "default": "./src/types.ts"
     },
-    "./copy": {
-      "types": "./src/copy.ts",
-      "bun": "./src/copy.ts",
-      "default": "./src/copy.ts"
+    "./canvaskit": {
+      "types": "./src/canvaskit.ts",
+      "bun": "./src/canvaskit.ts",
+      "default": "./src/canvaskit.ts"
     },
-    "./color-management": {
-      "types": "./src/color-management.ts",
-      "bun": "./src/color-management.ts",
-      "default": "./src/color-management.ts"
+    "./layout": {
+      "types": "./src/layout.ts",
+      "bun": "./src/layout.ts",
+      "default": "./src/layout.ts"
     },
-    "./fig-compress": {
-      "types": "./src/fig-compress.ts",
-      "bun": "./src/fig-compress.ts",
-      "default": "./src/fig-compress.ts"
-    },
-    "./scene-graph-instances": {
-      "types": "./src/scene-graph-instances.ts",
-      "bun": "./src/scene-graph-instances.ts",
-      "default": "./src/scene-graph-instances.ts"
-    },
-    "./render/tailwind": {
-      "types": "./src/render/tailwind.ts",
-      "bun": "./src/render/tailwind.ts",
-      "default": "./src/render/tailwind.ts"
-    },
-    "./kiwi/codec": {
-      "types": "./src/kiwi/codec.ts",
-      "bun": "./src/kiwi/codec.ts",
-      "default": "./src/kiwi/codec.ts"
-    },
-    "./kiwi/convert": {
-      "types": "./src/kiwi/convert.ts",
-      "bun": "./src/kiwi/convert.ts",
-      "default": "./src/kiwi/convert.ts"
-    },
-    "./kiwi/fig-import": {
-      "types": "./src/kiwi/fig-import.ts",
-      "bun": "./src/kiwi/fig-import.ts",
-      "default": "./src/kiwi/fig-import.ts"
-    },
-    "./kiwi/fig-parse-core": {
-      "types": "./src/kiwi/fig-parse-core.ts",
-      "bun": "./src/kiwi/fig-parse-core.ts",
-      "default": "./src/kiwi/fig-parse-core.ts"
-    },
-    "./kiwi/serialize": {
-      "types": "./src/kiwi/serialize.ts",
-      "bun": "./src/kiwi/serialize.ts",
-      "default": "./src/kiwi/serialize.ts"
-    },
-    "./io/formats/pen/convert": {
-      "types": "./src/io/formats/pen/convert.ts",
-      "bun": "./src/io/formats/pen/convert.ts",
-      "default": "./src/io/formats/pen/convert.ts"
-    },
-    "./io/formats/svg/parse-path": {
-      "types": "./src/io/formats/svg/parse-path.ts",
-      "bun": "./src/io/formats/svg/parse-path.ts",
-      "default": "./src/io/formats/svg/parse-path.ts"
+    "./geometry": {
+      "types": "./src/geometry.ts",
+      "bun": "./src/geometry.ts",
+      "default": "./src/geometry.ts"
     }
   },
   "main": "./src/index.ts",
@@ -197,64 +162,69 @@
         "default": "./dist/index.js"
       },
       "./scene-graph": {
-        "types": "./dist/scene-graph.d.ts",
-        "import": "./dist/scene-graph.js",
-        "default": "./dist/scene-graph.js"
+        "types": "./dist/scene-graph/index.d.ts",
+        "import": "./dist/scene-graph/index.js",
+        "default": "./dist/scene-graph/index.js"
       },
-      "./kiwi": {
-        "types": "./dist/kiwi/index.d.ts",
-        "import": "./dist/kiwi/index.js",
-        "default": "./dist/kiwi/index.js"
+      "./color": {
+        "types": "./dist/color/index.d.ts",
+        "import": "./dist/color/index.js",
+        "default": "./dist/color/index.js"
+      },
+      "./text": {
+        "types": "./dist/text/index.d.ts",
+        "import": "./dist/text/index.js",
+        "default": "./dist/text/index.js"
+      },
+      "./vector": {
+        "types": "./dist/vector/index.d.ts",
+        "import": "./dist/vector/index.js",
+        "default": "./dist/vector/index.js"
+      },
+      "./figma-api": {
+        "types": "./dist/figma-api/index.d.ts",
+        "import": "./dist/figma-api/index.js",
+        "default": "./dist/figma-api/index.js"
+      },
+      "./icons": {
+        "types": "./dist/icons/index.d.ts",
+        "import": "./dist/icons/index.js",
+        "default": "./dist/icons/index.js"
+      },
+      "./canvas": {
+        "types": "./dist/canvas/index.d.ts",
+        "import": "./dist/canvas/index.js",
+        "default": "./dist/canvas/index.js"
+      },
+      "./design-jsx": {
+        "types": "./dist/design-jsx/index.d.ts",
+        "import": "./dist/design-jsx/index.js",
+        "default": "./dist/design-jsx/index.js"
+      },
+      "./editor": {
+        "types": "./dist/editor/index.d.ts",
+        "import": "./dist/editor/index.js",
+        "default": "./dist/editor/index.js"
       },
       "./tools": {
         "types": "./dist/tools/index.d.ts",
         "import": "./dist/tools/index.js",
         "default": "./dist/tools/index.js"
       },
-      "./renderer": {
-        "types": "./dist/renderer/index.d.ts",
-        "import": "./dist/renderer/index.js",
-        "default": "./dist/renderer/index.js"
-      },
-      "./render": {
-        "types": "./dist/render/index.d.ts",
-        "import": "./dist/render/index.js",
-        "default": "./dist/render/index.js"
+      "./profiler": {
+        "types": "./dist/profiler/index.d.ts",
+        "import": "./dist/profiler/index.js",
+        "default": "./dist/profiler/index.js"
       },
       "./rpc": {
         "types": "./dist/rpc/index.d.ts",
         "import": "./dist/rpc/index.js",
         "default": "./dist/rpc/index.js"
       },
-      "./figma-api": {
-        "types": "./dist/figma-api.d.ts",
-        "import": "./dist/figma-api.js",
-        "default": "./dist/figma-api.js"
-      },
-      "./canvaskit": {
-        "types": "./dist/canvaskit.d.ts",
-        "import": "./dist/canvaskit.js",
-        "default": "./dist/canvaskit.js"
-      },
-      "./layout": {
-        "types": "./dist/layout.d.ts",
-        "import": "./dist/layout.js",
-        "default": "./dist/layout.js"
-      },
-      "./color": {
-        "types": "./dist/color.d.ts",
-        "import": "./dist/color.js",
-        "default": "./dist/color.js"
-      },
-      "./profiler": {
-        "types": "./dist/profiler/index.d.ts",
-        "import": "./dist/profiler/index.js",
-        "default": "./dist/profiler/index.js"
-      },
-      "./editor": {
-        "types": "./dist/editor/index.d.ts",
-        "import": "./dist/editor/index.js",
-        "default": "./dist/editor/index.js"
+      "./lint": {
+        "types": "./dist/lint/index.d.ts",
+        "import": "./dist/lint/index.js",
+        "default": "./dist/lint/index.js"
       },
       "./io": {
         "types": "./dist/io/index.d.ts",
@@ -286,6 +256,11 @@
         "import": "./dist/io/formats/svg/index.js",
         "default": "./dist/io/formats/svg/index.js"
       },
+      "./kiwi": {
+        "types": "./dist/kiwi/index.d.ts",
+        "import": "./dist/kiwi/index.js",
+        "default": "./dist/kiwi/index.js"
+      },
       "./constants": {
         "types": "./dist/constants.d.ts",
         "import": "./dist/constants.js",
@@ -296,65 +271,20 @@
         "import": "./dist/types.js",
         "default": "./dist/types.js"
       },
-      "./copy": {
-        "types": "./dist/copy.d.ts",
-        "import": "./dist/copy.js",
-        "default": "./dist/copy.js"
+      "./canvaskit": {
+        "types": "./dist/canvaskit.d.ts",
+        "import": "./dist/canvaskit.js",
+        "default": "./dist/canvaskit.js"
       },
-      "./color-management": {
-        "types": "./dist/color-management.d.ts",
-        "import": "./dist/color-management.js",
-        "default": "./dist/color-management.js"
+      "./layout": {
+        "types": "./dist/layout.d.ts",
+        "import": "./dist/layout.js",
+        "default": "./dist/layout.js"
       },
-      "./fig-compress": {
-        "types": "./dist/fig-compress.d.ts",
-        "import": "./dist/fig-compress.js",
-        "default": "./dist/fig-compress.js"
-      },
-      "./scene-graph-instances": {
-        "types": "./dist/scene-graph-instances.d.ts",
-        "import": "./dist/scene-graph-instances.js",
-        "default": "./dist/scene-graph-instances.js"
-      },
-      "./render/tailwind": {
-        "types": "./dist/render/tailwind.d.ts",
-        "import": "./dist/render/tailwind.js",
-        "default": "./dist/render/tailwind.js"
-      },
-      "./kiwi/codec": {
-        "types": "./dist/kiwi/codec.d.ts",
-        "import": "./dist/kiwi/codec.js",
-        "default": "./dist/kiwi/codec.js"
-      },
-      "./kiwi/convert": {
-        "types": "./dist/kiwi/convert.d.ts",
-        "import": "./dist/kiwi/convert.js",
-        "default": "./dist/kiwi/convert.js"
-      },
-      "./kiwi/fig-import": {
-        "types": "./dist/kiwi/fig-import.d.ts",
-        "import": "./dist/kiwi/fig-import.js",
-        "default": "./dist/kiwi/fig-import.js"
-      },
-      "./kiwi/fig-parse-core": {
-        "types": "./dist/kiwi/fig-parse-core.d.ts",
-        "import": "./dist/kiwi/fig-parse-core.js",
-        "default": "./dist/kiwi/fig-parse-core.js"
-      },
-      "./kiwi/serialize": {
-        "types": "./dist/kiwi/serialize.d.ts",
-        "import": "./dist/kiwi/serialize.js",
-        "default": "./dist/kiwi/serialize.js"
-      },
-      "./io/formats/pen/convert": {
-        "types": "./dist/io/formats/pen/convert.d.ts",
-        "import": "./dist/io/formats/pen/convert.js",
-        "default": "./dist/io/formats/pen/convert.js"
-      },
-      "./io/formats/svg/parse-path": {
-        "types": "./dist/io/formats/svg/parse-path.d.ts",
-        "import": "./dist/io/formats/svg/parse-path.js",
-        "default": "./dist/io/formats/svg/parse-path.js"
+      "./geometry": {
+        "types": "./dist/geometry.d.ts",
+        "import": "./dist/geometry.js",
+        "default": "./dist/geometry.js"
       }
     },
     "main": "./dist/index.js",

@@ -1,6 +1,6 @@
 import { copyEffects, copyFills, copyStrokes, copyStyleRuns } from './copy'
 
-import type { SceneGraph, SceneNode, Fill, Stroke, Effect, StyleRun } from './scene-graph'
+import type { SceneGraph, SceneNode, Fill, Stroke, Effect, StyleRun } from './'
 
 const INSTANCE_SYNC_PROPS: (keyof SceneNode)[] = [
   'width',

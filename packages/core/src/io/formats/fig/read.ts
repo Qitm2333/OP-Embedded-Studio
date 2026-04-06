@@ -1,9 +1,9 @@
-import { IS_BROWSER } from '@open-pencil/core/constants'
-import { importNodeChanges } from '@open-pencil/core/kiwi/fig-import'
-import { parseFigBuffer } from '@open-pencil/core/kiwi/fig-parse-core'
+import { IS_BROWSER } from '../../../constants'
+import { importNodeChanges } from '../../../kiwi/fig-import'
+import { parseFigBuffer } from '../../../kiwi/fig-parse-core'
 
-import type { FigParseResult } from '@open-pencil/core/kiwi/fig-parse-core'
-import type { SceneGraph } from '@open-pencil/core/scene-graph'
+import type { FigParseResult } from '../../../kiwi/fig-parse-core'
+import type { SceneGraph } from '../../../scene-graph'
 
 function parseFigFileSync(buffer: ArrayBuffer): SceneGraph {
   const { nodeChanges, blobs, images: imageEntries, figKiwiVersion } = parseFigBuffer(buffer)

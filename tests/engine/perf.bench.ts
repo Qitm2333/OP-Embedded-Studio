@@ -3,7 +3,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 import { parseFigFile, exportFigFile, initCodec, SceneGraph } from '@open-pencil/core'
-import { copyFills } from '../../packages/core/src/copy'
+import { copyFills } from '../../packages/core/src/scene-graph/copy'
 
 const FIXTURES = resolve(import.meta.dir, '../fixtures')
 

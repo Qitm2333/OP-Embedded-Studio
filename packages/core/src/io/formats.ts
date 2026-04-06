@@ -1,4 +1,4 @@
-import { sceneNodeToJSX, selectionToJSX } from '@open-pencil/core/render'
+import { sceneNodeToJSX, selectionToJSX } from '../design-jsx'
 
 import { exportFigFile, parseFigFile } from './formats/fig'
 import { parsePenFile } from './formats/pen'

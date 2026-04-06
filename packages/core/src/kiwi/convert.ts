@@ -1,7 +1,7 @@
 /* eslint-disable max-lines -- kiwi↔scene conversion helpers are tightly coupled */
 import { normalizeColor } from '../color'
 import { DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from '../constants'
-import { styleToWeight } from '../fonts'
+import { styleToWeight } from '../text/fonts'
 import { decodeVectorNetworkBlob } from '../vector'
 
 import type {

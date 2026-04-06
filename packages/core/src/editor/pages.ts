@@ -1,5 +1,5 @@
 import { CANVAS_BG_COLOR } from '../constants'
-import { collectFontKeys } from '../fonts'
+import { collectFontKeys } from '../text/fonts'
 import { computeAllLayouts } from '../layout'
 
 import type { Color } from '../types'

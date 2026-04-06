@@ -1,12 +1,12 @@
 /* eslint-disable max-lines -- core class; instance, hit-test methods already extracted */
 import { createNanoEvents } from 'nanoevents'
 
-import { BLACK, DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from './constants'
+import { BLACK, DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from '../constants'
 import {
   hitTest as hitTestFn,
   hitTestDeep as hitTestDeepFn,
   hitTestFrame as hitTestFrameFn
-} from './scene-graph-hit-test'
+} from './hit-test'
 import {
   createInstance as createInstanceFn,
   populateInstanceChildren as populateInstanceChildrenFn,
@@ -14,10 +14,10 @@ import {
   detachInstance as detachInstanceFn,
   getMainComponent as getMainComponentFn,
   getInstances as getInstancesFn
-} from './scene-graph-instances'
+} from './instances'
 
-export type { GUID, Color } from './types'
-import type { Matrix, Vector, Color, Rect } from './types'
+export type { GUID, Color } from '../types'
+import type { Matrix, Vector, Color, Rect } from '../types'
 import type { Emitter } from 'nanoevents'
 
 export interface SceneGraphEvents {

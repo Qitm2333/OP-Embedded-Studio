@@ -2,7 +2,7 @@ import {
   resolveNodeFillColor,
   resolveNodeStrokeColor,
   type ResolvedRenderColor
-} from '../color-management'
+} from '../color/management'
 /* eslint-disable max-lines -- SkiaRenderer class; text, pen-overlay, fills, scene already extracted */
 import {
   SELECTION_COLOR,
@@ -121,8 +121,8 @@ import type {
   VectorVertex,
   VectorRegion
 } from '../scene-graph'
-import type { SnapGuide } from '../snap'
-import type { TextEditor } from '../text-editor'
+import type { SnapGuide } from '../scene-graph/snap'
+import type { TextEditor } from '../text/editor'
 import type { Color, Rect, Vector } from '../types'
 import type { NodeEditOverlayState } from './node-edit-overlay'
 import type {
@@ -434,7 +434,7 @@ export class SkiaRenderer {
     this.fontProvider = this.ck.TypefaceFontProvider.Make()
 
     const { initFontService, loadFont, ensureArabicFallback, ensureCJKFallback } =
-      await import('../fonts')
+      await import('../text/fonts')
     initFontService(this.ck, this.fontProvider)
 
     const fontData = await loadFont(DEFAULT_FONT_FAMILY, 'Regular')
@@ -478,7 +478,7 @@ export class SkiaRenderer {
     pageId: string,
     nodeIds: string[]
   ): Promise<() => void> {
-    const { collectFontKeys, loadFont } = await import('../fonts')
+    const { collectFontKeys, loadFont } = await import('../text/fonts')
     const { getTextMeasurer, setTextMeasurer, computeAllLayouts } = await import('../layout')
 
     const previousTextMeasurer = getTextMeasurer()

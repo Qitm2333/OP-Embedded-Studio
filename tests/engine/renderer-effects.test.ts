@@ -2,7 +2,7 @@ import { describe, test, expect } from 'bun:test'
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 
-const rendererDir = new URL('../../packages/core/src/renderer/', import.meta.url).pathname
+const rendererDir = new URL('../../packages/core/src/canvas/', import.meta.url).pathname
 const files = await readdir(rendererDir)
 const parts = await Promise.all(
   files.filter((f) => f.endsWith('.ts')).map((f) => Bun.file(join(rendererDir, f)).text())

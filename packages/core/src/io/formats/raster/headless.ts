@@ -1,8 +1,8 @@
-import { SkiaRenderer } from '@open-pencil/core/renderer'
+import { SkiaRenderer } from '../../../canvas'
 
 import { renderNodesToImage, renderThumbnail, type ExportFormat } from './render'
 
-import type { SceneGraph } from '@open-pencil/core/scene-graph'
+import type { SceneGraph } from '../../../scene-graph'
 import type { CanvasKit } from 'canvaskit-wasm'
 
 let cachedCk: CanvasKit | null = null

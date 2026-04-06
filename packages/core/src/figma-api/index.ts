@@ -1,15 +1,15 @@
-import { IS_BROWSER } from './constants'
-import { copyFills, copyStrokes, copyEffects } from './copy'
+import { IS_BROWSER } from '../constants'
+import { copyFills, copyStrokes, copyEffects } from '../scene-graph/copy'
 import {
   FigmaNodeProxy,
   INTERNAL_ID,
   MIXED,
   type FigmaFontName,
   type NodeProxyHost
-} from './figma-api-proxy'
-import { computeBounds } from './geometry'
+} from './proxy'
+import { computeBounds } from '../geometry'
 
-import type { RasterExportFormat } from './io/formats/raster'
+import type { RasterExportFormat } from '../io/formats/raster'
 import type {
   SceneGraph,
   NodeType,
@@ -17,11 +17,11 @@ import type {
   VariableCollection,
   VariableType,
   VariableValue
-} from './scene-graph'
-import type { Rect, Vector } from './types'
+} from '../scene-graph'
+import type { Rect, Vector } from '../types'
 
-export { FigmaNodeProxy } from './figma-api-proxy'
-export type { FigmaFontName } from './figma-api-proxy'
+export { FigmaNodeProxy } from './proxy'
+export type { FigmaFontName } from './proxy'
 
 export function computeImageHash(data: Uint8Array): string {
   let h1 = 0x811c9dc5 >>> 0

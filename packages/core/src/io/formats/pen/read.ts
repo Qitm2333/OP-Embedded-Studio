@@ -1,4 +1,4 @@
-import { copyEffects, copyFills, copyStrokes } from '@open-pencil/core/copy'
+import { copyEffects, copyFills, copyStrokes } from '../../../scene-graph/copy'
 import {
   applyCornerRadius,
   applyPadding,
@@ -19,17 +19,17 @@ import {
   type PenDocument,
   type PenNode,
   type VarContext
-} from '@open-pencil/core/io/formats/pen/convert'
-import { parseSVGPath } from '@open-pencil/core/io/formats/svg/parse-path'
-import { SceneGraph } from '@open-pencil/core/scene-graph'
-import { populateInstanceChildren } from '@open-pencil/core/scene-graph-instances'
+} from './convert'
+import { parseSVGPath } from '../svg/parse-path'
+import { SceneGraph } from '../../../scene-graph'
+import { populateInstanceChildren } from '../../../scene-graph/instances'
 
 import type {
   LayoutMode,
   LayoutSizing,
   SceneNode,
   VectorNetwork
-} from '@open-pencil/core/scene-graph'
+} from '../../../scene-graph'
 
 function scaleVectorNetwork(vn: VectorNetwork, targetW: number, targetH: number): void {
   if (vn.vertices.length === 0) return

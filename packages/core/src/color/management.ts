@@ -1,10 +1,10 @@
 import { converter, formatCss, formatRgb, inGamut, toGamut } from 'culori'
 
-import { normalizeColor } from './color'
+import { normalizeColor } from './'
 import { getFillOkHCL, getStrokeOkHCL, type OkHCLColor } from './okhcl'
 
-import type { DocumentColorSpace, Fill, SceneNode, Stroke } from './scene-graph'
-import type { Color } from './types'
+import type { DocumentColorSpace, Fill, SceneNode, Stroke } from '../scene-graph'
+import type { Color } from '../types'
 
 export type RenderColorSpace = 'srgb' | 'display-p3'
 export type ColorIntentSpace = 'oklch' | 'srgb'

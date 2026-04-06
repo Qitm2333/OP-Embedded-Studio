@@ -1,8 +1,8 @@
 import { parse, formatHex, formatHex8, formatRgb, converter, differenceEuclidean } from 'culori'
 
-import { BLACK } from './constants'
+import { BLACK } from '../constants'
 
-import type { Color } from './types'
+import type { Color } from '../types'
 
 const toRgb = converter('rgb')
 

@@ -24,19 +24,22 @@ The root app (`src/`) is the Tauri/Vite desktop editor. Its `src/engine/` files 
 | Subpath | What | Heavy dep isolated |
 |---|---|---|
 | `@open-pencil/core` | everything (barrel) | all |
-| `@open-pencil/core/scene-graph` | SceneGraph, node types, events | — |
-| `@open-pencil/core/kiwi` | .fig parse/serialize, codec, protocol | fflate, fzstd |
-| `@open-pencil/core/tools` | ToolDef, ALL_TOOLS, AI adapter | diff |
-| `@open-pencil/core/renderer` | SkiaRenderer | — |
-| `@open-pencil/core/render` | JSX-to-design renderer | sucrase |
-| `@open-pencil/core/rpc` | RPC commands for CLI | — |
+| `@open-pencil/core/scene-graph` | SceneGraph, node types, hit-test, copy, snap, undo | — |
+| `@open-pencil/core/color` | parseColor, colorToHex, color management, OkHCL | culori |
+| `@open-pencil/core/text` | fonts, text editor, style runs, direction | — |
+| `@open-pencil/core/vector` | vector network encode/decode, bezier math | — |
 | `@open-pencil/core/figma-api` | FigmaAPI, FigmaNodeProxy | — |
+| `@open-pencil/core/icons` | Iconify API client, icon rendering | @iconify/utils |
+| `@open-pencil/core/canvas` | SkiaRenderer (Skia/CanvasKit painting engine) | — |
+| `@open-pencil/core/design-jsx` | JSX-to-design renderer | sucrase |
+| `@open-pencil/core/editor` | createEditor, Editor, EditorState | — |
+| `@open-pencil/core/tools` | ToolDef, ALL_TOOLS, AI adapter | diff |
+| `@open-pencil/core/kiwi` | .fig parse/serialize, codec, protocol | fflate, fzstd |
+| `@open-pencil/core/rpc` | RPC commands for CLI | — |
+| `@open-pencil/core/lint` | design linter rules and presets | — |
+| `@open-pencil/core/profiler` | render profiling | — |
 | `@open-pencil/core/canvaskit` | getCanvasKit loader | canvaskit-wasm |
 | `@open-pencil/core/layout` | computeLayout | yoga-layout |
-| `@open-pencil/core/color` | parseColor, colorToHex, etc. | — |
-| `@open-pencil/core/render-image` | renderNodesToImage | — |
-| `@open-pencil/core/profiler` | render profiling | — |
-| `@open-pencil/core/editor` | createEditor, Editor, EditorState | — |
 
 Runtime `canvaskit-wasm` import exists only in `canvaskit.ts` — all other files use `import type`. CanvasKit instance is passed as a parameter everywhere.
 

@@ -1,4 +1,4 @@
-import { computeAccurateBounds } from '../bezier-math'
+import { computeAccurateBounds } from '../vector/bezier'
 import { PEN_HANDLE_RADIUS, PEN_VERTEX_RADIUS } from '../constants'
 import { vectorNetworkToPath } from '../vector'
 

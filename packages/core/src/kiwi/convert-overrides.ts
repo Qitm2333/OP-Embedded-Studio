@@ -1,4 +1,4 @@
-import { styleToWeight } from '../fonts'
+import { styleToWeight } from '../text/fonts'
 import {
   convertFills,
   mapStackSizing,

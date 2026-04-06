@@ -1,4 +1,4 @@
-import { copyFills, copyStrokes, copyEffects, copyStyleRuns } from '../../copy'
+import { copyFills, copyStrokes, copyEffects, copyStyleRuns } from '../../scene-graph/copy'
 
 import type { SceneGraph, SceneNode } from '../../scene-graph'
 

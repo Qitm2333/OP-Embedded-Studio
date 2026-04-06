@@ -1,6 +1,6 @@
-import { degToRad } from './geometry'
+import { degToRad } from '../geometry'
 
-import type { SceneGraph, SceneNode, NodeType } from './scene-graph'
+import type { SceneGraph, SceneNode, NodeType } from './'
 
 const CONTAINER_TYPES = new Set<NodeType>([
   'CANVAS',

@@ -6,9 +6,9 @@ import {
   CJK_FALLBACK_FAMILIES_LINUX,
   CJK_GOOGLE_FONTS,
   GOOGLE_FONTS_API_KEY
-} from './constants'
+} from '../constants'
 
-import type { SceneGraph } from './scene-graph'
+import type { SceneGraph } from '../scene-graph'
 import type { CanvasKit, TypefaceFontProvider } from 'canvaskit-wasm'
 
 export interface FontInfo {

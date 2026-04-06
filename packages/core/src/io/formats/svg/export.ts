@@ -1,6 +1,6 @@
-import { computeContentBounds } from '@open-pencil/core/io/formats/raster'
+import { computeContentBounds } from '../raster'
 
-import { resolveNodeTextDirection } from '../../../direction'
+import { resolveNodeTextDirection } from '../../../text/direction'
 import {
   nextDefId,
   formatColor,
@@ -32,7 +32,7 @@ import type {
   Fill,
   Stroke,
   CharacterStyleOverride
-} from '@open-pencil/core/scene-graph'
+} from '../../../scene-graph'
 
 // --- Node rendering ---
 

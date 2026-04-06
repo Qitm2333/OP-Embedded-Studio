@@ -1,10 +1,10 @@
-import type { VectorNetwork, VectorSegment, VectorVertex, VectorRegion } from './scene-graph'
+import type { VectorNetwork, VectorSegment, VectorVertex, VectorRegion } from '../scene-graph'
 /* eslint-disable max-lines -- Bezier/network utilities kept together for shared geometry math */
 /**
  * Pure-JS bezier math utilities for VectorNetwork manipulation.
  * Replaces Paper.js dependency from the reference implementation.
  */
-import type { Vector, Rect } from './types'
+import type { Vector, Rect } from '../types'
 
 // ---------------------------------------------------------------------------
 // Types

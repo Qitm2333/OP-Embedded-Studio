@@ -15,7 +15,7 @@ import Yoga, {
   type Node as YogaNode
 } from 'yoga-layout'
 
-import { resolveNodeLayoutDirection } from './direction'
+import { resolveNodeLayoutDirection } from './text/direction'
 
 import type { GridTrack, SceneGraph, SceneNode } from './scene-graph'
 
