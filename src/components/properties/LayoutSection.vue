@@ -25,8 +25,8 @@ const { panels } = useI18n()
 const CONTAINER_TYPES = ['FRAME', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE']
 
 function sizingShortLabel(sizing: LayoutSizing): string | null {
-  if (sizing === 'HUG') return panels.value.sizingHug
-  if (sizing === 'FILL') return panels.value.sizingFill
+  if (sizing === 'HUG') return panels.value.sizingHugShort
+  if (sizing === 'FILL') return panels.value.sizingFillShort
   return null
 }
 </script>

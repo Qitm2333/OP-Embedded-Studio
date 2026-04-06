@@ -151,6 +151,8 @@
     "sizingFixed": "Fisso",
     "sizingHug": "Adatta al contenuto",
     "sizingFill": "Riempi",
+    "sizingHugShort": "Adatt.",
+    "sizingFillShort": "Riemp.",
     "sizingFillFr": "Riempi (fr)",
     "sizingFixedPx": "Fisso (px)"
   },

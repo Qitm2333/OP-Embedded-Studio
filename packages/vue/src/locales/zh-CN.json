@@ -155,6 +155,8 @@
     "sizingFixed": "固定",
     "sizingHug": "适应内容",
     "sizingFill": "填充",
+    "sizingHugShort": "适应",
+    "sizingFillShort": "填充",
     "sizingFillFr": "填充 (fr)",
     "sizingFixedPx": "固定 (px)"
   },

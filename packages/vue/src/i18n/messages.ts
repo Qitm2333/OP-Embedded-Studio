@@ -168,6 +168,8 @@ export const panelMessages = i18n('panels', {
   sizingFixed: 'Fixed',
   sizingHug: 'Hug',
   sizingFill: 'Fill',
+  sizingHugShort: 'Hug',
+  sizingFillShort: 'Fill',
   sizingFillFr: 'Fill (fr)',
   sizingFixedPx: 'Fixed (px)'
 })

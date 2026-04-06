@@ -151,6 +151,8 @@
     "sizingFixed": "Фиксированный",
     "sizingHug": "По содержимому",
     "sizingFill": "Заполнить",
+    "sizingHugShort": "Содерж.",
+    "sizingFillShort": "Запол.",
     "sizingFillFr": "Заполнить (fr)",
     "sizingFixedPx": "Фиксированный (px)"
   },

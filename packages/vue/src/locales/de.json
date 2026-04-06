@@ -151,6 +151,8 @@
     "sizingFixed": "Fest",
     "sizingHug": "An Inhalt anpassen",
     "sizingFill": "Füllen",
+    "sizingHugShort": "Inhalt",
+    "sizingFillShort": "Füllen",
     "sizingFillFr": "Füllen (fr)",
     "sizingFixedPx": "Fest (px)"
   },
