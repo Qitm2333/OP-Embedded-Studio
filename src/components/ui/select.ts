@@ -33,33 +33,21 @@ const item = tv({
   base: 'relative flex cursor-pointer items-center text-surface outline-none data-[highlighted]:bg-hover'
 })
 
-interface SelectUi {
+export interface SelectUi {
   trigger?: string
   content?: string
+  contentVariants?: {
+    radius?: 'md' | 'lg'
+    elevation?: 'lg' | 'xl'
+    padding?: 'none' | 'sm' | 'md'
+  }
   item?: string
 }
 
 export function useSelectUI(ui?: SelectUi) {
   return {
     trigger: twMerge(trigger(), ui?.trigger),
-    content: twMerge(content(), ui?.content),
+    content: twMerge(content(ui?.contentVariants), ui?.content),
     item: twMerge(item(), ui?.item)
   }
-}
-
-export function selectTrigger(options?: { class?: string }) {
-  return twMerge(trigger(), options?.class)
-}
-
-export function selectContent(options?: {
-  radius?: 'md' | 'lg'
-  elevation?: 'lg' | 'xl'
-  padding?: 'none' | 'sm' | 'md'
-  class?: string
-}) {
-  return twMerge(content(options), options?.class)
-}
-
-export function selectItem(options?: { class?: string }) {
-  return twMerge(item(), options?.class)
 }

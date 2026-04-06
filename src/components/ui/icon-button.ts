@@ -1,7 +1,5 @@
+import { twMerge } from 'tailwind-merge'
 import { tv } from 'tailwind-variants'
-import { computed } from 'vue'
-
-import { useComponentUI } from '@/components/ui/use-component-ui'
 
 const iconButtonStyles = tv({
   base: 'flex cursor-pointer items-center justify-center rounded border-none bg-transparent text-muted hover:bg-hover hover:text-surface',
@@ -14,13 +12,8 @@ const iconButtonStyles = tv({
   defaultVariants: { size: 'sm' }
 })
 
-export function iconButton(options?: {
-  size?: 'sm' | 'md'
-  ui?: {
-    base?: string
+export function useIconButtonUI(options?: { size?: 'sm' | 'md'; ui?: { base?: string } }) {
+  return {
+    base: twMerge(iconButtonStyles({ size: options?.size }), options?.ui?.base)
   }
-}) {
-  const ui = useComponentUI(options?.ui, { base: '' })
-  const classes = computed(() => iconButtonStyles({ size: options?.size, class: ui.value.base }))
-  return classes.value
 }

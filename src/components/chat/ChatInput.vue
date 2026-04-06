@@ -5,8 +5,8 @@ import { computed, ref } from 'vue'
 import ProviderModelSelect from '@/components/chat/ProviderModelSelect.vue'
 import ProviderSettings from '@/components/chat/ProviderSettings.vue'
 import Tip from '@/components/ui/Tip.vue'
-import { uiButton } from '@/components/ui/button'
-import { uiInput } from '@/components/ui/input'
+import { useButtonUI } from '@/components/ui/button'
+import { useInputUI } from '@/components/ui/input'
 import { useAIChat } from '@/composables/use-chat'
 import { useI18n } from '@open-pencil/vue'
 
@@ -86,7 +86,7 @@ function handleSubmit(e: Event) {
           type="text"
           data-test-id="chat-input"
           :placeholder="dialogs.describeChange"
-          :class="uiInput({ ui: { base: 'min-w-0 flex-1 placeholder:text-muted' } })"
+          :class="useInputUI({ ui: { base: 'min-w-0 flex-1 placeholder:text-muted' } }).base"
           :disabled="isStreaming"
           @paste.stop
           @copy.stop
@@ -97,12 +97,12 @@ function handleSubmit(e: Event) {
             type="button"
             data-test-id="chat-stop-button"
             :class="
-              uiButton({
+              useButtonUI({
                 tone: 'ghost',
                 shape: 'rounded',
                 size: 'sm',
                 ui: { base: 'shrink-0 border border-border px-2 py-1.5' }
-              })
+              }).base
             "
             @click="emit('stop')"
           >
@@ -114,12 +114,12 @@ function handleSubmit(e: Event) {
             type="submit"
             data-test-id="chat-send-button"
             :class="
-              uiButton({
+              useButtonUI({
                 tone: 'accent',
                 shape: 'rounded',
                 size: 'sm',
                 ui: { base: 'shrink-0 px-2.5 py-1.5 font-medium' }
-              })
+              }).base
             "
             :disabled="!input.trim()"
           >

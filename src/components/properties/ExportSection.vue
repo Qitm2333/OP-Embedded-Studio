@@ -2,8 +2,8 @@
 import { ref, computed, watch, onScopeDispose } from 'vue'
 
 import AppSelect from '@/components/ui/AppSelect.vue'
-import { iconButton } from '@/components/ui/icon-button'
-import { sectionLabel, sectionWrapper } from '@/components/ui/section'
+import { useIconButtonUI } from '@/components/ui/icon-button'
+import { useSectionUI } from '@/components/ui/section'
 import { useEditorStore } from '@/stores/editor'
 import { useExport, useI18n } from '@open-pencil/vue'
 
@@ -11,6 +11,7 @@ import type { ExportFormatId } from '@open-pencil/vue/controls/useExport'
 
 const editorStore = useEditorStore()
 const { panels } = useI18n()
+const sectionCls = useSectionUI()
 const {
   activeTarget,
   activeName,
@@ -127,10 +128,12 @@ onScopeDispose(() => {
 </script>
 
 <template>
-  <div data-test-id="export-section" :class="sectionWrapper()">
+  <div data-test-id="export-section" :class="sectionCls.wrapper">
     <div class="flex items-center justify-between">
-      <label :class="sectionLabel()">{{ panels.export }}</label>
-      <button data-test-id="export-section-add" :class="iconButton()" @click="addSetting">+</button>
+      <label :class="sectionCls.label">{{ panels.export }}</label>
+      <button data-test-id="export-section-add" :class="useIconButtonUI().base" @click="addSetting">
+        +
+      </button>
     </div>
 
     <div
@@ -151,7 +154,9 @@ onScopeDispose(() => {
         :options="FORMAT_OPTIONS"
         @update:model-value="updateFormat(i, $event as ExportFormatId)"
       />
-      <button :class="iconButton({ ui: { base: 'shrink-0' } })" @click="removeSetting(i)">−</button>
+      <button :class="useIconButtonUI({ ui: { base: 'shrink-0' } }).base" @click="removeSetting(i)">
+        −
+      </button>
     </div>
 
     <button

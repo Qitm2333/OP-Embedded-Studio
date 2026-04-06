@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 
 import ProviderSelectField from '@/components/chat/ProviderSelectField.vue'
-import { uiInput } from '@/components/ui/input'
+import { useInputUI } from '@/components/ui/input'
 import { useAIChat } from '@/composables/use-chat'
 import { ACP_AGENTS } from '@open-pencil/core'
 import { useI18n } from '@open-pencil/vue'
@@ -50,7 +50,7 @@ function save() {
         type="text"
         data-test-id="provider-base-url"
         :placeholder="dialogs.baseURLPlaceholder"
-        :class="uiInput()"
+        :class="useInputUI().base"
       />
 
       <!-- Custom model ID (OpenAI-compatible only) -->
@@ -60,7 +60,7 @@ function save() {
         type="text"
         data-test-id="provider-custom-model"
         :placeholder="dialogs.modelIDPlaceholder"
-        :class="uiInput()"
+        :class="useInputUI().base"
       />
 
       <input
@@ -68,7 +68,7 @@ function save() {
         type="password"
         data-test-id="api-key-input"
         :placeholder="providerDef.keyPlaceholder"
-        :class="uiInput()"
+        :class="useInputUI().base"
       />
 
       <button

@@ -29,11 +29,13 @@ const surface = tv({
   }
 })
 
-export function panelSurface(options?: {
+export function useSurfaceUI(options?: {
   elevation?: 'md' | 'lg' | 'xl' | 'overlay'
   radius?: 'md' | 'lg' | 'xl'
   padding?: 'none' | 'sm' | 'md' | 'lg'
-  class?: string
+  ui?: { base?: string }
 }) {
-  return twMerge(surface(options), options?.class)
+  return {
+    base: twMerge(surface(options), options?.ui?.base)
+  }
 }

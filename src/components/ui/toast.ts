@@ -15,6 +15,8 @@ const toast = tv({
   defaultVariants: { tone: 'default' }
 })
 
-export function toastRoot(options?: { tone?: ToastVariant; class?: string }) {
-  return twMerge(toast(options), options?.class)
+export function useToastUI(options?: { tone?: ToastVariant; ui?: { base?: string } }) {
+  return {
+    base: twMerge(toast(options), options?.ui?.base)
+  }
 }

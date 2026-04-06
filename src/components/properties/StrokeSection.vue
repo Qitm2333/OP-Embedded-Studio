@@ -15,8 +15,8 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/ui/Tip.vue'
-import { iconButton } from '@/components/ui/icon-button'
-import { sectionLabel, sectionWrapper } from '@/components/ui/section'
+import { useIconButtonUI } from '@/components/ui/icon-button'
+import { useSectionUI } from '@/components/ui/section'
 
 import type { SceneNode, Stroke } from '@open-pencil/core'
 
@@ -24,6 +24,7 @@ const strokeCtx = useStrokeControls()
 const strokeVarCtx = useColorVariableBinding('strokes')
 const okhcl = useOkHCL()
 const { panels } = useI18n()
+const sectionCls = useSectionUI()
 
 const expandedSides = ref(false)
 
@@ -51,12 +52,12 @@ function onToggleSides(activeNode: SceneNode) {
     prop-key="strokes"
     :label="panels.stroke"
   >
-    <div data-test-id="stroke-section" :class="sectionWrapper()">
+    <div data-test-id="stroke-section" :class="sectionCls.wrapper">
       <div class="flex items-center justify-between">
-        <label :class="sectionLabel()">{{ panels.stroke }}</label>
+        <label :class="sectionCls.label">{{ panels.stroke }}</label>
         <button
           data-test-id="stroke-section-add"
-          :class="iconButton()"
+          :class="useIconButtonUI().base"
           @click="add(strokeCtx.defaultStroke)"
         >
           +

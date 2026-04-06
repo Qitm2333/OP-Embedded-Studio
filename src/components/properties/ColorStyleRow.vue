@@ -13,7 +13,7 @@ import {
 
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/ui/Tip.vue'
-import { iconButton } from '@/components/ui/icon-button'
+import { useIconButtonUI } from '@/components/ui/icon-button'
 
 import { colorToCSS } from '@open-pencil/core'
 import { useI18n } from '@open-pencil/vue'
@@ -144,6 +144,8 @@ const { panels, dialogs } = useI18n()
       <icon-lucide-eye-off v-else class="size-3.5" />
     </button>
 
-    <button :class="iconButton({ ui: { base: 'shrink-0' } })" @click="emit('remove')">−</button>
+    <button :class="useIconButtonUI({ ui: { base: 'shrink-0' } }).base" @click="emit('remove')">
+      −
+    </button>
   </div>
 </template>

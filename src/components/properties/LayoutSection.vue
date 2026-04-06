@@ -15,14 +15,19 @@ import { LayoutControlsRoot, useI18n } from '@open-pencil/vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/ui/Tip.vue'
-import { selectContent, selectItem } from '@/components/ui/select'
-import { sectionWrapper } from '@/components/ui/section'
+import { useSelectUI } from '@/components/ui/select'
+import { useSectionUI } from '@/components/ui/section'
 
 import type { LayoutSizing } from '@open-pencil/core'
 
 const { panels } = useI18n()
+const sectionCls = useSectionUI()
 
 const CONTAINER_TYPES = ['FRAME', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE']
+
+const sizingSelect = useSelectUI({
+  item: 'rounded py-1.5 pr-2 pl-6 text-xs'
+})
 
 function sizingShortLabel(sizing: LayoutSizing): string | null {
   if (sizing === 'HUG') return panels.value.sizingHugShort
@@ -34,7 +39,7 @@ function sizingShortLabel(sizing: LayoutSizing): string | null {
 <template>
   <LayoutControlsRoot v-slot="ctx">
     <template v-if="ctx.node">
-      <div data-test-id="layout-section" :class="sectionWrapper()">
+      <div data-test-id="layout-section" :class="sectionCls.wrapper">
         <label class="mb-1.5 block text-[11px] text-muted">{{ panels.layout }}</label>
         <div class="flex gap-1.5">
           <ScrubInput
@@ -57,13 +62,18 @@ function sizingShortLabel(sizing: LayoutSizing): string | null {
                   <icon-lucide-chevron-down class="hidden size-3 group-hover:block" />
                 </SelectTrigger>
                 <SelectPortal>
-                  <SelectContent position="popper" align="start" :side-offset="2" :class="selectContent()">
+                  <SelectContent
+                    position="popper"
+                    align="start"
+                    :side-offset="2"
+                    :class="sizingSelect.content"
+                  >
                     <SelectViewport class="p-0.5">
                       <SelectItem
                         v-for="opt in ctx.widthSizingOptions"
                         :key="opt.value"
                         :value="opt.value"
-                        :class="selectItem({ class: 'rounded py-1.5 pr-2 pl-6 text-xs' })"
+                        :class="sizingSelect.item"
                       >
                         <SelectItemIndicator
                           class="absolute left-1.5 inline-flex items-center justify-center"
@@ -98,13 +108,18 @@ function sizingShortLabel(sizing: LayoutSizing): string | null {
                   <icon-lucide-chevron-down class="hidden size-3 group-hover:block" />
                 </SelectTrigger>
                 <SelectPortal>
-                  <SelectContent position="popper" align="start" :side-offset="2" :class="selectContent()">
+                  <SelectContent
+                    position="popper"
+                    align="start"
+                    :side-offset="2"
+                    :class="sizingSelect.content"
+                  >
                     <SelectViewport class="p-0.5">
                       <SelectItem
                         v-for="opt in ctx.heightSizingOptions"
                         :key="opt.value"
                         :value="opt.value"
-                        :class="selectItem({ class: 'rounded py-1.5 pr-2 pl-6 text-xs' })"
+                        :class="sizingSelect.item"
                       >
                         <SelectItemIndicator
                           class="absolute left-1.5 inline-flex items-center justify-center"
@@ -123,7 +138,7 @@ function sizingShortLabel(sizing: LayoutSizing): string | null {
       </div>
 
       <template v-if="CONTAINER_TYPES.includes(ctx.node.type)">
-        <div :class="sectionWrapper()">
+        <div :class="sectionCls.wrapper">
           <div class="flex items-center justify-between">
             <label class="mb-1.5 block text-[11px] text-muted">{{ panels.autoLayout }}</label>
             <Tip v-if="ctx.node.layoutMode === 'NONE'" :label="panels.addAutoLayout">
@@ -350,7 +365,7 @@ function sizingShortLabel(sizing: LayoutSizing): string | null {
           </template>
         </div>
 
-        <div :class="sectionWrapper()">
+        <div :class="sectionCls.wrapper">
           <label class="flex cursor-pointer items-center gap-2 text-xs text-surface">
             <input
               type="checkbox"

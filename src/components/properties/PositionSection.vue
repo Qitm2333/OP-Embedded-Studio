@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/ui/Tip.vue'
-import { iconButton } from '@/components/ui/icon-button'
-import { sectionWrapper } from '@/components/ui/section'
+import { useIconButtonUI } from '@/components/ui/icon-button'
+import { useSectionUI } from '@/components/ui/section'
 import { useEditorStore } from '@/stores/editor'
 import { PositionControlsRoot, useI18n } from '@open-pencil/vue'
 
 const { panels } = useI18n()
 const store = useEditorStore()
+const sectionCls = useSectionUI()
 
 function handleAlign(
   nodeAlign: (axis: 'horizontal' | 'vertical', pos: 'min' | 'center' | 'max') => void,
@@ -40,14 +41,14 @@ function handleAlign(
       rotate
     }"
   >
-    <div v-if="active" data-test-id="position-section" :class="sectionWrapper()">
+    <div v-if="active" data-test-id="position-section" :class="sectionCls.wrapper">
       <label class="mb-1.5 block text-[11px] text-muted">{{ panels.position }}</label>
 
       <div class="mb-1.5 flex gap-2">
         <div class="flex gap-0.5">
           <Tip :label="panels.alignLeft">
             <button
-              :class="iconButton({ size: 'md' })"
+              :class="useIconButtonUI({ size: 'md' }).base"
               data-test-id="position-align-left"
               @click="handleAlign(align, 'horizontal', 'min')"
             >
@@ -56,7 +57,7 @@ function handleAlign(
           </Tip>
           <Tip :label="panels.alignCenterHorizontally">
             <button
-              :class="iconButton({ size: 'md' })"
+              :class="useIconButtonUI({ size: 'md' }).base"
               data-test-id="position-align-center-h"
               @click="handleAlign(align, 'horizontal', 'center')"
             >
@@ -65,7 +66,7 @@ function handleAlign(
           </Tip>
           <Tip :label="panels.alignRight">
             <button
-              :class="iconButton({ size: 'md' })"
+              :class="useIconButtonUI({ size: 'md' }).base"
               data-test-id="position-align-right"
               @click="handleAlign(align, 'horizontal', 'max')"
             >
@@ -76,7 +77,7 @@ function handleAlign(
         <div class="flex gap-0.5">
           <Tip :label="panels.alignTop">
             <button
-              :class="iconButton({ size: 'md' })"
+              :class="useIconButtonUI({ size: 'md' }).base"
               data-test-id="position-align-top"
               @click="handleAlign(align, 'vertical', 'min')"
             >
@@ -85,7 +86,7 @@ function handleAlign(
           </Tip>
           <Tip :label="panels.alignCenterVertically">
             <button
-              :class="iconButton({ size: 'md' })"
+              :class="useIconButtonUI({ size: 'md' }).base"
               data-test-id="position-align-center-v"
               @click="handleAlign(align, 'vertical', 'center')"
             >
@@ -94,7 +95,7 @@ function handleAlign(
           </Tip>
           <Tip :label="panels.alignBottom">
             <button
-              :class="iconButton({ size: 'md' })"
+              :class="useIconButtonUI({ size: 'md' }).base"
               data-test-id="position-align-bottom"
               @click="handleAlign(align, 'vertical', 'max')"
             >
@@ -152,7 +153,7 @@ function handleAlign(
         </ScrubInput>
         <Tip :label="panels.flipHorizontal">
           <button
-            :class="iconButton({ size: 'md', ui: { base: 'shrink-0' } })"
+            :class="useIconButtonUI({ size: 'md', ui: { base: 'shrink-0' } }).base"
             data-test-id="position-flip-horizontal"
             @click="flip('horizontal')"
           >
@@ -161,7 +162,7 @@ function handleAlign(
         </Tip>
         <Tip :label="panels.flipVertical">
           <button
-            :class="iconButton({ size: 'md', ui: { base: 'shrink-0' } })"
+            :class="useIconButtonUI({ size: 'md', ui: { base: 'shrink-0' } }).base"
             data-test-id="position-flip-vertical"
             @click="flip('vertical')"
           >
@@ -170,7 +171,7 @@ function handleAlign(
         </Tip>
         <Tip :label="panels.rotate90">
           <button
-            :class="iconButton({ size: 'md', ui: { base: 'shrink-0' } })"
+            :class="useIconButtonUI({ size: 'md', ui: { base: 'shrink-0' } }).base"
             data-test-id="position-rotate-90"
             @click="rotate(90)"
           >

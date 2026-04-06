@@ -13,7 +13,7 @@ import {
 import { computed, ref, watch } from 'vue'
 
 import ProviderSelectField from '@/components/chat/ProviderSelectField.vue'
-import { uiInput } from '@/components/ui/input'
+import { useInputUI } from '@/components/ui/input'
 import { usePopoverUI } from '@/components/ui/popover'
 import { useAIChat } from '@/composables/use-chat'
 
@@ -138,7 +138,7 @@ function clearUnsplashKey() {
               :min="1024"
               :max="128000"
               :step="1024"
-              :class="uiInput({ size: 'sm' })"
+              :class="useInputUI({ size: 'sm' }).base"
             />
           </div>
 
@@ -164,7 +164,7 @@ function clearUnsplashKey() {
                   ? 'Key saved — enter new to replace'
                   : 'Optional — for stock_photo tool'
               "
-              :class="uiInput({ size: 'sm' })"
+              :class="useInputUI({ size: 'sm' }).base"
               @change="save"
             />
             <a
@@ -198,7 +198,7 @@ function clearUnsplashKey() {
                   ? 'Key saved — enter new to replace'
                   : 'Optional — alternative to Pexels'
               "
-              :class="uiInput({ size: 'sm' })"
+              :class="useInputUI({ size: 'sm' }).base"
               @change="save"
             />
             <a
@@ -219,7 +219,7 @@ function clearUnsplashKey() {
                 type="text"
                 data-test-id="provider-settings-base-url"
                 placeholder="http://localhost:11434/v1"
-                :class="uiInput({ size: 'sm' })"
+                :class="useInputUI({ size: 'sm' }).base"
                 @change="save"
               />
             </div>
@@ -232,7 +232,7 @@ function clearUnsplashKey() {
                 type="text"
                 data-test-id="provider-settings-custom-model"
                 placeholder="e.g. llama-3.3-70b"
-                :class="uiInput({ size: 'sm' })"
+                :class="useInputUI({ size: 'sm' }).base"
                 @change="save"
               />
             </div>
@@ -290,7 +290,7 @@ function clearUnsplashKey() {
                 :placeholder="
                   hasExistingKey ? 'Key saved — enter new to replace' : providerDef.keyPlaceholder
                 "
-                :class="uiInput({ size: 'sm' })"
+                :class="useInputUI({ size: 'sm' }).base"
                 @change="save"
               />
               <a

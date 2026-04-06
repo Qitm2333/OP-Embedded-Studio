@@ -2,8 +2,8 @@
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ColorInput from '@/components/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
-import { iconButton } from '@/components/ui/icon-button'
-import { sectionLabel, sectionWrapper } from '@/components/ui/section'
+import { useIconButtonUI } from '@/components/ui/icon-button'
+import { useSectionUI } from '@/components/ui/section'
 import { PropertyListRoot, useEffectsControls, useI18n } from '@open-pencil/vue'
 
 import { colorToCSS } from '@open-pencil/core'
@@ -12,6 +12,7 @@ import type { Effect } from '@open-pencil/core'
 
 const effectsCtx = useEffectsControls()
 const { panels } = useI18n()
+const sectionCls = useSectionUI()
 </script>
 
 <template>
@@ -20,12 +21,12 @@ const { panels } = useI18n()
     prop-key="effects"
     :label="panels.effects"
   >
-    <div data-test-id="effects-section" :class="sectionWrapper()">
+    <div data-test-id="effects-section" :class="sectionCls.wrapper">
       <div class="flex items-center justify-between">
-        <label :class="sectionLabel()">{{ panels.effects }}</label>
+        <label :class="sectionCls.label">{{ panels.effects }}</label>
         <button
           data-test-id="effects-section-add"
-          :class="iconButton()"
+          :class="useIconButtonUI().base"
           @click="add(effectsCtx.createDefaultEffect())"
         >
           +
@@ -71,7 +72,9 @@ const { panels } = useI18n()
             <icon-lucide-eye v-if="effect.visible" class="size-3.5" />
             <icon-lucide-eye-off v-else class="size-3.5" />
           </button>
-          <button :class="iconButton()" @click="effectsCtx.handleRemove(remove, i)">−</button>
+          <button :class="useIconButtonUI().base" @click="effectsCtx.handleRemove(remove, i)">
+            −
+          </button>
         </div>
 
         <div v-if="effectsCtx.expandedIndex.value === i" class="flex flex-col gap-1.5 py-1.5">

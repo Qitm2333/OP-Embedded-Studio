@@ -4,14 +4,15 @@ import { PropertyListRoot, useFillControls, useOkHCL, useI18n } from '@open-penc
 
 import FillPicker from '@/components/FillPicker.vue'
 import ColorStyleRow from '@/components/properties/ColorStyleRow.vue'
-import { iconButton } from '@/components/ui/icon-button'
-import { sectionLabel, sectionWrapper } from '@/components/ui/section'
+import { useIconButtonUI } from '@/components/ui/icon-button'
+import { useSectionUI } from '@/components/ui/section'
 
 import type { Fill } from '@open-pencil/core'
 
 const fillCtx = useFillControls()
 const okhcl = useOkHCL()
 const { panels } = useI18n()
+const sectionCls = useSectionUI()
 </script>
 
 <template>
@@ -20,12 +21,12 @@ const { panels } = useI18n()
     prop-key="fills"
     :label="panels.fill"
   >
-    <div data-test-id="fill-section" :class="sectionWrapper()">
+    <div data-test-id="fill-section" :class="sectionCls.wrapper">
       <div class="flex items-center justify-between">
-        <label :class="sectionLabel()">{{ panels.fill }}</label>
+        <label :class="sectionCls.label">{{ panels.fill }}</label>
         <button
           data-test-id="fill-section-add"
-          :class="iconButton()"
+          :class="useIconButtonUI().base"
           @click="add({ ...fillCtx.defaultFill })"
         >
           +

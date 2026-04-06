@@ -5,7 +5,7 @@ import { useClipboard } from '@vueuse/core'
 
 import Tip from '@/components/ui/Tip.vue'
 import { toast } from '@/utils/toast'
-import { toastRoot } from '@/components/ui/toast'
+import { useToastUI } from '@/components/ui/toast'
 
 const { copy, copied } = useClipboard({ copiedDuring: 1500 })
 </script>
@@ -17,7 +17,7 @@ const { copy, copied } = useClipboard({ copiedDuring: 1500 })
       :key="t.id"
       data-test-id="toast-item"
       :duration="t.variant === 'error' ? 0 : toast.TOAST_DURATION"
-      :class="toastRoot({ tone: t.variant })"
+      :class="useToastUI({ tone: t.variant }).base"
       @update:open="
         (open) => {
           if (!open) toast.remove(t.id)

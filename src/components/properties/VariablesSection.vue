@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import Tip from '@/components/ui/Tip.vue'
-import { sectionWrapper } from '@/components/ui/section'
+import { useSectionUI } from '@/components/ui/section'
 import { useI18n, useSceneComputed } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/stores/editor'
@@ -19,11 +19,12 @@ const variableCount = useSceneComputed(() => {
   return editor.getVariableCount()
 })
 const hasVariables = computed(() => variableCount.value > 0)
+const sectionCls = useSectionUI()
 const { panels } = useI18n()
 </script>
 
 <template>
-  <div data-test-id="variables-section" :class="sectionWrapper()">
+  <div data-test-id="variables-section" :class="sectionCls.wrapper">
     <div class="flex items-center justify-between">
       <label class="text-[11px] font-medium text-surface">{{ panels.variables }}</label>
       <Tip :label="panels.openVariables">

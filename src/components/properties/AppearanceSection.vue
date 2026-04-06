@@ -5,7 +5,7 @@ import { useAppearance, useI18n } from '@open-pencil/vue'
 
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/ui/Tip.vue'
-import { sectionWrapper } from '@/components/ui/section'
+import { useSectionUI } from '@/components/ui/section'
 
 const { panels } = useI18n()
 const {
@@ -25,6 +25,7 @@ const {
   commitCornerProp
 } = useAppearance()
 
+const sectionCls = useSectionUI()
 const manualExpanded = ref<boolean | null>(null)
 
 const showIndependentCorners = computed(() => {
@@ -46,7 +47,7 @@ function onToggleCorners() {
 </script>
 
 <template>
-  <div v-if="active" data-test-id="appearance-section" :class="sectionWrapper()">
+  <div v-if="active" data-test-id="appearance-section" :class="sectionCls.wrapper">
     <div class="mb-1.5 flex items-center justify-between">
       <label class="text-[11px] text-muted">{{ panels.appearance }}</label>
       <Tip :label="panels.toggleVisibility">
