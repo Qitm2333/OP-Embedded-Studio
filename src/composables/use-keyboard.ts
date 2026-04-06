@@ -271,7 +271,18 @@ export function useKeyboard() {
       store.exitNodeEditMode(true)
       return
     }
-    if (store.state.penState) store.penCommit(false)
+    if (store.state.penState) {
+      store.penCommit(false)
+      return
+    }
+    const node = store.selectedNode.value
+    if (node?.type === 'TEXT') {
+      requestAnimationFrame(() => {
+        store.startTextEditing(node.id)
+        store.textEditor?.selectAll()
+        store.requestRender()
+      })
+    }
   })
   whenever(plain('Escape'), () => {
     if (store.state.nodeEditState) {

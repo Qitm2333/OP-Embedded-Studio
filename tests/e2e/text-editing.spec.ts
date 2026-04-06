@@ -134,3 +134,36 @@ test('frame tool creates FRAME node', async () => {
 
   canvas.assertNoErrors()
 })
+
+test('Enter key opens text editing and selects all without erasing', async () => {
+  await page.keyboard.press('Escape')
+  await canvas.waitForRender()
+
+  const textId = await page.evaluate(() => {
+    const store = window.__OPEN_PENCIL_STORE__!
+    const id = store.createShape('TEXT', 300, 300, 200, 30)
+    store.graph.updateNode(id, { text: 'Keep this text' })
+    store.select([id])
+    store.requestRender()
+    return id
+  })
+  await canvas.waitForRender()
+
+  const before = await getSelectedNode()
+  expect(before!.text).toBe('Keep this text')
+  expect(before!.type).toBe('TEXT')
+
+  await page.keyboard.press('Enter')
+  await page.waitForTimeout(200)
+
+  const editing = await page.evaluate(() => window.__OPEN_PENCIL_STORE__!.state.editingTextId)
+  expect(editing).toBe(textId)
+
+  const after = await page.evaluate(() => {
+    const store = window.__OPEN_PENCIL_STORE__!
+    const id = store.state.editingTextId
+    if (!id) return null
+    return store.graph.getNode(id)?.text ?? null
+  })
+  expect(after).toBe('Keep this text')
+})
