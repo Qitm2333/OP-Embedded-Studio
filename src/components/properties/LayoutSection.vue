@@ -76,9 +76,9 @@ const { panels } = useI18n()
             <div class="mt-1.5 flex gap-0.5">
               <button
                 v-for="dir in [
-                  { mode: 'HORIZONTAL', icon: 'arrow-right', test: 'horizontal' },
-                  { mode: 'VERTICAL', icon: 'arrow-down', test: 'vertical' },
-                  { mode: 'GRID', icon: 'layout-grid', test: 'grid' }
+                  { mode: 'HORIZONTAL', test: 'horizontal' },
+                  { mode: 'VERTICAL', test: 'vertical' },
+                  { mode: 'GRID', test: 'grid' }
                 ] as const"
                 :key="dir.mode"
                 :data-test-id="`layout-direction-${dir.test}`"
@@ -90,7 +90,9 @@ const { panels } = useI18n()
                 "
                 @click="ctx.editor.setLayoutMode(ctx.node.id, dir.mode)"
               >
-                <component :is="`icon-lucide-${dir.icon}`" class="size-3.5" />
+                <icon-lucide-arrow-right v-if="dir.mode === 'HORIZONTAL'" class="size-3.5" />
+                <icon-lucide-arrow-down v-else-if="dir.mode === 'VERTICAL'" class="size-3.5" />
+                <icon-lucide-layout-grid v-else class="size-3.5" />
               </button>
               <button
                 v-if="ctx.isFlex"
