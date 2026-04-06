@@ -368,13 +368,13 @@ export function handleSelectDown(
 
   if (editor.state.editingTextId) editor.commitTextEdit()
 
-  if (tryStartRotation(sx, sy)) return
-
   const resizeDrag = tryStartResize(sx, sy, cx, cy, editor)
   if (resizeDrag) {
     setDrag(resizeDrag)
     return
   }
+
+  if (tryStartRotation(sx, sy)) return
 
   const hit = resolveHit(cx, cy, editor, fns)
   if (!hit) {
