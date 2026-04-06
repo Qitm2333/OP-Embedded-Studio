@@ -889,7 +889,7 @@ export function createEditorStore(initialGraph?: SceneGraph) {
       editor.requestRender()
     } catch (e) {
       console.error('Failed to open .fig file:', e)
-      toast.show(`Failed to open file: ${e instanceof Error ? e.message : String(e)}`, 'error')
+      toast.error(`Failed to open file: ${e instanceof Error ? e.message : String(e)}`)
     } finally {
       state.loading = false
     }

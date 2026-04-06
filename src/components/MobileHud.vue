@@ -49,7 +49,7 @@ function onShare() {
   const roomId = collab.shareCurrentDoc()
   router.push(`/share/${roomId}`)
   copy(`${window.location.origin}/share/${roomId}`)
-  toast.show('Link copied to clipboard')
+  toast.info('Link copied to clipboard')
 }
 
 function onDisconnect() {

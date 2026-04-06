@@ -33,25 +33,25 @@ function execCommand(cmd: 'copy' | 'cut' | 'paste') {
     console.warn(`Clipboard command ${cmd} failed`, error)
   }
 
-  toast.show('Clipboard access is blocked in this browser context', 'error')
+  toast.error('Clipboard access is blocked in this browser context')
 }
 
 async function clipboardWrite(text: string | null, label: string) {
   if (!text) return
   copy(text)
-  toast.show(`Copied as ${label}`)
+  toast.info(`Copied as ${label}`)
 }
 
 async function copyAsPNG() {
   if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') {
-    toast.show('PNG clipboard export is not available in this browser', 'error')
+    toast.error('PNG clipboard export is not available in this browser')
     return
   }
   const data = await store.renderExportImage([...selectedIds.value], 2, 'PNG')
   if (!data) return
   const blob = new Blob([data], { type: 'image/png' })
   await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-  toast.show('Copied as PNG')
+  toast.info('Copied as PNG')
 }
 
 const menuCls = useMenuUI({

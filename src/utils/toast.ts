@@ -15,8 +15,16 @@ const toasts = ref<Toast[]>([])
 let nextId = 0
 let errorHandlersInitialized = false
 
-function show(message: string, variant: ToastVariant = 'default') {
-  toasts.value.push({ id: ++nextId, message, variant })
+function info(message: string) {
+  toasts.value.push({ id: ++nextId, message, variant: 'default' })
+}
+
+function warning(message: string) {
+  toasts.value.push({ id: ++nextId, message, variant: 'warning' })
+}
+
+function error(message: string) {
+  toasts.value.push({ id: ++nextId, message, variant: 'error' })
 }
 
 function remove(id: number) {
@@ -28,12 +36,12 @@ function setupGlobalErrorHandler() {
   errorHandlersInitialized = true
 
   useEventListener(window, 'error', (e) => {
-    show(e.message || 'An unexpected error occurred', 'error')
+    error(e.message || 'An unexpected error occurred')
   })
   useEventListener(window, 'unhandledrejection', (e) => {
     const msg = e.reason instanceof Error ? e.reason.message : String(e.reason)
-    show(msg || 'An unexpected error occurred', 'error')
+    error(msg || 'An unexpected error occurred')
   })
 }
 
-export const toast = { show, remove, toasts, setupGlobalErrorHandler, TOAST_DURATION }
+export const toast = { info, warning, error, remove, toasts, setupGlobalErrorHandler, TOAST_DURATION }
