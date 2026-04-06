@@ -99,11 +99,85 @@
       "types": "./src/io/formats/svg/index.ts",
       "bun": "./src/io/formats/svg/index.ts",
       "default": "./src/io/formats/svg/index.ts"
+    },
+    "./constants": {
+      "types": "./src/constants.ts",
+      "bun": "./src/constants.ts",
+      "default": "./src/constants.ts"
+    },
+    "./types": {
+      "types": "./src/types.ts",
+      "bun": "./src/types.ts",
+      "default": "./src/types.ts"
+    },
+    "./copy": {
+      "types": "./src/copy.ts",
+      "bun": "./src/copy.ts",
+      "default": "./src/copy.ts"
+    },
+    "./color-management": {
+      "types": "./src/color-management.ts",
+      "bun": "./src/color-management.ts",
+      "default": "./src/color-management.ts"
+    },
+    "./fig-compress": {
+      "types": "./src/fig-compress.ts",
+      "bun": "./src/fig-compress.ts",
+      "default": "./src/fig-compress.ts"
+    },
+    "./scene-graph-instances": {
+      "types": "./src/scene-graph-instances.ts",
+      "bun": "./src/scene-graph-instances.ts",
+      "default": "./src/scene-graph-instances.ts"
+    },
+    "./render/tailwind": {
+      "types": "./src/render/tailwind.ts",
+      "bun": "./src/render/tailwind.ts",
+      "default": "./src/render/tailwind.ts"
+    },
+    "./kiwi/codec": {
+      "types": "./src/kiwi/codec.ts",
+      "bun": "./src/kiwi/codec.ts",
+      "default": "./src/kiwi/codec.ts"
+    },
+    "./kiwi/convert": {
+      "types": "./src/kiwi/convert.ts",
+      "bun": "./src/kiwi/convert.ts",
+      "default": "./src/kiwi/convert.ts"
+    },
+    "./kiwi/fig-import": {
+      "types": "./src/kiwi/fig-import.ts",
+      "bun": "./src/kiwi/fig-import.ts",
+      "default": "./src/kiwi/fig-import.ts"
+    },
+    "./kiwi/fig-parse-core": {
+      "types": "./src/kiwi/fig-parse-core.ts",
+      "bun": "./src/kiwi/fig-parse-core.ts",
+      "default": "./src/kiwi/fig-parse-core.ts"
+    },
+    "./kiwi/serialize": {
+      "types": "./src/kiwi/serialize.ts",
+      "bun": "./src/kiwi/serialize.ts",
+      "default": "./src/kiwi/serialize.ts"
+    },
+    "./io/formats/pen/convert": {
+      "types": "./src/io/formats/pen/convert.ts",
+      "bun": "./src/io/formats/pen/convert.ts",
+      "default": "./src/io/formats/pen/convert.ts"
+    },
+    "./io/formats/svg/parse-path": {
+      "types": "./src/io/formats/svg/parse-path.ts",
+      "bun": "./src/io/formats/svg/parse-path.ts",
+      "default": "./src/io/formats/svg/parse-path.ts"
     }
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "files": ["src", "dist", "assets"],
+  "files": [
+    "src",
+    "dist",
+    "assets"
+  ],
   "scripts": {
     "build": "bunx tsgo && bunx fix-esm-import-path dist",
     "prepublishOnly": "bun run build"
@@ -211,6 +285,76 @@
         "types": "./dist/io/formats/svg/index.d.ts",
         "import": "./dist/io/formats/svg/index.js",
         "default": "./dist/io/formats/svg/index.js"
+      },
+      "./constants": {
+        "types": "./dist/constants.d.ts",
+        "import": "./dist/constants.js",
+        "default": "./dist/constants.js"
+      },
+      "./types": {
+        "types": "./dist/types.d.ts",
+        "import": "./dist/types.js",
+        "default": "./dist/types.js"
+      },
+      "./copy": {
+        "types": "./dist/copy.d.ts",
+        "import": "./dist/copy.js",
+        "default": "./dist/copy.js"
+      },
+      "./color-management": {
+        "types": "./dist/color-management.d.ts",
+        "import": "./dist/color-management.js",
+        "default": "./dist/color-management.js"
+      },
+      "./fig-compress": {
+        "types": "./dist/fig-compress.d.ts",
+        "import": "./dist/fig-compress.js",
+        "default": "./dist/fig-compress.js"
+      },
+      "./scene-graph-instances": {
+        "types": "./dist/scene-graph-instances.d.ts",
+        "import": "./dist/scene-graph-instances.js",
+        "default": "./dist/scene-graph-instances.js"
+      },
+      "./render/tailwind": {
+        "types": "./dist/render/tailwind.d.ts",
+        "import": "./dist/render/tailwind.js",
+        "default": "./dist/render/tailwind.js"
+      },
+      "./kiwi/codec": {
+        "types": "./dist/kiwi/codec.d.ts",
+        "import": "./dist/kiwi/codec.js",
+        "default": "./dist/kiwi/codec.js"
+      },
+      "./kiwi/convert": {
+        "types": "./dist/kiwi/convert.d.ts",
+        "import": "./dist/kiwi/convert.js",
+        "default": "./dist/kiwi/convert.js"
+      },
+      "./kiwi/fig-import": {
+        "types": "./dist/kiwi/fig-import.d.ts",
+        "import": "./dist/kiwi/fig-import.js",
+        "default": "./dist/kiwi/fig-import.js"
+      },
+      "./kiwi/fig-parse-core": {
+        "types": "./dist/kiwi/fig-parse-core.d.ts",
+        "import": "./dist/kiwi/fig-parse-core.js",
+        "default": "./dist/kiwi/fig-parse-core.js"
+      },
+      "./kiwi/serialize": {
+        "types": "./dist/kiwi/serialize.d.ts",
+        "import": "./dist/kiwi/serialize.js",
+        "default": "./dist/kiwi/serialize.js"
+      },
+      "./io/formats/pen/convert": {
+        "types": "./dist/io/formats/pen/convert.d.ts",
+        "import": "./dist/io/formats/pen/convert.js",
+        "default": "./dist/io/formats/pen/convert.js"
+      },
+      "./io/formats/svg/parse-path": {
+        "types": "./dist/io/formats/svg/parse-path.d.ts",
+        "import": "./dist/io/formats/svg/parse-path.js",
+        "default": "./dist/io/formats/svg/parse-path.js"
       }
     },
     "main": "./dist/index.js",
