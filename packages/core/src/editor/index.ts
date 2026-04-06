@@ -1,4 +1,5 @@
 export { createDefaultEditorState, createEditor } from './create'
 export type { Editor } from './create'
+export { createTextActions } from './text'
 export { EDITOR_TOOLS, TOOL_SHORTCUTS } from './types'
 export type { EditorContext, EditorOptions, EditorState, EditorToolDef, Tool } from './types'
