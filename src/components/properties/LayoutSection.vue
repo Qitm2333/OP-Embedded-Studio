@@ -1,12 +1,34 @@
 <script setup lang="ts">
+import {
+  SelectContent,
+  SelectItem,
+  SelectItemIndicator,
+  SelectItemText,
+  SelectPortal,
+  SelectRoot,
+  SelectTrigger,
+  SelectViewport
+} from 'reka-ui'
+
 import { LayoutControlsRoot, useI18n } from '@open-pencil/vue'
 
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import Tip from '@/components/ui/Tip.vue'
+import { selectContent, selectItem } from '@/components/ui/select'
 import { sectionWrapper } from '@/components/ui/section'
 
+import type { LayoutSizing } from '@open-pencil/core'
+
 const { panels } = useI18n()
+
+const CONTAINER_TYPES = ['FRAME', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE']
+
+function sizingShortLabel(sizing: LayoutSizing): string | null {
+  if (sizing === 'HUG') return panels.value.sizingHug
+  if (sizing === 'FILL') return panels.value.sizingFill
+  return null
+}
 </script>
 
 <template>
@@ -15,40 +37,92 @@ const { panels } = useI18n()
       <div data-test-id="layout-section" :class="sectionWrapper()">
         <label class="mb-1.5 block text-[11px] text-muted">{{ panels.layout }}</label>
         <div class="flex gap-1.5">
-          <div class="flex min-w-0 flex-1 items-center gap-1">
-            <ScrubInput
-              icon="W"
-              :model-value="Math.round(ctx.node.width)"
-              :min="0"
-              @update:model-value="ctx.updateProp('width', $event)"
-              @commit="(v: number, p: number) => ctx.commitProp('width', v, p)"
-            />
-            <AppSelect
-              v-if="ctx.isFlex || ctx.isInAutoLayout"
-              :model-value="ctx.widthSizing"
-              :options="ctx.widthSizingOptions"
-              @update:model-value="ctx.setWidthSizing"
-            />
-          </div>
-          <div class="flex min-w-0 flex-1 items-center gap-1">
-            <ScrubInput
-              icon="H"
-              :model-value="Math.round(ctx.node.height)"
-              :min="0"
-              @update:model-value="ctx.updateProp('height', $event)"
-              @commit="(v: number, p: number) => ctx.commitProp('height', v, p)"
-            />
-            <AppSelect
-              v-if="ctx.isFlex || ctx.isInAutoLayout"
-              :model-value="ctx.heightSizing"
-              :options="ctx.heightSizingOptions"
-              @update:model-value="ctx.setHeightSizing"
-            />
-          </div>
+          <ScrubInput
+            icon="W"
+            :model-value="Math.round(ctx.node.width)"
+            :min="0"
+            @update:model-value="ctx.updateProp('width', $event)"
+            @commit="(v: number, p: number) => ctx.commitProp('width', v, p)"
+          >
+            <template v-if="ctx.isFlex || ctx.isInAutoLayout" #suffix>
+              <SelectRoot
+                :model-value="ctx.widthSizing"
+                @update:model-value="ctx.setWidthSizing($event as LayoutSizing)"
+              >
+                <SelectTrigger
+                  class="flex shrink-0 cursor-pointer items-center self-stretch border-none bg-transparent px-1 text-[11px] text-muted outline-none"
+                  @pointerdown.stop
+                >
+                  <span class="group-hover:hidden">{{ sizingShortLabel(ctx.widthSizing) }}</span>
+                  <icon-lucide-chevron-down class="hidden size-3 group-hover:block" />
+                </SelectTrigger>
+                <SelectPortal>
+                  <SelectContent position="popper" align="start" :side-offset="2" :class="selectContent()">
+                    <SelectViewport class="p-0.5">
+                      <SelectItem
+                        v-for="opt in ctx.widthSizingOptions"
+                        :key="opt.value"
+                        :value="opt.value"
+                        :class="selectItem({ class: 'rounded py-1.5 pr-2 pl-6 text-xs' })"
+                      >
+                        <SelectItemIndicator
+                          class="absolute left-1.5 inline-flex items-center justify-center"
+                        >
+                          <icon-lucide-check class="size-3 text-accent" />
+                        </SelectItemIndicator>
+                        <SelectItemText>{{ opt.label }}</SelectItemText>
+                      </SelectItem>
+                    </SelectViewport>
+                  </SelectContent>
+                </SelectPortal>
+              </SelectRoot>
+            </template>
+          </ScrubInput>
+          <ScrubInput
+            icon="H"
+            :model-value="Math.round(ctx.node.height)"
+            :min="0"
+            @update:model-value="ctx.updateProp('height', $event)"
+            @commit="(v: number, p: number) => ctx.commitProp('height', v, p)"
+          >
+            <template v-if="ctx.isFlex || ctx.isInAutoLayout" #suffix>
+              <SelectRoot
+                :model-value="ctx.heightSizing"
+                @update:model-value="ctx.setHeightSizing($event as LayoutSizing)"
+              >
+                <SelectTrigger
+                  class="flex shrink-0 cursor-pointer items-center self-stretch border-none bg-transparent px-1 text-[11px] text-muted outline-none"
+                  @pointerdown.stop
+                >
+                  <span class="group-hover:hidden">{{ sizingShortLabel(ctx.heightSizing) }}</span>
+                  <icon-lucide-chevron-down class="hidden size-3 group-hover:block" />
+                </SelectTrigger>
+                <SelectPortal>
+                  <SelectContent position="popper" align="start" :side-offset="2" :class="selectContent()">
+                    <SelectViewport class="p-0.5">
+                      <SelectItem
+                        v-for="opt in ctx.heightSizingOptions"
+                        :key="opt.value"
+                        :value="opt.value"
+                        :class="selectItem({ class: 'rounded py-1.5 pr-2 pl-6 text-xs' })"
+                      >
+                        <SelectItemIndicator
+                          class="absolute left-1.5 inline-flex items-center justify-center"
+                        >
+                          <icon-lucide-check class="size-3 text-accent" />
+                        </SelectItemIndicator>
+                        <SelectItemText>{{ opt.label }}</SelectItemText>
+                      </SelectItem>
+                    </SelectViewport>
+                  </SelectContent>
+                </SelectPortal>
+              </SelectRoot>
+            </template>
+          </ScrubInput>
         </div>
       </div>
 
-      <template v-if="['FRAME', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE'].includes(ctx.node.type)">
+      <template v-if="CONTAINER_TYPES.includes(ctx.node.type)">
         <div :class="sectionWrapper()">
           <div class="flex items-center justify-between">
             <label class="mb-1.5 block text-[11px] text-muted">{{ panels.autoLayout }}</label>

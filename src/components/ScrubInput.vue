@@ -33,7 +33,7 @@ const emit = defineEmits<{
   >
     <div
       data-test-id="scrub-input"
-      class="flex h-[26px] min-w-0 flex-1 items-center rounded border border-border bg-input focus-within:border-accent"
+      class="group flex h-[26px] min-w-0 flex-1 items-center rounded border border-border bg-input focus-within:border-accent"
       :style="{ cursor: editing ? 'auto' : 'ew-resize' }"
       @pointerdown="!editing && startScrub($event)"
     >
@@ -53,14 +53,16 @@ const emit = defineEmits<{
         :step="step"
       />
       <ScrubInputDisplay
-        class="flex flex-1 items-center truncate overflow-hidden pr-1.5 text-xs select-none"
+        class="flex flex-1 items-center truncate overflow-hidden text-xs select-none"
+        :class="$slots.suffix ? 'pr-0' : 'pr-1.5'"
       >
         <template #default="{ value, isMixed: mixed }">
           <span v-if="mixed" class="flex-1 text-muted">{{ ph }}</span>
           <template v-else>
             <span class="flex-1 text-surface">{{ value }}</span>
-            <span v-if="suffix" class="shrink-0 text-muted">{{ suffix }}</span>
+            <span v-if="suffix" class="shrink-0 pr-1.5 text-muted">{{ suffix }}</span>
           </template>
+          <slot name="suffix" />
         </template>
       </ScrubInputDisplay>
     </div>
