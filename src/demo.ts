@@ -442,7 +442,7 @@ export function createDemoShapes(store: EditorStore) {
 
   // ─── Standalone shapes (bottom) ───────────────────────────────
   // Gradient showcase
-  const grad1 = store.createShape('RECTANGLE', 60, 660, 180, 120)
+  const grad1 = store.createShape('FRAME', 60, 660, 180, 120)
   graph.updateNode(grad1, {
     name: 'Gradient Card',
     cornerRadius: 16,
@@ -463,7 +463,7 @@ export function createDemoShapes(store: EditorStore) {
     fills: [solid(WHITE)]
   })
 
-  const grad2 = store.createShape('RECTANGLE', 260, 660, 180, 120)
+  const grad2 = store.createShape('FRAME', 260, 660, 180, 120)
   graph.updateNode(grad2, {
     name: 'Ocean',
     cornerRadius: 16,
@@ -483,7 +483,7 @@ export function createDemoShapes(store: EditorStore) {
     fills: [solid(WHITE)]
   })
 
-  const grad3 = store.createShape('RECTANGLE', 460, 660, 180, 120)
+  const grad3 = store.createShape('FRAME', 460, 660, 180, 120)
   graph.updateNode(grad3, {
     name: 'Sunset',
     cornerRadius: 16,
