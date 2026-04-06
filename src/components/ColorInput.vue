@@ -6,7 +6,11 @@ import ColorPicker from './ColorPicker.vue'
 import type { Color } from '@open-pencil/core'
 import type { OkHCLControls } from '@open-pencil/vue/ColorPicker/types'
 
-const { editable = false, color, okhcl = null } = defineProps<{
+const {
+  editable = false,
+  color,
+  okhcl = null
+} = defineProps<{
   color: Color
   editable?: boolean
   okhcl?: OkHCLControls | null
@@ -15,8 +19,15 @@ const emit = defineEmits<{ update: [color: Color] }>()
 </script>
 
 <template>
-  <ColorInputRoot :color="color" :editable="editable" :okhcl="okhcl" @update="emit('update', $event)">
-    <template #default="{ editable: isEditable, hex, updateFromHex, updateColor, okhcl: okhclControls }">
+  <ColorInputRoot
+    :color="color"
+    :editable="editable"
+    :okhcl="okhcl"
+    @update="emit('update', $event)"
+  >
+    <template
+      #default="{ editable: isEditable, hex, updateFromHex, updateColor, okhcl: okhclControls }"
+    >
       <div class="flex items-center gap-1.5">
         <ColorPicker :color="color" :okhcl="okhclControls" @update="updateColor($event)" />
         <input

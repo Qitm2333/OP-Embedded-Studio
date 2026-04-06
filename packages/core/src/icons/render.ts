@@ -1,8 +1,8 @@
 import { parseColor } from '../color'
 
-import type { IconData } from './'
 import type { SceneGraph, SceneNode, Stroke } from '../scene-graph'
 import type { Color } from '../types'
+import type { IconData } from './'
 
 const STROKE_CAP_MAP: Record<string, SceneNode['strokeCap']> = {
   butt: 'NONE',

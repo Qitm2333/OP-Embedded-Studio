@@ -1,13 +1,7 @@
 import { IS_BROWSER } from '../constants'
-import { copyFills, copyStrokes, copyEffects } from '../scene-graph/copy'
-import {
-  FigmaNodeProxy,
-  INTERNAL_ID,
-  MIXED,
-  type FigmaFontName,
-  type NodeProxyHost
-} from './proxy'
 import { computeBounds } from '../geometry'
+import { copyFills, copyStrokes, copyEffects } from '../scene-graph/copy'
+import { FigmaNodeProxy, INTERNAL_ID, MIXED, type FigmaFontName, type NodeProxyHost } from './proxy'
 
 import type { RasterExportFormat } from '../io/formats/raster'
 import type {

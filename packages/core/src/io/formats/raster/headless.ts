@@ -1,5 +1,4 @@
 import { SkiaRenderer } from '../../../canvas'
-
 import { renderNodesToImage, renderThumbnail, type ExportFormat } from './render'
 
 import type { SceneGraph } from '../../../scene-graph'

@@ -1,7 +1,7 @@
 import { parseColor, colorToFill } from '../color'
 import { TRANSPARENT } from '../constants'
-import { createIconFromPaths } from '../icons/render'
 import { fetchIcons } from '../icons'
+import { createIconFromPaths } from '../icons/render'
 import { computeAllLayouts } from '../layout'
 import { isTreeNode } from './tree'
 
@@ -405,7 +405,8 @@ function applyLayoutOverrides(
     applyAutoLayoutSizing(o, props, w, h)
   }
 
-  o.layoutDirection = parseDirection(props.flow ?? (!isText ? props.dir : undefined)) ?? o.layoutDirection
+  o.layoutDirection =
+    parseDirection(props.flow ?? (!isText ? props.dir : undefined)) ?? o.layoutDirection
 
   if (props.gap !== undefined) o.itemSpacing = props.gap as number
 

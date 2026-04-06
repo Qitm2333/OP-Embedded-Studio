@@ -22,18 +22,22 @@ export function useOkHCL() {
   }
 
   function getFillOkHCLColor(node: SceneNode | null, index: number): OkHCLColor | null {
-    return node ? getFillOkHCL(node, index)?.color ?? null : null
+    return node ? (getFillOkHCL(node, index)?.color ?? null) : null
   }
 
   function getStrokeOkHCLColor(node: SceneNode | null, index: number): OkHCLColor | null {
-    return node ? getStrokeOkHCL(node, index)?.color ?? null : null
+    return node ? (getStrokeOkHCL(node, index)?.color ?? null) : null
   }
 
   function ensureFillOkHCL(node: SceneNode, index: number) {
     const color =
       getFillOkHCLColor(node, index) ??
       rgbaToOkHCL(node.fills[index]?.color ?? { r: 0, g: 0, b: 0, a: 1 })
-    editor.updateNodeWithUndo(node.id, setNodeFillOkHCL(node, index, color), 'Update fill color model')
+    editor.updateNodeWithUndo(
+      node.id,
+      setNodeFillOkHCL(node, index, color),
+      'Update fill color model'
+    )
   }
 
   function ensureStrokeOkHCL(node: SceneNode, index: number) {

@@ -142,10 +142,7 @@ watch(open, (v) => {
           :class="itemCls"
           @select="store.zoomToLevel(preset.level)"
         >
-          <icon-lucide-check
-            v-if="isActivePreset(preset.level)"
-            class="absolute left-2 size-3.5"
-          />
+          <icon-lucide-check v-if="isActivePreset(preset.level)" class="absolute left-2 size-3.5" />
           <span class="flex-1">{{ preset.label }}</span>
           <span v-if="preset.shortcut" class="text-[11px] text-muted">{{ preset.shortcut }}</span>
         </DropdownMenuItem>

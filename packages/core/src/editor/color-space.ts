@@ -1,6 +1,6 @@
-import { copyEffects, copyFill, copyStyleRuns, copyStroke } from '../scene-graph/copy'
 import { resolveOkHCLForPreview } from '../color/management'
 import { rgbaToOkHCL } from '../color/okhcl'
+import { copyEffects, copyFill, copyStyleRuns, copyStroke } from '../scene-graph/copy'
 
 import type { DocumentColorSpace, SceneNode } from '../scene-graph'
 import type { EditorContext } from './types'

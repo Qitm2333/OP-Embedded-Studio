@@ -48,12 +48,13 @@ const okhclSliderPreview = computed(() =>
 const okhclSliderGradient = computed(() =>
   okhcl?.okhcl ? createOkHCLSliderGradientModel(okhcl.okhcl) : null
 )
-const fieldOptions = computed(() =>
-  okhcl?.fieldOptions ?? [
-    { value: 'rgb', label: panels.value.colorFormatRgb },
-    { value: 'hsl', label: panels.value.colorFormatHsl },
-    { value: 'hsb', label: panels.value.colorFormatHsb }
-  ]
+const fieldOptions = computed(
+  () =>
+    okhcl?.fieldOptions ?? [
+      { value: 'rgb', label: panels.value.colorFormatRgb },
+      { value: 'hsl', label: panels.value.colorFormatHsl },
+      { value: 'hsb', label: panels.value.colorFormatHsb }
+    ]
 )
 const fieldFormat = computed(() => okhcl?.fieldFormat ?? 'rgb')
 const isOkHCLFormat = computed(() => fieldFormat.value === 'okhcl' && okhcl)
@@ -150,17 +151,64 @@ function updateOkHCLChannel(channel: 'h' | 'c' | 'l' | 'a', value: number) {
       />
 
       <div class="min-w-0 flex flex-col gap-2">
-        <div v-if="fieldFormat === 'rgb'" class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-px overflow-hidden rounded border border-border bg-border">
-          <input type="number" class="bg-input px-2 py-1 text-xs text-surface outline-none" :value="Math.round(rgbColor.r)" min="0" max="255" @change="updateRGBChannelValue('r', +($event.target as HTMLInputElement).value)" />
-          <input type="number" class="bg-input px-2 py-1 text-xs text-surface outline-none" :value="Math.round(rgbColor.g)" min="0" max="255" @change="updateRGBChannelValue('g', +($event.target as HTMLInputElement).value)" />
-          <input type="number" class="bg-input px-2 py-1 text-xs text-surface outline-none" :value="Math.round(rgbColor.b)" min="0" max="255" @change="updateRGBChannelValue('b', +($event.target as HTMLInputElement).value)" />
+        <div
+          v-if="fieldFormat === 'rgb'"
+          class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-px overflow-hidden rounded border border-border bg-border"
+        >
+          <input
+            type="number"
+            class="bg-input px-2 py-1 text-xs text-surface outline-none"
+            :value="Math.round(rgbColor.r)"
+            min="0"
+            max="255"
+            @change="updateRGBChannelValue('r', +($event.target as HTMLInputElement).value)"
+          />
+          <input
+            type="number"
+            class="bg-input px-2 py-1 text-xs text-surface outline-none"
+            :value="Math.round(rgbColor.g)"
+            min="0"
+            max="255"
+            @change="updateRGBChannelValue('g', +($event.target as HTMLInputElement).value)"
+          />
+          <input
+            type="number"
+            class="bg-input px-2 py-1 text-xs text-surface outline-none"
+            :value="Math.round(rgbColor.b)"
+            min="0"
+            max="255"
+            @change="updateRGBChannelValue('b', +($event.target as HTMLInputElement).value)"
+          />
         </div>
 
         <template v-else-if="fieldFormat === 'hsl'">
-          <div class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-px overflow-hidden rounded border border-border bg-border">
-            <input type="number" class="bg-input px-2 py-1 text-xs text-surface outline-none" :value="Math.round(hslColor.h ?? 0)" min="0" max="360" @change="updateHSLChannelValue('h', +($event.target as HTMLInputElement).value)" />
-            <input type="number" class="bg-input px-2 py-1 text-xs text-surface outline-none" :value="Math.round(hslColor.s ?? 0)" min="0" max="100" @change="updateHSLChannelValue('s', +($event.target as HTMLInputElement).value)" />
-            <input type="number" class="bg-input px-2 py-1 text-xs text-surface outline-none" :value="Math.round(hslColor.l ?? 0)" min="0" max="100" @change="updateHSLChannelValue('l', +($event.target as HTMLInputElement).value)" />
+          <div
+            class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-px overflow-hidden rounded border border-border bg-border"
+          >
+            <input
+              type="number"
+              class="bg-input px-2 py-1 text-xs text-surface outline-none"
+              :value="Math.round(hslColor.h ?? 0)"
+              min="0"
+              max="360"
+              @change="updateHSLChannelValue('h', +($event.target as HTMLInputElement).value)"
+            />
+            <input
+              type="number"
+              class="bg-input px-2 py-1 text-xs text-surface outline-none"
+              :value="Math.round(hslColor.s ?? 0)"
+              min="0"
+              max="100"
+              @change="updateHSLChannelValue('s', +($event.target as HTMLInputElement).value)"
+            />
+            <input
+              type="number"
+              class="bg-input px-2 py-1 text-xs text-surface outline-none"
+              :value="Math.round(hslColor.l ?? 0)"
+              min="0"
+              max="100"
+              @change="updateHSLChannelValue('l', +($event.target as HTMLInputElement).value)"
+            />
           </div>
 
           <PickerSlider
@@ -199,10 +247,33 @@ function updateOkHCLChannel(channel: 'h' | 'c' | 'l' | 'a', value: number) {
         </template>
 
         <template v-else-if="fieldFormat === 'hsb'">
-          <div class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-px overflow-hidden rounded border border-border bg-border">
-            <input type="number" class="bg-input px-2 py-1 text-xs text-surface outline-none" :value="Math.round(hsbColor.h)" min="0" max="360" @change="updateHSBChannelValue('h', +($event.target as HTMLInputElement).value)" />
-            <input type="number" class="bg-input px-2 py-1 text-xs text-surface outline-none" :value="Math.round(hsbColor.s)" min="0" max="100" @change="updateHSBChannelValue('s', +($event.target as HTMLInputElement).value)" />
-            <input type="number" class="bg-input px-2 py-1 text-xs text-surface outline-none" :value="Math.round(hsbColor.b)" min="0" max="100" @change="updateHSBChannelValue('b', +($event.target as HTMLInputElement).value)" />
+          <div
+            class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-px overflow-hidden rounded border border-border bg-border"
+          >
+            <input
+              type="number"
+              class="bg-input px-2 py-1 text-xs text-surface outline-none"
+              :value="Math.round(hsbColor.h)"
+              min="0"
+              max="360"
+              @change="updateHSBChannelValue('h', +($event.target as HTMLInputElement).value)"
+            />
+            <input
+              type="number"
+              class="bg-input px-2 py-1 text-xs text-surface outline-none"
+              :value="Math.round(hsbColor.s)"
+              min="0"
+              max="100"
+              @change="updateHSBChannelValue('s', +($event.target as HTMLInputElement).value)"
+            />
+            <input
+              type="number"
+              class="bg-input px-2 py-1 text-xs text-surface outline-none"
+              :value="Math.round(hsbColor.b)"
+              min="0"
+              max="100"
+              @change="updateHSBChannelValue('b', +($event.target as HTMLInputElement).value)"
+            />
           </div>
 
           <PickerSlider

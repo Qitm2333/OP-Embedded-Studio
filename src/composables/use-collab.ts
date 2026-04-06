@@ -44,9 +44,7 @@ export const DEFAULT_COLLAB_STATE: CollabState = {
 
 export function useCollab(storeOrGetter: EditorStore | (() => EditorStore)) {
   const getStore = () =>
-    typeof storeOrGetter === 'function'
-      ? (storeOrGetter as () => EditorStore)()
-      : storeOrGetter
+    typeof storeOrGetter === 'function' ? (storeOrGetter as () => EditorStore)() : storeOrGetter
   const storedName = useLocalStorage('op-collab-name', '')
   const state = ref<CollabState>({
     connected: false,

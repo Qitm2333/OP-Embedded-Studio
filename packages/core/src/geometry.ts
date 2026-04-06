@@ -102,7 +102,11 @@ function effectOverflow(effects?: Effect[]) {
 
   for (const effect of effects ?? []) {
     if (!effect.visible) continue
-    if (effect.type !== 'DROP_SHADOW' && effect.type !== 'LAYER_BLUR' && effect.type !== 'FOREGROUND_BLUR') {
+    if (
+      effect.type !== 'DROP_SHADOW' &&
+      effect.type !== 'LAYER_BLUR' &&
+      effect.type !== 'FOREGROUND_BLUR'
+    ) {
       continue
     }
     const blurSpread = effect.radius + effect.spread

@@ -1,6 +1,6 @@
 import { parseColor } from '../color'
-import { createIconFromPaths } from '../icons/render'
 import { fetchIcons, searchIconsBatch } from '../icons'
+import { createIconFromPaths } from '../icons/render'
 import { defineTool, nodeSummary } from './schema'
 
 import type { FigmaNodeProxy } from '../figma-api'

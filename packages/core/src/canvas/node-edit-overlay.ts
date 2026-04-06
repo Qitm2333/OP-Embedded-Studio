@@ -1,6 +1,6 @@
-import { computeAccurateBounds } from '../vector/bezier'
 import { PEN_HANDLE_RADIUS, PEN_VERTEX_RADIUS } from '../constants'
 import { vectorNetworkToPath } from '../vector'
+import { computeAccurateBounds } from '../vector/bezier'
 
 import type { VectorVertex, VectorSegment, VectorRegion, SceneGraph } from '../scene-graph'
 import type { Vector } from '../types'

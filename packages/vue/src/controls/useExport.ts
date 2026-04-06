@@ -51,7 +51,9 @@ export function useExport() {
     hasSelection.value ? 'selection' : 'page'
   )
   const activeName = computed(() =>
-    activeTarget.value === 'selection' ? (selectedNodeName.value ?? 'Export') : currentPageName.value
+    activeTarget.value === 'selection'
+      ? (selectedNodeName.value ?? 'Export')
+      : currentPageName.value
   )
   const activeSettings = computed(() =>
     activeTarget.value === 'selection' ? selectionSettings.value : pageSettings.value

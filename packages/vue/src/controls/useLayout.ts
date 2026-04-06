@@ -1,10 +1,16 @@
 import { computed, ref } from 'vue'
 
 import { useEditor } from '@open-pencil/vue/context/editorContext'
-import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
 import { useI18n } from '@open-pencil/vue/i18n'
+import { useSceneComputed } from '@open-pencil/vue/internal/useSceneComputed'
 
-import type { SceneNode, LayoutSizing, LayoutAlign, LayoutCounterAlign, GridTrack } from '@open-pencil/core'
+import type {
+  SceneNode,
+  LayoutSizing,
+  LayoutAlign,
+  LayoutCounterAlign,
+  GridTrack
+} from '@open-pencil/core'
 
 type AlignCell = { primary: LayoutAlign; counter: LayoutCounterAlign }
 
@@ -51,7 +57,9 @@ export function useLayout() {
   const { panels } = useI18n()
 
   const node = useSceneComputed<SceneNode | null>(() => editor.getSelectedNode() ?? null)
-  const layoutDirection = computed<SceneNode['layoutDirection']>(() => node.value?.layoutDirection ?? 'AUTO')
+  const layoutDirection = computed<SceneNode['layoutDirection']>(
+    () => node.value?.layoutDirection ?? 'AUTO'
+  )
 
   const isInAutoLayout = computed(() => {
     const n = node.value
@@ -87,7 +95,8 @@ export function useLayout() {
       { value: 'FIXED', label: panels.value.sizingFixed }
     ]
     if (isFlex.value) options.push({ value: 'HUG', label: panels.value.sizingHug })
-    if (isInAutoLayout.value || isFlex.value) options.push({ value: 'FILL', label: panels.value.sizingFill })
+    if (isInAutoLayout.value || isFlex.value)
+      options.push({ value: 'FILL', label: panels.value.sizingFill })
     return options
   })
 
@@ -96,7 +105,8 @@ export function useLayout() {
       { value: 'FIXED', label: panels.value.sizingFixed }
     ]
     if (isFlex.value) options.push({ value: 'HUG', label: panels.value.sizingHug })
-    if (isInAutoLayout.value || isFlex.value) options.push({ value: 'FILL', label: panels.value.sizingFill })
+    if (isInAutoLayout.value || isFlex.value)
+      options.push({ value: 'FILL', label: panels.value.sizingFill })
     return options
   })
 
@@ -184,7 +194,11 @@ export function useLayout() {
 
   function setLayoutDirection(direction: SceneNode['layoutDirection']) {
     if (!node.value) return
-    editor.updateNodeWithUndo(node.value.id, { layoutDirection: direction }, 'Change layout direction')
+    editor.updateNodeWithUndo(
+      node.value.id,
+      { layoutDirection: direction },
+      'Change layout direction'
+    )
   }
 
   function updateGridTrack(

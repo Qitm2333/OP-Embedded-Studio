@@ -1,7 +1,6 @@
 /* eslint-disable max-lines -- JSX export formats share helpers and node walking logic */
 import { colorToHex8, colorToCSSCompact } from '../../../color'
 import { DEFAULT_FONT_FAMILY } from '../../../constants'
-import { resolveNodeTextDirection } from '../../../text/direction'
 import {
   pxToSpacing,
   colorToTwClass,
@@ -10,6 +9,7 @@ import {
   borderRadiusToTw,
   opacityToTw
 } from '../../../design-jsx/tailwind'
+import { resolveNodeTextDirection } from '../../../text/direction'
 
 import type {
   SceneGraph,

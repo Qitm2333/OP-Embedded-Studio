@@ -1,8 +1,8 @@
 import { computeVisualBounds } from '../../../geometry'
 import { extractExportGraph } from '../../subgraph'
 
-import type { RenderColorSpace } from '../../../color/management'
 import type { SkiaRenderer } from '../../../canvas'
+import type { RenderColorSpace } from '../../../color/management'
 import type { SceneGraph } from '../../../scene-graph'
 import type { CanvasKit, Canvas } from 'canvaskit-wasm'
 

@@ -1,9 +1,4 @@
-import type {
-  SceneNode,
-  VectorNetwork,
-  VectorSegment,
-  VectorVertex
-} from '../../../scene-graph'
+import type { SceneNode, VectorNetwork, VectorSegment, VectorVertex } from '../../../scene-graph'
 
 const CMD_CLOSE = 0
 const CMD_MOVE_TO = 1

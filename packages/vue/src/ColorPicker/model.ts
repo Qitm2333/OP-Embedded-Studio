@@ -91,7 +91,11 @@ export function updateRGBChannel(color: Color, channel: 'r' | 'g' | 'b', value25
   }
 }
 
-export function updateHSLChannel(model: ColorPickerModel, channel: 'h' | 's' | 'l', value: number): Color {
+export function updateHSLChannel(
+  model: ColorPickerModel,
+  channel: 'h' | 's' | 'l',
+  value: number
+): Color {
   const next = {
     ...model.hsl,
     [channel]: channel === 'h' ? value : clampPercent(value)
@@ -106,7 +110,11 @@ export function updateHSLChannel(model: ColorPickerModel, channel: 'h' | 's' | '
   return rekaToAppColor(next)
 }
 
-export function updateHSBChannel(model: ColorPickerModel, channel: 'h' | 's' | 'b', value: number): Color {
+export function updateHSBChannel(
+  model: ColorPickerModel,
+  channel: 'h' | 's' | 'b',
+  value: number
+): Color {
   return rekaToAppColor({
     ...model.hsb,
     [channel]: channel === 'h' ? value : clampPercent(value)
@@ -132,10 +140,7 @@ export function createOkHCLSliderPreviewModel(color: OkHCLColor): OkHCLSliderPre
     okhclHue: okhclToRGBA({
       ...color,
       c: Math.max(color.c, OKHCL_HUE_PREVIEW_MIN_CHROMA),
-      l:
-        color.l <= 0 || color.l >= 1
-          ? OKHCL_HUE_PREVIEW_FALLBACK_LIGHTNESS
-          : color.l
+      l: color.l <= 0 || color.l >= 1 ? OKHCL_HUE_PREVIEW_FALLBACK_LIGHTNESS : color.l
     }),
     okhclChroma: okhclToRGBA(color),
     okhclLightness: okhclToRGBA(color)

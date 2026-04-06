@@ -44,4 +44,12 @@ function setupGlobalErrorHandler() {
   })
 }
 
-export const toast = { info, warning, error, remove, toasts, setupGlobalErrorHandler, TOAST_DURATION }
+export const toast = {
+  info,
+  warning,
+  error,
+  remove,
+  toasts,
+  setupGlobalErrorHandler,
+  TOAST_DURATION
+}

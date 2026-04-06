@@ -1,6 +1,6 @@
 import { CANVAS_BG_COLOR } from '../constants'
-import { collectFontKeys } from '../text/fonts'
 import { computeAllLayouts } from '../layout'
+import { collectFontKeys } from '../text/fonts'
 
 import type { Color } from '../types'
 import type { EditorContext } from './types'

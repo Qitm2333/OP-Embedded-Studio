@@ -34,7 +34,9 @@ const {
   checkerboard?: boolean
   thumbFill?: string
   testId?: string
-  ui?: Partial<Record<'root' | 'label' | 'track' | 'gradient' | 'range' | 'thumb' | 'input', string>>
+  ui?: Partial<
+    Record<'root' | 'label' | 'track' | 'gradient' | 'range' | 'thumb' | 'input', string>
+  >
 }>()
 
 const emit = defineEmits<{
@@ -74,10 +76,7 @@ function thumbLeft(): string {
         :value="modelValue"
         @input="emit('update:modelValue', +($event.target as HTMLInputElement).value)"
       />
-      <div
-        :class="cls.thumb"
-        :style="{ left: thumbLeft(), background: thumbFill }"
-      />
+      <div :class="cls.thumb" :style="{ left: thumbLeft(), background: thumbFill }" />
     </div>
     <input
       type="number"

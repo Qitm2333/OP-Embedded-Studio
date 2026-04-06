@@ -1,10 +1,10 @@
 import { buildFigmaClipboardHTML, importClipboardNodes, parseFigmaClipboard } from '../clipboard'
+import { selectionToJSX } from '../design-jsx'
 import { computeImageHash } from '../figma-api'
-import { collectFontKeys } from '../text/fonts'
 import { computeBounds } from '../geometry'
 import { renderNodesToSVG } from '../io/formats/svg'
 import { computeAllLayouts } from '../layout'
-import { selectionToJSX } from '../design-jsx'
+import { collectFontKeys } from '../text/fonts'
 
 import type { Fill, SceneGraph, SceneNode } from '../scene-graph'
 import type { Vector } from '../types'
