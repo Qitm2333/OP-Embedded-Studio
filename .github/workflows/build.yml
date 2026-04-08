@@ -216,6 +216,13 @@ jobs:
             }
             delete json.scripts
             delete json.devDependencies
+            if (json.publishConfig) {
+              for (const [key, value] of Object.entries(json.publishConfig)) {
+                if (key === 'access' || key === 'provenance' || key === 'registry') continue
+                json[key] = value
+              }
+              delete json.publishConfig
+            }
             fs.writeFileSync(path.join(destDir, 'package.json'), JSON.stringify(json, null, 2) + '\n')
             console.log(`Prepared ${destDir}`)
           }

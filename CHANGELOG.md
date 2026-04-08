@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.11.5 — 2026-04-08
+
+### Fixes
+
+- Fix published npm packages resolving to TypeScript source instead of compiled JavaScript — `publishConfig.exports` overrides are now applied during CI publish
+- Fix Windows CI build failures caused by backslash file paths in custom lint rules
+
 ## 0.11.4 — 2026-04-08
 
 ### Fixes
