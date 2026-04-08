@@ -1,8 +1,8 @@
 import { normalizeFontFamily, weightToStyle } from './fonts'
 import { getGlyphOutlineCommandsSync } from './opentype'
 
-import type { SceneNode } from '../scene-graph'
 import type { NodeChange } from '../kiwi/codec'
+import type { SceneNode } from '../scene-graph'
 
 export interface ShapedClipboardText {
   lineHeight: number
@@ -27,7 +27,8 @@ export async function buildDerivedTextDataV4(
   const normalizedFamily = normalizeFontFamily(node.fontFamily)
   const key = `${normalizedFamily}|${style}`
   const lineHeightFallback = node.lineHeight ?? Math.ceil(node.fontSize * 1.2)
-  const glyphCommandLists = getGlyphOutlineCommandsSync(node.fontFamily, style, node.text, node.fontSize) ?? []
+  const glyphCommandLists =
+    getGlyphOutlineCommandsSync(node.fontFamily, style, node.text, node.fontSize) ?? []
 
   const glyphs = glyphCommandLists.map((commands, index) => {
     const shapedGlyph = shaped?.glyphs[index]
@@ -35,7 +36,7 @@ export async function buildDerivedTextDataV4(
       commands,
       position: {
         x: shapedGlyph?.x ?? 0,
-        y: shapedGlyph?.y ?? (shaped?.baseline ?? lineHeightFallback)
+        y: shapedGlyph?.y ?? shaped?.baseline ?? lineHeightFallback
       },
       fontSize: node.fontSize,
       firstCharacter: shapedGlyph?.firstCharacter ?? index,
@@ -53,7 +54,7 @@ export async function buildDerivedTextDataV4(
         position: { x: 0, y: shaped?.baseline ?? lineHeightFallback },
         width: shaped?.lineWidth ?? node.width,
         lineHeight: shaped?.lineHeight ?? lineHeightFallback,
-        lineAscent: shaped?.lineAscent ?? Math.max(lineHeightFallback - (node.fontSize * 0.2), 0)
+        lineAscent: shaped?.lineAscent ?? Math.max(lineHeightFallback - node.fontSize * 0.2, 0)
       }
     ],
     glyphs,
@@ -67,7 +68,8 @@ export async function buildDerivedTextDataV4(
       }
     ],
     logicalIndexToCharacterOffsetMap:
-      shaped?.logicalIndexToCharacterOffsetMap ?? Array.from({ length: node.text.length + 1 }, () => 0),
+      shaped?.logicalIndexToCharacterOffsetMap ??
+      Array.from({ length: node.text.length + 1 }, () => 0),
     derivedLines: [{ directionality: 'LTR' }],
     truncationStartIndex: -1,
     truncatedHeight: -1

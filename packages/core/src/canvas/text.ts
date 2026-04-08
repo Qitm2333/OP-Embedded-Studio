@@ -1,5 +1,5 @@
-import { resolveRGBAForPreview } from '../color/management'
 import { getCanvasKit } from '../canvaskit'
+import { resolveRGBAForPreview } from '../color/management'
 import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE } from '../constants'
 import { resolveNodeTextDirection } from '../text/direction'
 import {

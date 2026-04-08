@@ -13,8 +13,8 @@ import {
   makeCanvasNodeChange,
   buildFontDigestMap
 } from './kiwi/serialize'
-import { buildDerivedTextDataV4 } from './text/clipboard-derived-text'
 import { randomInt } from './random'
+import { buildDerivedTextDataV4 } from './text/clipboard-derived-text'
 
 import type { NodeChange as KiwiNodeChange } from './kiwi/codec'
 import type { InstanceNodeChange } from './kiwi/instance-overrides'
@@ -317,7 +317,16 @@ export async function buildFigmaClipboardHTML(
   for (let i = 0; i < nodes.length; i++) {
     collectTextNodes(nodes[i])
     nodeChanges.push(
-      ...sceneNodeToKiwi(nodes[i], canvasGuid, i, localIdCounter, graph, blobs, undefined, fontDigestMap)
+      ...sceneNodeToKiwi(
+        nodes[i],
+        canvasGuid,
+        i,
+        localIdCounter,
+        graph,
+        blobs,
+        undefined,
+        fontDigestMap
+      )
     )
   }
 

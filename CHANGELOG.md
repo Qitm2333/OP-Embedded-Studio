@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.11.4 — 2026-04-08
+
+### Fixes
+
+- Fix `@open-pencil/core` published package containing stale import paths from before the domain module restructuring — CLI and MCP installs from npm now resolve correctly
+- Add `save_file` MCP tool for saving the current document to disk
+- Clipboard text export now writes richer v4 `derivedTextData` payloads with glyph outlines for better paste fidelity
+
 ## 0.11.3 — 2026-04-08
 
 ### Fixes

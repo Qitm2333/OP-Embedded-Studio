@@ -2,8 +2,8 @@ export const FIG_KIWI_DEFAULT_VERSION = 101
 
 import { deflateSync, inflateSync } from 'fflate'
 
-import { getGlyphOutlineCommandsSync } from '../text/opentype'
 import { getLoadedFontData, normalizeFontFamily, weightToStyle } from '../text/fonts'
+import { getGlyphOutlineCommandsSync } from '../text/opentype'
 import { encodeVectorNetworkBlob, buildStyleOverrideTable } from '../vector'
 import { stringToGuid, VARIABLE_BINDING_FIELDS } from './convert'
 import { sceneNodeToKiwiWithContext, type KiwiNodeChange } from './node-export'
@@ -208,7 +208,8 @@ function buildDerivedTextData(
   }
 
   const style = weightToStyle(node.fontWeight, node.italic)
-  const glyphCommandLists = getGlyphOutlineCommandsSync(node.fontFamily, style, node.text, node.fontSize) ?? []
+  const glyphCommandLists =
+    getGlyphOutlineCommandsSync(node.fontFamily, style, node.text, node.fontSize) ?? []
   const lineHeight = node.lineHeight ?? Math.ceil(node.fontSize * 1.2)
   const glyphAdvance = node.text.length > 0 ? node.width / Math.max(node.text.length, 1) : 0
 
@@ -221,8 +222,9 @@ function buildDerivedTextData(
     rotation: 0
   }))
 
-  const logicalIndexToCharacterOffsetMap = Array.from({ length: node.text.length + 1 }, (_, index) =>
-    index * glyphAdvance
+  const logicalIndexToCharacterOffsetMap = Array.from(
+    { length: node.text.length + 1 },
+    (_, index) => index * glyphAdvance
   )
 
   return {
@@ -234,7 +236,7 @@ function buildDerivedTextData(
         position: { x: 0, y: lineHeight },
         width: node.width,
         lineHeight,
-        lineAscent: Math.max(lineHeight - (node.fontSize * 0.2), 0)
+        lineAscent: Math.max(lineHeight - node.fontSize * 0.2, 0)
       }
     ],
     glyphs,
