@@ -166,7 +166,7 @@ onScopeDispose(() => {
       :disabled="exporting"
       @click="doExport"
     >
-      Export {{ activeName }}
+      {{ panels.export }} {{ activeName }}
     </button>
 
     <button
@@ -177,7 +177,7 @@ onScopeDispose(() => {
     >
       <icon-lucide-chevron-down v-if="showPreview" class="size-3" />
       <icon-lucide-chevron-right v-else class="size-3" />
-      Preview
+      {{ panels.exportPreview }}
     </button>
 
     <div v-if="showPreview && previewUrl" class="mt-1 overflow-hidden rounded border border-border">
@@ -194,7 +194,7 @@ onScopeDispose(() => {
       v-else-if="showPreview"
       class="mt-1 rounded border border-border px-3 py-2 text-[11px] text-muted"
     >
-      Rendering preview…
+      {{ panels.exportRenderingPreview }}
     </div>
   </div>
 </template>

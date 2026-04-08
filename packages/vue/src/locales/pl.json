@@ -154,7 +154,13 @@
     "sizingHugShort": "Dopas.",
     "sizingFillShort": "Wypełn.",
     "sizingFillFr": "Wypełnij (fr)",
-    "sizingFixedPx": "Stały (px)"
+    "sizingFixedPx": "Stały (px)",
+    "strokeAlignInside": "Wewnętrzny",
+    "strokeAlignCenter": "Wyśrodkowany",
+    "strokeAlignOutside": "Zewnętrzny",
+    "exportPreview": "Podgląd",
+    "exportRenderingPreview": "Renderowanie podglądu…",
+    "createVariable": "Utwórz zmienną"
   },
   "pages": {
     "newPage": "Nowa strona",

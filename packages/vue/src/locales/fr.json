@@ -154,7 +154,13 @@
     "sizingHugShort": "Ajust.",
     "sizingFillShort": "Remp.",
     "sizingFillFr": "Remplir (fr)",
-    "sizingFixedPx": "Fixe (px)"
+    "sizingFixedPx": "Fixe (px)",
+    "strokeAlignInside": "Intérieur",
+    "strokeAlignCenter": "Centré",
+    "strokeAlignOutside": "Extérieur",
+    "exportPreview": "Aperçu",
+    "exportRenderingPreview": "Rendu de l’aperçu…",
+    "createVariable": "Créer une variable"
   },
   "pages": {
     "newPage": "Nouvelle page",

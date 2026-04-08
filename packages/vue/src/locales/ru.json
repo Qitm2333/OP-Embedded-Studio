@@ -154,7 +154,13 @@
     "sizingHugShort": "Содерж.",
     "sizingFillShort": "Запол.",
     "sizingFillFr": "Заполнить (fr)",
-    "sizingFixedPx": "Фиксированный (px)"
+    "sizingFixedPx": "Фиксированный (px)",
+    "strokeAlignInside": "Внутри",
+    "strokeAlignCenter": "По центру",
+    "strokeAlignOutside": "Снаружи",
+    "exportPreview": "Предпросмотр",
+    "exportRenderingPreview": "Рендеринг предпросмотра…",
+    "createVariable": "Создать переменную"
   },
   "pages": {
     "newPage": "Новая страница",

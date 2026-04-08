@@ -1,16 +1,11 @@
 import { ref } from 'vue'
 
 import { useEditor } from '@open-pencil/vue/context/editorContext'
+import { useI18n } from '@open-pencil/vue/i18n'
 
 import type { SceneNode, Stroke } from '@open-pencil/core'
 
 type StrokeSides = 'ALL' | 'TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT' | 'CUSTOM'
-
-const ALIGN_OPTIONS: { value: Stroke['align']; label: string }[] = [
-  { value: 'INSIDE', label: 'Inside' },
-  { value: 'CENTER', label: 'Center' },
-  { value: 'OUTSIDE', label: 'Outside' }
-]
 
 const SIDE_OPTIONS: { value: StrokeSides; label: string }[] = [
   { value: 'ALL', label: 'All' },
@@ -38,7 +33,13 @@ const DEFAULT_STROKE: Stroke = {
  */
 export function useStrokeControls() {
   const store = useEditor()
+  const { panels } = useI18n()
   const sideMenuOpen = ref(false)
+  const alignOptions = [
+    { value: 'INSIDE' as const, label: panels.value.strokeAlignInside },
+    { value: 'CENTER' as const, label: panels.value.strokeAlignCenter },
+    { value: 'OUTSIDE' as const, label: panels.value.strokeAlignOutside }
+  ]
 
   function updateAlign(align: Stroke['align'], activeNode: SceneNode) {
     const strokes = activeNode.strokes.map((s) => ({ ...s, align }))
@@ -134,7 +135,7 @@ export function useStrokeControls() {
   }
 
   return {
-    alignOptions: ALIGN_OPTIONS,
+    alignOptions,
     sideOptions: SIDE_OPTIONS,
     borderSides: BORDER_SIDES,
     sideMenuOpen,

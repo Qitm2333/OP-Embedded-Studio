@@ -35,7 +35,7 @@ const variableTypeIcons: Record<string, Component> = {
   BOOLEAN: IconToggleLeft
 }
 
-const { dialogs } = useI18n()
+const { dialogs, panels } = useI18n()
 
 const ctx = useVariablesEditor({
   colorInput: ColorInput,
@@ -203,7 +203,7 @@ const ctx = useVariablesEditor({
                 @click="ctx.addVariable"
               >
                 <icon-lucide-plus class="size-3.5" />
-                Create variable
+                {{ panels.createVariable }}
               </button>
             </TabsContent>
           </TabsRoot>

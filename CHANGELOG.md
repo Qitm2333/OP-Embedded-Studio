@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.11.3 — 2026-04-08
+
 ### Fixes
 
 - Show actionable install errors in the chat panel when a required local AI CLI is missing
