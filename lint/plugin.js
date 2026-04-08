@@ -129,7 +129,7 @@ const noHandRolledColor = {
     },
   },
   create(context) {
-    const file = context.filename ?? context.getFilename?.()
+    const file = (context.filename ?? context.getFilename?.())?.replace(/\\/g, '/')
     if (file?.includes('/color') && /(?:color\.ts|color\/index\.ts)$/.test(file)) return {}
 
     return {
@@ -222,7 +222,7 @@ const noTypeofWindowCheck = {
     },
   },
   create(context) {
-    const file = context.filename ?? context.getFilename?.()
+    const file = (context.filename ?? context.getFilename?.())?.replace(/\\/g, '/')
     if (file?.endsWith('constants.ts')) return {}
 
     return {
