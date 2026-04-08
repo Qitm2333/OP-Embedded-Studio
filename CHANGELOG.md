@@ -4,9 +4,16 @@
 
 ### Fixes
 
-- Show actionable ACP install errors in the chat panel when Claude Code, Codex, or Gemini CLI is selected but the required local CLI is missing
-- Fix inline layer rename so clearing the name falls back to the default node name, and Backspace/Delete inside rename inputs no longer delete the layer
-- Fix rotated frame hit testing, hover highlights, and selection overlays so child hover/click areas, frame title labels, and size pills stay aligned during rotation and live rotation preview
+- Show actionable install errors in the chat panel when a required local AI CLI is missing
+- Fix inline layer rename so clearing the name restores the default name, and Backspace/Delete inside rename inputs no longer delete the layer
+- Fix rotated frame hit testing, hover highlights, and selection overlays so interactive areas and overlay labels stay aligned during rotation
+- Fix text edit undo so it restores both the original text and `styleRuns`
+- Pressing Enter with a selected text node now starts text editing and selects all text
+- Fix `ScrubInput` Enter handling so committing a value no longer triggers a second blur-based commit that overwrites it
+- Show the auto-layout panel for `COMPONENT`, `COMPONENT_SET`, and `INSTANCE` nodes
+- Fix missing layout direction icons in the auto-layout controls
+- Fix nested text selection inside gradient cards
+- Unify the size control into a single inline sizing input/dropdown with shorter localized labels to prevent overflow
 
 ## 0.11.2 — 2026-03-30
 
