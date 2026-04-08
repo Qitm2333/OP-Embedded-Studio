@@ -311,6 +311,25 @@ export function startServer(options: ServerOptions = {}) {
     }
 
     register(
+      'save_file',
+      {
+        description:
+          'Save the current document to disk. Uses the existing file path if available, otherwise prompts for a location.',
+        inputSchema: z.object({})
+      },
+      async () => {
+        try {
+          const result = await sendToBrowser({ command: 'save_file' })
+          const res = result as { ok?: boolean; error?: string }
+          if (res.ok === false) return fail(new Error(res.error))
+          return ok({ saved: true })
+        } catch (e) {
+          return fail(e)
+        }
+      }
+    )
+
+    register(
       'get_codegen_prompt',
       {
         description:

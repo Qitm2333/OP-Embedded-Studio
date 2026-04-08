@@ -120,13 +120,20 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
     return { ok: true, result: { jsx } }
   }
 
+  async function handleSaveFile(store: EditorStore): Promise<unknown> {
+    await store.saveFigFile()
+    return { ok: true }
+  }
+
   const commandHandlers: Partial<
     Record<string, (store: EditorStore, args: unknown) => Promise<unknown>>
   > = {
     eval: handleEval,
     tool: handleTool,
     export: handleExport,
-    export_jsx: handleExportJsx
+    export_jsx: handleExportJsx,
+
+    save_file: handleSaveFile
   }
 
   async function handleRequest(_id: string, command: string, args: unknown): Promise<unknown> {
