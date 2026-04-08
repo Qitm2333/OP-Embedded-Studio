@@ -88,7 +88,7 @@
     },
     "packages/cli": {
       "name": "@open-pencil/cli",
-      "version": "0.10.0",
+      "version": "0.11.3",
       "bin": {
         "openpencil": "./src/index.ts",
       },
@@ -104,7 +104,7 @@
     },
     "packages/core": {
       "name": "@open-pencil/core",
-      "version": "0.10.0",
+      "version": "0.11.3",
       "dependencies": {
         "@iconify/utils": "^3.1.0",
         "canvaskit-wasm": "^0.40.0",
@@ -115,6 +115,7 @@
         "fontoxpath": "^3.34.0",
         "fzstd": "^0.1.1",
         "nanoevents": "^9.1.0",
+        "opentype.js": "^1.3.4",
         "sucrase": "^3.35.1",
         "svgpath": "^2.6.0",
         "yoga-layout": "npm:@open-pencil/yoga-layout@3.3.0-grid.2",
@@ -122,6 +123,7 @@
       "devDependencies": {
         "@types/culori": "^4.0.1",
         "@types/diff": "^8.0.0",
+        "@types/opentype.js": "^1.3.9",
         "typescript": "~5.8.3",
       },
     },
@@ -137,7 +139,7 @@
     },
     "packages/mcp": {
       "name": "@open-pencil/mcp",
-      "version": "0.8.0",
+      "version": "0.11.3",
       "bin": {
         "openpencil-mcp": "./dist/index.js",
       },
@@ -156,7 +158,7 @@
     },
     "packages/vue": {
       "name": "@open-pencil/vue",
-      "version": "0.10.0",
+      "version": "0.11.3",
       "dependencies": {
         "@nanostores/i18n": "^1.2.2",
         "@nanostores/vue": "^1.1.0",

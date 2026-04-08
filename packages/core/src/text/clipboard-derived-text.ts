@@ -1,8 +1,8 @@
-import { getGlyphOutlineCommandsSync } from '../clipboard-text-outlines'
-import { normalizeFontFamily, weightToStyle } from '../text/fonts'
+import { normalizeFontFamily, weightToStyle } from './fonts'
+import { getGlyphOutlineCommandsSync } from './opentype'
 
 import type { SceneNode } from '../scene-graph'
-import type { NodeChange } from './codec'
+import type { NodeChange } from '../kiwi/codec'
 
 export interface ShapedClipboardText {
   lineHeight: number

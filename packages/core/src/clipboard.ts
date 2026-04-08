@@ -13,7 +13,7 @@ import {
   makeCanvasNodeChange,
   buildFontDigestMap
 } from './kiwi/serialize'
-import { buildDerivedTextDataV4 } from './kiwi/serialize-clipboard-v4'
+import { buildDerivedTextDataV4 } from './text/clipboard-derived-text'
 import { randomInt } from './random'
 
 import type { NodeChange as KiwiNodeChange } from './kiwi/codec'

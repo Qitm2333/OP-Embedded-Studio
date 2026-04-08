@@ -2,7 +2,7 @@ export const FIG_KIWI_DEFAULT_VERSION = 101
 
 import { deflateSync, inflateSync } from 'fflate'
 
-import { getGlyphOutlineCommandsSync } from '../clipboard-text-outlines'
+import { getGlyphOutlineCommandsSync } from '../text/opentype'
 import { getLoadedFontData, normalizeFontFamily, weightToStyle } from '../text/fonts'
 import { encodeVectorNetworkBlob, buildStyleOverrideTable } from '../vector'
 import { stringToGuid, VARIABLE_BINDING_FIELDS } from './convert'

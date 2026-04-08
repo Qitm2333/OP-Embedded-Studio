@@ -294,7 +294,7 @@ export {
   fractionalPosition,
   mapToFigmaType
 } from './kiwi/serialize'
-export { buildDerivedTextDataV4 } from './kiwi/serialize-clipboard-v4'
+export { buildDerivedTextDataV4 } from './text/clipboard-derived-text'
 
 export {
   createElement,
@@ -341,7 +341,7 @@ export {
   type TextPictureBuilder,
   type OpenPencilClipboardData
 } from './clipboard'
-export { probeGlyphOutlineCommands, type GlyphOutlineProbe } from './clipboard-text-outlines'
+export { probeGlyphOutlineCommands, type GlyphOutlineProbe } from './text/opentype'
 
 export { readPenFile, parsePenFile } from './io/formats/pen'
 

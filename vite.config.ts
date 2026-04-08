@@ -24,6 +24,7 @@ export default defineConfig(async ({ command }) => ({
       '@': resolve(__dirname, 'src'),
       '@open-pencil/vue': resolve(__dirname, 'packages/vue/src'),
       '@open-pencil/core': resolve(__dirname, 'packages/core/src'),
+      'opentype.js': resolve(__dirname, 'node_modules/opentype.js/dist/opentype.module.js'),
       // vue-stream-markdown eagerly loads mermaid/beautiful-mermaid as optional peer deps.
       // Alias to empty shims to avoid runtime errors and reduce bundle size.
       mermaid: resolve(__dirname, 'src/shims/mermaid.ts'),

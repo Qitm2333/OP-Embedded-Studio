@@ -1,6 +1,6 @@
 import * as OpenTypeSync from 'opentype.js'
 
-import { getLoadedFontData } from './text/fonts'
+import { getLoadedFontData } from './fonts'
 
 interface OutlineCommand {
   type: string
