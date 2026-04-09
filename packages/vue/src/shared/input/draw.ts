@@ -33,5 +33,7 @@ export function handleDrawUp(d: DragDraw, editor: Editor) {
   if (node?.type === 'SECTION') {
     editor.adoptNodesIntoSection(node.id)
   }
+  editor.commitResize(d.nodeId, { x: d.startX, y: d.startY, width: 0, height: 0 })
+  editor.undo.commitBatch()
   editor.setTool('SELECT')
 }

@@ -460,6 +460,7 @@ export function useCanvasInput(
     const nodeType = TOOL_TO_NODE[tool]
     if (!nodeType) return
 
+    editor.undo.beginBatch('Create shape')
     const nodeId = editor.createShape(nodeType, cx, cy, 0, 0)
     editor.select([nodeId])
 

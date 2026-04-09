@@ -18,42 +18,11 @@ function isEditing(e: Event) {
   return e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement
 }
 
-const PREVENT_MOD_ALT = new Set(['KeyK', 'KeyB'])
-const PREVENT_MOD_SHIFT = new Set(['KeyK', 'KeyH', 'KeyL', 'KeyE', 'KeyS', 'KeyG', 'KeyZ'])
-const PREVENT_MOD_ONLY = new Set([
-  'Backslash',
-  'KeyJ',
-  'KeyW',
-  'KeyN',
-  'KeyT',
-  'KeyZ',
-  'KeyY',
-  'Digit0',
-  'Digit1',
-  'Digit2',
-  'KeyD',
-  'KeyA',
-  'KeyS',
-  'KeyO',
-  'KeyG'
-])
-const PREVENT_SHIFT_ONLY = new Set(['Digit1', 'Digit2', 'KeyA'])
-const PREVENT_PLAIN_KEY = new Set(['BracketLeft', 'BracketRight'])
-const PREVENT_DELETE_KEY = new Set(['Backspace', 'Delete'])
-
-function shouldPreventDefault(e: KeyboardEvent, hasPenState: boolean): boolean {
-  const mod = e.metaKey || e.ctrlKey
-
-  if (mod) {
-    if (e.altKey && PREVENT_MOD_ALT.has(e.code)) return true
-    if (e.shiftKey && PREVENT_MOD_SHIFT.has(e.code)) return true
-    if (!e.shiftKey && !e.altKey && PREVENT_MOD_ONLY.has(e.code)) return true
-  } else {
-    if (e.shiftKey && PREVENT_SHIFT_ONLY.has(e.code)) return true
-    if (!e.shiftKey && PREVENT_PLAIN_KEY.has(e.code)) return true
-  }
-
-  return PREVENT_DELETE_KEY.has(e.code) || (e.code === 'Enter' && hasPenState)
+const NUDGE_DELTAS: Partial<Record<string, [number, number]>> = {
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0]
 }
 
 export function useKeyboard() {
@@ -61,6 +30,8 @@ export function useKeyboard() {
   const store = useEditorStore()
   const { isMobile } = useViewportKind()
   const { runCommand } = useEditorCommands()
+
+  // ─── Clipboard ──────────────────────────────────────────────
 
   useEventListener(window, 'copy', (e: ClipboardEvent) => {
     if (isEditing(e)) return
@@ -94,7 +65,8 @@ export function useKeyboard() {
     if (html) store.pasteFromHTML(html, cursorPos)
   })
 
-  // Spacebar hold → temporary Hand tool (Figma-style canvas pan)
+  // ─── Space hold → temporary Hand tool ──────────────────────
+
   let toolBeforeSpace: typeof store.state.activeTool | null = null
 
   useEventListener(window, 'keydown', (e: KeyboardEvent) => {
@@ -123,31 +95,43 @@ export function useKeyboard() {
     }
   })
 
+  // ─── Raw keydown: tool switch, nudge, preventDefault ───────
+
+  useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+    if (isEditing(e) || store.state.editingTextId) return
+    if (e.metaKey || e.ctrlKey || e.altKey) return
+
+    if (e.code === 'Space') return
+
+    const tool = TOOL_SHORTCUTS[e.code]
+    if (tool && !e.shiftKey) {
+      toolBeforeSpace = null
+      store.setTool(tool)
+      e.preventDefault()
+      return
+    }
+
+    const delta = NUDGE_DELTAS[e.code]
+    if (delta && store.state.selectedIds.size > 0) {
+      const step = e.shiftKey ? 10 : 1
+      store.nudgeSelected(delta[0] * step, delta[1] * step)
+      e.preventDefault()
+    }
+  })
+
+  // ─── useMagicKeys for modifier combos ──────────────────────
+
   const keys = useMagicKeys({
     passive: false,
     onEventFired(e) {
       if (e.type !== 'keydown') return
-      if (isEditing(e)) return
-      if (store.state.editingTextId) return
-
-      if (!e.metaKey && !e.ctrlKey && !e.altKey) {
-        // Space is handled by hold-to-pan above
-        if (e.code === 'Space') return
-        const tool = TOOL_SHORTCUTS[e.code]
-        if (tool) {
-          // Permanent tool switch cancels space-hold
-          toolBeforeSpace = null
-          store.setTool(tool)
-          return
-        }
-      }
-
-      if (shouldPreventDefault(e, !!store.state.penState)) e.preventDefault()
+      if (isEditing(e) || store.state.editingTextId) return
+      if (e.code === 'Backspace' || e.code === 'Delete') e.preventDefault()
+      if (e.code === 'BracketLeft' || e.code === 'BracketRight') e.preventDefault()
+      if (e.code === 'Enter' && store.state.penState) e.preventDefault()
     }
   })
 
-  // Cross-platform mod: true when Meta (Mac) or Control (Win/Linux) is pressed with the combo.
-  // Checks that no extra modifiers are held beyond what the combo specifies.
   function mod(combo: string): ComputedRef<boolean> {
     const hasShift = combo.includes('shift')
     const hasAlt = combo.includes('alt')
@@ -158,11 +142,32 @@ export function useKeyboard() {
     return computed(() => base.value && !keys['shift'].value && !keys['alt'].value)
   }
 
-  // --- Mod + Alt ---
+  function shift(key: string): ComputedRef<boolean> {
+    return computed(
+      () => keys[`shift+${key}`].value && !keys['meta'].value && !keys['control'].value
+    )
+  }
+
+  function plain(key: string, options?: { allowAlt?: boolean }): ComputedRef<boolean> {
+    const allowAlt = options?.allowAlt ?? false
+    return computed(
+      () =>
+        keys[key].value &&
+        !keys['meta'].value &&
+        !keys['control'].value &&
+        !keys['shift'].value &&
+        (allowAlt || !keys['alt'].value) &&
+        !store.state.editingTextId
+    )
+  }
+
+  // ─── Mod + Alt ─────────────────────────────────────────────
+
   whenever(mod('alt+keyk'), () => runCommand('selection.createComponent'))
   whenever(mod('alt+keyb'), () => runCommand('selection.detachInstance'))
 
-  // --- Mod + Shift ---
+  // ─── Mod + Shift ───────────────────────────────────────────
+
   whenever(mod('shift+keyk'), () => runCommand('selection.createComponentSet'))
   whenever(mod('shift+keyh'), () => runCommand('selection.toggleVisibility'))
   whenever(mod('shift+keyl'), () => runCommand('selection.toggleLock'))
@@ -173,7 +178,8 @@ export function useKeyboard() {
   whenever(mod('shift+keyg'), () => runCommand('selection.ungroup'))
   whenever(mod('shift+keyz'), () => runCommand('edit.redo'))
 
-  // --- Mod + Key ---
+  // ─── Mod ───────────────────────────────────────────────────
+
   whenever(mod('backslash'), () => {
     store.state.showUI = !store.state.showUI
   })
@@ -203,40 +209,20 @@ export function useKeyboard() {
   whenever(mod('keyo'), () => openFileDialog())
   whenever(mod('keyg'), () => runCommand('selection.group'))
 
-  // --- Shift (no mod) ---
-  whenever(
-    computed(() => keys['shift+digit1'].value && !keys['meta'].value && !keys['control'].value),
-    () => runCommand('view.zoomFit')
-  )
-  whenever(
-    computed(() => keys['shift+digit2'].value && !keys['meta'].value && !keys['control'].value),
-    () => runCommand('view.zoomSelection')
-  )
-  whenever(
-    computed(() => keys['shift+keya'].value && !keys['meta'].value && !keys['control'].value),
-    () => {
-      const node = store.selectedNode.value
-      if (node?.type === 'FRAME' && store.selectedNodes.value.length === 1) {
-        store.setLayoutMode(node.id, node.layoutMode === 'NONE' ? 'VERTICAL' : 'NONE')
-      } else if (store.selectedNodes.value.length > 0) {
-        runCommand('selection.wrapInAutoLayout')
-      }
-    }
-  )
+  // ─── Shift (no mod) ────────────────────────────────────────
 
-  // --- Plain keys (no modifiers) ---
-  function plain(key: string, options?: { allowAlt?: boolean }): ComputedRef<boolean> {
-    const allowAlt = options?.allowAlt ?? false
-    return computed(
-      () =>
-        keys[key].value &&
-        !keys['meta'].value &&
-        !keys['control'].value &&
-        !keys['shift'].value &&
-        (allowAlt || !keys['alt'].value) &&
-        !store.state.editingTextId
-    )
-  }
+  whenever(shift('digit1'), () => runCommand('view.zoomFit'))
+  whenever(shift('digit2'), () => runCommand('view.zoomSelection'))
+  whenever(shift('keya'), () => {
+    const node = store.selectedNode.value
+    if (node?.type === 'FRAME' && store.selectedNodes.value.length === 1) {
+      store.setLayoutMode(node.id, node.layoutMode === 'NONE' ? 'VERTICAL' : 'NONE')
+    } else if (store.selectedNodes.value.length > 0) {
+      runCommand('selection.wrapInAutoLayout')
+    }
+  })
+
+  // ─── Plain keys ────────────────────────────────────────────
 
   whenever(plain('BracketRight'), () => runCommand('selection.bringToFront'))
   whenever(plain('BracketLeft'), () => runCommand('selection.sendToBack'))

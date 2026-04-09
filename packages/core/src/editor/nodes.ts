@@ -1,7 +1,10 @@
 import { computeLayout } from '../layout'
 
 import type { LayoutMode, SceneNode } from '../scene-graph'
+import type { Vector } from '../types'
 import type { EditorContext } from './types'
+
+const NUDGE_COMMIT_DELAY = 300
 
 export function createNodeActions(ctx: EditorContext) {
   function updateNode(id: string, changes: Partial<SceneNode>) {
@@ -157,5 +160,83 @@ export function createNodeActions(ctx: EditorContext) {
     ctx.requestRender()
   }
 
-  return { updateNode, updateNodeWithUndo, setLayoutMode, bindVariable, unbindVariable }
+  let nudgeOriginals: Map<string, Vector> | null = null
+  let nudgeCommitTimer: ReturnType<typeof setTimeout> | null = null
+
+  function commitNudge() {
+    if (!nudgeOriginals) return
+    const originals = nudgeOriginals
+    nudgeOriginals = null
+    nudgeCommitTimer = null
+
+    const finals = new Map<string, Vector>()
+    for (const [id] of originals) {
+      const node = ctx.graph.getNode(id)
+      if (node) finals.set(id, { x: node.x, y: node.y })
+    }
+    ctx.undo.push({
+      label: 'Nudge',
+      forward: () => {
+        for (const [id, pos] of finals) {
+          ctx.graph.updateNode(id, pos)
+          ctx.runLayoutForNode(id)
+        }
+      },
+      inverse: () => {
+        for (const [id, pos] of originals) {
+          ctx.graph.updateNode(id, pos)
+          ctx.runLayoutForNode(id)
+        }
+      }
+    })
+  }
+
+  function nudgeSelected(dx: number, dy: number) {
+    const ids = [...ctx.state.selectedIds]
+    if (ids.length === 0) return
+
+    const movable: string[] = []
+    for (const id of ids) {
+      const node = ctx.graph.getNode(id)
+      if (node && !node.locked) movable.push(id)
+    }
+    if (movable.length === 0) return
+
+    if (!nudgeOriginals) {
+      nudgeOriginals = new Map()
+      for (const id of movable) {
+        const node = ctx.graph.getNode(id)!
+        nudgeOriginals.set(id, { x: node.x, y: node.y })
+      }
+    }
+
+    for (const id of movable) {
+      const node = ctx.graph.getNode(id)
+      if (!node) continue
+      ctx.graph.updateNode(id, { x: node.x + dx, y: node.y + dy })
+      ctx.runLayoutForNode(id)
+    }
+
+    if (nudgeCommitTimer) clearTimeout(nudgeCommitTimer)
+    nudgeCommitTimer = setTimeout(commitNudge, NUDGE_COMMIT_DELAY)
+
+    ctx.requestRender()
+  }
+
+  function flushNudge() {
+    if (nudgeCommitTimer) {
+      clearTimeout(nudgeCommitTimer)
+      commitNudge()
+    }
+  }
+
+  return {
+    updateNode,
+    updateNodeWithUndo,
+    setLayoutMode,
+    bindVariable,
+    unbindVariable,
+    nudgeSelected,
+    flushNudge
+  }
 }
