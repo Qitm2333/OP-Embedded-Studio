@@ -31,6 +31,91 @@ export function useKeyboard() {
   const { isMobile } = useViewportKind()
   const { runCommand } = useEditorCommands()
 
+  // ─── App-level actions ─────────────────────────────────────
+  // Commands that need app store state (nodeEditState, tabs, etc.)
+  // and can't live in the SDK's useEditorCommands.
+
+  function hasNodeEditSelection() {
+    return (
+      store.state.nodeEditState &&
+      (store.state.nodeEditState.selectedVertexIndices.size > 0 ||
+        store.state.nodeEditState.selectedHandles.size > 0)
+    )
+  }
+
+  function smartDelete(altKey: boolean) {
+    if (hasNodeEditSelection()) {
+      if (altKey) store.nodeEditBreakAtVertex()
+      else store.nodeEditDeleteSelected()
+      return
+    }
+    runCommand('selection.delete')
+  }
+
+  function confirmOrEnterText() {
+    if (store.state.nodeEditState) {
+      store.exitNodeEditMode(true)
+      return
+    }
+    if (store.state.penState) {
+      store.penCommit(false)
+      return
+    }
+    const node = store.selectedNode.value
+    if (node?.type === 'TEXT') {
+      requestAnimationFrame(() => {
+        store.startTextEditing(node.id)
+        store.textEditor?.selectAll()
+        store.requestRender()
+      })
+    }
+  }
+
+  function escapeOrDeselect() {
+    if (store.state.nodeEditState) {
+      store.exitNodeEditMode(true)
+      return
+    }
+    if (store.state.penState) {
+      store.penCommit(false)
+      return
+    }
+    if (store.state.enteredContainerId) {
+      store.exitContainer()
+      return
+    }
+    store.clearSelection()
+    store.setTool('SELECT')
+  }
+
+  function toggleAutoLayout() {
+    const node = store.selectedNode.value
+    if (node?.type === 'FRAME' && store.selectedNodes.value.length === 1) {
+      store.setLayoutMode(node.id, node.layoutMode === 'NONE' ? 'VERTICAL' : 'NONE')
+    } else if (store.selectedNodes.value.length > 0) {
+      runCommand('selection.wrapInAutoLayout')
+    }
+  }
+
+  function toggleUI() {
+    store.state.showUI = !store.state.showUI
+  }
+
+  function toggleAI() {
+    if (isMobile.value) {
+      store.state.activeRibbonTab = store.state.activeRibbonTab === 'ai' ? 'panels' : 'ai'
+      if (store.state.mobileDrawerSnap === 'closed') {
+        store.state.mobileDrawerSnap = 'half'
+      }
+    } else {
+      activeTab.value = activeTab.value === 'ai' ? 'design' : 'ai'
+    }
+  }
+
+  function exportSelectionPng() {
+    if (store.state.selectedIds.size > 0) void store.exportSelection(1, 'png')
+  }
+
   // ─── Clipboard ──────────────────────────────────────────────
 
   useEventListener(window, 'copy', (e: ClipboardEvent) => {
@@ -161,41 +246,25 @@ export function useKeyboard() {
     )
   }
 
-  // ─── Mod + Alt ─────────────────────────────────────────────
+  // ─── Shortcut → action mapping ─────────────────────────────
 
+  // Mod + Alt
   whenever(mod('alt+keyk'), () => runCommand('selection.createComponent'))
   whenever(mod('alt+keyb'), () => runCommand('selection.detachInstance'))
 
-  // ─── Mod + Shift ───────────────────────────────────────────
-
+  // Mod + Shift
   whenever(mod('shift+keyk'), () => runCommand('selection.createComponentSet'))
   whenever(mod('shift+keyh'), () => runCommand('selection.toggleVisibility'))
   whenever(mod('shift+keyl'), () => runCommand('selection.toggleLock'))
-  whenever(mod('shift+keye'), () => {
-    if (store.state.selectedIds.size > 0) void store.exportSelection(1, 'png')
-  })
+  whenever(mod('shift+keye'), exportSelectionPng)
   whenever(mod('shift+keys'), () => store.saveFigFileAs())
   whenever(mod('shift+keyg'), () => runCommand('selection.ungroup'))
   whenever(mod('shift+keyz'), () => runCommand('edit.redo'))
 
-  // ─── Mod ───────────────────────────────────────────────────
-
-  whenever(mod('backslash'), () => {
-    store.state.showUI = !store.state.showUI
-  })
-  whenever(mod('keyj'), () => {
-    if (isMobile.value) {
-      store.state.activeRibbonTab = store.state.activeRibbonTab === 'ai' ? 'panels' : 'ai'
-      if (store.state.mobileDrawerSnap === 'closed') {
-        store.state.mobileDrawerSnap = 'half'
-      }
-    } else {
-      activeTab.value = activeTab.value === 'ai' ? 'design' : 'ai'
-    }
-  })
-  whenever(mod('keyw'), () => {
-    if (activeTabRef.value) closeTab(activeTabRef.value.id)
-  })
+  // Mod
+  whenever(mod('backslash'), toggleUI)
+  whenever(mod('keyj'), toggleAI)
+  whenever(mod('keyw'), () => { if (activeTabRef.value) closeTab(activeTabRef.value.id) })
   whenever(mod('keyn'), () => createTab())
   whenever(mod('keyt'), () => createTab())
   whenever(mod('keyz'), () => runCommand('edit.undo'))
@@ -209,81 +278,16 @@ export function useKeyboard() {
   whenever(mod('keyo'), () => openFileDialog())
   whenever(mod('keyg'), () => runCommand('selection.group'))
 
-  // ─── Shift (no mod) ────────────────────────────────────────
-
+  // Shift (no mod)
   whenever(shift('digit1'), () => runCommand('view.zoomFit'))
   whenever(shift('digit2'), () => runCommand('view.zoomSelection'))
-  whenever(shift('keya'), () => {
-    const node = store.selectedNode.value
-    if (node?.type === 'FRAME' && store.selectedNodes.value.length === 1) {
-      store.setLayoutMode(node.id, node.layoutMode === 'NONE' ? 'VERTICAL' : 'NONE')
-    } else if (store.selectedNodes.value.length > 0) {
-      runCommand('selection.wrapInAutoLayout')
-    }
-  })
+  whenever(shift('keya'), toggleAutoLayout)
 
-  // ─── Plain keys ────────────────────────────────────────────
-
+  // Plain keys
   whenever(plain('BracketRight'), () => runCommand('selection.bringToFront'))
   whenever(plain('BracketLeft'), () => runCommand('selection.sendToBack'))
-  whenever(plain('Backspace'), () => {
-    if (
-      store.state.nodeEditState &&
-      (store.state.nodeEditState.selectedVertexIndices.size > 0 ||
-        store.state.nodeEditState.selectedHandles.size > 0)
-    ) {
-      store.nodeEditDeleteSelected()
-      return
-    }
-    runCommand('selection.delete')
-  })
-  whenever(plain('Delete', { allowAlt: true }), () => {
-    if (
-      store.state.nodeEditState &&
-      (store.state.nodeEditState.selectedVertexIndices.size > 0 ||
-        store.state.nodeEditState.selectedHandles.size > 0)
-    ) {
-      if (keys['alt'].value) {
-        store.nodeEditBreakAtVertex()
-      } else {
-        store.nodeEditDeleteSelected()
-      }
-      return
-    }
-    runCommand('selection.delete')
-  })
-  whenever(plain('Enter'), () => {
-    if (store.state.nodeEditState) {
-      store.exitNodeEditMode(true)
-      return
-    }
-    if (store.state.penState) {
-      store.penCommit(false)
-      return
-    }
-    const node = store.selectedNode.value
-    if (node?.type === 'TEXT') {
-      requestAnimationFrame(() => {
-        store.startTextEditing(node.id)
-        store.textEditor?.selectAll()
-        store.requestRender()
-      })
-    }
-  })
-  whenever(plain('Escape'), () => {
-    if (store.state.nodeEditState) {
-      store.exitNodeEditMode(true)
-      return
-    }
-    if (store.state.penState) {
-      store.penCommit(false)
-      return
-    }
-    if (store.state.enteredContainerId) {
-      store.exitContainer()
-      return
-    }
-    store.clearSelection()
-    store.setTool('SELECT')
-  })
+  whenever(plain('Backspace'), () => smartDelete(false))
+  whenever(plain('Delete', { allowAlt: true }), () => smartDelete(keys['alt'].value))
+  whenever(plain('Enter'), confirmOrEnterText)
+  whenever(plain('Escape'), escapeOrDeselect)
 }
