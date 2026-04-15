@@ -165,12 +165,14 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
   function connect() {
     try {
       ws = new WebSocket(`ws://127.0.0.1:${AUTOMATION_WS_PORT}`)
-    } catch {
+    } catch (e) {
+      console.error('[Automation] WebSocket constructor failed:', e instanceof Error ? e.message : e)
       scheduleReconnect()
       return
     }
 
     ws.onopen = () => {
+      console.log('[Automation] WebSocket connected to MCP server')
       ws?.send(JSON.stringify({ type: 'register', token }))
     }
 
@@ -201,12 +203,14 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
       }
     }
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      console.error('[Automation] WebSocket closed:', `code=${event.code} reason=${event.reason}`)
       ws = null
       scheduleReconnect()
     }
 
-    ws.onerror = () => {
+    ws.onerror = (event) => {
+      console.error('[Automation] WebSocket error:', event)
       ws?.close()
     }
   }

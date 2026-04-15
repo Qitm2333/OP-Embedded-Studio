@@ -24,7 +24,8 @@ async function readHealth(): Promise<AutomationHealth | null> {
     })
     if (!res.ok) return null
     return (await res.json()) as AutomationHealth
-  } catch {
+  } catch (e) {
+    console.error('[MCP] health check failed:', e instanceof Error ? e.message : e)
     return null
   }
 }

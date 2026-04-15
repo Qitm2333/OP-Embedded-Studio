@@ -19,7 +19,8 @@ async function checkMCPHealth(retries = 3, delayMs = 1000) {
         mcpAvailable.value = true
         return
       }
-    } catch {
+    } catch (e) {
+      console.error('[MCP] health check failed (attempt', i + 1, '):', e instanceof Error ? e.message : e)
       if (i < retries - 1) await new Promise((r) => setTimeout(r, delayMs))
     }
   }
