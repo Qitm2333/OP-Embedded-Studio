@@ -438,7 +438,7 @@ export function updateHoverCursor(
     const node = editor.graph.getNode(id)
     if (!node) continue
 
-    const handHit = getHitHandleByMatrix(cx, cy, node, editor.graph, editor?.renderer?.zoom!)
+    const handHit = getHitHandleByMatrix(cx, cy, node, editor.graph, editor.renderer?.zoom ?? 1)
     if (handHit?.handle) {
       cursor = buildResizeCursor(handHit?.rotation)
       break
@@ -454,7 +454,7 @@ export function updateHoverCursor(
         cy,
         node,
         editor.graph,
-        editor?.renderer?.zoom!
+        editor.renderer?.zoom ?? 1
       )
       if (corner) {
         const abRotation = getAbsoluteRotation(node, editor.graph)

@@ -207,7 +207,7 @@ export function useCanvasInput(
     }
     const abs = getAbsolutePositionFull(node, editor.graph)
 
-    if (!hitTestCornerRotationByMatrix(cx, cy, node, editor.graph, editor.renderer?.zoom!)) {
+    if (!hitTestCornerRotationByMatrix(cx, cy, node, editor.graph, editor.renderer?.zoom ?? 1)) {
       return false
     }
     const startAngle = Math.atan2(cy - abs.centerY, cx - abs.centerX) * (180 / Math.PI)
