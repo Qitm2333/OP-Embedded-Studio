@@ -31,6 +31,7 @@ function push(message: string, variant: ToastVariant) {
   const existing = toasts.value.find((t) => t.message === message && t.variant === variant)
   if (existing) {
     existing.count += 1
+    existing.id = ++nextId
     return
   }
   toasts.value.push({ id: ++nextId, message, variant, count: 1 })
