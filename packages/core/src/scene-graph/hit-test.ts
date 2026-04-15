@@ -1,6 +1,6 @@
 import Matrix from '@open-pencil/core/canvas/matrix'
 
-import {  getWorldMatrix } from '../canvas/coordinate'
+import { getWorldMatrix } from '../canvas/coordinate'
 
 import type { SceneGraph, SceneNode, NodeType } from './'
 

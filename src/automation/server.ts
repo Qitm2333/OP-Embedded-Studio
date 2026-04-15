@@ -166,7 +166,10 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
     try {
       ws = new WebSocket(`ws://127.0.0.1:${AUTOMATION_WS_PORT}`)
     } catch (e) {
-      console.error('[Automation] WebSocket constructor failed:', e instanceof Error ? e.message : e)
+      console.error(
+        '[Automation] WebSocket constructor failed:',
+        e instanceof Error ? e.message : e
+      )
       scheduleReconnect()
       return
     }
