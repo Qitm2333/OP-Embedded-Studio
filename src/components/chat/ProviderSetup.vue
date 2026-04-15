@@ -5,6 +5,7 @@ import ProviderSelectField from '@/components/chat/ProviderSelectField.vue'
 import { useInputUI } from '@/components/ui/input'
 import { useAIChat } from '@/composables/use-chat'
 import { ACP_AGENTS } from '@open-pencil/core'
+import { openExternalLink } from '@/composables/use-external-link'
 import { useI18n } from '@open-pencil/vue'
 
 const { providerID, providerDef, setAPIKey, customBaseURL, customModelID } = useAIChat()
@@ -104,15 +105,15 @@ function save() {
       </p>
     </div>
 
-    <a
+    <button
       v-if="!isACP && providerDef.keyURL"
-      :href="providerDef.keyURL"
-      target="_blank"
+      type="button"
       data-test-id="api-key-get-link"
-      class="mt-2.5 text-[10px] text-muted underline hover:text-surface"
+      class="mt-2.5 cursor-pointer text-[10px] text-muted underline hover:text-surface"
+      @click="openExternalLink(providerDef.keyURL!)"
     >
       {{ dialogs.getAPIKey({ provider: providerDef.name }) }}
-    </a>
+    </button>
 
     <p
       v-if="providerID === 'openrouter'"

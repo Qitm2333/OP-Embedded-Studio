@@ -217,3 +217,37 @@ test('transport errors show an actionable toast', async () => {
     }),
   ).toBeVisible({ timeout: 5000 })
 })
+
+test('"Get API key" link opens external URL via window.open', async () => {
+  // Clear the key to return to provider setup
+  await page.locator('[data-test-id="provider-settings-trigger"]').click()
+  await page.locator('[data-test-id="provider-settings-clear-key"]').click()
+  await page.locator('[data-test-id="provider-settings-done"]').click()
+
+  // Now we're back in ProviderSetup — the link should be visible
+  const link = page.locator('[data-test-id="api-key-get-link"]')
+  await expect(link).toBeVisible()
+
+  // Intercept window.open to verify it's called with the right URL
+  const openedUrls: string[] = []
+  await page.exposeFunction('mockWindowOpen', (url: string) => openedUrls.push(url))
+  await page.evaluate(() => {
+    window.__mocked_window_open = window.open
+    window.open = (url: string | URL) => {
+      ;(window as any).mockWindowOpen(String(url))
+      return null
+    }
+  })
+
+  await link.click()
+
+  await expect(() => {
+    expect(openedUrls.length).toBeGreaterThan(0)
+    expect(openedUrls[0]).toMatch(/^https:\/\//)
+  }).toPass({ timeout: 3000 })
+
+  // Restore
+  await page.evaluate(() => {
+    window.open = window.__mocked_window_open
+  })
+})
