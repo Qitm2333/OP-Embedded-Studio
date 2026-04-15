@@ -30,7 +30,15 @@
     "toggleUI": "Basculer l’interface",
     "bold": "Gras",
     "italic": "Italique",
-    "underline": "Souligné"
+    "underline": "Souligné",
+    "pasteHere": "Coller ici",
+    "copyPasteAs": "Copier/Coller en tant que",
+    "copyAsText": "Copier en texte",
+    "copyAsSVG": "Copier en SVG",
+    "copyAsPNG": "Copier en PNG",
+    "copyAsJSX": "Copier en JSX",
+    "copyNodeId": "Copier l'ID du nœud",
+    "copyXPath": "Copier le XPath"
   },
   "commands": {
     "undo": "Annuler",

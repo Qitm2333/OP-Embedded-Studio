@@ -30,7 +30,15 @@
     "toggleUI": "Przełącz interfejs",
     "bold": "Pogrubienie",
     "italic": "Kursywa",
-    "underline": "Podkreślenie"
+    "underline": "Podkreślenie",
+    "pasteHere": "Wklej tutaj",
+    "copyPasteAs": "Kopiuj/Wklej jako",
+    "copyAsText": "Kopiuj jako tekst",
+    "copyAsSVG": "Kopiuj jako SVG",
+    "copyAsPNG": "Kopiuj jako PNG",
+    "copyAsJSX": "Kopiuj jako JSX",
+    "copyNodeId": "Kopiuj ID węzła",
+    "copyXPath": "Kopiuj XPath"
   },
   "commands": {
     "undo": "Cofnij",

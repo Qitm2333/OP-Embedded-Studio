@@ -30,7 +30,15 @@
     "toggleUI": "Mostra/nascondi interfaccia",
     "bold": "Grassetto",
     "italic": "Corsivo",
-    "underline": "Sottolineato"
+    "underline": "Sottolineato",
+    "pasteHere": "Incolla qui",
+    "copyPasteAs": "Copia/Incolla come",
+    "copyAsText": "Copia come testo",
+    "copyAsSVG": "Copia come SVG",
+    "copyAsPNG": "Copia come PNG",
+    "copyAsJSX": "Copia come JSX",
+    "copyNodeId": "Copia ID nodo",
+    "copyXPath": "Copia XPath"
   },
   "commands": {
     "undo": "Annulla",

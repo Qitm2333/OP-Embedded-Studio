@@ -12,6 +12,7 @@ import lint from './commands/lint'
 import node from './commands/node'
 import pages from './commands/pages'
 import query from './commands/query'
+import selection from './commands/selection'
 import tree from './commands/tree'
 import variables from './commands/variables'
 
@@ -35,6 +36,7 @@ const main = defineCommand({
     query,
     node,
     pages,
+    selection,
     tree,
     variables
   }

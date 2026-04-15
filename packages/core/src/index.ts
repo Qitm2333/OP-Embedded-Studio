@@ -96,7 +96,7 @@ export type {
   StepBudget
 } from './tools'
 export { executeRpcCommand, ALL_RPC_COMMANDS } from './rpc'
-export { queryByXPath, matchByXPath } from './xpath'
+export { queryByXPath, matchByXPath, nodeToXPath } from './xpath'
 export type { XPathQueryOptions } from './xpath'
 export {
   okhclToRGBA,

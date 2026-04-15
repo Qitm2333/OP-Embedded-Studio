@@ -30,7 +30,15 @@
     "toggleUI": "切换界面",
     "bold": "加粗",
     "italic": "斜体",
-    "underline": "下划线"
+    "underline": "下划线",
+    "pasteHere": "粘贴到此处",
+    "copyPasteAs": "复制/粘贴为",
+    "copyAsText": "复制为文本",
+    "copyAsSVG": "复制为 SVG",
+    "copyAsPNG": "复制为 PNG",
+    "copyAsJSX": "复制为 JSX",
+    "copyNodeId": "复制节点 ID",
+    "copyXPath": "复制 XPath"
   },
   "commands": {
     "undo": "撤销",

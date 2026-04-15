@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { FigmaAPI, SceneGraph, matchByXPath, queryByXPath } from '@open-pencil/core'
+import { FigmaAPI, SceneGraph, matchByXPath, nodeToXPath, queryByXPath } from '@open-pencil/core'
 
 function setup() {
   const graph = new SceneGraph()
@@ -96,6 +96,87 @@ describe('queryByXPath', () => {
   test('handles invalid selector gracefully (throws)', async () => {
     const { graph } = setup()
     expect(queryByXPath(graph, '///invalid[[[[')).rejects.toThrow()
+  })
+})
+
+describe('nodeToXPath', () => {
+  test('returns null for missing node', () => {
+    const { graph } = setup()
+    expect(nodeToXPath(graph, 'nonexistent')).toBeNull()
+  })
+
+  test('uses name predicate for unique name among siblings', () => {
+    const { graph, figma } = setup()
+    const rect = figma.createRectangle()
+    rect.name = 'Header'
+    const text = figma.createText()
+    text.name = 'Title'
+
+    const xpath = nodeToXPath(graph, rect.id)
+    expect(xpath).toBe("//RECTANGLE[@name='Header']")
+  })
+
+  test('includes name even when sole child of that type', () => {
+    const { graph, figma } = setup()
+    const frame = figma.createFrame()
+    frame.name = 'Card'
+    const text = figma.createText()
+    text.name = 'Label'
+    frame.appendChild(text)
+
+    const xpath = nodeToXPath(graph, text.id)
+    expect(xpath).toBe("//FRAME[@name='Card']/TEXT[@name='Label']")
+  })
+
+  test('uses positional predicate for duplicate names', () => {
+    const { graph, figma } = setup()
+    const r1 = figma.createRectangle()
+    r1.name = 'Item'
+    const r2 = figma.createRectangle()
+    r2.name = 'Item'
+
+    const xpath1 = nodeToXPath(graph, r1.id)
+    const xpath2 = nodeToXPath(graph, r2.id)
+    expect(xpath1).toBe('//RECTANGLE[1]')
+    expect(xpath2).toBe('//RECTANGLE[2]')
+  })
+
+  test('builds multi-level path', () => {
+    const { graph, figma } = setup()
+    const frame = figma.createFrame()
+    frame.name = 'Container'
+    const inner = figma.createFrame()
+    inner.name = 'Row'
+    frame.appendChild(inner)
+    const text = figma.createText()
+    text.name = 'Label'
+    inner.appendChild(text)
+
+    const xpath = nodeToXPath(graph, text.id)
+    expect(xpath).toBe("//FRAME[@name='Container']/FRAME[@name='Row']/TEXT[@name='Label']")
+  })
+
+  test('round-trips with queryByXPath', async () => {
+    const { graph, figma } = setup()
+    const frame = figma.createFrame()
+    frame.name = 'Sidebar'
+    const btn = figma.createRectangle()
+    btn.name = 'Button'
+    frame.appendChild(btn)
+
+    const xpath = nodeToXPath(graph, btn.id)!
+    const results = await queryByXPath(graph, xpath)
+    expect(results.length).toBe(1)
+    expect(results[0].id).toBe(btn.id)
+  })
+
+  test('handles names with single quotes', () => {
+    const { graph, figma } = setup()
+    const rect = figma.createRectangle()
+    rect.name = "it's a test"
+
+    const xpath = nodeToXPath(graph, rect.id)
+    expect(xpath).toBe('//RECTANGLE[@name="it\'s a test"]')
   })
 })
 

@@ -13,6 +13,7 @@ import {
   computeAllLayouts,
   selectionToJSX,
   sceneNodeToJSX,
+  nodeToXPath,
   randomHex
 } from '@open-pencil/core'
 
@@ -125,6 +126,22 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
     return { ok: true }
   }
 
+  async function handleSelection(store: EditorStore): Promise<unknown> {
+    const ids = [...store.state.selectedIds]
+    const nodes = ids
+      .map((id) => store.graph.getNode(id))
+      .filter((n): n is NonNullable<typeof n> => n !== undefined)
+      .map((n) => ({
+        id: n.id,
+        name: n.name,
+        type: n.type,
+        width: Math.round(n.width),
+        height: Math.round(n.height),
+        xpath: nodeToXPath(store.graph, n.id)
+      }))
+    return { ok: true, result: nodes }
+  }
+
   const commandHandlers: Partial<
     Record<string, (store: EditorStore, args: unknown) => Promise<unknown>>
   > = {
@@ -132,6 +149,7 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
     tool: handleTool,
     export: handleExport,
     export_jsx: handleExportJsx,
+    selection: handleSelection,
 
     save_file: handleSaveFile
   }

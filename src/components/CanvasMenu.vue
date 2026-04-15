@@ -9,7 +9,8 @@ import {
   ContextMenuPortal
 } from 'reka-ui'
 import { useClipboard } from '@vueuse/core'
-import { useEditorCommands, useMenuModel, useSelectionState } from '@open-pencil/vue'
+import { nodeToXPath } from '@open-pencil/core'
+import { useEditorCommands, useI18n, useMenuModel, useSelectionState } from '@open-pencil/vue'
 import { toast } from '@/utils/toast'
 
 import { useEditorStore } from '@/stores/editor'
@@ -21,6 +22,7 @@ const { copy } = useClipboard()
 const { editor, selectedIds, hasSelection } = useSelectionState()
 const { getCommand } = useEditorCommands()
 const { canvasMenu } = useMenuModel()
+const { menu: t } = useI18n()
 
 function ids() {
   return [...selectedIds.value]
@@ -40,6 +42,24 @@ async function clipboardWrite(text: string | null, label: string) {
   if (!text) return
   copy(text)
   toast.info(`Copied as ${label}`)
+}
+
+function copyNodeId() {
+  const nodeIds = ids()
+  if (nodeIds.length === 0) return
+  copy(nodeIds.join(', '))
+  toast.info(`Copied node ID${nodeIds.length > 1 ? 's' : ''}`)
+}
+
+function copyXPath() {
+  const nodeIds = ids()
+  if (nodeIds.length === 0) return
+  const xpaths = nodeIds
+    .map((id) => nodeToXPath(store.graph, id))
+    .filter((x): x is string => x !== null)
+  if (xpaths.length === 0) return
+  copy(xpaths.join('\n'))
+  toast.info(`Copied XPath${xpaths.length > 1 ? 's' : ''}`)
 }
 
 async function copyAsPNG() {
@@ -71,13 +91,16 @@ const cls = {
 <template>
   <ContextMenuContent :class="cls.menu" :side-offset="2" align="start">
     <ContextMenuItem :class="cls.item" :disabled="!hasSelection" @select="execCommand('copy')">
-      <span>Copy</span><span class="text-[11px] text-muted">⌘C</span>
+      <span>{{ t.copy }}</span
+      ><span class="text-[11px] text-muted">⌘C</span>
     </ContextMenuItem>
     <ContextMenuItem :class="cls.item" :disabled="!hasSelection" @select="execCommand('cut')">
-      <span>Cut</span><span class="text-[11px] text-muted">⌘X</span>
+      <span>{{ t.cut }}</span
+      ><span class="text-[11px] text-muted">⌘X</span>
     </ContextMenuItem>
     <ContextMenuItem :class="cls.item" @select="execCommand('paste')">
-      <span>Paste here</span><span class="text-[11px] text-muted">⌘V</span>
+      <span>{{ t.pasteHere }}</span
+      ><span class="text-[11px] text-muted">⌘V</span>
     </ContextMenuItem>
     <ContextMenuItem
       :class="cls.item"
@@ -147,28 +170,36 @@ const cls = {
 
       <ContextMenuSub>
         <ContextMenuSubTrigger :class="cls.item">
-          <span>Copy/Paste as</span><span class="text-sm text-muted">›</span>
+          <span>{{ t.copyPasteAs }}</span
+          ><span class="text-sm text-muted">›</span>
         </ContextMenuSubTrigger>
         <ContextMenuPortal>
           <ContextMenuSubContent :class="cls.menu">
             <ContextMenuItem
               :class="cls.item"
               @select="clipboardWrite(editor.copySelectionAsText(ids()), 'text')"
-              >Copy as text</ContextMenuItem
+              >{{ t.copyAsText }}</ContextMenuItem
             >
             <ContextMenuItem
               :class="cls.item"
               @select="clipboardWrite(editor.copySelectionAsSVG(ids()), 'SVG')"
-              >Copy as SVG</ContextMenuItem
+              >{{ t.copyAsSVG }}</ContextMenuItem
             >
             <ContextMenuItem :class="cls.item" @select="copyAsPNG">
-              <span>Copy as PNG</span><span class="text-[11px] text-muted">⇧⌘C</span>
+              <span>{{ t.copyAsPNG }}</span
+              ><span class="text-[11px] text-muted">⇧⌘C</span>
             </ContextMenuItem>
             <ContextMenuItem
               :class="cls.item"
               @select="clipboardWrite(editor.copySelectionAsJSX(ids()), 'JSX')"
-              >Copy as JSX</ContextMenuItem
+              >{{ t.copyAsJSX }}</ContextMenuItem
             >
+            <ContextMenuItem :class="cls.item" @select="copyNodeId">{{
+              t.copyNodeId
+            }}</ContextMenuItem>
+            <ContextMenuItem :class="cls.item" @select="copyXPath">{{
+              t.copyXPath
+            }}</ContextMenuItem>
           </ContextMenuSubContent>
         </ContextMenuPortal>
       </ContextMenuSub>

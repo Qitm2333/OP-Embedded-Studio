@@ -38,7 +38,16 @@ export const menuMessages = i18n('menu', {
 
   bold: 'Bold',
   italic: 'Italic',
-  underline: 'Underline'
+  underline: 'Underline',
+
+  pasteHere: 'Paste here',
+  copyPasteAs: 'Copy/Paste as',
+  copyAsText: 'Copy as text',
+  copyAsSVG: 'Copy as SVG',
+  copyAsPNG: 'Copy as PNG',
+  copyAsJSX: 'Copy as JSX',
+  copyNodeId: 'Copy node ID',
+  copyXPath: 'Copy XPath'
 })
 
 export const commandMessages = i18n('commands', {

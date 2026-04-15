@@ -247,6 +247,58 @@ export async function queryByXPath(
   return results
 }
 
+/**
+ * Build an XPath selector that uniquely identifies a node in its page.
+ *
+ * Strategy: walk from the node up to the page root, building path segments.
+ * Each segment uses the node type as the element name. If the name is
+ * unique among siblings of the same type, use `[@name='...']`.
+ * Otherwise fall back to a positional predicate `[n]`.
+ */
+export function nodeToXPath(graph: SceneGraph, nodeId: string): string | null {
+  const node = graph.getNode(nodeId)
+  if (!node) return null
+
+  const segments: string[] = []
+  let current = node
+
+  for (;;) {
+    if (current.type === 'CANVAS') break
+    const parentId: string | null = current.parentId
+    const parent: SceneNode | undefined = parentId ? graph.getNode(parentId) : undefined
+
+    segments.unshift(buildSegment(graph, current, parent))
+    if (!parent || parent.type === 'CANVAS') break
+    current = parent
+  }
+
+  return segments.length > 0 ? '//' + segments.join('/') : null
+}
+
+function buildSegment(graph: SceneGraph, node: SceneNode, parent: SceneNode | undefined): string {
+  const tag = node.type
+  const escaped = escapeXPathName(node.name)
+
+  if (!parent) return `${tag}[@name=${escaped}]`
+
+  const siblings = parent.childIds
+    .map((id) => graph.getNode(id))
+    .filter((n): n is SceneNode => n !== undefined && n.type === tag)
+
+  const sameNameCount = siblings.filter((s) => s.name === node.name).length
+  if (sameNameCount <= 1) return `${tag}[@name=${escaped}]`
+
+  const index = siblings.findIndex((s) => s.id === node.id) + 1
+  return `${tag}[${index}]`
+}
+
+function escapeXPathName(s: string): string {
+  if (!s.includes("'")) return `'${s}'`
+  if (!s.includes('"')) return `"${s}"`
+  const parts = s.split("'").map((p) => `'${p}'`)
+  return `concat(${parts.join(', "\'", ')})`
+}
+
 export async function matchByXPath(
   graph: SceneGraph,
   selector: string,

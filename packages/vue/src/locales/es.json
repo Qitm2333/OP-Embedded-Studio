@@ -30,7 +30,15 @@
     "toggleUI": "Alternar interfaz",
     "bold": "Negrita",
     "italic": "Cursiva",
-    "underline": "Subrayado"
+    "underline": "Subrayado",
+    "pasteHere": "Pegar aquí",
+    "copyPasteAs": "Copiar/Pegar como",
+    "copyAsText": "Copiar como texto",
+    "copyAsSVG": "Copiar como SVG",
+    "copyAsPNG": "Copiar como PNG",
+    "copyAsJSX": "Copiar como JSX",
+    "copyNodeId": "Copiar ID del nodo",
+    "copyXPath": "Copiar XPath"
   },
   "commands": {
     "undo": "Deshacer",

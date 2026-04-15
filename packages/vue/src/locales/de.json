@@ -30,7 +30,15 @@
     "toggleUI": "UI umschalten",
     "bold": "Fett",
     "italic": "Kursiv",
-    "underline": "Unterstrichen"
+    "underline": "Unterstrichen",
+    "pasteHere": "Hier einfügen",
+    "copyPasteAs": "Kopieren/Einfügen als",
+    "copyAsText": "Als Text kopieren",
+    "copyAsSVG": "Als SVG kopieren",
+    "copyAsPNG": "Als PNG kopieren",
+    "copyAsJSX": "Als JSX kopieren",
+    "copyNodeId": "Knoten-ID kopieren",
+    "copyXPath": "XPath kopieren"
   },
   "commands": {
     "undo": "Rückgängig",
