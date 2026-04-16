@@ -213,7 +213,8 @@ export function useKeyboard() {
         !keys['control'].value &&
         !keys['shift'].value &&
         (allowAlt || !keys['alt'].value) &&
-        !store.state.editingTextId
+        !store.state.editingTextId &&
+        !store.state.scrubInputFocused
     )
   }
 

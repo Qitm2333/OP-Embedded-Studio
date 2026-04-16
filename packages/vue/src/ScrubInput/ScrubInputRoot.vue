@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, toRef } from 'vue'
+import { ref, computed, toRef, watch } from 'vue'
 import { useEventListener } from '@vueuse/core'
 
 import { provideScrubInput } from './context'
@@ -25,6 +25,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   'update:modelValue': [value: number]
   commit: [value: number, previous: number]
+  'editing-change': [editing: boolean]
 }>()
 
 const editing = ref(false)
@@ -78,7 +79,13 @@ function startScrub(e: PointerEvent) {
 
 function startEdit() {
   editing.value = true
-  requestAnimationFrame(() => inputRef.value?.select())
+  requestAnimationFrame(() => {
+    const input = inputRef.value
+    if (input) {
+      input.focus()
+      input.select()
+    }
+  })
 }
 
 function commitEdit(e: Event) {
@@ -90,6 +97,14 @@ function commitEdit(e: Event) {
     const clamped = Math.min(props.max, Math.max(props.min, val))
     emit('update:modelValue', clamped)
     if (clamped !== previous) emit('commit', clamped, previous)
+  }
+}
+
+function liveUpdate(e: Event) {
+  const val = +(e.target as HTMLInputElement).value
+  if (!Number.isNaN(val)) {
+    const clamped = Math.min(props.max, Math.max(props.min, val))
+    emit('update:modelValue', clamped)
   }
 }
 
@@ -107,11 +122,14 @@ const ctx = {
   inputRef,
   startScrub,
   startEdit,
+  liveUpdate,
   commitEdit,
   onKeydown
 }
 
 provideScrubInput(ctx)
+
+watch(editing, (v) => emit('editing-change', v))
 </script>
 
 <template>

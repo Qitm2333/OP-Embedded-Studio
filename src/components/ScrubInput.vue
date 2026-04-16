@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ScrubInputRoot, ScrubInputField, ScrubInputDisplay } from '@open-pencil/vue'
+import { useEditorStore } from '@/stores/editor'
+
+const store = useEditorStore()
 
 const { modelValue, min, max, step, icon, label, suffix, sensitivity, placeholder } = defineProps<{
   modelValue: number | symbol
@@ -21,7 +24,7 @@ const emit = defineEmits<{
 
 <template>
   <ScrubInputRoot
-    v-slot="{ editing, startScrub, placeholder: ph }"
+    v-slot="{ editing, startScrub, startEdit, placeholder: ph }"
     :model-value="modelValue"
     :min="min"
     :max="max"
@@ -30,12 +33,15 @@ const emit = defineEmits<{
     :placeholder="placeholder"
     @update:model-value="emit('update:modelValue', $event)"
     @commit="(val: number, prev: number) => emit('commit', val, prev)"
+    @editing-change="store.state.scrubInputFocused = $event"
   >
     <div
       data-test-id="scrub-input"
-      class="group flex h-[26px] min-w-0 flex-1 items-center rounded border border-border bg-input focus-within:border-accent"
+      :tabindex="editing ? undefined : 0"
+      class="group flex h-[26px] min-w-0 flex-1 items-center rounded border border-border bg-input focus-within:border-accent focus:border-accent"
       :style="{ cursor: editing ? 'auto' : 'ew-resize' }"
       @pointerdown="!editing && startScrub($event)"
+      @focus="!editing && startEdit()"
     >
       <span
         class="flex shrink-0 items-center justify-center self-stretch px-[5px] text-muted select-none [&>*]:pointer-events-none"

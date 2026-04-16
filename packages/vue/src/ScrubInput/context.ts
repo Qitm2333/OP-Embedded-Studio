@@ -11,6 +11,7 @@ export interface ScrubInputContext {
   inputRef: Ref<HTMLInputElement | null>
   startScrub: (e: PointerEvent) => void
   startEdit: () => void
+  liveUpdate: (e: Event) => void
   commitEdit: (e: Event) => void
   onKeydown: (e: KeyboardEvent) => void
 }

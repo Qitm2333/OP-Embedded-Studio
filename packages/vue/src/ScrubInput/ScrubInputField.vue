@@ -17,6 +17,7 @@ const ctx = useScrubInput()
     v-bind="$attrs"
     @blur="ctx.commitEdit"
     @keydown="ctx.onKeydown"
+    @input="ctx.liveUpdate"
   />
 </template>
 
