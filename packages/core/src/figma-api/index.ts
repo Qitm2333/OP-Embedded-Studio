@@ -1,7 +1,14 @@
 import { IS_BROWSER } from '../constants'
 import { computeBounds } from '../geometry'
 import { copyFills, copyStrokes, copyEffects } from '../scene-graph/copy'
-import { FigmaNodeProxy, INTERNAL_ID, MIXED, type FigmaFontName, type NodeProxyHost } from './proxy'
+import {
+  FigmaNodeProxy,
+  INTERNAL_ID,
+  MIXED,
+  type FigmaFont,
+  type FigmaFontName,
+  type NodeProxyHost
+} from './proxy'
 
 import type { RasterExportFormat } from '../io/formats/raster'
 import type {
@@ -15,7 +22,7 @@ import type {
 import type { Rect, Vector } from '../types'
 
 export { FigmaNodeProxy } from './proxy'
-export type { FigmaFontName } from './proxy'
+export type { FigmaFont, FigmaFontName } from './proxy'
 
 export function computeImageHash(data: Uint8Array): string {
   let h1 = 0x811c9dc5 >>> 0
@@ -368,6 +375,12 @@ export class FigmaAPI implements NodeProxyHost {
 
   async loadFontAsync(_fontName: FigmaFontName): Promise<void> {
     // No-op: we don't gate text editing on font loading
+  }
+
+  async listAvailableFontsAsync(): Promise<FigmaFont[]> {
+    // Default: pure browser / test contexts have no enumeration surface.
+    // Desktop hosts override this to return system + bundled fonts.
+    return []
   }
 
   notify(message: string): { cancel: () => void } {
