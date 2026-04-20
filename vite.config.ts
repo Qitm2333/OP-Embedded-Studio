@@ -71,7 +71,7 @@ export default defineConfig(async ({ command }) => ({
       registerType: 'autoUpdate',
       devOptions: { enabled: false },
       workbox: {
-        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,wasm,png,ico,ttf,webmanifest}'],
         navigateFallback: '/index.html'
       },
