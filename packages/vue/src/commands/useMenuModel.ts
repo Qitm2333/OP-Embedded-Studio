@@ -36,7 +36,7 @@ export type MenuEntry = MenuActionNode | MenuSeparatorNode
 export function useMenuModel() {
   const editor = useEditor()
   const { menuItem: commandMenuItem, otherPages, moveSelectionToPage } = useEditorCommands()
-  const { hasSelection, isGroup, isInstance, isComponent, canCreateComponentSet, selectedNode } =
+  const { hasSelection, isGroup, isInstance, isComponent, canCreateComponentSet } =
     useSelectionState()
 
   const t = useStore(menuMessages)
@@ -98,12 +98,11 @@ export function useMenuModel() {
       ...(isGroup.value ? [commandMenuItem('selection.ungroup', '⇧⌘G')] : []),
       ...(hasSelection.value ? [commandMenuItem('selection.wrapInAutoLayout', '⇧A')] : []),
       { separator: true },
-      commandMenuItem('selection.createComponent', '⌥⌘K'),
+      ...(isComponent.value
+        ? [commandMenuItem('selection.createInstance')]
+        : [commandMenuItem('selection.createComponent', '⌥⌘K')]),
       ...(canCreateComponentSet.value
         ? [commandMenuItem('selection.createComponentSet', '⇧⌘K')]
-        : []),
-      ...(isComponent.value && selectedNode.value
-        ? [commandMenuItem('selection.createInstance')]
         : []),
       ...(isInstance.value ? [commandMenuItem('selection.goToMainComponent')] : []),
       ...(isInstance.value ? [commandMenuItem('selection.detachInstance', '⌥⌘B')] : []),
