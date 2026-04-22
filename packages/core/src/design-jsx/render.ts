@@ -36,6 +36,7 @@ export function buildComponent(jsxString: string): () => unknown {
     code = transform(`${aliases}\nreturn function __render() { return <>${trimmed}</> }`, opts).code
   }
 
+  // eslint-disable-next-line typescript-eslint/no-implied-eval -- sucrase output must be evaluated at runtime
   return new Function('React', code)(React) as () => unknown
 }
 

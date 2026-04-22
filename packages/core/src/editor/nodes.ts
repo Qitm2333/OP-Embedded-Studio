@@ -205,8 +205,8 @@ export function createNodeActions(ctx: EditorContext) {
     if (!nudgeOriginals) {
       nudgeOriginals = new Map()
       for (const id of movable) {
-        const node = ctx.graph.getNode(id)!
-        nudgeOriginals.set(id, { x: node.x, y: node.y })
+        const node = ctx.graph.getNode(id)
+        if (node) nudgeOriginals.set(id, { x: node.x, y: node.y })
       }
     }
 

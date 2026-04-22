@@ -811,8 +811,9 @@ export class SceneGraph {
     if (cached) return cached
 
     const node = this.getNode(id)
+    if (!node) return { x: 0, y: 0 }
 
-    const result = getAbsolutePosition(node!, this)
+    const result = getAbsolutePosition(node, this)
     this.absPosCache.set(id, result)
     return result
   }

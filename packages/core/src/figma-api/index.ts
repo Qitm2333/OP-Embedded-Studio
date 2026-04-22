@@ -384,7 +384,7 @@ export class FigmaAPI implements NodeProxyHost {
   }
 
   notify(message: string): { cancel: () => void } {
-    if (typeof console !== 'undefined') console.log(`[figma.notify] ${message}`)
+    if (typeof console !== 'undefined') console.warn(`[figma.notify] ${message}`)
     // eslint-disable-next-line no-empty-function
     return { cancel() {} }
   }

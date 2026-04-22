@@ -211,7 +211,7 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
     }
 
     ws.onopen = () => {
-      console.log('[Automation] WebSocket connected to MCP server')
+      console.debug('[Automation] WebSocket connected to MCP server')
       ws?.send(JSON.stringify({ type: 'register', token }))
     }
 

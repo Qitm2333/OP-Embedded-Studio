@@ -32,7 +32,11 @@ function connect() {
 
   ws.on('message', (raw) => {
     try {
-      const msg = JSON.parse(String(raw)) as {
+      let text: string
+      if (Buffer.isBuffer(raw)) text = raw.toString('utf8')
+      else if (Array.isArray(raw)) text = Buffer.concat(raw).toString('utf8')
+      else text = Buffer.from(raw).toString('utf8')
+      const msg = JSON.parse(text) as {
         type: string
         id?: string
         token?: string
