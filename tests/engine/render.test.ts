@@ -336,7 +336,7 @@ describe('renderJSX (string → scene graph)', () => {
         <Text name="Hello" size={16} color="#000">World</Text>
       </Frame>
     `
-    const result = await renderJSX(g, jsx)
+    const [result] = await renderJSX(g, jsx)
 
     expect(result.name).toBe('Test')
     const node = g.nodes.get(result.id)!
@@ -356,7 +356,7 @@ describe('renderJSX (string → scene graph)', () => {
         <Text name="Description" size={14} color="#6B7280">Lorem ipsum</Text>
       </Frame>
     `
-    const result = await renderJSX(g, jsx)
+    const [result] = await renderJSX(g, jsx)
     const card = g.nodes.get(result.id)!
 
     expect(card.layoutMode).toBe('VERTICAL')
@@ -365,7 +365,7 @@ describe('renderJSX (string → scene graph)', () => {
 
   it('renders with position', async () => {
     const g = createGraph()
-    const result = await renderJSX(g, '<Frame name="At" w={50} h={50} />', { x: 100, y: 200 })
+    const [result] = await renderJSX(g, '<Frame name="At" w={50} h={50} />', { x: 100, y: 200 })
     const node = g.nodes.get(result.id)!
 
     expect(node.x).toBe(100)
@@ -530,7 +530,7 @@ describe('grid layout rendering', () => {
         <Rectangle name="B" w={50} h={50} />
       </Frame>
     `
-    const result = await renderJSX(g, jsx)
+    const [result] = await renderJSX(g, jsx)
     const frame = g.nodes.get(result.id)!
 
     expect(frame.layoutMode).toBe('GRID')
@@ -605,7 +605,7 @@ describe('grid layout rendering', () => {
         </Frame>
       </Frame>
     `
-    const result = await renderJSX(g, jsx)
+    const [result] = await renderJSX(g, jsx)
     computeAllLayouts(g)
     const grid = g.getChildren(result.id).find(c => c.name === 'G')!
     expect(grid.width).toBe(360)
@@ -623,7 +623,7 @@ describe('grid layout rendering', () => {
         </Frame>
       </Frame>
     `
-    const result = await renderJSX(g, jsx)
+    const [result] = await renderJSX(g, jsx)
     computeAllLayouts(g)
     const grid = g.getChildren(result.id).find(c => c.name === 'G')!
     expect(grid.width).toBe(350)
@@ -642,7 +642,7 @@ describe('grid layout rendering', () => {
         </Frame>
       </Frame>
     `
-    const result = await renderJSX(g, jsx)
+    const [result] = await renderJSX(g, jsx)
     computeAllLayouts(g)
     const content = g.getChildren(result.id).find(c => c.name === 'Content')!
     const grid = g.getChildren(content.id).find(c => c.name === 'G')!
@@ -661,7 +661,7 @@ describe('grid layout rendering', () => {
         </Frame>
       </Frame>
     `
-    const result = await renderJSX(g, jsx)
+    const [result] = await renderJSX(g, jsx)
     computeAllLayouts(g)
     const grid = g.getChildren(result.id).find(c => c.name === 'G')!
     expect(grid.height).toBe(460)
@@ -671,7 +671,7 @@ describe('grid layout rendering', () => {
 describe('text props round-trip', () => {
   it('lineHeight renders and exports', async () => {
     const g = createGraph()
-    const result = await renderJSX(g, '<Text color="#000" lineHeight={24}>Hello</Text>')
+    const [result] = await renderJSX(g, '<Text color="#000" lineHeight={24}>Hello</Text>')
     const n = g.getNode(result.id)!
     expect(n.lineHeight).toBe(24)
     const jsx = sceneNodeToJSX(n.id, g)
@@ -680,7 +680,7 @@ describe('text props round-trip', () => {
 
   it('letterSpacing renders and exports', async () => {
     const g = createGraph()
-    const result = await renderJSX(g, '<Text color="#000" letterSpacing={2}>Spaced</Text>')
+    const [result] = await renderJSX(g, '<Text color="#000" letterSpacing={2}>Spaced</Text>')
     const n = g.getNode(result.id)!
     expect(n.letterSpacing).toBe(2)
     const jsx = sceneNodeToJSX(n.id, g)
@@ -689,7 +689,7 @@ describe('text props round-trip', () => {
 
   it('textDecoration renders and exports', async () => {
     const g = createGraph()
-    const result = await renderJSX(g, '<Text color="#000" textDecoration="underline">Link</Text>')
+    const [result] = await renderJSX(g, '<Text color="#000" textDecoration="underline">Link</Text>')
     const n = g.getNode(result.id)!
     expect(n.textDecoration).toBe('UNDERLINE')
     const jsx = sceneNodeToJSX(n.id, g)
@@ -698,7 +698,7 @@ describe('text props round-trip', () => {
 
   it('textCase renders and exports', async () => {
     const g = createGraph()
-    const result = await renderJSX(g, '<Text color="#000" textCase="upper">label</Text>')
+    const [result] = await renderJSX(g, '<Text color="#000" textCase="upper">label</Text>')
     const n = g.getNode(result.id)!
     expect(n.textCase).toBe('UPPER')
     const jsx = sceneNodeToJSX(n.id, g)
@@ -707,7 +707,7 @@ describe('text props round-trip', () => {
 
   it('maxLines renders with truncation', async () => {
     const g = createGraph()
-    const result = await renderJSX(g, '<Text color="#000" maxLines={2}>Long text here</Text>')
+    const [result] = await renderJSX(g, '<Text color="#000" maxLines={2}>Long text here</Text>')
     const n = g.getNode(result.id)!
     expect(n.maxLines).toBe(2)
     expect(n.textTruncation).toBe('ENDING')
@@ -717,7 +717,7 @@ describe('text props round-trip', () => {
 
   it('truncate without maxLines', async () => {
     const g = createGraph()
-    const result = await renderJSX(g, '<Text color="#000" truncate>Overflow</Text>')
+    const [result] = await renderJSX(g, '<Text color="#000" truncate>Overflow</Text>')
     const n = g.getNode(result.id)!
     expect(n.textTruncation).toBe('ENDING')
     const jsx = sceneNodeToJSX(n.id, g)
@@ -726,7 +726,7 @@ describe('text props round-trip', () => {
 
   it('defaults omit text props', async () => {
     const g = createGraph()
-    const result = await renderJSX(g, '<Text color="#000">Plain</Text>')
+    const [result] = await renderJSX(g, '<Text color="#000">Plain</Text>')
     const n = g.getNode(result.id)!
     expect(n.lineHeight).toBeNull()
     expect(n.letterSpacing).toBe(0)
@@ -744,7 +744,7 @@ describe('text props round-trip', () => {
 
   it('text w="fill" in flex="col" exports as w="fill" not w={computed}', async () => {
     const g = createGraph()
-    const result = await renderJSX(g, `
+    const [result] = await renderJSX(g, `
       <Frame name="Card" flex="col" w={300} p={20}>
         <Text name="Title" size={22} weight="bold" color="#111" w="fill">Hello World</Text>
       </Frame>
@@ -760,7 +760,7 @@ describe('text props round-trip', () => {
 
   it('text grow={1} in flex="row" exports as grow not w={computed}', async () => {
     const g = createGraph()
-    const result = await renderJSX(g, `
+    const [result] = await renderJSX(g, `
       <Frame name="Row" flex="row" w={300}>
         <Text name="Label" color="#999" w={60}>Label</Text>
         <Text name="Value" color="#111" w="fill">Some value text</Text>

@@ -85,11 +85,12 @@ export const render = defineTool({
       }
     }
 
-    const result = await renderJSX(figma.graph, args.jsx, {
+    const results = await renderJSX(figma.graph, args.jsx, {
       parentId,
       x: args.x,
       y: args.y
     })
+    const result = results[0]
 
     if (args.replace_id && replaceIndex >= 0) {
       figma.graph.reorderChild(result.id, parentId, replaceIndex)
@@ -98,7 +99,15 @@ export const render = defineTool({
       figma.graph.reorderChild(result.id, parentId, args.insert_index)
     }
 
-    return { id: result.id, name: result.name, type: result.type, children: result.childIds }
+    return {
+      id: result.id,
+      name: result.name,
+      type: result.type,
+      children: result.childIds,
+      ...(results.length > 1
+        ? { siblings: results.slice(1).map((r) => ({ id: r.id, name: r.name, type: r.type })) }
+        : {})
+    }
   }
 })
 

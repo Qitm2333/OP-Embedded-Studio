@@ -42,3 +42,8 @@ interface Window {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   __OPEN_PENCIL_STORE__?: any
 }
+
+declare module '*.md' {
+  const content: string
+  export default content
+}

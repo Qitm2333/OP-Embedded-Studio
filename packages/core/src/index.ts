@@ -395,7 +395,8 @@ export {
 export * from './io'
 export * from './lint'
 
-export { CODEGEN_PROMPT } from './tools/prompts/codegen-prompt'
+export { default as CODEGEN_PROMPT } from './tools/prompts/codegen.md'
+export { default as JSX_REFERENCE } from './tools/prompts/jsx-reference.md'
 export {
   setPexelsApiKey,
   setUnsplashAccessKey,

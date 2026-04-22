@@ -11,22 +11,32 @@ import type { SceneGraph } from '../scene-graph'
  * Works in both Node/Bun and the browser (no native bindings).
  */
 export function buildComponent(jsxString: string): () => unknown {
-  const code = `
+  const trimmed = jsxString.trim()
+
+  const aliases = `
     const __h = React.createElement
+    const __frag = ''
     const Frame = 'frame', Text = 'text', Rectangle = 'rectangle', Ellipse = 'ellipse'
     const Line = 'line', Star = 'star', Polygon = 'polygon', Vector = 'vector'
     const Group = 'group', Section = 'section', View = 'frame', Rect = 'rectangle'
+    const Component = 'component', Instance = 'frame'
     const Icon = 'icon'
-    return function Component() { return ${jsxString.trim()} }
   `
-
-  const result = transform(code, {
-    transforms: ['typescript', 'jsx'],
+  const opts = {
+    transforms: ['typescript', 'jsx'] as Array<'typescript' | 'jsx'>,
     jsxPragma: '__h',
+    jsxFragmentPragma: '__frag',
     production: true
-  })
+  }
 
-  return new Function('React', result.code)(React) as () => unknown
+  let code: string
+  try {
+    code = transform(`${aliases}\nreturn function __render() { return ${trimmed} }`, opts).code
+  } catch {
+    code = transform(`${aliases}\nreturn function __render() { return <>${trimmed}</> }`, opts).code
+  }
+
+  return new Function('React', code)(React) as () => unknown
 }
 
 interface RenderJSXOptions {
@@ -43,7 +53,7 @@ export async function renderJSX(
   graph: SceneGraph,
   jsxString: string,
   options?: RenderJSXOptions
-): Promise<RenderResult> {
+): Promise<RenderResult[]> {
   const Component = buildComponent(jsxString)
   const element = React.createElement(Component, null)
   const tree = resolveToTree(element)
@@ -52,7 +62,19 @@ export async function renderJSX(
     throw new Error('JSX must return a Figma element (Frame, Text, etc)')
   }
 
-  return renderTree(graph, tree, options)
+  if (tree.type === '' && tree.children.length > 0) {
+    const results: RenderResult[] = []
+    for (const child of tree.children) {
+      if (typeof child === 'string') continue
+      results.push(await renderTree(graph, child, options))
+    }
+    if (results.length === 0) {
+      throw new Error('JSX must return a Figma element (Frame, Text, etc)')
+    }
+    return results
+  }
+
+  return [await renderTree(graph, tree, options)]
 }
 
 /**

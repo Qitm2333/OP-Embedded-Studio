@@ -38,6 +38,14 @@ export default defineConfig(async ({ command }) => ({
   },
   plugins: [
     {
+      name: 'raw-md',
+      transform(code: string, id: string) {
+        if (id.endsWith('.md')) {
+          return { code: `export default ${JSON.stringify(code)}`, map: null }
+        }
+      }
+    },
+    {
       name: 'copy-canvaskit-wasm',
       buildStart() {
         const src = 'node_modules/canvaskit-wasm/bin/canvaskit.wasm'
