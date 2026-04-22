@@ -5,9 +5,24 @@
 ### Features
 
 - Add stdio transport for MCP server — `openpencil-mcp` now works as a proper stdio MCP server for Claude Code, Cursor, etc. HTTP server available as `openpencil-mcp-http`.
+- Default canvas background to dark when system prefers dark color scheme
+- Add `list_available_fonts` MCP tool for font discovery
+- Copy node ID / XPath from context menu; CLI selection command
+- Arrow key nudge for selected nodes (1px, Shift+arrow for 10px)
 
 ### Fixes
 
+- Fix Backspace not deleting selected nodes after clicking on canvas — canvas now receives focus on click so keyboard shortcuts aren't blocked by stale input focus
+- Support Cmd/Ctrl+click for additive multi-select in layers panel (previously only Shift+click worked)
+- Fix macOS Tauri build — move `NSAllowsLocalNetworking` ATS config from invalid `tauri.conf.json` property to a proper `Info.plist` file
+- Fix tab order and keyboard handling in inspector panel
+- Fix design token variables not resolved before passing to yoga-layout
+- Suppress keyboard shortcuts while editing property panel inputs
+- Fix tooltip competing with popover trigger on Windows
+- Fix hit area for nodes with rotated parents
+- Error toasts auto-dismiss, deduplicate, and cap stack at 5
+- Bump yoga-layout to 3.3.0-grid.3 with `Node.free()` support
+- Bump PWA precache limit for canvaskit-webgpu
 - Fix color picker dragging flooding the undo stack — fill/stroke/effect color and opacity drags now collapse into a single undo entry per interaction via debounced batching in `PropertyListRoot`
 - Fix .fig import crash on alias variables without a GUID
 - Fix external links in AI panel blocked by Tauri ACL — use opener plugin instead of shell
