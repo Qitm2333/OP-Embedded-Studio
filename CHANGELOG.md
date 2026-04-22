@@ -12,6 +12,12 @@
 - JSX renderer: `position="absolute"`, `top`, `left` props for absolute children inside auto-layout containers
 - MCP server sends `notifications/tools/list_changed` when the desktop app connects or disconnects
 - Headless text measurement via opentype.js per-glyph advance widths — no CanvasKit needed
+- Add `open_file` and `new_document` MCP tools with `OPENPENCIL_MCP_ROOT` path scoping
+- Optional `path` param on `export_image`, `export_svg`, `get_jsx` — write output to disk instead of returning base64/string
+- Multi-root JSX support — multiple top-level elements auto-wrapped in a fragment
+- `Component` and `Instance` tag aliases in JSX renderer
+- JSX prop reference doc — copy to clipboard via book icon in Code panel
+- Prompts (`CODEGEN_PROMPT`, `JSX_REFERENCE`) moved from embedded strings to markdown files
 
 ### Fixes
 
@@ -37,6 +43,9 @@
 - Fix `--help` output with huge vertical gaps between commands — remove inline examples from query description
 - Fix `openpencil-mcp` npm package missing `dist/stdio.js` — explicitly list entry points in tsconfig
 - Show toast when MCP server fails to start instead of silently swallowing the error
+- Fix provider settings popover not appearing — tooltip wrapper broke floating-ui positioning
+- Fix `set_font_range` producing invalid style runs that crash `.fig` export — use `applyStyleToRange`, apply color and fontWeight from style name
+- Fix MCP "app not connected" error — message now instructs the agent to stop and inform the user
 - Fix external links in AI panel blocked by Tauri ACL — use opener plugin instead of shell
 
 ## 0.11.6 — 2026-04-08
