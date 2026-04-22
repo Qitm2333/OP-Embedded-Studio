@@ -203,6 +203,7 @@ export function startServer(options: ServerOptions = {}) {
         browserWs = ws
         browserToken = msg.token
         browserRegistered = true
+        notifyToolsChanged()
         return
       }
       if (!browserRegistered || browserWs !== ws) return
@@ -246,6 +247,7 @@ export function startServer(options: ServerOptions = {}) {
         browserToken = null
         browserRegistered = false
         rejectAllPending('Browser disconnected')
+        notifyToolsChanged()
       }
     })
   })
@@ -334,9 +336,16 @@ export function startServer(options: ServerOptions = {}) {
   type MCPTransport = { handleRequest: (r: Request) => Promise<Response> }
   interface MCPSession {
     transport: MCPTransport
+    server: McpServer
     lastSeen: number
   }
   const mcpSessions = new Map<string, MCPSession>()
+
+  function notifyToolsChanged() {
+    for (const session of mcpSessions.values()) {
+      session.server.sendToolListChanged().catch(() => undefined)
+    }
+  }
   const MAX_MCP_SESSIONS = 10
   const MCP_SESSION_TTL_MS = 15 * 60_000
 
@@ -357,7 +366,7 @@ export function startServer(options: ServerOptions = {}) {
       sessionIdGenerator: () => id
     })
     void mcpServer.connect(transport)
-    mcpSessions.set(id, { transport, lastSeen: Date.now() })
+    mcpSessions.set(id, { transport, server: mcpServer, lastSeen: Date.now() })
     return transport
   }
 

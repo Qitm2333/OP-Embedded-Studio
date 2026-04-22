@@ -187,32 +187,44 @@ function applySizeOverrides(
   const isParentCol = parentLayout === 'VERTICAL'
   const isParentGrid = parentLayout === 'GRID'
 
-  if (w === 'fill') {
-    if (isParentGrid) o.layoutAlignSelf = 'STRETCH'
-    else if (isParentRow) o.layoutGrow = 1
-    else if (isParentCol) o.layoutAlignSelf = 'STRETCH'
-    else {
-      o.layoutGrow = 1
-      o.layoutAlignSelf = 'STRETCH'
-    }
-  }
-  if (h === 'fill') {
-    if (isParentGrid) o.layoutAlignSelf = 'STRETCH'
-    else if (isParentCol) o.layoutGrow = 1
-    else if (isParentRow) o.layoutAlignSelf = 'STRETCH'
-    else o.layoutAlignSelf = 'STRETCH'
-  }
+  applyFillSizing(w, 'width', isParentGrid, isParentRow, isParentCol, o)
+  applyFillSizing(h, 'height', isParentGrid, isParentRow, isParentCol, o)
 
   if (props.x !== undefined) o.x = props.x as number
   if (props.y !== undefined) o.y = props.y as number
+  if (props.top !== undefined) o.y = props.top as number
+  if (props.left !== undefined) o.x = props.left as number
 
-  const hasExplicitPosition = props.x !== undefined || props.y !== undefined
-  const isInsideAutoLayout = parentLayout !== 'NONE'
-  if (hasExplicitPosition && isInsideAutoLayout) {
+  if (props.position === 'absolute') o.layoutPositioning = 'ABSOLUTE'
+  const hasExplicitPosition =
+    props.x !== undefined ||
+    props.y !== undefined ||
+    props.top !== undefined ||
+    props.left !== undefined
+  if (hasExplicitPosition && parentLayout !== 'NONE') {
     o.layoutPositioning = 'ABSOLUTE'
   }
 
   return { w, h }
+}
+
+function applyFillSizing(
+  dim: unknown,
+  axis: 'width' | 'height',
+  isGrid: boolean,
+  isRow: boolean,
+  isCol: boolean,
+  o: Partial<SceneNode>
+): void {
+  if (dim !== 'fill') return
+  const isPrimary = axis === 'width' ? isRow : isCol
+  const isCross = axis === 'width' ? isCol : isRow
+  if (isGrid || isCross) o.layoutAlignSelf = 'STRETCH'
+  else if (isPrimary) o.layoutGrow = 1
+  else {
+    o.layoutGrow = 1
+    o.layoutAlignSelf = 'STRETCH'
+  }
 }
 
 function applyVisualOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
