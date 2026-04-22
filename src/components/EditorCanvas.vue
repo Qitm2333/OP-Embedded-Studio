@@ -66,8 +66,9 @@ function onContextMenu(e: MouseEvent) {
         <canvas
           ref="canvasRef"
           data-test-id="canvas-element"
+          tabindex="-1"
           :style="{ cursor }"
-          class="block size-full touch-none"
+          class="block size-full touch-none outline-none"
         />
         <Transition
           enter-active-class="transition-opacity duration-150"

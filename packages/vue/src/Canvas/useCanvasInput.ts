@@ -350,6 +350,7 @@ export function useCanvasInput(
   }
 
   function onMouseDown(e: MouseEvent) {
+    if (!editor.state.editingTextId) canvasRef.value?.focus()
     editor.setHoveredNode(null)
     const { sx, sy, cx, cy } = getCoords(e)
 
