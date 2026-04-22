@@ -16,6 +16,8 @@ import Yoga, {
 } from 'yoga-layout'
 
 import { resolveNodeLayoutDirection } from './text/direction'
+import { weightToStyle } from './text/fonts'
+import { measureTextWithOpenType } from './text/opentype'
 
 import type { GridTrack, SceneGraph, SceneNode } from './scene-graph'
 
@@ -34,7 +36,14 @@ const GLYPH_WIDTH_FACTOR = 0.6
 // this when available — this is only the fallback.
 function estimateTextSize(node: SceneNode, maxWidth?: number): { width: number; height: number } {
   const fontSize = node.fontSize || 14
+  const family = node.fontFamily || 'Inter'
+  const style = weightToStyle(node.fontWeight || 400, node.italic)
   const text = node.text || ''
+
+  const explicitLineH = (node.lineHeight ?? 0) > 0 ? (node.lineHeight as number) : undefined
+  const measured = measureTextWithOpenType(text, fontSize, family, style, maxWidth, explicitLineH)
+  if (measured) return measured
+
   const charWidth = fontSize * GLYPH_WIDTH_FACTOR
   const singleLineWidth = Math.ceil(text.length * charWidth)
   const lineH = (node.lineHeight ?? 0) > 0 ? (node.lineHeight as number) : Math.ceil(fontSize * 1.4)
