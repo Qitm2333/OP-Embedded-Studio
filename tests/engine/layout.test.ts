@@ -1193,7 +1193,7 @@ describe('Auto Layout', () => {
       expect(updatedArrow2.x).toBe(190)
     })
 
-    test('without measurer, text uses estimated size instead of 100x100 default', () => {
+    test('without measurer, text preserves stored dimensions from .fig import', () => {
       const graph = new SceneGraph()
       const pid = pageId(graph)
 
@@ -1219,14 +1219,43 @@ describe('Auto Layout', () => {
 
       const children = graph.getChildren(frame.id)
       const updatedText = children[0]
-      // Rough estimate: ~0.6 × fontSize × charCount, not the 100×100 default
+      expect(updatedText.width).toBe(200)
+      expect(updatedText.height).toBe(20)
+    })
+
+    test('without measurer, text with 100x100 default falls back to estimate', () => {
+      const graph = new SceneGraph()
+      const pid = pageId(graph)
+
+      const frame = autoFrame(graph, pid, {
+        width: 300,
+        height: 40,
+        layoutMode: 'HORIZONTAL',
+        primaryAxisSizing: 'FIXED',
+        counterAxisSizing: 'FIXED',
+        primaryAxisAlign: 'CENTER',
+      })
+
+      graph.createNode('TEXT', frame.id, {
+        width: 100,
+        height: 100,
+        text: 'Test',
+        fontSize: 14,
+        textAutoResize: 'WIDTH_AND_HEIGHT' as const,
+      })
+
+      setTextMeasurer(null)
+      computeAllLayouts(graph)
+
+      const children = graph.getChildren(frame.id)
+      const updatedText = children[0]
       expect(updatedText.width).toBeLessThan(100)
       expect(updatedText.width).toBeGreaterThan(0)
       expect(updatedText.height).toBeLessThan(100)
       expect(updatedText.height).toBeGreaterThan(0)
     })
 
-    test('without measurer, HEIGHT text estimates multi-line wrapping', () => {
+    test('without measurer, HEIGHT text preserves stored height from .fig import', () => {
       const graph = new SceneGraph()
       const pid = pageId(graph)
 
@@ -1240,7 +1269,7 @@ describe('Auto Layout', () => {
 
       graph.createNode('TEXT', frame.id, {
         width: 269,
-        height: 20,
+        height: 66,
         text: 'GDP Growth Exceeds Expectations at 3.1% in Q2 Report That Nobody Expected',
         fontSize: 15,
         lineHeight: 22,
@@ -1252,9 +1281,37 @@ describe('Auto Layout', () => {
 
       const children = graph.getChildren(frame.id)
       const updatedText = children[0]
-      // 74 chars × 15 × 0.6 = 666px single line, in 269px → ~3 lines × 22px = 66px
-      expect(updatedText.height).toBeGreaterThan(22)
+      expect(updatedText.height).toBe(66)
       expect(updatedText.width).toBe(269)
+    })
+
+    test('without measurer, HEIGHT text with 100x100 default falls back to estimate', () => {
+      const graph = new SceneGraph()
+      const pid = pageId(graph)
+
+      const frame = autoFrame(graph, pid, {
+        width: 269,
+        height: 400,
+        layoutMode: 'VERTICAL',
+        primaryAxisSizing: 'FIXED',
+        counterAxisSizing: 'FIXED',
+      })
+
+      graph.createNode('TEXT', frame.id, {
+        width: 100,
+        height: 100,
+        text: 'GDP Growth Exceeds Expectations at 3.1% in Q2 Report That Nobody Expected',
+        fontSize: 15,
+        lineHeight: 22,
+        textAutoResize: 'HEIGHT' as const,
+      })
+
+      setTextMeasurer(null)
+      computeAllLayouts(graph)
+
+      const children = graph.getChildren(frame.id)
+      const updatedText = children[0]
+      expect(updatedText.height).toBeGreaterThan(22)
     })
 
     test('text with w="fill" in flex="col" stretches to parent width', () => {

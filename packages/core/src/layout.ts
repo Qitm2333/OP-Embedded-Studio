@@ -422,12 +422,22 @@ function configureChildAsLeaf(yogaChild: YogaNode, child: SceneNode, parent: Sce
   if (needsMeasureFunc) {
     configureTextLeaf(yogaChild, child, parent)
   } else if (isText && !globalTextMeasurer && child.textAutoResize !== 'NONE') {
-    // No CanvasKit — use rough estimate so HUG containers don't inherit
-    // the 100×100 default SceneNode size. See estimateTextSize above.
+    // No CanvasKit — prefer stored dimensions from .fig import (Figma's
+    // ground truth) over the rough character-count estimate. Only fall back
+    // to estimateTextSize for newly-created nodes that still carry the
+    // 100×100 default SceneNode size.
+    const hasStoredSize =
+      child.width > 0 && child.height > 0 && !(child.width === 100 && child.height === 100)
+
     if (child.textAutoResize === 'WIDTH_AND_HEIGHT') {
-      const est = estimateTextSize(child)
-      yogaChild.setWidth(est.width)
-      yogaChild.setHeight(est.height)
+      if (hasStoredSize) {
+        yogaChild.setWidth(child.width)
+        yogaChild.setHeight(child.height)
+      } else {
+        const est = estimateTextSize(child)
+        yogaChild.setWidth(est.width)
+        yogaChild.setHeight(est.height)
+      }
     } else if (child.textAutoResize === 'HEIGHT') {
       const stretches =
         child.layoutAlignSelf === 'STRETCH' ||
@@ -435,8 +445,12 @@ function configureChildAsLeaf(yogaChild: YogaNode, child: SceneNode, parent: Sce
       if (!(!isRow && stretches)) {
         yogaChild.setWidth(child.width)
       }
-      const est = estimateTextSize(child, child.width)
-      yogaChild.setHeight(est.height)
+      if (hasStoredSize) {
+        yogaChild.setHeight(child.height)
+      } else {
+        const est = estimateTextSize(child, child.width)
+        yogaChild.setHeight(est.height)
+      }
     }
   } else {
     configureNonTextLeaf(yogaChild, child, isRow, stretchCross)
