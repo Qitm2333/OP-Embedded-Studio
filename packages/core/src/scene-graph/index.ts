@@ -78,6 +78,25 @@ export function cloneVectorNetwork(vn: VectorNetwork): VectorNetwork {
   }
 }
 
+/**
+ * Ensure every segment has tangentStart/tangentEnd.
+ * Missing tangents default to {x:0, y:0} (straight line segments).
+ * Use at system boundaries where input may come from JSON/MCP.
+ */
+export function normalizeVectorNetwork(vn: VectorNetwork): VectorNetwork {
+  const ZERO: Vector = { x: 0, y: 0 }
+  return {
+    vertices: vn.vertices,
+    segments: vn.segments.map((s) => ({
+      start: s.start,
+      end: s.end,
+      tangentStart: (s as Partial<VectorSegment>).tangentStart ?? { ...ZERO },
+      tangentEnd: (s as Partial<VectorSegment>).tangentEnd ?? { ...ZERO }
+    })),
+    regions: vn.regions
+  }
+}
+
 export interface GeometryPath {
   windingRule: WindingRule
   commandsBlob: Uint8Array
