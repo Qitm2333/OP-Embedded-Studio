@@ -24,15 +24,7 @@ async function getData(
 
 export default defineCommand({
   meta: {
-    description: `Query nodes using XPath selectors
-
-Examples:
-  open-pencil query file.fig "//FRAME"                              # All frames
-  open-pencil query file.fig "//FRAME[@width < 300]"                # Frames narrower than 300px
-  open-pencil query file.fig "//COMPONENT[starts-with(@name, 'Button')]"  # Components starting with Button
-  open-pencil query file.fig "//SECTION/FRAME"                      # Direct frame children of sections
-  open-pencil query file.fig "//SECTION//TEXT"                      # All text inside sections
-  open-pencil query file.fig "//*[@cornerRadius > 0]"               # Any node with corner radius`
+    description: 'Query nodes using XPath selectors'
   },
   args: {
     file: {
