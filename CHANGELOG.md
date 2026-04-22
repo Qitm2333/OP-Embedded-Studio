@@ -9,6 +9,9 @@
 - Add `list_available_fonts` MCP tool for font discovery
 - Copy node ID / XPath from context menu; CLI selection command
 - Arrow key nudge for selected nodes (1px, Shift+arrow for 10px)
+- JSX renderer: `position="absolute"`, `top`, `left` props for absolute children inside auto-layout containers
+- MCP server sends `notifications/tools/list_changed` when the desktop app connects or disconnects
+- Headless text measurement via opentype.js per-glyph advance widths — no CanvasKit needed
 
 ### Fixes
 
@@ -25,6 +28,15 @@
 - Bump PWA precache limit for canvaskit-webgpu
 - Fix color picker dragging flooding the undo stack — fill/stroke/effect color and opacity drags now collapse into a single undo entry per interaction via debounced batching in `PropertyListRoot`
 - Fix .fig import crash on alias variables without a GUID
+- Fix `save_file` crash on vectors with missing tangent control points — default to straight segments
+- Validate `create_vector` path JSON upfront with clear error messages for malformed input
+- Fix MCP/AI tools rejecting string-encoded numeric arguments from MCP clients (`"42"` → `42`)
+- Fix "Create Instance" context menu item always grayed out — inverted disabled flag
+- Show "Create Instance" instead of "Create Component" in context menu when a component is selected
+- Fix headless layout: use stored .fig dimensions instead of rough text size estimates (26K → 11K mismatches on material3.fig)
+- Fix `--help` output with huge vertical gaps between commands — remove inline examples from query description
+- Fix `openpencil-mcp` npm package missing `dist/stdio.js` — explicitly list entry points in tsconfig
+- Show toast when MCP server fails to start instead of silently swallowing the error
 - Fix external links in AI panel blocked by Tauri ACL — use opener plugin instead of shell
 
 ## 0.11.6 — 2026-04-08
