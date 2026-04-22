@@ -87,9 +87,10 @@ function applyAutoLayout(
   overrides.layoutMode = layoutMode
   overrides.primaryAxisAlign = mapJustifyContent(pen.justifyContent)
   overrides.counterAxisAlign = mapAlignItems(pen.alignItems)
-  overrides.itemSpacing = typeof pen.gap === 'string' && isVarRef(pen.gap) && ctx
-    ? ctx.resolveNumber(pen.gap)
-    : (pen.gap ?? 0) as number
+  overrides.itemSpacing =
+    typeof pen.gap === 'string' && isVarRef(pen.gap) && ctx
+      ? ctx.resolveNumber(pen.gap)
+      : ((pen.gap ?? 0) as number)
 
   if (layoutMode === 'VERTICAL') {
     overrides.primaryAxisSizing = heightSizing

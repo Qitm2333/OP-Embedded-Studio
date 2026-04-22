@@ -8,7 +8,7 @@ import {
   DEFAULT_TEXT_HEIGHT,
   degToRad
 } from '@open-pencil/core'
-import { getAbsolutePositionFull } from '@open-pencil/core/canvas/coordinate'
+import { getAbsolutePositionFull } from '@open-pencil/core/canvas'
 import { handleDrawMove, handleDrawUp } from '@open-pencil/vue/shared/input/draw'
 import { hitTestCornerRotationByMatrix } from '@open-pencil/vue/shared/input/geometry'
 import { handleMoveMove, handleMoveUp } from '@open-pencil/vue/shared/input/move'

@@ -383,7 +383,7 @@ export function applyCornerRadius(
 export function applyPadding(node: SceneNode, padding: PenNode['padding'], ctx?: VarContext): void {
   if (padding === undefined) return
   const resolve = (v: number | string): number =>
-    typeof v === 'string' ? (isVarRef(v) && ctx ? ctx.resolveNumber(v) : (Number(v) || 0)) : v
+    typeof v === 'string' ? (isVarRef(v) && ctx ? ctx.resolveNumber(v) : Number(v) || 0) : v
   if (Array.isArray(padding)) {
     node.paddingTop = resolve(padding[0] ?? 0)
     node.paddingRight = resolve(padding[1] ?? 0)
