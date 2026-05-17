@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { PopoverClose, PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui'
 import { ref } from 'vue'
+import { useI18n } from '@open-pencil/vue'
 
 import ApiKeySection from '@/components/chat/ProviderSettings/ApiKeySection.vue'
 import ApiTypeSection from '@/components/chat/ProviderSettings/ApiTypeSection.vue'
@@ -11,6 +12,7 @@ import StockPhotoKeysSection from '@/components/chat/ProviderSettings/StockPhoto
 import { provideProviderSettings } from '@/components/chat/ProviderSettings/context'
 import { usePopoverUI } from '@/components/ui/popover'
 
+const { dialogs } = useI18n()
 const cls = usePopoverUI({ content: 'isolate z-[51] w-64 p-3' })
 const popoverOpen = ref(false)
 const providerSettings = provideProviderSettings()
@@ -30,7 +32,7 @@ function onInteractOutside(e: Event) {
     <PopoverTrigger
       data-test-id="provider-settings-trigger"
       class="rounded p-0.5 text-muted hover:bg-hover hover:text-surface"
-      :title="popoverOpen ? undefined : 'Provider settings'"
+      :title="popoverOpen ? undefined : dialogs.providerSettings"
     >
       <icon-lucide-settings class="size-3" />
     </PopoverTrigger>
@@ -46,7 +48,7 @@ function onInteractOutside(e: Event) {
         @interact-outside="onInteractOutside"
       >
         <div class="flex flex-col gap-2.5">
-          <h3 class="text-[11px] font-semibold text-surface">AI Provider</h3>
+          <h3 class="text-[11px] font-semibold text-surface">{{ dialogs.aiProvider }}</h3>
           <ProviderSelectField test-id="provider-settings-provider" />
           <MaxTokensSection />
           <StockPhotoKeysSection />
@@ -59,7 +61,7 @@ function onInteractOutside(e: Event) {
             data-test-id="provider-settings-done"
             @click="providerSettings.save"
           >
-            Done
+            {{ dialogs.done }}
           </PopoverClose>
         </div>
       </PopoverContent>

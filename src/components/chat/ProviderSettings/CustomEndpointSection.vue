@@ -1,14 +1,17 @@
 <script setup lang="ts">
+import { useI18n } from '@open-pencil/vue'
+
 import { useInputUI } from '@/components/ui/input'
 import { useProviderSettingsContext } from '@/components/chat/ProviderSettings/context'
 
 const ctx = useProviderSettingsContext()
+const { dialogs } = useI18n()
 </script>
 
 <template>
   <template v-if="!ctx.isACP">
     <div v-if="ctx.providerDef.supportsCustomBaseURL" class="flex flex-col gap-1">
-      <label class="text-[10px] text-muted">Base URL</label>
+      <label class="text-[10px] text-muted">{{ dialogs.baseURL }}</label>
       <input
         v-model="ctx.baseURLInput"
         type="text"
@@ -20,7 +23,7 @@ const ctx = useProviderSettingsContext()
     </div>
 
     <div v-if="ctx.providerDef.supportsCustomModel" class="flex flex-col gap-1">
-      <label class="text-[10px] text-muted">Model ID</label>
+      <label class="text-[10px] text-muted">{{ dialogs.modelID }}</label>
       <input
         v-model="ctx.customModelInput"
         type="text"

@@ -1,22 +1,25 @@
 <script setup lang="ts">
+import { useI18n } from '@open-pencil/vue'
+
 import { openExternalLink } from '@/app/shell/ui'
 import { useInputUI } from '@/components/ui/input'
 import { useProviderSettingsContext } from '@/components/chat/ProviderSettings/context'
 
 const ctx = useProviderSettingsContext()
+const { dialogs } = useI18n()
 </script>
 
 <template>
   <div class="flex flex-col gap-1">
     <div class="flex items-center justify-between">
-      <label class="text-[10px] text-muted">Pexels API Key (stock photos)</label>
+      <label class="text-[10px] text-muted">{{ dialogs.pexelsAPIKey }}</label>
       <button
         v-if="ctx.pexelsApiKey"
         class="cursor-pointer text-[10px] text-muted hover:text-surface"
         data-test-id="provider-settings-clear-pexels-key"
         @click="ctx.clearPexelsKey"
       >
-        Clear
+        {{ dialogs.clear }}
       </button>
     </div>
     <input
@@ -24,9 +27,7 @@ const ctx = useProviderSettingsContext()
       type="password"
       data-test-id="provider-settings-pexels-key"
       :placeholder="
-        ctx.hasExistingPexelsKey
-          ? 'Key saved — enter new to replace'
-          : 'Optional — for stock_photo tool'
+        ctx.hasExistingPexelsKey ? dialogs.keySavedReplace : dialogs.stockPhotoToolOptional
       "
       :class="useInputUI({ size: 'sm' }).base"
       @change="ctx.save"
@@ -36,20 +37,20 @@ const ctx = useProviderSettingsContext()
       class="cursor-pointer text-[9px] text-muted underline hover:text-surface"
       @click="openExternalLink('https://www.pexels.com/api/')"
     >
-      Get free Pexels API key →
+      {{ dialogs.getPexelsAPIKey }}
     </button>
   </div>
 
   <div class="flex flex-col gap-1">
     <div class="flex items-center justify-between">
-      <label class="text-[10px] text-muted">Unsplash Access Key</label>
+      <label class="text-[10px] text-muted">{{ dialogs.unsplashAccessKey }}</label>
       <button
         v-if="ctx.unsplashAccessKey"
         class="cursor-pointer text-[10px] text-muted hover:text-surface"
         data-test-id="provider-settings-clear-unsplash-key"
         @click="ctx.clearUnsplashKey"
       >
-        Clear
+        {{ dialogs.clear }}
       </button>
     </div>
     <input
@@ -57,9 +58,7 @@ const ctx = useProviderSettingsContext()
       type="password"
       data-test-id="provider-settings-unsplash-key"
       :placeholder="
-        ctx.hasExistingUnsplashKey
-          ? 'Key saved — enter new to replace'
-          : 'Optional — alternative to Pexels'
+        ctx.hasExistingUnsplashKey ? dialogs.keySavedReplace : dialogs.pexelsAlternativeOptional
       "
       :class="useInputUI({ size: 'sm' }).base"
       @change="ctx.save"
@@ -69,7 +68,7 @@ const ctx = useProviderSettingsContext()
       class="cursor-pointer text-[9px] text-muted underline hover:text-surface"
       @click="openExternalLink('https://unsplash.com/oauth/applications')"
     >
-      Get free Unsplash access key →
+      {{ dialogs.getUnsplashAccessKey }}
     </button>
   </div>
 </template>
