@@ -175,7 +175,8 @@
       },
       {
         "id": "dev-tools",
-        "label": "Developer Tools"
+        "label": "Developer Tools",
+        "accelerator": "CmdOrCtrl+Alt+I"
       }
     ]
   },

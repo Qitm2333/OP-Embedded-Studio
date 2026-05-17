@@ -132,6 +132,7 @@ export const APP_MENU_SCHEMA = [
       {
         id: 'dev-tools',
         label: 'Developer Tools',
+        accelerator: 'CmdOrCtrl+Alt+I',
         target: 'native'
       }
     ]
