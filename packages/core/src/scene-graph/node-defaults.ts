@@ -124,6 +124,7 @@ export function createDefaultNode(
     flipX: false,
     flipY: false,
     textPicture: null,
+    figmaDerivedTextGlyphs: null,
     ...overrides
   }
 }

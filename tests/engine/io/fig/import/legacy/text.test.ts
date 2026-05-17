@@ -21,6 +21,49 @@ describe('fig-import: text properties', () => {
     expect(n.textAlignHorizontal).toBe('CENTER')
   })
 
+  test('imports derived glyph geometry for Figma text rendering', () => {
+    const glyphBlob = new Uint8Array([0])
+    const graph = importNodeChanges(
+      [
+        doc(),
+        canvas(),
+        node('TEXT', 10, 1, {
+          textData: { characters: 'A' },
+          fontSize: 14,
+          derivedTextData: {
+            layoutSize: { x: 10, y: 10 },
+            glyphs: [
+              {
+                commandsBlob: 0,
+                position: { x: 2, y: 8 },
+                fontSize: 14,
+                firstCharacter: 0,
+                advance: 1,
+                rotation: 0
+              }
+            ]
+          }
+        } as Partial<NodeChange>)
+      ],
+      [glyphBlob]
+    )
+    const n = graph.getChildren(graph.getPages()[0].id)[0]
+    expect(n.figmaDerivedTextGlyphs).toEqual([
+      {
+        commandsBlob: glyphBlob,
+        x: 2,
+        y: 8,
+        fontSize: 14
+      }
+    ])
+
+    graph.updateNode(n.id, { opacity: 0.5 })
+    expect(graph.getNode(n.id)?.figmaDerivedTextGlyphs).toHaveLength(1)
+
+    graph.updateNode(n.id, { text: 'B' })
+    expect(graph.getNode(n.id)?.figmaDerivedTextGlyphs).toBeNull()
+  })
+
   test('uses derived line metrics for imported Figma text rendering', () => {
     const graph = importNodeChanges([
       doc(),

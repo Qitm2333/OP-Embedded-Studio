@@ -210,6 +210,13 @@ export interface PluginRelaunchDataEntry {
   isDeleted: boolean
 }
 
+export interface FigmaDerivedTextGlyph {
+  commandsBlob: Uint8Array
+  x: number
+  y: number
+  fontSize: number
+}
+
 export interface SymbolLink {
   uri: string
   displayName?: string
@@ -363,6 +370,7 @@ export interface SceneNode {
   flipY: boolean
 
   textPicture: Uint8Array | null
+  figmaDerivedTextGlyphs: FigmaDerivedTextGlyph[] | null
 }
 
 export type ComponentPropertyType = 'VARIANT' | 'TEXT' | 'BOOLEAN' | 'INSTANCE_SWAP'

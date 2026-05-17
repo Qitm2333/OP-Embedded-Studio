@@ -8,6 +8,7 @@ import { vectorNetworkToCenterlinePath } from '#core/vector'
 import { renderBooleanOperation } from './boolean'
 import { nodeHasRadius } from './shapes'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
+import { drawFigmaDerivedText } from './text-derived'
 
 function drawVisibleFills(
   r: SkiaRenderer,
@@ -574,6 +575,10 @@ export function renderText(r: SkiaRenderer, canvas: Canvas, node: SceneNode, fil
       canvas.restore()
       return
     }
+  }
+  if (drawFigmaDerivedText(r, canvas, node)) {
+    canvas.restore()
+    return
   }
   if (r.fontsLoaded && r.fontProvider) {
     const paragraph = r.buildParagraph(node, r.fillPaint.getColor())

@@ -397,12 +397,10 @@ export class SceneGraph {
         set.add(id)
       }
     }
-    if (
-      node.type === 'TEXT' &&
-      node.textPicture &&
-      Object.keys(changes).some((k) => SceneGraph.TEXT_PICTURE_KEYS.has(k))
-    ) {
-      node.textPicture = null
+    if (node.type === 'TEXT') {
+      const textChanged = Object.keys(changes).some((k) => SceneGraph.TEXT_PICTURE_KEYS.has(k))
+      if (node.textPicture && textChanged) node.textPicture = null
+      if (node.figmaDerivedTextGlyphs && 'text' in changes) node.figmaDerivedTextGlyphs = null
     }
     if (changes.vectorNetwork) {
       changes = { ...changes, vectorNetwork: normalizeVectorNetwork(changes.vectorNetwork) }
