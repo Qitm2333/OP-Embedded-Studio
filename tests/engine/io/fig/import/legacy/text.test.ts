@@ -49,6 +49,32 @@ describe('fig-import: text properties', () => {
     expect(n.lineHeight).toBe(16.94)
   })
 
+  test('applies shared text style refs', () => {
+    const graph = importNodeChanges([
+      doc(),
+      canvas(),
+      node('TEXT', 20, 1, {
+        name: 'Body style',
+        styleType: 'TEXT',
+        fontSize: 16,
+        fontName: { family: 'Inter', style: 'Regular' },
+        lineHeight: { value: 24, units: 'PIXELS' }
+      } as Partial<NodeChange>),
+      node('TEXT', 10, 1, {
+        textData: { characters: 'Styled text' },
+        fontSize: 48,
+        fontName: { family: 'Inter', style: 'Extra Bold' },
+        textDecoration: 'UNDERLINE',
+        styleIdForText: { guid: { sessionID: 1, localID: 20 } }
+      } as Partial<NodeChange>)
+    ])
+    const styled = graph.getChildren(graph.getPages()[0].id).find((node) => node.text === 'Styled text')
+    expect(styled?.fontSize).toBe(16)
+    expect(styled?.fontWeight).toBe(400)
+    expect(styled?.lineHeight).toBe(24)
+    expect(styled?.textDecoration).toBe('NONE')
+  })
+
   test('font weight mapping', () => {
     const cases = [
       ['Bold', 700],

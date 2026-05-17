@@ -349,6 +349,32 @@ function parseDocumentColorSpace(nodeChanges: NodeChange[]): 'srgb' | 'display-p
   return documentNode?.documentColorProfile === 'DISPLAY_P3' ? 'display-p3' : 'srgb'
 }
 
+function applyTextStyleRefs(changeMap: Map<string, NodeChange>): void {
+  const textStyleFields = [
+    'fontSize',
+    'fontName',
+    'lineHeight',
+    'letterSpacing',
+    'textDecoration',
+    'textCase'
+  ] as const
+
+  for (const nc of changeMap.values()) {
+    if (nc.type !== 'TEXT') continue
+    const styleGuid = nc.styleIdForText?.guid
+    if (!styleGuid) continue
+    const style = changeMap.get(guidToString(styleGuid))
+    if (style?.type !== 'TEXT' || style.styleType !== 'TEXT') continue
+    for (const field of textStyleFields) {
+      if (field === 'textDecoration') {
+        nc.textDecoration = style.textDecoration
+      } else if (style[field] !== undefined) {
+        nc[field] = style[field] as never
+      }
+    }
+  }
+}
+
 export interface FigImportOptions {
   populate?: 'all' | 'first-page'
 }
@@ -373,6 +399,7 @@ export function importNodeChanges(
   }
 
   const { changeMap, parentMap, childrenMap } = buildChangeMaps(nodeChanges)
+  applyTextStyleRefs(changeMap)
   const assetRefs = buildAssetRefMap(changeMap)
   setVariableColorResolver(buildVariableColorResolver(changeMap, assetRefs))
 

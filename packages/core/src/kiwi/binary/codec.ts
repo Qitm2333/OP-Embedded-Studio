@@ -351,6 +351,8 @@ export interface NodeChange {
     truncationStartIndex?: number
     truncatedHeight?: number
   }
+  styleType?: string
+  styleIdForText?: { guid?: GUID }
   textUserLayoutVersion?: number
   textExplicitLayoutVersion?: number
   textBidiVersion?: number
