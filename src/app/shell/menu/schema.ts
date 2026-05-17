@@ -35,12 +35,12 @@ export const APP_MENU_SCHEMA = [
       { id: 'open', label: 'Open…', shortcut: 'MOD+O', accelerator: 'CmdOrCtrl+O' },
       { type: 'separator' },
       { id: 'save', label: 'Save', shortcut: 'MOD+S', accelerator: 'CmdOrCtrl+S' },
-      { id: 'save-as', label: 'Save As…', shortcut: 'MOD+⇧S', accelerator: 'CmdOrCtrl+Shift+S' },
+      { id: 'save-as', label: 'Save As…', shortcut: 'MOD+SHIFT+S', accelerator: 'CmdOrCtrl+Shift+S' },
       { type: 'separator' },
       {
         id: 'export-selection',
         label: 'Export Selection',
-        shortcut: 'MOD+⇧E',
+        shortcut: 'MOD+SHIFT+E',
         accelerator: 'CmdOrCtrl+Shift+E',
         sub: [
           { id: 'export-png', label: 'PNG' },
@@ -66,12 +66,13 @@ export const APP_MENU_SCHEMA = [
       {
         id: 'edit.redo',
         label: 'Redo',
-        shortcut: 'MOD+⇧Z',
+        shortcut: 'MOD+SHIFT+Z',
         accelerator: 'CmdOrCtrl+Shift+Z',
         command: 'edit.redo'
       },
       { type: 'separator' },
       { id: 'copy', label: 'Copy', shortcut: 'MOD+C', accelerator: 'CmdOrCtrl+C' },
+      { id: 'cut', label: 'Cut', shortcut: 'MOD+X', accelerator: 'CmdOrCtrl+X' },
       { id: 'paste', label: 'Paste', shortcut: 'MOD+V', accelerator: 'CmdOrCtrl+V' },
       {
         id: 'selection.duplicate',
@@ -158,7 +159,7 @@ export const APP_MENU_SCHEMA = [
       {
         id: 'selection.ungroup',
         label: 'Ungroup Selection',
-        shortcut: 'MOD+⇧G',
+        shortcut: 'MOD+SHIFT+G',
         accelerator: 'CmdOrCtrl+Shift+G',
         command: 'selection.ungroup'
       },
@@ -166,7 +167,7 @@ export const APP_MENU_SCHEMA = [
       {
         id: 'selection.createComponent',
         label: 'Create Component',
-        shortcut: 'MOD+⌥K',
+        shortcut: 'MOD+ALT+K',
         accelerator: 'CmdOrCtrl+Alt+K',
         command: 'selection.createComponent'
       },
@@ -211,18 +212,18 @@ export const APP_MENU_SCHEMA = [
       {
         id: 'selection.wrapInAutoLayout',
         label: 'Wrap in Auto Layout',
-        shortcut: '⇧A',
+        shortcut: 'SHIFT+A',
         accelerator: 'Shift+A',
         command: 'selection.wrapInAutoLayout'
       },
       { type: 'separator' },
-      { id: 'align-left', label: 'Align Left', shortcut: '⌥A', accelerator: 'Alt+A' },
-      { id: 'align-center', label: 'Align Center', shortcut: '⌥H', accelerator: 'Alt+H' },
-      { id: 'align-right', label: 'Align Right', shortcut: '⌥D', accelerator: 'Alt+D' },
+      { id: 'align-left', label: 'Align Left', shortcut: 'ALT+A', accelerator: 'Alt+A' },
+      { id: 'align-center', label: 'Align Center', shortcut: 'ALT+H', accelerator: 'Alt+H' },
+      { id: 'align-right', label: 'Align Right', shortcut: 'ALT+D', accelerator: 'Alt+D' },
       { type: 'separator' },
-      { id: 'align-top', label: 'Align Top', shortcut: '⌥W', accelerator: 'Alt+W' },
-      { id: 'align-middle', label: 'Align Middle', shortcut: '⌥V', accelerator: 'Alt+V' },
-      { id: 'align-bottom', label: 'Align Bottom', shortcut: '⌥S', accelerator: 'Alt+S' }
+      { id: 'align-top', label: 'Align Top', shortcut: 'ALT+W', accelerator: 'Alt+W' },
+      { id: 'align-middle', label: 'Align Middle', shortcut: 'ALT+V', accelerator: 'Alt+V' },
+      { id: 'align-bottom', label: 'Align Bottom', shortcut: 'ALT+S', accelerator: 'Alt+S' }
     ]
   }
 ] satisfies AppMenuGroupSchema[]

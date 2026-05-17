@@ -27,6 +27,6 @@ export function appMenuTinykeysShortcut(id: string): string | string[] | undefin
   const shortcut = appMenuShortcut(id)
   return shortcut
     ?.replaceAll('MOD', '$mod')
-    .replaceAll('⇧', 'Shift')
-    .replaceAll('⌥', 'Alt')
+    .replaceAll('SHIFT', 'Shift')
+    .replaceAll('ALT', 'Alt')
 }

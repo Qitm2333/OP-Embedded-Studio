@@ -6,6 +6,8 @@ import { nodeToXPath } from '@open-pencil/core/xpath'
 import type { EditorStore } from '@/app/editor/active-store'
 import { toast } from '@/app/shell/ui'
 
+export const COPY_AS_PNG_SHORTCUT = 'MOD+SHIFT+C'
+
 function toArrayBuffer(data: Uint8Array): ArrayBuffer {
   const bytes = new Uint8Array(data.length)
   bytes.set(data)

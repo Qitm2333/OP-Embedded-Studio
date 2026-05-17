@@ -34,7 +34,7 @@ const COMMAND_MENU_IDS = new Set<string>([
 export { importFileDialog, openFileDialog }
 export { openFileFromPath } from '@/app/shell/menu/files'
 
-function execBrowserCommand(command: 'copy' | 'paste'): void {
+function execBrowserCommand(command: 'copy' | 'cut' | 'paste'): void {
   document.execCommand(command)
 }
 
@@ -70,6 +70,7 @@ export function useMenu() {
       store.state.autosaveEnabled = !store.state.autosaveEnabled
     },
     copy: () => execBrowserCommand('copy'),
+    cut: () => execBrowserCommand('cut'),
     paste: () => execBrowserCommand('paste'),
     'check-updates': () => void checkForAppUpdate({ messages: dialogs }),
     ...createSharedEditorMenuActions(setTheme)
