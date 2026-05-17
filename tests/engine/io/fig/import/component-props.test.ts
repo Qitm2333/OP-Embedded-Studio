@@ -17,6 +17,7 @@ const userVectorGuid = { sessionID: 4, localID: 4 }
 const componentIconGuid = { sessionID: 1, localID: 3 }
 const sourceInstanceGuid = { sessionID: 2, localID: 2 }
 const cloneInstanceGuid = { sessionID: 2, localID: 3 }
+const strokeStyleGuid = { sessionID: 5, localID: 1 }
 
 function baseTextChange(): NodeChange {
   return {
@@ -81,6 +82,23 @@ describe('Figma component property import', () => {
       { guid: documentGuid, phase: 'CREATED', type: 'DOCUMENT', name: 'Document' },
       { guid: pageGuid, phase: 'CREATED', parentIndex: { guid: documentGuid, position: '!' }, type: 'CANVAS', name: 'Page' },
       {
+        guid: strokeStyleGuid,
+        phase: 'CREATED',
+        parentIndex: { guid: pageGuid, position: '&' },
+        type: 'ROUNDED_RECTANGLE',
+        name: 'slate/700',
+        styleType: 'FILL',
+        fillPaints: [
+          {
+            type: 'SOLID',
+            color: { r: 0.2, g: 0.25, b: 0.33, a: 1 },
+            opacity: 1,
+            visible: true,
+            blendMode: 'NORMAL'
+          }
+        ]
+      },
+      {
         guid: mailIconGuid,
         phase: 'CREATED',
         parentIndex: { guid: pageGuid, position: '!' },
@@ -96,7 +114,18 @@ describe('Figma component property import', () => {
         type: 'VECTOR',
         name: 'mail-path',
         size: { x: 16, y: 16 },
-        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 }
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+        strokePaints: [
+          {
+            type: 'SOLID',
+            color: { r: 0, g: 0, b: 0, a: 1 },
+            opacity: 1,
+            visible: true,
+            blendMode: 'NORMAL'
+          }
+        ],
+        strokeWeight: 2,
+        strokeAlign: 'CENTER'
       },
       {
         guid: userIconGuid,
@@ -114,7 +143,18 @@ describe('Figma component property import', () => {
         type: 'VECTOR',
         name: 'user-path',
         size: { x: 16, y: 16 },
-        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 }
+        transform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 },
+        strokePaints: [
+          {
+            type: 'SOLID',
+            color: { r: 0, g: 0, b: 0, a: 1 },
+            opacity: 1,
+            visible: true,
+            blendMode: 'NORMAL'
+          }
+        ],
+        strokeWeight: 2,
+        strokeAlign: 'CENTER'
       },
       {
         guid: componentGuid,
@@ -147,7 +187,6 @@ describe('Figma component property import', () => {
         parentIndex: { guid: pageGuid, position: '$' },
         type: 'INSTANCE',
         name: 'Menu item source',
-        symbolData: { symbolID: componentGuid },
         size: { x: 100, y: 20 },
         transform: { m00: 1, m01: 0, m02: 120, m10: 0, m11: 1, m12: 0 },
         componentPropAssignments: [
@@ -156,7 +195,16 @@ describe('Figma component property import', () => {
             value: { guidValue: userIconGuid },
             varValue: { value: { symbolIdValue: { guid: userIconGuid } } }
           }
-        ]
+        ],
+        symbolData: {
+          symbolID: componentGuid,
+          symbolOverrides: [
+            {
+              guidPath: { guids: [componentIconGuid, mailVectorGuid] },
+              styleIdForStrokeFill: { guid: strokeStyleGuid }
+            }
+          ]
+        }
       },
       {
         guid: cloneInstanceGuid,
@@ -176,5 +224,6 @@ describe('Figma component property import', () => {
     const iconChild = icon?.childIds.map((id) => graph.getNode(id)).find(Boolean)
     expect(icon?.name).toBe('icon/user')
     expect(iconChild?.name).toBe('user-path')
+    expect(iconChild?.strokes[0]?.color).toEqual({ r: 0.2, g: 0.25, b: 0.33, a: 1 })
   })
 })

@@ -70,6 +70,8 @@ export interface InstanceNodeChange {
   componentPropRefs?: ComponentPropRef[]
   componentPropAssignments?: ComponentPropAssignment[]
   componentPropDefs?: ComponentPropDef[]
+  styleType?: string
+  fillPaints?: NodeChange['fillPaints']
   fillGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
   strokeGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
   derivedSymbolData?: DerivedSymbolOverride[]

@@ -1,6 +1,7 @@
 import type { GUID } from '#core/kiwi/binary/codec'
 import { guidToString } from '#core/kiwi/node-change/convert'
 import type { SceneNode } from '#core/scene-graph'
+import { copyStrokes } from '#core/scene-graph/copy'
 
 import type { InstanceNodeChange, OverrideContext } from './types'
 
@@ -324,10 +325,37 @@ export function resolveOverrideTarget(
  * Only renames when the current name matches the root component name (preserves
  * user-given names). Clears the componentIdRoot cache after changing the tree.
  */
+function collectStyledStrokeDescendants(ctx: OverrideContext, nodeId: string): SceneNode['strokes'][] {
+  const result: SceneNode['strokes'][] = []
+  const visit = (id: string) => {
+    const node = ctx.graph.getNode(id)
+    if (!node) return
+    if (node.strokes.length > 0) result.push(copyStrokes(node.strokes))
+    for (const childId of node.childIds) visit(childId)
+  }
+  visit(nodeId)
+  return result
+}
+
+function applyStrokeDescendants(ctx: OverrideContext, nodeId: string, strokes: SceneNode['strokes'][]): void {
+  let index = 0
+  const visit = (id: string) => {
+    const node = ctx.graph.getNode(id)
+    if (!node) return
+    if (node.strokes.length > 0) {
+      if (index < strokes.length) ctx.graph.updateNode(id, { strokes: copyStrokes(strokes[index]) })
+      index++
+    }
+    for (const childId of node.childIds) visit(childId)
+  }
+  visit(nodeId)
+}
+
 export function repopulateInstance(ctx: OverrideContext, nodeId: string, compId: string): void {
   const node = ctx.graph.getNode(nodeId)
   if (node?.type !== 'INSTANCE') return
 
+  const previousStrokes = collectStyledStrokeDescendants(ctx, nodeId)
   const rootCompId = node.componentId ? getComponentRoot(ctx, node.componentId) : undefined
   const rootComp = rootCompId ? ctx.graph.getNode(rootCompId) : undefined
   for (const childId of Array.from(node.childIds)) ctx.graph.deleteNode(childId)
@@ -339,6 +367,7 @@ export function repopulateInstance(ctx: OverrideContext, nodeId: string, compId:
   ctx.graph.updateNode(nodeId, updates)
   if (comp && comp.childIds.length > 0) {
     ctx.graph.populateInstanceChildren(nodeId, compId)
+    applyStrokeDescendants(ctx, nodeId, previousStrokes)
   }
   ctx.swappedInstances.add(nodeId)
   ctx.componentIdRoot.clear()
