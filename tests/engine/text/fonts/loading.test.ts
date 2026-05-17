@@ -184,6 +184,25 @@ describe('FontManager loaded font cache', () => {
     expect(recording.registrations).toEqual([{ family: 'DownloadedCache', byteLength: 16 }])
     expect(writes).toBe(0)
   })
+
+  test('loads bundled Inter ExtraBold without network access', async () => {
+    const manager = new FontManager()
+    const recording = createRecordingProvider()
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (() => {
+      throw new Error('network disabled')
+    }) as typeof fetch
+
+    try {
+      manager.attachProvider({} as CanvasKit, recording.provider)
+      const data = await manager.loadFont('Inter', 'ExtraBold')
+
+      expect(data?.byteLength).toBeGreaterThan(0)
+      expect(recording.registrations).toEqual([{ family: 'Inter', byteLength: data?.byteLength }])
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
 })
 
 describe('collectFontKeys', () => {

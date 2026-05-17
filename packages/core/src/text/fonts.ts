@@ -61,6 +61,7 @@ const BUNDLED_FONTS: Record<string, string> = {
   'Inter|Medium': '/Inter-Medium.ttf',
   'Inter|SemiBold': '/Inter-SemiBold.ttf',
   'Inter|Bold': '/Inter-Bold.ttf',
+  'Inter|ExtraBold': '/Inter-ExtraBold.ttf',
   'Noto Naskh Arabic|Regular': '/NotoNaskhArabic-Regular.ttf'
 }
 
@@ -236,6 +237,16 @@ export class FontManager {
     const localBuffer = await this.findLocalFont(family, style)
     if (localBuffer) return this.registerAndCache(family, style, localBuffer)
 
+    const bundledUrl = BUNDLED_FONTS[cacheKey]
+    if (bundledUrl) {
+      try {
+        const buffer = await this.fetchBundledFont(bundledUrl)
+        if (buffer && !isVariableFont(buffer)) return this.registerAndCache(family, style, buffer)
+      } catch (e) {
+        console.warn(`Bundled font load failed for "${family}" ${style}:`, e)
+      }
+    }
+
     if (typeof fetch !== 'undefined') {
       try {
         const buffer = await this.fetchGoogleFont(family, style)
@@ -245,16 +256,6 @@ export class FontManager {
         }
       } catch (e) {
         console.warn(`Google Fonts fetch failed for "${family}" ${style}:`, e)
-      }
-    }
-
-    const bundledUrl = BUNDLED_FONTS[cacheKey]
-    if (bundledUrl) {
-      try {
-        const buffer = await this.fetchBundledFont(bundledUrl)
-        if (buffer && !isVariableFont(buffer)) return this.registerAndCache(family, style, buffer)
-      } catch (e) {
-        console.warn(`Bundled font load failed for "${family}" ${style}:`, e)
       }
     }
 
