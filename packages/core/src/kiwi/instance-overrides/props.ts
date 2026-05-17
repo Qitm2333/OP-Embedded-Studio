@@ -2,12 +2,8 @@ import { applyOverridePatch } from '#core/kiwi/instance-overrides/patches'
 import { guidToString } from '#core/kiwi/node-change/convert'
 
 import { collectAssignmentsMap, collectPropRefsMap } from './component-props/maps'
-import {
-  assignmentsToValueMap,
-  normalizePropName,
-  propTextCharacters,
-  stringToGuidParts
-} from './component-props/values'
+import { fallbackRefsForChild, findPropRefs, valueForRef } from './component-props/refs'
+import { assignmentsToValueMap, propTextCharacters } from './component-props/values'
 import { getComponentRoot, resolveOverrideTarget } from './resolve'
 import type {
   OverrideContext,
@@ -15,50 +11,6 @@ import type {
   ComponentPropRef,
   ComponentPropValue
 } from './types'
-
-/**
- * Walk the componentId chain to find componentPropRefs for a node.
- * The refs may be defined on the component several levels up.
- */
-function findPropRefs(
-  ctx: OverrideContext,
-  nodeId: string,
-  propRefsMap: Map<string, ComponentPropRef[]>
-): ComponentPropRef[] | undefined {
-  let sourceId: string | undefined = nodeId
-  for (let depth = 0; sourceId && depth < 10; depth++) {
-    const figmaId = ctx.nodeIdToGuid.get(sourceId)
-    if (figmaId) {
-      const refs = propRefsMap.get(figmaId)
-      if (refs) return refs
-    }
-    const node = ctx.graph.getNode(sourceId)
-    const nextId = node?.componentId ?? undefined
-    if (nextId === sourceId) break
-    sourceId = nextId
-  }
-  return undefined
-}
-
-/**
- * Recursively apply prop assignments to children of a parent node.
- * Handles VISIBLE toggles and OVERRIDDEN_SYMBOL_ID (instance swap).
- */
-function fallbackRefsForChild(
-  ctx: OverrideContext,
-  childName: string,
-  valueByDef: Map<string, ComponentPropValue>
-): ComponentPropRef[] | undefined {
-  const normalizedChildName = normalizePropName(childName)
-  const refs: ComponentPropRef[] = []
-  for (const defId of valueByDef.keys()) {
-    const propName = ctx.propNames.get(defId)
-    if (propName && normalizePropName(propName) === normalizedChildName) {
-      refs.push({ defID: stringToGuidParts(defId), componentPropNodeField: 'VISIBLE' })
-    }
-  }
-  return refs.length > 0 ? refs : undefined
-}
 
 function applyPatchAndMark(
   ctx: OverrideContext,
@@ -151,8 +103,7 @@ function applyChildPropRefs(
 ): void {
   if (!refs) return
   for (const ref of refs) {
-    if (!ref.defID) continue
-    const val = valueByDef.get(guidToString(ref.defID))
+    const val = valueForRef(ref, valueByDef)
     if (val) applyComponentPropRef(ctx, childId, ref, val, modified)
   }
 }
