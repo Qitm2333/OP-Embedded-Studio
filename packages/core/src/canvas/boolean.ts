@@ -49,6 +49,71 @@ function lineStrokePath(r: SkiaRenderer, node: SceneNode): Path | null {
   return path.stroke({ width: stroke?.weight ?? 1 })
 }
 
+function baseShapePath(r: SkiaRenderer, node: SceneNode): Path | null {
+  if (node.type === 'LINE') return lineStrokePath(r, node)
+  if (node.type === 'ELLIPSE' && node.arcData) return makeArcPath(r, node)
+
+  const rect = r.ck.LTRBRect(0, 0, node.width, node.height)
+  return r.makeNodeShapePath(node, rect, nodeHasRadius(node))
+}
+
+function nodeHasVisibleFill(node: SceneNode): boolean {
+  return node.fills.some((fill) => fill.visible)
+}
+
+function addVisibleStrokeOutlines(target: Path, source: Path, node: SceneNode): void {
+  for (const stroke of node.strokes) {
+    if (!stroke.visible || stroke.weight <= 0) continue
+    const outline = source.stroke({ width: stroke.weight })
+    if (!outline) continue
+    target.addPath(outline)
+  }
+}
+
+function canContainFlattenableChildren(node: SceneNode): boolean {
+  return (
+    node.type === 'GROUP' ||
+    node.type === 'FRAME' ||
+    node.type === 'COMPONENT' ||
+    node.type === 'INSTANCE'
+  )
+}
+
+function containerSourcePath(r: SkiaRenderer, node: SceneNode, graph: SceneGraph): Path | null {
+  const path = new r.ck.Path()
+  let hasPath = false
+
+  if (nodeHasVisibleFill(node) || node.strokes.some((stroke) => stroke.visible)) {
+    const ownPath = baseShapePath(r, node)
+    if (ownPath) {
+      if (nodeHasVisibleFill(node)) path.addPath(ownPath)
+      addVisibleStrokeOutlines(path, ownPath, node)
+      ownPath.delete()
+      hasPath = true
+    }
+  }
+
+  for (const childId of node.childIds) {
+    const child = graph.getNode(childId)
+    if (!child || !child.visible) continue
+    const childPath = makeBooleanSourcePath(r, child, graph)
+    if (!childPath) {
+      path.delete()
+      return null
+    }
+    childPath.transform(nodePathTransform(r, child))
+    path.addPath(childPath)
+    childPath.delete()
+    hasPath = true
+  }
+
+  if (!hasPath) {
+    path.delete()
+    return null
+  }
+  return path
+}
+
 export function makeBooleanSourcePath(
   r: SkiaRenderer,
   node: SceneNode,
@@ -56,11 +121,13 @@ export function makeBooleanSourcePath(
 ): Path | null {
   if (node.type === 'BOOLEAN_OPERATION') return makeBooleanOperationPath(r, node, graph)
   if (!canMakeBooleanSourcePath(node)) return null
-  if (node.type === 'LINE') return lineStrokePath(r, node)
-  if (node.type === 'ELLIPSE' && node.arcData) return makeArcPath(r, node)
+  if (canContainFlattenableChildren(node)) return containerSourcePath(r, node, graph)
+  if (node.type === 'LINE') return baseShapePath(r, node)
 
-  const rect = r.ck.LTRBRect(0, 0, node.width, node.height)
-  return r.makeNodeShapePath(node, rect, nodeHasRadius(node))
+  const path = baseShapePath(r, node)
+  if (!path) return null
+  if (node.strokes.some((stroke) => stroke.visible)) addVisibleStrokeOutlines(path, path, node)
+  return path
 }
 
 function transformedShapePath(r: SkiaRenderer, child: SceneNode, graph: SceneGraph): Path | null {

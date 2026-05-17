@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { initCanvasKit } from '#cli/headless'
 import { SkiaRenderer } from '#core/canvas'
+import { BLACK } from '#core/constants'
 import { createEditor } from '#core/editor'
 
 async function createEditorWithRenderer() {
@@ -49,6 +50,48 @@ describe('flattenSelected', () => {
     expect(result).toBeNull()
     expect(editor.graph.getNode(pageId)?.childIds).toEqual([text.id, rect.id])
     expect(editor.state.selectedIds).toEqual(new Set([text.id, rect.id]))
+    surface.delete()
+  })
+
+  test('flattens visual descendants from groups', async () => {
+    const { editor, surface } = await createEditorWithRenderer()
+    const pageId = editor.state.currentPageId
+    const rect = editor.graph.createNode('RECTANGLE', pageId, { x: 10, y: 20, width: 50, height: 40 })
+    const ellipse = editor.graph.createNode('ELLIPSE', pageId, { x: 70, y: 20, width: 30, height: 30 })
+    editor.select([rect.id, ellipse.id])
+    editor.groupSelected()
+    const [groupId] = [...editor.state.selectedIds]
+
+    editor.flattenSelected()
+
+    const [vectorId] = [...editor.state.selectedIds]
+    const vector = editor.graph.getNode(vectorId)
+    expect(vector?.type).toBe('VECTOR')
+    expect(vector?.vectorNetwork?.vertices.length).toBeGreaterThan(0)
+    expect(editor.graph.getNode(groupId)).toBeUndefined()
+    surface.delete()
+  })
+
+  test('includes stroke-only rectangles as flattenable outlines', async () => {
+    const { editor, surface } = await createEditorWithRenderer()
+    const pageId = editor.state.currentPageId
+    const rect = editor.graph.createNode('RECTANGLE', pageId, {
+      x: 10,
+      y: 20,
+      width: 50,
+      height: 40,
+      fills: [],
+      strokes: [{ type: 'SOLID', color: BLACK, opacity: 1, visible: true, weight: 8, align: 'CENTER' }]
+    })
+
+    editor.select([rect.id])
+    editor.flattenSelected()
+
+    const [vectorId] = [...editor.state.selectedIds]
+    const vector = editor.graph.getNode(vectorId)
+    expect(vector?.type).toBe('VECTOR')
+    expect(vector?.width).toBeGreaterThan(50)
+    expect(vector?.height).toBeGreaterThan(40)
     surface.delete()
   })
 
