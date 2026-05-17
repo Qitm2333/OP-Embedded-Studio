@@ -49,6 +49,10 @@ export function createStructureActions(ctx: EditorContext) {
     return wrapSelectionInContainer('GROUP', selectedNodes)
   }
 
+  function frameSelection(selectedNodes: SceneNode[]) {
+    return wrapSelectionInContainer('FRAME', selectedNodes)
+  }
+
   function ungroupSelected(selectedNode: SceneNode | undefined) {
     ungroupImpl(ctx, selectedNode)
   }
@@ -77,6 +81,7 @@ export function createStructureActions(ctx: EditorContext) {
     wrapSelectionInContainer,
     wrapInAutoLayout,
     groupSelected,
+    frameSelection,
     ungroupSelected,
     ...stateActions,
     moveToPage,

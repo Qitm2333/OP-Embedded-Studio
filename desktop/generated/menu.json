@@ -180,6 +180,10 @@
         "label": "Group Selection"
       },
       {
+        "id": "selection.frameSelection",
+        "label": "Frame Selection"
+      },
+      {
         "id": "selection.ungroup",
         "label": "Ungroup Selection"
       },

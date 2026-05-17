@@ -43,6 +43,7 @@ describe('buildCanvasContextMenu', () => {
       'selection.sendToBack',
       '---',
       'selection.group',
+      'selection.frameSelection',
       'selection.wrapInAutoLayout',
       '---',
       'selection.createComponent',

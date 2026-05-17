@@ -24,6 +24,7 @@ export function useSelectionCapabilities() {
     canDuplicate: computed(() => hasSelection.value),
     canExportSelection: computed(() => hasSelection.value),
     canGroup: computed(() => selectedCount.value >= 2),
+    canFrameSelection: computed(() => hasSelection.value),
     canUngroup: computed(() => selection.isGroup.value),
     canCreateComponent: computed(() => hasSelection.value),
     canCreateComponentSet: selection.canCreateComponentSet,

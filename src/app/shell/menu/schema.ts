@@ -138,6 +138,11 @@ export const APP_MENU_SCHEMA = [
         command: 'selection.group'
       },
       {
+        id: 'selection.frameSelection',
+        label: 'Frame Selection',
+        command: 'selection.frameSelection'
+      },
+      {
         id: 'selection.ungroup',
         label: 'Ungroup Selection',
         command: 'selection.ungroup'

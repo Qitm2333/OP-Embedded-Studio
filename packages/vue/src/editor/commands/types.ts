@@ -7,6 +7,7 @@ export type EditorCommandId =
   | 'selection.duplicate'
   | 'selection.delete'
   | 'selection.group'
+  | 'selection.frameSelection'
   | 'selection.ungroup'
   | 'selection.createComponent'
   | 'selection.createComponentSet'

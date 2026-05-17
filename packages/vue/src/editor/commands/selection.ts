@@ -44,6 +44,14 @@ export function createSelectionCommands({
       enabled: capabilities.canGroup,
       run: () => editor.groupSelected()
     },
+    'selection.frameSelection': {
+      id: 'selection.frameSelection',
+      get label() {
+        return t.value.frameSelection
+      },
+      enabled: capabilities.canFrameSelection,
+      run: () => editor.frameSelection()
+    },
     'selection.ungroup': {
       id: 'selection.ungroup',
       get label() {

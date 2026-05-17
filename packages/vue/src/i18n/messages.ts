@@ -80,6 +80,7 @@ export const commandMessages = i18n('commands', {
   delete: 'Delete',
   group: 'Group',
   groupSelection: 'Group selection',
+  frameSelection: 'Frame selection',
   ungroup: 'Ungroup',
   createComponent: 'Create component',
   createComponentSet: 'Create component set',

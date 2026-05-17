@@ -8,6 +8,7 @@ export function createStructureBridge(structure: StructureActions, selection: Se
   return {
     wrapInAutoLayout: () => structure.wrapInAutoLayout(selection.getSelectedNodes()),
     groupSelected: () => structure.groupSelected(selection.getSelectedNodes()),
+    frameSelection: () => structure.frameSelection(selection.getSelectedNodes()),
     ungroupSelected: () => structure.ungroupSelected(selection.getSelectedNode())
   }
 }

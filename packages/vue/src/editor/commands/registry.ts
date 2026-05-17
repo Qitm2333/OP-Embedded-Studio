@@ -17,6 +17,11 @@ export const EDITOR_COMMAND_METADATA = {
   },
   'selection.delete': { shortcut: '⌫', contextTestId: 'context-delete' },
   'selection.group': { shortcut: 'MOD+G', keybinding: '$mod+KeyG', contextTestId: 'context-group' },
+  'selection.frameSelection': {
+    shortcut: 'MOD+ALT+G',
+    keybinding: '$mod+Alt+KeyG',
+    contextTestId: 'context-frame-selection'
+  },
   'selection.ungroup': { shortcut: 'MOD+SHIFT+G', keybinding: '$mod+Shift+KeyG' },
   'selection.createComponent': {
     shortcut: 'MOD+ALT+K',
