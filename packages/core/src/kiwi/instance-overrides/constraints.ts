@@ -28,7 +28,9 @@ export function applyConstraintScaling(ctx: OverrideContext): void {
     const sy = node.height / basis.height
     if (Math.abs(sx - 1) < 0.001 && Math.abs(sy - 1) < 0.001) continue
 
-    scaleChildren(graph, node, comp, sx, sy, scaled, basis !== comp)
+    const figmaId = ctx.nodeIdToGuid.get(node.id)
+    const strokeScale = figmaId ? ctx.changeMap.get(figmaId)?.strokeWeight : undefined
+    scaleChildren(graph, node, comp, sx, sy, scaled, basis !== comp, strokeScale)
   }
 
   if (scaled.size > 0) propagateScaling(ctx, scaled)
@@ -91,12 +93,19 @@ function scaleVectorNetwork(
   }
 }
 
-function scaledStrokes(source: SceneNode, child: SceneNode, shapeScaleX: number, shapeScaleY: number) {
+function scaledStrokes(
+  source: SceneNode,
+  child: SceneNode,
+  shapeScaleX: number,
+  shapeScaleY: number,
+  strokeScale?: number
+) {
   if (source.strokes.length !== child.strokes.length) return undefined
   if (Math.abs(shapeScaleX - shapeScaleY) >= 0.001) return undefined
+  const scale = strokeScale ?? 1
   return child.strokes.map((stroke, strokeIndex) => ({
     ...stroke,
-    weight: source.strokes[strokeIndex].weight
+    weight: source.strokes[strokeIndex].weight * scale
   }))
 }
 
@@ -107,7 +116,8 @@ function scaleChildren(
   sx: number,
   sy: number,
   scaled: Set<string>,
-  useCurrentChildAsSource = false
+  useCurrentChildAsSource = false,
+  strokeScale?: number
 ): void {
   const len = Math.min(instance.childIds.length, comp.childIds.length)
   for (let i = 0; i < len; i++) {
@@ -140,7 +150,7 @@ function scaleChildren(
     if (source.vectorNetwork) {
       updates.vectorNetwork = scaleVectorNetwork(source.vectorNetwork, shapeScaleX, shapeScaleY)
     }
-    updates.strokes = scaledStrokes(source, child, shapeScaleX, shapeScaleY)
+    updates.strokes = scaledStrokes(source, child, shapeScaleX, shapeScaleY, strokeScale)
     graph.updateNode(child.id, updates)
     scaled.add(child.id)
 
@@ -152,7 +162,8 @@ function scaleChildren(
         hScale ? sx : 1,
         vScale ? sy : 1,
         scaled,
-        useCurrentChildAsSource
+        useCurrentChildAsSource,
+        strokeScale
       )
     }
   }

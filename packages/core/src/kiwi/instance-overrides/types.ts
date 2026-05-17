@@ -78,6 +78,7 @@ export interface InstanceNodeChange {
   fillPaints?: NodeChange['fillPaints']
   fillGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
   strokeGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
+  strokeWeight?: number
   derivedSymbolData?: DerivedSymbolOverride[]
 }
 
