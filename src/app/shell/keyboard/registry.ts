@@ -6,6 +6,7 @@ import { editorCommandMetadata } from '@open-pencil/vue'
 import type { EditorCommandId } from '@open-pencil/vue'
 
 import { TOOL_SHORTCUTS } from '@/app/editor/session'
+import { appMenuTinykeysShortcut } from '@/app/shell/menu/shortcut'
 import { isEditing } from '@/app/shell/keyboard/focus'
 import { bindSpaceHandTool } from '@/app/shell/keyboard/space-tool'
 import type {
@@ -83,14 +84,26 @@ export function registerKeyboardShortcuts(options: KeyboardShortcutOptions) {
     ),
     {
       id: 'export-selection-png',
-      keys: '$mod+Shift+KeyE',
+      keys: appMenuTinykeysShortcut('export-selection') ?? '$mod+Shift+KeyE',
       run: ({ actions }) => actions.exportSelectionPng()
     },
-    { id: 'save-as', keys: '$mod+Shift+KeyS', run: ({ store }) => void store.saveFigFileAs() },
+    {
+      id: 'save-as',
+      keys: appMenuTinykeysShortcut('save-as') ?? '$mod+Shift+KeyS',
+      run: ({ store }) => void store.saveFigFileAs()
+    },
     ...commandShortcuts('selection.ungroup', 'edit.redo'),
-    { id: 'toggle-ui', keys: '$mod+Backslash', run: ({ actions }) => actions.toggleUI() },
+    {
+      id: 'toggle-ui',
+      keys: appMenuTinykeysShortcut('toggle-ui') ?? '$mod+Backslash',
+      run: ({ actions }) => actions.toggleUI()
+    },
     { id: 'toggle-ai', keys: '$mod+KeyJ', run: ({ actions }) => actions.toggleAI() },
-    { id: 'close-tab', keys: '$mod+KeyW', run: ({ closeActiveTab }) => closeActiveTab() },
+    {
+      id: 'close-tab',
+      keys: appMenuTinykeysShortcut('close') ?? '$mod+KeyW',
+      run: ({ closeActiveTab }) => closeActiveTab()
+    },
     { id: 'new-tab', keys: ['$mod+KeyN', '$mod+KeyT'], run: ({ createTab }) => createTab() },
     ...commandShortcuts(
       'edit.undo',
@@ -100,8 +113,16 @@ export function registerKeyboardShortcuts(options: KeyboardShortcutOptions) {
       'selection.duplicate',
       'selection.selectAll'
     ),
-    { id: 'save', keys: '$mod+KeyS', run: ({ store }) => void store.saveFigFile() },
-    { id: 'open-file', keys: '$mod+KeyO', run: ({ openFileDialog }) => openFileDialog() },
+    {
+      id: 'save',
+      keys: appMenuTinykeysShortcut('save') ?? '$mod+KeyS',
+      run: ({ store }) => void store.saveFigFile()
+    },
+    {
+      id: 'open-file',
+      keys: appMenuTinykeysShortcut('open') ?? '$mod+KeyO',
+      run: ({ openFileDialog }) => openFileDialog()
+    },
     ...commandShortcuts('selection.group'),
     {
       id: 'toggle-auto-layout',

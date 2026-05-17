@@ -13,6 +13,7 @@ import { useCollab, COLLAB_KEY } from '@/app/collab/use'
 import { connectAutomation } from '@/app/automation/bridge/server'
 import { spawnMCPIfNeeded } from '@/app/automation/mcp/spawn'
 import { isTauri } from '@/app/tauri/env'
+import { appMenuShortcut } from '@/app/shell/menu/shortcut'
 import { createDemoShapes } from '@/app/demo/document'
 import { useEditorStore } from '@/app/editor/active-store'
 import { createTab, activeTab, getActiveStore, tabCount } from '@/app/tabs'
@@ -194,7 +195,7 @@ onUnmounted(() => {
           <button
             data-test-id="editor-show-ui"
             class="ml-1 flex size-6 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
-            :title="`Show UI (${formatShortcut('MOD+\\')})`"
+            :title="`Show UI (${formatShortcut(appMenuShortcut('toggle-ui'))})`"
             @click="store.state.showUI = true"
           >
             <icon-lucide-sidebar class="size-3.5" />
