@@ -46,10 +46,12 @@ function drawShapeDropShadow(
   const sp = effect.spread
   const shapeNode = shadowShapeChild ?? node
   const shapeHasRadius = shadowShapeChild ? nodeHasRadius(shadowShapeChild) : hasRadius
-  const strokeShadow =
-    !shadowShapeChild && !node.fills.some((fill) => fill.visible) && node.strokeGeometry.length > 0
-      ? r.getStrokeGeometry(node)
-      : null
+  const geometryShadow = !shadowShapeChild
+    ? r.getFillGeometry(node) ??
+      (!node.fills.some((fill) => fill.visible) && node.strokeGeometry.length > 0
+        ? r.getStrokeGeometry(node)
+        : null)
+    : null
 
   r.auxFill.setColor(r.color4f(effect.color.r, effect.color.g, effect.color.b, effect.color.a))
   r.auxFill.setMaskFilter(r.getCachedMaskBlur(effect.radius / 2))
@@ -59,8 +61,8 @@ function drawShapeDropShadow(
   if (shadowShapeChild) drawChildTransform(canvas, shadowShapeChild, effect.offset)
   else canvas.translate(effect.offset.x, effect.offset.y)
 
-  if (strokeShadow) {
-    for (const path of strokeShadow) canvas.drawPath(path, r.auxFill)
+  if (geometryShadow) {
+    for (const path of geometryShadow) canvas.drawPath(path, r.auxFill)
   } else if (shapeNode.type === 'ELLIPSE') {
     canvas.drawOval(r.ltrb(-sp, -sp, shapeNode.width + sp, shapeNode.height + sp), r.auxFill)
   } else if (shapeHasRadius) {
