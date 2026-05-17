@@ -64,6 +64,7 @@ export type NodeType =
   | 'STAR'
   | 'POLYGON'
   | 'VECTOR'
+  | 'BOOLEAN_OPERATION'
   | 'GROUP'
   | 'SECTION'
   | 'COMPONENT'
@@ -292,6 +293,7 @@ export interface SceneNode {
   layoutAlignSelf: LayoutAlignSelf
 
   vectorNetwork: VectorNetwork | null
+  booleanOperation?: 'UNION' | 'SUBTRACT' | 'INTERSECT' | 'EXCLUDE'
   fillGeometry: GeometryPath[]
   strokeGeometry: GeometryPath[]
 

@@ -132,6 +132,7 @@ export const CONTAINER_TYPES = new Set<NodeType>([
   'CANVAS',
   'FRAME',
   'GROUP',
+  'BOOLEAN_OPERATION',
   'SECTION',
   'COMPONENT',
   'COMPONENT_SET',

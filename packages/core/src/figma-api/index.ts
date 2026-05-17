@@ -13,9 +13,11 @@ import { copyFills, copyStrokes, copyEffects } from '#core/scene-graph/copy'
 import type { Rect, Vector } from '#core/types'
 
 import type {
+  FigmaBooleanOperationNode,
   FigmaComponentNode,
   FigmaEllipseNode,
   FigmaFrameNode,
+  FigmaGroupNode,
   FigmaLineNode,
   FigmaPolygonNode,
   FigmaRectangleNode,
@@ -37,9 +39,11 @@ const noop = () => undefined
 
 export { FigmaNodeProxy } from './proxy'
 export type {
+  FigmaBooleanOperationNode,
   FigmaComponentNode,
   FigmaEllipseNode,
   FigmaFrameNode,
+  FigmaGroupNode,
   FigmaLineNode,
   FigmaPolygonNode,
   FigmaRectangleNode,
@@ -202,22 +206,39 @@ export class FigmaAPI implements NodeProxyHost {
 
   // --- Grouping ---
 
-  group(nodes: FigmaNodeProxy[], parent: FigmaNodeProxy): FigmaNodeProxy {
-    const groupNode = this.graph.createNode('GROUP', parent[INTERNAL_ID])
-    for (const n of nodes) {
-      this.graph.reparentNode(n[INTERNAL_ID], groupNode.id)
-    }
-    return this.wrapNode(groupNode.id)
+  private _nodeId(node: BaseNode | FigmaNodeProxy): string {
+    return (node as BaseNode & { [INTERNAL_ID]: string })[INTERNAL_ID]
   }
 
-  ungroup(node: FigmaNodeProxy): void {
-    const raw = this.graph.getNode(node[INTERNAL_ID])
-    if (raw?.type !== 'GROUP') return
+  group(nodes: ReadonlyArray<FigmaNodeProxy>, parent: FigmaNodeProxy, index?: number): FigmaGroupNode
+  group(nodes: ReadonlyArray<BaseNode>, parent: BaseNode & ChildrenMixin, index?: number): GroupNode
+  group(
+    nodes: ReadonlyArray<BaseNode | FigmaNodeProxy>,
+    parent: (BaseNode & ChildrenMixin) | FigmaNodeProxy,
+    index?: number
+  ): FigmaGroupNode {
+    const parentId = this._nodeId(parent)
+    const groupNode = this.graph.createNode('GROUP', parentId)
+    for (const n of nodes) {
+      this.graph.reparentNode(this._nodeId(n), groupNode.id)
+    }
+    if (index != null) this.graph.reorderChild(groupNode.id, parentId, index)
+    return this.wrapNode(groupNode.id) as FigmaGroupNode
+  }
+
+  ungroup(node: FigmaNodeProxy): FigmaNodeProxy[]
+  ungroup(node: SceneNode & ChildrenMixin): Array<SceneNode>
+  ungroup(node: (SceneNode & ChildrenMixin) | FigmaNodeProxy): Array<SceneNode> | FigmaNodeProxy[] {
+    const nodeId = this._nodeId(node)
+    const raw = this.graph.getNode(nodeId)
+    if (!raw || raw.childIds.length === 0) return []
     const parentId = raw.parentId ?? this._currentPageId
-    for (const childId of Array.from(raw.childIds)) {
+    const children = Array.from(raw.childIds)
+    for (const childId of children) {
       this.graph.reparentNode(childId, parentId)
     }
-    this.graph.deleteNode(node[INTERNAL_ID])
+    this.graph.deleteNode(nodeId)
+    return children.map((id) => this.wrapNode(id))
   }
 
   createComponentFromNode(node: FigmaNodeProxy): FigmaNodeProxy {
@@ -318,35 +339,93 @@ export class FigmaAPI implements NodeProxyHost {
 
   // --- Boolean Operations ---
 
-  booleanOperation(
+  private _booleanOperation(
     operation: 'UNION' | 'SUBTRACT' | 'INTERSECT' | 'EXCLUDE',
-    nodeIds: string[]
-  ): FigmaNodeProxy {
-    if (nodeIds.length < 2) throw new Error('Need at least 2 nodes for boolean operation')
-    const nodes = nodeIds.map((id) => this.graph.getNode(id))
-    const first = nodes[0]
-    if (!first || nodes.some((n) => !n)) throw new Error('One or more nodes not found')
-    const parentId = first.parentId ?? this._currentPageId
-    const group = this.graph.createNode('GROUP', parentId, {
+    nodes: ReadonlyArray<BaseNode | FigmaNodeProxy>,
+    parent: (BaseNode & ChildrenMixin) | FigmaNodeProxy,
+    index?: number
+  ): FigmaBooleanOperationNode {
+    if (nodes.length < 2) throw new Error('Need at least 2 nodes for boolean operation')
+    const parentId = this._nodeId(parent)
+    const first = this.graph.getNode(this._nodeId(nodes[0]))
+    if (!first) throw new Error('Node not found')
+    const group = this.graph.createNode('BOOLEAN_OPERATION', parentId, {
       name: `Boolean ${operation.toLowerCase()}`,
       x: first.x,
       y: first.y,
       width: first.width,
-      height: first.height
+      height: first.height,
+      booleanOperation: operation
     })
-    for (const id of nodeIds) {
-      this.graph.reparentNode(id, group.id)
+    for (const node of nodes) {
+      this.graph.reparentNode(this._nodeId(node), group.id)
     }
-    return this.wrapNode(group.id)
+    if (index != null) this.graph.reorderChild(group.id, parentId, index)
+    return this.wrapNode(group.id) as FigmaBooleanOperationNode
+  }
+
+  private _nodesById(nodeIds: string[]) {
+    return nodeIds.map((id) => {
+      const node = this.getNodeById(id)
+      if (!node) throw new Error(`Node ${id} not found`)
+      return node
+    })
+  }
+
+  booleanOperation(
+    operation: 'UNION' | 'SUBTRACT' | 'INTERSECT' | 'EXCLUDE',
+    nodeIds: string[]
+  ): FigmaBooleanOperationNode {
+    const first = this.graph.getNode(nodeIds[0])
+    const parent = this.wrapNode(first?.parentId ?? this._currentPageId)
+    return this._booleanOperation(operation, this._nodesById(nodeIds), parent)
+  }
+
+  union(
+    nodes: ReadonlyArray<BaseNode>,
+    parent: BaseNode & ChildrenMixin,
+    index?: number
+  ): BooleanOperationNode {
+    return this._booleanOperation('UNION', nodes, parent, index)
+  }
+
+  subtract(
+    nodes: ReadonlyArray<BaseNode>,
+    parent: BaseNode & ChildrenMixin,
+    index?: number
+  ): BooleanOperationNode {
+    return this._booleanOperation('SUBTRACT', nodes, parent, index)
+  }
+
+  intersect(
+    nodes: ReadonlyArray<BaseNode>,
+    parent: BaseNode & ChildrenMixin,
+    index?: number
+  ): BooleanOperationNode {
+    return this._booleanOperation('INTERSECT', nodes, parent, index)
+  }
+
+  exclude(
+    nodes: ReadonlyArray<BaseNode>,
+    parent: BaseNode & ChildrenMixin,
+    index?: number
+  ): BooleanOperationNode {
+    return this._booleanOperation('EXCLUDE', nodes, parent, index)
   }
 
   // --- Flatten ---
 
-  flattenNode(nodeIds: string[]): FigmaNodeProxy {
-    if (nodeIds.length === 0) throw new Error('Need at least 1 node to flatten')
-    const first = this.graph.getNode(nodeIds[0])
+  flatten(nodes: ReadonlyArray<FigmaNodeProxy>, parent?: FigmaNodeProxy, index?: number): FigmaVectorNode
+  flatten(nodes: ReadonlyArray<BaseNode>, parent?: BaseNode & ChildrenMixin, index?: number): VectorNode
+  flatten(
+    nodes: ReadonlyArray<BaseNode | FigmaNodeProxy>,
+    parent?: (BaseNode & ChildrenMixin) | FigmaNodeProxy,
+    index?: number
+  ): FigmaVectorNode {
+    if (nodes.length === 0) throw new Error('Need at least 1 node to flatten')
+    const parentId = this._nodeId(parent ?? this.currentPage)
+    const first = this.graph.getNode(this._nodeId(nodes[0]))
     if (!first) throw new Error('Node not found')
-    const parentId = first.parentId ?? this._currentPageId
     const vector = this.graph.createNode('VECTOR', parentId, {
       name: 'Flatten',
       x: first.x,
@@ -355,10 +434,17 @@ export class FigmaAPI implements NodeProxyHost {
       height: first.height,
       fills: copyFills(first.fills)
     })
-    for (const id of nodeIds) {
-      this.graph.deleteNode(id)
+    if (index != null) this.graph.reorderChild(vector.id, parentId, index)
+    for (const node of nodes) {
+      this.graph.deleteNode(this._nodeId(node))
     }
-    return this.wrapNode(vector.id)
+    return this.wrapNode(vector.id) as FigmaVectorNode
+  }
+
+  flattenNode(nodeIds: string[]): FigmaVectorNode {
+    const first = this.graph.getNode(nodeIds[0])
+    const parent = this.wrapNode(first?.parentId ?? this._currentPageId)
+    return this.flatten(this._nodesById(nodeIds), parent)
   }
 
   // --- Viewport ---
