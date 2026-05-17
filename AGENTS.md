@@ -93,7 +93,8 @@ The app editor session (`src/app/editor/session/create.ts`) is a thin Vue wrappe
 
 ## Commands
 
-- `bun run check` — type-aware lint + typecheck via oxlint + tsgo (run before committing)
+- `bun run check` — type-aware lint + typecheck via oxlint + tsgo + architecture checks (run before committing)
+- `bun run check:arch` — Steiger architecture lint for project-specific import boundaries
 - `bun run check:vue` — vue-tsc type-check for .vue files (has pre-existing errors, fix progressively)
 - `bun run test:dupes` — jscpd copy-paste detection across all TS sources
 - `bun run format` — oxfmt with import sorting
@@ -144,7 +145,7 @@ Run all quality gates (see [Code quality](#code-quality) for the self-review che
 ```sh
 bun run check          # oxlint + tsgo type-aware lint & typecheck
 bun run format         # oxfmt
-bun run test:dupes     # jscpd < 3%
+bun run test:dupes     # jscpd — zero clones
 bun run test:unit      # bun:test
 bun run test           # Playwright E2E
 ```
@@ -236,6 +237,10 @@ Release commits are the exception: keep using `Release v0.x.y`.
 
 ## Code conventions
 
+- Do not place code or tests ad hoc. Before adding or moving files, inspect the existing folder structure and nearby patterns, then put changes in the established domain-specific location. If no proper location exists, create one deliberately and update docs/conventions as needed.
+- Architecture boundaries are enforced by Steiger (`bun run check:arch`). App code must use public workspace package exports, workspace packages must not import app `src/` code, package-local aliases (`#core`, `#vue`, `#cli`, `#mcp`) are only for their owning package, core must stay framework-agnostic, app service/domain code (`src/app/**`) must not import app component/view layers, components must not import views, shared UI (`src/components/ui/**`) must not import app services/stores, property-panel internals must stay inside the property panel, canvas/editor overlay code must not import property-panel internals, Vue components must not use `<style>` blocks, code outside core editor internals must not assign `editor.state.selectedIds` or `editor.state.activeTool` directly, committed code must not import scratch/generated/vendor internals, and durable docs belong under `packages/docs/**` unless the root Markdown allowlist is deliberately updated.
+- Test placement is strict and enforced by Steiger: app E2E tests live under `tests/e2e/**` and use `*.spec.ts`; Figma automation tests live under `tests/figma/**` and use `*.spec.ts`; engine/unit tests live under `tests/engine/**` and use `*.test.ts` (with `helpers.ts`, `*.bench.ts`, and `visual-*` support scripts allowed); shared test utilities live under `tests/helpers/**`. Do not commit temporary/profile specs (`*.tmp.*`, `*.profile.*`). Do not put store-only/internal-state assertions in E2E. If a test drives the UI like a user and verifies visible behavior, it can be E2E; if it creates nodes through internals and asserts graph state, it belongs in engine/unit coverage.
+
 ### File and folder naming
 
 OpenPencil follows a Reka UI-inspired component namespace structure:
@@ -246,7 +251,7 @@ OpenPencil follows a Reka UI-inspired component namespace structure:
 - Non-component domain folders use lowercase or kebab-case: `scene-graph/`, `figma-api/`, `node-edit/`.
 - Non-component TypeScript files use lowercase or kebab-case unless they are conventional entrypoints such as `index.ts`, `types.ts`, `context.ts`, or `use.ts`.
 - Multi-file root components live inside their component namespace folder, not beside it.
-- Use subfolders for multi-file domains instead of sibling files with repeated prefixes. Prefer `selection/container.ts`, `selection/hit-test.ts` over `selection-container.ts`, `selection-hit-test.ts`. When adding a second file for a domain (e.g. `eval-wrap.ts` next to `eval.ts`), create the folder immediately (`eval/index.ts` + `eval/wrap.ts`) instead of prefixing. The lint rule `no-sibling-domain-prefixed-files` catches this when a sibling folder exists, but the convention applies even before the folder is created.
+- Use subfolders for multi-file domains instead of sibling files with repeated prefixes. Prefer `selection/container.ts`, `selection/hit-test.ts` over `selection-container.ts`, `selection-hit-test.ts`. When adding a second file for a domain (e.g. `eval-wrap.ts` next to `eval.ts`), create the folder immediately (`eval/index.ts` + `eval/wrap.ts`) instead of prefixing. Oxlint catches sibling prefix files when a sibling folder exists; Steiger catches 3+ sibling files with the same prefix. The convention applies even before either rule triggers.
 
 - `@/` import alias for app cross-directory imports; app feature code lives under `src/app/*`
 - Use package-local aliases inside workspace packages: `#vue/*` in `packages/vue`, `#cli/*` in `packages/cli`, `#mcp/*` in `packages/mcp`, and `#core/*` when core code needs an alias. Prefer relative imports within nearby core modules when that is clearer than an alias.
@@ -274,7 +279,7 @@ Before submitting a PR, run the full quality gate and do a self-review:
 ```sh
 bun run check          # oxlint + tsgo type-aware lint & typecheck — zero errors required
 bun run format         # oxfmt with import sorting
-bun run test:dupes     # jscpd — must stay under 3% duplication
+bun run test:dupes     # jscpd — zero clones required
 bun run test:unit      # bun:test
 bun run test           # Playwright E2E
 ```

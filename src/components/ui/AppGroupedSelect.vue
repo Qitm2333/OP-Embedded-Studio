@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectViewport
 } from 'reka-ui'
+import { vTestId, type TestIdProps } from '@open-pencil/vue'
 
 import { useSelectUI } from '@/components/ui/select'
 
@@ -32,12 +33,13 @@ interface GroupedSelectUi {
   separator?: string
 }
 
-const { groups, displayValue, ui, testId } = defineProps<{
-  groups: SelectGroupDef<T>[]
+interface AppGroupedSelectProps<TValue extends string | number> extends TestIdProps {
+  groups: SelectGroupDef<TValue>[]
   displayValue: string
   ui?: GroupedSelectUi
-  testId?: string
-}>()
+}
+
+const { groups, displayValue, ui, testId } = defineProps<AppGroupedSelectProps<T>>()
 
 const modelValue = defineModel<T>({ required: true })
 
@@ -55,7 +57,7 @@ const separator = ui?.separator ?? 'mx-1 my-1 h-px bg-border'
 
 <template>
   <SelectRoot v-model="modelValue">
-    <SelectTrigger :data-test-id="testId" :class="select.trigger">
+    <SelectTrigger v-test-id="testId" :class="select.trigger">
       <slot name="value">{{ displayValue }}</slot>
       <icon-lucide-chevron-down class="size-2.5 shrink-0 text-muted" />
     </SelectTrigger>

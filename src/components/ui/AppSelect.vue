@@ -11,6 +11,8 @@ import {
   SelectViewport
 } from 'reka-ui'
 
+import { vTestId, type TestIdProps } from '@open-pencil/vue'
+
 import { useSelectUI } from '@/components/ui/select'
 import type { SelectUi } from '@/components/ui/select'
 
@@ -19,17 +21,18 @@ interface AppSelectUi extends SelectUi {
   indicator?: string
 }
 
+interface AppSelectProps<TValue extends string | number> extends TestIdProps {
+  options: { value: TValue; label: string }[]
+  placeholder?: string
+  ui?: AppSelectUi
+}
+
 const {
   options,
   placeholder,
   ui,
   testId = 'app-select-trigger'
-} = defineProps<{
-  options: { value: T; label: string }[]
-  placeholder?: string
-  ui?: AppSelectUi
-  testId?: string
-}>()
+} = defineProps<AppSelectProps<T>>()
 
 const modelValue = defineModel<T>({ required: true })
 
@@ -44,7 +47,7 @@ const indicator = ui?.indicator ?? 'absolute left-1.5 inline-flex items-center j
 
 <template>
   <SelectRoot v-model="modelValue">
-    <SelectTrigger :data-test-id="testId" :class="select.trigger">
+    <SelectTrigger v-test-id="testId" :class="select.trigger">
       <SelectValue :placeholder="placeholder" />
       <icon-lucide-chevron-down class="ml-1 size-3 shrink-0 text-muted" />
     </SelectTrigger>

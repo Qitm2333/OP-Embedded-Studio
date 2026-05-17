@@ -1,12 +1,26 @@
 # Security Policy
 
-## Reporting a vulnerability
+## Reporting a Vulnerability
 
-If you discover a security vulnerability, please report it privately:
+Please do not report security vulnerabilities through public GitHub issues or pull requests.
 
-**Email:** security@openpencil.dev
+If you believe you have found a security issue in OpenPencil, report it privately using GitHub Security Advisories:
 
-Do not open a public issue. We'll acknowledge within 48 hours and aim to release a fix within 7 days for critical issues.
+https://github.com/open-pencil/open-pencil/security/advisories/new
+
+Please include as much detail as possible:
+
+- Affected version or commit
+- Reproduction steps
+- Proof of concept, if available
+- Expected impact
+- Whether the issue is already public
+
+We will investigate privately before discussing details in public. If the report is confirmed, we will coordinate a fix and credit the reporter unless they prefer not to be named.
+
+## Disclosure
+
+Please give us a reasonable opportunity to investigate and release a fix before publishing details publicly.
 
 ## MCP server
 

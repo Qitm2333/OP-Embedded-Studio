@@ -25,12 +25,28 @@ export function createSelectionOverlayActions(ctx: EditorContext) {
   }
 
   function setDropTarget(id: string | null) {
+    if (ctx.state.dropTargetId === id) return
     ctx.state.dropTargetId = id
     ctx.requestRepaint()
   }
 
   function setLayoutInsertIndicator(indicator: typeof ctx.state.layoutInsertIndicator) {
+    if (ctx.state.layoutInsertIndicator === indicator) return
     ctx.state.layoutInsertIndicator = indicator
+    ctx.requestRepaint()
+  }
+
+  function setAutoLayoutHover(hover: typeof ctx.state.autoLayoutHover) {
+    const current = ctx.state.autoLayoutHover
+    if (
+      current?.nodeId === hover?.nodeId &&
+      current?.kind === hover?.kind &&
+      current?.index === hover?.index &&
+      current?.side === hover?.side
+    ) {
+      return
+    }
+    ctx.state.autoLayoutHover = hover
     ctx.requestRepaint()
   }
 
@@ -40,6 +56,7 @@ export function createSelectionOverlayActions(ctx: EditorContext) {
     setRotationPreview,
     setHoveredNode,
     setDropTarget,
-    setLayoutInsertIndicator
+    setLayoutInsertIndicator,
+    setAutoLayoutHover
   }
 }

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
+import { TreeRoot } from 'reka-ui'
 
 import { useEditor } from '#vue/editor/context'
 import { provideLayerTree } from '#vue/primitives/LayerTree/context'
+import { useLayerDrag } from '#vue/primitives/LayerTree/useLayerDrag'
 
 import type { LayerNode } from '#vue/primitives/LayerTree/context'
 
@@ -19,6 +21,16 @@ const emit = defineEmits<{
 }>()
 
 const editor = useEditor()
+
+function expandNode(id: string) {
+  if (!expanded.value.includes(id)) expanded.value = [...expanded.value, id]
+}
+
+const { draggingId, instruction, instructionTargetId, setupItem } = useLayerDrag(
+  editor,
+  indentPerLevel,
+  expandNode
+)
 
 function buildTree(parentId: string): LayerNode[] {
   const parent = editor.graph.getNode(parentId)
@@ -102,7 +114,15 @@ function toggleExpand(id: string) {
   emit('toggleExpand', id)
   const idx = expanded.value.indexOf(id)
   if (idx !== -1) expanded.value = expanded.value.filter((e) => e !== id)
-  else expanded.value = [...expanded.value, id]
+  else expandNode(id)
+}
+
+function getKey(node: LayerNode) {
+  return node.id
+}
+
+function getChildren(node: LayerNode) {
+  return node.children
 }
 
 const actions = {
@@ -117,6 +137,10 @@ provideLayerTree({
   treeKey,
   selectedIds,
   indentPerLevel,
+  draggingId,
+  instruction,
+  instructionTargetId,
+  setupDrag: setupItem,
   select,
   toggleExpand,
   toggleVisibility: (id: string) => {
@@ -136,13 +160,26 @@ provideLayerTree({
 </script>
 
 <template>
-  <slot
-    :items="items"
+  <TreeRoot
+    :key="treeKey"
+    v-slot="{ flattenItems }"
+    as="div"
+    class="flex min-h-0 flex-1 flex-col overflow-hidden"
     :expanded="expanded"
-    :tree-key="treeKey"
-    :selected-ids="selectedIds"
-    :actions="actions"
-    :get-key="(v: LayerNode) => v.id"
-    :get-children="(v: LayerNode) => v.children"
-  />
+    :items="items"
+    :get-key="getKey"
+    :get-children="getChildren"
+  >
+    <slot
+      :items="items"
+      :flatten-items="flattenItems"
+      :expanded="expanded"
+      :tree-key="treeKey"
+      :selected-ids="selectedIds"
+      :dragging-id="draggingId"
+      :instruction="instruction"
+      :instruction-target-id="instructionTargetId"
+      :actions="actions"
+    />
+  </TreeRoot>
 </template>

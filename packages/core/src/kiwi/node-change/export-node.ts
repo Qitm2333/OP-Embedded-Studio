@@ -23,7 +23,8 @@ interface SceneNodeToKiwiContext {
     node: SceneNode,
     nc: KiwiNodeChange,
     graph: SceneGraph,
-    fontDigestMap?: Map<string, Uint8Array>
+    fontDigestMap: Map<string, Uint8Array> | undefined,
+    blobs: Uint8Array[]
   ) => void
   serializeLayoutProps: (node: SceneNode, nc: KiwiNodeChange) => void
   serializeGeometry: (node: SceneNode, nc: KiwiNodeChange, blobs: Uint8Array[]) => void
@@ -58,6 +59,12 @@ function componentPropertyValue(value: string) {
   return { textValue: { characters: value } }
 }
 
+function componentPropertyTypeForKiwi(type: string) {
+  if (type === 'BOOLEAN') return 'BOOL'
+  if (type === 'VARIANT') return 'TEXT'
+  return type
+}
+
 function parseGuidOrNull(value: string) {
   return /^\d+:\d+$/.test(value) ? stringToGuid(value) : null
 }
@@ -82,7 +89,7 @@ function applyComponentMetadata(node: SceneNode, nc: KiwiNodeChange): void {
         ? {
             id,
             name: def.name,
-            type: def.type,
+            type: componentPropertyTypeForKiwi(def.type),
             initialValue: componentPropertyValue(def.defaultValue)
           }
         : null
@@ -128,7 +135,7 @@ function applyNodeVisualProps(
   }
 
   if (node.type === 'TEXT') {
-    context.serializeTextProps(node, nc, context.graph, context.fontDigestMap)
+    context.serializeTextProps(node, nc, context.graph, context.fontDigestMap, context.blobs)
   }
 
   nc.frameMaskDisabled = !node.clipsContent

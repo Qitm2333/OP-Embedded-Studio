@@ -15,11 +15,12 @@ import { createTextEditInput } from '#vue/canvas/text-edit/input'
 import { handleToolMouseDown } from '#vue/canvas/tool-input/use'
 import { createCanvasTransformInput } from '#vue/canvas/transform-input/use'
 import { createClickCounter } from '#vue/shared/input/click-count'
+import { resolveAutoLayoutHover } from '#vue/shared/input/auto-layout-hover'
 import { handleDrawMove, handleDrawUp } from '#vue/shared/input/draw'
 import { handleMoveMove, handleMoveUp } from '#vue/shared/input/move'
 import { handleNodeEditMove } from '#vue/shared/input/node-edit'
 import { setupPanZoom } from '#vue/shared/input/pan-zoom'
-import { applyResize } from '#vue/shared/input/resize'
+import { applyResize, commitResizePreview } from '#vue/shared/input/resize'
 import { updateHoverCursor } from '#vue/shared/input/select'
 import { useSpaceHeld } from '#vue/shared/input/space-key'
 import type { DragState } from '#vue/shared/input/types'
@@ -41,6 +42,13 @@ export function useCanvasInput(
 ) {
   const drag = ref<DragState | null>(null)
   const cursorOverride = ref<string | null>(null)
+  const autoLayoutPaddingEdit = ref<{
+    nodeId: string
+    side: 'top' | 'right' | 'bottom' | 'left'
+    value: number
+    previous: number
+  } | null>(null)
+  const selectedIdsBeforeClickSequence = ref<ReadonlySet<string>>(new Set())
   const spaceHeld = useSpaceHeld()
   const { recordClick, getClickCount } = createClickCounter()
 
@@ -56,13 +64,14 @@ export function useCanvasInput(
     drag.value = d
   }
 
-  const { handleTextEditClick, onDblClick } = createTextEditInput({
+  const { handleTextEditClick, onDblClick: onTextDblClick } = createTextEditInput({
     editor,
     getCoords,
     hitTestInScope,
     hitTestSectionTitle,
     hitTestComponentLabel,
     getClickCount,
+    wasSelectedBeforeClickSequence: (id) => selectedIdsBeforeClickSequence.value.has(id),
     setDrag
   })
 
@@ -74,12 +83,82 @@ export function useCanvasInput(
     handleMarqueeMove
   } = createCanvasTransformInput(editor, canvasToLocal, setDrag)
 
+  function paddingValue(node: SceneNode, side: 'top' | 'right' | 'bottom' | 'left') {
+    if (side === 'top') return node.paddingTop
+    if (side === 'right') return node.paddingRight
+    if (side === 'bottom') return node.paddingBottom
+    return node.paddingLeft
+  }
+
+  function paddingKey(side: 'top' | 'right' | 'bottom' | 'left') {
+    if (side === 'top') return 'paddingTop' as const
+    if (side === 'right') return 'paddingRight' as const
+    if (side === 'bottom') return 'paddingBottom' as const
+    return 'paddingLeft' as const
+  }
+
+  function startAutoLayoutPaddingEdit(e: MouseEvent): boolean {
+    const { cx, cy } = getCoords(e)
+    const hover = resolveAutoLayoutHover(cx, cy, editor)
+    if (hover?.kind !== 'padding' && hover?.kind !== 'padding-value') return false
+    if (!hover.side) return false
+    const node = editor.graph.getNode(hover.nodeId)
+    if (!node) return false
+    const value = paddingValue(node, hover.side)
+    autoLayoutPaddingEdit.value = {
+      nodeId: node.id,
+      side: hover.side,
+      value,
+      previous: value
+    }
+    e.preventDefault()
+    e.stopPropagation()
+    return true
+  }
+
+  function updateAutoLayoutPaddingEdit(value: number) {
+    const edit = autoLayoutPaddingEdit.value
+    if (!edit || !Number.isFinite(value)) return
+    const next = Math.max(0, value)
+    autoLayoutPaddingEdit.value = { ...edit, value: next }
+    editor.updateNode(edit.nodeId, { [paddingKey(edit.side)]: next })
+  }
+
+  function commitAutoLayoutPaddingEdit(value: number) {
+    const edit = autoLayoutPaddingEdit.value
+    if (!edit || !Number.isFinite(value)) {
+      autoLayoutPaddingEdit.value = null
+      return
+    }
+    const next = Math.max(0, value)
+    editor.updateNode(edit.nodeId, { [paddingKey(edit.side)]: edit.previous })
+    editor.updateNodeWithUndo(edit.nodeId, { [paddingKey(edit.side)]: next }, 'Update padding')
+    autoLayoutPaddingEdit.value = null
+  }
+
+  function cancelAutoLayoutPaddingEdit() {
+    const edit = autoLayoutPaddingEdit.value
+    if (edit) editor.updateNode(edit.nodeId, { [paddingKey(edit.side)]: edit.previous })
+    autoLayoutPaddingEdit.value = null
+  }
+
+  function onDblClick(e: MouseEvent) {
+    if (startAutoLayoutPaddingEdit(e)) return
+    onTextDblClick(e)
+  }
+
   function onMouseDown(e: MouseEvent) {
+    const paddingEdit = autoLayoutPaddingEdit.value
+    if (paddingEdit) {
+      commitAutoLayoutPaddingEdit(paddingEdit.value)
+    }
     if (!editor.state.editingTextId) canvasRef.value?.focus()
     editor.setHoveredNode(null)
     const { sx, sy, cx, cy } = getCoords(e)
 
-    recordClick(sx, sy)
+    const selectedIdsBeforeMouseDown = new Set(editor.state.selectedIds)
+    const clickCount = recordClick(sx, sy)
+    if (clickCount === 1) selectedIdsBeforeClickSequence.value = selectedIdsBeforeMouseDown
     handleToolMouseDown({
       event: e,
       cx,
@@ -112,6 +191,7 @@ export function useCanvasInput(
     if (!drag.value && editor.state.activeTool === 'SELECT') {
       const { cx, cy } = getCoords(e)
       cursorOverride.value = updateHoverCursor(cx, cy, editor, hitFns)
+      editor.setAutoLayoutHover(resolveAutoLayoutHover(cx, cy, editor))
     }
 
     if (!drag.value) return
@@ -174,7 +254,7 @@ export function useCanvasInput(
     else if (d.type === 'text-select') {
       drag.value = null
       return
-    } else if (d.type === 'resize') editor.commitResize(d.nodeId, d.origRect)
+    } else if (d.type === 'resize') commitResizePreview(d, editor)
     else if (d.type === 'pen-drag') {
       const penState = editor.state.penState as
         | (typeof editor.state.penState & {
@@ -216,6 +296,10 @@ export function useCanvasInput(
   setupPanZoom(canvasRef, editor, drag, onMouseDown, onMouseMove, onMouseUp)
   return {
     drag,
-    cursorOverride
+    cursorOverride,
+    autoLayoutPaddingEdit,
+    updateAutoLayoutPaddingEdit,
+    commitAutoLayoutPaddingEdit,
+    cancelAutoLayoutPaddingEdit
   }
 }

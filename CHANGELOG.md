@@ -4,57 +4,63 @@
 
 ### Added
 
-- Add variable mode management — create, rename, duplicate, delete modes and set the default mode per collection. Modes appear as interactive table column headers (double-click to rename, right-click for context menu).
-- Add collection deletion from the variables dialog.
-- Bind variables to line height, letter spacing, font weight, paragraph spacing, and paragraph indent in the typography inspector.
-- Add editor event bus with typed lifecycle events — subscribe via `editor.onEditorEvent()` in core or `useEditorEvent()` composable in the Vue SDK.
-- Register desktop file associations for `.fig` and `.pen` so supported design files can be opened from OS file browsers with OpenPencil.
-- Add a local Assets panel for document components and component sets, with grouped variant assets, default variant insertion, and duplicate variant warnings.
-- Preserve Figma component library metadata on import/export, including component keys, source library keys, publish/version IDs, descriptions, links, and variant property specs.
+- Assets panel — browse, search, and insert document components directly from the left sidebar.
+- Component variants — switch instance variants from the right inspector; default variant respects property definitions.
+- Figma library metadata — component keys, source libraries, version IDs, descriptions, and docs links are preserved on import/export.
+- Desktop file associations — double-click `.fig` or `.pen` files in Finder/Explorer to open them in OpenPencil.
+- Auto-update — startup update checks and a Check for Updates menu item on desktop.
+- Light theme with theme-aware canvas rulers.
+- PDF export — available in the export panel, CLI (`--format pdf`), and MCP.
+- SVG import tool for automation workflows.
+- DeepSeek AI provider.
+- Variable modes — create, rename, duplicate, delete, and set defaults per collection.
+- Variable binding controls for fills, strokes, sizing, min/max, and typography fields.
+- Auto-layout inspector controls for min/max dimensions, auto gap, wrap gap, and two-axis padding.
+- Stroke dash/gap controls.
+- Font settings — local font access, fallback predownloads, and downloaded font cache management.
 
 ### Changed
 
-- Refactor the editor architecture across core, app, Vue SDK, CLI, MCP, docs, and desktop into smaller domain modules with structural lint rules to keep package boundaries explicit.
-- Add targeted core subpath exports and package-local import aliases for cleaner app, Vue SDK, CLI, and MCP imports.
-- Split the canvas into separate scene and overlay render layers so rulers, labels, selections, and input overlays are isolated from scene rendering.
-- Use `@use-gesture/vanilla` for wheel gesture lifecycle handling and faster trackpad zoom behavior.
-- Add auto-layout inspector controls for min/max dimensions, Auto gap distribution, wrap cross-axis gap, and two-axis padding controls.
-- Add signed Tauri updater configuration, release artifacts, startup update checks, and a native Check for Updates menu item.
-- Add inspector variable binding controls for fill and stroke colors plus width/height sizing, including existing variable selection and named variable creation.
-- Add stroke dash/gap controls to the stroke inspector panel.
-- Bump AI SDK dependencies for improved DeepSeek reasoning mode and newer model support.
-- Add PDF export — vector PDF output via SVG→PDF conversion. Available in export panel, CLI (`--format pdf`), and MCP (`export_pdf` tool).
-- Add font settings controls for local font access, fallback font predownloads, and downloaded font cache management.
+- Smaller domain modules across core, app, Vue SDK, CLI, MCP, docs, and desktop with enforced package boundaries.
+- Separate scene and overlay canvas layers — rulers, labels, and selections no longer cause scene redraws.
+- Shared menu schema between browser and native Tauri menus.
 
 ### Fixes
 
-- Fix inner shadow rendering for text nodes to be more in line with Figma's behavior
-- Fix bug causing exponential (decompressed) .fig growth triggered by repeated save / load cycles
-- Fix `@open-pencil/vue` failing to import from npm — `getAbsolutePositionFull` was imported from `@open-pencil/core/canvas/coordinate`, an unexported subpath. Re-exported the function from `@open-pencil/core/canvas` and updated the vue import.
-- Fix large `.fig` files freezing during open — parsing and scene graph import now run in the worker, and opened files fit to the canvas viewport after loading.
-- Improve Figma import fidelity for Preline UI files — preserve variable aliases, derived instance layout, nested instance scaling, avatar swaps, badge internals, and input text alignment.
-- Improve Figma render fidelity for exports — preserve flipped vector bounds, render Figma stroke geometry for shapes/vectors, fix clipped visual overflow, and render drop shadows for stroked shapes from the stroke outline.
-- Fix text editing inside selected components and instances on double-click.
-- Prevent browser/Safari from intercepting app-level Cmd/Ctrl shortcuts such as undo/redo.
-- Fix undo/redo shortcuts firing twice during modifier-key release by handling command shortcuts with event-based dispatch.
-- Fix option-drag duplicate undo/redo so undo removes duplicated subtrees and redo restores them instead of moving the copy back.
-- Fix section drawing errors and color input attribute forwarding in the property panel.
-- Fix demo component instances by laying out source components before creating instances, and restore explicit badge dot/text spacing.
-- Keep the global startup loader visible until CanvasKit fonts load and the first font-backed render completes, avoiding a flash of missing text in opened files and the demo.
-- Fix hot reload creating duplicate editor tabs during development.
-- Improve layout inspector dropdown anchoring and icon clarity for spacing and padding controls.
-- Fix bound color variable inspector swatches to display the resolved variable color and detach the binding when edited directly.
-- Fix dashed strokes on vector nodes rendering as solid lines — dash pattern now uses `PathEffect.MakeDash` directly instead of outline conversion, and closed crescent shapes (e.g. annular wedges) render a single dashed centerline arc instead of two parallel arcs.
-- Fix gradient fills on text nodes by clipping gradient paints through the shaped paragraph mask.
-- Fix CJK and Arabic fallback font rendering so text waits for required fallback fonts and repaints after async fallback loading completes.
+- Fix `.fig` export of component variant properties and text stretch alignment so designs round-trip correctly through Figma.
+- Fix CJK and Arabic text rendering — fallback fonts now load before the first paint instead of showing blank text.
+- Fix large `.fig` files freezing on open — parsing runs in a worker, and the viewport fits to content after loading.
+- Improve Figma import fidelity — variable aliases, nested instances, avatar swaps, badge internals, and input text alignment are preserved.
+- Improve Figma export fidelity — flipped vectors, stroke geometry, visual overflow, and stroked-shape drop shadows are preserved.
+- Fix variant switching so instances update their contents, not just the component reference.
+- Fix text editing inside components and instances on double-click.
+- Fix paste into selected containers and entered frames.
+- Fix clipboard parsing to safely ignore invalid data.
+- Fix undo/redo for duplicate, state restore, and modifier-key release.
+- Prevent browser from intercepting app-level undo/redo shortcuts.
+- Fix font loading and bundled font resolution.
+- Show the startup loader until fonts load and the first render completes.
+- Improve light theme polish and canvas ruler colors.
+- Normalize browser zoom speed.
+- Fix variable picker popovers and color binding swatches.
+- Fix dashed strokes on vector nodes and gradient fills on text.
+- Fix inner shadow rendering on text nodes.
+- Fix exponential `.fig` file growth on repeated save/load cycles.
+- Fix canvas size badges scaling with zoom.
+- Fix layout inspector dropdown anchoring and spacing/padding icon clarity.
+- Fix section drawing and color input forwarding in the property panel.
+- Fix asset insertion coordinates inside entered containers.
+- Fix MCP stdio handshake and eval return values.
+- Fix `@open-pencil/vue` npm imports referencing an unexported core subpath.
 
 ### Performance
 
-- Cache downloaded remote fonts in app-local storage so reopened documents can reuse them without repeated network fetches.
-- Add Tauri API mock coverage for font loading, font cache, external links, document read/write, and save dialogs.
-- Add a curated fallback font manifest for CJK and Arabic font downloads.
-- Cache instance override resolution and lazily populate opened `.fig` pages to reduce load time for large community files.
-- Reduce zoom and overlay rendering work by separating scene rendering from rulers, selection, labels, and input overlays.
+- Event-driven canvas rendering — scene and overlay layers only repaint when their inputs change, replacing continuous polling.
+- Shared RAF scheduler coalesces scene and overlay frames into a single animation frame per editor.
+- Font-family fallback arrays and downloaded remote fonts are cached to avoid repeated work.
+- WebGL draw-call instrumentation only runs while the profiler is active.
+- Instance override resolution is cached and `.fig` pages load lazily for large files.
+- Live drag/resize uses repaint-only previews to skip layout during interaction.
 
 ## 0.11.8 — 2026-04-23
 

@@ -1,3 +1,4 @@
+import { hexToBytes } from '#core/bytes/hex'
 import type { GUID } from '#core/types'
 
 import type { NodeChange, Paint } from './codec'
@@ -87,7 +88,7 @@ export function encodeNodeChangeWithVariables(
     hex = injectVariableBinding(hex, '2701', strokeBinding)
   }
 
-  return new Uint8Array(hex.match(/.{2}/g)?.map((b) => parseInt(b, 16)) ?? [])
+  return hexToBytes(hex)
 }
 
 function injectVariableBinding(hex: string, marker: string, binding: { variableID: GUID }): string {

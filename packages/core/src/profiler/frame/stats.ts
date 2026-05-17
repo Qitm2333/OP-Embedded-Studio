@@ -25,6 +25,11 @@ export class FrameStats {
   culledNodes = 0
   drawCalls = 0
   scenePictureCacheHit = false
+  scenePictureMode: 'hit' | 'record' | 'volatile' | 'none' = 'none'
+  scenePictureMissReason = ''
+  scenePictureDrawTime = 0
+  scenePictureRecordTime = 0
+  flushTime = 0
 
   private frameTimeBuffer = new Float64Array(BUFFER_SIZE)
   private cpuTimeBuffer = new Float64Array(BUFFER_SIZE)

@@ -33,10 +33,15 @@ export class RenderProfiler {
     this.hud = new HudController(ck)
   }
 
-  toggle(): void {
-    this.hudVisible = !this.hudVisible
-    this.enabled = this.hudVisible
+  setVisible(visible: boolean): void {
+    this.hudVisible = visible
+    this.enabled = visible
     this.phases.enabled = this.enabled
+    this.syncInstrumentation()
+  }
+
+  toggle(): void {
+    this.setVisible(!this.hudVisible)
   }
 
   beginFrame(): void {
@@ -78,11 +83,32 @@ export class RenderProfiler {
 
   setCacheHit(hit: boolean): void {
     this.stats.scenePictureCacheHit = hit
+    this.stats.scenePictureMode = hit ? 'hit' : 'none'
+    if (hit) this.stats.scenePictureMissReason = ''
+  }
+
+  setScenePictureMode(mode: 'hit' | 'record' | 'volatile' | 'none', reason = ''): void {
+    this.stats.scenePictureCacheHit = mode === 'hit'
+    this.stats.scenePictureMode = mode
+    this.stats.scenePictureMissReason = reason
+  }
+
+  setScenePictureDrawTime(ms: number): void {
+    this.stats.scenePictureDrawTime = ms
+  }
+
+  setScenePictureRecordTime(ms: number): void {
+    this.stats.scenePictureRecordTime = ms
+  }
+
+  setFlushTime(ms: number): void {
+    this.stats.flushTime = ms
   }
 
   beginCapture(): void {
     this.capturing = true
     this.captureSession = createCaptureSession(now())
+    this.syncInstrumentation()
   }
 
   endCapture(): FrameCapture | null {
@@ -92,6 +118,7 @@ export class RenderProfiler {
     const capture = createFrameCapture(this.captureSession, this.stats, this.gpuTimer, now)
     this.lastCapture = capture
     this.captureSession = null
+    this.syncInstrumentation()
     return capture
   }
 
@@ -121,6 +148,11 @@ export class RenderProfiler {
     a.download = `openpencil-frame-${Date.now()}.speedscope.json`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  private syncInstrumentation(): void {
+    if (this.enabled || this.capturing) this.drawCallCounter.enable()
+    else this.drawCallCounter.disable()
   }
 
   setTypeface(typeface: Typeface): void {

@@ -76,6 +76,7 @@ describe('text measurement', () => {
     // an older layout implementation. Post-layout, left-aligned HUG content retains x=8.
     expect(visibleToolbar.x).toBe(8)
 
+    setTextMeasurer(null)
     computeAllLayouts(graph, graph.getPages()[0].id)
 
     expect(graph.getNode(visibleToolbar.id)?.x).toBe(8)
@@ -251,6 +252,47 @@ describe('text measurement', () => {
     const children = graph.getChildren(frame.id)
     const updatedText = children[0]
     expect(updatedText.height).toBeGreaterThan(22)
+  })
+
+  test('resizing vertical typography frames reflows fill-width auto-height text', () => {
+    const graph = new SceneGraph()
+    const pid = pageId(graph)
+
+    const frame = autoFrame(graph, pid, {
+      width: 300,
+      height: 200,
+      layoutMode: 'VERTICAL',
+      primaryAxisSizing: 'FIXED',
+      counterAxisSizing: 'FIXED',
+      paddingLeft: 20,
+      paddingRight: 20
+    })
+
+    const text = graph.createNode('TEXT', frame.id, {
+      width: 260,
+      height: 20,
+      text: 'Body text — The quick brown fox jumps and wraps.',
+      fontSize: 14,
+      textAutoResize: 'HEIGHT' as const,
+      layoutAlignSelf: 'STRETCH' as const
+    })
+
+    setTextMeasurer((_node, maxWidth) => {
+      const w = maxWidth ?? 260
+      return { width: w, height: w <= 160 ? 60 : 20 }
+    })
+
+    computeAllLayouts(graph)
+    expect(getNodeOrThrow(graph, text.id).width).toBe(260)
+    expect(getNodeOrThrow(graph, text.id).height).toBe(20)
+
+    graph.updateNode(frame.id, { width: 200 })
+    computeAllLayouts(graph)
+    setTextMeasurer(null)
+
+    const updatedText = getNodeOrThrow(graph, text.id)
+    expect(updatedText.width).toBe(160)
+    expect(updatedText.height).toBe(60)
   })
 
   test('text with w="fill" in flex="col" stretches to parent width', () => {

@@ -50,17 +50,31 @@ export class LabelCache {
   private sections: CachedSection[] = []
   private components: CachedComponent[] = []
   private cachedSceneVersion = -1
+  private cachedPositionPreviewVersion = -1
   private cachedPageId: string | null = null
 
-  update(graph: SceneGraph, pageId: string | null, sceneVersion: number): void {
-    if (sceneVersion === this.cachedSceneVersion && pageId === this.cachedPageId) return
+  update(
+    graph: SceneGraph,
+    pageId: string | null,
+    sceneVersion: number,
+    positionPreviewVersion = graph.positionPreviewVersion
+  ): void {
+    if (
+      sceneVersion === this.cachedSceneVersion &&
+      positionPreviewVersion === this.cachedPositionPreviewVersion &&
+      pageId === this.cachedPageId
+    ) {
+      return
+    }
     this.rebuild(graph, pageId)
     this.cachedSceneVersion = sceneVersion
+    this.cachedPositionPreviewVersion = positionPreviewVersion
     this.cachedPageId = pageId
   }
 
   invalidate(): void {
     this.cachedSceneVersion = -1
+    this.cachedPositionPreviewVersion = -1
     this.cachedPageId = null
     this.sections = []
     this.components = []
@@ -79,9 +93,17 @@ export class LabelCache {
     graph: SceneGraph,
     viewport: Viewport
   ): Array<{ node: SceneNode; absX: number; absY: number; inside: boolean }> {
-    return collectVisibleLabels(graph, viewport, this.components, (cached) => ({
-      inside: cached.parentType === 'COMPONENT_SET'
+    return collectVisibleLabels(graph, viewport, this.components, () => ({
+      inside: false
     }))
+  }
+
+  getAllSections(): readonly CachedSection[] {
+    return this.sections
+  }
+
+  getAllComponents(): readonly CachedComponent[] {
+    return this.components
   }
 
   private rebuild(graph: SceneGraph, pageId: string | null): void {

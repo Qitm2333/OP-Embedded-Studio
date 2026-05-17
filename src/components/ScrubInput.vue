@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue'
-import { ScrubInputRoot, ScrubInputField, ScrubInputDisplay } from '@open-pencil/vue'
+import { computed, useAttrs } from 'vue'
+import { ScrubInputRoot, ScrubInputField, ScrubInputDisplay, testId } from '@open-pencil/vue'
 import { useEditorStore } from '@/app/editor/active-store'
 
 const attrs = useAttrs()
 
 const store = useEditorStore()
+
+const rootTestId = computed(() => (attrs['data-test-id'] as string | undefined) ?? 'scrub-input')
 
 const { modelValue, min, max, step, icon, label, suffix, sensitivity, placeholder } = defineProps<{
   modelValue: number | symbol
@@ -21,6 +23,7 @@ const { modelValue, min, max, step, icon, label, suffix, sensitivity, placeholde
 
 const emit = defineEmits<{
   'update:modelValue': [value: number]
+  'editing-change': [editing: boolean]
   commit: [value: number, previous: number]
 }>()
 
@@ -38,11 +41,15 @@ defineOptions({ inheritAttrs: false })
     :placeholder="placeholder"
     @update:model-value="emit('update:modelValue', $event)"
     @commit="(val: number, prev: number) => emit('commit', val, prev)"
-    @editing-change="store.state.scrubInputFocused = $event"
+    @editing-change="
+      (editing: boolean) => {
+        store.state.scrubInputFocused = editing
+        emit('editing-change', editing)
+      }
+    "
   >
     <div
-      v-bind="attrs"
-      :data-test-id="(attrs['data-test-id'] as string | undefined) ?? 'scrub-input'"
+      v-bind="{ ...attrs, ...testId(rootTestId) }"
       :tabindex="editing ? undefined : 0"
       :class="[
         attrs.class,

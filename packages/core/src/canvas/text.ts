@@ -5,7 +5,7 @@ import { resolveRGBAForPreview } from '#core/color/management'
 import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE } from '#core/constants'
 import type { SceneNode } from '#core/scene-graph'
 import { resolveNodeTextDirection } from '#core/text/direction'
-import { fontManager } from '#core/text/fonts'
+import { fontManager, weightToStyle } from '#core/text/fonts'
 
 interface TextRenderer {
   ck: CanvasKit
@@ -32,6 +32,8 @@ export interface ClipboardShapedText {
 
 const CJK_RE = /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uac00-\ud7af]/u
 const ARABIC_RE = /[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]/u
+const FONT_FAMILY_CACHE_LIMIT = 256
+const fontFamilyCache = new Map<string, string[]>()
 
 function hasRequiredFallbackFonts(text: string): boolean {
   if (CJK_RE.test(text) && fontManager.getCJKFallbackFamilies().length === 0) return false
@@ -40,12 +42,19 @@ function hasRequiredFallbackFonts(text: string): boolean {
 }
 
 export function isNodeFontLoaded(_r: TextRenderer, node: SceneNode): boolean {
-  const families = new Set<string>()
-  families.add(node.fontFamily || DEFAULT_FONT_FAMILY)
-  for (const run of node.styleRuns) {
-    if (run.style.fontFamily) families.add(run.style.fontFamily)
+  const baseFamily = node.fontFamily || DEFAULT_FONT_FAMILY
+  if (!fontManager.isStyleLoaded(baseFamily, weightToStyle(node.fontWeight, node.italic))) {
+    return false
   }
-  return hasRequiredFallbackFonts(node.text) && [...families].every((f) => fontManager.isLoaded(f))
+
+  for (const run of node.styleRuns) {
+    const family = run.style.fontFamily ?? baseFamily
+    const weight = run.style.fontWeight ?? node.fontWeight
+    const italic = run.style.italic ?? node.italic
+    if (!fontManager.isStyleLoaded(family, weightToStyle(weight, italic))) return false
+  }
+
+  return hasRequiredFallbackFonts(node.text)
 }
 
 export function measureTextNode(
@@ -105,6 +114,28 @@ function buildTruncateOpts(
     opts.maxLines = Math.max(1, Math.floor(node.height / lineH))
   }
   return opts
+}
+
+function resolveParagraphFontFamilies(
+  primary: string,
+  arabicFallbacks: readonly string[],
+  cjkFallbacks: readonly string[]
+): string[] {
+  const key = `${primary}\0${arabicFallbacks.join('\0')}\0${cjkFallbacks.join('\0')}`
+  const cached = fontFamilyCache.get(key)
+  if (cached) return cached
+
+  const families = [primary]
+  if (primary !== DEFAULT_FONT_FAMILY) families.push(DEFAULT_FONT_FAMILY)
+  families.push(...arabicFallbacks, ...cjkFallbacks)
+
+  const resolved = [...new Set(families)]
+  fontFamilyCache.set(key, resolved)
+  if (fontFamilyCache.size > FONT_FAMILY_CACHE_LIMIT) {
+    const oldestKey = fontFamilyCache.keys().next().value
+    if (oldestKey) fontFamilyCache.delete(oldestKey)
+  }
+  return resolved
 }
 
 function getParagraphTextAlign(
@@ -205,13 +236,8 @@ export function buildParagraph(
 
   const truncateOpts = buildTruncateOpts(node, baseFontSize)
 
-  const fontFamilies = (primary: string) => {
-    const families = [primary]
-    if (primary !== DEFAULT_FONT_FAMILY) families.push(DEFAULT_FONT_FAMILY)
-    families.push(...arabicFallbacks)
-    families.push(...cjkFallbacks)
-    return [...new Set(families)]
-  }
+  const fontFamilies = (primary: string) =>
+    resolveParagraphFontFamilies(primary, arabicFallbacks, cjkFallbacks)
 
   const paraStyle = new ck.ParagraphStyle({
     textAlign: getParagraphTextAlign(ck, node),
@@ -258,36 +284,46 @@ export async function shapeTextForClipboard(node: SceneNode): Promise<ClipboardS
   if (!fontProvider) return null
 
   const paragraph = buildParagraph({ ck, fontProvider, fontsLoaded: true }, node)
+  paragraph.layout(node.textAutoResize === 'WIDTH_AND_HEIGHT' ? 1e6 : node.width)
   const shapedLines = paragraph.getShapedLines()
   const lineMetrics = paragraph.getLineMetrics()
-  const firstLine = shapedLines[0]
+  if (shapedLines.length === 0 || lineMetrics.length === 0) {
+    paragraph.delete()
+    return null
+  }
   const firstMetrics = lineMetrics[0]
 
   const glyphs: ClipboardShapedGlyph[] = []
   const logicalIndexToCharacterOffsetMap = Array.from({ length: node.text.length + 1 }, () => 0)
 
-  for (const run of firstLine.runs) {
-    const positions = run.positions
-    for (let i = 0; i < run.glyphs.length; i++) {
-      const x = positions[i * 2] ?? 0
-      const y = positions[i * 2 + 1] ?? firstLine.baseline
-      const nextX = positions[(i + 1) * 2] ?? x
-      const firstCharacter = run.offsets[i] ?? i
-      glyphs.push({
-        glyphIndex: i,
-        firstCharacter,
-        x,
-        y,
-        advance: nextX - x
-      })
-      if (firstCharacter >= 0 && firstCharacter < logicalIndexToCharacterOffsetMap.length) {
-        logicalIndexToCharacterOffsetMap[firstCharacter] = x
+  for (let lineIdx = 0; lineIdx < shapedLines.length; lineIdx++) {
+    const line = shapedLines[lineIdx]
+    const metrics = lineMetrics[lineIdx] ?? firstMetrics
+    const lineY = metrics.baseline
+
+    for (const run of line.runs) {
+      const positions = run.positions
+      for (let i = 0; i < run.glyphs.length; i++) {
+        const x = positions[i * 2] ?? 0
+        const y = positions[i * 2 + 1] ?? lineY
+        const nextX = positions[(i + 1) * 2] ?? x
+        const firstCharacter = run.offsets[i] ?? i
+        glyphs.push({
+          glyphIndex: i,
+          firstCharacter,
+          x,
+          y,
+          advance: nextX - x
+        })
+        if (firstCharacter >= 0 && firstCharacter < logicalIndexToCharacterOffsetMap.length) {
+          logicalIndexToCharacterOffsetMap[firstCharacter] = x
+        }
       }
-    }
-    const finalOffset = run.offsets[run.offsets.length - 1]
-    const finalX = positions[positions.length - 2] ?? firstMetrics.width
-    if (finalOffset >= 0 && finalOffset < logicalIndexToCharacterOffsetMap.length) {
-      logicalIndexToCharacterOffsetMap[finalOffset] = finalX
+      const finalOffset = run.offsets[run.offsets.length - 1]
+      const finalX = positions[positions.length - 2] ?? metrics.width
+      if (finalOffset >= 0 && finalOffset < logicalIndexToCharacterOffsetMap.length) {
+        logicalIndexToCharacterOffsetMap[finalOffset] = finalX
+      }
     }
   }
 

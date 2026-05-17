@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test'
 import { CanvasHelper } from '#tests/helpers/canvas'
 
 async function dragSlider(page: Page, canvas: CanvasHelper, testId: string, ratio: number) {
-  const slider = page.locator(`[data-test-id="${testId}"] input[type="range"]`)
+  const slider = page.getByTestId(testId).locator('input[type="range"]')
   const box = await slider.boundingBox()
   if (!box) throw new Error(`Missing slider: ${testId}`)
   const y = box.y + box.height / 2
@@ -18,15 +18,16 @@ async function dragSlider(page: Page, canvas: CanvasHelper, testId: string, rati
 
 async function openStrokePicker(page: Page) {
   await page
-    .locator('[data-test-id="stroke-item"] [data-test-id="color-picker-popover"]')
+    .getByTestId('stroke-item')
+    .getByTestId('color-picker-popover')
     .waitFor({ state: 'detached' })
     .catch(() => undefined)
-  await page.locator('[data-test-id="stroke-item"] button').first().click()
-  await expect(page.locator('[data-test-id="color-picker-popover"]')).toBeVisible()
+  await page.getByTestId('stroke-item').locator('button').first().click()
+  await expect(page.getByTestId('color-picker-popover')).toBeVisible()
 }
 
 async function chooseFormat(page: Page, label: 'RGB' | 'HSL' | 'HSB' | 'OkHCL') {
-  await page.locator('[data-test-id="color-format-select"]').click()
+  await page.getByTestId('color-format-select').click()
   await page.getByRole('option', { name: label, exact: true }).click()
 }
 
@@ -46,7 +47,7 @@ test('stroke picker updates stroke color on a rectangle', async ({ page }) => {
   await canvas.waitForInit()
 
   await canvas.drawRect(120, 120, 180, 120)
-  await page.locator('[data-test-id="stroke-section-add"]').click()
+  await page.getByTestId('stroke-section-add').click()
   await canvas.waitForRender()
 
   const before = await getSelectedStroke(page)
@@ -68,7 +69,7 @@ test('stroke picker alpha slider updates stroke opacity and alpha', async ({ pag
   await canvas.waitForInit()
 
   await canvas.drawRect(120, 120, 180, 120)
-  await page.locator('[data-test-id="stroke-section-add"]').click()
+  await page.getByTestId('stroke-section-add').click()
   await canvas.waitForRender()
 
   await openStrokePicker(page)
@@ -103,12 +104,11 @@ test('stroke picker hsb saturation and brightness sliders update stroke color on
       align: 'INSIDE'
     }
     store.updateNodeWithUndo(card.id, { strokes: [stroke] }, 'Add demo card stroke')
-    store.state.selectedIds = new Set([card.id])
-    store.requestRender()
+    store.select([card.id])
   })
   await canvas.waitForRender()
 
-  await expect(page.locator('[data-test-id="stroke-item"]')).toBeVisible()
+  await expect(page.getByTestId('stroke-item')).toBeVisible()
   await openStrokePicker(page)
   await chooseFormat(page, 'HSB')
 

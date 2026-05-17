@@ -17,16 +17,22 @@ import VariableScrubInput from '@/components/properties/VariableScrubInput.vue'
 import BoundVariableButton from '@/components/properties/BoundVariableButton.vue'
 import VariablePickerPopover from '@/components/properties/VariablePickerPopover.vue'
 import { useSelectUI } from '@/components/ui/select'
-import { useI18n, useLayoutControlsContext, useNumberVariableBinding } from '@open-pencil/vue'
+import {
+  testId as testIdAttr,
+  vTestId,
+  useI18n,
+  useLayoutControlsContext,
+  useNumberVariableBinding
+} from '@open-pencil/vue'
 
 import type { LayoutSizing } from '@open-pencil/core/scene-graph'
-import type { SizeLimitProp } from '@open-pencil/vue'
+import type { SizeLimitProp, TestId } from '@open-pencil/vue'
 
 type SizeSelectValue = LayoutSizing | `add-${SizeLimitProp}` | `remove-${SizeLimitProp}`
 
 type ActiveSizeLimit = {
   prop: SizeLimitProp
-  testId: string
+  testId: TestId
   icon: () => string
   value: () => number | null
   setLabel: () => string
@@ -341,7 +347,7 @@ function handleSizeSelect(axis: 'width' | 'height', value: SizeSelectValue) {
       <div :ref="limitFieldRefs.set" class="min-w-0">
         <VariableScrubInput
           v-if="ctx.node"
-          :data-test-id="item.testId"
+          v-bind="testIdAttr(item.testId)"
           :icon="item.icon()"
           :model-value="Math.round(item.value() ?? 0)"
           :min="0"
@@ -356,7 +362,7 @@ function handleSizeSelect(axis: 'width' | 'height', value: SizeSelectValue) {
               @update:model-value="(value) => handleLimitSelect(item.prop, value as string)"
             >
               <SelectTrigger
-                :data-test-id="`${item.testId}-menu`"
+                v-test-id="`${item.testId}-menu`"
                 :reference="limitFieldAnchor(index)"
                 class="flex shrink-0 cursor-pointer items-center self-stretch border-none bg-transparent px-1 text-[11px] text-muted outline-none"
                 @pointerdown.stop
@@ -385,7 +391,7 @@ function handleSizeSelect(axis: 'width' | 'height', value: SizeSelectValue) {
         </VariableScrubInput>
         <ScrubInput
           v-else
-          :data-test-id="item.testId"
+          v-bind="testIdAttr(item.testId)"
           :icon="item.icon()"
           :model-value="Math.round(item.value() ?? 0)"
           :min="0"
@@ -398,7 +404,7 @@ function handleSizeSelect(axis: 'width' | 'height', value: SizeSelectValue) {
               @update:model-value="(value) => handleLimitSelect(item.prop, value as string)"
             >
               <SelectTrigger
-                :data-test-id="`${item.testId}-menu`"
+                v-test-id="`${item.testId}-menu`"
                 :reference="limitFieldAnchor(index)"
                 class="flex shrink-0 cursor-pointer items-center self-stretch border-none bg-transparent px-1 text-[11px] text-muted outline-none"
                 @pointerdown.stop

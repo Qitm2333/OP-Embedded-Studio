@@ -6,6 +6,7 @@ import { createNanoEvents } from 'nanoevents'
 import * as HitTest from './hit-test'
 import * as Instances from './instances'
 import { CONTAINER_TYPES, createDefaultNode } from './node-defaults'
+import { updateNodePreview } from './preview'
 import * as Variables from './variables'
 import { normalizeVectorNetwork } from './vector-network'
 
@@ -48,6 +49,8 @@ export class SceneGraph {
   documentColorSpace: DocumentColorSpace = 'display-p3'
   readonly emitter: Emitter<SceneGraphEvents> = createNanoEvents()
   private absPosCache = new Map<string, Vector>()
+  private previewMutationDepth = 0
+  positionPreviewVersion = 0
   instanceIndex = new Map<string, Set<string>>()
 
   constructor() {
@@ -257,8 +260,14 @@ export class SceneGraph {
     }
   }
 
+  private generateNodeId(): string {
+    let id = generateId()
+    while (this.nodes.has(id)) id = generateId()
+    return id
+  }
+
   createNode(type: NodeType, parentId: string, overrides: Partial<SceneNode> = {}): SceneNode {
-    const node = createDefaultNode(generateId, type, overrides)
+    const node = createDefaultNode(() => this.generateNodeId(), type, overrides)
     node.parentId = parentId
     this.nodes.set(node.id, node)
 
@@ -289,7 +298,6 @@ export class SceneGraph {
    * These names MUST match the actual SceneNode field names (not Figma API proxy names).
    */
   static LAYOUT_AFFECTING_KEYS: ReadonlySet<string> = new Set([
-    // Direct transform properties (used by getNodeLocalMatrix)
     'x',
     'y',
     'width',
@@ -297,7 +305,6 @@ export class SceneGraph {
     'rotation',
     'flipX',
     'flipY',
-    // Auto-layout properties (affect children's absolute positions)
     'layoutMode',
     'layoutDirection',
     'itemSpacing',
@@ -316,16 +323,13 @@ export class SceneGraph {
     'layoutGrow',
     'layoutAlignSelf',
     'strokesIncludedInLayout',
-    // Constraints
     'horizontalConstraint',
     'verticalConstraint',
-    // Grid layout
     'gridTemplateColumns',
     'gridTemplateRows',
     'gridColumnGap',
     'gridRowGap',
     'gridPosition',
-    // Sizing constraints
     'minWidth',
     'maxWidth',
     'minHeight',
@@ -351,7 +355,26 @@ export class SceneGraph {
     'height'
   ])
 
+  runPreviewUpdates(fn: () => void): void {
+    this.previewMutationDepth++
+    try {
+      fn()
+    } finally {
+      this.previewMutationDepth--
+    }
+  }
+  updateNodePositionPreview(id: string, x: number, y: number): void {
+    this.updateNodePreview(id, { x, y })
+  }
+  updateNodePreview(id: string, changes: Partial<SceneNode>): void {
+    updateNodePreview(this, id, changes)
+  }
   updateNode(id: string, changes: Partial<SceneNode>): void {
+    if (this.previewMutationDepth > 0) {
+      this.updateNodePreview(id, changes)
+      return
+    }
+
     const node = this.nodes.get(id)
     if (!node) return
 

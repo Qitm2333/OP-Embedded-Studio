@@ -5,7 +5,7 @@ import type { SceneNode, SceneGraph, Fill } from '#core/scene-graph'
 import type { Color } from '#core/types'
 import { vectorNetworkToCenterlinePath } from '#core/vector'
 
-import { nodeHasRadius } from './effects'
+import { nodeHasRadius } from './shapes'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
 
 function drawVisibleFills(
@@ -99,7 +99,9 @@ function renderChildren(
   canvas: Canvas,
   graph: SceneGraph,
   node: SceneNode,
-  overlays: RenderOverlays
+  overlays: RenderOverlays,
+  absX: number,
+  absY: number
 ): void {
   const isClippableContainer =
     node.type === 'FRAME' || node.type === 'COMPONENT' || node.type === 'INSTANCE'
@@ -111,12 +113,12 @@ function renderChildren(
       canvas.clipRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.ck.ClipOp.Intersect, true)
     }
     for (const childId of node.childIds) {
-      r.renderNode(canvas, graph, childId, overlays)
+      r.renderNode(canvas, graph, childId, overlays, absX, absY)
     }
     canvas.restore()
   } else {
     for (const childId of node.childIds) {
-      r.renderNode(canvas, graph, childId, overlays)
+      r.renderNode(canvas, graph, childId, overlays, absX, absY)
     }
   }
 }
@@ -169,7 +171,7 @@ export function renderNode(
 
   applyNodeTransforms(r, canvas, node, nodeId, overlays)
   renderNodeContent(r, canvas, graph, node, nodeId, overlays)
-  renderChildren(r, canvas, graph, node, overlays)
+  renderChildren(r, canvas, graph, node, overlays, absX, absY)
 
   if (layerBlur) {
     canvas.restore()
@@ -320,6 +322,8 @@ function drawVectorStrokeGeometry(
 
 function vectorStrokePaths(r: SkiaRenderer, node: SceneNode): Path[] | null {
   if (!node.vectorNetwork) return null
+  const cached = r.vectorStrokePathCache.get(node.id)
+  if (cached) return cached
 
   const paths: Path[] = []
   for (const segment of node.vectorNetwork.segments) {
@@ -348,7 +352,9 @@ function vectorStrokePaths(r: SkiaRenderer, node: SceneNode): Path[] | null {
     paths.push(path)
   }
 
-  return paths.length > 0 ? paths : null
+  if (paths.length === 0) return null
+  r.vectorStrokePathCache.set(node.id, paths)
+  return paths
 }
 
 function drawVectorPathStrokes(
@@ -356,7 +362,8 @@ function drawVectorPathStrokes(
   canvas: Canvas,
   vectorPaths: Path[],
   stroke: SceneNode['strokes'][0],
-  sc: Color
+  sc: Color,
+  outlineCacheKey?: string
 ): void {
   const dash = stroke.dashPattern
   if (dash && dash.length > 0) {
@@ -382,13 +389,17 @@ function drawVectorPathStrokes(
   r.fillPaint.setColor(r.ck.Color4f(sc.r, sc.g, sc.b, sc.a))
   r.fillPaint.setAlphaf(stroke.opacity)
   r.fillPaint.setShader(null)
-  for (const vp of vectorPaths) {
-    const outline = vp.copy().stroke(strokeOpts)
-    if (outline) {
-      canvas.drawPath(outline, r.fillPaint)
-      outline.delete()
+
+  let outlines = outlineCacheKey ? r.vectorStrokeOutlineCache.get(outlineCacheKey) : undefined
+  if (!outlines) {
+    outlines = []
+    for (const vp of vectorPaths) {
+      const outline = vp.copy().stroke(strokeOpts)
+      if (outline) outlines.push(outline)
     }
+    if (outlineCacheKey) r.vectorStrokeOutlineCache.set(outlineCacheKey, outlines)
   }
+  for (const outline of outlines) canvas.drawPath(outline, r.fillPaint)
 }
 
 function drawRegularStroke(
@@ -436,7 +447,8 @@ function drawNodeStroke(
   vectorStroke: Path[] | null
 ): void {
   if (vectorStroke && stroke.align === 'CENTER' && node.cornerRadius === 0) {
-    drawVectorPathStrokes(r, canvas, vectorStroke, stroke, sc)
+    const outlineKey = `${node.id}|${stroke.weight}|${stroke.cap ?? 'NONE'}|${stroke.join ?? 'MITER'}`
+    drawVectorPathStrokes(r, canvas, vectorStroke, stroke, sc, outlineKey)
     return
   }
   if (!sg) {
@@ -496,10 +508,6 @@ export function renderShapeUncached(
     }
     drawNodeStroke(r, canvas, node, rect, hasRadius, stroke, color, sg, vectorPaths, vectorStroke)
   })
-  if (vectorStroke) {
-    for (const path of vectorStroke) path.delete()
-  }
-
   r.renderEffects(canvas, node, rect, hasRadius, 'front', shadowChild)
 }
 
@@ -544,7 +552,7 @@ export function renderText(r: SkiaRenderer, canvas: Canvas, node: SceneNode, fil
     canvas.clipRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.ck.ClipOp.Intersect, false)
   }
 
-  const paragraphY = -1
+  const paragraphY = 0
   if (!r.isNodeFontLoaded(node)) {
     canvas.restore()
     return

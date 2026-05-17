@@ -47,26 +47,34 @@ export function createAppPreviewSection(
     })
   }
 
-  const headerId = store.createShape('RECTANGLE', 56, 0, 464, 52, frameId)
+  const headerId = store.createShape('FRAME', 56, 0, 464, 52, frameId)
   graph.updateNode(headerId, {
     name: 'Header',
     fills: [solid(WHITE)],
-    strokes: thinStroke(GRAY_200)
+    strokes: thinStroke(GRAY_200),
+    layoutMode: 'HORIZONTAL',
+    primaryAxisSizing: 'FIXED',
+    counterAxisSizing: 'FIXED',
+    counterAxisAlign: 'CENTER',
+    primaryAxisAlign: 'SPACE_BETWEEN',
+    paddingLeft: 20,
+    paddingRight: 20,
+    itemSpacing: 8
   })
-  const headerTitle = store.createShape('TEXT', 76, 16, 120, 20, frameId)
+  const headerTitle = store.createShape('TEXT', 0, 0, 120, 20, headerId)
   graph.updateNode(headerTitle, {
     name: 'Page Title',
     text: 'Dashboard',
     fontSize: 16,
     fontWeight: 600,
+    textAutoResize: 'WIDTH_AND_HEIGHT' as const,
     fills: [solid(BLACK)]
   })
 
-  const headerBtn = graph.createInstance(btnCompId, frameId, { x: 400, y: 8 })
-  if (headerBtn) graph.updateNode(headerBtn.id, { x: 400, y: 8 })
-
-  const headerBadge = graph.createInstance(badgeCompId, frameId, { x: 200, y: 18 })
-  if (headerBadge) graph.updateNode(headerBadge.id, { x: 200, y: 18 })
+  const badgeInstance = graph.createInstance(badgeCompId, headerId)
+  if (badgeInstance) graph.updateNode(badgeInstance.id, { x: 264, y: 15 })
+  const buttonInstance = graph.createInstance(btnCompId, headerId)
+  if (buttonInstance) graph.updateNode(buttonInstance.id, { x: 324, y: 6 })
 
   const stats = [
     { title: 'Revenue', value: '$12,480', badge: '+14%', color: GREEN },
@@ -98,6 +106,8 @@ export function createAppPreviewSection(
       text: s.title,
       fontSize: 11,
       fontWeight: 500,
+      textAutoResize: 'HEIGHT',
+      layoutAlignSelf: 'STRETCH',
       fills: [solid(GRAY_500)]
     })
     const valId = store.createShape('TEXT', 0, 0, 108, 24, cId)
@@ -106,6 +116,8 @@ export function createAppPreviewSection(
       text: s.value,
       fontSize: 22,
       fontWeight: 700,
+      textAutoResize: 'HEIGHT',
+      layoutAlignSelf: 'STRETCH',
       fills: [solid(BLACK)]
     })
     const bId = store.createShape('TEXT', 0, 0, 108, 14, cId)
@@ -114,6 +126,8 @@ export function createAppPreviewSection(
       text: s.badge,
       fontSize: 11,
       fontWeight: 600,
+      textAutoResize: 'HEIGHT',
+      layoutAlignSelf: 'STRETCH',
       fills: [solid(s.color)]
     })
   }
@@ -181,6 +195,7 @@ export function createAppPreviewSection(
       text: col,
       fontSize: 12,
       fontWeight: 600,
+      textAutoResize: 'WIDTH_AND_HEIGHT',
       fills: [solid(GRAY_500)]
     })
   }

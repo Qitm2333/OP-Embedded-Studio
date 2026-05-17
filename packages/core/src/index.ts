@@ -167,6 +167,7 @@ export {
   FontManager,
   fontManager,
   styleToWeight,
+  weightToFigmaStyle,
   weightToStyle,
   normalizeFontFamily,
   isVariableFont,
@@ -293,7 +294,7 @@ export {
   fractionalPosition,
   mapToFigmaType
 } from './kiwi/node-change/serialize'
-export { buildDerivedTextDataV4 } from './text/clipboard-derived-text'
+export { buildDerivedTextDataV4 } from './text/derived-text/clipboard'
 
 export {
   createElement,

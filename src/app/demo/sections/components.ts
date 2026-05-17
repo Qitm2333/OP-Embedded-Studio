@@ -24,14 +24,14 @@ export function createComponentsSection(store: EditorStore) {
   const compSectionId = store.createShape('SECTION', 60, 60, 920, 540)
   graph.updateNode(compSectionId, { name: 'Components' })
 
-  const btnId = store.createShape('FRAME', 32, 48, 160, 72, compSectionId)
+  const btnId = store.createShape('FRAME', 32, 76, 120, 40, compSectionId)
   graph.updateNode(btnId, {
     name: 'Button/Primary',
     fills: [],
     strokes: [],
     clipsContent: false
   })
-  const btnSurfaceId = store.createShape('FRAME', 0, 28, 120, 40, btnId)
+  const btnSurfaceId = store.createShape('FRAME', 0, 0, 120, 40, btnId)
   graph.updateNode(btnSurfaceId, {
     name: 'Surface',
     cornerRadius: 8,
@@ -52,18 +52,19 @@ export function createComponentsSection(store: EditorStore) {
     text: 'Get Started',
     fontSize: 14,
     fontWeight: 600,
+    textAutoResize: 'WIDTH_AND_HEIGHT',
     fills: [solid(WHITE)]
   })
   const btnCompId = makeComponent(store, [btnId])
 
-  const btn2Id = store.createShape('FRAME', 216, 48, 160, 72, compSectionId)
+  const btn2Id = store.createShape('FRAME', 216, 76, 100, 40, compSectionId)
   graph.updateNode(btn2Id, {
     name: 'Button/Secondary',
     fills: [],
     strokes: [],
     clipsContent: false
   })
-  const btn2SurfaceId = store.createShape('FRAME', 0, 28, 100, 40, btn2Id)
+  const btn2SurfaceId = store.createShape('FRAME', 0, 0, 100, 40, btn2Id)
   graph.updateNode(btn2SurfaceId, {
     name: 'Surface',
     cornerRadius: 8,
@@ -85,6 +86,7 @@ export function createComponentsSection(store: EditorStore) {
     text: 'Cancel',
     fontSize: 14,
     fontWeight: 500,
+    textAutoResize: 'WIDTH_AND_HEIGHT',
     fills: [solid(BLACK)]
   })
   const btn2CompId = makeComponent(store, [btn2Id])
@@ -93,8 +95,8 @@ export function createComponentsSection(store: EditorStore) {
   store.createComponentSetFromComponents()
   const buttonSetId = [...store.state.selectedIds][0]
   graph.updateNode(buttonSetId, { x: 32, y: 44, width: 400, height: 136, fills: [] })
-  graph.updateNode(btnCompId, { x: 40, y: 36 })
-  graph.updateNode(btn2CompId, { x: 224, y: 36 })
+  graph.updateNode(btnCompId, { x: 40, y: 64 })
+  graph.updateNode(btn2CompId, { x: 224, y: 64 })
 
   const chipId = store.createShape('FRAME', 500, 72, 80, 28, compSectionId)
   graph.updateNode(chipId, {
@@ -117,6 +119,7 @@ export function createComponentsSection(store: EditorStore) {
     text: 'Design',
     fontSize: 12,
     fontWeight: 500,
+    textAutoResize: 'WIDTH_AND_HEIGHT',
     fills: [solid(INDIGO)]
   })
   makeComponent(store, [chipId])
@@ -155,6 +158,8 @@ export function createComponentsSection(store: EditorStore) {
     text: 'Analytics Overview',
     fontSize: 16,
     fontWeight: 600,
+    textAutoResize: 'HEIGHT',
+    layoutAlignSelf: 'STRETCH',
     fills: [solid(BLACK)]
   })
   const cardDescId = store.createShape('TEXT', 0, 0, 240, 36, cardId)
@@ -163,6 +168,8 @@ export function createComponentsSection(store: EditorStore) {
     text: 'Track your key metrics and performance indicators in real time.',
     fontSize: 13,
     fontWeight: 400,
+    textAutoResize: 'HEIGHT',
+    layoutAlignSelf: 'STRETCH',
     fills: [solid(GRAY_500)]
   })
   const cardBarBg = store.createShape('RECTANGLE', 0, 0, 240, 8, cardId)
@@ -206,6 +213,8 @@ export function createComponentsSection(store: EditorStore) {
     text: 'Search...',
     fontSize: 14,
     fontWeight: 400,
+    textAutoResize: 'HEIGHT',
+    layoutAlignSelf: 'STRETCH',
     fills: [solid(GRAY_500)]
   })
   makeComponent(store, [inputId])
@@ -237,6 +246,7 @@ export function createComponentsSection(store: EditorStore) {
     text: 'Live',
     fontSize: 11,
     fontWeight: 600,
+    textAutoResize: 'WIDTH_AND_HEIGHT',
     fills: [solid(GREEN)]
   })
   const badgeCompId = makeComponent(store, [badgeId])

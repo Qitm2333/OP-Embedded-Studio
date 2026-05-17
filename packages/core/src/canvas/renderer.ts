@@ -72,13 +72,14 @@ export class SkiaRenderer {
   fontsLoaded = false
   imageCache = new Map<string, CKImage>()
   vectorPathCache = new Map<string, Path[]>()
+  vectorStrokePathCache = new Map<string, Path[]>()
+  vectorStrokeOutlineCache = new Map<string, Path[]>()
   fillGeometryCache = new Map<string, Path[]>()
   strokeGeometryCache = new Map<string, Path[]>()
   scenePicture: SkPicture | null = null
   scenePictureVersion = -1
+  scenePicturePositionPreviewVersion = -1
   scenePicturePageId: string | null = null
-  lastObservedSceneVersion = -1
-  lastSceneVersionChangeAt = 0
   nodePictureCache = new Map<string, SkPicture | null>()
   readonly labelCache = new LabelCache()
   readonly profiler: RenderProfiler
@@ -168,6 +169,11 @@ export class SkiaRenderer {
     canvas: Canvas,
     indicator?: RenderOverlays['layoutInsertIndicator']
   ) => void
+  declare drawAutoLayoutHover: (
+    canvas: Canvas,
+    graph: SceneGraph,
+    hover?: RenderOverlays['autoLayoutHover']
+  ) => void
   declare drawTextEditOverlay: (canvas: Canvas, node: SceneNode, editor: TextEditor) => void
   declare drawNodeEditOverlay: (
     canvas: Canvas,
@@ -187,7 +193,9 @@ export class SkiaRenderer {
     canvas: Canvas,
     graph: SceneGraph,
     nodeId: string,
-    overlays: RenderOverlays
+    overlays: RenderOverlays,
+    parentAbsX?: number,
+    parentAbsY?: number
   ) => void
   declare renderSection: (canvas: Canvas, node: SceneNode, graph: SceneGraph) => void
   declare renderComponentSet: (canvas: Canvas, node: SceneNode, graph: SceneGraph) => void
@@ -408,7 +416,8 @@ export class SkiaRenderer {
       canvasY,
       this.zoom,
       this.pageId ?? graph.rootId,
-      this.sectionTitleFont
+      this.sectionTitleFont,
+      this.labelCache
     )
   }
 
@@ -419,7 +428,8 @@ export class SkiaRenderer {
       canvasY,
       this.zoom,
       this.pageId ?? graph.rootId,
-      this.componentLabelFont
+      this.componentLabelFont,
+      this.labelCache
     )
   }
 
@@ -477,10 +487,16 @@ export class SkiaRenderer {
   }
 
   invalidateVectorPath(nodeId: string): void {
-    const old = this.vectorPathCache.get(nodeId)
-    if (old) {
+    for (const cache of [this.vectorPathCache, this.vectorStrokePathCache]) {
+      const old = cache.get(nodeId)
+      if (!old) continue
       for (const p of old) p.delete()
-      this.vectorPathCache.delete(nodeId)
+      cache.delete(nodeId)
+    }
+    for (const [key, paths] of this.vectorStrokeOutlineCache) {
+      if (!key.startsWith(`${nodeId}|`)) continue
+      for (const p of paths) p.delete()
+      this.vectorStrokeOutlineCache.delete(key)
     }
     for (const cache of [this.fillGeometryCache, this.strokeGeometryCache]) {
       const oldGeom = cache.get(nodeId)

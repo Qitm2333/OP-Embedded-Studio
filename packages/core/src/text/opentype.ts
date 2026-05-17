@@ -2,7 +2,7 @@ import * as OpenTypeSync from 'opentype.js'
 
 import { fontManager } from './fonts'
 
-interface OutlineCommand {
+export interface OutlineCommand {
   type: string
   x?: number
   y?: number
@@ -18,6 +18,7 @@ interface OutlinePath {
 
 interface OutlineGlyph {
   path: OutlinePath
+  advanceWidth?: number
   getPath(x: number, y: number, fontSize: number): OutlinePath
 }
 
@@ -79,31 +80,31 @@ export function measureTextWithOpenType(
   return { width: Math.ceil(singleLineWidth), height: lineH }
 }
 
-function commandsToFigmaNumbers(commands: OutlineCommand[]): Array<string | number> {
-  const result: Array<string | number> = []
-  for (const command of commands) {
-    result.push(command.type)
-    if (command.x1 !== undefined) result.push(command.x1)
-    if (command.y1 !== undefined) result.push(command.y1)
-    if (command.x2 !== undefined) result.push(command.x2)
-    if (command.y2 !== undefined) result.push(command.y2)
-    if (command.x !== undefined) result.push(command.x)
-    if (command.y !== undefined) result.push(command.y)
-  }
-  return result
+export interface GlyphOutlineMetrics {
+  commands: OutlineCommand[]
+  x: number
+  advance: number
 }
 
-export function getGlyphOutlineCommandsSync(
+export function getGlyphOutlineMetricsSync(
   family: string,
   style: string,
   text: string,
   fontSize: number
-): Array<Array<string | number>> | null {
+): GlyphOutlineMetrics[] | null {
   const font = getParsedFont(family, style)
   if (!font) return null
 
   const glyphs = font.stringToGlyphs(text)
-  return glyphs.map((glyph) => commandsToFigmaNumbers(glyph.getPath(0, 0, fontSize).commands))
+  let x = 0
+  const scale = fontSize / font.unitsPerEm
+  return glyphs.map((glyph) => {
+    const commands = glyph.getPath(0, 0, fontSize).commands
+    const advance = (glyph.advanceWidth ?? 0) * scale
+    const metrics = { commands, x, advance }
+    x += advance
+    return metrics
+  })
 }
 
 export async function probeGlyphOutlineCommands(

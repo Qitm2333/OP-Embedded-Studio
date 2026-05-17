@@ -1,14 +1,37 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { ContextMenuRoot, ContextMenuTrigger, ContextMenuPortal } from 'reka-ui'
+import { computed, ref, type Component } from 'vue'
+import {
+  AUTO_LAYOUT_PADDING_EDITOR_OFFSET_X,
+  AUTO_LAYOUT_PADDING_EDITOR_OFFSET_Y
+} from '@open-pencil/core/constants'
+import {
+  ContextMenuPortal,
+  ContextMenuRoot,
+  ContextMenuTrigger,
+  PopoverContent,
+  PopoverPortal,
+  PopoverRoot
+} from 'reka-ui'
 
-import { toolCursor, useCanvas, useCanvasDrop, useCanvasInput, useTextEdit } from '@open-pencil/vue'
+import {
+  toolCursor,
+  useCanvas,
+  useCanvasDrop,
+  useCanvasInput,
+  useCanvasVirtualReference,
+  useTextEdit
+} from '@open-pencil/vue'
 import { useCollabInjected } from '@/app/collab/use'
 import { useEditorStore } from '@/app/editor/active-store'
 import { useCanvasCollaborationAwareness } from '@/app/editor/canvas/collaboration-awareness'
 import { createCanvasContextSelection } from '@/app/editor/canvas/context-selection'
 import { fadeOutGlobalLoader } from '@/app/editor/canvas/loader-overlay'
+import IconLucidePanelBottom from '~icons/lucide/panel-bottom'
+import IconLucidePanelLeft from '~icons/lucide/panel-left'
+import IconLucidePanelRight from '~icons/lucide/panel-right'
+import IconLucidePanelTop from '~icons/lucide/panel-top'
 import CanvasMenu from './CanvasMenu.vue'
+import ScrubInput from './ScrubInput.vue'
 
 const store = useEditorStore()
 const collab = useCollabInjected()
@@ -30,7 +53,13 @@ const { hitTestSectionTitle, hitTestComponentLabel, hitTestFrameTitle } = useCan
     layer: 'overlays'
   }
 )
-const { cursorOverride } = useCanvasInput(
+const {
+  cursorOverride,
+  autoLayoutPaddingEdit,
+  updateAutoLayoutPaddingEdit,
+  commitAutoLayoutPaddingEdit,
+  cancelAutoLayoutPaddingEdit
+} = useCanvasInput(
   canvasRef,
   store,
   hitTestSectionTitle,
@@ -41,6 +70,32 @@ const { cursorOverride } = useCanvasInput(
 
 useTextEdit(canvasRef, store)
 const { isDraggingOver } = useCanvasDrop(canvasRef, store)
+
+const paddingSideIcons = {
+  top: IconLucidePanelTop,
+  right: IconLucidePanelRight,
+  bottom: IconLucidePanelBottom,
+  left: IconLucidePanelLeft
+} satisfies Record<'top' | 'right' | 'bottom' | 'left', Component>
+
+const paddingEditorAnchor = computed(() => {
+  const edit = autoLayoutPaddingEdit.value
+  if (!edit) return null
+  const node = store.graph.getNode(edit.nodeId)
+  if (!node) return null
+  const abs = store.graph.getAbsolutePosition(node.id)
+  if (edit.side === 'top') return { x: abs.x + node.width / 2, y: abs.y + node.paddingTop / 2 }
+  if (edit.side === 'bottom') {
+    return { x: abs.x + node.width / 2, y: abs.y + node.height - node.paddingBottom / 2 }
+  }
+  if (edit.side === 'left') return { x: abs.x + node.paddingLeft / 2, y: abs.y + node.height / 2 }
+  return { x: abs.x + node.width - node.paddingRight / 2, y: abs.y + node.height / 2 }
+})
+const paddingEditorReference = useCanvasVirtualReference(canvasRef, store, paddingEditorAnchor)
+const paddingEditorIcon = computed(() => {
+  const edit = autoLayoutPaddingEdit.value
+  return edit ? paddingSideIcons[edit.side] : IconLucidePanelTop
+})
 
 const cursor = computed(() => toolCursor(store.state.activeTool, cursorOverride.value))
 </script>
@@ -76,6 +131,42 @@ const cursor = computed(() => toolCursor(store.state.activeTool, cursorOverride.
             class="pointer-events-none absolute inset-0 z-40 border-2 border-dashed border-accent/60 bg-accent/5"
           />
         </Transition>
+        <PopoverRoot :open="!!autoLayoutPaddingEdit">
+          <PopoverPortal>
+            <PopoverContent
+              v-if="autoLayoutPaddingEdit && paddingEditorReference"
+              :reference="paddingEditorReference"
+              side="top"
+              align="center"
+              :side-offset="AUTO_LAYOUT_PADDING_EDITOR_OFFSET_Y"
+              :align-offset="AUTO_LAYOUT_PADDING_EDITOR_OFFSET_X"
+              :collision-padding="8"
+              class="z-50 w-20 rounded-md bg-panel p-1 shadow-lg"
+              data-test-id="auto-layout-padding-editor"
+              @keydown.escape.prevent="cancelAutoLayoutPaddingEdit"
+              @open-auto-focus.prevent
+            >
+              <ScrubInput
+                :model-value="autoLayoutPaddingEdit.value"
+                :min="0"
+                :step="1"
+                data-test-id="auto-layout-padding-input"
+                @update:model-value="updateAutoLayoutPaddingEdit"
+                @commit="(value: number) => commitAutoLayoutPaddingEdit(value)"
+                @editing-change="
+                  (editing: boolean) =>
+                    !editing &&
+                    autoLayoutPaddingEdit &&
+                    commitAutoLayoutPaddingEdit(autoLayoutPaddingEdit.value)
+                "
+              >
+                <template #icon>
+                  <component :is="paddingEditorIcon" class="size-3.5" />
+                </template>
+              </ScrubInput>
+            </PopoverContent>
+          </PopoverPortal>
+        </PopoverRoot>
         <Transition leave-active-class="transition-opacity duration-300" leave-to-class="opacity-0">
           <div
             v-if="store.state.loading"
@@ -83,7 +174,7 @@ const cursor = computed(() => toolCursor(store.state.activeTool, cursorOverride.
             class="absolute inset-0 z-50 flex items-center justify-center bg-canvas"
           >
             <svg
-              class="size-8 text-white opacity-40"
+              class="size-8 text-surface opacity-45"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -96,10 +187,10 @@ const cursor = computed(() => toolCursor(store.state.activeTool, cursorOverride.
               />
             </svg>
             <div
-              class="absolute bottom-1/2 left-1/2 h-0.5 w-25 -translate-x-1/2 translate-y-10 overflow-hidden rounded-full bg-white/8"
+              class="absolute bottom-1/2 left-1/2 h-0.5 w-25 -translate-x-1/2 translate-y-10 overflow-hidden rounded-full bg-surface/8"
             >
               <div
-                class="h-full w-2/5 animate-[slide_1s_ease-in-out_infinite] rounded-full bg-white/25"
+                class="h-full w-2/5 animate-[slide_1s_ease-in-out_infinite] rounded-full bg-surface/25"
               />
             </div>
           </div>

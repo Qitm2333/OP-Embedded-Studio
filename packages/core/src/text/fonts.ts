@@ -25,6 +25,7 @@ const BUNDLED_FONTS: Record<string, string> = {
   'Inter|Regular': '/Inter-Regular.ttf',
   'Inter|Medium': '/Inter-Medium.ttf',
   'Inter|SemiBold': '/Inter-SemiBold.ttf',
+  'Inter|Bold': '/Inter-Bold.ttf',
   'Noto Naskh Arabic|Regular': '/NotoNaskhArabic-Regular.ttf'
 }
 
@@ -84,6 +85,12 @@ export function styleToWeight(style: string): number {
 export function weightToStyle(weight: number, italic = false): string {
   const rounded = Math.round(weight / 100) * 100
   const label = (FONT_WEIGHT_NAMES[rounded] ?? 'Regular').replace(/ /g, '')
+  return italic ? `${label} Italic` : label
+}
+
+export function weightToFigmaStyle(weight: number, italic = false): string {
+  const rounded = Math.round(weight / 100) * 100
+  const label = FONT_WEIGHT_NAMES[rounded] ?? 'Regular'
   return italic ? `${label} Italic` : label
 }
 
@@ -237,6 +244,10 @@ export class FontManager {
 
   isLoaded(family: string): boolean {
     return [...this.loadedFamilies.keys()].some((k) => k.startsWith(`${family}|`))
+  }
+
+  isStyleLoaded(family: string, style: string): boolean {
+    return this.loadedFamilies.has(`${family}|${style}`)
   }
 
   loadedData(family: string, style: string): ArrayBuffer | null {

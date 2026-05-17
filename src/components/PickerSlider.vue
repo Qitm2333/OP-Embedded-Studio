@@ -1,6 +1,30 @@
 <script setup lang="ts">
-import { inputNumberValue } from '@open-pencil/vue'
+import { inputNumberValue, vTestId, type TestIdProps } from '@open-pencil/vue'
 import { usePickerSliderUI } from './ui/picker-slider'
+
+type PickerSliderDisplay = {
+  value?: number
+  min?: number
+  max?: number
+  step?: number
+  format?: (value: number) => string | number
+  parse?: (value: number) => number
+}
+
+interface PickerSliderProps extends TestIdProps {
+  label: string
+  modelValue: number
+  min: number
+  max: number
+  step?: number
+  display?: PickerSliderDisplay
+  gradientStyle?: string
+  checkerboard?: boolean
+  thumbFill?: string
+  ui?: Partial<
+    Record<'root' | 'label' | 'track' | 'gradient' | 'range' | 'thumb' | 'input', string>
+  >
+}
 
 const {
   label,
@@ -8,37 +32,13 @@ const {
   min,
   max,
   step = 1,
-  displayValue,
-  displayMin,
-  displayMax,
-  displayStep,
-  formatDisplay,
-  parseDisplay,
+  display,
   gradientStyle,
   checkerboard = false,
   thumbFill = '#fff',
   testId,
   ui
-} = defineProps<{
-  label: string
-  modelValue: number
-  min: number
-  max: number
-  step?: number
-  displayValue?: number
-  displayMin?: number
-  displayMax?: number
-  displayStep?: number
-  formatDisplay?: (value: number) => string | number
-  parseDisplay?: (value: number) => number
-  gradientStyle?: string
-  checkerboard?: boolean
-  thumbFill?: string
-  testId?: string
-  ui?: Partial<
-    Record<'root' | 'label' | 'track' | 'gradient' | 'range' | 'thumb' | 'input', string>
-  >
-}>()
+} = defineProps<PickerSliderProps>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: number]
@@ -47,12 +47,12 @@ const emit = defineEmits<{
 const cls = usePickerSliderUI({ checkerboard, ui })
 
 function numberValue(): string | number {
-  const value = displayValue ?? modelValue
-  return formatDisplay ? formatDisplay(value) : value
+  const value = display?.value ?? modelValue
+  return display?.format ? display.format(value) : value
 }
 
 function handleNumberChange(value: number) {
-  emit('update:modelValue', parseDisplay ? parseDisplay(value) : value)
+  emit('update:modelValue', display?.parse ? display.parse(value) : value)
 }
 
 function thumbLeft(): string {
@@ -64,7 +64,7 @@ function thumbLeft(): string {
 </script>
 
 <template>
-  <div :class="cls.root" :data-test-id="testId">
+  <div :class="cls.root" v-test-id="testId">
     <span :class="cls.label">{{ label }}</span>
     <div :class="cls.track">
       <div :class="cls.gradient" :style="gradientStyle" />
@@ -82,9 +82,9 @@ function thumbLeft(): string {
     <input
       type="number"
       :class="cls.input"
-      :min="displayMin ?? min"
-      :max="displayMax ?? max"
-      :step="displayStep ?? step"
+      :min="display?.min ?? min"
+      :max="display?.max ?? max"
+      :step="display?.step ?? step"
       :value="numberValue()"
       @change="handleNumberChange(inputNumberValue($event))"
     />
