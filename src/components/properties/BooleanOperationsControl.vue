@@ -1,0 +1,66 @@
+<script setup lang="ts">
+import {
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuRoot,
+  DropdownMenuTrigger
+} from 'reka-ui'
+import IconChevronDown from '~icons/lucide/chevron-down'
+import IconCombine from '~icons/lucide/combine'
+import IconCopyMinus from '~icons/lucide/copy-minus'
+import IconCopyX from '~icons/lucide/copy-x'
+import IconSquaresIntersect from '~icons/lucide/squares-intersect'
+
+import { useEditorCommands, useI18n } from '@open-pencil/vue'
+import type { EditorCommandId } from '@open-pencil/vue'
+
+import { menuItem, useMenuUI } from '@/components/ui/menu'
+
+const { getCommand, runCommand } = useEditorCommands()
+const { commands } = useI18n()
+
+const operations = [
+  { id: 'selection.booleanUnion', icon: IconCombine },
+  { id: 'selection.booleanSubtract', icon: IconCopyMinus },
+  { id: 'selection.booleanIntersect', icon: IconSquaresIntersect },
+  { id: 'selection.booleanExclude', icon: IconCopyX }
+] satisfies Array<{ id: EditorCommandId; icon: unknown }>
+
+const menuCls = useMenuUI({ content: 'min-w-44' })
+const itemCls = menuItem({ justify: 'start' })
+</script>
+
+<template>
+  <DropdownMenuRoot>
+    <DropdownMenuTrigger as-child>
+      <button
+        data-test-id="boolean-operations-trigger"
+        class="flex h-7 items-center gap-1 rounded-md px-1.5 text-muted hover:bg-hover hover:text-surface data-[state=open]:bg-active data-[state=open]:text-surface"
+        :title="commands.booleanOperations"
+      >
+        <IconCombine class="size-4" />
+        <IconChevronDown class="size-3" />
+      </button>
+    </DropdownMenuTrigger>
+    <DropdownMenuPortal>
+      <DropdownMenuContent
+        align="end"
+        side="bottom"
+        :side-offset="4"
+        :class="menuCls.content"
+      >
+        <DropdownMenuItem
+          v-for="operation in operations"
+          :key="operation.id"
+          :class="itemCls"
+          :disabled="!getCommand(operation.id).enabled.value"
+          @select="runCommand(operation.id)"
+        >
+          <component :is="operation.icon" class="size-3.5 text-muted" />
+          <span>{{ getCommand(operation.id).label }}</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenuPortal>
+  </DropdownMenuRoot>
+</template>

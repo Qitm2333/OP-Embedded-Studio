@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import { useI18n, useSelectionState, useEditorCommands } from '@open-pencil/vue'
 
 import VariablesDialog from './VariablesDialog.vue'
+import BooleanOperationsControl from './properties/BooleanOperationsControl.vue'
 import AppearanceSection from './properties/AppearanceSection.vue'
 import EffectsSection from './properties/EffectsSection.vue'
 import ExportSection from './properties/ExportSection.vue'
@@ -18,6 +19,7 @@ import VariantSection from './properties/VariantSection.vue'
 
 const variablesOpen = ref(false)
 const { selectedNode: node, selectedCount: multiCount } = useSelectionState()
+const showBooleanOperations = computed(() => multiCount.value >= 2)
 const { getCommand } = useEditorCommands()
 const goToMainComponent = getCommand('selection.goToMainComponent')
 const detachInstance = getCommand('selection.detachInstance')
@@ -43,6 +45,9 @@ const { panels } = useI18n()
       <span class="text-xs font-semibold">{{
         panels.layersCount({ count: String(multiCount) })
       }}</span>
+      <div class="ml-auto flex items-center">
+        <BooleanOperationsControl v-if="showBooleanOperations" />
+      </div>
     </div>
     <PositionSection />
     <AppearanceSection />
