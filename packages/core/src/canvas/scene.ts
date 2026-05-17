@@ -462,7 +462,8 @@ function drawNodeStroke(
     return
   }
   if (stroke.align !== 'INSIDE') {
-    drawVectorStrokeGeometry(r, canvas, sg, sc, stroke.opacity)
+    if (node.type === 'VECTOR') drawVectorStrokeGeometry(r, canvas, sg, sc, stroke.opacity)
+    else drawRegularStroke(r, canvas, node, rect, hasRadius, stroke, sc)
     return
   }
 
