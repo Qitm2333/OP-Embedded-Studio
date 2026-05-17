@@ -126,9 +126,47 @@ function hardTextLines(text: string): TextLine[] {
   return lines
 }
 
+function glyphAdvance(node: SceneNode, absoluteIndex: number): number | null {
+  const char = node.text[absoluteIndex]
+  const style = resolvedGlyphStyle(textStyleAt(node, absoluteIndex), char)
+  if (!style) return null
+  const metrics = getGlyphOutlineMetricsSync(style.fontFamily, styleName(style), char, style.fontSize)
+  const glyph = metrics?.[0]
+  return glyph ? glyph.advance + style.letterSpacing : null
+}
+
+function wrapStyledLine(node: SceneNode, line: TextLine): TextLine[] {
+  if (!line.text || node.width <= 0) return [line]
+  const result: TextLine[] = []
+  let lineStart = 0
+  let cursor = 0
+  let lastBreak = -1
+
+  for (let index = 0; index < line.text.length; index++) {
+    const advance = glyphAdvance(node, line.start + index)
+    if (advance == null) return [line]
+    cursor += advance
+    if (/\s/.test(line.text[index])) {
+      lastBreak = index + 1
+    }
+    if (cursor <= node.width || index === lineStart) continue
+
+    const breakIndex = lastBreak > lineStart ? lastBreak : index
+    result.push({ text: line.text.slice(lineStart, breakIndex), start: line.start + lineStart })
+    lineStart = breakIndex
+    index = breakIndex - 1
+    cursor = 0
+    lastBreak = -1
+  }
+
+  result.push({ text: line.text.slice(lineStart), start: line.start + lineStart })
+  return result
+}
+
 function textLines(node: SceneNode): TextLine[] {
   const hardLines = hardTextLines(node.text)
-  if (node.textAutoResize === 'WIDTH_AND_HEIGHT' || node.styleRuns.length > 0) return hardLines
+  if (node.textAutoResize === 'WIDTH_AND_HEIGHT') return hardLines
+  if (node.styleRuns.length > 0) return hardLines.flatMap((line) => wrapStyledLine(node, line))
 
   const result: TextLine[] = []
   for (const hardLine of hardLines) {

@@ -13,6 +13,21 @@ async function createRenderer() {
 }
 
 describe('FigmaAPI renderer-backed flatten', () => {
+  test('keeps headless flatten as a compatibility placeholder without geometry', () => {
+    const api = createAPI()
+    const rect = api.createRectangle()
+    rect.resize(50, 40)
+
+    const vector = api.flatten([rect], api.currentPage)
+    const raw = api.graph.getNode(vector.id)
+
+    expect(raw?.type).toBe('VECTOR')
+    expect(raw?.width).toBe(50)
+    expect(raw?.height).toBe(40)
+    expect(raw?.vectorNetwork).toBeNull()
+    expect(api.getNodeById(rect.id)).toBeNull()
+  })
+
   test('creates vector geometry when a renderer is attached', async () => {
     const api = createAPI()
     const { renderer, surface } = await createRenderer()

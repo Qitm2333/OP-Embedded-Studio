@@ -214,7 +214,20 @@ test('create component via context menu', async () => {
   editor.canvas.assertNoErrors()
 })
 
-test('Copy/Paste as submenu exists', async () => {
+test('outline stroke is disabled for fill-only shapes', async () => {
+  await editor.canvas.clearCanvas()
+  await editor.canvas.drawRect(200, 200, 120, 80)
+  await editor.canvas.waitForRender()
+
+  await rightClickShape(250, 230)
+
+  const item = contextItem('context-outline-stroke')
+  await expect(item).toBeVisible()
+  await expect(item).toHaveAttribute('data-disabled', '')
+  await editor.page.keyboard.press('Escape')
+})
+
+ test('Copy/Paste as submenu exists', async () => {
   await rightClickShape(130, 130)
 
   const submenuTrigger = contextItem('context-copy-paste-as')

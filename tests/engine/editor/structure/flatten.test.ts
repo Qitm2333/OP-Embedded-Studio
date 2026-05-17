@@ -5,6 +5,7 @@ import { SkiaRenderer } from '#core/canvas'
 import { BLACK, TRANSPARENT } from '#core/constants'
 import { createEditor } from '#core/editor'
 import { fontManager } from '#core/text/fonts'
+import { textNodeToOutlineLayout } from '#core/text/outlines'
 
 async function createEditorWithRenderer() {
   const ck = await initCanvasKit()
@@ -159,6 +160,27 @@ describe('flattenSelected', () => {
     expect(vector?.vectorNetwork?.vertices.length).toBeGreaterThan(0)
     expect(editor.graph.getNode(text.id)).toBeUndefined()
     surface.delete()
+  })
+
+  test('wraps loaded text style runs as outlines', async () => {
+    await loadInterRegular()
+    await loadInterBold()
+    const editor = createEditor()
+    const pageId = editor.state.currentPageId
+    const text = editor.graph.createNode('TEXT', pageId, {
+      text: 'Hello world',
+      fontFamily: 'Inter',
+      fontWeight: 400,
+      fontSize: 32,
+      width: 100,
+      height: 100,
+      styleRuns: [{ start: 6, length: 5, style: { fontWeight: 700 } }]
+    })
+
+    const layout = textNodeToOutlineLayout(text)
+
+    expect(layout).not.toBeNull()
+    expect(layout?.height).toBeGreaterThan(40)
   })
 
   test('flattens loaded text style runs as outlines', async () => {
