@@ -1,17 +1,4 @@
-import {
-  BLACK,
-  BLUE,
-  GRAY_200,
-  GRAY_50,
-  GRAY_500,
-  GREEN,
-  INDIGO,
-  RED,
-  WHITE,
-  gradient,
-  solid,
-  thinStroke
-} from '@/app/demo/colors'
+import { DEMO_COLORS, gradient, solid, thinStroke } from '@/app/demo/colors'
 import type { EditorStore } from '@/app/editor/session'
 
 export function createAppPreviewSection(
@@ -27,31 +14,31 @@ export function createAppPreviewSection(
   const frameId = store.createShape('FRAME', 20, 48, 520, 460, appSectionId)
   graph.updateNode(frameId, {
     name: 'Dashboard',
-    fills: [solid(GRAY_50)],
-    strokes: thinStroke(GRAY_200),
+    fills: [solid(DEMO_COLORS.gray50)],
+    strokes: thinStroke(DEMO_COLORS.gray200),
     clipsContent: true
   })
 
   const sidebarId = store.createShape('RECTANGLE', 0, 0, 56, 460, frameId)
   graph.updateNode(sidebarId, {
     name: 'Sidebar',
-    fills: [solid(WHITE)],
-    strokes: thinStroke(GRAY_200)
+    fills: [solid(DEMO_COLORS.white)],
+    strokes: thinStroke(DEMO_COLORS.gray200)
   })
 
   for (let i = 0; i < 5; i++) {
     const dotId = store.createShape('ELLIPSE', 18, 20 + i * 40, 20, 20, frameId)
     graph.updateNode(dotId, {
       name: `Nav ${i + 1}`,
-      fills: [solid(i === 0 ? BLUE : GRAY_200)]
+      fills: [solid(i === 0 ? DEMO_COLORS.blue : DEMO_COLORS.gray200)]
     })
   }
 
   const headerId = store.createShape('FRAME', 56, 0, 464, 52, frameId)
   graph.updateNode(headerId, {
     name: 'Header',
-    fills: [solid(WHITE)],
-    strokes: thinStroke(GRAY_200),
+    fills: [solid(DEMO_COLORS.white)],
+    strokes: thinStroke(DEMO_COLORS.gray200),
     layoutMode: 'HORIZONTAL',
     primaryAxisSizing: 'FIXED',
     counterAxisSizing: 'FIXED',
@@ -68,7 +55,7 @@ export function createAppPreviewSection(
     fontSize: 16,
     fontWeight: 600,
     textAutoResize: 'WIDTH_AND_HEIGHT' as const,
-    fills: [solid(BLACK)]
+    fills: [solid(DEMO_COLORS.black)]
   })
 
   const badgeInstance = graph.createInstance(badgeCompId, headerId)
@@ -77,9 +64,9 @@ export function createAppPreviewSection(
   if (buttonInstance) graph.updateNode(buttonInstance.id, { x: 324, y: 6 })
 
   const stats = [
-    { title: 'Revenue', value: '$12,480', badge: '+14%', color: GREEN },
-    { title: 'Users', value: '3,842', badge: '+8%', color: BLUE },
-    { title: 'Orders', value: '1,249', badge: '-3%', color: RED }
+    { title: 'Revenue', value: '$12,480', badge: '+14%', color: DEMO_COLORS.green },
+    { title: 'Users', value: '3,842', badge: '+8%', color: DEMO_COLORS.blue },
+    { title: 'Orders', value: '1,249', badge: '-3%', color: DEMO_COLORS.red }
   ]
 
   for (let i = 0; i < stats.length; i++) {
@@ -89,8 +76,8 @@ export function createAppPreviewSection(
     graph.updateNode(cId, {
       name: s.title,
       cornerRadius: 10,
-      fills: [solid(WHITE)],
-      strokes: thinStroke(GRAY_200),
+      fills: [solid(DEMO_COLORS.white)],
+      strokes: thinStroke(DEMO_COLORS.gray200),
       layoutMode: 'VERTICAL',
       primaryAxisSizing: 'FIXED',
       counterAxisSizing: 'FIXED',
@@ -108,7 +95,7 @@ export function createAppPreviewSection(
       fontWeight: 500,
       textAutoResize: 'HEIGHT',
       layoutAlignSelf: 'STRETCH',
-      fills: [solid(GRAY_500)]
+      fills: [solid(DEMO_COLORS.gray500)]
     })
     const valId = store.createShape('TEXT', 0, 0, 108, 24, cId)
     graph.updateNode(valId, {
@@ -118,7 +105,7 @@ export function createAppPreviewSection(
       fontWeight: 700,
       textAutoResize: 'HEIGHT',
       layoutAlignSelf: 'STRETCH',
-      fills: [solid(BLACK)]
+      fills: [solid(DEMO_COLORS.black)]
     })
     const bId = store.createShape('TEXT', 0, 0, 108, 14, cId)
     graph.updateNode(bId, {
@@ -136,8 +123,8 @@ export function createAppPreviewSection(
   graph.updateNode(chartBg, {
     name: 'Chart',
     cornerRadius: 10,
-    fills: [solid(WHITE)],
-    strokes: thinStroke(GRAY_200)
+    fills: [solid(DEMO_COLORS.white)],
+    strokes: thinStroke(DEMO_COLORS.gray200)
   })
   const chartTitle = store.createShape('TEXT', 16, 16, 120, 18, chartBg)
   graph.updateNode(chartTitle, {
@@ -145,7 +132,7 @@ export function createAppPreviewSection(
     text: 'Revenue over time',
     fontSize: 13,
     fontWeight: 600,
-    fills: [solid(BLACK)]
+    fills: [solid(DEMO_COLORS.black)]
   })
 
   const barHeights = [60, 90, 72, 110, 95, 130, 100, 80, 120, 140, 115, 88]
@@ -164,8 +151,8 @@ export function createAppPreviewSection(
       cornerRadius: 4,
       fills: [
         gradient([
-          { color: BLUE, position: 0 },
-          { color: INDIGO, position: 1 }
+          { color: DEMO_COLORS.blue, position: 0 },
+          { color: DEMO_COLORS.indigo, position: 1 }
         ])
       ]
     })
@@ -174,8 +161,8 @@ export function createAppPreviewSection(
   const tableId = store.createShape('FRAME', 76, 400, 424, 40, frameId)
   graph.updateNode(tableId, {
     name: 'Table Header',
-    fills: [solid(WHITE)],
-    strokes: thinStroke(GRAY_200),
+    fills: [solid(DEMO_COLORS.white)],
+    strokes: thinStroke(DEMO_COLORS.gray200),
     layoutMode: 'HORIZONTAL',
     primaryAxisSizing: 'FIXED',
     counterAxisSizing: 'HUG',
@@ -196,7 +183,7 @@ export function createAppPreviewSection(
       fontSize: 12,
       fontWeight: 600,
       textAutoResize: 'WIDTH_AND_HEIGHT',
-      fills: [solid(GRAY_500)]
+      fills: [solid(DEMO_COLORS.gray500)]
     })
   }
 

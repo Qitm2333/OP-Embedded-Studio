@@ -1,17 +1,4 @@
-import {
-  BLACK,
-  BLUE,
-  GRAY_200,
-  GREEN,
-  ORANGE,
-  PURPLE,
-  RED,
-  TEAL,
-  WHITE,
-  gradient,
-  solid,
-  thinStroke
-} from '@/app/demo/colors'
+import { DEMO_COLORS, gradient, solid, thinStroke } from '@/app/demo/colors'
 import type { EditorStore } from '@/app/editor/session'
 
 export function createStandaloneShapes(store: EditorStore) {
@@ -35,7 +22,7 @@ export function createStandaloneShapes(store: EditorStore) {
     text: 'Linear Gradient',
     fontSize: 14,
     fontWeight: 600,
-    fills: [solid(WHITE)]
+    fills: [solid(DEMO_COLORS.white)]
   })
 
   const grad2 = store.createShape('FRAME', 260, 660, 180, 120)
@@ -55,7 +42,7 @@ export function createStandaloneShapes(store: EditorStore) {
     text: 'Ocean Breeze',
     fontSize: 14,
     fontWeight: 600,
-    fills: [solid(WHITE)]
+    fills: [solid(DEMO_COLORS.white)]
   })
 
   const grad3 = store.createShape('FRAME', 460, 660, 180, 120)
@@ -75,15 +62,15 @@ export function createStandaloneShapes(store: EditorStore) {
     text: 'Warm Sunset',
     fontSize: 14,
     fontWeight: 600,
-    fills: [solid(WHITE)]
+    fills: [solid(DEMO_COLORS.white)]
   })
 
   const typoFrame = store.createShape('FRAME', 700, 660, 300, 120)
   graph.updateNode(typoFrame, {
     name: 'Typography',
     cornerRadius: 12,
-    fills: [solid(WHITE)],
-    strokes: thinStroke(GRAY_200),
+    fills: [solid(DEMO_COLORS.white)],
+    strokes: thinStroke(DEMO_COLORS.gray200),
     layoutMode: 'VERTICAL',
     primaryAxisSizing: 'FIXED',
     counterAxisSizing: 'FIXED',
@@ -108,7 +95,7 @@ export function createStandaloneShapes(store: EditorStore) {
       fontWeight: t.weight,
       textAutoResize: 'HEIGHT',
       layoutAlignSelf: 'STRETCH',
-      fills: [solid(BLACK)]
+      fills: [solid(DEMO_COLORS.black)]
     })
   }
 
@@ -117,24 +104,24 @@ export function createStandaloneShapes(store: EditorStore) {
       type: 'ELLIPSE' as const,
       x: 1060,
       fill: gradient([
-        { color: PURPLE, position: 0 },
-        { color: BLUE, position: 1 }
+        { color: DEMO_COLORS.purple, position: 0 },
+        { color: DEMO_COLORS.blue, position: 1 }
       ])
     },
     {
       type: 'RECTANGLE' as const,
       x: 1160,
       fill: gradient([
-        { color: GREEN, position: 0 },
-        { color: TEAL, position: 1 }
+        { color: DEMO_COLORS.green, position: 0 },
+        { color: DEMO_COLORS.teal, position: 1 }
       ])
     },
     {
       type: 'ELLIPSE' as const,
       x: 1260,
       fill: gradient([
-        { color: ORANGE, position: 0 },
-        { color: RED, position: 1 }
+        { color: DEMO_COLORS.orange, position: 0 },
+        { color: DEMO_COLORS.red, position: 1 }
       ])
     }
   ]

@@ -1,16 +1,6 @@
 import type { Color } from '@open-pencil/core/scene-graph'
 
-import {
-  BLACK,
-  BLUE,
-  GRAY_100,
-  GRAY_200,
-  GRAY_50,
-  GRAY_500,
-  GREEN,
-  RED,
-  WHITE
-} from '@/app/demo/colors'
+import { DEMO_COLORS } from '@/app/demo/colors'
 import type { EditorStore } from '@/app/editor/session'
 
 export function createDemoVariables(store: EditorStore) {
@@ -33,40 +23,50 @@ export function createDemoVariables(store: EditorStore) {
     light: Color
     dark: Color
   }> = [
-    { id: 'var-white', name: 'White', light: WHITE, dark: { r: 0.12, g: 0.12, b: 0.13, a: 1 } },
-    { id: 'var-black', name: 'Black', light: BLACK, dark: WHITE },
+    {
+      id: 'var-white',
+      name: 'White',
+      light: DEMO_COLORS.white,
+      dark: { r: 0.12, g: 0.12, b: 0.13, a: 1 }
+    },
+    { id: 'var-black', name: 'Black', light: DEMO_COLORS.black, dark: DEMO_COLORS.white },
     {
       id: 'var-gray-50',
       name: 'Gray/50',
-      light: GRAY_50,
+      light: DEMO_COLORS.gray50,
       dark: { r: 0.1, g: 0.1, b: 0.11, a: 1 }
     },
     {
       id: 'var-gray-100',
       name: 'Gray/100',
-      light: GRAY_100,
+      light: DEMO_COLORS.gray100,
       dark: { r: 0.14, g: 0.14, b: 0.16, a: 1 }
     },
     {
       id: 'var-gray-200',
       name: 'Gray/200',
-      light: GRAY_200,
+      light: DEMO_COLORS.gray200,
       dark: { r: 0.22, g: 0.22, b: 0.24, a: 1 }
     },
     {
       id: 'var-gray-500',
       name: 'Gray/500',
-      light: GRAY_500,
+      light: DEMO_COLORS.gray500,
       dark: { r: 0.65, g: 0.65, b: 0.68, a: 1 }
     },
-    { id: 'var-blue', name: 'Blue', light: BLUE, dark: { r: 0.33, g: 0.61, b: 1, a: 1 } },
+    {
+      id: 'var-blue',
+      name: 'Blue',
+      light: DEMO_COLORS.blue,
+      dark: { r: 0.33, g: 0.61, b: 1, a: 1 }
+    },
     {
       id: 'var-green',
       name: 'Green',
-      light: GREEN,
+      light: DEMO_COLORS.green,
       dark: { r: 0.23, g: 0.87, b: 0.52, a: 1 }
     },
-    { id: 'var-red', name: 'Red', light: RED, dark: { r: 1, g: 0.32, b: 0.32, a: 1 } }
+    { id: 'var-red', name: 'Red', light: DEMO_COLORS.red, dark: { r: 1, g: 0.32, b: 0.32, a: 1 } }
   ]
 
   for (const c of primitiveColors) {

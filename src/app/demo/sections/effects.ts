@@ -1,15 +1,4 @@
-import {
-  BLACK,
-  BLUE,
-  GRAY_100,
-  GRAY_500,
-  INDIGO,
-  PURPLE,
-  WHITE,
-  gradient,
-  solid,
-  thinStroke
-} from '@/app/demo/colors'
+import { DEMO_COLORS, gradient, solid, thinStroke } from '@/app/demo/colors'
 import { blurEffect, dropShadow, innerShadow } from '@/app/demo/effects'
 import type { EditorStore } from '@/app/editor/session'
 
@@ -19,7 +8,7 @@ export function createEffectsSection(store: EditorStore) {
   const effectsSectionId = store.createShape('SECTION', 60, 840, 920, 480)
   graph.updateNode(effectsSectionId, {
     name: 'Effects',
-    fills: [{ type: 'SOLID', color: { r: 1, g: 1, b: 1, a: 1 }, visible: true, opacity: 1 }]
+    fills: [solid(DEMO_COLORS.white)]
   })
 
   const shadowLabel = store.createShape('TEXT', 32, 48, 200, 20, effectsSectionId)
@@ -28,14 +17,14 @@ export function createEffectsSection(store: EditorStore) {
     text: 'Drop Shadow',
     fontSize: 13,
     fontWeight: 600,
-    fills: [solid(GRAY_500)]
+    fills: [solid(DEMO_COLORS.gray500)]
   })
 
   const shadowCard1 = store.createShape('FRAME', 32, 76, 160, 100, effectsSectionId)
   graph.updateNode(shadowCard1, {
     name: 'Subtle Shadow',
     cornerRadius: 12,
-    fills: [solid(WHITE)],
+    fills: [solid(DEMO_COLORS.white)],
     effects: [dropShadow(0, 2, 8, 0, { r: 0, g: 0, b: 0, a: 0.08 })]
   })
   const s1Text = store.createShape('TEXT', 16, 40, 128, 20, shadowCard1)
@@ -44,14 +33,14 @@ export function createEffectsSection(store: EditorStore) {
     text: 'Subtle',
     fontSize: 13,
     fontWeight: 500,
-    fills: [solid(GRAY_500)]
+    fills: [solid(DEMO_COLORS.gray500)]
   })
 
   const shadowCard2 = store.createShape('FRAME', 220, 76, 160, 100, effectsSectionId)
   graph.updateNode(shadowCard2, {
     name: 'Medium Shadow',
     cornerRadius: 12,
-    fills: [solid(WHITE)],
+    fills: [solid(DEMO_COLORS.white)],
     effects: [dropShadow(0, 4, 16, 0, { r: 0, g: 0, b: 0, a: 0.15 })]
   })
   const s2Text = store.createShape('TEXT', 16, 40, 128, 20, shadowCard2)
@@ -60,14 +49,14 @@ export function createEffectsSection(store: EditorStore) {
     text: 'Medium',
     fontSize: 13,
     fontWeight: 500,
-    fills: [solid(GRAY_500)]
+    fills: [solid(DEMO_COLORS.gray500)]
   })
 
   const shadowCard3 = store.createShape('FRAME', 408, 76, 160, 100, effectsSectionId)
   graph.updateNode(shadowCard3, {
     name: 'Heavy Shadow',
     cornerRadius: 12,
-    fills: [solid(WHITE)],
+    fills: [solid(DEMO_COLORS.white)],
     effects: [dropShadow(0, 8, 24, 0, { r: 0, g: 0, b: 0, a: 0.2 })]
   })
   const s3Text = store.createShape('TEXT', 16, 40, 128, 20, shadowCard3)
@@ -76,14 +65,14 @@ export function createEffectsSection(store: EditorStore) {
     text: 'Heavy',
     fontSize: 13,
     fontWeight: 500,
-    fills: [solid(GRAY_500)]
+    fills: [solid(DEMO_COLORS.gray500)]
   })
 
   const shadowCard4 = store.createShape('FRAME', 596, 76, 160, 100, effectsSectionId)
   graph.updateNode(shadowCard4, {
     name: 'Spread Shadow',
     cornerRadius: 12,
-    fills: [solid(WHITE)],
+    fills: [solid(DEMO_COLORS.white)],
     effects: [dropShadow(0, 4, 12, 8, { r: 0.23, g: 0.51, b: 0.96, a: 0.3 })]
   })
   const s4Text = store.createShape('TEXT', 16, 40, 128, 20, shadowCard4)
@@ -92,7 +81,7 @@ export function createEffectsSection(store: EditorStore) {
     text: 'With Spread',
     fontSize: 13,
     fontWeight: 500,
-    fills: [solid(BLUE)]
+    fills: [solid(DEMO_COLORS.blue)]
   })
 
   const innerLabel = store.createShape('TEXT', 32, 208, 200, 20, effectsSectionId)
@@ -101,14 +90,14 @@ export function createEffectsSection(store: EditorStore) {
     text: 'Inner Shadow',
     fontSize: 13,
     fontWeight: 600,
-    fills: [solid(GRAY_500)]
+    fills: [solid(DEMO_COLORS.gray500)]
   })
 
   const innerCard1 = store.createShape('FRAME', 32, 236, 160, 100, effectsSectionId)
   graph.updateNode(innerCard1, {
     name: 'Inset Light',
     cornerRadius: 12,
-    fills: [solid(GRAY_100)],
+    fills: [solid(DEMO_COLORS.gray100)],
     effects: [innerShadow(0, 2, 6, 0, { r: 0, g: 0, b: 0, a: 0.12 })]
   })
   const i1Text = store.createShape('TEXT', 16, 40, 128, 20, innerCard1)
@@ -117,14 +106,14 @@ export function createEffectsSection(store: EditorStore) {
     text: 'Inset',
     fontSize: 13,
     fontWeight: 500,
-    fills: [solid(GRAY_500)]
+    fills: [solid(DEMO_COLORS.gray500)]
   })
 
   const innerCard2 = store.createShape('FRAME', 220, 236, 160, 100, effectsSectionId)
   graph.updateNode(innerCard2, {
     name: 'Inset with Spread',
     cornerRadius: 12,
-    fills: [solid(GRAY_100)],
+    fills: [solid(DEMO_COLORS.gray100)],
     effects: [innerShadow(0, 2, 8, 4, { r: 0, g: 0, b: 0, a: 0.15 })]
   })
   const i2Text = store.createShape('TEXT', 16, 40, 128, 20, innerCard2)
@@ -133,7 +122,7 @@ export function createEffectsSection(store: EditorStore) {
     text: 'Inset + Spread',
     fontSize: 13,
     fontWeight: 500,
-    fills: [solid(GRAY_500)]
+    fills: [solid(DEMO_COLORS.gray500)]
   })
 
   const innerEllipse = store.createShape('ELLIPSE', 408, 236, 100, 100, effectsSectionId)
@@ -152,7 +141,7 @@ export function createEffectsSection(store: EditorStore) {
   graph.updateNode(comboCard, {
     name: 'Combined',
     cornerRadius: 12,
-    fills: [solid(WHITE)],
+    fills: [solid(DEMO_COLORS.white)],
     effects: [
       dropShadow(0, 4, 16, 0, { r: 0, g: 0, b: 0, a: 0.12 }),
       innerShadow(0, 1, 2, 0, { r: 0, g: 0, b: 0, a: 0.06 })
@@ -164,7 +153,7 @@ export function createEffectsSection(store: EditorStore) {
     text: 'Drop + Inner',
     fontSize: 13,
     fontWeight: 500,
-    fills: [solid(GRAY_500)]
+    fills: [solid(DEMO_COLORS.gray500)]
   })
 
   const textFxLabel = store.createShape('TEXT', 32, 368, 200, 20, effectsSectionId)
@@ -173,7 +162,7 @@ export function createEffectsSection(store: EditorStore) {
     text: 'Text Shadow & Blur',
     fontSize: 13,
     fontWeight: 600,
-    fills: [solid(GRAY_500)]
+    fills: [solid(DEMO_COLORS.gray500)]
   })
 
   const textShadow = store.createShape('TEXT', 32, 400, 200, 36, effectsSectionId)
@@ -182,7 +171,7 @@ export function createEffectsSection(store: EditorStore) {
     text: 'Glyph Shadow',
     fontSize: 28,
     fontWeight: 700,
-    fills: [solid(BLACK)],
+    fills: [solid(DEMO_COLORS.black)],
     effects: [dropShadow(2, 2, 4, 0, { r: 0.23, g: 0.51, b: 0.96, a: 0.5 })]
   })
 
@@ -192,7 +181,7 @@ export function createEffectsSection(store: EditorStore) {
     text: 'Inner Glow',
     fontSize: 28,
     fontWeight: 700,
-    fills: [solid(INDIGO)],
+    fills: [solid(DEMO_COLORS.indigo)],
     effects: [innerShadow(0, -1, 3, 0, { r: 1, g: 1, b: 1, a: 0.6 })]
   })
 
@@ -202,8 +191,8 @@ export function createEffectsSection(store: EditorStore) {
     cornerRadius: 10,
     fills: [
       gradient([
-        { color: PURPLE, position: 0 },
-        { color: BLUE, position: 1 }
+        { color: DEMO_COLORS.purple, position: 0 },
+        { color: DEMO_COLORS.blue, position: 1 }
       ])
     ],
     effects: [blurEffect('LAYER_BLUR', 4)]
@@ -223,6 +212,6 @@ export function createEffectsSection(store: EditorStore) {
     text: 'Glassmorphism',
     fontSize: 14,
     fontWeight: 600,
-    fills: [solid(BLACK)]
+    fills: [solid(DEMO_COLORS.black)]
   })
 }
