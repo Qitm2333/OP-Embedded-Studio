@@ -118,6 +118,13 @@ export function createClipboardActions(ctx: EditorContext) {
     return selected.filter((node) => !node.parentId || !selectedSet.has(node.parentId))
   }
 
+  function reorderCreatedAtReplacementIndex(created: string[], deleted: DeletedEntry[]) {
+    const insertParentId = deleted[0]?.parentId
+    if (!insertParentId) return
+    const insertIndex = deleted[0]?.index ?? 0
+    for (let i = 0; i < created.length; i++) ctx.graph.reorderChild(created[i], insertParentId, insertIndex + i)
+  }
+
   function pushPasteReplaceUndo(
     created: string[],
     deleted: DeletedEntry[],
@@ -130,6 +137,7 @@ export function createClipboardActions(ctx: EditorContext) {
       forward: () => {
         for (const { id } of deleted) ctx.graph.deleteNode(id)
         recreateSnapshots(createdSnapshots, pageId)
+        reorderCreatedAtReplacementIndex(created, deleted)
         computeAllLayouts(ctx.graph, pageId)
         ctx.setSelectedIds(new Set(created))
       },
@@ -165,9 +173,7 @@ export function createClipboardActions(ctx: EditorContext) {
       targetBounds.x + targetBounds.width / 2,
       targetBounds.y + targetBounds.height / 2
     )
-    const insertParentId = deleted[0]?.parentId ?? ctx.state.currentPageId
-    const insertIndex = deleted[0]?.index ?? 0
-    for (let i = 0; i < created.length; i++) ctx.graph.reorderChild(created[i], insertParentId, insertIndex + i)
+    reorderCreatedAtReplacementIndex(created, deleted)
     for (const { id } of deleted) ctx.graph.deleteNode(id)
     computeAllLayouts(ctx.graph, ctx.state.currentPageId)
     ctx.setSelectedIds(new Set(created))
