@@ -50,6 +50,7 @@ const componentMenu = menu({ tone: 'component' })
 
 const cls = {
   menu: menuCls.content,
+  submenu: menuCls.content.replace('min-w-56', 'min-w-0 w-max'),
   item: menuCls.item,
   component: componentMenu.item(),
   sep: menuCls.separator
@@ -135,7 +136,7 @@ function contextCommandIcon(id: EditorCommandId | undefined): Component | undefi
           ><span class="text-sm text-muted">›</span>
         </ContextMenuSubTrigger>
         <ContextMenuPortal>
-          <ContextMenuSubContent :class="cls.menu">
+          <ContextMenuSubContent :class="cls.submenu">
             <ContextMenuItem
               v-for="(sub, j) in item.sub"
               :key="j"
