@@ -84,7 +84,8 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
       :disabled="!hasSelection"
       @select="getCommand('selection.duplicate').run()"
     >
-      <span>Duplicate</span><span class="text-[11px] text-muted">{{ formatShortcut('MOD+D') }}</span>
+      <span>{{ getCommand('selection.duplicate').label }}</span
+      ><span class="text-[11px] text-muted">{{ formatShortcut('MOD+D') }}</span>
     </ContextMenuItem>
     <ContextMenuItem
       data-test-id="context-delete"
@@ -92,7 +93,8 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
       :disabled="!hasSelection"
       @select="getCommand('selection.delete').run()"
     >
-      <span>Delete</span><span class="text-[11px] text-muted">⌫</span>
+      <span>{{ getCommand('selection.delete').label }}</span
+      ><span class="text-[11px] text-muted">{{ editorCommandMetadata('selection.delete').shortcut }}</span>
     </ContextMenuItem>
 
     <template v-for="(item, i) in canvasMenu" :key="`menu-${i}`">
