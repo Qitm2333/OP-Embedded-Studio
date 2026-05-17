@@ -1,7 +1,12 @@
 import { existsSync } from 'node:fs'
+import path from 'node:path'
 
 function normalizedFilename(context) {
   return (context.filename ?? context.getFilename?.() ?? '').replace(/\\/g, '/')
+}
+
+function relativeFromRepo(file) {
+  return path.relative(process.cwd(), file).replace(/\\/g, '/')
 }
 
 function importSource(node) {
@@ -1490,6 +1495,11 @@ const noDirectOpenPencilWindowInternals = {
   }
 }
 
+const SIBLING_DOMAIN_FILENAME_ALLOWLIST = new Set([
+  'packages/core/src/canvas/ai-overlays.ts',
+  'packages/core/src/canvas/selection-labels.ts'
+])
+
 const noTopLevelPrefixedTestFiles = createProgramFilenameRule({
   description: 'Disallow top-level test files that encode domains as filename prefixes',
   check(file) {
@@ -1509,11 +1519,13 @@ const noSiblingDomainPrefixedFiles = createProgramFilenameRule({
     const parts = name.split('-')
     if (parts.length < 2) return false
 
+    if (SIBLING_DOMAIN_FILENAME_ALLOWLIST.has(relativeFromRepo(file))) return false
+
     const prefix = parts[0]
     const suffix = parts.at(-1)
     const domain = existsSync(`${dir}${prefix}`)
       ? prefix
-      : suffix === 'menu' && existsSync(`${dir}${suffix}`)
+      : suffix && existsSync(`${dir}${suffix}`)
         ? suffix
         : null
     if (!domain) return false
