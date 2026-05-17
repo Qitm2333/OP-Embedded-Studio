@@ -53,6 +53,14 @@ function setup() {
   return { graph, undo, textEditor, state, textNode, actions }
 }
 
+function paragraphWithHeight(height: number) {
+  return {
+    getHeight: () => height,
+    getLongestLine: () => 0,
+    delete: () => undefined
+  }
+}
+
 describe('text edit undo', () => {
   test('commitTextEdit pushes undo entry when text changed', () => {
     const { graph, undo, textEditor, textNode, actions } = setup()
@@ -76,6 +84,24 @@ describe('text edit undo', () => {
 
     undo.redo()
     expect(getNodeOrThrow(graph, textNode.id).text).toBe('Hello World')
+  })
+
+  test('commitTextEdit preserves auto-height text bounds', () => {
+    const { graph, undo, textEditor, textNode, actions } = setup()
+    graph.updateNode(textNode.id, { textAutoResize: 'HEIGHT', height: 18 })
+
+    actions.startTextEditing(textNode.id)
+    const state = expectDefined(textEditor.state, 'text editor state')
+    state.paragraph = paragraphWithHeight(42) as NonNullable<typeof state.paragraph>
+    textEditor.insert(' World', getNodeOrThrow(graph, textNode.id))
+
+    actions.commitTextEdit()
+
+    expect(getNodeOrThrow(graph, textNode.id).height).toBe(42)
+    undo.undo()
+    expect(getNodeOrThrow(graph, textNode.id).height).toBe(18)
+    undo.redo()
+    expect(getNodeOrThrow(graph, textNode.id).height).toBe(42)
   })
 
   test('commitTextEdit does not push undo when text unchanged', () => {

@@ -1,9 +1,14 @@
+import type { Paragraph } from 'canvaskit-wasm'
+
 import type { SceneNode, StyleRun } from '#core/scene-graph'
 import { copyStyleRuns } from '#core/scene-graph/copy'
+
+export type TextEditSizeSnapshot = Partial<Pick<SceneNode, 'width' | 'height'>>
 
 export type TextEditSnapshot = {
   text: string
   styleRuns: StyleRun[]
+  size?: TextEditSizeSnapshot
 }
 
 export type TextEditSession = {
@@ -16,7 +21,8 @@ export function createTextEditSession(node: SceneNode): TextEditSession {
     nodeId: node.id,
     before: {
       text: node.text,
-      styleRuns: copyStyleRuns(node.styleRuns)
+      styleRuns: copyStyleRuns(node.styleRuns),
+      size: { width: node.width, height: node.height }
     }
   }
 }
@@ -24,12 +30,38 @@ export function createTextEditSession(node: SceneNode): TextEditSession {
 export function snapshotTextNode(node: SceneNode | undefined, fallbackText = ''): TextEditSnapshot {
   return {
     text: node?.text ?? fallbackText,
-    styleRuns: node ? copyStyleRuns(node.styleRuns) : []
+    styleRuns: node ? copyStyleRuns(node.styleRuns) : [],
+    size: node ? { width: node.width, height: node.height } : undefined
   }
 }
 
+export function resizeTextNodeForEdit(
+  node: SceneNode | undefined,
+  paragraph: Paragraph | null
+): TextEditSizeSnapshot {
+  if (!node || !paragraph) return {}
+  const changes: TextEditSizeSnapshot = {}
+  if (node.textAutoResize === 'WIDTH_AND_HEIGHT') {
+    const width = Math.ceil(paragraph.getLongestLine())
+    if (width > 0 && width !== node.width) changes.width = width
+  }
+  if (node.textAutoResize === 'HEIGHT' || node.textAutoResize === 'WIDTH_AND_HEIGHT') {
+    const height = Math.ceil(paragraph.getHeight())
+    if (height > 0 && height !== node.height) changes.height = height
+  }
+  return changes
+}
+
 export function textSnapshotChanged(before: TextEditSnapshot, after: TextEditSnapshot): boolean {
-  return before.text !== after.text || !styleRunsEqual(before.styleRuns, after.styleRuns)
+  return (
+    before.text !== after.text ||
+    !styleRunsEqual(before.styleRuns, after.styleRuns) ||
+    (after.size !== undefined && !sizeEqual(before.size ?? {}, after.size))
+  )
+}
+
+function sizeEqual(a: TextEditSizeSnapshot, b: TextEditSizeSnapshot): boolean {
+  return a.width === b.width && a.height === b.height
 }
 
 function styleRunsEqual(a: StyleRun[], b: StyleRun[]): boolean {

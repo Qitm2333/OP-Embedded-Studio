@@ -1,5 +1,6 @@
 import {
   createTextEditSession,
+  resizeTextNodeForEdit,
   snapshotTextNode,
   textSnapshotChanged,
   type TextEditSession
@@ -30,6 +31,7 @@ export function createTextActions(ctx: EditorContext) {
       activeSession = null
       return
     }
+    const paragraph = te.state?.paragraph ?? null
     const result = te.stop()
     if (!result) {
       ctx.state.editingTextId = null
@@ -37,11 +39,17 @@ export function createTextActions(ctx: EditorContext) {
       ctx.requestRender()
       return
     }
-    const before = activeSession?.before ?? { text: '', styleRuns: [] }
+    const before = activeSession?.before ?? { text: '', styleRuns: [], size: {} }
     const node = ctx.graph.getNode(result.nodeId)
     const after = snapshotTextNode(node, result.text)
     after.text = result.text
-    ctx.graph.updateNode(result.nodeId, { text: after.text, styleRuns: after.styleRuns })
+    const sizeChanges = before.text !== after.text ? resizeTextNodeForEdit(node, paragraph) : {}
+    if (Object.keys(sizeChanges).length > 0) after.size = sizeChanges
+    ctx.graph.updateNode(result.nodeId, {
+      text: after.text,
+      styleRuns: after.styleRuns,
+      ...sizeChanges
+    })
     ctx.state.editingTextId = null
     activeSession = null
 
@@ -49,10 +57,18 @@ export function createTextActions(ctx: EditorContext) {
       ctx.undo.push({
         label: 'Edit text',
         forward: () => {
-          ctx.graph.updateNode(result.nodeId, { text: after.text, styleRuns: after.styleRuns })
+          ctx.graph.updateNode(result.nodeId, {
+            text: after.text,
+            styleRuns: after.styleRuns,
+            ...after.size
+          })
         },
         inverse: () => {
-          ctx.graph.updateNode(result.nodeId, { text: before.text, styleRuns: before.styleRuns })
+          ctx.graph.updateNode(result.nodeId, {
+            text: before.text,
+            styleRuns: before.styleRuns,
+            ...before.size
+          })
         }
       })
     }
