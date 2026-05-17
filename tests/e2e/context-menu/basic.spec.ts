@@ -65,6 +65,10 @@ test('draw shape and right-click selects it', async () => {
 })
 
 test('context menu shows expected items', async () => {
+  await editor.canvas.drawRect(200, 200, 120, 80)
+  await editor.canvas.waitForRender()
+  await rightClickShape(250, 230)
+
   await expect(contextItem('context-copy')).toBeVisible()
   await expect(contextItem('context-cut')).toBeVisible()
   await expect(contextItem('context-duplicate')).toBeVisible()
@@ -74,6 +78,9 @@ test('context menu shows expected items', async () => {
   await expect(contextItem('context-send-to-back')).toBeVisible()
   await expect(contextItem('context-toggle-visibility')).toBeVisible()
   await expect(contextItem('context-toggle-lock')).toBeVisible()
+  await expect(contextItem('context-flatten')).toBeVisible()
+  await expect(contextItem('context-outline-text')).toBeVisible()
+  await expect(contextItem('context-boolean-union')).toHaveCount(0)
 
   await editor.page.keyboard.press('Escape')
 })

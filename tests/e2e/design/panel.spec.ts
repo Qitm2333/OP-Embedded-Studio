@@ -294,7 +294,7 @@ test('deselecting shows empty design panel', async () => {
   await expect(editor.page.getByTestId('design-panel-empty')).toBeVisible()
 })
 
-test('multi-select shows mixed header', async () => {
+test('multi-select shows mixed header and boolean operations', async () => {
   await editor.canvas.drawRect(300, 100, 60, 60)
   await editor.canvas.drawRect(400, 100, 60, 60)
   await editor.canvas.selectAll()
@@ -304,4 +304,11 @@ test('multi-select shows mixed header', async () => {
   await expect(multiHeader).toBeVisible()
   await expect(multiHeader).toContainText('Mixed')
   await expect(multiHeader).toContainText('layers')
+
+  await editor.page.getByTestId('boolean-operations-trigger').click()
+  await expect(editor.page.getByTestId('boolean-operation-booleanUnion')).toBeVisible()
+  await expect(editor.page.getByTestId('boolean-operation-booleanSubtract')).toBeVisible()
+  await expect(editor.page.getByTestId('boolean-operation-booleanIntersect')).toBeVisible()
+  await expect(editor.page.getByTestId('boolean-operation-booleanExclude')).toBeVisible()
+  await expect(editor.page.getByTestId('boolean-operation-flatten')).toBeVisible()
 })

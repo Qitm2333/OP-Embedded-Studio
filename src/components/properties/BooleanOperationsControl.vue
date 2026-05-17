@@ -50,6 +50,7 @@ const itemCls = menuItem({ justify: 'between' })
         <DropdownMenuItem
           v-for="operation in operations"
           :key="operation.id"
+          :data-test-id="`boolean-operation-${operation.id.replace('selection.', '')}`"
           :class="itemCls"
           :disabled="!getCommand(operation.id).enabled.value"
           @select="runCommand(operation.id)"
