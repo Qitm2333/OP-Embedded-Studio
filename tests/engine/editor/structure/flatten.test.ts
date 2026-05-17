@@ -4,6 +4,7 @@ import { initCanvasKit } from '#cli/headless'
 import { SkiaRenderer } from '#core/canvas'
 import { BLACK, TRANSPARENT } from '#core/constants'
 import { createEditor } from '#core/editor'
+import { fontManager } from '#core/text/fonts'
 
 async function createEditorWithRenderer() {
   const ck = await initCanvasKit()
@@ -13,6 +14,11 @@ async function createEditorWithRenderer() {
   const editor = createEditor()
   editor.setCanvasKit(ck, renderer)
   return { editor, surface }
+}
+
+async function loadInterRegular() {
+  const data = await Bun.file('public/Inter-Regular.ttf').arrayBuffer()
+  fontManager.markLoaded('Inter', 'Regular', data)
 }
 
 describe('flattenSelected', () => {
@@ -38,10 +44,34 @@ describe('flattenSelected', () => {
     surface.delete()
   })
 
+  test('flattens loaded text as outlines', async () => {
+    await loadInterRegular()
+    const { editor, surface } = await createEditorWithRenderer()
+    const pageId = editor.state.currentPageId
+    const text = editor.graph.createNode('TEXT', pageId, {
+      text: 'Hi',
+      fontFamily: 'Inter',
+      fontWeight: 400,
+      fontSize: 32,
+      width: 80,
+      height: 40
+    })
+
+    editor.select([text.id])
+    editor.flattenSelected()
+
+    const [vectorId] = [...editor.state.selectedIds]
+    const vector = editor.graph.getNode(vectorId)
+    expect(vector?.type).toBe('VECTOR')
+    expect(vector?.vectorNetwork?.vertices.length).toBeGreaterThan(0)
+    expect(editor.graph.getNode(text.id)).toBeUndefined()
+    surface.delete()
+  })
+
   test('does not flatten unsupported text nodes', async () => {
     const { editor, surface } = await createEditorWithRenderer()
     const pageId = editor.state.currentPageId
-    const text = editor.graph.createNode('TEXT', pageId, { text: 'Nope' })
+    const text = editor.graph.createNode('TEXT', pageId, { text: 'Nope', fontFamily: 'Definitely Missing Font' })
     const rect = editor.graph.createNode('RECTANGLE', pageId)
 
     editor.select([text.id, rect.id])

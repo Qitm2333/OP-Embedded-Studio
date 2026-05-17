@@ -26,7 +26,7 @@ describe('booleanOperationSelected', () => {
   test('does not wrap unsupported text nodes', () => {
     const editor = createEditor()
     const pageId = editor.state.currentPageId
-    const first = editor.graph.createNode('TEXT', pageId, { text: 'Nope' })
+    const first = editor.graph.createNode('TEXT', pageId, { text: 'Nope', fontFamily: 'Definitely Missing Font' })
     const second = editor.graph.createNode('RECTANGLE', pageId)
 
     editor.select([first.id, second.id])
