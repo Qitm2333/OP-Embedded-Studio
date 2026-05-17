@@ -105,6 +105,60 @@ describe('boolean operation paths', () => {
     path?.delete()
   })
 
+  test('supports ellipse arc wedges', async () => {
+    const r = await createRenderer()
+    const api = createAPI()
+    const first = api.createEllipse()
+    const second = api.createEllipse()
+    first.resize(100, 100)
+    second.resize(100, 100)
+    second.x = 50
+    const firstNode = api.graph.getNode(first.id)
+    const secondNode = api.graph.getNode(second.id)
+    expect(firstNode).toBeDefined()
+    expect(secondNode).toBeDefined()
+    if (!firstNode || !secondNode) return
+    firstNode.arcData = { startingAngle: 0, endingAngle: Math.PI, innerRadius: 0 }
+    secondNode.arcData = { startingAngle: 0, endingAngle: Math.PI, innerRadius: 0 }
+
+    const booleanNode = api.union([first, second], api.currentPage)
+    const node = api.graph.getNode(booleanNode.id)
+    expect(node).toBeDefined()
+    if (!node) return
+    const path = makeBooleanOperationPath(r, node, api.graph)
+
+    expect(path?.getBounds()).toEqual(new Float32Array([0, 50, 150, 100]))
+    path?.delete()
+  })
+
+  test('turns lines into stroke outlines', async () => {
+    const r = await createRenderer()
+    const api = createAPI()
+    const first = api.createLine()
+    const second = api.createLine()
+    first.resize(100, 100)
+    second.resize(100, 100)
+    second.x = 50
+    const firstNode = api.graph.getNode(first.id)
+    const secondNode = api.graph.getNode(second.id)
+    expect(firstNode).toBeDefined()
+    expect(secondNode).toBeDefined()
+    if (!firstNode || !secondNode) return
+    firstNode.strokes = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0, a: 1 }, opacity: 1, visible: true, weight: 12, align: 'CENTER' }]
+    secondNode.strokes = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0, a: 1 }, opacity: 1, visible: true, weight: 12, align: 'CENTER' }]
+
+    const booleanNode = api.union([first, second], api.currentPage)
+    const node = api.graph.getNode(booleanNode.id)
+    expect(node).toBeDefined()
+    if (!node) return
+    const path = makeBooleanOperationPath(r, node, api.graph)
+    const bounds = path?.getBounds()
+
+    expect(bounds?.[2]).toBeGreaterThan(145)
+    expect(bounds?.[3]).toBeGreaterThan(100)
+    path?.delete()
+  })
+
   test('supports nested boolean operation children', async () => {
     const r = await createRenderer()
     const api = createAPI()

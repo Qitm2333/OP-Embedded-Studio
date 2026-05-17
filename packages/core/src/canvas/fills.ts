@@ -233,9 +233,9 @@ export function applyImageFill(
   return true
 }
 
-export function drawArc(r: SkiaRenderer, canvas: Canvas, node: SceneNode, paint: Paint): void {
+export function makeArcPath(r: SkiaRenderer, node: SceneNode) {
   const arc = node.arcData
-  if (!arc) return
+  if (!arc) return null
   const cx = node.width / 2
   const cy = node.height / 2
   const rx = node.width / 2
@@ -258,17 +258,23 @@ export function drawArc(r: SkiaRenderer, canvas: Canvas, node: SceneNode, paint:
     path.addPath(innerPath)
     path.close()
     innerPath.delete()
-  } else {
-    const isFullCircle = Math.abs(sweepDeg) >= 359.99
-    if (isFullCircle) {
-      path.addOval(oval)
-    } else {
-      path.moveTo(cx, cy)
-      path.addArc(oval, startDeg, sweepDeg)
-      path.close()
-    }
+    return path
   }
 
+  const isFullCircle = Math.abs(sweepDeg) >= 359.99
+  if (isFullCircle) {
+    path.addOval(oval)
+  } else {
+    path.moveTo(cx, cy)
+    path.addArc(oval, startDeg, sweepDeg)
+    path.close()
+  }
+  return path
+}
+
+export function drawArc(r: SkiaRenderer, canvas: Canvas, node: SceneNode, paint: Paint): void {
+  const path = makeArcPath(r, node)
+  if (!path) return
   canvas.drawPath(path, paint)
   path.delete()
 }

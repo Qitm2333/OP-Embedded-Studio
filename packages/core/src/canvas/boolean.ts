@@ -2,6 +2,7 @@ import type { Canvas, Path, PathOp } from 'canvaskit-wasm'
 
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 
+import { makeArcPath } from './fills'
 import type { SkiaRenderer } from './renderer'
 import { nodeHasRadius } from './shapes'
 
@@ -29,9 +30,19 @@ function childTransform(r: SkiaRenderer, child: SceneNode): number[] {
   return r.ck.Matrix.multiply(...transforms)
 }
 
+function lineStrokePath(r: SkiaRenderer, node: SceneNode): Path | null {
+  const path = new r.ck.Path()
+  path.moveTo(0, 0)
+  path.lineTo(node.width, node.height)
+  const stroke = node.strokes.find((item) => item.visible)
+  return path.stroke({ width: stroke?.weight ?? 1 })
+}
+
 function shapePath(r: SkiaRenderer, node: SceneNode, graph: SceneGraph): Path | null {
   if (node.type === 'BOOLEAN_OPERATION') return makeBooleanOperationPath(r, node, graph)
   if (node.type === 'TEXT' || node.type === 'SECTION' || node.type === 'COMPONENT_SET') return null
+  if (node.type === 'LINE') return lineStrokePath(r, node)
+  if (node.type === 'ELLIPSE' && node.arcData) return makeArcPath(r, node)
 
   const rect = r.ck.LTRBRect(0, 0, node.width, node.height)
   return r.makeNodeShapePath(node, rect, nodeHasRadius(node))
