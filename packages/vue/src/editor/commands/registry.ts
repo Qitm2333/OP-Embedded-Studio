@@ -7,27 +7,27 @@ export interface EditorCommandMetadata {
 }
 
 export const EDITOR_COMMAND_METADATA = {
-  'edit.undo': { shortcut: '⌘Z', keybinding: '$mod+KeyZ' },
-  'edit.redo': { shortcut: '⇧⌘Z', keybinding: ['$mod+Shift+KeyZ', '$mod+KeyY'] },
-  'selection.selectAll': { shortcut: '⌘A', keybinding: '$mod+KeyA' },
+  'edit.undo': { shortcut: 'MOD+Z', keybinding: '$mod+KeyZ' },
+  'edit.redo': { shortcut: 'MOD+SHIFT+Z', keybinding: ['$mod+Shift+KeyZ', '$mod+KeyY'] },
+  'selection.selectAll': { shortcut: 'MOD+A', keybinding: '$mod+KeyA' },
   'selection.duplicate': {
-    shortcut: '⌘D',
+    shortcut: 'MOD+D',
     keybinding: '$mod+KeyD',
     contextTestId: 'context-duplicate'
   },
   'selection.delete': { shortcut: '⌫', contextTestId: 'context-delete' },
-  'selection.group': { shortcut: '⌘G', keybinding: '$mod+KeyG', contextTestId: 'context-group' },
-  'selection.ungroup': { shortcut: '⇧⌘G', keybinding: '$mod+Shift+KeyG' },
+  'selection.group': { shortcut: 'MOD+G', keybinding: '$mod+KeyG', contextTestId: 'context-group' },
+  'selection.ungroup': { shortcut: 'MOD+SHIFT+G', keybinding: '$mod+Shift+KeyG' },
   'selection.createComponent': {
-    shortcut: '⌥⌘K',
+    shortcut: 'MOD+ALT+K',
     keybinding: '$mod+Alt+KeyK',
     contextTestId: 'context-create-component'
   },
-  'selection.createComponentSet': { shortcut: '⇧⌘K', keybinding: '$mod+Shift+KeyK' },
-  'selection.detachInstance': { shortcut: '⌥⌘B', keybinding: '$mod+Alt+KeyB' },
+  'selection.createComponentSet': { shortcut: 'MOD+SHIFT+K', keybinding: '$mod+Shift+KeyK' },
+  'selection.detachInstance': { shortcut: 'MOD+ALT+B', keybinding: '$mod+Alt+KeyB' },
   'selection.goToMainComponent': {},
   'selection.createInstance': {},
-  'selection.wrapInAutoLayout': { shortcut: '⇧A', keybinding: 'Shift+KeyA' },
+  'selection.wrapInAutoLayout': { shortcut: 'SHIFT+A', keybinding: 'Shift+KeyA' },
   'selection.bringToFront': {
     shortcut: ']',
     keybinding: 'BracketRight',
@@ -39,22 +39,22 @@ export const EDITOR_COMMAND_METADATA = {
     contextTestId: 'context-send-to-back'
   },
   'selection.toggleVisibility': {
-    shortcut: '⇧⌘H',
+    shortcut: 'MOD+SHIFT+H',
     keybinding: '$mod+Shift+KeyH',
     contextTestId: 'context-toggle-visibility'
   },
   'selection.toggleLock': {
-    shortcut: '⇧⌘L',
+    shortcut: 'MOD+SHIFT+L',
     keybinding: '$mod+Shift+KeyL',
     contextTestId: 'context-toggle-lock'
   },
   'selection.flipHorizontal': {
-    shortcut: '⇧H',
+    shortcut: 'SHIFT+H',
     keybinding: 'Shift+KeyH',
     contextTestId: 'context-flip-horizontal'
   },
   'selection.flipVertical': {
-    shortcut: '⇧V',
+    shortcut: 'SHIFT+V',
     keybinding: 'Shift+KeyV',
     contextTestId: 'context-flip-vertical'
   },

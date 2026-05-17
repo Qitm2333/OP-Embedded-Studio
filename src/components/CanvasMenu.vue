@@ -14,7 +14,8 @@ import {
   useI18n,
   useMenuModel,
   useSelectionState,
-  editorCommandMetadata
+  editorCommandMetadata,
+  formatShortcut
 } from '@open-pencil/vue'
 import type { EditorCommandId } from '@open-pencil/vue'
 
@@ -62,7 +63,7 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
       @select="execCommand('copy')"
     >
       <span>{{ t.copy }}</span
-      ><span class="text-[11px] text-muted">⌘C</span>
+      ><span class="text-[11px] text-muted">{{ formatShortcut('MOD+C') }}</span>
     </ContextMenuItem>
     <ContextMenuItem
       data-test-id="context-cut"
@@ -71,11 +72,11 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
       @select="execCommand('cut')"
     >
       <span>{{ t.cut }}</span
-      ><span class="text-[11px] text-muted">⌘X</span>
+      ><span class="text-[11px] text-muted">{{ formatShortcut('MOD+X') }}</span>
     </ContextMenuItem>
     <ContextMenuItem data-test-id="context-paste" :class="cls.item" @select="execCommand('paste')">
       <span>{{ t.pasteHere }}</span
-      ><span class="text-[11px] text-muted">⌘V</span>
+      ><span class="text-[11px] text-muted">{{ formatShortcut('MOD+V') }}</span>
     </ContextMenuItem>
     <ContextMenuItem
       data-test-id="context-duplicate"
@@ -83,7 +84,7 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
       :disabled="!hasSelection"
       @select="getCommand('selection.duplicate').run()"
     >
-      <span>Duplicate</span><span class="text-[11px] text-muted">⌘D</span>
+      <span>Duplicate</span><span class="text-[11px] text-muted">{{ formatShortcut('MOD+D') }}</span>
     </ContextMenuItem>
     <ContextMenuItem
       data-test-id="context-delete"
@@ -159,7 +160,7 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
             >
             <ContextMenuItem :class="cls.item" @select="copyAsPNG">
               <span>{{ t.copyAsPNG }}</span
-              ><span class="text-[11px] text-muted">⇧⌘C</span>
+              ><span class="text-[11px] text-muted">{{ formatShortcut('MOD+SHIFT+C') }}</span>
             </ContextMenuItem>
             <ContextMenuItem
               data-test-id="context-copy-as-jsx"

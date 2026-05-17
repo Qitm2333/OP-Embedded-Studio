@@ -1,4 +1,5 @@
 import { editorCommandMetadata } from './registry'
+import { formatShortcut } from './shortcut'
 import type { EditorCommand, EditorCommandId, EditorCommandMenuItem } from './types'
 
 export function createEditorCommandActions(commands: Record<EditorCommandId, EditorCommand>) {
@@ -19,7 +20,7 @@ export function createEditorCommandActions(commands: Record<EditorCommandId, Edi
     return {
       id,
       label: command.label,
-      shortcut,
+      shortcut: formatShortcut(shortcut),
       get disabled() {
         return !command.enabled.value
       },
