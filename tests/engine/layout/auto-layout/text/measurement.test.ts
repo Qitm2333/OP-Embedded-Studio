@@ -8,6 +8,83 @@ import { getNodeOrThrow } from '#tests/helpers/assert'
 import { autoFrame, loadFixtureGraph, pageId, rect } from '#tests/helpers/layout'
 
 describe('text measurement', () => {
+  test('derived text layout preserves imported auto-layout text bounds during measurement', () => {
+    const graph = new SceneGraph()
+    const page = pageId(graph)
+    const tabs = autoFrame(graph, page, {
+      width: 180,
+      height: 42,
+      primaryAxisSizing: 'FIXED',
+      counterAxisSizing: 'HUG',
+      paddingTop: 5,
+      paddingBottom: 5,
+      paddingLeft: 5,
+      paddingRight: 5
+    })
+    const tab = autoFrame(graph, tabs.id, {
+      width: 80,
+      height: 32,
+      primaryAxisSizing: 'FIXED',
+      counterAxisSizing: 'HUG',
+      paddingTop: 6,
+      paddingBottom: 6,
+      paddingLeft: 12,
+      paddingRight: 12
+    })
+    graph.createNode('TEXT', tab.id, {
+      text: 'Account',
+      width: 56,
+      height: 20,
+      textAutoResize: 'WIDTH_AND_HEIGHT',
+      figmaDerivedLayout: { width: 56, height: 20 }
+    })
+
+    setTextMeasurer(() => ({ width: 56, height: 40 }))
+    computeAllLayouts(graph, page)
+    setTextMeasurer(null)
+
+    expect(graph.getNode(tab.id)?.height).toBe(32)
+    expect(graph.getNode(tabs.id)?.height).toBe(42)
+  })
+
+  test('live text without derived glyphs still uses CanvasKit measurement', () => {
+    const graph = new SceneGraph()
+    const page = pageId(graph)
+    const tabs = autoFrame(graph, page, {
+      width: 180,
+      height: 42,
+      primaryAxisSizing: 'FIXED',
+      counterAxisSizing: 'HUG',
+      paddingTop: 5,
+      paddingBottom: 5,
+      paddingLeft: 5,
+      paddingRight: 5
+    })
+    const tab = autoFrame(graph, tabs.id, {
+      width: 80,
+      height: 32,
+      primaryAxisSizing: 'FIXED',
+      counterAxisSizing: 'HUG',
+      paddingTop: 6,
+      paddingBottom: 6,
+      paddingLeft: 12,
+      paddingRight: 12
+    })
+    graph.createNode('TEXT', tab.id, {
+      text: 'Account',
+      width: 56,
+      height: 20,
+      textAutoResize: 'WIDTH_AND_HEIGHT'
+    })
+
+    setTextMeasurer(() => ({ width: 56, height: 40 }))
+    computeAllLayouts(graph, page)
+    setTextMeasurer(null)
+
+    expect(graph.getNode(tab.id)?.height).toBe(52)
+    expect(graph.getNode(tabs.id)?.height).toBe(62)
+  })
+
   test('opening imported fig keeps stored text bounds before CanvasKit measurement', async () => {
     const graph = await loadFixtureGraph('gold-preview.fig')
     const store = createEditorStore(graph)

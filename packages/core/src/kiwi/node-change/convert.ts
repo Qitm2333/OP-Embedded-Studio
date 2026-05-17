@@ -280,6 +280,7 @@ function convertTextProps(
   | 'styleRuns'
   | 'textTruncation'
   | 'textDirection'
+  | 'figmaDerivedLayout'
   | 'figmaDerivedTextGlyphs'
 > {
   return {
@@ -306,6 +307,12 @@ function convertTextProps(
       (getOpenPencilPluginValue(nc, TEXT_DIRECTION_PLUGIN_KEY) as
         | SceneNode['textDirection']
         | null) || 'AUTO',
+    figmaDerivedLayout: nc.derivedTextData?.layoutSize
+      ? {
+          width: nc.derivedTextData.layoutSize.x,
+          height: nc.derivedTextData.layoutSize.y
+        }
+      : null,
     figmaDerivedTextGlyphs: convertFigmaDerivedTextGlyphs(nc.derivedTextData, blobs)
   }
 }

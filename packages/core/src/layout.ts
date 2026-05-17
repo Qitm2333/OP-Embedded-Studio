@@ -337,6 +337,13 @@ function configureTextLeaf(yogaChild: YogaNode, child: SceneNode, parent: SceneN
   const UNCONSTRAINED_KEY = -1
 
   if (autoResize === 'WIDTH_AND_HEIGHT') {
+    const importedSize = child.figmaDerivedLayout
+    if (importedSize?.width !== undefined && importedSize.height !== undefined) {
+      yogaChild.setWidth(child.width)
+      yogaChild.setHeight(child.height)
+      return
+    }
+
     yogaChild.setMeasureFunc((width, widthMode, _height, _heightMode) => {
       const maxW = widthMode === MeasureMode.Undefined ? undefined : width
       const cacheKey = maxW === undefined ? UNCONSTRAINED_KEY : Math.round(maxW)
