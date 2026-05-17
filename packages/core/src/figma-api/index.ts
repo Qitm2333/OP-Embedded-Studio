@@ -12,6 +12,18 @@ import type {
 import { copyFills, copyStrokes, copyEffects } from '#core/scene-graph/copy'
 import type { Rect, Vector } from '#core/types'
 
+import type {
+  FigmaComponentNode,
+  FigmaEllipseNode,
+  FigmaFrameNode,
+  FigmaLineNode,
+  FigmaPolygonNode,
+  FigmaRectangleNode,
+  FigmaSectionNode,
+  FigmaStarNode,
+  FigmaTextNode,
+  FigmaVectorNode
+} from './node-types'
 import {
   FigmaNodeProxy,
   INTERNAL_ID,
@@ -24,6 +36,18 @@ import {
 const noop = () => undefined
 
 export { FigmaNodeProxy } from './proxy'
+export type {
+  FigmaComponentNode,
+  FigmaEllipseNode,
+  FigmaFrameNode,
+  FigmaLineNode,
+  FigmaPolygonNode,
+  FigmaRectangleNode,
+  FigmaSectionNode,
+  FigmaStarNode,
+  FigmaTextNode,
+  FigmaVectorNode
+} from './node-types'
 export type { FigmaFont, FigmaFontName } from './proxy'
 
 export function computeImageHash(data: Uint8Array): string {
@@ -131,44 +155,44 @@ export class FigmaAPI implements NodeProxyHost {
     return this.wrapNode(node.id)
   }
 
-  createFrame(): FigmaNodeProxy {
-    return this._createNode('FRAME')
+  createFrame(): FigmaFrameNode {
+    return this._createNode('FRAME') as FigmaFrameNode
   }
 
-  createRectangle(): FigmaNodeProxy {
-    return this._createNode('RECTANGLE')
+  createRectangle(): FigmaRectangleNode {
+    return this._createNode('RECTANGLE') as FigmaRectangleNode
   }
 
-  createEllipse(): FigmaNodeProxy {
-    return this._createNode('ELLIPSE')
+  createEllipse(): FigmaEllipseNode {
+    return this._createNode('ELLIPSE') as FigmaEllipseNode
   }
 
-  createText(): FigmaNodeProxy {
-    return this._createNode('TEXT')
+  createText(): FigmaTextNode {
+    return this._createNode('TEXT') as FigmaTextNode
   }
 
-  createLine(): FigmaNodeProxy {
-    return this._createNode('LINE')
+  createLine(): FigmaLineNode {
+    return this._createNode('LINE') as FigmaLineNode
   }
 
-  createPolygon(): FigmaNodeProxy {
-    return this._createNode('POLYGON')
+  createPolygon(): FigmaPolygonNode {
+    return this._createNode('POLYGON') as FigmaPolygonNode
   }
 
-  createStar(): FigmaNodeProxy {
-    return this._createNode('STAR')
+  createStar(): FigmaStarNode {
+    return this._createNode('STAR') as FigmaStarNode
   }
 
-  createVector(): FigmaNodeProxy {
-    return this._createNode('VECTOR')
+  createVector(): FigmaVectorNode {
+    return this._createNode('VECTOR') as FigmaVectorNode
   }
 
-  createComponent(): FigmaNodeProxy {
-    return this._createNode('COMPONENT')
+  createComponent(): FigmaComponentNode {
+    return this._createNode('COMPONENT') as FigmaComponentNode
   }
 
-  createSection(): FigmaNodeProxy {
-    return this._createNode('SECTION')
+  createSection(): FigmaSectionNode {
+    return this._createNode('SECTION') as FigmaSectionNode
   }
 
   createPage(): FigmaNodeProxy {

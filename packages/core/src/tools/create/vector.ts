@@ -37,15 +37,17 @@ export const createVector = defineTool({
       node.fills = [{ type: 'SOLID', color: parseColor(args.fill), opacity: 1, visible: true }]
     }
     if (args.stroke) {
-      node.strokes = [
-        {
-          color: parseColor(args.stroke),
-          weight: args.stroke_weight ?? 1,
-          opacity: 1,
-          visible: true,
-          align: 'CENTER'
-        }
-      ]
+      figma.graph.updateNode(node.id, {
+        strokes: [
+          {
+            color: parseColor(args.stroke),
+            weight: args.stroke_weight ?? 1,
+            opacity: 1,
+            visible: true,
+            align: 'CENTER'
+          }
+        ]
+      })
     }
     if (args.parent_id) {
       const parent = figma.getNodeById(args.parent_id)
