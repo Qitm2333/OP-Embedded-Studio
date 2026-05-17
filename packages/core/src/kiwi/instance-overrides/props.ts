@@ -1,7 +1,13 @@
-import type { GUID } from '#core/kiwi/binary/codec'
 import { applyOverridePatch } from '#core/kiwi/instance-overrides/patches'
 import { guidToString } from '#core/kiwi/node-change/convert'
 
+import { collectAssignmentsMap, collectPropRefsMap } from './component-props/maps'
+import {
+  assignmentsToValueMap,
+  normalizePropName,
+  propTextCharacters,
+  stringToGuidParts
+} from './component-props/values'
 import { getComponentRoot, resolveOverrideTarget } from './resolve'
 import type {
   OverrideContext,
@@ -9,24 +15,6 @@ import type {
   ComponentPropRef,
   ComponentPropValue
 } from './types'
-
-function normalizePropName(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]/g, '')
-}
-
-function isEmptyPropValue(v: ComponentPropValue): boolean {
-  return (
-    v.boolValue === undefined &&
-    v.textValue === undefined &&
-    v.textDataValue === undefined &&
-    v.guidValue === undefined
-  )
-}
-
-function propTextCharacters(value: ComponentPropValue): string | undefined {
-  if (typeof value.textValue === 'string') return value.textValue
-  return value.textValue?.characters ?? value.textDataValue?.characters
-}
 
 /**
  * Walk the componentId chain to find componentPropRefs for a node.
@@ -53,53 +41,9 @@ function findPropRefs(
 }
 
 /**
- * Convert assignments to a defID → value map, optionally resolving empty
- * values to component defaults.
- *
- * In symbolOverride context, an empty kiwi value `{}` (all fields absent)
- * means "reset to the component's initialValue default". This is distinct
- * from `{boolValue: false}` which is an explicit false.
- */
-function resolveAssignmentValue(
-  ctx: OverrideContext,
-  assignment: ComponentPropAssignment,
-  key: string,
-  resolveDefaults: boolean
-): ComponentPropValue {
-  if (!isEmptyPropValue(assignment.value)) return assignment.value
-
-  const variableValue = assignment.varValue?.value
-  if (variableValue?.symbolIdValue?.guid) return { guidValue: variableValue.symbolIdValue.guid }
-  if (variableValue?.boolValue !== undefined) return { boolValue: variableValue.boolValue }
-  if (variableValue?.textValue !== undefined) return { textValue: variableValue.textValue }
-  if (variableValue?.textDataValue !== undefined) return { textDataValue: variableValue.textDataValue }
-
-  return resolveDefaults ? (ctx.propDefaults.get(key) ?? assignment.value) : assignment.value
-}
-
-function assignmentsToValueMap(
-  ctx: OverrideContext,
-  assignments: ComponentPropAssignment[],
-  resolveDefaults = false
-): Map<string, ComponentPropValue> {
-  const valueByDef = new Map<string, ComponentPropValue>()
-  for (const assignment of assignments) {
-    if (!assignment.defID) continue
-    const key = guidToString(assignment.defID)
-    valueByDef.set(key, resolveAssignmentValue(ctx, assignment, key, resolveDefaults))
-  }
-  return valueByDef
-}
-
-/**
  * Recursively apply prop assignments to children of a parent node.
  * Handles VISIBLE toggles and OVERRIDDEN_SYMBOL_ID (instance swap).
  */
-function stringToGuidParts(value: string): GUID {
-  const [sessionID, localID] = value.split(':').map(Number)
-  return { sessionID, localID }
-}
-
 function fallbackRefsForChild(
   ctx: OverrideContext,
   childName: string,
@@ -312,22 +256,6 @@ function applyOverrideAssignments(
  * Returns the set of modified node IDs so the caller can run a second
  * transitive sync to propagate the changes to deeper clones.
  */
-function collectPropRefsMap(ctx: OverrideContext): Map<string, ComponentPropRef[]> {
-  const result = new Map<string, ComponentPropRef[]>()
-  for (const [figmaId, nc] of ctx.changeMap) {
-    if (nc.componentPropRefs?.length) result.set(figmaId, nc.componentPropRefs)
-  }
-  return result
-}
-
-function collectAssignmentsMap(ctx: OverrideContext): Map<string, ComponentPropAssignment[]> {
-  const result = new Map<string, ComponentPropAssignment[]>()
-  for (const [figmaId, nc] of ctx.changeMap) {
-    if (nc.componentPropAssignments?.length) result.set(figmaId, nc.componentPropAssignments)
-  }
-  return result
-}
-
 export function applyComponentProperties(ctx: OverrideContext): Set<string> {
   const modified = new Set<string>()
   const propRefsMap = collectPropRefsMap(ctx)
