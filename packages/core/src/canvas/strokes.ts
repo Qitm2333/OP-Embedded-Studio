@@ -19,13 +19,17 @@ export function drawNodeStroke(
       }
       break
     }
-    case 'ELLIPSE':
-      if (node.arcData) {
+    case 'ELLIPSE': {
+      const fg = r.getFillGeometry(node)
+      if (fg) {
+        for (const p of fg) canvas.drawPath(p, r.strokePaint)
+      } else if (node.arcData) {
         r.drawArc(canvas, node, r.strokePaint)
       } else {
         canvas.drawOval(rect, r.strokePaint)
       }
       break
+    }
     case 'POLYGON':
     case 'STAR': {
       const path = r.makePolygonPath(node)

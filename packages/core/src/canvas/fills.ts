@@ -25,13 +25,17 @@ export function drawNodeFill(
       }
       break
     }
-    case 'ELLIPSE':
-      if (node.arcData) {
+    case 'ELLIPSE': {
+      const fg = r.getFillGeometry(node)
+      if (fg) {
+        for (const p of fg) canvas.drawPath(p, r.fillPaint)
+      } else if (node.arcData) {
         r.drawArc(canvas, node, r.fillPaint)
       } else {
         canvas.drawOval(rect, r.fillPaint)
       }
       break
+    }
     case 'TEXT':
       r.renderText(canvas, node, fill)
       break
