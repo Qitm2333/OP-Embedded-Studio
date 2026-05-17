@@ -51,6 +51,9 @@ See [`AGENTS.md`](./AGENTS.md) for the full architecture reference, code convent
 - Icons via unplugin-icons (`<icon-lucide-*>`)
 - Use existing deps and Reka UI components before hand-rolling (see AGENTS.md → Code quality)
 - Follow the Reka UI-inspired file structure: PascalCase component namespace folders and Vue files, lowercase/kebab non-component domains, and multi-file root components colocated inside their namespace folder
+- Keep UI labels translatable. Do not hardcode user-facing strings in Vue templates when an i18n namespace exists.
+- Keep shortcuts out of labels/translations. Put command shortcut tokens and keyboard bindings in `packages/vue/src/editor/commands/registry.ts`, then render them with `formatShortcut()` so macOS and Windows/Linux display correctly.
+- Canvas context-menu grouping belongs in `packages/vue/src/editor/menu-model/canvas.ts`; components should render the menu model instead of hand-building command groups.
 
 ## Test IDs (`data-test-id`)
 
