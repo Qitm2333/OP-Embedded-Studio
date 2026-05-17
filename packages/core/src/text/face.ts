@@ -9,17 +9,21 @@ export interface FontFaceRef extends ParsedFontStyle {
   postscriptName?: string
 }
 
-const FONT_STYLE_WEIGHTS: Array<[RegExp, number]> = [
-  [/(?:extra|ultra)?(?:thin|hairline)/u, 100],
-  [/(?:extra|ultra)light/u, 200],
-  [/light/u, 300],
-  [/(?:regular|normal|book|roman|plain)/u, 400],
-  [/medium/u, 500],
-  [/(?:semi|demi)bold/u, 600],
-  [/(?:extra|ultra)bold/u, 800],
-  [/(?:black|heavy)/u, 900],
-  [/bold/u, 700]
-]
+const FONT_WEIGHT_ALIASES = [
+  { weight: 100, names: ['thin', 'hairline', 'extrathin', 'ultrathin'] },
+  { weight: 200, names: ['extralight', 'ultralight'] },
+  { weight: 300, names: ['light'] },
+  { weight: 400, names: ['regular', 'normal', 'book', 'roman', 'plain'] },
+  { weight: 500, names: ['medium'] },
+  { weight: 600, names: ['semibold', 'demibold'] },
+  { weight: 700, names: ['bold'] },
+  { weight: 800, names: ['extrabold', 'ultrabold'] },
+  { weight: 900, names: ['black', 'heavy'] }
+] as const
+
+const FONT_WEIGHT_BY_STYLE: ReadonlyMap<string, number> = new Map(
+  FONT_WEIGHT_ALIASES.flatMap(({ names, weight }) => names.map((name) => [name, weight] as const))
+)
 
 export function normalizeFontStyleName(style: string): string {
   return style
@@ -35,11 +39,7 @@ export function parseFontStyle(style: string | undefined): ParsedFontStyle {
   const numericWeight = normalized.match(/(?:^|[^0-9])([1-9]00)(?:[^0-9]|$)/u)?.[1]
   if (numericWeight) return { weight: Number(numericWeight), italic }
 
-  for (const [pattern, weight] of FONT_STYLE_WEIGHTS) {
-    if (pattern.test(normalized)) return { weight, italic }
-  }
-
-  return { weight: 400, italic }
+  return { weight: FONT_WEIGHT_BY_STYLE.get(normalized) ?? 400, italic }
 }
 
 export function fontFaceFromFigmaFontName(fontName: {
