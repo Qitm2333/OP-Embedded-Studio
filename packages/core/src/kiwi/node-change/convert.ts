@@ -252,6 +252,12 @@ function convertCornerProps(
   }
 }
 
+function importedTextLineHeight(nc: NodeChange): number | null {
+  const derivedLineHeight = nc.derivedTextData?.baselines?.[0]?.lineHeight
+  if (derivedLineHeight !== undefined && Number.isFinite(derivedLineHeight)) return derivedLineHeight
+  return convertLineHeight(nc.lineHeight, nc.fontSize)
+}
+
 function convertTextProps(
   nc: NodeChange
 ): Pick<
@@ -288,7 +294,7 @@ function convertTextProps(
     textAutoResize: (nc.textAutoResize ?? 'NONE') as TextAutoResize,
     textCase: (nc.textCase ?? 'ORIGINAL') as TextCase,
     textDecoration: mapTextDecoration(nc.textDecoration as string),
-    lineHeight: convertLineHeight(nc.lineHeight, nc.fontSize),
+    lineHeight: importedTextLineHeight(nc),
     letterSpacing: convertLetterSpacing(nc.letterSpacing, nc.fontSize),
     maxLines: (nc.maxLines ?? null) as number | null,
     styleRuns: importStyleRuns(nc),

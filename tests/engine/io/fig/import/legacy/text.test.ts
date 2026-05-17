@@ -21,6 +21,34 @@ describe('fig-import: text properties', () => {
     expect(n.textAlignHorizontal).toBe('CENTER')
   })
 
+  test('uses derived line metrics for imported Figma text rendering', () => {
+    const graph = importNodeChanges([
+      doc(),
+      canvas(),
+      node('TEXT', 10, 1, {
+        textData: { characters: 'Default' },
+        fontSize: 14,
+        lineHeight: { value: 36, units: 'PIXELS' },
+        derivedTextData: {
+          layoutSize: { x: 49, y: 14 },
+          baselines: [
+            {
+              firstCharacter: 0,
+              endCharacter: 7,
+              position: { x: 0, y: 12.09 },
+              width: 48.25,
+              lineY: 0,
+              lineHeight: 16.94,
+              lineAscent: 13
+            }
+          ]
+        }
+      } as Partial<NodeChange>)
+    ])
+    const n = graph.getChildren(graph.getPages()[0].id)[0]
+    expect(n.lineHeight).toBe(16.94)
+  })
+
   test('font weight mapping', () => {
     const cases = [
       ['Bold', 700],
