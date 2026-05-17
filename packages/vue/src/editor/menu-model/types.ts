@@ -1,4 +1,5 @@
 import type { EditorCommandId } from '#vue/editor/commands/types'
+import type { TestId } from '#vue/testing/test-id'
 
 export interface MenuActionNode {
   separator?: false
@@ -7,6 +8,7 @@ export interface MenuActionNode {
   shortcut?: string
   action?: () => void
   disabled?: boolean
+  testId?: TestId
   checked?: boolean
   onCheckedChange?: (checked: boolean) => void
   sub?: MenuEntry[]

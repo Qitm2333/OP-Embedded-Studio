@@ -21,7 +21,8 @@ import type { EditorCommandId } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { appMenuShortcutLabel } from '@/app/shell/menu/shortcut'
-import { COPY_AS_PNG_SHORTCUT, createCanvasMenuActions } from '@/app/editor/canvas/menu-actions'
+import { createCanvasMenuActions } from '@/app/editor/canvas/menu-actions'
+import { useCanvasContextMenu } from '@/app/editor/canvas/context-menu'
 import { canvasMenuItemClass, canvasMenuShortcutClass } from '@/app/editor/canvas/menu-model'
 import { menu, useMenuUI } from '@/components/ui/menu'
 
@@ -32,8 +33,9 @@ const { getCommand } = useEditorCommands()
 const { canvasMenu } = useMenuModel()
 const { menu: t } = useI18n()
 
-const { ids, execCommand, clipboardWrite, copyNodeId, copyXPath, copyAsPNG } =
-  createCanvasMenuActions(store, selectedIds)
+const canvasMenuActions = createCanvasMenuActions(store, selectedIds)
+const { execCommand } = canvasMenuActions
+const contextMenu = useCanvasContextMenu(canvasMenu, hasSelection, editor, canvasMenuActions, t)
 
 const menuCls = useMenuUI({
   content: 'min-w-56 shadow-[0_8px_30px_rgb(0_0_0/0.4)] animate-in fade-in zoom-in-95',
@@ -47,8 +49,6 @@ const cls = {
   component: componentMenu.item(),
   sep: menuCls.separator
 }
-
-const staticContextCommandIds = new Set(['selection.duplicate', 'selection.delete'])
 
 function contextCommandTestId(id: EditorCommandId | undefined): string | undefined {
   return id ? editorCommandMetadata(id).contextTestId : undefined
@@ -102,11 +102,10 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
       }}</span>
     </ContextMenuItem>
 
-    <template v-for="(item, i) in canvasMenu" :key="`menu-${i}`">
-      <template v-if="!item.separator && item.id && staticContextCommandIds.has(item.id)" />
-      <ContextMenuSeparator v-else-if="item.separator" :class="cls.sep" />
+    <template v-for="(item, i) in contextMenu" :key="`menu-${i}`">
+      <ContextMenuSeparator v-if="item.separator" :class="cls.sep" />
       <ContextMenuSub v-else-if="item.sub">
-        <ContextMenuSubTrigger :class="cls.item">
+        <ContextMenuSubTrigger v-test-id="item.testId" :class="cls.item">
           <span>{{ item.label }}</span
           ><span class="text-sm text-muted">›</span>
         </ContextMenuSubTrigger>
@@ -116,6 +115,7 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
               v-for="(sub, j) in item.sub"
               :key="j"
               :class="cls.item"
+              v-test-id="sub.separator ? undefined : sub.testId"
               :disabled="sub.separator ? true : sub.disabled"
               @select="!sub.separator && sub.action?.()"
             >
@@ -144,48 +144,5 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
       </ContextMenuItem>
     </template>
 
-    <template v-if="hasSelection">
-      <ContextMenuSeparator :class="cls.sep" />
-
-      <ContextMenuSub>
-        <ContextMenuSubTrigger data-test-id="context-copy-paste-as" :class="cls.item">
-          <span>{{ t.copyPasteAs }}</span
-          ><span class="text-sm text-muted">›</span>
-        </ContextMenuSubTrigger>
-        <ContextMenuPortal>
-          <ContextMenuSubContent :class="cls.menu">
-            <ContextMenuItem
-              :class="cls.item"
-              @select="clipboardWrite(editor.copySelectionAsText(ids()), 'text')"
-              >{{ t.copyAsText }}</ContextMenuItem
-            >
-            <ContextMenuItem
-              data-test-id="context-copy-as-svg"
-              :class="cls.item"
-              @select="clipboardWrite(editor.copySelectionAsSVG(ids()), 'SVG')"
-              >{{ t.copyAsSVG }}</ContextMenuItem
-            >
-            <ContextMenuItem :class="cls.item" @select="copyAsPNG">
-              <span>{{ t.copyAsPNG }}</span
-              ><span class="text-[11px] text-muted">{{
-                formatShortcut(COPY_AS_PNG_SHORTCUT)
-              }}</span>
-            </ContextMenuItem>
-            <ContextMenuItem
-              data-test-id="context-copy-as-jsx"
-              :class="cls.item"
-              @select="clipboardWrite(editor.copySelectionAsJSX(ids()), 'JSX')"
-              >{{ t.copyAsJSX }}</ContextMenuItem
-            >
-            <ContextMenuItem :class="cls.item" @select="copyNodeId">{{
-              t.copyNodeId
-            }}</ContextMenuItem>
-            <ContextMenuItem :class="cls.item" @select="copyXPath">{{
-              t.copyXPath
-            }}</ContextMenuItem>
-          </ContextMenuSubContent>
-        </ContextMenuPortal>
-      </ContextMenuSub>
-    </template>
   </ContextMenuContent>
 </template>
