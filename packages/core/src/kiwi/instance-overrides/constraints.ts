@@ -178,7 +178,10 @@ function propagateScaling(ctx: OverrideContext, scaled: Set<string>): void {
   const queue = [...scaled]
   const visited = new Set<string>()
 
-  for (let srcId = queue.shift(); srcId !== undefined; srcId = queue.shift()) {
+  let index = 0
+  while (index < queue.length) {
+    const srcId = queue[index]
+    index++
     const source = graph.getNode(srcId)
     if (!source) continue
     const clones = clonesOf.get(srcId)

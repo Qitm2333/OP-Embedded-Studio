@@ -10,7 +10,10 @@ import type { SceneGraph } from '#core/scene-graph'
 function collectSubtreeIds(graph: SceneGraph, rootIds: Iterable<string>): Set<string> {
   const result = new Set<string>()
   const queue = [...rootIds]
-  for (let id = queue.shift(); id !== undefined; id = queue.shift()) {
+  let index = 0
+  while (index < queue.length) {
+    const id = queue[index]
+    index++
     if (result.has(id)) continue
     result.add(id)
     const node = graph.getNode(id)
@@ -60,8 +63,10 @@ export function populateInstances(
 
   const queue = [...rootIds]
   const visited = new Set<string>()
-  while (queue.length > 0) {
-    const nodeId = queue.shift()
+  let index = 0
+  while (index < queue.length) {
+    const nodeId = queue[index]
+    index++
     if (!nodeId || visited.has(nodeId)) continue
     visited.add(nodeId)
     ensurePopulated(nodeId)

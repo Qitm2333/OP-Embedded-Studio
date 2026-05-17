@@ -159,7 +159,10 @@ export function propagateOverridesTransitively(
 
   const visited = new Set<string>()
   const syncQueue = [...expandedSeeds]
-  for (let sourceId = syncQueue.shift(); sourceId !== undefined; sourceId = syncQueue.shift()) {
+  let index = 0
+  while (index < syncQueue.length) {
+    const sourceId = syncQueue[index]
+    index++
     const clones = clonesOf.get(sourceId)
     if (!clones) continue
     const source = graph.getNode(sourceId)

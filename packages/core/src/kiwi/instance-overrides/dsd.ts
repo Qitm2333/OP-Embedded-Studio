@@ -206,7 +206,10 @@ function propagateDsdChanges(
   const queue = [...modified]
   const visited = new Set<string>()
 
-  for (let sourceId = queue.shift(); sourceId !== undefined; sourceId = queue.shift()) {
+  let index = 0
+  while (index < queue.length) {
+    const sourceId = queue[index]
+    index++
     const source = ctx.graph.getNode(sourceId)
     if (!source) continue
     const clones = clonesOf.get(sourceId)
