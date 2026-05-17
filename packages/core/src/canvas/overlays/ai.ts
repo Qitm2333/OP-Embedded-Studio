@@ -8,8 +8,8 @@ import {
 } from '#core/constants'
 import type { SceneGraph } from '#core/scene-graph'
 
-import { drawNodeHighlightRect } from './highlight-rect'
-import type { SkiaRenderer } from './renderer'
+import { drawNodeHighlightRect } from '#core/canvas/highlight-rect'
+import type { SkiaRenderer } from '#core/canvas/renderer'
 
 export function drawAiOverlays(r: SkiaRenderer, canvas: Canvas, graph: SceneGraph): void {
   const now = performance.now()

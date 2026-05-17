@@ -12,7 +12,7 @@ import {
 import { rotatedCorners } from '#core/geometry'
 import type { SceneNode, SceneGraph } from '#core/scene-graph'
 
-import type { SkiaRenderer, RenderOverlays } from './renderer'
+import type { SkiaRenderer, RenderOverlays } from '#core/canvas/renderer'
 
 function getOverlayRotation(node: SceneNode, overlays?: RenderOverlays): number {
   return overlays?.rotationPreview?.nodeId === node.id

@@ -12,6 +12,6 @@ export {
 export { drawAutoLayoutHover } from './auto-layout-hover'
 export { drawFlashes, drawLayoutInsertIndicator, drawMarquee, drawSnapGuides } from './feedback'
 export { drawTextEditOverlay } from './text-edit'
-export { drawSelectionLabels } from '#core/canvas/selection-labels'
+export { drawSelectionLabels } from '#core/canvas/labels/selection'
 export { drawPenOverlay, drawRemoteCursors } from '#core/canvas/pen-overlay'
 export { drawNodeEditOverlay } from '#core/canvas/node-edit-overlay'

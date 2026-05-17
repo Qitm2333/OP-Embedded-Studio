@@ -1,6 +1,6 @@
 import type { ImageFilter, MaskFilter, Canvas, Paint, Path } from 'canvaskit-wasm'
 
-import * as AiOverlays from '#core/canvas/ai-overlays'
+import * as AiOverlays from '#core/canvas/overlays/ai'
 import * as Effects from '#core/canvas/effects'
 import * as Fills from '#core/canvas/fills'
 import * as Labels from '#core/canvas/labels/draw'
