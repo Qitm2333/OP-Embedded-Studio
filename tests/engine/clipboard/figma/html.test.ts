@@ -57,6 +57,7 @@ describe('buildFigmaClipboardHTML', () => {
     const parsed = await parseFigmaClipboard(html)
     const textNode = parsed?.nodes.find((node) => node.type === 'TEXT')
     expect(textNode?.textUserLayoutVersion).toBe(4)
+    expect(textNode?.textAutoResize).toBeUndefined()
     expect(textNode?.derivedTextData?.glyphs).toBeDefined()
     expect(textNode?.derivedTextData?.baselines?.length).toBeGreaterThan(0)
   })
@@ -84,6 +85,7 @@ describe('buildFigmaClipboardHTML', () => {
     const baseline = textNode?.derivedTextData?.baselines?.[0]
 
     expect(textNode?.textUserLayoutVersion).toBe(4)
+    expect(textNode?.textAutoResize).toBeUndefined()
     expect(textNode?.derivedTextData?.glyphs?.length).toBe('Analytics Overview'.length)
     expect(baseline?.width).toBe(552)
     expect(baseline?.lineHeight).toBe(67)

@@ -335,6 +335,7 @@ export async function buildFigmaClipboardHTML(
       if (change.type !== 'TEXT') return
       const source = textNodeQueue.shift()
       if (!source) return
+      delete change.textAutoResize
       change.textUserLayoutVersion = 4
       const shaped = await shapeTextForClipboard(source).catch(() => null)
       change.derivedTextData = await buildDerivedTextDataV4(source, fontDigestMap, shaped, blobs)
