@@ -80,6 +80,14 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
       ><span class="text-[11px] text-muted">{{ appMenuShortcutLabel('paste') }}</span>
     </ContextMenuItem>
     <ContextMenuItem
+      data-test-id="context-paste-to-replace"
+      :class="cls.item"
+      :disabled="!hasSelection"
+      @select="canvasMenuActions.pasteToReplace"
+    >
+      <span>{{ t.pasteToReplace }}</span>
+    </ContextMenuItem>
+    <ContextMenuItem
       data-test-id="context-duplicate"
       :class="cls.item"
       :disabled="!hasSelection"

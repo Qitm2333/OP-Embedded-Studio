@@ -63,6 +63,7 @@ export const menuMessages = i18n('menu', {
   underline: 'Underline',
 
   pasteHere: 'Paste here',
+  pasteToReplace: 'Paste to replace',
   copyPasteAs: 'Copy/Paste as',
   copyAsText: 'Copy as text',
   copyAsSVG: 'Copy as SVG',

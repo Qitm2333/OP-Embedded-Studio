@@ -4,6 +4,7 @@ import { useEditorCommands, useI18n } from '@open-pencil/vue'
 import type { EditorCommandId } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
+import { pasteClipboardToReplace } from '@/app/editor/clipboard/paste-to-replace'
 import { createSharedEditorMenuActions } from '@/app/shell/menu/editor-actions'
 import { importFileDialog, openFileDialog } from '@/app/shell/menu/files'
 import { useAppTheme } from '@/app/shell/theme'
@@ -72,6 +73,7 @@ export function useMenu() {
     copy: () => execBrowserCommand('copy'),
     cut: () => execBrowserCommand('cut'),
     paste: () => execBrowserCommand('paste'),
+    'paste-to-replace': () => void pasteClipboardToReplace(store),
     'check-updates': () => void checkForAppUpdate({ messages: dialogs }),
     ...createSharedEditorMenuActions(setTheme)
   }

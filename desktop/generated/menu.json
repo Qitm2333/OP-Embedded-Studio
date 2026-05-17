@@ -92,6 +92,10 @@
         "accelerator": "CmdOrCtrl+V"
       },
       {
+        "id": "paste-to-replace",
+        "label": "Paste to Replace"
+      },
+      {
         "id": "selection.duplicate",
         "label": "Duplicate"
       },

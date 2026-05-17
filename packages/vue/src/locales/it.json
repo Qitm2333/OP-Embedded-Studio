@@ -32,6 +32,7 @@
     "italic": "Corsivo",
     "underline": "Sottolineato",
     "pasteHere": "Incolla qui",
+    "pasteToReplace": "Paste to replace",
     "copyPasteAs": "Copia/Incolla come",
     "copyAsText": "Copia come testo",
     "copyAsSVG": "Copia come SVG",

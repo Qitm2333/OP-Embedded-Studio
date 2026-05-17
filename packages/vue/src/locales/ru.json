@@ -32,6 +32,7 @@
     "italic": "Курсив",
     "underline": "Подчёркнутый",
     "pasteHere": "Вставить сюда",
+    "pasteToReplace": "Paste to replace",
     "copyPasteAs": "Копировать/Вставить как",
     "copyAsText": "Копировать как текст",
     "copyAsSVG": "Копировать как SVG",

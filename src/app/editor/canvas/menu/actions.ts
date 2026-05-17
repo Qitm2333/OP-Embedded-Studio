@@ -4,6 +4,7 @@ import type { Ref } from 'vue'
 import { nodeToXPath } from '@open-pencil/core/xpath'
 
 import type { EditorStore } from '@/app/editor/active-store'
+import { pasteClipboardToReplace } from '@/app/editor/clipboard/paste-to-replace'
 import { toast } from '@/app/shell/ui'
 
 function toArrayBuffer(data: Uint8Array): ArrayBuffer {
@@ -65,5 +66,13 @@ export function createCanvasMenuActions(store: EditorStore, selectedIds: Ref<Set
     toast.info('Copied as PNG')
   }
 
-  return { ids, execCommand, clipboardWrite, copyNodeId, copyXPath, copyAsPNG }
+  return {
+    ids,
+    execCommand,
+    pasteToReplace: () => pasteClipboardToReplace(store),
+    clipboardWrite,
+    copyNodeId,
+    copyXPath,
+    copyAsPNG
+  }
 }
