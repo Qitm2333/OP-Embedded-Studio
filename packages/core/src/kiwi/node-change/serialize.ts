@@ -263,12 +263,20 @@ function serializeTextProps(
   }
   nc.textData = exportTextData(node)
   const autoResize = resolveTextAutoResize(node, graph)
-  if (autoResize !== 'NONE') nc.textAutoResize = autoResize
+  nc.textAutoResize = autoResize
   nc.textAlignHorizontal = node.textAlignHorizontal
-  nc.textUserLayoutVersion = 4
+  nc.textAlignVertical = 'TOP'
+  nc.textUserLayoutVersion = 5
+  nc.textExplicitLayoutVersion = 1
+  nc.textBidiVersion = 1
+  nc.textDecorationSkipInk = true
+  nc.fontVariantCommonLigatures = true
+  nc.fontVariantContextualLigatures = true
+  nc.fontVersion = ''
+  nc.emojiImageSet = 'APPLE'
   if (fontDigestMap) nc.derivedTextData = buildDerivedTextData(node, fontDigestMap, blobs)
-  if (node.lineHeight != null) nc.lineHeight = { value: node.lineHeight, units: 'PIXELS' }
-  if (node.letterSpacing !== 0) nc.letterSpacing = { value: node.letterSpacing, units: 'PIXELS' }
+  nc.lineHeight = node.lineHeight != null ? { value: node.lineHeight, units: 'PIXELS' } : { value: 100, units: 'PERCENT' }
+  nc.letterSpacing = { value: node.letterSpacing, units: 'PIXELS' }
   if (node.textDecoration !== 'NONE') {
     nc.textDecoration = node.textDecoration === 'UNDERLINE' ? 'UNDERLINE' : 'STRIKETHROUGH'
   }

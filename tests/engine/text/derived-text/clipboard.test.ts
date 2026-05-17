@@ -73,6 +73,63 @@ describe('clipboard derived text export', () => {
     expect(baseline.width).toBe(42)
   })
 
+  test('preserves shaped multiline baselines for Figma text editing', async () => {
+    await initCodec()
+
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const text = graph.createNode('TEXT', page.id, {
+      name: 'Wrapped',
+      text: 'Analytics Overview',
+      width: 360,
+      height: 136,
+      fontFamily: 'Missing Preview Font',
+      fontSize: 56,
+      fontWeight: 700
+    })
+
+    const derived = expectDefined(
+      await buildDerivedTextDataV4(text, await buildFontDigestMap(graph), {
+        lineHeight: 68,
+        lineAscent: 54,
+        lineWidth: 272,
+        baseline: 54.36,
+        baselines: [
+          {
+            firstCharacter: 0,
+            endCharacter: 10,
+            position: { x: 0, y: 54.36 },
+            width: 271.58,
+            lineY: 0,
+            lineHeight: 68,
+            lineAscent: 54
+          },
+          {
+            firstCharacter: 10,
+            endCharacter: 18,
+            position: { x: 0, y: 122.36 },
+            width: 261.9,
+            lineY: 68,
+            lineHeight: 68,
+            lineAscent: 54
+          }
+        ],
+        glyphs: [
+          { firstCharacter: 0, x: 0, y: 54.36, advance: 42 },
+          { firstCharacter: 10, x: 0, y: 122.36, advance: 44 }
+        ],
+        logicalIndexToCharacterOffsetMap: Array.from({ length: 19 }, () => 0)
+      }, null),
+      'derived text'
+    )
+
+    expect(derived.baselines).toHaveLength(2)
+    expect(derived.baselines[0].endCharacter).toBe(10)
+    expect(derived.baselines[1].firstCharacter).toBe(10)
+    expect(derived.baselines[1].position.y).toBe(122.36)
+    expect(derived.layoutSize).toEqual({ x: 360, y: 136 })
+  })
+
   test('uses Figma font style names in metadata', async () => {
     await initCodec()
 

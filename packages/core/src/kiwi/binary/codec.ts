@@ -327,6 +327,7 @@ export interface NodeChange {
       endCharacter: number
       position: Vector
       width: number
+      lineY?: number
       lineHeight: number
       lineAscent: number
     }>
@@ -351,7 +352,14 @@ export interface NodeChange {
     truncatedHeight?: number
   }
   textUserLayoutVersion?: number
+  textExplicitLayoutVersion?: number
+  textBidiVersion?: number
   textDecoration?: string
+  textDecorationSkipInk?: boolean
+  fontVariantCommonLigatures?: boolean
+  fontVariantContextualLigatures?: boolean
+  fontVersion?: string
+  emojiImageSet?: string
   lineHeight?: { value: number; units: string }
   letterSpacing?: { value: number; units: string }
   // Symbol/Instance

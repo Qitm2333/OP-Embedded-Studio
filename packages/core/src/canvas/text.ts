@@ -3,6 +3,7 @@ import type { CanvasKit, FontWeight, Paragraph, TypefaceFontProvider } from 'can
 import { getCanvasKit } from '#core/canvaskit'
 import { resolveRGBAForPreview } from '#core/color/management'
 import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE } from '#core/constants'
+import type { NodeChange } from '#core/kiwi/binary/codec'
 import type { SceneNode } from '#core/scene-graph'
 import { resolveNodeTextDirection } from '#core/text/direction'
 import { fontManager, weightToStyle } from '#core/text/fonts'
@@ -26,6 +27,7 @@ export interface ClipboardShapedText {
   lineAscent: number
   lineWidth: number
   baseline: number
+  baselines?: NonNullable<NodeChange['derivedTextData']>['baselines']
   glyphs: ClipboardShapedGlyph[]
   logicalIndexToCharacterOffsetMap: number[]
 }
@@ -293,6 +295,55 @@ export function buildParagraph(
   return paragraph
 }
 
+function addShapedRunGlyphs(
+  run: ReturnType<Paragraph['getShapedLines']>[number]['runs'][number],
+  glyphs: ClipboardShapedGlyph[],
+  logicalIndexToCharacterOffsetMap: number[],
+  fallbackLineY: number,
+  fallbackLineWidth: number
+): void {
+  const positions = run.positions
+  for (let i = 0; i < run.glyphs.length; i++) {
+    const x = positions[i * 2] ?? 0
+    const y = positions[i * 2 + 1] ?? fallbackLineY
+    const nextX = positions[(i + 1) * 2] ?? x
+    const glyphCharacter = run.offsets[i] ?? i
+    glyphs.push({
+      glyphIndex: i,
+      firstCharacter: glyphCharacter,
+      x,
+      y,
+      advance: nextX - x
+    })
+    if (glyphCharacter >= 0 && glyphCharacter < logicalIndexToCharacterOffsetMap.length) {
+      logicalIndexToCharacterOffsetMap[glyphCharacter] = x
+    }
+  }
+
+  const finalOffset = run.offsets[run.offsets.length - 1]
+  const finalX = positions[positions.length - 2] ?? fallbackLineWidth
+  if (finalOffset >= 0 && finalOffset < logicalIndexToCharacterOffsetMap.length) {
+    logicalIndexToCharacterOffsetMap[finalOffset] = finalX
+  }
+}
+
+function addLineBaseline(
+  metrics: ReturnType<Paragraph['getLineMetrics']>[number],
+  textLength: number,
+  baselines: NonNullable<ClipboardShapedText['baselines']>
+): void {
+  if (metrics.startIndex >= textLength) return
+  baselines.push({
+    firstCharacter: metrics.startIndex,
+    endCharacter: metrics.endIndex,
+    position: { x: 0, y: metrics.baseline },
+    width: metrics.width,
+    lineY: metrics.startIndex === 0 ? 0 : metrics.baseline - Math.abs(metrics.ascent),
+    lineHeight: metrics.height,
+    lineAscent: Math.abs(metrics.ascent)
+  })
+}
+
 export async function shapeTextForClipboard(node: SceneNode): Promise<ClipboardShapedText | null> {
   const ck = await getCanvasKit()
   const fontProvider = fontManager.provider()
@@ -309,37 +360,17 @@ export async function shapeTextForClipboard(node: SceneNode): Promise<ClipboardS
   const firstMetrics = lineMetrics[0]
 
   const glyphs: ClipboardShapedGlyph[] = []
+  const baselines: NonNullable<ClipboardShapedText['baselines']> = []
   const logicalIndexToCharacterOffsetMap = Array.from({ length: node.text.length + 1 }, () => 0)
 
   for (let lineIdx = 0; lineIdx < shapedLines.length; lineIdx++) {
     const line = shapedLines[lineIdx]
     const metrics = lineMetrics[lineIdx] ?? firstMetrics
     const lineY = metrics.baseline
-
     for (const run of line.runs) {
-      const positions = run.positions
-      for (let i = 0; i < run.glyphs.length; i++) {
-        const x = positions[i * 2] ?? 0
-        const y = positions[i * 2 + 1] ?? lineY
-        const nextX = positions[(i + 1) * 2] ?? x
-        const firstCharacter = run.offsets[i] ?? i
-        glyphs.push({
-          glyphIndex: i,
-          firstCharacter,
-          x,
-          y,
-          advance: nextX - x
-        })
-        if (firstCharacter >= 0 && firstCharacter < logicalIndexToCharacterOffsetMap.length) {
-          logicalIndexToCharacterOffsetMap[firstCharacter] = x
-        }
-      }
-      const finalOffset = run.offsets[run.offsets.length - 1]
-      const finalX = positions[positions.length - 2] ?? metrics.width
-      if (finalOffset >= 0 && finalOffset < logicalIndexToCharacterOffsetMap.length) {
-        logicalIndexToCharacterOffsetMap[finalOffset] = finalX
-      }
+      addShapedRunGlyphs(run, glyphs, logicalIndexToCharacterOffsetMap, lineY, metrics.width)
     }
+    addLineBaseline(metrics, node.text.length, baselines)
   }
 
   for (let i = 1; i < logicalIndexToCharacterOffsetMap.length; i++) {
@@ -355,6 +386,7 @@ export async function shapeTextForClipboard(node: SceneNode): Promise<ClipboardS
     lineAscent: Math.abs(firstMetrics.ascent),
     lineWidth: firstMetrics.width,
     baseline: firstMetrics.baseline,
+    baselines,
     glyphs,
     logicalIndexToCharacterOffsetMap
   }

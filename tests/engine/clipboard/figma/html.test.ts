@@ -10,6 +10,19 @@ import {
 
 import { expectDefined } from '#tests/helpers/assert'
 
+function expectFigmaEditableTextDefaults(textNode: NonNullable<Awaited<ReturnType<typeof parseFigmaClipboard>>>['nodes'][number]) {
+  expect(textNode.textUserLayoutVersion).toBe(5)
+  expect(textNode.textExplicitLayoutVersion).toBe(1)
+  expect(textNode.textBidiVersion).toBe(1)
+  expect(textNode.textAutoResize).toBe('NONE')
+  expect(textNode.lineHeight).toEqual({ value: 100, units: 'PERCENT' })
+  expect(textNode.letterSpacing).toEqual({ value: 0, units: 'PIXELS' })
+  expect(textNode.fontVariantCommonLigatures).toBe(true)
+  expect(textNode.fontVariantContextualLigatures).toBe(true)
+  expect(textNode.textDecorationSkipInk).toBe(true)
+  expect(textNode.emojiImageSet).toBe('APPLE')
+}
+
 describe('buildFigmaClipboardHTML', () => {
   beforeAll(async () => {
     await initCodec()
@@ -56,10 +69,12 @@ describe('buildFigmaClipboardHTML', () => {
 
     const parsed = await parseFigmaClipboard(html)
     const textNode = parsed?.nodes.find((node) => node.type === 'TEXT')
-    expect(textNode?.textUserLayoutVersion).toBe(4)
-    expect(textNode?.textAutoResize).toBeUndefined()
-    expect(textNode?.derivedTextData?.glyphs).toBeDefined()
-    expect(textNode?.derivedTextData?.baselines?.length).toBeGreaterThan(0)
+    if (!textNode) throw new Error('Expected text node')
+    expectFigmaEditableTextDefaults(textNode)
+    expect(textNode.derivedTextData?.glyphs).toBeDefined()
+    expect(textNode.derivedTextData?.baselines?.length).toBeGreaterThan(0)
+    expect(textNode.derivedTextData?.logicalIndexToCharacterOffsetMap?.length).toBe(text.text.length + 1)
+    expect(textNode.derivedTextData?.derivedLines).toEqual([{ directionality: 'LTR' }])
   })
 
   it('encodes fallback derived text metrics when outline fonts are unavailable', async () => {
@@ -84,8 +99,8 @@ describe('buildFigmaClipboardHTML', () => {
     const textNode = parsed?.nodes.find((node) => node.type === 'TEXT')
     const baseline = textNode?.derivedTextData?.baselines?.[0]
 
-    expect(textNode?.textUserLayoutVersion).toBe(4)
-    expect(textNode?.textAutoResize).toBeUndefined()
+    expect(textNode?.textUserLayoutVersion).toBe(5)
+    expect(textNode?.textAutoResize).toBe('NONE')
     expect(textNode?.derivedTextData?.glyphs?.length).toBe('Analytics Overview'.length)
     expect(baseline?.width).toBe(552)
     expect(baseline?.lineHeight).toBe(67)

@@ -75,6 +75,7 @@ export interface ShapedClipboardText {
   lineAscent: number
   lineWidth: number
   baseline: number
+  baselines?: NonNullable<NodeChange['derivedTextData']>['baselines']
   glyphs: Array<{
     firstCharacter: number
     x: number
@@ -160,7 +161,7 @@ export async function buildDerivedTextDataV4(
     if (!shapedGlyph && lineBreakSet.has(index)) {
       fallbackBaselines.push({
         firstCharacter: lineStart,
-        endCharacter: Math.max(index - 1, lineStart),
+        endCharacter: index,
         position: { x: 0, y: fallbackY },
         width: fallbackX,
         lineHeight: lineHeightFallback,
@@ -193,7 +194,7 @@ export async function buildDerivedTextDataV4(
   if (node.text.length > 0) {
     fallbackBaselines.push({
       firstCharacter: lineStart,
-      endCharacter: node.text.length - 1,
+      endCharacter: node.text.length,
       position: { x: 0, y: fallbackY },
       width: fallbackX,
       lineHeight: lineHeightFallback,
@@ -217,7 +218,7 @@ export async function buildDerivedTextDataV4(
     width: shaped?.lineWidth ?? node.width,
     lineHeight: shaped?.lineHeight ?? lineHeightFallback,
     lineAscent: shaped?.lineAscent ?? lineAscent,
-    baselines: shaped ? undefined : fallbackBaselines,
+    baselines: shaped ? shaped.baselines : fallbackBaselines,
     logicalIndexToCharacterOffsetMap: shaped?.logicalIndexToCharacterOffsetMap ?? fallbackOffsets
   })
 }

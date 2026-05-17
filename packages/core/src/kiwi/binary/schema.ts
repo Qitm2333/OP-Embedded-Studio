@@ -112,6 +112,11 @@ enum BlendMode {
   LUMINOSITY = 18;
 }
 
+enum EmojiImageSet {
+  APPLE = 0;
+  NOTO = 1;
+}
+
 enum PaintType {
   SOLID = 0;
   GRADIENT_LINEAR = 1;
@@ -906,6 +911,10 @@ message Decoration {
   uint styleID = 2;
 }
 
+message DerivedTextLineData {
+  Directionality directionality = 1;
+}
+
 message DerivedTextData {
   Vector layoutSize = 1;
   Baseline[] baselines = 2;
@@ -915,6 +924,8 @@ message DerivedTextData {
   HyperlinkBox[] hyperlinkBoxes = 7;
   int truncationStartIndex = 8;
   float truncatedHeight = 9;
+  float[] logicalIndexToCharacterOffsetMap = 10;
+  DerivedTextLineData[] derivedLines = 12;
 }
 
 message VectorData {
@@ -1506,6 +1517,12 @@ message NodeChange {
   VariableDataValues variableDataValues = 315;
   VariableScope[] variableScopes = 353;
   DerivedTextData derivedTextData = 359;
+  EmojiImageSet emojiImageSet = 391;
+  uint textExplicitLayoutVersion = 396;
+  Paint[] textDecorationFillPaints = 411;
+  bool textDecorationSkipInk = 412;
+  Number textUnderlineOffset = 413;
+  Number textDecorationThickness = 415;
   uint gridRowCount = 435;
   uint gridColumnCount = 436;
   float gridRowGap = 437;
