@@ -1,20 +1,13 @@
 import { resolveOverrideTarget, repopulateInstance } from '#core/kiwi/instance-overrides/resolve'
 import type { OverrideContext } from '#core/kiwi/instance-overrides/types'
-import type { GUID } from '#core/kiwi/binary/codec'
 import { guidToString } from '#core/kiwi/node-change/convert'
+import { applyStyleRefsToFields } from '#core/kiwi/node-change/style-refs'
 import type { SceneNode } from '#core/scene-graph'
 
 import { convertOverrideToProps } from './props'
 
 function isActiveInstance(ctx: OverrideContext, nodeId: string | undefined): nodeId is string {
   return nodeId !== undefined && (!ctx.activeNodeIds || ctx.activeNodeIds.has(nodeId))
-}
-
-function resolveStrokeFillStyle(ctx: OverrideContext, fields: Record<string, unknown>): void {
-  const guid = (fields.styleIdForStrokeFill as { guid?: GUID } | undefined)?.guid
-  if (!guid || fields.strokePaints !== undefined) return
-  const style = ctx.changeMap.get(guidToString(guid))
-  if (style?.styleType === 'FILL' && style.fillPaints) fields.strokePaints = style.fillPaints
 }
 
 function preserveStrokeShapeProps(target: SceneNode, updates: Partial<SceneNode>): void {
@@ -80,7 +73,7 @@ export function applySymbolOverrides(ctx: OverrideContext): Set<string> {
       const { guidPath: _, overriddenSymbolID: _s, componentPropAssignments: _c, ...fields } = ov
       if (Object.keys(fields).length === 0) continue
 
-      resolveStrokeFillStyle(ctx, fields)
+      applyStyleRefsToFields(ctx.changeMap, fields)
       const updates = convertOverrideToProps(fields as Record<string, unknown>)
       if (Object.keys(updates).length > 0) {
         const target = ctx.graph.getNode(targetId)

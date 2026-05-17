@@ -9,6 +9,7 @@ import {
   setVariableColorResolver,
   VARIABLE_BINDING_FIELDS_INVERSE
 } from '#core/kiwi/node-change/convert'
+import { applyStyleRefsToFields } from '#core/kiwi/node-change/style-refs'
 import { SceneGraph } from '#core/scene-graph'
 import type { VariableType, VariableValue } from '#core/scene-graph'
 
@@ -350,35 +351,7 @@ function parseDocumentColorSpace(nodeChanges: NodeChange[]): 'srgb' | 'display-p
 }
 
 function applyStyleRefs(changeMap: Map<string, NodeChange>): void {
-  const textStyleFields = [
-    'fontSize',
-    'fontName',
-    'lineHeight',
-    'letterSpacing',
-    'textDecoration',
-    'textCase'
-  ] as const
-
-  for (const nc of changeMap.values()) {
-    const fillStyleGuid = nc.styleIdForFill?.guid
-    if (fillStyleGuid) {
-      const style = changeMap.get(guidToString(fillStyleGuid))
-      if (style?.styleType === 'FILL' && style.fillPaints) nc.fillPaints = style.fillPaints
-    }
-
-    if (nc.type !== 'TEXT') continue
-    const textStyleGuid = nc.styleIdForText?.guid
-    if (!textStyleGuid) continue
-    const style = changeMap.get(guidToString(textStyleGuid))
-    if (style?.type !== 'TEXT' || style.styleType !== 'TEXT') continue
-    for (const field of textStyleFields) {
-      if (field === 'textDecoration') {
-        nc.textDecoration = style.textDecoration
-      } else if (style[field] !== undefined) {
-        nc[field] = style[field] as never
-      }
-    }
-  }
+  for (const nc of changeMap.values()) applyStyleRefsToFields(changeMap, nc)
 }
 
 export interface FigImportOptions {
