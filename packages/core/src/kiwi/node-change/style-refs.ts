@@ -40,7 +40,7 @@ export function applyStyleRefsToFields(
   }
 
   const strokeFillStyleGuid = fields.styleIdForStrokeFill?.guid
-  if (strokeFillStyleGuid && fields.strokePaints === undefined) {
+  if (strokeFillStyleGuid) {
     const style = changeMap.get(guidToString(strokeFillStyleGuid))
     if (style?.styleType === 'FILL' && style.fillPaints) fields.strokePaints = style.fillPaints
   }
