@@ -1,6 +1,7 @@
+import { applyOverridePatch } from '#core/kiwi/instance-overrides/patches'
 import { guidToString } from '#core/kiwi/node-change/convert'
 
-import { getComponentRoot, resolveOverrideTarget, repopulateInstance } from './resolve'
+import { getComponentRoot, resolveOverrideTarget } from './resolve'
 import type {
   OverrideContext,
   ComponentPropAssignment,
@@ -123,16 +124,14 @@ function applyComponentPropRef(
   if (!child) return
 
   if (ref.componentPropNodeField === 'VISIBLE' && val.boolValue !== undefined) {
-    ctx.graph.updateNode(childId, { visible: val.boolValue })
-    modified?.add(childId)
+    if (applyOverridePatch(ctx, { targetId: childId, source: 'component-prop', props: { visible: val.boolValue } })) modified?.add(childId)
     return
   }
 
   if (ref.componentPropNodeField === 'TEXT_DATA') {
     const text = propTextCharacters(val)
     if (text === undefined || child.type !== 'TEXT') return
-    ctx.graph.updateNode(childId, { text })
-    modified?.add(childId)
+    if (applyOverridePatch(ctx, { targetId: childId, source: 'component-prop', props: { text } })) modified?.add(childId)
     return
   }
 
@@ -141,8 +140,7 @@ function applyComponentPropRef(
   if (!swapId) return
   const newCompId = ctx.guidToNodeId.get(swapId)
   if (!newCompId) return
-  repopulateInstance(ctx, childId, getComponentRoot(ctx, newCompId))
-  modified?.add(childId)
+  if (applyOverridePatch(ctx, { targetId: childId, source: 'component-prop', swapComponentId: getComponentRoot(ctx, newCompId) })) modified?.add(childId)
 }
 
 function applyChildPropRefs(

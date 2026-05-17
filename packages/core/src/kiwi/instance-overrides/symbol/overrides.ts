@@ -1,8 +1,8 @@
-import { resolveOverrideTarget, repopulateInstance } from '#core/kiwi/instance-overrides/resolve'
-import type { OverrideContext } from '#core/kiwi/instance-overrides/types'
+import { applyOverridePatch, type OverridePatch } from '#core/kiwi/instance-overrides/patches'
+import { resolveOverrideTarget } from '#core/kiwi/instance-overrides/resolve'
+import type { OverrideContext, SymbolOverride } from '#core/kiwi/instance-overrides/types'
 import { guidToString } from '#core/kiwi/node-change/convert'
 import { applyStyleRefsToFields } from '#core/kiwi/node-change/style-refs'
-import type { SceneNode } from '#core/scene-graph'
 
 import { convertOverrideToProps } from './props'
 
@@ -10,25 +10,25 @@ function isActiveInstance(ctx: OverrideContext, nodeId: string | undefined): nod
   return nodeId !== undefined && (!ctx.activeNodeIds || ctx.activeNodeIds.has(nodeId))
 }
 
-function preserveStrokeShapeProps(target: SceneNode, updates: Partial<SceneNode>): void {
-  if (!updates.strokes) return
-  updates.strokes = updates.strokes.map((stroke, index) => {
-    if (index >= target.strokes.length) {
-      return {
-        ...stroke,
-        cap: target.strokeCap,
-        join: target.strokeJoin,
-        dashPattern: target.dashPattern
-      }
-    }
-    const existing = target.strokes[index]
-    return {
-      ...stroke,
-      cap: existing.cap,
-      join: existing.join,
-      dashPattern: existing.dashPattern
-    }
-  })
+function patchFromSymbolOverride(
+  ctx: OverrideContext,
+  targetId: string,
+  ov: SymbolOverride
+): OverridePatch | null {
+  const patch: OverridePatch = { targetId, source: 'symbol-override' }
+  if (ov.overriddenSymbolID) {
+    const swapGuid = guidToString(ov.overriddenSymbolID)
+    patch.swapComponentId = ctx.guidToNodeId.get(swapGuid)
+  }
+
+  const { guidPath: _, overriddenSymbolID: _s, componentPropAssignments: _c, ...fields } = ov
+  if (Object.keys(fields).length > 0) {
+    applyStyleRefsToFields(ctx.changeMap, fields)
+    const props = convertOverrideToProps(fields as Record<string, unknown>)
+    if (Object.keys(props).length > 0) patch.props = props
+  }
+
+  return patch.swapComponentId || patch.props ? patch : null
 }
 
 /**
@@ -59,27 +59,10 @@ export function applySymbolOverrides(ctx: OverrideContext): Set<string> {
 
       if (targetId === nodeId && ctx.kiwiPropertyNodes.has(nodeId)) continue
 
+      const patch = patchFromSymbolOverride(ctx, targetId, ov)
+      if (!patch) continue
       overriddenNodes.add(targetId)
-
-      if (ov.overriddenSymbolID) {
-        const swapGuid = guidToString(ov.overriddenSymbolID)
-        const newCompId = ctx.guidToNodeId.get(swapGuid)
-        if (newCompId) {
-          repopulateInstance(ctx, targetId, newCompId)
-          ctx.swappedInstances.add(targetId)
-        }
-      }
-
-      const { guidPath: _, overriddenSymbolID: _s, componentPropAssignments: _c, ...fields } = ov
-      if (Object.keys(fields).length === 0) continue
-
-      applyStyleRefsToFields(ctx.changeMap, fields)
-      const updates = convertOverrideToProps(fields as Record<string, unknown>)
-      if (Object.keys(updates).length > 0) {
-        const target = ctx.graph.getNode(targetId)
-        if (target) preserveStrokeShapeProps(target, updates)
-        ctx.graph.updateNode(targetId, updates)
-      }
+      applyOverridePatch(ctx, patch)
     }
   }
   return overriddenNodes
