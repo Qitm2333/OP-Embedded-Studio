@@ -18,12 +18,16 @@
 - Auto-layout inspector controls for min/max dimensions, auto gap, wrap gap, and two-axis padding.
 - Stroke dash/gap controls.
 - Font settings — local font access, fallback predownloads, and downloaded font cache management.
+- Editor commands for frame selection, paste to replace, Boolean operations, flatten, outline text, and outline stroke.
+- Boolean operations panel control and canvas context-menu entries for flattening and outlining supported selections.
 
 ### Changed
 
 - Smaller domain modules across core, app, Vue SDK, CLI, MCP, docs, and desktop with enforced package boundaries.
 - Separate scene and overlay canvas layers — rulers, labels, and selections no longer cause scene redraws.
 - Shared menu schema between browser and native Tauri menus.
+- Editor command metadata now drives shortcut display across browser menus, native menus, tooltips, and context menus.
+- Text-to-vector conversion now uses shared loaded-font outline geometry across Boolean, flatten, and outline commands.
 
 ### Fixes
 
@@ -52,6 +56,13 @@
 - Fix asset insertion coordinates inside entered containers.
 - Fix MCP stdio handshake and eval return values.
 - Fix `@open-pencil/vue` npm imports referencing an unexported core subpath.
+- Fix Figma clipboard text compatibility — pasted OpenPencil text keeps editable fixed bounds, line wrapping, baselines, glyph offsets, and Figma edit-mode layout.
+- Fix local font matching so requested upright and weighted faces do not fall back to italic or regular faces.
+- Fix CanvasKit paragraph rendering to preserve requested text weights and slants.
+- Fix nested text editing interactions — drill double-click enters nested text edit mode, and clicking another text node switches edit targets while editing.
+- Fix auto-height text edit commits so text bounds and undo state stay in sync.
+- Fix Boolean, flatten, and outline operations to reject unsupported image/complex-script sources safely instead of silently dropping geometry.
+- Fix outline stroke enablement for stroked descendants inside groups and containers.
 
 ### Performance
 
