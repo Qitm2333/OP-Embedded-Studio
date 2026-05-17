@@ -75,7 +75,8 @@
     "flipHorizontal": "Rifletti orizzontalmente",
     "flipVertical": "Rifletti verticalmente",
     "flattenSelection": "Flatten",
-    "outlineText": "Outline text"
+    "outlineText": "Outline text",
+    "outlineStroke": "Outline stroke"
   },
   "tools": {
     "move": "Sposta",

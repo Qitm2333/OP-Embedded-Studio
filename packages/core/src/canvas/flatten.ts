@@ -2,17 +2,29 @@ import { parseSVGPath } from '#core/io/formats/svg/parse-path'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import { copyFills } from '#core/scene-graph/copy'
 
-import { makeBooleanSourcePath, nodePathTransform } from './boolean'
+import { makeBooleanSourcePath, makeStrokeOutlinePath, nodePathTransform } from './boolean'
 import type { SkiaRenderer } from './renderer'
 
-export function flattenNodesToVectorProps(
+type VectorFlattenProps = Pick<
+  SceneNode,
+  'name' | 'x' | 'y' | 'width' | 'height' | 'fills' | 'vectorNetwork'
+>
+
+type NodePathFactory = (
   renderer: SkiaRenderer,
   graph: SceneGraph,
-  nodes: SceneNode[]
-): Pick<SceneNode, 'name' | 'x' | 'y' | 'width' | 'height' | 'fills' | 'vectorNetwork'> | null {
+  node: SceneNode
+) => ReturnType<typeof makeBooleanSourcePath>
+
+function nodesToVectorProps(
+  renderer: SkiaRenderer,
+  graph: SceneGraph,
+  nodes: SceneNode[],
+  makeNodePath: NodePathFactory
+): VectorFlattenProps | null {
   const path = new renderer.ck.Path()
   for (const node of nodes) {
-    const nodePath = makeBooleanSourcePath(renderer, node, graph)
+    const nodePath = makeNodePath(renderer, graph, node)
     if (!nodePath) {
       path.delete()
       return null
@@ -41,4 +53,24 @@ export function flattenNodesToVectorProps(
     fills: copyFills(nodes[0].fills),
     vectorNetwork
   }
+}
+
+export function flattenNodesToVectorProps(
+  renderer: SkiaRenderer,
+  graph: SceneGraph,
+  nodes: SceneNode[]
+): VectorFlattenProps | null {
+  return nodesToVectorProps(renderer, graph, nodes, (r, g, node) =>
+    makeBooleanSourcePath(r, node, g)
+  )
+}
+
+export function outlineStrokeNodesToVectorProps(
+  renderer: SkiaRenderer,
+  graph: SceneGraph,
+  nodes: SceneNode[]
+): VectorFlattenProps | null {
+  return nodesToVectorProps(renderer, graph, nodes, (r, g, node) =>
+    makeStrokeOutlinePath(r, node, g)
+  )
 }

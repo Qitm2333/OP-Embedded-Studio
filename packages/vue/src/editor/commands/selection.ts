@@ -207,6 +207,14 @@ export function createSelectionCommands({
       enabled: capabilities.canOutlineText,
       run: () => editor.outlineTextSelected()
     },
+    'selection.outlineStroke': {
+      id: 'selection.outlineStroke',
+      get label() {
+        return t.value.outlineStroke
+      },
+      enabled: capabilities.canOutlineStroke,
+      run: () => editor.outlineStrokeSelected()
+    },
     'selection.moveToPage': {
       id: 'selection.moveToPage',
       get label() {

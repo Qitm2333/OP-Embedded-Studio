@@ -7,7 +7,10 @@ import {
   type BooleanOperation
 } from './structure/boolean'
 import { wrapSelectionInContainer as wrapSelectionInContainerImpl } from './structure/container-wrap'
-import { flattenSelected as flattenSelectedImpl } from './structure/flatten'
+import {
+  flattenSelected as flattenSelectedImpl,
+  outlineStrokeSelected as outlineStrokeSelectedImpl
+} from './structure/flatten'
 import { ungroupSelected as ungroupImpl } from './structure/group'
 import { createStructureReorderActions } from './structure/reorder'
 import { createStructureStateActions } from './structure/state'
@@ -74,8 +77,13 @@ export function createStructureActions(ctx: EditorContext) {
   }
 
   function outlineTextSelected(selectedNodes: SceneNode[]) {
-    if (selectedNodes.length === 0 || selectedNodes.some((node) => node.type !== 'TEXT')) return null
-    return flattenSelectedImpl(ctx, selectedNodes, 'Outline text')
+    if (selectedNodes.length === 0 || selectedNodes.some((node) => node.type !== 'TEXT'))
+      return null
+    return flattenSelectedImpl(ctx, selectedNodes, { label: 'Outline text' })
+  }
+
+  function outlineStrokeSelected(selectedNodes: SceneNode[]) {
+    return outlineStrokeSelectedImpl(ctx, selectedNodes)
   }
 
   function moveToPage(pageId: string) {
@@ -107,6 +115,7 @@ export function createStructureActions(ctx: EditorContext) {
     ungroupSelected,
     flattenSelected,
     outlineTextSelected,
+    outlineStrokeSelected,
     ...stateActions,
     moveToPage,
     renameNode

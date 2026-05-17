@@ -31,6 +31,7 @@ const COMMAND_MENU_IDS = new Set<string>([
   'selection.booleanExclude',
   'selection.flatten',
   'selection.outlineText',
+  'selection.outlineStroke',
   'selection.bringToFront',
   'selection.sendToBack',
   'view.zoom100',

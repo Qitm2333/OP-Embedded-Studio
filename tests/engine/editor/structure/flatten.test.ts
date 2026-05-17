@@ -36,8 +36,18 @@ describe('flattenSelected', () => {
   test('converts selected shapes into a vector path', async () => {
     const { editor, surface } = await createEditorWithRenderer()
     const pageId = editor.state.currentPageId
-    const first = editor.graph.createNode('RECTANGLE', pageId, { x: 10, y: 20, width: 50, height: 40 })
-    const second = editor.graph.createNode('ELLIPSE', pageId, { x: 40, y: 30, width: 50, height: 40 })
+    const first = editor.graph.createNode('RECTANGLE', pageId, {
+      x: 10,
+      y: 20,
+      width: 50,
+      height: 40
+    })
+    const second = editor.graph.createNode('ELLIPSE', pageId, {
+      x: 40,
+      y: 30,
+      width: 50,
+      height: 40
+    })
 
     editor.select([first.id, second.id])
     editor.flattenSelected()
@@ -52,6 +62,53 @@ describe('flattenSelected', () => {
     expect(vector?.vectorNetwork?.vertices.length).toBeGreaterThan(0)
     expect(editor.graph.getNode(first.id)).toBeUndefined()
     expect(editor.graph.getNode(second.id)).toBeUndefined()
+    surface.delete()
+  })
+
+  test('outlines visible strokes into a vector path', async () => {
+    const { editor, surface } = await createEditorWithRenderer()
+    const pageId = editor.state.currentPageId
+    const rect = editor.graph.createNode('RECTANGLE', pageId, {
+      x: 20,
+      y: 30,
+      width: 40,
+      height: 30,
+      fills: [TRANSPARENT],
+      strokes: [{ type: 'SOLID', color: BLACK, weight: 8, opacity: 1, visible: true }]
+    })
+
+    editor.select([rect.id])
+    editor.outlineStrokeSelected()
+
+    const [vectorId] = [...editor.state.selectedIds]
+    const vector = editor.graph.getNode(vectorId)
+    expect(vector?.type).toBe('VECTOR')
+    expect(vector?.name).toBe('Outline stroke')
+    expect(vector?.x).toBe(16)
+    expect(vector?.y).toBe(26)
+    expect(vector?.width).toBe(48)
+    expect(vector?.height).toBe(38)
+    expect(vector?.vectorNetwork?.vertices.length).toBeGreaterThan(0)
+    expect(editor.graph.getNode(rect.id)).toBeUndefined()
+    surface.delete()
+  })
+
+  test('does not outline fill-only shapes as strokes', async () => {
+    const { editor, surface } = await createEditorWithRenderer()
+    const pageId = editor.state.currentPageId
+    const rect = editor.graph.createNode('RECTANGLE', pageId, {
+      x: 20,
+      y: 30,
+      width: 40,
+      height: 30,
+      strokes: []
+    })
+
+    editor.select([rect.id])
+    const result = editor.outlineStrokeSelected()
+
+    expect(result).toBeNull()
+    expect(editor.graph.getNode(rect.id)?.type).toBe('RECTANGLE')
     surface.delete()
   })
 
@@ -177,7 +234,10 @@ describe('flattenSelected', () => {
   test('does not flatten unsupported text nodes', async () => {
     const { editor, surface } = await createEditorWithRenderer()
     const pageId = editor.state.currentPageId
-    const text = editor.graph.createNode('TEXT', pageId, { text: 'Nope', fontFamily: 'Definitely Missing Font' })
+    const text = editor.graph.createNode('TEXT', pageId, {
+      text: 'Nope',
+      fontFamily: 'Definitely Missing Font'
+    })
     const rect = editor.graph.createNode('RECTANGLE', pageId)
 
     editor.select([text.id, rect.id])
@@ -194,7 +254,16 @@ describe('flattenSelected', () => {
     const pageId = editor.state.currentPageId
     const rect = editor.graph.createNode('RECTANGLE', pageId)
     const image = editor.graph.createNode('RECTANGLE', pageId, {
-      fills: [{ type: 'IMAGE', imageHash: 'image', imageScaleMode: 'FILL', color: TRANSPARENT, opacity: 1, visible: true }]
+      fills: [
+        {
+          type: 'IMAGE',
+          imageHash: 'image',
+          imageScaleMode: 'FILL',
+          color: TRANSPARENT,
+          opacity: 1,
+          visible: true
+        }
+      ]
     })
     editor.select([rect.id, image.id])
     editor.groupSelected()
@@ -210,8 +279,18 @@ describe('flattenSelected', () => {
   test('flattens visual descendants from groups', async () => {
     const { editor, surface } = await createEditorWithRenderer()
     const pageId = editor.state.currentPageId
-    const rect = editor.graph.createNode('RECTANGLE', pageId, { x: 10, y: 20, width: 50, height: 40 })
-    const ellipse = editor.graph.createNode('ELLIPSE', pageId, { x: 70, y: 20, width: 30, height: 30 })
+    const rect = editor.graph.createNode('RECTANGLE', pageId, {
+      x: 10,
+      y: 20,
+      width: 50,
+      height: 40
+    })
+    const ellipse = editor.graph.createNode('ELLIPSE', pageId, {
+      x: 70,
+      y: 20,
+      width: 30,
+      height: 30
+    })
     editor.select([rect.id, ellipse.id])
     editor.groupSelected()
     const [groupId] = [...editor.state.selectedIds]
@@ -235,7 +314,9 @@ describe('flattenSelected', () => {
       width: 50,
       height: 40,
       fills: [],
-      strokes: [{ type: 'SOLID', color: BLACK, opacity: 1, visible: true, weight: 8, align: 'CENTER' }]
+      strokes: [
+        { type: 'SOLID', color: BLACK, opacity: 1, visible: true, weight: 8, align: 'CENTER' }
+      ]
     })
 
     editor.select([rect.id])
@@ -263,7 +344,12 @@ describe('flattenSelected', () => {
     expect(editor.graph.getNode(pageId)?.childIds).toEqual([before.id, vectorId, after.id])
 
     editor.undo.undo()
-    expect(editor.graph.getNode(pageId)?.childIds).toEqual([before.id, first.id, second.id, after.id])
+    expect(editor.graph.getNode(pageId)?.childIds).toEqual([
+      before.id,
+      first.id,
+      second.id,
+      after.id
+    ])
     expect(editor.state.selectedIds).toEqual(new Set([first.id, second.id]))
 
     editor.undo.redo()

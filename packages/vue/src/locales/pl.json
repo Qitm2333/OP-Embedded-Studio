@@ -75,7 +75,8 @@
     "flipHorizontal": "Odbij poziomo",
     "flipVertical": "Odbij pionowo",
     "flattenSelection": "Flatten",
-    "outlineText": "Outline text"
+    "outlineText": "Outline text",
+    "outlineStroke": "Outline stroke"
   },
   "tools": {
     "move": "Przesuń",

@@ -100,6 +100,7 @@ export const commandMessages = i18n('commands', {
   excludeSelection: 'Exclude selection',
   flattenSelection: 'Flatten',
   outlineText: 'Outline text',
+  outlineStroke: 'Outline stroke',
   booleanOperations: 'Boolean operations',
   flipHorizontal: 'Flip horizontal',
   flipVertical: 'Flip vertical',

@@ -27,6 +27,7 @@ export type EditorCommandId =
   | 'selection.booleanExclude'
   | 'selection.flatten'
   | 'selection.outlineText'
+  | 'selection.outlineStroke'
   | 'selection.moveToPage'
   | 'view.zoom100'
   | 'view.zoomFit'

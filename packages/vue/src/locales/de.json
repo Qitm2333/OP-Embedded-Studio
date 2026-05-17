@@ -75,7 +75,8 @@
     "flipHorizontal": "Horizontal spiegeln",
     "flipVertical": "Vertikal spiegeln",
     "flattenSelection": "Flatten",
-    "outlineText": "Outline text"
+    "outlineText": "Outline text",
+    "outlineStroke": "Outline stroke"
   },
   "tools": {
     "move": "Verschieben",

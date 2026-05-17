@@ -75,7 +75,8 @@
     "flipHorizontal": "水平翻转",
     "flipVertical": "垂直翻转",
     "flattenSelection": "Flatten",
-    "outlineText": "Outline text"
+    "outlineText": "Outline text",
+    "outlineStroke": "Outline stroke"
   },
   "tools": {
     "move": "移动",

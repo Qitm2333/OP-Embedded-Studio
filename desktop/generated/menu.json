@@ -219,6 +219,10 @@
         "label": "Outline text"
       },
       {
+        "id": "selection.outlineStroke",
+        "label": "Outline stroke"
+      },
+      {
         "type": "separator"
       },
       {

@@ -13,6 +13,7 @@ export function createStructureBridge(structure: StructureActions, selection: Se
       structure.booleanOperationSelected(selection.getSelectedNodes(), operation),
     flattenSelected: () => structure.flattenSelected(selection.getSelectedNodes()),
     outlineTextSelected: () => structure.outlineTextSelected(selection.getSelectedNodes()),
+    outlineStrokeSelected: () => structure.outlineStrokeSelected(selection.getSelectedNodes()),
     ungroupSelected: () => structure.ungroupSelected(selection.getSelectedNode())
   }
 }

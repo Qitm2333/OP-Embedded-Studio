@@ -80,6 +80,7 @@ test('context menu shows expected items', async () => {
   await expect(contextItem('context-toggle-lock')).toBeVisible()
   await expect(contextItem('context-flatten')).toBeVisible()
   await expect(contextItem('context-outline-text')).toBeVisible()
+  await expect(contextItem('context-outline-stroke')).toBeVisible()
   await expect(contextItem('context-boolean-union')).toHaveCount(0)
 
   await editor.page.keyboard.press('Escape')

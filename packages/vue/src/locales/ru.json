@@ -75,7 +75,8 @@
     "flipHorizontal": "Отразить по горизонтали",
     "flipVertical": "Отразить по вертикали",
     "flattenSelection": "Flatten",
-    "outlineText": "Outline text"
+    "outlineText": "Outline text",
+    "outlineStroke": "Outline stroke"
   },
   "tools": {
     "move": "Перемещение",

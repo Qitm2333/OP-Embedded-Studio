@@ -1,3 +1,3 @@
-export { canMakeBooleanSourceNode, canMakeBooleanSourcePath } from './boolean'
+export { canMakeBooleanSourceNode, canMakeBooleanSourcePath, nodeHasVisibleStroke } from './boolean'
 export { SkiaRenderer, type RenderOverlays, type RulerTheme } from './renderer'
 export { getAbsolutePositionFull, getAbsoluteRotation, getWorldHandles } from './coordinate'

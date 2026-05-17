@@ -179,6 +179,11 @@ export const APP_MENU_SCHEMA = [
         label: 'Outline text',
         command: 'selection.outlineText'
       },
+      {
+        id: 'selection.outlineStroke',
+        label: 'Outline stroke',
+        command: 'selection.outlineStroke'
+      },
       { type: 'separator' },
       {
         id: 'selection.createComponent',

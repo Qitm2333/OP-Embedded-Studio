@@ -12,6 +12,7 @@ import IconCombine from '~icons/lucide/combine'
 import IconCopyMinus from '~icons/lucide/copy-minus'
 import IconCopyX from '~icons/lucide/copy-x'
 import IconListCollapse from '~icons/lucide/list-collapse'
+import IconSpline from '~icons/lucide/spline'
 import IconTypeOutline from '~icons/lucide/type-outline'
 import IconSquaresIntersect from '~icons/lucide/squares-intersect'
 import {
@@ -64,7 +65,8 @@ const booleanCommandIcons = {
   'selection.booleanIntersect': IconSquaresIntersect,
   'selection.booleanExclude': IconCopyX,
   'selection.flatten': IconListCollapse,
-  'selection.outlineText': IconTypeOutline
+  'selection.outlineText': IconTypeOutline,
+  'selection.outlineStroke': IconSpline
 } satisfies Partial<Record<EditorCommandId, Component>>
 
 function contextCommandTestId(id: EditorCommandId | undefined): string | undefined {
