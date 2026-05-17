@@ -1,3 +1,4 @@
+import { hexToBytes } from '#core/bytes/hex'
 import { buildDerivedTextData as buildSharedDerivedTextData } from '#core/text/derived-text/data'
 import { normalizeFontFamily, weightToFigmaStyle, weightToStyle } from '#core/text/fonts'
 import { encodePathCommandsBlob } from '#core/kiwi/node-change/path-commands'
@@ -205,7 +206,7 @@ function fillToKiwiPaint(f: SceneNode['fills'][number]): Paint {
     paint.stops = f.gradientStops.map((s) => ({ color: safeColor(s.color), position: s.position }))
   }
   if (f.gradientTransform) paint.transform = f.gradientTransform
-  if (f.imageHash) paint.image = { hash: f.imageHash }
+  if (f.imageHash) paint.image = { hash: hexToBytes(f.imageHash) }
   if (f.imageScaleMode) paint.imageScaleMode = f.imageScaleMode
   if (f.imageTransform) paint.transform = f.imageTransform
   return paint
