@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import { buildDsdLayoutUpdates } from '#core/kiwi/instance-overrides/derived-symbol-data/layout'
+import { propagateDsdChanges } from '#core/kiwi/instance-overrides/derived-symbol-data/propagate'
 import type { OverrideContext } from '#core/kiwi/instance-overrides'
 import { SceneGraph } from '#core/scene-graph'
 
@@ -9,6 +10,26 @@ function pageId(graph: SceneGraph): string {
 }
 
 describe('fig import derived symbol data', () => {
+  test('propagates derived glyphs through clone chains', () => {
+    const graph = new SceneGraph()
+    const source = graph.createNode('TEXT', pageId(graph), {
+      text: 'Account',
+      figmaDerivedTextGlyphs: [{ commandsBlob: new Uint8Array([0]), x: 0, y: 10, fontSize: 14 }],
+      figmaDerivedLayout: { width: 56, height: 20 }
+    })
+    const clone = graph.createNode('TEXT', pageId(graph), { text: 'Account', componentId: source.id })
+    const ctx = {
+      graph,
+      activeNodeIds: new Set([source.id, clone.id]),
+      geometryOverrideNodes: new Set()
+    } as OverrideContext
+
+    propagateDsdChanges(ctx, new Set([source.id]), new Set())
+
+    expect(clone.figmaDerivedTextGlyphs).toEqual(source.figmaDerivedTextGlyphs)
+    expect(clone.figmaDerivedLayout).toEqual(source.figmaDerivedLayout)
+  })
+
   test('routes derived text glyphs through layout patch updates', () => {
     const graph = new SceneGraph()
     const target = graph.createNode('TEXT', pageId(graph), { text: 'Menu Item' })

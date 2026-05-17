@@ -3,6 +3,32 @@ import type { OverrideContext } from '#core/kiwi/instance-overrides/types'
 import type { SceneNode } from '#core/scene-graph'
 import { copyGeometryPaths } from '#core/scene-graph/copy'
 
+function buildCloneUpdates(
+  ctx: OverrideContext,
+  source: SceneNode,
+  clone: SceneNode,
+  cloneId: string,
+  sizeSet: Set<string>
+): Partial<SceneNode> {
+  const updates: Partial<SceneNode> = {}
+  if (sizeSet.has(cloneId)) return updates
+  if (source.width !== clone.width) updates.width = source.width
+  if (source.height !== clone.height) updates.height = source.height
+  if (source.x !== clone.x) updates.x = source.x
+  if (source.y !== clone.y) updates.y = source.y
+  if (!ctx.geometryOverrideNodes.has(cloneId)) {
+    if (source.fillGeometry !== clone.fillGeometry) updates.fillGeometry = copyGeometryPaths(source.fillGeometry)
+    if (source.strokeGeometry !== clone.strokeGeometry) updates.strokeGeometry = copyGeometryPaths(source.strokeGeometry)
+  }
+  if (source.text === clone.text && source.figmaDerivedTextGlyphs) {
+    updates.figmaDerivedTextGlyphs = structuredClone(source.figmaDerivedTextGlyphs)
+  }
+  if (source.text === clone.text && source.figmaDerivedLayout) {
+    updates.figmaDerivedLayout = { ...source.figmaDerivedLayout }
+  }
+  return updates
+}
+
 export function propagateDsdChanges(
   ctx: OverrideContext,
   modified: Set<string>,
@@ -27,18 +53,8 @@ export function propagateDsdChanges(
       visited.add(cloneId)
       const clone = ctx.graph.getNode(cloneId)
       if (!clone) continue
-      if (!sizeSet.has(cloneId)) {
-        const cu: Partial<SceneNode> = {}
-        if (source.width !== clone.width) cu.width = source.width
-        if (source.height !== clone.height) cu.height = source.height
-        if (source.x !== clone.x) cu.x = source.x
-        if (source.y !== clone.y) cu.y = source.y
-        if (!ctx.geometryOverrideNodes.has(cloneId)) {
-          if (source.fillGeometry !== clone.fillGeometry) cu.fillGeometry = copyGeometryPaths(source.fillGeometry)
-          if (source.strokeGeometry !== clone.strokeGeometry) cu.strokeGeometry = copyGeometryPaths(source.strokeGeometry)
-        }
-        if (Object.keys(cu).length > 0) ctx.graph.updateNode(cloneId, cu)
-      }
+      const updates = buildCloneUpdates(ctx, source, clone, cloneId, sizeSet)
+      if (Object.keys(updates).length > 0) ctx.graph.updateNode(cloneId, updates)
       queue.push(cloneId)
     }
   }
