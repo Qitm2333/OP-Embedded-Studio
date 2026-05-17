@@ -1,5 +1,7 @@
 import { computed } from 'vue'
 
+import { canMakeBooleanSourcePath } from '@open-pencil/core/canvas'
+
 import { useSelectionState } from '#vue/editor/selection-state/use'
 import { useSceneComputed } from '#vue/internal/scene-computed/use'
 
@@ -13,6 +15,11 @@ import { useSceneComputed } from '#vue/internal/scene-computed/use'
 export function useSelectionCapabilities() {
   const selection = useSelectionState()
   const { editor, selectedIds, selectedNode, selectedCount, hasSelection } = selection
+
+  const selectedNodesCanFlatten = useSceneComputed(() => {
+    const nodes = editor.getSelectedNodes()
+    return nodes.length > 0 && nodes.every(canMakeBooleanSourcePath)
+  })
 
   return {
     selectedIds,
@@ -35,8 +42,8 @@ export function useSelectionCapabilities() {
     canToggleVisibility: computed(() => hasSelection.value),
     canToggleLock: computed(() => hasSelection.value),
     canFlip: computed(() => hasSelection.value),
-    canBooleanOperation: computed(() => selectedCount.value >= 2),
-    canFlatten: computed(() => hasSelection.value),
+    canBooleanOperation: computed(() => selectedCount.value >= 2 && selectedNodesCanFlatten.value),
+    canFlatten: computed(() => selectedNodesCanFlatten.value),
     canGoToMainComponent: computed(() => selection.isInstance.value),
     canCreateInstance: computed(() => selectedNode.value?.type === 'COMPONENT'),
     canMoveToPage: useSceneComputed(() => hasSelection.value && editor.graph.getPages().length > 1),

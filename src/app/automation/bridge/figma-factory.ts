@@ -5,6 +5,7 @@ import { listFonts } from '@/app/editor/fonts'
 
 export function makeFigmaFromStore(store: EditorStore): FigmaAPI {
   const api = new FigmaAPI(store.graph)
+  api.setRenderer(store.renderer ?? null)
   api.currentPage = api.wrapNode(store.state.currentPageId)
   api.currentPage.selection = [...store.state.selectedIds]
     .map((id) => api.getNodeById(id))
