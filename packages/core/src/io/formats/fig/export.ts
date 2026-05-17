@@ -44,7 +44,7 @@ function variableValueToKiwi(
   }
   if (type === 'COLOR' && typeof value === 'object' && 'r' in value) {
     return {
-      value: { colorValue: safeColor(value as { r: number; g: number; b: number; a?: number }) },
+      value: { colorValue: safeColor(value) },
       dataType: 'COLOR',
       resolvedDataType: 'COLOR'
     }

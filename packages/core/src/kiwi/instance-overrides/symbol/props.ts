@@ -15,6 +15,7 @@ import {
 } from '#core/kiwi/node-change/convert'
 import type { SceneNode, ArcData, TextAutoResize } from '#core/scene-graph'
 import { styleToWeight } from '#core/text/fonts'
+import type { Vector } from '#core/types'
 
 function applyOverridePaints(ov: Record<string, unknown>, updates: Partial<SceneNode>): void {
   if (ov.textData != null) {
@@ -39,7 +40,7 @@ function applyOverridePaints(ov: Record<string, unknown>, updates: Partial<Scene
 
 function applyOverrideGeometry(ov: Record<string, unknown>, updates: Partial<SceneNode>): void {
   if (ov.size != null) {
-    const sz = ov.size as { x?: number; y?: number }
+    const sz = ov.size as Partial<Vector>
     if (sz.x != null) updates.width = sz.x
     if (sz.y != null) updates.height = sz.y
   }

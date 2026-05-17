@@ -190,8 +190,8 @@ function exportTextData(node: SceneNode): NodeChange['textData'] {
   }
 }
 
-export function safeColor(c: { r: number; g: number; b: number; a?: number }): Color {
-  return { r: c.r, g: c.g, b: c.b, a: c.a ?? 1 }
+export function safeColor(c: Color): Color {
+  return { r: c.r, g: c.g, b: c.b, a: c.a }
 }
 
 function fillToKiwiPaint(f: SceneNode['fills'][number]): Paint {

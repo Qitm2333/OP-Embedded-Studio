@@ -16,7 +16,7 @@ interface SceneNodeToKiwiContext {
   fractionalPosition: (index: number) => string
   mapToFigmaType: (type: SceneNode['type']) => string
   fillToKiwiPaint: (fill: SceneNode['fills'][number]) => Paint
-  safeColor: (color: { r: number; g: number; b: number; a?: number }) => Color
+  safeColor: (color: Color) => Color
   computeExportTransform: (node: SceneNode, graph: SceneGraph) => Matrix
   serializeCornerRadii: (node: SceneNode, nc: KiwiNodeChange) => void
   serializeTextProps: (

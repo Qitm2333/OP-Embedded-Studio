@@ -1,4 +1,4 @@
-import type { Color, Matrix, Vector } from '#core/types'
+import type { Color, Matrix, Rect, Vector } from '#core/types'
 
 export interface SceneGraphEvents {
   'node:created': (node: SceneNode) => void
@@ -233,7 +233,7 @@ export interface SceneNode {
   width: number
   height: number
   rotation: number
-  figmaDerivedLayout: { x?: number; y?: number; width?: number; height?: number } | null
+  figmaDerivedLayout: Partial<Rect> | null
 
   fills: Fill[]
   strokes: Stroke[]
