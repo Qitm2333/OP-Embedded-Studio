@@ -1,3 +1,4 @@
+import type { GUID } from '#core/kiwi/binary/codec'
 import { applyOverridePatch } from '#core/kiwi/instance-overrides/patches'
 import { guidToString } from '#core/kiwi/node-change/convert'
 
@@ -94,6 +95,11 @@ function assignmentsToValueMap(
  * Recursively apply prop assignments to children of a parent node.
  * Handles VISIBLE toggles and OVERRIDDEN_SYMBOL_ID (instance swap).
  */
+function stringToGuidParts(value: string): GUID {
+  const [sessionID, localID] = value.split(':').map(Number)
+  return { sessionID, localID }
+}
+
 function fallbackRefsForChild(
   ctx: OverrideContext,
   childName: string,
@@ -104,13 +110,72 @@ function fallbackRefsForChild(
   for (const defId of valueByDef.keys()) {
     const propName = ctx.propNames.get(defId)
     if (propName && normalizePropName(propName) === normalizedChildName) {
-      refs.push({
-        defID: { sessionID: Number(defId.split(':')[0]), localID: Number(defId.split(':')[1]) },
-        componentPropNodeField: 'VISIBLE'
-      })
+      refs.push({ defID: stringToGuidParts(defId), componentPropNodeField: 'VISIBLE' })
     }
   }
   return refs.length > 0 ? refs : undefined
+}
+
+function applyPatchAndMark(
+  ctx: OverrideContext,
+  childId: string,
+  patch: Parameters<typeof applyOverridePatch>[1],
+  modified?: Set<string>
+): void {
+  if (applyOverridePatch(ctx, patch)) modified?.add(childId)
+}
+
+function applyVisibleProp(
+  ctx: OverrideContext,
+  childId: string,
+  val: ComponentPropValue,
+  modified?: Set<string>
+): void {
+  if (val.boolValue === undefined) return
+  applyPatchAndMark(
+    ctx,
+    childId,
+    { targetId: childId, source: 'component-prop', props: { visible: val.boolValue } },
+    modified
+  )
+}
+
+function applyTextProp(
+  ctx: OverrideContext,
+  childId: string,
+  val: ComponentPropValue,
+  modified?: Set<string>
+): void {
+  const child = ctx.graph.getNode(childId)
+  const text = propTextCharacters(val)
+  if (text === undefined || child?.type !== 'TEXT') return
+  applyPatchAndMark(
+    ctx,
+    childId,
+    { targetId: childId, source: 'component-prop', props: { text } },
+    modified
+  )
+}
+
+function applySwapProp(
+  ctx: OverrideContext,
+  childId: string,
+  val: ComponentPropValue,
+  modified?: Set<string>
+): void {
+  const swapId = propTextCharacters(val) ?? (val.guidValue ? guidToString(val.guidValue) : undefined)
+  const newCompId = swapId ? ctx.guidToNodeId.get(swapId) : undefined
+  if (!newCompId) return
+  applyPatchAndMark(
+    ctx,
+    childId,
+    {
+      targetId: childId,
+      source: 'component-prop',
+      swapComponentId: getComponentRoot(ctx, newCompId)
+    },
+    modified
+  )
 }
 
 function applyComponentPropRef(
@@ -120,27 +185,17 @@ function applyComponentPropRef(
   val: ComponentPropValue,
   modified?: Set<string>
 ): void {
-  const child = ctx.graph.getNode(childId)
-  if (!child) return
-
-  if (ref.componentPropNodeField === 'VISIBLE' && val.boolValue !== undefined) {
-    if (applyOverridePatch(ctx, { targetId: childId, source: 'component-prop', props: { visible: val.boolValue } })) modified?.add(childId)
-    return
+  switch (ref.componentPropNodeField) {
+    case 'VISIBLE':
+      applyVisibleProp(ctx, childId, val, modified)
+      break
+    case 'TEXT_DATA':
+      applyTextProp(ctx, childId, val, modified)
+      break
+    case 'OVERRIDDEN_SYMBOL_ID':
+      applySwapProp(ctx, childId, val, modified)
+      break
   }
-
-  if (ref.componentPropNodeField === 'TEXT_DATA') {
-    const text = propTextCharacters(val)
-    if (text === undefined || child.type !== 'TEXT') return
-    if (applyOverridePatch(ctx, { targetId: childId, source: 'component-prop', props: { text } })) modified?.add(childId)
-    return
-  }
-
-  if (ref.componentPropNodeField !== 'OVERRIDDEN_SYMBOL_ID') return
-  const swapId = propTextCharacters(val) ?? (val.guidValue ? guidToString(val.guidValue) : undefined)
-  if (!swapId) return
-  const newCompId = ctx.guidToNodeId.get(swapId)
-  if (!newCompId) return
-  if (applyOverridePatch(ctx, { targetId: childId, source: 'component-prop', swapComponentId: getComponentRoot(ctx, newCompId) })) modified?.add(childId)
 }
 
 function applyChildPropRefs(
@@ -257,25 +312,28 @@ function applyOverrideAssignments(
  * Returns the set of modified node IDs so the caller can run a second
  * transitive sync to propagate the changes to deeper clones.
  */
+function collectPropRefsMap(ctx: OverrideContext): Map<string, ComponentPropRef[]> {
+  const result = new Map<string, ComponentPropRef[]>()
+  for (const [figmaId, nc] of ctx.changeMap) {
+    if (nc.componentPropRefs?.length) result.set(figmaId, nc.componentPropRefs)
+  }
+  return result
+}
+
+function collectAssignmentsMap(ctx: OverrideContext): Map<string, ComponentPropAssignment[]> {
+  const result = new Map<string, ComponentPropAssignment[]>()
+  for (const [figmaId, nc] of ctx.changeMap) {
+    if (nc.componentPropAssignments?.length) result.set(figmaId, nc.componentPropAssignments)
+  }
+  return result
+}
+
 export function applyComponentProperties(ctx: OverrideContext): Set<string> {
   const modified = new Set<string>()
-
-  const propRefsMap = new Map<string, ComponentPropRef[]>()
-  for (const [figmaId, nc] of ctx.changeMap) {
-    if (nc.componentPropRefs?.length) {
-      propRefsMap.set(figmaId, nc.componentPropRefs)
-    }
-  }
+  const propRefsMap = collectPropRefsMap(ctx)
   if (propRefsMap.size === 0) return modified
 
-  const assignmentSources = new Map<string, ComponentPropAssignment[]>()
-  for (const [figmaId, nc] of ctx.changeMap) {
-    if (nc.componentPropAssignments?.length) {
-      assignmentSources.set(figmaId, nc.componentPropAssignments)
-    }
-  }
-
-  applyInstanceDirectAssignments(ctx, assignmentSources, propRefsMap, modified)
+  applyInstanceDirectAssignments(ctx, collectAssignmentsMap(ctx), propRefsMap, modified)
   applyOverrideAssignments(ctx, propRefsMap, modified)
 
   return modified
