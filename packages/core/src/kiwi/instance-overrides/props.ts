@@ -1,98 +1,14 @@
-import { applyOverridePatch } from '#core/kiwi/instance-overrides/patches'
-import { guidToString } from '#core/kiwi/node-change/convert'
-
+import { applyComponentPropRef } from './component-props/apply'
 import { collectAssignmentsMap, collectPropRefsMap } from './component-props/maps'
 import { fallbackRefsForChild, findPropRefs, valueForRef } from './component-props/refs'
-import { assignmentsToValueMap, propTextCharacters } from './component-props/values'
-import { getComponentRoot, resolveOverrideTarget } from './resolve'
+import { assignmentsToValueMap } from './component-props/values'
+import { resolveOverrideTarget } from './resolve'
 import type {
   OverrideContext,
   ComponentPropAssignment,
   ComponentPropRef,
   ComponentPropValue
 } from './types'
-
-function applyPatchAndMark(
-  ctx: OverrideContext,
-  childId: string,
-  patch: Parameters<typeof applyOverridePatch>[1],
-  modified?: Set<string>
-): void {
-  if (applyOverridePatch(ctx, patch)) modified?.add(childId)
-}
-
-function applyVisibleProp(
-  ctx: OverrideContext,
-  childId: string,
-  val: ComponentPropValue,
-  modified?: Set<string>
-): void {
-  if (val.boolValue === undefined) return
-  applyPatchAndMark(
-    ctx,
-    childId,
-    { targetId: childId, source: 'component-prop', props: { visible: val.boolValue } },
-    modified
-  )
-}
-
-function applyTextProp(
-  ctx: OverrideContext,
-  childId: string,
-  val: ComponentPropValue,
-  modified?: Set<string>
-): void {
-  const child = ctx.graph.getNode(childId)
-  const text = propTextCharacters(val)
-  if (text === undefined || child?.type !== 'TEXT') return
-  applyPatchAndMark(
-    ctx,
-    childId,
-    { targetId: childId, source: 'component-prop', props: { text } },
-    modified
-  )
-}
-
-function applySwapProp(
-  ctx: OverrideContext,
-  childId: string,
-  val: ComponentPropValue,
-  modified?: Set<string>
-): void {
-  const swapId = propTextCharacters(val) ?? (val.guidValue ? guidToString(val.guidValue) : undefined)
-  const newCompId = swapId ? ctx.guidToNodeId.get(swapId) : undefined
-  if (!newCompId) return
-  applyPatchAndMark(
-    ctx,
-    childId,
-    {
-      targetId: childId,
-      source: 'component-prop',
-      swapComponentId: getComponentRoot(ctx, newCompId)
-    },
-    modified
-  )
-}
-
-function applyComponentPropRef(
-  ctx: OverrideContext,
-  childId: string,
-  ref: ComponentPropRef,
-  val: ComponentPropValue,
-  modified?: Set<string>
-): void {
-  switch (ref.componentPropNodeField) {
-    case 'VISIBLE':
-      applyVisibleProp(ctx, childId, val, modified)
-      break
-    case 'TEXT_DATA':
-      applyTextProp(ctx, childId, val, modified)
-      break
-    case 'OVERRIDDEN_SYMBOL_ID':
-      applySwapProp(ctx, childId, val, modified)
-      break
-  }
-}
 
 function applyChildPropRefs(
   ctx: OverrideContext,
