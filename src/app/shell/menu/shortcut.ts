@@ -1,3 +1,5 @@
+import { formatShortcut } from '@open-pencil/vue'
+
 import type { AppMenuActionItem, AppMenuEntry } from '@/app/shell/menu/schema'
 import { APP_MENU_SCHEMA } from '@/app/shell/menu/schema'
 
@@ -23,10 +25,36 @@ export function appMenuShortcut(id: string): string | undefined {
   return undefined
 }
 
-export function appMenuTinykeysShortcut(id: string): string | string[] | undefined {
-  const shortcut = appMenuShortcut(id)
+function normalizeShortcutToken(shortcut: string): string {
+  return shortcut === '⌫' ? 'Backspace' : shortcut
+}
+
+export function shortcutTokenToTinykeys(shortcut: string | undefined): string | undefined {
   return shortcut
-    ?.replaceAll('MOD', '$mod')
-    .replaceAll('SHIFT', 'Shift')
-    .replaceAll('ALT', 'Alt')
+    ? normalizeShortcutToken(shortcut)
+        .replaceAll('MOD', '$mod')
+        .replaceAll('SHIFT', 'Shift')
+        .replaceAll('ALT', 'Alt')
+    : undefined
+}
+
+export function shortcutTokenToAccelerator(shortcut: string | undefined): string | undefined {
+  return shortcut
+    ? normalizeShortcutToken(shortcut)
+        .replaceAll('MOD', 'CmdOrCtrl')
+        .replaceAll('SHIFT', 'Shift')
+        .replaceAll('ALT', 'Alt')
+    : undefined
+}
+
+export function appMenuShortcutLabel(id: string): string | undefined {
+  return formatShortcut(appMenuShortcut(id))
+}
+
+export function appMenuTinykeysShortcut(id: string): string | undefined {
+  return shortcutTokenToTinykeys(appMenuShortcut(id))
+}
+
+export function appMenuAccelerator(id: string): string | undefined {
+  return shortcutTokenToAccelerator(appMenuShortcut(id))
 }

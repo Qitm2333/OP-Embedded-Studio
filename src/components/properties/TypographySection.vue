@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ToggleGroupItem, ToggleGroupRoot } from 'reka-ui'
 
-import { TypographyControlsRoot, useI18n, formatShortcut } from '@open-pencil/vue'
+import { TypographyControlsRoot, useI18n } from '@open-pencil/vue'
 
 import FontPicker from '@/components/FontPicker.vue'
 import FontSettingsPopover from '@/components/FontSettings/FontSettingsPopover.vue'
@@ -10,7 +10,7 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import Tip from '@/components/ui/Tip.vue'
 import { useSectionUI } from '@/components/ui/section'
 import { loadFont } from '@/app/editor/fonts'
-import { appMenuShortcut } from '@/app/shell/menu/shortcut'
+import { appMenuShortcutLabel } from '@/app/shell/menu/shortcut'
 
 const { panels, menu } = useI18n()
 const sectionCls = useSectionUI()
@@ -126,7 +126,7 @@ const fontLoader = { load: loadFont }
           </ToggleGroupItem>
         </ToggleGroupRoot>
         <div class="flex gap-0.5">
-          <Tip :label="`${menu.bold} (${formatShortcut(appMenuShortcut('text.bold'))})`">
+          <Tip :label="`${menu.bold} (${appMenuShortcutLabel('text.bold')})`">
             <button
               data-test-id="typography-bold-button"
               class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 font-bold text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
@@ -136,7 +136,7 @@ const fontLoader = { load: loadFont }
               <icon-lucide-bold class="size-3.5" />
             </button>
           </Tip>
-          <Tip :label="`${menu.italic} (${formatShortcut(appMenuShortcut('text.italic'))})`">
+          <Tip :label="`${menu.italic} (${appMenuShortcutLabel('text.italic')})`">
             <button
               class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
               :data-state="ctx.activeFormatting.value.includes('italic') ? 'on' : 'off'"
@@ -145,7 +145,7 @@ const fontLoader = { load: loadFont }
               <icon-lucide-italic class="size-3.5" />
             </button>
           </Tip>
-          <Tip :label="`${menu.underline} (${formatShortcut(appMenuShortcut('text.underline'))})`">
+          <Tip :label="`${menu.underline} (${appMenuShortcutLabel('text.underline')})`">
             <button
               class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
               :data-state="ctx.activeFormatting.value.includes('underline') ? 'on' : 'off'"

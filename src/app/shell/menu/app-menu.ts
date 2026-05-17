@@ -1,12 +1,13 @@
 import { computed } from 'vue'
 
-import { useEditorCommands, useI18n, formatShortcut } from '@open-pencil/vue'
+import { useEditorCommands, useI18n } from '@open-pencil/vue'
 import type { MenuEntry } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { createSharedEditorMenuActions } from '@/app/shell/menu/editor-actions'
 import { APP_MENU_SCHEMA } from '@/app/shell/menu/schema'
 import type { AppMenuActionItem, AppMenuEntry, AppMenuGroupSchema } from '@/app/shell/menu/schema'
+import { appMenuShortcutLabel } from '@/app/shell/menu/shortcut'
 import { openFileDialog } from '@/app/shell/menu/use'
 import { useAppTheme } from '@/app/shell/theme'
 
@@ -107,12 +108,12 @@ export function useAppMenu() {
     }
 
     if (entry.command) {
-      return commandMenuItem(entry.command, formatShortcut(entry.shortcut))
+      return commandMenuItem(entry.command, appMenuShortcutLabel(entry.id))
     }
 
     return {
       label: entry.label,
-      shortcut: formatShortcut(entry.shortcut),
+      shortcut: appMenuShortcutLabel(entry.id),
       action: itemAction(entry),
       checked: checked(entry),
       onCheckedChange: onCheckedChange(entry),

@@ -3,6 +3,7 @@ import { dirname } from 'node:path'
 
 import { APP_MENU_SCHEMA } from '../src/app/shell/menu/schema'
 import type { AppMenuEntry, AppMenuGroupSchema } from '../src/app/shell/menu/schema'
+import { shortcutTokenToAccelerator } from '../src/app/shell/menu/shortcut'
 
 function isNativeVisible(entry: { target?: string }): boolean {
   return entry.target !== 'browser'
@@ -14,7 +15,7 @@ function cleanEntry(entry: AppMenuEntry): unknown | null {
   return {
     id: entry.id,
     label: entry.label,
-    accelerator: entry.accelerator,
+    accelerator: entry.accelerator ?? shortcutTokenToAccelerator(entry.shortcut),
     checkbox: entry.checkbox,
     sub: entry.sub?.map(cleanEntry).filter(Boolean)
   }

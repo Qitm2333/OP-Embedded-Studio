@@ -20,7 +20,7 @@ import {
 import type { EditorCommandId } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
-import { appMenuShortcut } from '@/app/shell/menu/shortcut'
+import { appMenuShortcutLabel } from '@/app/shell/menu/shortcut'
 import { COPY_AS_PNG_SHORTCUT, createCanvasMenuActions } from '@/app/editor/canvas/menu-actions'
 import { canvasMenuItemClass, canvasMenuShortcutClass } from '@/app/editor/canvas/menu-model'
 import { menu, useMenuUI } from '@/components/ui/menu'
@@ -64,7 +64,7 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
       @select="execCommand('copy')"
     >
       <span>{{ t.copy }}</span
-      ><span class="text-[11px] text-muted">{{ formatShortcut(appMenuShortcut('copy')) }}</span>
+      ><span class="text-[11px] text-muted">{{ appMenuShortcutLabel('copy') }}</span>
     </ContextMenuItem>
     <ContextMenuItem
       data-test-id="context-cut"
@@ -73,11 +73,11 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
       @select="execCommand('cut')"
     >
       <span>{{ t.cut }}</span
-      ><span class="text-[11px] text-muted">{{ formatShortcut(appMenuShortcut('cut')) }}</span>
+      ><span class="text-[11px] text-muted">{{ appMenuShortcutLabel('cut') }}</span>
     </ContextMenuItem>
     <ContextMenuItem data-test-id="context-paste" :class="cls.item" @select="execCommand('paste')">
       <span>{{ t.pasteHere }}</span
-      ><span class="text-[11px] text-muted">{{ formatShortcut(appMenuShortcut('paste')) }}</span>
+      ><span class="text-[11px] text-muted">{{ appMenuShortcutLabel('paste') }}</span>
     </ContextMenuItem>
     <ContextMenuItem
       data-test-id="context-duplicate"
@@ -86,7 +86,9 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
       @select="getCommand('selection.duplicate').run()"
     >
       <span>{{ getCommand('selection.duplicate').label }}</span
-      ><span class="text-[11px] text-muted">{{ formatShortcut(editorCommandMetadata('selection.duplicate').shortcut) }}</span>
+      ><span class="text-[11px] text-muted">{{
+        formatShortcut(editorCommandMetadata('selection.duplicate').shortcut)
+      }}</span>
     </ContextMenuItem>
     <ContextMenuItem
       data-test-id="context-delete"
@@ -95,7 +97,9 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
       @select="getCommand('selection.delete').run()"
     >
       <span>{{ getCommand('selection.delete').label }}</span
-      ><span class="text-[11px] text-muted">{{ editorCommandMetadata('selection.delete').shortcut }}</span>
+      ><span class="text-[11px] text-muted">{{
+        editorCommandMetadata('selection.delete').shortcut
+      }}</span>
     </ContextMenuItem>
 
     <template v-for="(item, i) in canvasMenu" :key="`menu-${i}`">
@@ -163,7 +167,9 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
             >
             <ContextMenuItem :class="cls.item" @select="copyAsPNG">
               <span>{{ t.copyAsPNG }}</span
-              ><span class="text-[11px] text-muted">{{ formatShortcut(COPY_AS_PNG_SHORTCUT) }}</span>
+              ><span class="text-[11px] text-muted">{{
+                formatShortcut(COPY_AS_PNG_SHORTCUT)
+              }}</span>
             </ContextMenuItem>
             <ContextMenuItem
               data-test-id="context-copy-as-jsx"

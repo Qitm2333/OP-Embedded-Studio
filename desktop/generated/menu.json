@@ -84,6 +84,11 @@
         "accelerator": "CmdOrCtrl+C"
       },
       {
+        "id": "cut",
+        "label": "Cut",
+        "accelerator": "CmdOrCtrl+X"
+      },
+      {
         "id": "paste",
         "label": "Paste",
         "accelerator": "CmdOrCtrl+V"
@@ -170,8 +175,7 @@
       },
       {
         "id": "dev-tools",
-        "label": "Developer Tools",
-        "accelerator": "CmdOrCtrl+Alt+I"
+        "label": "Developer Tools"
       }
     ]
   },

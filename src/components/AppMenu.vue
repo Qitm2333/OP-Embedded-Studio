@@ -19,12 +19,12 @@ import {
 
 import IconChevronRight from '~icons/lucide/chevron-right'
 
-import { vTestId, useI18n, formatShortcut } from '@open-pencil/vue'
+import { vTestId, useI18n } from '@open-pencil/vue'
 import { useMenuUI } from '@/components/ui/menu'
 import { IS_TAURI } from '@/constants'
 import { useAppMenu } from '@/app/shell/menu/app-menu'
 import { useDocumentNameRename } from '@/app/shell/menu/document-name'
-import { appMenuShortcut } from '@/app/shell/menu/shortcut'
+import { appMenuShortcutLabel } from '@/app/shell/menu/shortcut'
 import {
   hasMenuSubItems,
   isMenuCheckbox,
@@ -76,7 +76,7 @@ const subMenuCls = useMenuUI({ content: 'min-w-44' })
         @dblclick="startRename"
         >{{ store.state.documentName }}</span
       >
-      <Tip :label="`${t.toggleUI} (${formatShortcut(appMenuShortcut('toggle-ui'))})`">
+      <Tip :label="`${t.toggleUI} (${appMenuShortcutLabel('toggle-ui')})`">
         <button
           data-test-id="app-toggle-ui"
           class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"

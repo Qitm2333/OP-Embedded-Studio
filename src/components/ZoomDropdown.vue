@@ -12,7 +12,7 @@ import { nextTick, ref, watch } from 'vue'
 import { useEditorCommands, useI18n, formatShortcut } from '@open-pencil/vue'
 import { menuItem, useMenuUI } from '@/components/ui/menu'
 import { useEditorStore } from '@/app/editor/active-store'
-import { appMenuShortcut } from '@/app/shell/menu/shortcut'
+import { appMenuShortcut, appMenuShortcutLabel } from '@/app/shell/menu/shortcut'
 
 const store = useEditorStore()
 const { getCommand } = useEditorCommands()
@@ -127,15 +127,15 @@ watch(open, (v) => {
 
         <DropdownMenuItem :class="itemCls" @select="zoomIn">
           <span class="flex-1">{{ menuText.zoomIn }}</span>
-          <span class="text-[11px] text-muted">{{ formatShortcut(appMenuShortcut('zoom-in')) }}</span>
+          <span class="text-[11px] text-muted">{{ appMenuShortcutLabel('zoom-in') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem :class="itemCls" @select="zoomOut">
           <span class="flex-1">{{ menuText.zoomOut }}</span>
-          <span class="text-[11px] text-muted">{{ formatShortcut(appMenuShortcut('zoom-out')) }}</span>
+          <span class="text-[11px] text-muted">{{ appMenuShortcutLabel('zoom-out') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem :class="itemCls" @select="getCommand('view.zoomFit').run()">
           <span class="flex-1">{{ commands.zoomToFit }}</span>
-          <span class="text-[11px] text-muted">{{ formatShortcut(appMenuShortcut('view.zoomFit')) }}</span>
+          <span class="text-[11px] text-muted">{{ appMenuShortcutLabel('view.zoomFit') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           v-for="preset in ZOOM_PRESETS"
@@ -145,7 +145,9 @@ watch(open, (v) => {
         >
           <icon-lucide-check v-if="isActivePreset(preset.level)" class="absolute left-2 size-3.5" />
           <span class="flex-1">{{ preset.label }}</span>
-          <span v-if="preset.shortcut" class="text-[11px] text-muted">{{ formatShortcut(preset.shortcut) }}</span>
+          <span v-if="preset.shortcut" class="text-[11px] text-muted">{{
+            formatShortcut(preset.shortcut)
+          }}</span>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator :class="menuCls.separator" />
