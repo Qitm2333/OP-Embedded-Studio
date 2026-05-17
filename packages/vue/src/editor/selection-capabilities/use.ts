@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 
-import { canMakeBooleanSourcePath } from '@open-pencil/core/canvas'
+import { canMakeBooleanSourceNode } from '@open-pencil/core/canvas'
 
 import { useSelectionState } from '#vue/editor/selection-state/use'
 import { useSceneComputed } from '#vue/internal/scene-computed/use'
@@ -18,7 +18,7 @@ export function useSelectionCapabilities() {
 
   const selectedNodesCanFlatten = useSceneComputed(() => {
     const nodes = editor.getSelectedNodes()
-    return nodes.length > 0 && nodes.every(canMakeBooleanSourcePath)
+    return nodes.length > 0 && nodes.every((node) => canMakeBooleanSourceNode(node, editor.graph))
   })
 
   return {

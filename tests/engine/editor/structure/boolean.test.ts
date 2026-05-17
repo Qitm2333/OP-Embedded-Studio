@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
+import { TRANSPARENT } from '@open-pencil/core/constants'
 import { createEditor } from '@open-pencil/core/editor'
 
 describe('booleanOperationSelected', () => {
@@ -34,6 +35,21 @@ describe('booleanOperationSelected', () => {
     expect(result).toBeNull()
     expect(editor.graph.getNode(pageId)?.childIds).toEqual([first.id, second.id])
     expect(editor.state.selectedIds).toEqual(new Set([first.id, second.id]))
+  })
+
+  test('does not wrap visible image fills', () => {
+    const editor = createEditor()
+    const pageId = editor.state.currentPageId
+    const first = editor.graph.createNode('RECTANGLE', pageId, {
+      fills: [{ type: 'IMAGE', imageHash: 'image', imageScaleMode: 'FILL', color: TRANSPARENT, opacity: 1, visible: true }]
+    })
+    const second = editor.graph.createNode('RECTANGLE', pageId)
+
+    editor.select([first.id, second.id])
+    const result = editor.booleanOperationSelected('UNION')
+
+    expect(result).toBeNull()
+    expect(editor.graph.getNode(pageId)?.childIds).toEqual([first.id, second.id])
   })
 
   test('undo and redo preserve parent order and selection', () => {

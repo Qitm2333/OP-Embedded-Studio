@@ -1,4 +1,4 @@
-import { canMakeBooleanSourcePath } from '#core/canvas/boolean'
+import { canMakeBooleanSourceNode } from '#core/canvas/boolean'
 import { restoreSubtree, snapshotSubtree } from '#core/editor/clipboard/subtree-history'
 import type { EditorContext } from '#core/editor/types'
 import { computeAbsoluteBounds } from '#core/geometry'
@@ -18,7 +18,7 @@ export function booleanOperationSelected(
   const selection = selectedNodesInSharedParent(ctx, selectedNodes)
   if (!selection || selection.topLevel.length < 2) return null
   const { topLevel, parentId, parent } = selection
-  if (topLevel.some((node) => !canMakeBooleanSourcePath(node))) return null
+  if (topLevel.some((node) => !canMakeBooleanSourceNode(node, ctx.graph))) return null
 
   const prevSelection = new Set(ctx.state.selectedIds)
   const childIds = topLevel.map((node) => node.id)

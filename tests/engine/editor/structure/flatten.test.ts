@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { initCanvasKit } from '#cli/headless'
 import { SkiaRenderer } from '#core/canvas'
-import { BLACK } from '#core/constants'
+import { BLACK, TRANSPARENT } from '#core/constants'
 import { createEditor } from '#core/editor'
 
 async function createEditorWithRenderer() {
@@ -50,6 +50,24 @@ describe('flattenSelected', () => {
     expect(result).toBeNull()
     expect(editor.graph.getNode(pageId)?.childIds).toEqual([text.id, rect.id])
     expect(editor.state.selectedIds).toEqual(new Set([text.id, rect.id]))
+    surface.delete()
+  })
+
+  test('does not flatten containers with unsupported descendants', async () => {
+    const { editor, surface } = await createEditorWithRenderer()
+    const pageId = editor.state.currentPageId
+    const rect = editor.graph.createNode('RECTANGLE', pageId)
+    const image = editor.graph.createNode('RECTANGLE', pageId, {
+      fills: [{ type: 'IMAGE', imageHash: 'image', imageScaleMode: 'FILL', color: TRANSPARENT, opacity: 1, visible: true }]
+    })
+    editor.select([rect.id, image.id])
+    editor.groupSelected()
+    const [groupId] = [...editor.state.selectedIds]
+
+    const result = editor.flattenSelected()
+
+    expect(result).toBeNull()
+    expect(editor.graph.getNode(groupId)?.type).toBe('GROUP')
     surface.delete()
   })
 

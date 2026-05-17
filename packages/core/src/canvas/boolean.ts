@@ -37,8 +37,26 @@ export function nodePathTransform(r: SkiaRenderer, child: SceneNode): number[] {
   return r.ck.Matrix.multiply(...transforms)
 }
 
+function hasVisibleImageFill(node: SceneNode): boolean {
+  return node.fills.some((fill) => fill.visible && fill.type === 'IMAGE')
+}
+
 export function canMakeBooleanSourcePath(node: SceneNode): boolean {
-  return node.type !== 'TEXT' && node.type !== 'SECTION' && node.type !== 'COMPONENT_SET'
+  return (
+    node.type !== 'TEXT' &&
+    node.type !== 'SECTION' &&
+    node.type !== 'COMPONENT_SET' &&
+    !hasVisibleImageFill(node)
+  )
+}
+
+export function canMakeBooleanSourceNode(node: SceneNode, graph: SceneGraph): boolean {
+  if (!canMakeBooleanSourcePath(node)) return false
+  if (!canContainFlattenableChildren(node)) return true
+  return node.childIds.every((childId) => {
+    const child = graph.getNode(childId)
+    return !child || !child.visible || canMakeBooleanSourceNode(child, graph)
+  })
 }
 
 function lineStrokePath(r: SkiaRenderer, node: SceneNode): Path | null {

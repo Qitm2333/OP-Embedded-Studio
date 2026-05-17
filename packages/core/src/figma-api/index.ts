@@ -1,5 +1,5 @@
 import type { SkiaRenderer } from '#core/canvas'
-import { canMakeBooleanSourcePath } from '#core/canvas/boolean'
+import { canMakeBooleanSourceNode } from '#core/canvas/boolean'
 import { flattenNodesToVectorProps } from '#core/canvas/flatten'
 import { IS_BROWSER } from '#core/constants'
 import { computeBounds } from '#core/geometry'
@@ -464,7 +464,7 @@ export class FigmaAPI implements NodeProxyHost {
   private _flattenWithRenderer(nodes: CoreSceneNode[], parentId: string): CoreSceneNode {
     const renderer = this._renderer
     if (!renderer) return this._flattenPlaceholder(nodes, parentId)
-    if (nodes.some((node) => !canMakeBooleanSourcePath(node))) {
+    if (nodes.some((node) => !canMakeBooleanSourceNode(node, this.graph))) {
       throw new Error('Cannot flatten unsupported node type')
     }
 

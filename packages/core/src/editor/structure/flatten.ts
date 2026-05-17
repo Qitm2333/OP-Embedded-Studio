@@ -1,4 +1,4 @@
-import { canMakeBooleanSourcePath } from '#core/canvas/boolean'
+import { canMakeBooleanSourceNode } from '#core/canvas/boolean'
 import { flattenNodesToVectorProps } from '#core/canvas/flatten'
 import { restoreSubtree, snapshotSubtree } from '#core/editor/clipboard/subtree-history'
 import type { EditorContext } from '#core/editor/types'
@@ -13,7 +13,7 @@ export function flattenSelected(ctx: EditorContext, selectedNodes: SceneNode[]) 
   const selection = selectedNodesInSharedParent(ctx, selectedNodes)
   if (!selection) return null
   const { topLevel, parentId, parent } = selection
-  if (topLevel.some((node) => !canMakeBooleanSourcePath(node))) return null
+  if (topLevel.some((node) => !canMakeBooleanSourceNode(node, ctx.graph))) return null
 
   const childIds = topLevel.map((node) => node.id)
   const childSnapshots = childIds.map((id) => ({ id, subtree: snapshotSubtree(ctx.graph, id) }))
