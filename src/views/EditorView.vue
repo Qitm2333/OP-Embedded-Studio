@@ -5,7 +5,7 @@ import { useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 
-import { useViewportKind } from '@open-pencil/vue'
+import { useViewportKind, formatShortcut } from '@open-pencil/vue'
 import { useKeyboard } from '@/app/shell/keyboard/use'
 import { loadEditorLayout, saveEditorLayout } from '@/app/shell/layout-storage'
 import { openFileFromPath, useMenu } from '@/app/shell/menu/use'
@@ -194,7 +194,7 @@ onUnmounted(() => {
           <button
             data-test-id="editor-show-ui"
             class="ml-1 flex size-6 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
-            title="Show UI (⌘\)"
+            :title="`Show UI (${formatShortcut('MOD+\\')})`"
             @click="store.state.showUI = true"
           >
             <icon-lucide-sidebar class="size-3.5" />

@@ -478,6 +478,26 @@ const noPropertyPanelInternalsOutsidePanel = createImportRule(
   }
 )
 
+const MACOS_MODIFIER_GLYPH_PATTERN = /[⌘⌥⌃]/u
+
+const noHardcodedMacOSShortcutGlyphs = createTextRule(
+  'open-pencil/no-hardcoded-macos-shortcut-glyphs',
+  (sourceRel, content) => {
+    if (!sourceRel.endsWith('.vue')) return []
+    const diagnostics: Array<{ message: string; line?: number; column?: number }> = []
+    for (const match of content.matchAll(MACOS_MODIFIER_GLYPH_PATTERN)) {
+      const before = content.slice(0, match.index)
+      const lines = before.split('\n')
+      diagnostics.push({
+        message: 'Use formatShortcut() instead of hardcoding macOS-only modifier glyphs.',
+        line: lines.length,
+        column: lines.at(-1)?.length ?? 0
+      })
+    }
+    return diagnostics
+  }
+)
+
 const SHORTCUT_LABEL_PATTERN = /(?:Shift|Ctrl|Alt|Option|Cmd|Command|⌘|⇧|⌥|⌃)\s*[+)\w]/u
 
 const noShortcutTextInLabels = createTextRule(
@@ -546,6 +566,7 @@ export const openPencilArchitecturePlugin = {
     noAppImportsInSharedUi,
     noPropertyPanelInternalsOutsidePanel,
     noShortcutTextInLabels,
+    noHardcodedMacOSShortcutGlyphs,
     noUiImportsInCore
   ]
 }
