@@ -45,16 +45,12 @@ export function chooseLocalFontMatch<T extends LocalFontMatch>(
     })
     if (sameStyle) return sameStyle
 
-    const sameSlant = candidates.filter((x) => parseFontStyle(x.style).italic === requested.italic)
-    if (sameSlant.length > 0) {
-      return sameSlant.sort(
-        (a, b) =>
-          Math.abs(parseFontStyle(a.style).weight - requested.weight) -
-          Math.abs(parseFontStyle(b.style).weight - requested.weight)
-      )[0]
-    }
+    if (style) continue
 
-    if (!style && candidates.length > 0) return candidates[0]
+    const sameSlant = candidates.filter((x) => parseFontStyle(x.style).italic === requested.italic)
+    if (sameSlant.length > 0) return sameSlant[0]
+
+    if (candidates.length > 0) return candidates[0]
   }
 
   return undefined

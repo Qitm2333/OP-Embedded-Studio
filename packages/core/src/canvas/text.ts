@@ -208,8 +208,8 @@ function addStyledRuns(
         ),
         fontSize: runFontSize,
         fontStyle: {
-          weight: { value: 400 } as FontWeight,
-          slant: ck.FontSlant.Upright
+          weight: { value: s.fontWeight ?? node.fontWeight } as FontWeight,
+          slant: (s.italic ?? node.italic) ? ck.FontSlant.Italic : ck.FontSlant.Upright
         },
         letterSpacing: s.letterSpacing ?? (node.letterSpacing || 0),
         decoration: textDecorationValue(ck, s.textDecoration ?? node.textDecoration),
@@ -263,8 +263,8 @@ export function buildParagraph(
       ),
       fontSize: baseFontSize,
       fontStyle: {
-        weight: { value: 400 } as FontWeight,
-        slant: ck.FontSlant.Upright
+        weight: { value: node.fontWeight } as FontWeight,
+        slant: node.italic ? ck.FontSlant.Italic : ck.FontSlant.Upright
       },
       letterSpacing: node.letterSpacing || 0,
       decoration: textDecorationValue(ck, node.textDecoration),

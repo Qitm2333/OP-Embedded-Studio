@@ -11,6 +11,7 @@ import { initCanvasKit } from '#cli/headless'
 import type { SkiaRenderer } from '#core/canvas/renderer'
 import { renderText } from '#core/canvas/scene'
 import type { SceneNode } from '#core/scene-graph'
+import { buildParagraph } from '#core/canvas/text'
 import { fontManager } from '#core/text/fonts'
 
 import { expectDefined } from '#tests/helpers/assert'
@@ -69,8 +70,25 @@ function textNode(overrides: Partial<SceneNode> = {}): SceneNode {
     text: 'Hello 你好',
     fontSize: 16,
     fontFamily: 'Arial',
+    fontWeight: 400,
+    italic: false,
+    letterSpacing: 0,
+    lineHeight: null,
+    textAlignHorizontal: 'LEFT',
+    textAlignVertical: 'TOP',
+    textAutoResize: 'NONE',
+    textDecoration: 'NONE',
+    textDirection: 'AUTO',
+    styleRuns: [],
     ...overrides
   } as SceneNode
+}
+
+async function createTextRenderer() {
+  const ck = await initCanvasKit()
+  const surface = expectDefined(ck.MakeSurface(400, 120), 'surface')
+  const renderer = new SkiaRendererClass(ck, surface)
+  return { renderer, surface }
 }
 
 describe('renderText', () => {
@@ -147,6 +165,34 @@ describe('renderText', () => {
     expect(r.buildParagraph).not.toHaveBeenCalled()
     expect(canvas.drawText).not.toHaveBeenCalled()
     expect(canvas.drawPicture).not.toHaveBeenCalled()
+  })
+})
+
+describe('paragraph font weights', () => {
+  test('bold Inter paragraph is wider than regular Inter', async () => {
+    const { renderer, surface } = await createTextRenderer()
+    await renderer.loadFonts()
+    const regular = await Bun.file(repoPath('public/Inter-Regular.ttf')).arrayBuffer()
+    const bold = await Bun.file(repoPath('public/Inter-Bold.ttf')).arrayBuffer()
+    fontManager.markLoaded('Inter', 'Regular', regular)
+    fontManager.markLoaded('Inter', 'Bold', bold)
+
+    const base = textNode({
+      text: 'World largest design',
+      fontFamily: 'Inter',
+      fontSize: 64,
+      width: 1000,
+      height: 100,
+      fontWeight: 400,
+      italic: false
+    })
+    const regularParagraph = buildParagraph(renderer, base)
+    const boldParagraph = buildParagraph(renderer, { ...base, fontWeight: 700 })
+
+    expect(boldParagraph.getLongestLine()).toBeGreaterThan(regularParagraph.getLongestLine())
+    regularParagraph.delete()
+    boldParagraph.delete()
+    surface.delete()
   })
 })
 

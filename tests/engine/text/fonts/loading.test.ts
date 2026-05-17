@@ -105,8 +105,8 @@ describe('chooseLocalFontMatch', () => {
     expect(chooseLocalFontMatch(fonts, 'Inter', 'Regular')?.style).toBe('Regular')
   })
 
-  test('does not fall back from upright requests to italic when upright faces exist', () => {
-    expect(chooseLocalFontMatch(fonts, 'Inter', 'Bold')?.style).toBe('Semi Bold')
+  test('does not substitute nearby weights for explicit style requests', () => {
+    expect(chooseLocalFontMatch(fonts, 'Inter', 'Bold')).toBeUndefined()
   })
 })
 
