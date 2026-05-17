@@ -58,13 +58,11 @@ export const APP_MENU_SCHEMA = [
       {
         id: 'edit.undo',
         label: 'Undo',
-        shortcut: 'MOD+Z',
         command: 'edit.undo'
       },
       {
         id: 'edit.redo',
         label: 'Redo',
-        shortcut: 'MOD+SHIFT+Z',
         command: 'edit.redo'
       },
       { type: 'separator' },
@@ -74,20 +72,17 @@ export const APP_MENU_SCHEMA = [
       {
         id: 'selection.duplicate',
         label: 'Duplicate',
-        shortcut: 'MOD+D',
         command: 'selection.duplicate'
       },
       {
         id: 'selection.delete',
         label: 'Delete',
-        shortcut: '⌫',
         command: 'selection.delete'
       },
       { type: 'separator' },
       {
         id: 'selection.selectAll',
         label: 'Select All',
-        shortcut: 'MOD+A',
         command: 'selection.selectAll'
       }
     ]
@@ -98,19 +93,16 @@ export const APP_MENU_SCHEMA = [
       {
         id: 'view.zoom100',
         label: 'Zoom to 100%',
-        shortcut: 'MOD+0',
         command: 'view.zoom100'
       },
       {
         id: 'view.zoomFit',
         label: 'Zoom to Fit',
-        shortcut: 'MOD+1',
         command: 'view.zoomFit'
       },
       {
         id: 'view.zoomSelection',
         label: 'Zoom to Selection',
-        shortcut: 'MOD+2',
         command: 'view.zoomSelection'
       },
       { id: 'zoom-in', label: 'Zoom In', shortcut: 'MOD+=' },
@@ -143,20 +135,17 @@ export const APP_MENU_SCHEMA = [
       {
         id: 'selection.group',
         label: 'Group Selection',
-        shortcut: 'MOD+G',
         command: 'selection.group'
       },
       {
         id: 'selection.ungroup',
         label: 'Ungroup Selection',
-        shortcut: 'MOD+SHIFT+G',
         command: 'selection.ungroup'
       },
       { type: 'separator' },
       {
         id: 'selection.createComponent',
         label: 'Create Component',
-        shortcut: 'MOD+ALT+K',
         command: 'selection.createComponent'
       },
       {
@@ -173,13 +162,11 @@ export const APP_MENU_SCHEMA = [
       {
         id: 'selection.bringToFront',
         label: 'Bring to Front',
-        shortcut: ']',
         command: 'selection.bringToFront'
       },
       {
         id: 'selection.sendToBack',
         label: 'Send to Back',
-        shortcut: '[',
         command: 'selection.sendToBack'
       }
     ]
@@ -198,7 +185,6 @@ export const APP_MENU_SCHEMA = [
       {
         id: 'selection.wrapInAutoLayout',
         label: 'Wrap in Auto Layout',
-        shortcut: 'SHIFT+A',
         command: 'selection.wrapInAutoLayout'
       },
       { type: 'separator' },
