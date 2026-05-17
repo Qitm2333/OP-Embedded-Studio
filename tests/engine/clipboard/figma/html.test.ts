@@ -61,6 +61,35 @@ describe('buildFigmaClipboardHTML', () => {
     expect(textNode?.derivedTextData?.baselines?.length).toBeGreaterThan(0)
   })
 
+  it('encodes fallback derived text metrics when outline fonts are unavailable', async () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    graph.createNode('TEXT', page.id, {
+      name: 'Title',
+      x: 0,
+      y: 0,
+      width: 552,
+      height: 70,
+      text: 'Analytics Overview',
+      fontFamily: 'Missing Preview Font',
+      fontWeight: 700,
+      fontSize: 56,
+      lineHeight: 67,
+      textAutoResize: 'HEIGHT'
+    })
+
+    const html = await buildFigmaClipboardHTML(graph.getChildren(page.id), graph)
+    const parsed = await parseFigmaClipboard(html)
+    const textNode = parsed?.nodes.find((node) => node.type === 'TEXT')
+    const baseline = textNode?.derivedTextData?.baselines?.[0]
+
+    expect(textNode?.textUserLayoutVersion).toBe(4)
+    expect(textNode?.derivedTextData?.glyphs?.length).toBe('Analytics Overview'.length)
+    expect(baseline?.width).toBe(552)
+    expect(baseline?.lineHeight).toBe(67)
+    expect(textNode?.derivedTextData?.layoutSize).toEqual({ x: 552, y: 70 })
+  })
+
   it('encodes auto-layout frames', async () => {
     const graph = new SceneGraph()
     const page = graph.getPages()[0]
