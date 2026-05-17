@@ -7,6 +7,7 @@ import { guidToString } from './guid'
 import { convertEffects, convertFills, convertStrokes } from './paint'
 import { importStyleRuns } from './style-runs'
 export { importStyleRuns } from './style-runs'
+import { convertFigmaDerivedTextGlyphs } from './derived-text-glyphs'
 import { convertLetterSpacing, convertLineHeight, mapTextDecoration } from './text-values'
 export { convertEffects, convertFills, convertStrokes, setVariableColorResolver } from './paint'
 export { convertLetterSpacing, convertLineHeight, mapTextDecoration } from './text-values'
@@ -258,21 +259,6 @@ function importedTextLineHeight(nc: NodeChange): number | null {
   return convertLineHeight(nc.lineHeight, nc.fontSize)
 }
 
-function convertFigmaDerivedTextGlyphs(nc: NodeChange, blobs: Uint8Array[]) {
-  return (nc.derivedTextData?.glyphs ?? [])
-    .map((glyph) => {
-      const blob = glyph.commandsBlob === undefined ? undefined : blobs[glyph.commandsBlob]
-      if (!blob) return null
-      return {
-        commandsBlob: blob,
-        x: glyph.position.x,
-        y: glyph.position.y,
-        fontSize: glyph.fontSize
-      }
-    })
-    .filter((glyph): glyph is NonNullable<typeof glyph> => !!glyph)
-}
-
 function convertTextProps(
   nc: NodeChange,
   blobs: Uint8Array[]
@@ -320,7 +306,7 @@ function convertTextProps(
       (getOpenPencilPluginValue(nc, TEXT_DIRECTION_PLUGIN_KEY) as
         | SceneNode['textDirection']
         | null) || 'AUTO',
-    figmaDerivedTextGlyphs: convertFigmaDerivedTextGlyphs(nc, blobs)
+    figmaDerivedTextGlyphs: convertFigmaDerivedTextGlyphs(nc.derivedTextData, blobs)
   }
 }
 

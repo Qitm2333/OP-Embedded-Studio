@@ -50,6 +50,7 @@ export interface DerivedSymbolOverride {
   fontSize?: number
   lineHeight?: NodeChange['lineHeight']
   letterSpacing?: NodeChange['letterSpacing']
+  derivedTextData?: NodeChange['derivedTextData']
   fillGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
   strokeGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
 }

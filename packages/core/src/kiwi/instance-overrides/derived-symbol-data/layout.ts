@@ -1,4 +1,5 @@
 import { convertLetterSpacing, convertLineHeight } from '#core/kiwi/node-change/convert'
+import { convertFigmaDerivedTextGlyphs } from '#core/kiwi/node-change/derived-text-glyphs'
 import type { DerivedSymbolOverride, OverrideContext } from '#core/kiwi/instance-overrides/types'
 import type { SceneNode } from '#core/scene-graph'
 
@@ -26,11 +27,13 @@ function resolveSizeOnlyPosition(
   return withinParent ? { x: source.x, y: source.y } : { x: 0, y: 0 }
 }
 
-function buildDsdTextUpdates(d: DerivedSymbolOverride): Partial<SceneNode> {
+function buildDsdTextUpdates(d: DerivedSymbolOverride, blobs: Uint8Array[]): Partial<SceneNode> {
   const updates: Partial<SceneNode> = {}
   if (d.fontSize !== undefined) updates.fontSize = d.fontSize
   if (d.lineHeight !== undefined) updates.lineHeight = convertLineHeight(d.lineHeight, d.fontSize)
   if (d.letterSpacing !== undefined) updates.letterSpacing = convertLetterSpacing(d.letterSpacing, d.fontSize)
+  const figmaDerivedTextGlyphs = convertFigmaDerivedTextGlyphs(d.derivedTextData, blobs)
+  if (figmaDerivedTextGlyphs.length > 0) updates.figmaDerivedTextGlyphs = figmaDerivedTextGlyphs
   return updates
 }
 
@@ -40,7 +43,7 @@ export function buildDsdLayoutUpdates(
   d: DerivedSymbolOverride,
   target: SceneNode
 ): { updates: Partial<SceneNode>; hasSize: boolean } {
-  const updates: Partial<SceneNode> = buildDsdTextUpdates(d)
+  const updates: Partial<SceneNode> = buildDsdTextUpdates(d, ctx.blobs)
   const figmaDerivedLayout: NonNullable<SceneNode['figmaDerivedLayout']> = {}
 
   if (d.size) {
