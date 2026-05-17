@@ -60,6 +60,8 @@ export function computeImageHash(data: Uint8Array): string {
   return [h1, h2, h3, h4, h5].map((h) => h.toString(16).padStart(8, '0')).join('')
 }
 
+// TODO(figma-api): Implement the full official PluginAPI interface once our compatibility
+// layer covers all required node-specific return types and unsupported APIs are modeled explicitly.
 export class FigmaAPI implements NodeProxyHost {
   readonly graph: SceneGraph
   private _currentPageId: string
@@ -382,6 +384,14 @@ export class FigmaAPI implements NodeProxyHost {
     // Default: pure browser / test contexts have no enumeration surface.
     // Desktop hosts override this to return system + bundled fonts.
     return []
+  }
+
+  base64Encode(data: Uint8Array): string {
+    return data.toBase64()
+  }
+
+  base64Decode(data: string): Uint8Array {
+    return Uint8Array.fromBase64(data)
   }
 
   notify(message: string): { cancel: () => void } {

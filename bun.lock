@@ -60,6 +60,7 @@
       "devDependencies": {
         "@agentclientprotocol/sdk": "^0.14.1",
         "@feature-sliced/steiger-plugin": "^0.5.8",
+        "@figma/plugin-typings": "^1.126.0",
         "@hono/node-server": "^1.19.11",
         "@iconify-json/lucide": "^1.2.94",
         "@modelcontextprotocol/sdk": "^1.27.1",
@@ -531,6 +532,8 @@
     "@feature-sliced/filesystem": ["@feature-sliced/filesystem@3.1.0", "", { "dependencies": { "typescript": "^5.8.3" } }, "sha512-kdNcVwJMCiORdi2Aog7epDeQMEREFUvdqqQHmE7D3ZjSdsQzZWMH6Ex7gtGAttTT/oRBFysqCtP5pl0CETEc9Q=="],
 
     "@feature-sliced/steiger-plugin": ["@feature-sliced/steiger-plugin@0.5.8", "", { "dependencies": { "@feature-sliced/filesystem": "^3.1.0", "fastest-levenshtein": "^1.0.16", "lodash-es": "^4.17.21", "pluralize": "^8.0.0", "precinct": "^12.2.0", "tsconfck": "^3.1.6" } }, "sha512-SXn2PQS0yVRzhltSM968hz0hWmNj93l7dNU4Qqry3OgSkvrO4kl1/daWYwRYzmm9sImsAUsTztabwLUbF9U9YA=="],
+
+    "@figma/plugin-typings": ["@figma/plugin-typings@1.126.0", "", {}, "sha512-7Y8HPIHWgMUoT1L7InyUe5X6S+gPUSlVLi7TQvwnRev6PjDwwNkM/oSio2t69EvsJ+TRPSJSvO7xph+KHIcWeQ=="],
 
     "@firebase/ai": ["@firebase/ai@2.10.0", "", { "dependencies": { "@firebase/app-check-interop-types": "0.3.3", "@firebase/component": "0.7.2", "@firebase/logger": "0.5.0", "@firebase/util": "1.15.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app": "0.x", "@firebase/app-types": "0.x" } }, "sha512-1lI6HomyoO/8RSJb6ItyHLpHnB2z27m5F4aX/Vpi1nhwWoxdNjkq+6UQOykHyCE0KairojOE5qQ20i1tnF0nNA=="],
 
