@@ -1,6 +1,6 @@
 import { prepareWithSegments, layoutWithLines } from '@chenglou/pretext'
 
-import type { SceneNode } from '#core/scene-graph'
+import type { CharacterStyleOverride, SceneNode } from '#core/scene-graph'
 import { fontManager, weightToStyle } from '#core/text/fonts'
 import { getGlyphOutlineMetricsSync, type OutlineCommand } from '#core/text/opentype'
 
@@ -9,7 +9,6 @@ export type TextOutlineUnsupportedReason =
   | 'empty-text'
   | 'missing-font'
   | 'complex-script'
-  | 'style-runs'
 
 export type TextOutlineSupport =
   | { supported: true }
@@ -29,21 +28,57 @@ export interface TextOutlineLayout {
 
 const COMPLEX_SCRIPT_PATTERN = /[\u0590-\u08ff\u0900-\u0dff\ufb1d-\ufdff\ufe70-\ufeff]/
 
-function textStyle(node: SceneNode): string {
-  return weightToStyle(node.fontWeight, node.italic)
+type TextStyle = Required<Pick<CharacterStyleOverride, 'fontFamily' | 'fontSize' | 'fontWeight' | 'italic' | 'letterSpacing'>>
+
+function baseTextStyle(node: SceneNode): TextStyle {
+  return {
+    fontFamily: node.fontFamily,
+    fontSize: node.fontSize,
+    fontWeight: node.fontWeight,
+    italic: node.italic,
+    letterSpacing: node.letterSpacing
+  }
 }
 
-function textFamily(node: SceneNode): string {
-  return node.fontFamily
+function styleName(style: Pick<TextStyle, 'fontWeight' | 'italic'>): string {
+  return weightToStyle(style.fontWeight, style.italic)
+}
+
+function styleKey(style: TextStyle): string {
+  return `${style.fontFamily}|${styleName(style)}|${style.fontSize}|${style.letterSpacing}`
+}
+
+function textStyleAt(node: SceneNode, index: number): TextStyle {
+  const base = baseTextStyle(node)
+  const run = node.styleRuns.find((item) => index >= item.start && index < item.start + item.length)
+  if (!run) return base
+  return {
+    fontFamily: run.style.fontFamily ?? base.fontFamily,
+    fontSize: run.style.fontSize ?? base.fontSize,
+    fontWeight: run.style.fontWeight ?? base.fontWeight,
+    italic: run.style.italic ?? base.italic,
+    letterSpacing: run.style.letterSpacing ?? base.letterSpacing
+  }
+}
+
+function textStyles(node: SceneNode): TextStyle[] {
+  if (node.styleRuns.length === 0) return [baseTextStyle(node)]
+  const styles = new Map<string, TextStyle>()
+  for (let index = 0; index < node.text.length; index++) {
+    const style = textStyleAt(node, index)
+    styles.set(styleKey(style), style)
+  }
+  return [...styles.values()]
 }
 
 export function getTextOutlineSupport(node: SceneNode): TextOutlineSupport {
   if (node.type !== 'TEXT') return { supported: false, reason: 'not-text' }
   if (!node.text) return { supported: false, reason: 'empty-text' }
-  if (node.styleRuns.length > 0) return { supported: false, reason: 'style-runs' }
   if (COMPLEX_SCRIPT_PATTERN.test(node.text)) return { supported: false, reason: 'complex-script' }
-  if (!fontManager.loadedData(textFamily(node), textStyle(node))) {
-    return { supported: false, reason: 'missing-font' }
+  for (const style of textStyles(node)) {
+    if (!fontManager.loadedData(style.fontFamily, styleName(style))) {
+      return { supported: false, reason: 'missing-font' }
+    }
   }
   return { supported: true }
 }
@@ -52,20 +87,39 @@ function lineHeight(node: SceneNode): number {
   return node.lineHeight ?? Math.ceil(node.fontSize * 1.2)
 }
 
-function textLines(node: SceneNode): string[] {
-  const hardLines = node.text.split('\n')
-  if (node.textAutoResize === 'WIDTH_AND_HEIGHT') return hardLines
+interface TextLine {
+  text: string
+  start: number
+}
 
-  const result: string[] = []
+function hardTextLines(text: string): TextLine[] {
+  const lines: TextLine[] = []
+  let start = 0
+  for (const line of text.split('\n')) {
+    lines.push({ text: line, start })
+    start += line.length + 1
+  }
+  return lines
+}
+
+function textLines(node: SceneNode): TextLine[] {
+  const hardLines = hardTextLines(node.text)
+  if (node.textAutoResize === 'WIDTH_AND_HEIGHT' || node.styleRuns.length > 0) return hardLines
+
+  const result: TextLine[] = []
   for (const hardLine of hardLines) {
-    if (!hardLine) {
-      result.push('')
+    if (!hardLine.text) {
+      result.push(hardLine)
       continue
     }
     try {
-      const prepared = prepareWithSegments(hardLine, `${node.fontSize}px ${node.fontFamily}`)
+      const prepared = prepareWithSegments(hardLine.text, `${node.fontSize}px ${node.fontFamily}`)
       const layout = layoutWithLines(prepared, node.width, lineHeight(node))
-      result.push(...layout.lines.map((line) => line.text))
+      let start = hardLine.start
+      for (const line of layout.lines) {
+        result.push({ text: line.text, start })
+        start += line.text.length
+      }
     } catch {
       result.push(hardLine)
     }
@@ -95,6 +149,32 @@ function verticalOffset(node: SceneNode, contentHeight: number): number {
   }
 }
 
+function lineGlyphs(node: SceneNode, line: TextLine, baseline: number, xOffset: number): { glyphs: TextOutlineGlyph[]; width: number } | null {
+  const glyphs: TextOutlineGlyph[] = []
+  let cursorX = xOffset
+  let index = 0
+
+  while (index < line.text.length) {
+    const absoluteIndex = line.start + index
+    const style = textStyleAt(node, absoluteIndex)
+    const key = styleKey(style)
+    let end = index + 1
+    while (end < line.text.length && styleKey(textStyleAt(node, line.start + end)) === key) end++
+
+    const segment = line.text.slice(index, end)
+    const metrics = getGlyphOutlineMetricsSync(style.fontFamily, styleName(style), segment, style.fontSize)
+    if (!metrics) return null
+
+    for (const glyph of metrics) {
+      glyphs.push({ commands: glyph.commands, x: cursorX, y: baseline })
+      cursorX += glyph.advance + style.letterSpacing
+    }
+    index = end
+  }
+
+  return { glyphs, width: cursorX - xOffset }
+}
+
 export function textNodeToOutlineLayout(node: SceneNode): TextOutlineLayout | null {
   if (!getTextOutlineSupport(node).supported) return null
 
@@ -106,20 +186,13 @@ export function textNodeToOutlineLayout(node: SceneNode): TextOutlineLayout | nu
   let maxWidth = 0
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-    const line = lines[lineIndex]
-    const metrics = getGlyphOutlineMetricsSync(textFamily(node), textStyle(node), line, node.fontSize)
-    if (!metrics) return null
-
-    const lineWidth = metrics.reduce((width, glyph) => width + glyph.advance + node.letterSpacing, 0)
-    maxWidth = Math.max(maxWidth, lineWidth)
-    const xOffset = lineOffsetX(node, lineWidth)
     const baseline = yOffset + lineIndex * lineH + lineH
-
-    let cursorX = xOffset
-    for (const glyph of metrics) {
-      glyphs.push({ commands: glyph.commands, x: cursorX, y: baseline })
-      cursorX += glyph.advance + node.letterSpacing
-    }
+    const measured = lineGlyphs(node, lines[lineIndex], baseline, 0)
+    if (!measured) return null
+    const xOffset = lineOffsetX(node, measured.width)
+    maxWidth = Math.max(maxWidth, measured.width)
+    const placed = xOffset === 0 ? measured.glyphs : measured.glyphs.map((glyph) => ({ ...glyph, x: glyph.x + xOffset }))
+    glyphs.push(...placed)
   }
 
   return { glyphs, width: maxWidth, height: contentHeight }

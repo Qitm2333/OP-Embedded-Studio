@@ -21,6 +21,11 @@ async function loadInterRegular() {
   fontManager.markLoaded('Inter', 'Regular', data)
 }
 
+async function loadInterBold() {
+  const data = await Bun.file('public/Inter-Bold.ttf').arrayBuffer()
+  fontManager.markLoaded('Inter', 'Bold', data)
+}
+
 describe('flattenSelected', () => {
   test('converts selected shapes into a vector path', async () => {
     const { editor, surface } = await createEditorWithRenderer()
@@ -90,6 +95,31 @@ describe('flattenSelected', () => {
     expect(vector?.type).toBe('VECTOR')
     expect(vector?.vectorNetwork?.vertices.length).toBeGreaterThan(0)
     expect(editor.graph.getNode(text.id)).toBeUndefined()
+    surface.delete()
+  })
+
+  test('flattens loaded text style runs as outlines', async () => {
+    await loadInterRegular()
+    await loadInterBold()
+    const { editor, surface } = await createEditorWithRenderer()
+    const pageId = editor.state.currentPageId
+    const text = editor.graph.createNode('TEXT', pageId, {
+      text: 'Hi',
+      fontFamily: 'Inter',
+      fontWeight: 400,
+      fontSize: 32,
+      width: 80,
+      height: 40,
+      styleRuns: [{ start: 1, length: 1, style: { fontWeight: 700, fontSize: 40 } }]
+    })
+
+    editor.select([text.id])
+    editor.flattenSelected()
+
+    const [vectorId] = [...editor.state.selectedIds]
+    const vector = editor.graph.getNode(vectorId)
+    expect(vector?.type).toBe('VECTOR')
+    expect(vector?.vectorNetwork?.vertices.length).toBeGreaterThan(0)
     surface.delete()
   })
 
