@@ -115,7 +115,7 @@
     "detachVariable": "Variable lösen",
     "applyVariable": "Variable anwenden",
     "noVariablesFound": "Keine Variablen gefunden",
-    "addAutoLayout": "Auto-Layout hinzufügen (Shift+A)",
+    "addAutoLayout": "Auto-Layout hinzufügen",
     "removeAutoLayout": "Auto-Layout entfernen",
     "mixed": "Gemischt",
     "layersCount": "{count} Ebenen",

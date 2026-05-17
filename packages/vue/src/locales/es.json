@@ -115,7 +115,7 @@
     "detachVariable": "Desvincular variable",
     "applyVariable": "Aplicar variable",
     "noVariablesFound": "No se encontraron variables",
-    "addAutoLayout": "Añadir auto-layout (Shift+A)",
+    "addAutoLayout": "Añadir auto-layout",
     "removeAutoLayout": "Quitar auto-layout",
     "mixed": "Mixto",
     "layersCount": "{count} capas",

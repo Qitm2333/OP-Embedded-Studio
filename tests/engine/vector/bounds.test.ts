@@ -1,10 +1,10 @@
 import { describe, test, expect } from 'bun:test'
 
-import { computeVectorBounds } from '@open-pencil/core'
+import { computeAccurateBounds } from '@open-pencil/core'
 
-describe('computeVectorBounds', () => {
+describe('computeAccurateBounds', () => {
   test('empty network', () => {
-    expect(computeVectorBounds({ vertices: [], segments: [], regions: [] })).toEqual({
+    expect(computeAccurateBounds({ vertices: [], segments: [], regions: [] })).toEqual({
       x: 0,
       y: 0,
       width: 0,
@@ -13,7 +13,7 @@ describe('computeVectorBounds', () => {
   })
 
   test('single vertex', () => {
-    const bounds = computeVectorBounds({
+    const bounds = computeAccurateBounds({
       vertices: [{ x: 50, y: 30, handleMirroring: 'NONE' }],
       segments: [],
       regions: []
@@ -25,7 +25,7 @@ describe('computeVectorBounds', () => {
   })
 
   test('two vertices', () => {
-    const bounds = computeVectorBounds({
+    const bounds = computeAccurateBounds({
       vertices: [
         { x: 0, y: 0, handleMirroring: 'NONE' },
         { x: 100, y: 50, handleMirroring: 'NONE' }
@@ -37,7 +37,7 @@ describe('computeVectorBounds', () => {
   })
 
   test('bezier curve extrema extend bounds', () => {
-    const bounds = computeVectorBounds({
+    const bounds = computeAccurateBounds({
       vertices: [
         { x: 0, y: 0, handleMirroring: 'NONE' },
         { x: 100, y: 0, handleMirroring: 'NONE' }

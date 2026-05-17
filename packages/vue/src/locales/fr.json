@@ -115,7 +115,7 @@
     "detachVariable": "Détacher la variable",
     "applyVariable": "Appliquer la variable",
     "noVariablesFound": "Aucune variable trouvée",
-    "addAutoLayout": "Ajouter un auto-layout (Shift+A)",
+    "addAutoLayout": "Ajouter un auto-layout",
     "removeAutoLayout": "Retirer l'auto-layout",
     "mixed": "Mixte",
     "layersCount": "{count} calques",

@@ -1,7 +1,7 @@
 import type { EditorContext } from '#core/editor/types'
 import type { SceneNode, VectorNetwork, VectorRegion, VectorSegment } from '#core/scene-graph'
 import type { Vector } from '#core/types'
-import { computeVectorBounds } from '#core/vector'
+import { computeAccurateBounds } from '#core/vector'
 
 export interface PenDragOptions {
   keepOpposite?: boolean
@@ -175,7 +175,7 @@ export function createPenActions(ctx: EditorContext, createShape: CreateShape) {
       regions
     }
 
-    const bounds = computeVectorBounds(network)
+    const bounds = computeAccurateBounds(network)
 
     const normalizedVertices = network.vertices.map((v) => ({
       ...v,

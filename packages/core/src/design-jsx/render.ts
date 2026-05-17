@@ -4,7 +4,7 @@ import type { SceneGraph } from '#core/scene-graph'
 
 import * as React from './mini-react'
 import { renderTree, type RenderResult } from './renderer'
-import { resolveToTree, type TreeNode } from './tree'
+import { resolveToTree } from './tree'
 
 /**
  * Build a component function from a JSX string using sucrase.
@@ -78,13 +78,4 @@ export async function renderJSX(
   return [await renderTree(graph, tree, options)]
 }
 
-/**
- * Render a pre-built TreeNode into the scene graph.
- */
-export async function renderTreeNode(
-  graph: SceneGraph,
-  tree: TreeNode,
-  options?: RenderJSXOptions
-): Promise<RenderResult> {
-  return renderTree(graph, tree, options)
-}
+export { renderTree as renderTreeNode }

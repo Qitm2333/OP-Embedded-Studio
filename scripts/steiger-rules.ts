@@ -17,6 +17,11 @@ type Rule = { name: string; check: (root: TreeEntry) => RuleResult }
 
 type FileRuleCheck = (sourceRel: string) => string | null
 
+type TextRuleCheck = (
+  sourceRel: string,
+  content: string
+) => Array<{ message: string; line?: number; column?: number }>
+
 const FILE_PREFIX_GROUP_ALLOWLIST = new Set([
   'packages/core/src/lint/rules::no',
   'tests/engine::visual'
@@ -109,6 +114,26 @@ function resolveImport(sourceRel: string, specifier: string): string | null {
   return null
 }
 
+function createTextRule(name: string, checkText: TextRuleCheck): Rule {
+  return {
+    name,
+    check(root) {
+      const diagnostics: Diagnostic[] = []
+      for (const file of collectFiles(root)) {
+        const sourceRel = relativePath(root.path, file)
+        const content = readFileSync(file, 'utf8')
+        for (const result of checkText(sourceRel, content)) {
+          diagnostics.push({
+            message: result.message,
+            location: { path: file, line: result.line, column: result.column }
+          })
+        }
+      }
+      return { diagnostics }
+    }
+  }
+}
+
 function createFileRule(name: string, checkFile: FileRuleCheck): Rule {
   return {
     name,
@@ -185,29 +210,34 @@ const preferDomainFoldersOverFilenamePrefixes: Rule = {
   }
 }
 
-const strictTestFilePlacement = createFileRule('open-pencil/strict-test-file-placement', (sourceRel) => {
-  if (!sourceRel.startsWith('tests/')) return null
-  if (!TEXT_EXTENSIONS.has(path.extname(sourceRel))) return null
-  const name = path.basename(sourceRel)
-  if (name.includes('.tmp.') || name.includes('.profile.')) {
-    return 'Temporary/profile test files must not be committed. Move exploratory specs to scratch/ or delete them.'
+const strictTestFilePlacement = createFileRule(
+  'open-pencil/strict-test-file-placement',
+  (sourceRel) => {
+    if (!sourceRel.startsWith('tests/')) return null
+    if (!TEXT_EXTENSIONS.has(path.extname(sourceRel))) return null
+    const name = path.basename(sourceRel)
+    if (name.includes('.tmp.') || name.includes('.profile.')) {
+      return 'Temporary/profile test files must not be committed. Move exploratory specs to scratch/ or delete them.'
+    }
+    if (sourceRel.startsWith('tests/e2e/')) {
+      if (sourceRel.endsWith('.spec.ts') || sourceRel.endsWith('/fixtures.ts')) return null
+      return 'E2E tests must live under tests/e2e/** and use *.spec.ts.'
+    }
+    if (sourceRel.startsWith('tests/figma/')) {
+      return sourceRel.endsWith('.spec.ts')
+        ? null
+        : 'Figma Playwright tests must live under tests/figma/** and use *.spec.ts.'
+    }
+    if (sourceRel.startsWith('tests/engine/')) {
+      if (sourceRel.endsWith('.test.ts')) return null
+      if (sourceRel.endsWith('/helpers.ts') || sourceRel.endsWith('.bench.ts')) return null
+      if (/\/visual\/[^/]+\.ts$/.test(sourceRel)) return null
+      return 'Engine/unit tests must live under tests/engine/** and use *.test.ts; helpers.ts, *.bench.ts, and domain visual support scripts are allowed.'
+    }
+    if (sourceRel.startsWith('tests/helpers/')) return null
+    return 'Tests must live under tests/e2e/** (*.spec.ts), tests/engine/** (*.test.ts), or tests/helpers/**.'
   }
-  if (sourceRel.startsWith('tests/e2e/')) {
-    if (sourceRel.endsWith('.spec.ts') || sourceRel.endsWith('/fixtures.ts')) return null
-    return 'E2E tests must live under tests/e2e/** and use *.spec.ts.'
-  }
-  if (sourceRel.startsWith('tests/figma/')) {
-    return sourceRel.endsWith('.spec.ts') ? null : 'Figma Playwright tests must live under tests/figma/** and use *.spec.ts.'
-  }
-  if (sourceRel.startsWith('tests/engine/')) {
-    if (sourceRel.endsWith('.test.ts')) return null
-    if (sourceRel.endsWith('/helpers.ts') || sourceRel.endsWith('.bench.ts')) return null
-    if (/\/visual\/[^/]+\.ts$/.test(sourceRel)) return null
-    return 'Engine/unit tests must live under tests/engine/** and use *.test.ts; helpers.ts, *.bench.ts, and domain visual support scripts are allowed.'
-  }
-  if (sourceRel.startsWith('tests/helpers/')) return null
-  return 'Tests must live under tests/e2e/** (*.spec.ts), tests/engine/** (*.test.ts), or tests/helpers/**.'
-})
+)
 
 const ENGINE_TEST_DOMAIN_REDIRECTS: Array<{
   from: string
@@ -295,12 +325,15 @@ const noE2EImportsInEngineTests = createImportRule(
   }
 )
 
-const noRootMarkdownClutter = createFileRule('open-pencil/no-root-markdown-clutter', (sourceRel) => {
-  if (sourceRel.includes('/')) return null
-  if (!sourceRel.endsWith('.md')) return null
-  if (ROOT_MARKDOWN_ALLOWLIST.has(sourceRel)) return null
-  return 'Do not add ad hoc root Markdown files. Put durable docs under packages/docs/** or update the root allowlist deliberately.'
-})
+const noRootMarkdownClutter = createFileRule(
+  'open-pencil/no-root-markdown-clutter',
+  (sourceRel) => {
+    if (sourceRel.includes('/')) return null
+    if (!sourceRel.endsWith('.md')) return null
+    if (ROOT_MARKDOWN_ALLOWLIST.has(sourceRel)) return null
+    return 'Do not add ad hoc root Markdown files. Put durable docs under packages/docs/** or update the root allowlist deliberately.'
+  }
+)
 
 const noPrototypeOrGeneratedImports = createImportRule(
   'open-pencil/no-prototype-or-generated-imports',
@@ -353,7 +386,10 @@ const noPackageInternalsInApp = createImportRule(
   'open-pencil/no-package-internals-in-app',
   (sourceRel, specifier, resolved) => {
     if (!sourceRel.startsWith('src/')) return null
-    if (specifier in PACKAGE_ALIASES || Object.keys(PACKAGE_ALIASES).some((alias) => specifier.startsWith(alias))) {
+    if (
+      specifier in PACKAGE_ALIASES ||
+      Object.keys(PACKAGE_ALIASES).some((alias) => specifier.startsWith(alias))
+    ) {
       return 'App code must use package public exports such as @open-pencil/core or @open-pencil/vue, not package-local aliases.'
     }
     if (resolved?.startsWith('packages/')) {
@@ -415,7 +451,8 @@ const noViewsImportedOutsideEntry = createImportRule(
   'open-pencil/no-views-imported-outside-entry',
   (sourceRel, _specifier, resolved) => {
     if (!resolved?.startsWith('src/views/')) return null
-    if (sourceRel === 'src/App.vue' || sourceRel === 'src/main.ts' || sourceRel === 'src/router.ts') return null
+    if (sourceRel === 'src/App.vue' || sourceRel === 'src/main.ts' || sourceRel === 'src/router.ts')
+      return null
     return 'Views are top-level composition entrypoints and must not be imported by app services or reusable components.'
   }
 )
@@ -438,6 +475,35 @@ const noPropertyPanelInternalsOutsidePanel = createImportRule(
     if (sourceRel.startsWith('src/components/properties/')) return null
     if (sourceRel === 'src/components/DesignPanel.vue') return null
     return 'Property-panel internals must stay inside the property panel. Extract app-neutral UI before reusing elsewhere.'
+  }
+)
+
+const SHORTCUT_LABEL_PATTERN = /(?:Shift|Ctrl|Alt|Option|Cmd|Command|⌘|⇧|⌥|⌃)\s*[+)\w]/u
+
+const noShortcutTextInLabels = createTextRule(
+  'open-pencil/no-shortcut-text-in-labels',
+  (sourceRel, content) => {
+    if (
+      sourceRel !== 'packages/vue/src/i18n/messages.ts' &&
+      !sourceRel.startsWith('packages/vue/src/locales/')
+    ) {
+      return []
+    }
+
+    const diagnostics: Array<{ message: string; line?: number; column?: number }> = []
+    for (const match of content.matchAll(
+      /['"]([^'"]*(?:Shift|Ctrl|Alt|Option|Cmd|Command|⌘|⇧|⌥|⌃)[^'"]*)['"]/gu
+    )) {
+      if (!SHORTCUT_LABEL_PATTERN.test(match[1])) continue
+      const before = content.slice(0, match.index)
+      const lines = before.split('\n')
+      diagnostics.push({
+        message: 'Keep shortcuts in command metadata, not translated labels.',
+        line: lines.length,
+        column: lines.at(-1)?.length ?? 0
+      })
+    }
+    return diagnostics
   }
 )
 
@@ -479,6 +545,7 @@ export const openPencilArchitecturePlugin = {
     noNonUiImportsInSharedUi,
     noAppImportsInSharedUi,
     noPropertyPanelInternalsOutsidePanel,
+    noShortcutTextInLabels,
     noUiImportsInCore
   ]
 }

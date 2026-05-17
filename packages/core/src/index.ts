@@ -223,8 +223,7 @@ export {
   geometryBlobToPath,
   decodeVectorNetworkBlob,
   encodeVectorNetworkBlob,
-  buildStyleOverrideTable,
-  computeVectorBounds
+  buildStyleOverrideTable
 } from './vector'
 export {
   evalCubic,

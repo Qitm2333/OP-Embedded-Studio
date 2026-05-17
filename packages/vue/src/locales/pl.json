@@ -115,7 +115,7 @@
     "detachVariable": "Odłącz zmienną",
     "applyVariable": "Zastosuj zmienną",
     "noVariablesFound": "Nie znaleziono zmiennych",
-    "addAutoLayout": "Dodaj auto-layout (Shift+A)",
+    "addAutoLayout": "Dodaj auto-layout",
     "removeAutoLayout": "Usuń auto-layout",
     "mixed": "Mieszane",
     "layersCount": "{count} warstw",

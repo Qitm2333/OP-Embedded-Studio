@@ -22,10 +22,6 @@ import type {
   VectorVertex,
   WindingRule
 } from '#core/scene-graph'
-import type { Rect } from '#core/types'
-
-import { computeAccurateBounds } from './bezier'
-
 export { vectorNetworkToCenterlinePath, fitCircleArc, isClosedThinCrescent } from './centerline'
 
 // --- vectorNetworkBlob binary format ---
@@ -278,10 +274,6 @@ function addLoopToPath(
   }
 
   path.close()
-}
-
-export function computeVectorBounds(network: VectorNetwork): Rect {
-  return computeAccurateBounds(network)
 }
 
 const CMD_CLOSE = 0

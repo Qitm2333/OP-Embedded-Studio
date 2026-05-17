@@ -68,15 +68,7 @@ export async function fetchIcons(names: string[], size = 24): Promise<Map<string
   return results
 }
 
-export async function searchIcons(
-  query: string,
-  options?: {
-    limit?: number
-    prefix?: string
-  }
-): Promise<IconSearchResult> {
-  return searchIconify(query, options)
-}
+export { searchIconify as searchIcons }
 
 export async function searchIconsBatch(
   queries: string[],
@@ -88,7 +80,7 @@ export async function searchIconsBatch(
   const results = new Map<string, IconSearchResult>()
   await Promise.all(
     queries.map(async (query) => {
-      const result = await searchIcons(query, options)
+      const result = await searchIconify(query, options)
       results.set(query, result)
     })
   )

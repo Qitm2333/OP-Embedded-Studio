@@ -172,7 +172,7 @@
   },
   "overrides": [
     {
-      "files": ["src/**/*.ts"],
+      "files": ["src/**/*.ts", "packages/*/src/**/*.ts"],
       "rules": {
         "open-pencil/no-useless-pass-through-wrappers": "error"
       }

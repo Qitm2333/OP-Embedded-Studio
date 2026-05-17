@@ -3,12 +3,8 @@ import { computed } from 'vue'
 
 import { useEditorCommands } from '#vue/editor/commands/use'
 import { useEditor } from '#vue/editor/context'
-import {
-  buildCanvasMenu,
-  buildEditMenu,
-  buildObjectMenu,
-  buildViewMenu
-} from '#vue/editor/menu-model/builders'
+import { buildEditMenu, buildObjectMenu, buildViewMenu } from '#vue/editor/menu-model/builders'
+import { buildCanvasContextMenu } from '#vue/editor/menu-model/canvas'
 import { useSelectionState } from '#vue/editor/selection-state/use'
 import { menuMessages } from '#vue/i18n'
 
@@ -46,7 +42,7 @@ export function useMenuModel() {
   ])
 
   const canvasMenu = computed<MenuEntry[]>(() =>
-    buildCanvasMenu({
+    buildCanvasContextMenu({
       commandMenuItem,
       otherPages: otherPages.value,
       moveSelectionToPage,

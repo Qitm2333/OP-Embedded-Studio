@@ -115,7 +115,7 @@
     "detachVariable": "Отвязать переменную",
     "applyVariable": "Применить переменную",
     "noVariablesFound": "Переменные не найдены",
-    "addAutoLayout": "Добавить автораскладку (Shift+A)",
+    "addAutoLayout": "Добавить автораскладку",
     "removeAutoLayout": "Убрать автораскладку",
     "alignLeft": "Выровнять по левому краю",
     "alignCenterHorizontally": "Выровнять по центру по горизонтали",
