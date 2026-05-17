@@ -5,6 +5,7 @@ import type { SceneNode, SceneGraph, Fill } from '#core/scene-graph'
 import type { Color } from '#core/types'
 import { vectorNetworkToCenterlinePath } from '#core/vector'
 
+import { renderBooleanOperation } from './boolean'
 import { nodeHasRadius } from './shapes'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
 
@@ -79,6 +80,8 @@ function renderNodeContent(
     r.renderSection(canvas, node, graph)
   } else if (node.type === 'COMPONENT_SET') {
     r.renderComponentSet(canvas, node, graph)
+  } else if (node.type === 'BOOLEAN_OPERATION') {
+    renderBooleanOperation(r, canvas, node, graph)
   } else {
     r.renderShape(canvas, node, graph)
   }
@@ -103,6 +106,7 @@ function renderChildren(
   absX: number,
   absY: number
 ): void {
+  if (node.type === 'BOOLEAN_OPERATION') return
   const isClippableContainer =
     node.type === 'FRAME' || node.type === 'COMPONENT' || node.type === 'INSTANCE'
   if (isClippableContainer && node.clipsContent && node.childIds.length > 0) {
