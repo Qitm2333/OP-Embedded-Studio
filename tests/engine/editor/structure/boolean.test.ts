@@ -37,6 +37,22 @@ describe('booleanOperationSelected', () => {
     expect(editor.state.selectedIds).toEqual(new Set([first.id, second.id]))
   })
 
+  test('does not wrap complex script text without shaping support', () => {
+    const editor = createEditor()
+    const pageId = editor.state.currentPageId
+    const first = editor.graph.createNode('TEXT', pageId, {
+      text: 'مرحبا',
+      fontFamily: 'Inter'
+    })
+    const second = editor.graph.createNode('RECTANGLE', pageId)
+
+    editor.select([first.id, second.id])
+    const result = editor.booleanOperationSelected('UNION')
+
+    expect(result).toBeNull()
+    expect(editor.graph.getNode(pageId)?.childIds).toEqual([first.id, second.id])
+  })
+
   test('does not wrap visible image fills', () => {
     const editor = createEditor()
     const pageId = editor.state.currentPageId

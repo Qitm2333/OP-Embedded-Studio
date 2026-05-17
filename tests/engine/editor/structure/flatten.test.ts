@@ -153,6 +153,27 @@ describe('flattenSelected', () => {
     surface.delete()
   })
 
+  test('does not flatten complex script text without shaping support', async () => {
+    await loadInterRegular()
+    const { editor, surface } = await createEditorWithRenderer()
+    const pageId = editor.state.currentPageId
+    const text = editor.graph.createNode('TEXT', pageId, {
+      text: 'مرحبا',
+      fontFamily: 'Inter',
+      fontWeight: 400,
+      fontSize: 32,
+      width: 120,
+      height: 40
+    })
+
+    editor.select([text.id])
+    const result = editor.flattenSelected()
+
+    expect(result).toBeNull()
+    expect(editor.graph.getNode(text.id)?.type).toBe('TEXT')
+    surface.delete()
+  })
+
   test('does not flatten unsupported text nodes', async () => {
     const { editor, surface } = await createEditorWithRenderer()
     const pageId = editor.state.currentPageId
