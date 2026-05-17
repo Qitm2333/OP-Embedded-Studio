@@ -1,7 +1,9 @@
+import { canMakeBooleanSourcePath } from '#core/canvas/boolean'
 import { restoreSubtree, snapshotSubtree } from '#core/editor/clipboard/subtree-history'
 import type { EditorContext } from '#core/editor/types'
 import { computeAbsoluteBounds } from '#core/geometry'
 import type { SceneNode } from '#core/scene-graph'
+import { copyFills, copyStrokes } from '#core/scene-graph/copy'
 
 import { selectedNodesInSharedParent } from './selection'
 
@@ -16,6 +18,7 @@ export function booleanOperationSelected(
   const selection = selectedNodesInSharedParent(ctx, selectedNodes)
   if (!selection || selection.topLevel.length < 2) return null
   const { topLevel, parentId, parent } = selection
+  if (topLevel.some((node) => !canMakeBooleanSourcePath(node))) return null
 
   const prevSelection = new Set(ctx.state.selectedIds)
   const childIds = topLevel.map((node) => node.id)
@@ -31,6 +34,8 @@ export function booleanOperationSelected(
     y: bounds.y - parentAbs.y,
     width: bounds.width,
     height: bounds.height,
+    fills: copyFills(topLevel[0].fills),
+    strokes: copyStrokes(topLevel[0].strokes),
     booleanOperation: operation
   })
   const booleanId = booleanNode.id

@@ -16,9 +16,24 @@ describe('booleanOperationSelected', () => {
     const booleanNode = editor.graph.getNode(booleanId)
     expect(booleanNode?.type).toBe('BOOLEAN_OPERATION')
     expect(booleanNode?.booleanOperation).toBe('UNION')
+    expect(booleanNode?.fills).toEqual(first.fills)
     expect(booleanNode?.childIds).toEqual([first.id, second.id])
     expect(editor.graph.getNode(first.id)?.parentId).toBe(booleanId)
     expect(editor.graph.getNode(second.id)?.parentId).toBe(booleanId)
+  })
+
+  test('does not wrap unsupported text nodes', () => {
+    const editor = createEditor()
+    const pageId = editor.state.currentPageId
+    const first = editor.graph.createNode('TEXT', pageId, { text: 'Nope' })
+    const second = editor.graph.createNode('RECTANGLE', pageId)
+
+    editor.select([first.id, second.id])
+    const result = editor.booleanOperationSelected('UNION')
+
+    expect(result).toBeNull()
+    expect(editor.graph.getNode(pageId)?.childIds).toEqual([first.id, second.id])
+    expect(editor.state.selectedIds).toEqual(new Set([first.id, second.id]))
   })
 
   test('undo and redo preserve parent order and selection', () => {

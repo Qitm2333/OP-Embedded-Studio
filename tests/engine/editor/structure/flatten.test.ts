@@ -37,6 +37,21 @@ describe('flattenSelected', () => {
     surface.delete()
   })
 
+  test('does not flatten unsupported text nodes', async () => {
+    const { editor, surface } = await createEditorWithRenderer()
+    const pageId = editor.state.currentPageId
+    const text = editor.graph.createNode('TEXT', pageId, { text: 'Nope' })
+    const rect = editor.graph.createNode('RECTANGLE', pageId)
+
+    editor.select([text.id, rect.id])
+    const result = editor.flattenSelected()
+
+    expect(result).toBeNull()
+    expect(editor.graph.getNode(pageId)?.childIds).toEqual([text.id, rect.id])
+    expect(editor.state.selectedIds).toEqual(new Set([text.id, rect.id]))
+    surface.delete()
+  })
+
   test('undo and redo restore flattened children and vector', async () => {
     const { editor, surface } = await createEditorWithRenderer()
     const pageId = editor.state.currentPageId

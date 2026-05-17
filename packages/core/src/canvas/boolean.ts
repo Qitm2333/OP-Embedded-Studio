@@ -37,6 +37,10 @@ export function nodePathTransform(r: SkiaRenderer, child: SceneNode): number[] {
   return r.ck.Matrix.multiply(...transforms)
 }
 
+export function canMakeBooleanSourcePath(node: SceneNode): boolean {
+  return node.type !== 'TEXT' && node.type !== 'SECTION' && node.type !== 'COMPONENT_SET'
+}
+
 function lineStrokePath(r: SkiaRenderer, node: SceneNode): Path | null {
   const path = new r.ck.Path()
   path.moveTo(0, 0)
@@ -51,7 +55,7 @@ export function makeBooleanSourcePath(
   graph: SceneGraph
 ): Path | null {
   if (node.type === 'BOOLEAN_OPERATION') return makeBooleanOperationPath(r, node, graph)
-  if (node.type === 'TEXT' || node.type === 'SECTION' || node.type === 'COMPONENT_SET') return null
+  if (!canMakeBooleanSourcePath(node)) return null
   if (node.type === 'LINE') return lineStrokePath(r, node)
   if (node.type === 'ELLIPSE' && node.arcData) return makeArcPath(r, node)
 
