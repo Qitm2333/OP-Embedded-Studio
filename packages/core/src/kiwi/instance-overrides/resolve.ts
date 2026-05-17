@@ -340,6 +340,7 @@ export function repopulateInstance(ctx: OverrideContext, nodeId: string, compId:
   if (comp && comp.childIds.length > 0) {
     ctx.graph.populateInstanceChildren(nodeId, compId)
   }
+  ctx.swappedInstances.add(nodeId)
   ctx.componentIdRoot.clear()
   candidateCache.delete(ctx)
   componentFindCache.delete(ctx)

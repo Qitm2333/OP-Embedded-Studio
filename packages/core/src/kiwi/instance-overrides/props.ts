@@ -1,6 +1,6 @@
 import { guidToString } from '#core/kiwi/node-change/convert'
 
-import { resolveOverrideTarget, repopulateInstance } from './resolve'
+import { getComponentRoot, resolveOverrideTarget, repopulateInstance } from './resolve'
 import type {
   OverrideContext,
   ComponentPropAssignment,
@@ -141,7 +141,7 @@ function applyComponentPropRef(
   if (!swapId) return
   const newCompId = ctx.guidToNodeId.get(swapId)
   if (!newCompId) return
-  repopulateInstance(ctx, childId, newCompId)
+  repopulateInstance(ctx, childId, getComponentRoot(ctx, newCompId))
   modified?.add(childId)
 }
 
