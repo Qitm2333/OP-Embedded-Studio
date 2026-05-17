@@ -1,8 +1,12 @@
+import type { SkiaRenderer } from '#core/canvas'
+import { canMakeBooleanSourcePath } from '#core/canvas/boolean'
+import { flattenNodesToVectorProps } from '#core/canvas/flatten'
 import { IS_BROWSER } from '#core/constants'
 import { computeBounds } from '#core/geometry'
 import type { RasterExportFormat } from '#core/io/formats/raster'
 import type {
   SceneGraph,
+  SceneNode as CoreSceneNode,
   NodeType,
   Variable,
   VariableCollection,
@@ -96,6 +100,7 @@ export class FigmaAPI implements NodeProxyHost {
   private _selection: FigmaNodeProxy[] = []
   private _nodeCache = new Map<string, FigmaNodeProxy>()
   private _pageProxies = new WeakSet<FigmaNodeProxy>()
+  private _renderer: SkiaRenderer | null = null
 
   readonly mixed = MIXED
 
@@ -103,6 +108,10 @@ export class FigmaAPI implements NodeProxyHost {
     this.graph = graph
     const pages = graph.getPages()
     this._currentPageId = pages[0]?.id ?? graph.rootId
+  }
+
+  setRenderer(renderer: SkiaRenderer | null): void {
+    this._renderer = renderer
   }
 
   get currentPageId(): string {
@@ -424,9 +433,25 @@ export class FigmaAPI implements NodeProxyHost {
   ): FigmaVectorNode {
     if (nodes.length === 0) throw new Error('Need at least 1 node to flatten')
     const parentId = this._nodeId(parent ?? this.currentPage)
-    const first = this.graph.getNode(this._nodeId(nodes[0]))
-    if (!first) throw new Error('Node not found')
-    const vector = this.graph.createNode('VECTOR', parentId, {
+    const sourceNodes: CoreSceneNode[] = []
+    for (const node of nodes) {
+      const raw = this.graph.getNode(this._nodeId(node))
+      if (!raw) throw new Error('Node not found')
+      sourceNodes.push(raw)
+    }
+    const vector = this._renderer
+      ? this._flattenWithRenderer(sourceNodes, parentId)
+      : this._flattenPlaceholder(sourceNodes, parentId)
+    if (index != null) this.graph.reorderChild(vector.id, parentId, index)
+    for (const node of nodes) {
+      this.graph.deleteNode(this._nodeId(node))
+    }
+    return this.wrapNode(vector.id) as FigmaVectorNode
+  }
+
+  private _flattenPlaceholder(nodes: CoreSceneNode[], parentId: string): CoreSceneNode {
+    const first = nodes[0]
+    return this.graph.createNode('VECTOR', parentId, {
       name: 'Flatten',
       x: first.x,
       y: first.y,
@@ -434,11 +459,18 @@ export class FigmaAPI implements NodeProxyHost {
       height: first.height,
       fills: copyFills(first.fills)
     })
-    if (index != null) this.graph.reorderChild(vector.id, parentId, index)
-    for (const node of nodes) {
-      this.graph.deleteNode(this._nodeId(node))
+  }
+
+  private _flattenWithRenderer(nodes: CoreSceneNode[], parentId: string): CoreSceneNode {
+    const renderer = this._renderer
+    if (!renderer) return this._flattenPlaceholder(nodes, parentId)
+    if (nodes.some((node) => !canMakeBooleanSourcePath(node))) {
+      throw new Error('Cannot flatten unsupported node type')
     }
-    return this.wrapNode(vector.id) as FigmaVectorNode
+
+    const vectorProps = flattenNodesToVectorProps(renderer, this.graph, nodes)
+    if (!vectorProps) throw new Error('Cannot flatten empty node path')
+    return this.graph.createNode('VECTOR', parentId, vectorProps)
   }
 
   flattenNode(nodeIds: string[]): FigmaVectorNode {

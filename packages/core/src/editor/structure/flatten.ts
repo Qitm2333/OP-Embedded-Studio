@@ -1,9 +1,8 @@
-import { canMakeBooleanSourcePath, makeBooleanSourcePath, nodePathTransform } from '#core/canvas/boolean'
+import { canMakeBooleanSourcePath } from '#core/canvas/boolean'
+import { flattenNodesToVectorProps } from '#core/canvas/flatten'
 import { restoreSubtree, snapshotSubtree } from '#core/editor/clipboard/subtree-history'
 import type { EditorContext } from '#core/editor/types'
-import { parseSVGPath } from '#core/io/formats/svg/parse-path'
 import type { SceneNode } from '#core/scene-graph'
-import { copyFills } from '#core/scene-graph/copy'
 
 import { selectedNodesInSharedParent } from './selection'
 
@@ -20,40 +19,10 @@ export function flattenSelected(ctx: EditorContext, selectedNodes: SceneNode[]) 
   const childSnapshots = childIds.map((id) => ({ id, subtree: snapshotSubtree(ctx.graph, id) }))
   const prevSelection = new Set(ctx.state.selectedIds)
   const firstIndex = Math.min(...childIds.map((id) => parent.childIds.indexOf(id)))
-  const path = new renderer.ck.Path()
+  const vectorProps = flattenNodesToVectorProps(renderer, ctx.graph, topLevel)
+  if (!vectorProps) return null
 
-  for (const node of topLevel) {
-    const childPath = makeBooleanSourcePath(renderer, node, ctx.graph)
-    if (!childPath) {
-      path.delete()
-      return null
-    }
-    childPath.transform(nodePathTransform(renderer, node))
-    path.addPath(childPath)
-    childPath.delete()
-  }
-
-  const bounds = path.getBounds()
-  if (bounds[2] <= bounds[0] || bounds[3] <= bounds[1]) {
-    path.delete()
-    return null
-  }
-
-  path.transform(renderer.ck.Matrix.translated(-bounds[0], -bounds[1]))
-  const svgPath = path.toSVGString()
-  path.delete()
-
-  const first = topLevel[0]
-  const vector = ctx.graph.createNode('VECTOR', parentId, {
-    name: 'Flatten',
-    x: bounds[0],
-    y: bounds[1],
-    width: bounds[2] - bounds[0],
-    height: bounds[3] - bounds[1],
-    fills: copyFills(first.fills),
-    strokes: [],
-    vectorNetwork: parseSVGPath(svgPath)
-  })
+  const vector = ctx.graph.createNode('VECTOR', parentId, { ...vectorProps, strokes: [] })
   const vectorSnapshot = structuredClone(vector)
   ctx.graph.insertChildAt(vector.id, parentId, firstIndex)
   for (const id of childIds) ctx.graph.deleteNode(id)

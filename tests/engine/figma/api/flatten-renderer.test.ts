@@ -1,0 +1,39 @@
+import { describe, expect, test } from 'bun:test'
+
+import { initCanvasKit } from '#cli/headless'
+import { SkiaRenderer } from '#core/canvas'
+
+import { createAPI } from './helpers'
+
+async function createRenderer() {
+  const ck = await initCanvasKit()
+  const surface = ck.MakeSurface(200, 200)
+  if (!surface) throw new Error('Could not create CanvasKit surface')
+  return { renderer: new SkiaRenderer(ck, surface), surface }
+}
+
+describe('FigmaAPI renderer-backed flatten', () => {
+  test('creates vector geometry when a renderer is attached', async () => {
+    const api = createAPI()
+    const { renderer, surface } = await createRenderer()
+    api.setRenderer(renderer)
+    const first = api.createRectangle()
+    const second = api.createEllipse()
+    first.resize(50, 40)
+    second.resize(50, 40)
+    second.x = 30
+    second.y = 10
+
+    const vector = api.flatten([first, second], api.currentPage)
+    const raw = api.graph.getNode(vector.id)
+
+    expect(raw?.type).toBe('VECTOR')
+    expect(raw?.x).toBe(0)
+    expect(raw?.y).toBe(0)
+    expect(raw?.width).toBe(80)
+    expect(raw?.height).toBe(50)
+    expect(raw?.vectorNetwork?.vertices.length).toBeGreaterThan(0)
+    expect(api.getNodeById(first.id)).toBeNull()
+    surface.delete()
+  })
+})
