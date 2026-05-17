@@ -40,7 +40,8 @@
     "copyAsJSX": "复制为 JSX",
     "copyNodeId": "复制节点 ID",
     "copyXPath": "复制 XPath",
-    "checkUpdates": "检查更新…"
+    "checkUpdates": "检查更新…",
+    "booleanOperations": "Boolean operations"
   },
   "commands": {
     "undo": "撤销",
@@ -66,6 +67,11 @@
     "frameSelection": "Frame selection",
     "showHide": "切换可见性",
     "lockUnlock": "切换锁定",
+    "unionSelection": "Union selection",
+    "subtractSelection": "Subtract selection",
+    "intersectSelection": "Intersect selection",
+    "excludeSelection": "Exclude selection",
+    "booleanOperations": "Boolean operations",
     "flipHorizontal": "水平翻转",
     "flipVertical": "垂直翻转"
   },

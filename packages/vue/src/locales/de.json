@@ -40,7 +40,8 @@
     "copyAsJSX": "Als JSX kopieren",
     "copyNodeId": "Knoten-ID kopieren",
     "copyXPath": "XPath kopieren",
-    "checkUpdates": "Nach Updates suchen…"
+    "checkUpdates": "Nach Updates suchen…",
+    "booleanOperations": "Boolean operations"
   },
   "commands": {
     "undo": "Rückgängig",
@@ -66,6 +67,11 @@
     "frameSelection": "Frame selection",
     "showHide": "Sichtbarkeit",
     "lockUnlock": "Sperren",
+    "unionSelection": "Union selection",
+    "subtractSelection": "Subtract selection",
+    "intersectSelection": "Intersect selection",
+    "excludeSelection": "Exclude selection",
+    "booleanOperations": "Boolean operations",
     "flipHorizontal": "Horizontal spiegeln",
     "flipVertical": "Vertikal spiegeln"
   },

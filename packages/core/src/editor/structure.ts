@@ -1,6 +1,10 @@
 import { DEFAULT_FRAME_FILL } from '#core/constants'
 import type { NodeType, SceneNode } from '#core/scene-graph'
 
+import {
+  booleanOperationSelected as booleanOperationSelectedImpl,
+  type BooleanOperation
+} from './structure/boolean'
 import { wrapInAutoLayout as wrapInAutoLayoutImpl } from './structure/auto-layout-wrap'
 import { wrapSelectionInContainer as wrapSelectionInContainerImpl } from './structure/container-wrap'
 import { ungroupSelected as ungroupImpl } from './structure/group'
@@ -56,6 +60,10 @@ export function createStructureActions(ctx: EditorContext) {
     })
   }
 
+  function booleanOperationSelected(selectedNodes: SceneNode[], operation: BooleanOperation) {
+    return booleanOperationSelectedImpl(ctx, isTopLevel, selectedNodes, operation)
+  }
+
   function ungroupSelected(selectedNode: SceneNode | undefined) {
     ungroupImpl(ctx, selectedNode)
   }
@@ -85,6 +93,7 @@ export function createStructureActions(ctx: EditorContext) {
     wrapInAutoLayout,
     groupSelected,
     frameSelection,
+    booleanOperationSelected,
     ungroupSelected,
     ...stateActions,
     moveToPage,

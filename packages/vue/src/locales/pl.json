@@ -40,7 +40,8 @@
     "copyAsJSX": "Kopiuj jako JSX",
     "copyNodeId": "Kopiuj ID węzła",
     "copyXPath": "Kopiuj XPath",
-    "checkUpdates": "Sprawdź aktualizacje…"
+    "checkUpdates": "Sprawdź aktualizacje…",
+    "booleanOperations": "Boolean operations"
   },
   "commands": {
     "undo": "Cofnij",
@@ -66,6 +67,11 @@
     "frameSelection": "Frame selection",
     "showHide": "Widoczność",
     "lockUnlock": "Blokada",
+    "unionSelection": "Union selection",
+    "subtractSelection": "Subtract selection",
+    "intersectSelection": "Intersect selection",
+    "excludeSelection": "Exclude selection",
+    "booleanOperations": "Boolean operations",
     "flipHorizontal": "Odbij poziomo",
     "flipVertical": "Odbij pionowo"
   },

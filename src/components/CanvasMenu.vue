@@ -8,6 +8,10 @@ import {
   ContextMenuSubContent,
   ContextMenuPortal
 } from 'reka-ui'
+import IconCombine from '~icons/lucide/combine'
+import IconCopyMinus from '~icons/lucide/copy-minus'
+import IconCopyX from '~icons/lucide/copy-x'
+import IconSquaresIntersect from '~icons/lucide/squares-intersect'
 import {
   vTestId,
   useEditorCommands,
@@ -17,6 +21,7 @@ import {
   editorCommandMetadata,
   formatShortcut
 } from '@open-pencil/vue'
+import type { Component } from 'vue'
 import type { EditorCommandId } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
@@ -50,8 +55,20 @@ const cls = {
   sep: menuCls.separator
 }
 
+const booleanCommandIcons = {
+  'selection.booleanUnion': IconCombine,
+  'selection.booleanSubtract': IconCopyMinus,
+  'selection.booleanIntersect': IconSquaresIntersect,
+  'selection.booleanExclude': IconCopyX
+} satisfies Partial<Record<EditorCommandId, Component>>
+
 function contextCommandTestId(id: EditorCommandId | undefined): string | undefined {
   return id ? editorCommandMetadata(id).contextTestId : undefined
+}
+
+function contextCommandIcon(id: EditorCommandId | undefined): Component | undefined {
+  if (!id) return undefined
+  return (booleanCommandIcons as Partial<Record<EditorCommandId, Component>>)[id]
 }
 </script>
 
@@ -128,6 +145,11 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
               @select="!sub.separator && sub.action?.()"
             >
               <template v-if="!sub.separator">
+                <component
+                  :is="contextCommandIcon(sub.id)"
+                  v-if="contextCommandIcon(sub.id)"
+                  class="mr-2 size-3.5 text-muted"
+                />
                 <span class="flex-1">{{ sub.label }}</span>
                 <span v-if="sub.shortcut" class="text-[11px] text-muted">{{ sub.shortcut }}</span>
               </template>
@@ -142,6 +164,11 @@ function contextCommandTestId(id: EditorCommandId | undefined): string | undefin
         :disabled="item.disabled"
         @select="item.action?.()"
       >
+        <component
+          :is="contextCommandIcon(item.id)"
+          v-if="contextCommandIcon(item.id)"
+          class="mr-2 size-3.5 text-muted"
+        />
         <span class="flex-1">{{ item.label }}</span>
         <span
           v-if="item.shortcut"

@@ -195,6 +195,25 @@
         "type": "separator"
       },
       {
+        "id": "selection.booleanUnion",
+        "label": "Union selection"
+      },
+      {
+        "id": "selection.booleanSubtract",
+        "label": "Subtract selection"
+      },
+      {
+        "id": "selection.booleanIntersect",
+        "label": "Intersect selection"
+      },
+      {
+        "id": "selection.booleanExclude",
+        "label": "Exclude selection"
+      },
+      {
+        "type": "separator"
+      },
+      {
         "id": "selection.createComponent",
         "label": "Create Component"
       },

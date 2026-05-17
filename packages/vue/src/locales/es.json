@@ -40,7 +40,8 @@
     "copyAsJSX": "Copiar como JSX",
     "copyNodeId": "Copiar ID del nodo",
     "copyXPath": "Copiar XPath",
-    "checkUpdates": "Buscar actualizaciones…"
+    "checkUpdates": "Buscar actualizaciones…",
+    "booleanOperations": "Boolean operations"
   },
   "commands": {
     "undo": "Deshacer",
@@ -66,6 +67,11 @@
     "frameSelection": "Frame selection",
     "showHide": "Visibilidad",
     "lockUnlock": "Bloqueo",
+    "unionSelection": "Union selection",
+    "subtractSelection": "Subtract selection",
+    "intersectSelection": "Intersect selection",
+    "excludeSelection": "Exclude selection",
+    "booleanOperations": "Boolean operations",
     "flipHorizontal": "Voltear horizontalmente",
     "flipVertical": "Voltear verticalmente"
   },

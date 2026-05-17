@@ -70,7 +70,8 @@ export const menuMessages = i18n('menu', {
   copyAsPNG: 'Copy as PNG',
   copyAsJSX: 'Copy as JSX',
   copyNodeId: 'Copy node ID',
-  copyXPath: 'Copy XPath'
+  copyXPath: 'Copy XPath',
+  booleanOperations: 'Boolean operations'
 })
 
 export const commandMessages = i18n('commands', {
@@ -93,6 +94,11 @@ export const commandMessages = i18n('commands', {
   sendToBack: 'Send to back',
   showHide: 'Show/Hide',
   lockUnlock: 'Lock/Unlock',
+  unionSelection: 'Union selection',
+  subtractSelection: 'Subtract selection',
+  intersectSelection: 'Intersect selection',
+  excludeSelection: 'Exclude selection',
+  booleanOperations: 'Boolean operations',
   flipHorizontal: 'Flip horizontal',
   flipVertical: 'Flip vertical',
   moveToPage: 'Move to page',

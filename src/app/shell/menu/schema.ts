@@ -150,6 +150,27 @@ export const APP_MENU_SCHEMA = [
       },
       { type: 'separator' },
       {
+        id: 'selection.booleanUnion',
+        label: 'Union selection',
+        command: 'selection.booleanUnion'
+      },
+      {
+        id: 'selection.booleanSubtract',
+        label: 'Subtract selection',
+        command: 'selection.booleanSubtract'
+      },
+      {
+        id: 'selection.booleanIntersect',
+        label: 'Intersect selection',
+        command: 'selection.booleanIntersect'
+      },
+      {
+        id: 'selection.booleanExclude',
+        label: 'Exclude selection',
+        command: 'selection.booleanExclude'
+      },
+      { type: 'separator' },
+      {
         id: 'selection.createComponent',
         label: 'Create Component',
         command: 'selection.createComponent'

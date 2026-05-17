@@ -40,7 +40,8 @@
     "copyAsJSX": "Копировать как JSX",
     "copyNodeId": "Копировать ID узла",
     "copyXPath": "Копировать XPath",
-    "checkUpdates": "Проверить обновления…"
+    "checkUpdates": "Проверить обновления…",
+    "booleanOperations": "Boolean operations"
   },
   "commands": {
     "undo": "Отменить",
@@ -66,6 +67,11 @@
     "frameSelection": "Frame selection",
     "showHide": "Видимость",
     "lockUnlock": "Блокировка",
+    "unionSelection": "Union selection",
+    "subtractSelection": "Subtract selection",
+    "intersectSelection": "Intersect selection",
+    "excludeSelection": "Exclude selection",
+    "booleanOperations": "Boolean operations",
     "flipHorizontal": "Отразить по горизонтали",
     "flipVertical": "Отразить по вертикали"
   },

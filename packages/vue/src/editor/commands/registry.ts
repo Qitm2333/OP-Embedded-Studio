@@ -63,6 +63,10 @@ export const EDITOR_COMMAND_METADATA = {
     keybinding: 'Shift+KeyV',
     contextTestId: 'context-flip-vertical'
   },
+  'selection.booleanUnion': { contextTestId: 'context-boolean-union' },
+  'selection.booleanSubtract': { contextTestId: 'context-boolean-subtract' },
+  'selection.booleanIntersect': { contextTestId: 'context-boolean-intersect' },
+  'selection.booleanExclude': { contextTestId: 'context-boolean-exclude' },
   'selection.moveToPage': {},
   'view.zoom100': { keybinding: '$mod+Digit0' },
   'view.zoomFit': { keybinding: ['$mod+Digit1', 'Shift+Digit1'] },

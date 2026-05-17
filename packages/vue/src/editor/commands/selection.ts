@@ -159,6 +159,38 @@ export function createSelectionCommands({
       enabled: capabilities.canFlip,
       run: () => editor.flipNodes([...selection.selectedIds.value], 'vertical')
     },
+    'selection.booleanUnion': {
+      id: 'selection.booleanUnion',
+      get label() {
+        return t.value.unionSelection
+      },
+      enabled: capabilities.canBooleanOperation,
+      run: () => editor.booleanOperationSelected('UNION')
+    },
+    'selection.booleanSubtract': {
+      id: 'selection.booleanSubtract',
+      get label() {
+        return t.value.subtractSelection
+      },
+      enabled: capabilities.canBooleanOperation,
+      run: () => editor.booleanOperationSelected('SUBTRACT')
+    },
+    'selection.booleanIntersect': {
+      id: 'selection.booleanIntersect',
+      get label() {
+        return t.value.intersectSelection
+      },
+      enabled: capabilities.canBooleanOperation,
+      run: () => editor.booleanOperationSelected('INTERSECT')
+    },
+    'selection.booleanExclude': {
+      id: 'selection.booleanExclude',
+      get label() {
+        return t.value.excludeSelection
+      },
+      enabled: capabilities.canBooleanOperation,
+      run: () => editor.booleanOperationSelected('EXCLUDE')
+    },
     'selection.moveToPage': {
       id: 'selection.moveToPage',
       get label() {
