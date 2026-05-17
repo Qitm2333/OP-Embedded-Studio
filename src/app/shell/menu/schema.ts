@@ -69,7 +69,7 @@ export const APP_MENU_SCHEMA = [
       { id: 'copy', label: 'Copy', shortcut: 'MOD+C' },
       { id: 'cut', label: 'Cut', shortcut: 'MOD+X' },
       { id: 'paste', label: 'Paste', shortcut: 'MOD+V' },
-      { id: 'paste-to-replace', label: 'Paste to Replace' },
+      { id: 'paste-to-replace', label: 'Paste to replace' },
       {
         id: 'selection.duplicate',
         label: 'Duplicate',
