@@ -45,6 +45,11 @@ export function createTextEditInput(options: TextEditInputOptions) {
     const localY = cy - abs.y
     if (localX < 0 || localY < 0 || localX > editNode.width || localY > editNode.height) {
       editor.commitTextEdit()
+      const hit = hitTestInScope(cx, cy, true)
+      if (hit?.type === 'TEXT' && hit.id !== editNode.id) {
+        startTextEditingAt(hit, cx, cy)
+        return true
+      }
       return false
     }
     if (getClickCount() >= 3) {
