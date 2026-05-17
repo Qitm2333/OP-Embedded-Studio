@@ -429,5 +429,16 @@ describe('fig export/import with images', () => {
     expect(new Uint8Array(expectDefined(restored.images.get(hash2), 'restored image 2'))).toEqual(
       bytes2
     )
+
+    const restoredImg1 = expectDefined(
+      [...restored.getAllNodes()].find((node) => node.name === 'Img1'),
+      'restored image node 1'
+    )
+    const restoredImg2 = expectDefined(
+      [...restored.getAllNodes()].find((node) => node.name === 'Img2'),
+      'restored image node 2'
+    )
+    expect(restoredImg1.fills[0].imageHash).toBe(hash1)
+    expect(restoredImg2.fills[0].imageHash).toBe(hash2)
   })
 })
