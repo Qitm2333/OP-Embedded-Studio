@@ -1500,16 +1500,26 @@ const noTopLevelPrefixedTestFiles = createProgramFilenameRule({
 })
 
 const noSiblingDomainPrefixedFiles = createProgramFilenameRule({
-  description: 'Disallow files that repeat an existing sibling domain folder as a filename prefix',
+  description: 'Disallow files that repeat an existing sibling domain folder in the filename',
   check(file) {
-    const match = file.match(/^(.*\/)([^/]+)-[^/]+\.(?:test\.)?(?:spec\.)?(?:ts|tsx|vue)$/)
+    const match = file.match(/^(.*\/)([^/]+)\.(?:test\.)?(?:spec\.)?(?:ts|tsx|vue)$/)
     if (!match) return false
 
-    const [, dir, prefix] = match
-    if (!existsSync(`${dir}${prefix}`)) return false
+    const [, dir, name] = match
+    const parts = name.split('-')
+    if (parts.length < 2) return false
+
+    const prefix = parts[0]
+    const suffix = parts.at(-1)
+    const domain = existsSync(`${dir}${prefix}`)
+      ? prefix
+      : suffix === 'menu' && existsSync(`${dir}${suffix}`)
+        ? suffix
+        : null
+    if (!domain) return false
 
     const filename = file.slice(dir.length)
-    return `Move '${filename}' under the existing '${prefix}/' folder instead of repeating the domain as a filename prefix.`
+    return `Move '${filename}' under the existing '${domain}/' folder instead of repeating the domain in the filename.`
   }
 })
 
