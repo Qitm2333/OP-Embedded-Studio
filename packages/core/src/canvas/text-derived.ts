@@ -5,6 +5,10 @@ import { geometryBlobToPath } from '#core/vector'
 
 import type { SkiaRenderer } from './renderer'
 
+export function snapFigmaDerivedGlyphBaseline(y: number): number {
+  return Math.round(y)
+}
+
 export function drawFigmaDerivedText(
   r: SkiaRenderer,
   canvas: Canvas,
@@ -15,7 +19,7 @@ export function drawFigmaDerivedText(
   for (const glyph of node.figmaDerivedTextGlyphs) {
     const path = geometryBlobToPath(r.ck, glyph.commandsBlob, 'NONZERO')
     canvas.save()
-    canvas.translate(glyph.x, glyph.y)
+    canvas.translate(glyph.x, snapFigmaDerivedGlyphBaseline(glyph.y))
     canvas.scale(glyph.fontSize, -glyph.fontSize)
     canvas.drawPath(path, r.fillPaint)
     canvas.restore()
