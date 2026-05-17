@@ -5,6 +5,7 @@ import type { SceneNode, VectorNetwork, VectorSegment, VectorVertex } from '#cor
 const CMD_CLOSE = 0
 const CMD_MOVE_TO = 1
 const CMD_LINE_TO = 2
+const CMD_QUAD_TO = 3
 const CMD_CUBIC_TO = 4
 
 export function round(n: number, decimals = 2): number {
@@ -36,6 +37,15 @@ export function geometryBlobToSVGPath(blob: Uint8Array): string {
         const y = round(dv.getFloat32(o + 4, true))
         o += 8
         parts.push(`L${x} ${y}`)
+        break
+      }
+      case CMD_QUAD_TO: {
+        const x1 = round(dv.getFloat32(o, true))
+        const y1 = round(dv.getFloat32(o + 4, true))
+        const x = round(dv.getFloat32(o + 8, true))
+        const y = round(dv.getFloat32(o + 12, true))
+        o += 16
+        parts.push(`Q${x1} ${y1} ${x} ${y}`)
         break
       }
       case CMD_CUBIC_TO: {

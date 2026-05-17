@@ -39,6 +39,18 @@ describe('geometryBlobToSVGPath()', () => {
     expect(geometryBlobToSVGPath(blob)).toBe('M10 20L30 40Z')
   })
 
+  test('quadratic bezier', () => {
+    const blob = makeBlobWithFloats([
+      { cmd: 1, floats: [0, 0] },
+      { cmd: 3, floats: [10, 0, 30, 30] },
+      { cmd: 0 }
+    ])
+    const result = geometryBlobToSVGPath(blob)
+    expect(result).toContain('M0 0')
+    expect(result).toContain('Q10 0 30 30')
+    expect(result).toContain('Z')
+  })
+
   test('cubic bezier', () => {
     const blob = makeBlobWithFloats([
       { cmd: 1, floats: [0, 0] },

@@ -279,6 +279,7 @@ function addLoopToPath(
 const CMD_CLOSE = 0
 const CMD_MOVE_TO = 1
 const CMD_LINE_TO = 2
+const CMD_QUAD_TO = 3
 const CMD_CUBIC_TO = 4
 
 export function geometryBlobToPath(
@@ -309,6 +310,15 @@ export function geometryBlobToPath(
         const y = dv.getFloat32(o + 4, true)
         o += 8
         path.lineTo(x, y)
+        break
+      }
+      case CMD_QUAD_TO: {
+        const x1 = dv.getFloat32(o, true)
+        const y1 = dv.getFloat32(o + 4, true)
+        const x = dv.getFloat32(o + 8, true)
+        const y = dv.getFloat32(o + 12, true)
+        o += 16
+        path.quadTo(x1, y1, x, y)
         break
       }
       case CMD_CUBIC_TO: {
