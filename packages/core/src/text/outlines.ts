@@ -2,12 +2,13 @@ import { prepareWithSegments, layoutWithLines } from '@chenglou/pretext'
 
 import type { CharacterStyleOverride, SceneNode } from '#core/scene-graph'
 import { fontManager, weightToStyle } from '#core/text/fonts'
-import { getGlyphOutlineMetricsSync, type OutlineCommand } from '#core/text/opentype'
+import { fontHasGlyphSync, getGlyphOutlineMetricsSync, type OutlineCommand } from '#core/text/opentype'
 
 export type TextOutlineUnsupportedReason =
   | 'not-text'
   | 'empty-text'
   | 'missing-font'
+  | 'missing-glyph'
   | 'complex-script'
 
 export type TextOutlineSupport =
@@ -61,6 +62,23 @@ function textStyleAt(node: SceneNode, index: number): TextStyle {
   }
 }
 
+function resolvedGlyphStyle(style: TextStyle, char: string): TextStyle | null {
+  if (fontHasGlyphSync(style.fontFamily, styleName(style), char)) return style
+  const family = fallbackFamilies().find((candidate) => {
+    const next = fallbackStyle(style, candidate)
+    return fontManager.loadedData(next.fontFamily, styleName(next)) && fontHasGlyphSync(next.fontFamily, styleName(next), char)
+  })
+  return family ? fallbackStyle(style, family) : null
+}
+
+function fallbackFamilies(): string[] {
+  return [...fontManager.getCJKFallbackFamilies(), ...fontManager.getArabicFallbackFamilies()]
+}
+
+function fallbackStyle(style: TextStyle, family: string): TextStyle {
+  return { ...style, fontFamily: family }
+}
+
 function textStyles(node: SceneNode): TextStyle[] {
   if (node.styleRuns.length === 0) return [baseTextStyle(node)]
   const styles = new Map<string, TextStyle>()
@@ -79,6 +97,12 @@ export function getTextOutlineSupport(node: SceneNode): TextOutlineSupport {
     if (!fontManager.loadedData(style.fontFamily, styleName(style))) {
       return { supported: false, reason: 'missing-font' }
     }
+  }
+  for (let index = 0; index < node.text.length; index++) {
+    const char = node.text[index]
+    if (char === '\n') continue
+    const style = textStyleAt(node, index)
+    if (!resolvedGlyphStyle(style, char)) return { supported: false, reason: 'missing-glyph' }
   }
   return { supported: true }
 }
@@ -156,10 +180,15 @@ function lineGlyphs(node: SceneNode, line: TextLine, baseline: number, xOffset: 
 
   while (index < line.text.length) {
     const absoluteIndex = line.start + index
-    const style = textStyleAt(node, absoluteIndex)
+    const style = resolvedGlyphStyle(textStyleAt(node, absoluteIndex), line.text[index])
+    if (!style) return null
     const key = styleKey(style)
     let end = index + 1
-    while (end < line.text.length && styleKey(textStyleAt(node, line.start + end)) === key) end++
+    while (end < line.text.length) {
+      const nextStyle = resolvedGlyphStyle(textStyleAt(node, line.start + end), line.text[end])
+      if (!nextStyle || styleKey(nextStyle) !== key) break
+      end++
+    }
 
     const segment = line.text.slice(index, end)
     const metrics = getGlyphOutlineMetricsSync(style.fontFamily, styleName(style), segment, style.fontSize)

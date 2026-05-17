@@ -26,6 +26,12 @@ async function loadInterBold() {
   fontManager.markLoaded('Inter', 'Bold', data)
 }
 
+async function loadNotoSansSC() {
+  const data = await Bun.file('tests/fixtures/fonts/NotoSansSC-Regular.ttf').arrayBuffer()
+  fontManager.markLoaded('Noto Sans SC', 'Regular', data)
+  fontManager.setCJKFallbackFamily('Noto Sans SC')
+}
+
 describe('flattenSelected', () => {
   test('converts selected shapes into a vector path', async () => {
     const { editor, surface } = await createEditorWithRenderer()
@@ -111,6 +117,30 @@ describe('flattenSelected', () => {
       width: 80,
       height: 40,
       styleRuns: [{ start: 1, length: 1, style: { fontWeight: 700, fontSize: 40 } }]
+    })
+
+    editor.select([text.id])
+    editor.flattenSelected()
+
+    const [vectorId] = [...editor.state.selectedIds]
+    const vector = editor.graph.getNode(vectorId)
+    expect(vector?.type).toBe('VECTOR')
+    expect(vector?.vectorNetwork?.vertices.length).toBeGreaterThan(0)
+    surface.delete()
+  })
+
+  test('flattens mixed Latin and CJK text with loaded fallback outlines', async () => {
+    await loadInterRegular()
+    await loadNotoSansSC()
+    const { editor, surface } = await createEditorWithRenderer()
+    const pageId = editor.state.currentPageId
+    const text = editor.graph.createNode('TEXT', pageId, {
+      text: 'Hi你',
+      fontFamily: 'Inter',
+      fontWeight: 400,
+      fontSize: 32,
+      width: 120,
+      height: 40
     })
 
     editor.select([text.id])

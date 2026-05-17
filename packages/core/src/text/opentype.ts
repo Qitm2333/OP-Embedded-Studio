@@ -27,6 +27,7 @@ interface OutlineFont {
   ascender: number
   descender: number
   tables: { os2?: { sTypoLineGap?: number } }
+  charToGlyphIndex(char: string): number
   stringToGlyphs(text: string): OutlineGlyph[]
   getAdvanceWidth(text: string, fontSize: number): number
 }
@@ -84,6 +85,12 @@ export interface GlyphOutlineMetrics {
   commands: OutlineCommand[]
   x: number
   advance: number
+}
+
+export function fontHasGlyphSync(family: string, style: string, char: string): boolean {
+  const font = getParsedFont(family, style)
+  if (!font) return false
+  return font.charToGlyphIndex(char) !== 0
 }
 
 export function getGlyphOutlineMetricsSync(
