@@ -1,4 +1,4 @@
-import { getDefaultCanvasBgColor } from '#core/constants'
+import { CANVAS_BG_COLOR } from '#core/constants'
 import type { Color } from '#core/types'
 
 import type { EditorContext } from './types'
@@ -35,7 +35,7 @@ export function createPageViewportStore(ctx: EditorContext) {
     ctx.state.panX = 0
     ctx.state.panY = 0
     ctx.state.zoom = 1
-    ctx.state.pageColor = { ...getDefaultCanvasBgColor() }
+    ctx.state.pageColor = { ...CANVAS_BG_COLOR }
   }
 
   function deletePageViewport(pageId: string) {

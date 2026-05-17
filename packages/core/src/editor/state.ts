@@ -1,4 +1,4 @@
-import { getDefaultCanvasBgColor } from '#core/constants'
+import { CANVAS_BG_COLOR } from '#core/constants'
 import type { EditorState } from '#core/editor/types'
 
 export function createDefaultEditorState(pageId: string): EditorState {
@@ -20,7 +20,7 @@ export function createDefaultEditorState(pageId: string): EditorState {
     autoLayoutHover: null,
     documentName: 'Untitled',
     panX: 0,
-    pageColor: { ...getDefaultCanvasBgColor() },
+    pageColor: { ...CANVAS_BG_COLOR },
     panY: 0,
     zoom: 1,
     renderVersion: 0,
