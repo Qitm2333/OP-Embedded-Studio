@@ -63,7 +63,9 @@
     "zoomToSelection": "适应所选内容",
     "groupSelection": "成组",
     "showHide": "切换可见性",
-    "lockUnlock": "切换锁定"
+    "lockUnlock": "切换锁定",
+    "flipHorizontal": "水平翻转",
+    "flipVertical": "垂直翻转"
   },
   "tools": {
     "move": "移动",

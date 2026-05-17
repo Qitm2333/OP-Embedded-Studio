@@ -63,7 +63,9 @@
     "zoomToSelection": "Auswahl einpassen",
     "groupSelection": "Gruppieren",
     "showHide": "Sichtbarkeit",
-    "lockUnlock": "Sperren"
+    "lockUnlock": "Sperren",
+    "flipHorizontal": "Horizontal spiegeln",
+    "flipVertical": "Vertikal spiegeln"
   },
   "tools": {
     "move": "Verschieben",

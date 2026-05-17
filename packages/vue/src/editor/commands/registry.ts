@@ -48,6 +48,16 @@ export const EDITOR_COMMAND_METADATA = {
     keybinding: '$mod+Shift+KeyL',
     contextTestId: 'context-toggle-lock'
   },
+  'selection.flipHorizontal': {
+    shortcut: '⇧H',
+    keybinding: 'Shift+KeyH',
+    contextTestId: 'context-flip-horizontal'
+  },
+  'selection.flipVertical': {
+    shortcut: '⇧V',
+    keybinding: 'Shift+KeyV',
+    contextTestId: 'context-flip-vertical'
+  },
   'selection.moveToPage': {},
   'view.zoom100': { keybinding: '$mod+Digit0' },
   'view.zoomFit': { keybinding: ['$mod+Digit1', 'Shift+Digit1'] },

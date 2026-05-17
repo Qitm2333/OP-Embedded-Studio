@@ -18,6 +18,8 @@ export type EditorCommandId =
   | 'selection.sendToBack'
   | 'selection.toggleVisibility'
   | 'selection.toggleLock'
+  | 'selection.flipHorizontal'
+  | 'selection.flipVertical'
   | 'selection.moveToPage'
   | 'view.zoom100'
   | 'view.zoomFit'

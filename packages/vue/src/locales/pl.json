@@ -63,7 +63,9 @@
     "zoomToSelection": "Zoom do zaznaczenia",
     "groupSelection": "Grupuj",
     "showHide": "Widoczność",
-    "lockUnlock": "Blokada"
+    "lockUnlock": "Blokada",
+    "flipHorizontal": "Odbij poziomo",
+    "flipVertical": "Odbij pionowo"
   },
   "tools": {
     "move": "Przesuń",

@@ -135,6 +135,22 @@ export function createSelectionCommands({
       enabled: capabilities.canToggleLock,
       run: () => editor.toggleLock()
     },
+    'selection.flipHorizontal': {
+      id: 'selection.flipHorizontal',
+      get label() {
+        return t.value.flipHorizontal
+      },
+      enabled: capabilities.canFlip,
+      run: () => editor.flipNodes([...selection.selectedIds.value], 'horizontal')
+    },
+    'selection.flipVertical': {
+      id: 'selection.flipVertical',
+      get label() {
+        return t.value.flipVertical
+      },
+      enabled: capabilities.canFlip,
+      run: () => editor.flipNodes([...selection.selectedIds.value], 'vertical')
+    },
     'selection.moveToPage': {
       id: 'selection.moveToPage',
       get label() {

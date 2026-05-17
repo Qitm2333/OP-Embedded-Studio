@@ -63,7 +63,9 @@
     "zoomToSelection": "Zoom sur la sélection",
     "groupSelection": "Grouper",
     "showHide": "Visibilité",
-    "lockUnlock": "Verrouillage"
+    "lockUnlock": "Verrouillage",
+    "flipHorizontal": "Retourner horizontalement",
+    "flipVertical": "Retourner verticalement"
   },
   "tools": {
     "move": "Déplacer",

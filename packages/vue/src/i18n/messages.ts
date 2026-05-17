@@ -91,6 +91,8 @@ export const commandMessages = i18n('commands', {
   sendToBack: 'Send to back',
   showHide: 'Show/Hide',
   lockUnlock: 'Lock/Unlock',
+  flipHorizontal: 'Flip horizontal',
+  flipVertical: 'Flip vertical',
   moveToPage: 'Move to page',
   zoomTo100: 'Zoom to 100%',
   zoomToFit: 'Zoom to fit',

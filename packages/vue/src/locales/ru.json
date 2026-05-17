@@ -63,7 +63,9 @@
     "zoomToSelection": "Масштаб по выделению",
     "groupSelection": "Сгруппировать",
     "showHide": "Видимость",
-    "lockUnlock": "Блокировка"
+    "lockUnlock": "Блокировка",
+    "flipHorizontal": "Отразить по горизонтали",
+    "flipVertical": "Отразить по вертикали"
   },
   "tools": {
     "move": "Перемещение",

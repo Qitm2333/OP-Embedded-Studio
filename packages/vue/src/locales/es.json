@@ -63,7 +63,9 @@
     "zoomToSelection": "Zoom a selección",
     "groupSelection": "Agrupar",
     "showHide": "Visibilidad",
-    "lockUnlock": "Bloqueo"
+    "lockUnlock": "Bloqueo",
+    "flipHorizontal": "Voltear horizontalmente",
+    "flipVertical": "Voltear verticalmente"
   },
   "tools": {
     "move": "Mover",
