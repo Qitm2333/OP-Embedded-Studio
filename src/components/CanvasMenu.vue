@@ -22,7 +22,7 @@ import type { EditorCommandId } from '@open-pencil/vue'
 import { useEditorStore } from '@/app/editor/active-store'
 import { appMenuShortcutLabel } from '@/app/shell/menu/shortcut'
 import { createCanvasMenuActions } from '@/app/editor/canvas/menu/actions'
-import { useCanvasContextMenu } from '@/app/editor/canvas/context-menu'
+import { useCanvasContextMenu } from '@/app/editor/canvas/menu/context'
 import { canvasMenuItemClass, canvasMenuShortcutClass } from '@/app/editor/canvas/menu/model'
 import { menu, useMenuUI } from '@/components/ui/menu'
 
