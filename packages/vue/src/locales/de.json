@@ -73,7 +73,8 @@
     "excludeSelection": "Exclude selection",
     "booleanOperations": "Boolean operations",
     "flipHorizontal": "Horizontal spiegeln",
-    "flipVertical": "Vertikal spiegeln"
+    "flipVertical": "Vertikal spiegeln",
+    "flattenSelection": "Flatten"
   },
   "tools": {
     "move": "Verschieben",

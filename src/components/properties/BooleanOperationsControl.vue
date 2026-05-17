@@ -10,9 +10,10 @@ import IconChevronDown from '~icons/lucide/chevron-down'
 import IconCombine from '~icons/lucide/combine'
 import IconCopyMinus from '~icons/lucide/copy-minus'
 import IconCopyX from '~icons/lucide/copy-x'
+import IconListCollapse from '~icons/lucide/list-collapse'
 import IconSquaresIntersect from '~icons/lucide/squares-intersect'
 
-import { useEditorCommands, useI18n } from '@open-pencil/vue'
+import { editorCommandMetadata, formatShortcut, useEditorCommands, useI18n } from '@open-pencil/vue'
 import type { EditorCommandId } from '@open-pencil/vue'
 
 import { menuItem, useMenuUI } from '@/components/ui/menu'
@@ -24,11 +25,12 @@ const operations = [
   { id: 'selection.booleanUnion', icon: IconCombine },
   { id: 'selection.booleanSubtract', icon: IconCopyMinus },
   { id: 'selection.booleanIntersect', icon: IconSquaresIntersect },
-  { id: 'selection.booleanExclude', icon: IconCopyX }
+  { id: 'selection.booleanExclude', icon: IconCopyX },
+  { id: 'selection.flatten', icon: IconListCollapse }
 ] satisfies Array<{ id: EditorCommandId; icon: unknown }>
 
 const menuCls = useMenuUI({ content: 'min-w-44' })
-const itemCls = menuItem({ justify: 'start' })
+const itemCls = menuItem({ justify: 'between' })
 </script>
 
 <template>
@@ -44,12 +46,7 @@ const itemCls = menuItem({ justify: 'start' })
       </button>
     </DropdownMenuTrigger>
     <DropdownMenuPortal>
-      <DropdownMenuContent
-        align="end"
-        side="bottom"
-        :side-offset="4"
-        :class="menuCls.content"
-      >
+      <DropdownMenuContent align="end" side="bottom" :side-offset="4" :class="menuCls.content">
         <DropdownMenuItem
           v-for="operation in operations"
           :key="operation.id"
@@ -57,8 +54,13 @@ const itemCls = menuItem({ justify: 'start' })
           :disabled="!getCommand(operation.id).enabled.value"
           @select="runCommand(operation.id)"
         >
-          <component :is="operation.icon" class="size-3.5 text-muted" />
-          <span>{{ getCommand(operation.id).label }}</span>
+          <div class="flex min-w-0 items-center gap-2">
+            <component :is="operation.icon" class="size-3.5 shrink-0 text-muted" />
+            <span>{{ getCommand(operation.id).label }}</span>
+          </div>
+          <span class="ml-6 text-[11px] text-muted">{{
+            formatShortcut(editorCommandMetadata(operation.id).shortcut)
+          }}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenuPortal>

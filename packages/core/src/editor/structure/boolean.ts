@@ -1,8 +1,9 @@
+import { restoreSubtree, snapshotSubtree } from '#core/editor/clipboard/subtree-history'
 import type { EditorContext } from '#core/editor/types'
 import { computeAbsoluteBounds } from '#core/geometry'
 import type { SceneNode } from '#core/scene-graph'
 
-import { restoreSubtree, snapshotSubtree } from '#core/editor/clipboard/subtree-history'
+import { selectedNodesInSharedParent } from './selection'
 
 export type BooleanOperation = 'UNION' | 'SUBTRACT' | 'INTERSECT' | 'EXCLUDE'
 
@@ -12,15 +13,9 @@ export function booleanOperationSelected(
   selectedNodes: SceneNode[],
   operation: BooleanOperation
 ) {
-  const selectedSet = new Set(selectedNodes.map((node) => node.id))
-  const topLevel = selectedNodes.filter((node) => !node.parentId || !selectedSet.has(node.parentId))
-  if (topLevel.length < 2 || topLevel.some((node) => node.locked)) return null
-
-  const parentId = topLevel[0].parentId ?? ctx.state.currentPageId
-  if (!topLevel.every((node) => (node.parentId ?? ctx.state.currentPageId) === parentId)) return null
-
-  const parent = ctx.graph.getNode(parentId)
-  if (!parent) return null
+  const selection = selectedNodesInSharedParent(ctx, selectedNodes)
+  if (!selection || selection.topLevel.length < 2) return null
+  const { topLevel, parentId, parent } = selection
 
   const prevSelection = new Set(ctx.state.selectedIds)
   const childIds = topLevel.map((node) => node.id)

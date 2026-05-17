@@ -73,7 +73,8 @@
     "excludeSelection": "Exclude selection",
     "booleanOperations": "Boolean operations",
     "flipHorizontal": "Odbij poziomo",
-    "flipVertical": "Odbij pionowo"
+    "flipVertical": "Odbij pionowo",
+    "flattenSelection": "Flatten"
   },
   "tools": {
     "move": "Przesuń",

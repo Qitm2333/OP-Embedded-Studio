@@ -36,6 +36,7 @@ export function useSelectionCapabilities() {
     canToggleLock: computed(() => hasSelection.value),
     canFlip: computed(() => hasSelection.value),
     canBooleanOperation: computed(() => selectedCount.value >= 2),
+    canFlatten: computed(() => hasSelection.value),
     canGoToMainComponent: computed(() => selection.isInstance.value),
     canCreateInstance: computed(() => selectedNode.value?.type === 'COMPONENT'),
     canMoveToPage: useSceneComputed(() => hasSelection.value && editor.graph.getPages().length > 1),

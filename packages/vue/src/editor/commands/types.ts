@@ -25,6 +25,7 @@ export type EditorCommandId =
   | 'selection.booleanSubtract'
   | 'selection.booleanIntersect'
   | 'selection.booleanExclude'
+  | 'selection.flatten'
   | 'selection.moveToPage'
   | 'view.zoom100'
   | 'view.zoomFit'

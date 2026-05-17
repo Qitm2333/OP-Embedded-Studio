@@ -31,7 +31,13 @@ export type CanvasMenuOptions = {
 const CANVAS_MENU_GROUPS = [
   ['selection.duplicate', 'selection.delete'],
   ['selection.moveToPageWhenAvailable', 'selection.bringToFront', 'selection.sendToBack'],
-  ['selection.group', 'selection.frameSelection', 'selection.ungroupWhenGroup', 'selection.wrapInAutoLayout'],
+  [
+    'selection.group',
+    'selection.frameSelection',
+    'selection.ungroupWhenGroup',
+    'selection.wrapInAutoLayout',
+    'selection.flatten'
+  ],
   ['selection.componentAction', 'selection.componentSetAction', 'selection.instanceActions'],
   ['selection.toggleVisibility', 'selection.toggleLock'],
   ['selection.flipHorizontal', 'selection.flipVertical']

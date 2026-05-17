@@ -11,6 +11,7 @@ import {
 import IconCombine from '~icons/lucide/combine'
 import IconCopyMinus from '~icons/lucide/copy-minus'
 import IconCopyX from '~icons/lucide/copy-x'
+import IconListCollapse from '~icons/lucide/list-collapse'
 import IconSquaresIntersect from '~icons/lucide/squares-intersect'
 import {
   vTestId,
@@ -60,7 +61,8 @@ const booleanCommandIcons = {
   'selection.booleanUnion': IconCombine,
   'selection.booleanSubtract': IconCopyMinus,
   'selection.booleanIntersect': IconSquaresIntersect,
-  'selection.booleanExclude': IconCopyX
+  'selection.booleanExclude': IconCopyX,
+  'selection.flatten': IconListCollapse
 } satisfies Partial<Record<EditorCommandId, Component>>
 
 function contextCommandTestId(id: EditorCommandId | undefined): string | undefined {
@@ -183,6 +185,5 @@ function contextCommandIcon(id: EditorCommandId | undefined): Component | undefi
         >
       </ContextMenuItem>
     </template>
-
   </ContextMenuContent>
 </template>

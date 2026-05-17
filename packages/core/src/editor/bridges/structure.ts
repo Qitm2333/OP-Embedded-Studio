@@ -11,6 +11,7 @@ export function createStructureBridge(structure: StructureActions, selection: Se
     frameSelection: () => structure.frameSelection(selection.getSelectedNodes()),
     booleanOperationSelected: (operation: 'UNION' | 'SUBTRACT' | 'INTERSECT' | 'EXCLUDE') =>
       structure.booleanOperationSelected(selection.getSelectedNodes(), operation),
+    flattenSelected: () => structure.flattenSelected(selection.getSelectedNodes()),
     ungroupSelected: () => structure.ungroupSelected(selection.getSelectedNode())
   }
 }

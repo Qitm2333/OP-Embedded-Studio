@@ -73,7 +73,8 @@
     "excludeSelection": "Exclude selection",
     "booleanOperations": "Boolean operations",
     "flipHorizontal": "Rifletti orizzontalmente",
-    "flipVertical": "Rifletti verticalmente"
+    "flipVertical": "Rifletti verticalmente",
+    "flattenSelection": "Flatten"
   },
   "tools": {
     "move": "Sposta",

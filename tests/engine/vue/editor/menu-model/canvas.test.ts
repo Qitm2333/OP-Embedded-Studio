@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test'
+
 import { computed, ref } from 'vue'
 
 import type { EditorCommandId } from '@open-pencil/vue'
+
 import { buildCanvasContextMenu } from '#vue/editor/menu-model/canvas'
 import type { CanvasMenuOptions } from '#vue/editor/menu-model/canvas'
 
@@ -30,7 +32,7 @@ function options(overrides: Partial<CanvasMenuOptions> = {}): CanvasMenuOptions 
 }
 
 function itemIds(menu: ReturnType<typeof buildCanvasContextMenu>) {
-  return menu.map((item) => (item.separator ? '---' : item.id ?? item.label))
+  return menu.map((item) => (item.separator ? '---' : (item.id ?? item.label)))
 }
 
 describe('buildCanvasContextMenu', () => {
@@ -45,6 +47,7 @@ describe('buildCanvasContextMenu', () => {
       'selection.group',
       'selection.frameSelection',
       'selection.wrapInAutoLayout',
+      'selection.flatten',
       '---',
       'selection.createComponent',
       '---',

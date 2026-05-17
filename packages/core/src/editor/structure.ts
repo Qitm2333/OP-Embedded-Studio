@@ -1,12 +1,13 @@
 import { DEFAULT_FRAME_FILL } from '#core/constants'
 import type { NodeType, SceneNode } from '#core/scene-graph'
 
+import { wrapInAutoLayout as wrapInAutoLayoutImpl } from './structure/auto-layout-wrap'
 import {
   booleanOperationSelected as booleanOperationSelectedImpl,
   type BooleanOperation
 } from './structure/boolean'
-import { wrapInAutoLayout as wrapInAutoLayoutImpl } from './structure/auto-layout-wrap'
 import { wrapSelectionInContainer as wrapSelectionInContainerImpl } from './structure/container-wrap'
+import { flattenSelected as flattenSelectedImpl } from './structure/flatten'
 import { ungroupSelected as ungroupImpl } from './structure/group'
 import { createStructureReorderActions } from './structure/reorder'
 import { createStructureStateActions } from './structure/state'
@@ -68,6 +69,10 @@ export function createStructureActions(ctx: EditorContext) {
     ungroupImpl(ctx, selectedNode)
   }
 
+  function flattenSelected(selectedNodes: SceneNode[]) {
+    return flattenSelectedImpl(ctx, selectedNodes)
+  }
+
   function moveToPage(pageId: string) {
     const targetPage = ctx.graph.getNode(pageId)
     if (targetPage?.type !== 'CANVAS') return
@@ -95,6 +100,7 @@ export function createStructureActions(ctx: EditorContext) {
     frameSelection,
     booleanOperationSelected,
     ungroupSelected,
+    flattenSelected,
     ...stateActions,
     moveToPage,
     renameNode

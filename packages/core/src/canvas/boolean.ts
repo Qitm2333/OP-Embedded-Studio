@@ -16,14 +16,21 @@ const BOOLEAN_PATH_OP: Record<
   EXCLUDE: 'XOR'
 }
 
-function childTransform(r: SkiaRenderer, child: SceneNode): number[] {
+export function nodePathTransform(r: SkiaRenderer, child: SceneNode): number[] {
   const transforms = [r.ck.Matrix.translated(child.x, child.y)]
   if (child.rotation !== 0) {
-    transforms.push(r.ck.Matrix.rotated((child.rotation * Math.PI) / 180, child.width / 2, child.height / 2))
+    transforms.push(
+      r.ck.Matrix.rotated((child.rotation * Math.PI) / 180, child.width / 2, child.height / 2)
+    )
   }
   if (child.flipX || child.flipY) {
     transforms.push(
-      r.ck.Matrix.scaled(child.flipX ? -1 : 1, child.flipY ? -1 : 1, child.width / 2, child.height / 2)
+      r.ck.Matrix.scaled(
+        child.flipX ? -1 : 1,
+        child.flipY ? -1 : 1,
+        child.width / 2,
+        child.height / 2
+      )
     )
   }
   if (transforms.length === 1) return transforms[0]
@@ -38,7 +45,11 @@ function lineStrokePath(r: SkiaRenderer, node: SceneNode): Path | null {
   return path.stroke({ width: stroke?.weight ?? 1 })
 }
 
-function shapePath(r: SkiaRenderer, node: SceneNode, graph: SceneGraph): Path | null {
+export function makeBooleanSourcePath(
+  r: SkiaRenderer,
+  node: SceneNode,
+  graph: SceneGraph
+): Path | null {
   if (node.type === 'BOOLEAN_OPERATION') return makeBooleanOperationPath(r, node, graph)
   if (node.type === 'TEXT' || node.type === 'SECTION' || node.type === 'COMPONENT_SET') return null
   if (node.type === 'LINE') return lineStrokePath(r, node)
@@ -48,14 +59,10 @@ function shapePath(r: SkiaRenderer, node: SceneNode, graph: SceneGraph): Path | 
   return r.makeNodeShapePath(node, rect, nodeHasRadius(node))
 }
 
-function transformedShapePath(
-  r: SkiaRenderer,
-  child: SceneNode,
-  graph: SceneGraph
-): Path | null {
-  const path = shapePath(r, child, graph)
+function transformedShapePath(r: SkiaRenderer, child: SceneNode, graph: SceneGraph): Path | null {
+  const path = makeBooleanSourcePath(r, child, graph)
   if (!path) return null
-  path.transform(childTransform(r, child))
+  path.transform(nodePathTransform(r, child))
   return path
 }
 

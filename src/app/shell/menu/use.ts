@@ -29,6 +29,7 @@ const COMMAND_MENU_IDS = new Set<string>([
   'selection.booleanSubtract',
   'selection.booleanIntersect',
   'selection.booleanExclude',
+  'selection.flatten',
   'selection.bringToFront',
   'selection.sendToBack',
   'view.zoom100',

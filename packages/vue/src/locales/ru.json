@@ -73,7 +73,8 @@
     "excludeSelection": "Exclude selection",
     "booleanOperations": "Boolean operations",
     "flipHorizontal": "Отразить по горизонтали",
-    "flipVertical": "Отразить по вертикали"
+    "flipVertical": "Отразить по вертикали",
+    "flattenSelection": "Flatten"
   },
   "tools": {
     "move": "Перемещение",

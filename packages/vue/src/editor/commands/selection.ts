@@ -191,6 +191,14 @@ export function createSelectionCommands({
       enabled: capabilities.canBooleanOperation,
       run: () => editor.booleanOperationSelected('EXCLUDE')
     },
+    'selection.flatten': {
+      id: 'selection.flatten',
+      get label() {
+        return t.value.flattenSelection
+      },
+      enabled: capabilities.canFlatten,
+      run: () => editor.flattenSelected()
+    },
     'selection.moveToPage': {
       id: 'selection.moveToPage',
       get label() {

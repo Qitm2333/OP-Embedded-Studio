@@ -169,6 +169,11 @@ export const APP_MENU_SCHEMA = [
         label: 'Exclude selection',
         command: 'selection.booleanExclude'
       },
+      {
+        id: 'selection.flatten',
+        label: 'Flatten',
+        command: 'selection.flatten'
+      },
       { type: 'separator' },
       {
         id: 'selection.createComponent',

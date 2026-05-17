@@ -63,10 +63,31 @@ export const EDITOR_COMMAND_METADATA = {
     keybinding: 'Shift+KeyV',
     contextTestId: 'context-flip-vertical'
   },
-  'selection.booleanUnion': { contextTestId: 'context-boolean-union' },
-  'selection.booleanSubtract': { contextTestId: 'context-boolean-subtract' },
-  'selection.booleanIntersect': { contextTestId: 'context-boolean-intersect' },
-  'selection.booleanExclude': { contextTestId: 'context-boolean-exclude' },
+  'selection.booleanUnion': {
+    shortcut: 'ALT+SHIFT+U',
+    keybinding: 'Alt+Shift+KeyU',
+    contextTestId: 'context-boolean-union'
+  },
+  'selection.booleanSubtract': {
+    shortcut: 'ALT+SHIFT+S',
+    keybinding: 'Alt+Shift+KeyS',
+    contextTestId: 'context-boolean-subtract'
+  },
+  'selection.booleanIntersect': {
+    shortcut: 'ALT+SHIFT+I',
+    keybinding: 'Alt+Shift+KeyI',
+    contextTestId: 'context-boolean-intersect'
+  },
+  'selection.booleanExclude': {
+    shortcut: 'ALT+SHIFT+E',
+    keybinding: 'Alt+Shift+KeyE',
+    contextTestId: 'context-boolean-exclude'
+  },
+  'selection.flatten': {
+    shortcut: 'ALT+SHIFT+F',
+    keybinding: 'Alt+Shift+KeyF',
+    contextTestId: 'context-flatten'
+  },
   'selection.moveToPage': {},
   'view.zoom100': { keybinding: '$mod+Digit0' },
   'view.zoomFit': { keybinding: ['$mod+Digit1', 'Shift+Digit1'] },

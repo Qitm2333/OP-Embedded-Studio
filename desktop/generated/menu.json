@@ -211,6 +211,10 @@
         "label": "Exclude selection"
       },
       {
+        "id": "selection.flatten",
+        "label": "Flatten"
+      },
+      {
         "type": "separator"
       },
       {
