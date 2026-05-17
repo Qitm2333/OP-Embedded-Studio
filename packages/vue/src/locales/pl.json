@@ -74,7 +74,8 @@
     "booleanOperations": "Boolean operations",
     "flipHorizontal": "Odbij poziomo",
     "flipVertical": "Odbij pionowo",
-    "flattenSelection": "Flatten"
+    "flattenSelection": "Flatten",
+    "outlineText": "Outline text"
   },
   "tools": {
     "move": "Przesuń",

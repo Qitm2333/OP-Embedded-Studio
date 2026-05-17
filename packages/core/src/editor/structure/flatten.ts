@@ -6,7 +6,7 @@ import type { SceneNode } from '#core/scene-graph'
 
 import { selectedNodesInSharedParent } from './selection'
 
-export function flattenSelected(ctx: EditorContext, selectedNodes: SceneNode[]) {
+export function flattenSelected(ctx: EditorContext, selectedNodes: SceneNode[], label = 'Flatten') {
   const renderer = ctx.getRenderer()
   if (!renderer) return null
 
@@ -22,14 +22,14 @@ export function flattenSelected(ctx: EditorContext, selectedNodes: SceneNode[]) 
   const vectorProps = flattenNodesToVectorProps(renderer, ctx.graph, topLevel)
   if (!vectorProps) return null
 
-  const vector = ctx.graph.createNode('VECTOR', parentId, { ...vectorProps, strokes: [] })
+  const vector = ctx.graph.createNode('VECTOR', parentId, { ...vectorProps, name: label, strokes: [] })
   const vectorSnapshot = structuredClone(vector)
   ctx.graph.insertChildAt(vector.id, parentId, firstIndex)
   for (const id of childIds) ctx.graph.deleteNode(id)
   ctx.setSelectedIds(new Set([vector.id]))
 
   ctx.undo.push({
-    label: 'Flatten',
+    label,
     forward: () => {
       const restored = ctx.graph.createNode('VECTOR', parentId, vectorSnapshot)
       ctx.graph.insertChildAt(restored.id, parentId, firstIndex)

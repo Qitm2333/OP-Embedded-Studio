@@ -44,6 +44,31 @@ describe('flattenSelected', () => {
     surface.delete()
   })
 
+  test('outlines loaded text through the shared text outline path', async () => {
+    await loadInterRegular()
+    const { editor, surface } = await createEditorWithRenderer()
+    const pageId = editor.state.currentPageId
+    const text = editor.graph.createNode('TEXT', pageId, {
+      text: 'Hi',
+      fontFamily: 'Inter',
+      fontWeight: 400,
+      fontSize: 32,
+      width: 80,
+      height: 40
+    })
+
+    editor.select([text.id])
+    editor.outlineTextSelected()
+
+    const [vectorId] = [...editor.state.selectedIds]
+    const vector = editor.graph.getNode(vectorId)
+    expect(vector?.type).toBe('VECTOR')
+    expect(vector?.name).toBe('Outline text')
+    expect(vector?.vectorNetwork?.vertices.length).toBeGreaterThan(0)
+    expect(editor.graph.getNode(text.id)).toBeUndefined()
+    surface.delete()
+  })
+
   test('flattens loaded text as outlines', async () => {
     await loadInterRegular()
     const { editor, surface } = await createEditorWithRenderer()

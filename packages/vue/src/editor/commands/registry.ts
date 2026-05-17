@@ -88,6 +88,7 @@ export const EDITOR_COMMAND_METADATA = {
     keybinding: 'Alt+Shift+KeyF',
     contextTestId: 'context-flatten'
   },
+  'selection.outlineText': { contextTestId: 'context-outline-text' },
   'selection.moveToPage': {},
   'view.zoom100': { keybinding: '$mod+Digit0' },
   'view.zoomFit': { keybinding: ['$mod+Digit1', 'Shift+Digit1'] },

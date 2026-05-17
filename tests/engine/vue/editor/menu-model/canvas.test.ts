@@ -48,6 +48,7 @@ describe('buildCanvasContextMenu', () => {
       'selection.frameSelection',
       'selection.wrapInAutoLayout',
       'selection.flatten',
+      'selection.outlineText',
       '---',
       'selection.createComponent',
       '---',

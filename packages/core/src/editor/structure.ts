@@ -73,6 +73,11 @@ export function createStructureActions(ctx: EditorContext) {
     return flattenSelectedImpl(ctx, selectedNodes)
   }
 
+  function outlineTextSelected(selectedNodes: SceneNode[]) {
+    if (selectedNodes.length === 0 || selectedNodes.some((node) => node.type !== 'TEXT')) return null
+    return flattenSelectedImpl(ctx, selectedNodes, 'Outline text')
+  }
+
   function moveToPage(pageId: string) {
     const targetPage = ctx.graph.getNode(pageId)
     if (targetPage?.type !== 'CANVAS') return
@@ -101,6 +106,7 @@ export function createStructureActions(ctx: EditorContext) {
     booleanOperationSelected,
     ungroupSelected,
     flattenSelected,
+    outlineTextSelected,
     ...stateActions,
     moveToPage,
     renameNode

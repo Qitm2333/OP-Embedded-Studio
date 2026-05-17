@@ -74,7 +74,8 @@
     "booleanOperations": "Boolean operations",
     "flipHorizontal": "水平翻转",
     "flipVertical": "垂直翻转",
-    "flattenSelection": "Flatten"
+    "flattenSelection": "Flatten",
+    "outlineText": "Outline text"
   },
   "tools": {
     "move": "移动",

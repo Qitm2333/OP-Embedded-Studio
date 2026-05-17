@@ -174,6 +174,11 @@ export const APP_MENU_SCHEMA = [
         label: 'Flatten',
         command: 'selection.flatten'
       },
+      {
+        id: 'selection.outlineText',
+        label: 'Outline text',
+        command: 'selection.outlineText'
+      },
       { type: 'separator' },
       {
         id: 'selection.createComponent',

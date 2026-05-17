@@ -1,10 +1,10 @@
 import type { Canvas, Path, PathOp } from 'canvaskit-wasm'
 
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
-import { getGlyphOutlineMetricsSync, type OutlineCommand } from '#core/text/opentype'
-import { fontManager, weightToStyle } from '#core/text/fonts'
+import { getTextOutlineSupport } from '#core/text/outlines'
 
 import { makeArcPath } from './fills'
+import { textNodeToOutlinePath } from './text-outlines'
 import type { SkiaRenderer } from './renderer'
 import { nodeHasRadius } from './shapes'
 
@@ -44,9 +44,7 @@ function hasVisibleImageFill(node: SceneNode): boolean {
 }
 
 function canMakeTextSourcePath(node: SceneNode): boolean {
-  if (node.type !== 'TEXT' || !node.text) return false
-  const style = weightToStyle(node.fontWeight)
-  return fontManager.loadedData(node.fontFamily, style) !== null
+  return getTextOutlineSupport(node).supported
 }
 
 export function canMakeBooleanSourcePath(node: SceneNode): boolean {
@@ -71,54 +69,8 @@ function lineStrokePath(r: SkiaRenderer, node: SceneNode): Path | null {
   return path.stroke({ width: stroke?.weight ?? 1 })
 }
 
-function appendOutlineCommand(path: Path, command: OutlineCommand, xOffset: number, yOffset: number): void {
-  switch (command.type) {
-    case 'M':
-      path.moveTo((command.x ?? 0) + xOffset, (command.y ?? 0) + yOffset)
-      break
-    case 'L':
-      path.lineTo((command.x ?? 0) + xOffset, (command.y ?? 0) + yOffset)
-      break
-    case 'C':
-      path.cubicTo(
-        (command.x1 ?? 0) + xOffset,
-        (command.y1 ?? 0) + yOffset,
-        (command.x2 ?? 0) + xOffset,
-        (command.y2 ?? 0) + yOffset,
-        (command.x ?? 0) + xOffset,
-        (command.y ?? 0) + yOffset
-      )
-      break
-    case 'Q':
-      path.quadTo(
-        (command.x1 ?? 0) + xOffset,
-        (command.y1 ?? 0) + yOffset,
-        (command.x ?? 0) + xOffset,
-        (command.y ?? 0) + yOffset
-      )
-      break
-    case 'Z':
-      path.close()
-      break
-  }
-}
-
-function textOutlinePath(r: SkiaRenderer, node: SceneNode): Path | null {
-  if (!node.text) return null
-  const fontSize = node.fontSize
-  const style = weightToStyle(node.fontWeight)
-  const glyphs = getGlyphOutlineMetricsSync(node.fontFamily, style, node.text, fontSize)
-  if (!glyphs) return null
-
-  const path = new r.ck.Path()
-  for (const glyph of glyphs) {
-    for (const command of glyph.commands) appendOutlineCommand(path, command, glyph.x, fontSize)
-  }
-  return path
-}
-
 function baseShapePath(r: SkiaRenderer, node: SceneNode): Path | null {
-  if (node.type === 'TEXT') return textOutlinePath(r, node)
+  if (node.type === 'TEXT') return textNodeToOutlinePath(r, node)
   if (node.type === 'LINE') return lineStrokePath(r, node)
   if (node.type === 'ELLIPSE' && node.arcData) return makeArcPath(r, node)
 

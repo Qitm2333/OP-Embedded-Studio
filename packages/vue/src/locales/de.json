@@ -74,7 +74,8 @@
     "booleanOperations": "Boolean operations",
     "flipHorizontal": "Horizontal spiegeln",
     "flipVertical": "Vertikal spiegeln",
-    "flattenSelection": "Flatten"
+    "flattenSelection": "Flatten",
+    "outlineText": "Outline text"
   },
   "tools": {
     "move": "Verschieben",

@@ -44,6 +44,13 @@ export function useSelectionCapabilities() {
     canFlip: computed(() => hasSelection.value),
     canBooleanOperation: computed(() => selectedCount.value >= 2 && selectedNodesCanFlatten.value),
     canFlatten: computed(() => selectedNodesCanFlatten.value),
+    canOutlineText: useSceneComputed(() => {
+      const nodes = editor.getSelectedNodes()
+      return (
+        nodes.length > 0 &&
+        nodes.every((node) => node.type === 'TEXT' && canMakeBooleanSourceNode(node, editor.graph))
+      )
+    }),
     canGoToMainComponent: computed(() => selection.isInstance.value),
     canCreateInstance: computed(() => selectedNode.value?.type === 'COMPONENT'),
     canMoveToPage: useSceneComputed(() => hasSelection.value && editor.graph.getPages().length > 1),

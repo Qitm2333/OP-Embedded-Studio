@@ -74,7 +74,8 @@
     "booleanOperations": "Boolean operations",
     "flipHorizontal": "Отразить по горизонтали",
     "flipVertical": "Отразить по вертикали",
-    "flattenSelection": "Flatten"
+    "flattenSelection": "Flatten",
+    "outlineText": "Outline text"
   },
   "tools": {
     "move": "Перемещение",

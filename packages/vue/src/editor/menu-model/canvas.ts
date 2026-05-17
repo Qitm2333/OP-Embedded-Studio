@@ -36,7 +36,8 @@ const CANVAS_MENU_GROUPS = [
     'selection.frameSelection',
     'selection.ungroupWhenGroup',
     'selection.wrapInAutoLayout',
-    'selection.flatten'
+    'selection.flatten',
+    'selection.outlineText'
   ],
   ['selection.componentAction', 'selection.componentSetAction', 'selection.instanceActions'],
   ['selection.toggleVisibility', 'selection.toggleLock'],

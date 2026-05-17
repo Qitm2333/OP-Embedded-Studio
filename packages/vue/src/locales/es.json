@@ -74,7 +74,8 @@
     "booleanOperations": "Boolean operations",
     "flipHorizontal": "Voltear horizontalmente",
     "flipVertical": "Voltear verticalmente",
-    "flattenSelection": "Flatten"
+    "flattenSelection": "Flatten",
+    "outlineText": "Outline text"
   },
   "tools": {
     "move": "Mover",

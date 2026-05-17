@@ -215,6 +215,10 @@
         "label": "Flatten"
       },
       {
+        "id": "selection.outlineText",
+        "label": "Outline text"
+      },
+      {
         "type": "separator"
       },
       {

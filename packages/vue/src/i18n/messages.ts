@@ -99,6 +99,7 @@ export const commandMessages = i18n('commands', {
   intersectSelection: 'Intersect selection',
   excludeSelection: 'Exclude selection',
   flattenSelection: 'Flatten',
+  outlineText: 'Outline text',
   booleanOperations: 'Boolean operations',
   flipHorizontal: 'Flip horizontal',
   flipVertical: 'Flip vertical',
