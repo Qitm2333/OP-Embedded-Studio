@@ -1,3 +1,4 @@
+import { DEFAULT_FRAME_FILL } from '#core/constants'
 import type { NodeType, SceneNode } from '#core/scene-graph'
 
 import { wrapInAutoLayout as wrapInAutoLayoutImpl } from './structure/auto-layout-wrap'
@@ -50,7 +51,9 @@ export function createStructureActions(ctx: EditorContext) {
   }
 
   function frameSelection(selectedNodes: SceneNode[]) {
-    return wrapSelectionInContainer('FRAME', selectedNodes)
+    return wrapSelectionInContainer('FRAME', selectedNodes, {
+      fills: [structuredClone(DEFAULT_FRAME_FILL)]
+    })
   }
 
   function ungroupSelected(selectedNode: SceneNode | undefined) {
