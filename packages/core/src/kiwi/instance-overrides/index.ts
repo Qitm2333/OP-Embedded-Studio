@@ -133,6 +133,7 @@ function buildOverrideContext(
     preComputedRoot: new Map(),
     componentIdRoot: new Map(),
     swappedInstances: new Set(),
+    protectedFields: new Map(),
     kiwiPropertyNodes,
     geometryOverrideNodes,
     activeNodeIds
@@ -179,7 +180,8 @@ export function populateAndApplyOverrides(
     ctx.swappedInstances,
     ctx.componentIdRoot,
     undefined,
-    ctx.activeNodeIds
+    ctx.activeNodeIds,
+    ctx.protectedFields
   )
 
   const propModified = applyComponentProperties(ctx)
@@ -190,7 +192,8 @@ export function populateAndApplyOverrides(
       ctx.swappedInstances,
       ctx.componentIdRoot,
       overriddenNodes,
-      ctx.activeNodeIds
+      ctx.activeNodeIds,
+      ctx.protectedFields
     )
   }
 
@@ -205,7 +208,8 @@ export function populateAndApplyOverrides(
         ctx.swappedInstances,
         ctx.componentIdRoot,
         overriddenNodes,
-        ctx.activeNodeIds
+        ctx.activeNodeIds,
+        ctx.protectedFields
       )
     }
   }

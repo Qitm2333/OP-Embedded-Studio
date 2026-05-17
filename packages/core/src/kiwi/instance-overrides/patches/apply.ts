@@ -2,6 +2,7 @@ import { repopulateInstance } from '#core/kiwi/instance-overrides/resolve'
 import type { OverrideContext } from '#core/kiwi/instance-overrides/types'
 import type { SceneNode } from '#core/scene-graph'
 
+import { protectField, protectPatchProps } from './protection'
 import type { OverridePatch } from './types'
 
 function preserveStrokeShapeProps(target: SceneNode, updates: Partial<SceneNode>): void {
@@ -29,6 +30,7 @@ export function applyOverridePatch(ctx: OverrideContext, patch: OverridePatch): 
   let changed = false
   if (patch.swapComponentId) {
     repopulateInstance(ctx, patch.targetId, patch.swapComponentId)
+    protectField(ctx.protectedFields, patch.targetId, 'structure')
     changed = true
   }
 
@@ -37,6 +39,7 @@ export function applyOverridePatch(ctx: OverrideContext, patch: OverridePatch): 
     if (target) {
       preserveStrokeShapeProps(target, patch.props)
       ctx.graph.updateNode(patch.targetId, patch.props)
+      protectPatchProps(ctx.protectedFields, patch.targetId, patch.props)
       changed = true
     }
   }

@@ -1,3 +1,5 @@
+import type { ProtectionMap, ProtectedField } from '#core/kiwi/instance-overrides/patches'
+import { isFieldProtected } from '#core/kiwi/instance-overrides/patches'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import { copyFills, copyStrokes, copyEffects, copyStyleRuns } from '#core/scene-graph/copy'
 
@@ -5,19 +7,97 @@ import { copyFills, copyStrokes, copyEffects, copyStyleRuns } from '#core/scene-
  * Copy appearance props from source to target (text, visibility, fills, etc.).
  * Only writes properties that actually differ.
  */
-export function syncNodeProps(graph: SceneGraph, source: SceneNode, target: SceneNode): void {
+function canSync(
+  protections: ProtectionMap | undefined,
+  targetId: string,
+  field: ProtectedField
+): boolean {
+  return !isFieldProtected(protections, targetId, field)
+}
+
+type SyncFn = (
+  source: SceneNode,
+  target: SceneNode,
+  updates: Partial<SceneNode>,
+  protections?: ProtectionMap
+) => void
+
+type DirectSyncKey = 'text' | 'visible' | 'opacity' | 'locked' | 'layoutGrow' | 'textAutoResize'
+
+function assignDirectUpdate(
+  key: DirectSyncKey,
+  source: SceneNode,
+  updates: Partial<SceneNode>
+): void {
+  switch (key) {
+    case 'text':
+      updates.text = source.text
+      break
+    case 'visible':
+      updates.visible = source.visible
+      break
+    case 'opacity':
+      updates.opacity = source.opacity
+      break
+    case 'locked':
+      updates.locked = source.locked
+      break
+    case 'layoutGrow':
+      updates.layoutGrow = source.layoutGrow
+      break
+    case 'textAutoResize':
+      updates.textAutoResize = source.textAutoResize
+      break
+  }
+}
+
+function directSync(key: DirectSyncKey, field: ProtectedField): SyncFn {
+  return (source, target, updates, protections) => {
+    if (source[key] !== target[key] && canSync(protections, target.id, field)) {
+      assignDirectUpdate(key, source, updates)
+    }
+  }
+}
+
+const DIRECT_SYNCERS: SyncFn[] = [
+  directSync('text', 'text'),
+  directSync('visible', 'visible'),
+  directSync('opacity', 'opacity'),
+  directSync('locked', 'locked'),
+  directSync('layoutGrow', 'layoutGrow'),
+  directSync('textAutoResize', 'textAutoResize')
+]
+
+function syncDirectFields(
+  source: SceneNode,
+  target: SceneNode,
+  updates: Partial<SceneNode>,
+  protections?: ProtectionMap
+): void {
+  for (const sync of DIRECT_SYNCERS) sync(source, target, updates, protections)
+}
+
+function syncCopiedFields(
+  source: SceneNode,
+  target: SceneNode,
+  updates: Partial<SceneNode>,
+  protections?: ProtectionMap
+): void {
+  if (source.fills !== target.fills && canSync(protections, target.id, 'fills')) updates.fills = copyFills(source.fills)
+  if (source.strokes !== target.strokes && canSync(protections, target.id, 'strokes')) updates.strokes = copyStrokes(source.strokes)
+  if (source.effects !== target.effects && canSync(protections, target.id, 'effects')) updates.effects = copyEffects(source.effects)
+  if (source.styleRuns !== target.styleRuns && canSync(protections, target.id, 'styleRuns')) updates.styleRuns = copyStyleRuns(source.styleRuns)
+}
+
+export function syncNodeProps(
+  graph: SceneGraph,
+  source: SceneNode,
+  target: SceneNode,
+  protections?: ProtectionMap
+): void {
   const updates: Partial<SceneNode> = {}
-  if (source.text !== target.text) updates.text = source.text
-  if (source.visible !== target.visible) updates.visible = source.visible
-  if (source.opacity !== target.opacity) updates.opacity = source.opacity
-  if (source.fills !== target.fills) updates.fills = copyFills(source.fills)
-  if (source.strokes !== target.strokes) updates.strokes = copyStrokes(source.strokes)
-  if (source.effects !== target.effects) updates.effects = copyEffects(source.effects)
-  if (source.styleRuns !== target.styleRuns) updates.styleRuns = copyStyleRuns(source.styleRuns)
-  if (source.layoutGrow !== target.layoutGrow) updates.layoutGrow = source.layoutGrow
-  if (source.textAutoResize !== target.textAutoResize)
-    updates.textAutoResize = source.textAutoResize
-  if (source.locked !== target.locked) updates.locked = source.locked
+  syncDirectFields(source, target, updates, protections)
+  syncCopiedFields(source, target, updates, protections)
   if (Object.keys(updates).length > 0) graph.updateNode(target.id, updates)
 }
 
@@ -29,14 +109,15 @@ export function recloneChildren(
   graph: SceneGraph,
   srcChildId: string,
   tgtNode: SceneNode,
-  swappedInstances: Set<string>
+  swappedInstances: Set<string>,
+  protections?: ProtectionMap
 ): void {
   const srcChild = graph.getNode(srcChildId)
   if (!srcChild) return
 
   for (const childId of Array.from(tgtNode.childIds)) graph.deleteNode(childId)
   graph.updateNode(tgtNode.id, { name: srcChild.name, componentId: srcChild.componentId })
-  syncNodeProps(graph, srcChild, tgtNode)
+  syncNodeProps(graph, srcChild, tgtNode, protections)
   if (srcChild.childIds.length > 0) {
     graph.populateInstanceChildren(tgtNode.id, srcChildId)
   }
@@ -52,7 +133,8 @@ export function syncChildrenDeep(
   sourceId: string,
   targetId: string,
   swappedInstances: Set<string>,
-  skip?: Set<string>
+  skip?: Set<string>,
+  protections?: ProtectionMap
 ): void {
   const src = graph.getNode(sourceId)
   const tgt = graph.getNode(targetId)
@@ -69,12 +151,12 @@ export function syncChildrenDeep(
       swappedInstances.has(src.childIds[i]) &&
       srcNode.componentId !== tgtNode.componentId
     ) {
-      recloneChildren(graph, src.childIds[i], tgtNode, swappedInstances)
+      recloneChildren(graph, src.childIds[i], tgtNode, swappedInstances, protections)
       continue
     }
 
-    syncNodeProps(graph, srcNode, tgtNode)
-    syncChildrenDeep(graph, src.childIds[i], tgt.childIds[i], swappedInstances, skip)
+    syncNodeProps(graph, srcNode, tgtNode, protections)
+    syncChildrenDeep(graph, src.childIds[i], tgt.childIds[i], swappedInstances, skip, protections)
   }
 }
 
@@ -145,7 +227,8 @@ export function propagateOverridesTransitively(
   swappedInstances: Set<string>,
   componentIdRoot: Map<string, string>,
   protect?: Set<string>,
-  activeNodeIds?: Set<string>
+  activeNodeIds?: Set<string>,
+  protections?: ProtectionMap
 ): void {
   if (seeds.size === 0) return
 
@@ -179,14 +262,14 @@ export function propagateOverridesTransitively(
         continue
       }
 
-      syncNodeProps(graph, source, node)
+      syncNodeProps(graph, source, node, protections)
       if (source.childIds.length !== node.childIds.length) {
         for (const childId of Array.from(node.childIds)) graph.deleteNode(childId)
         if (source.childIds.length > 0) {
           graph.populateInstanceChildren(node.id, sourceId)
         }
       } else if (source.childIds.length > 0 && node.childIds.length > 0) {
-        syncChildrenDeep(graph, sourceId, node.id, swappedInstances, skip)
+        syncChildrenDeep(graph, sourceId, node.id, swappedInstances, skip, protections)
       }
       syncQueue.push(cloneId)
     }

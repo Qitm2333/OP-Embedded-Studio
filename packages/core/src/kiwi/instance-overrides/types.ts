@@ -2,6 +2,8 @@ import type { GUID, NodeChange } from '#core/kiwi/binary/codec'
 import type { SceneGraph } from '#core/scene-graph'
 import type { Matrix, Vector } from '#core/types'
 
+import type { ProtectionMap } from './patches'
+
 export interface SymbolOverride {
   guidPath?: { guids?: GUID[] }
   overriddenSymbolID?: GUID
@@ -97,6 +99,7 @@ export interface OverrideContext {
   preComputedRoot: Map<string, string>
   componentIdRoot: Map<string, string>
   swappedInstances: Set<string>
+  protectedFields: ProtectionMap
   /** Nodes whose kiwi NC has explicit property values (cornerRadius, visibility, etc.) */
   kiwiPropertyNodes: Set<string>
   /** Nodes whose Figma-derived geometry should not be overwritten by clone propagation. */
