@@ -183,7 +183,7 @@ export {
   parseFontStyle,
   type FontFaceRef,
   type ParsedFontStyle
-} from './text/font-face'
+} from './text/face'
 export {
   ARABIC_LOCAL_FALLBACK_FAMILIES,
   ARABIC_REMOTE_FALLBACK_FAMILIES,

@@ -4,7 +4,7 @@ import { DEFAULT_FONT_FAMILY, IS_BROWSER, GOOGLE_FONTS_API_KEY } from '#core/con
 import type { SceneGraph } from '#core/scene-graph'
 import { fontFallbackEntry } from '#core/text/fallbacks'
 import type { FontFallbackScript } from '#core/text/fallbacks'
-import { fontFaceRenderFamily, parseFontStyle } from '#core/text/font-face'
+import { fontFaceRenderFamily, parseFontStyle } from '#core/text/face'
 
 export interface FontInfo {
   family: string
