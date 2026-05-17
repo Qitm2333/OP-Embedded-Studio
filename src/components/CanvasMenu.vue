@@ -145,12 +145,14 @@ function contextCommandIcon(id: EditorCommandId | undefined): Component | undefi
               @select="!sub.separator && sub.action?.()"
             >
               <template v-if="!sub.separator">
-                <component
-                  :is="contextCommandIcon(sub.id)"
-                  v-if="contextCommandIcon(sub.id)"
-                  class="mr-2 size-3.5 text-muted"
-                />
-                <span class="flex-1">{{ sub.label }}</span>
+                <span class="flex min-w-0 flex-1 items-center gap-2">
+                  <component
+                    :is="contextCommandIcon(sub.id)"
+                    v-if="contextCommandIcon(sub.id)"
+                    class="size-3.5 shrink-0 text-muted"
+                  />
+                  <span class="truncate">{{ sub.label }}</span>
+                </span>
                 <span v-if="sub.shortcut" class="text-[11px] text-muted">{{ sub.shortcut }}</span>
               </template>
             </ContextMenuItem>
@@ -164,12 +166,14 @@ function contextCommandIcon(id: EditorCommandId | undefined): Component | undefi
         :disabled="item.disabled"
         @select="item.action?.()"
       >
-        <component
-          :is="contextCommandIcon(item.id)"
-          v-if="contextCommandIcon(item.id)"
-          class="mr-2 size-3.5 text-muted"
-        />
-        <span class="flex-1">{{ item.label }}</span>
+        <span class="flex min-w-0 flex-1 items-center gap-2">
+          <component
+            :is="contextCommandIcon(item.id)"
+            v-if="contextCommandIcon(item.id)"
+            class="size-3.5 shrink-0 text-muted"
+          />
+          <span class="truncate">{{ item.label }}</span>
+        </span>
         <span
           v-if="item.shortcut"
           class="text-[11px]"
