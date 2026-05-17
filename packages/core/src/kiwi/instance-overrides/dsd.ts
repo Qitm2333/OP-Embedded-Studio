@@ -3,6 +3,7 @@ import {
   convertLineHeight,
   resolveGeometryPaths
 } from '#core/kiwi/node-change/convert'
+import { applyOverridePatch } from '#core/kiwi/instance-overrides/patches'
 import type { SceneNode, GeometryPath } from '#core/scene-graph'
 import { copyGeometryPaths } from '#core/scene-graph/copy'
 
@@ -156,6 +157,33 @@ function buildDsdLayoutUpdates(
   return { updates, hasSize: d.size !== undefined }
 }
 
+function applyDsdOverride(
+  ctx: OverrideContext,
+  visibleSiblingCount: Map<string, number>,
+  nodeId: string,
+  d: DerivedSymbolOverride,
+  modified: Set<string>,
+  sizeSet: Set<string>
+): void {
+  const guids = d.guidPath?.guids
+  if (!guids?.length) return
+
+  const targetId = resolveOverrideTarget(ctx, nodeId, guids)
+  if (!targetId) return
+
+  const target = ctx.graph.getNode(targetId)
+  if (!target) return
+
+  const { updates, hasSize } = buildDsdLayoutUpdates(ctx, visibleSiblingCount, d, target)
+  if (d.fillGeometry?.length || d.strokeGeometry?.length) ctx.geometryOverrideNodes.add(targetId)
+  if (Object.keys(updates).length === 0) return
+
+  if (applyOverridePatch(ctx, { targetId, source: 'derived-symbol-data', props: updates })) {
+    modified.add(targetId)
+  }
+  if (hasSize) sizeSet.add(targetId)
+}
+
 function resolveDsdUpdates(ctx: OverrideContext): { modified: Set<string>; sizeSet: Set<string> } {
   const modified = new Set<string>()
   const sizeSet = new Set<string>()
@@ -170,25 +198,7 @@ function resolveDsdUpdates(ctx: OverrideContext): { modified: Set<string>; sizeS
     if (!nodeId || (ctx.activeNodeIds && !ctx.activeNodeIds.has(nodeId))) continue
 
     for (const d of derived) {
-      const guids = d.guidPath?.guids
-      if (!guids?.length) continue
-
-      const targetId = resolveOverrideTarget(ctx, nodeId, guids)
-      if (!targetId) continue
-
-      const target = ctx.graph.getNode(targetId)
-      if (!target) continue
-
-      const { updates, hasSize } = buildDsdLayoutUpdates(ctx, visibleSiblingCount, d, target)
-      if (d.fillGeometry?.length || d.strokeGeometry?.length) {
-        ctx.geometryOverrideNodes.add(targetId)
-      }
-
-      if (Object.keys(updates).length > 0) {
-        ctx.graph.updateNode(targetId, updates)
-        modified.add(targetId)
-        if (hasSize) sizeSet.add(targetId)
-      }
+      applyDsdOverride(ctx, visibleSiblingCount, nodeId, d, modified, sizeSet)
     }
   }
 

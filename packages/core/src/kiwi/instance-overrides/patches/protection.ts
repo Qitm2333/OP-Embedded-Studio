@@ -11,6 +11,16 @@ export type ProtectedField =
   | 'layoutGrow'
   | 'textAutoResize'
   | 'locked'
+  | 'x'
+  | 'y'
+  | 'width'
+  | 'height'
+  | 'figmaDerivedLayout'
+  | 'fontSize'
+  | 'lineHeight'
+  | 'letterSpacing'
+  | 'fillGeometry'
+  | 'strokeGeometry'
   | 'structure'
 
 export type ProtectionMap = Map<string, Set<ProtectedField>>
@@ -25,7 +35,17 @@ const PROP_TO_PROTECTED_FIELD: Partial<Record<keyof SceneNode, ProtectedField>> 
   styleRuns: 'styleRuns',
   layoutGrow: 'layoutGrow',
   textAutoResize: 'textAutoResize',
-  locked: 'locked'
+  locked: 'locked',
+  x: 'x',
+  y: 'y',
+  width: 'width',
+  height: 'height',
+  figmaDerivedLayout: 'figmaDerivedLayout',
+  fontSize: 'fontSize',
+  lineHeight: 'lineHeight',
+  letterSpacing: 'letterSpacing',
+  fillGeometry: 'fillGeometry',
+  strokeGeometry: 'strokeGeometry'
 }
 
 export function protectField(
