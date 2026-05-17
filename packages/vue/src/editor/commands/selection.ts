@@ -39,7 +39,7 @@ export function createSelectionCommands({
     'selection.group': {
       id: 'selection.group',
       get label() {
-        return t.value.group
+        return t.value.groupSelection
       },
       enabled: capabilities.canGroup,
       run: () => editor.groupSelected()
@@ -122,7 +122,7 @@ export function createSelectionCommands({
     'selection.toggleVisibility': {
       id: 'selection.toggleVisibility',
       get label() {
-        return t.value.toggleVisibility
+        return t.value.showHide
       },
       enabled: capabilities.canToggleVisibility,
       run: () => editor.toggleVisibility()
@@ -130,7 +130,7 @@ export function createSelectionCommands({
     'selection.toggleLock': {
       id: 'selection.toggleLock',
       get label() {
-        return t.value.toggleLock
+        return t.value.lockUnlock
       },
       enabled: capabilities.canToggleLock,
       run: () => editor.toggleLock()

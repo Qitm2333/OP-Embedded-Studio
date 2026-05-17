@@ -57,12 +57,13 @@
     "addAutoLayout": "Ajouter un auto-layout",
     "bringToFront": "Mettre au premier plan",
     "sendToBack": "Mettre en arrière-plan",
-    "toggleVisibility": "Visibilité",
-    "toggleLock": "Verrouillage",
     "moveToPage": "Déplacer vers la page",
     "zoomTo100": "Zoom 100 %",
     "zoomToFit": "Ajuster à l'écran",
-    "zoomToSelection": "Zoom sur la sélection"
+    "zoomToSelection": "Zoom sur la sélection",
+    "groupSelection": "Grouper",
+    "showHide": "Visibilité",
+    "lockUnlock": "Verrouillage"
   },
   "tools": {
     "move": "Déplacer",

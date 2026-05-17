@@ -1,4 +1,4 @@
-import { EDITOR_COMMAND_SHORTCUTS } from './metadata'
+import { editorCommandMetadata } from './registry'
 import type { EditorCommand, EditorCommandId, EditorCommandMenuItem } from './types'
 
 export function createEditorCommandActions(commands: Record<EditorCommandId, EditorCommand>) {
@@ -13,7 +13,7 @@ export function createEditorCommandActions(commands: Record<EditorCommandId, Edi
 
   function menuItem(
     id: EditorCommandId,
-    shortcut = EDITOR_COMMAND_SHORTCUTS[id]
+    shortcut = editorCommandMetadata(id).shortcut
   ): EditorCommandMenuItem {
     const command = getCommand(id)
     return {

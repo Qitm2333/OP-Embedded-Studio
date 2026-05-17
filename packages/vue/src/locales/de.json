@@ -57,12 +57,13 @@
     "addAutoLayout": "Auto-Layout hinzufügen",
     "bringToFront": "In den Vordergrund",
     "sendToBack": "In den Hintergrund",
-    "toggleVisibility": "Sichtbarkeit",
-    "toggleLock": "Sperren",
     "moveToPage": "Auf Seite verschieben",
     "zoomTo100": "Zoom 100 %",
     "zoomToFit": "Einpassen",
-    "zoomToSelection": "Auswahl einpassen"
+    "zoomToSelection": "Auswahl einpassen",
+    "groupSelection": "Gruppieren",
+    "showHide": "Sichtbarkeit",
+    "lockUnlock": "Sperren"
   },
   "tools": {
     "move": "Verschieben",

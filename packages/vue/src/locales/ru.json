@@ -57,12 +57,13 @@
     "addAutoLayout": "Добавить авто-раскладку",
     "bringToFront": "На передний план",
     "sendToBack": "На задний план",
-    "toggleVisibility": "Видимость",
-    "toggleLock": "Блокировка",
     "moveToPage": "Переместить на страницу",
     "zoomTo100": "Масштаб 100%",
     "zoomToFit": "Вписать в экран",
-    "zoomToSelection": "Масштаб по выделению"
+    "zoomToSelection": "Масштаб по выделению",
+    "groupSelection": "Сгруппировать",
+    "showHide": "Видимость",
+    "lockUnlock": "Блокировка"
   },
   "tools": {
     "move": "Перемещение",

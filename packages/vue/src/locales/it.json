@@ -57,12 +57,13 @@
     "addAutoLayout": "Aggiungi auto-layout",
     "bringToFront": "Porta in primo piano",
     "sendToBack": "Porta in secondo piano",
-    "toggleVisibility": "Visibilità",
-    "toggleLock": "Blocco",
     "moveToPage": "Sposta nella pagina",
     "zoomTo100": "Zoom 100%",
     "zoomToFit": "Adatta allo schermo",
-    "zoomToSelection": "Zoom sulla selezione"
+    "zoomToSelection": "Zoom sulla selezione",
+    "groupSelection": "Raggruppa",
+    "showHide": "Visibilità",
+    "lockUnlock": "Blocco"
   },
   "tools": {
     "move": "Sposta",

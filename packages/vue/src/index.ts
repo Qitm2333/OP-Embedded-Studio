@@ -35,6 +35,8 @@ export { useSelectionCapabilities } from '#vue/editor/selection-capabilities/use
 
 /** Command and menu composition helpers. */
 export { useEditorCommands } from '#vue/editor/commands/use'
+export { EDITOR_COMMAND_METADATA, editorCommandMetadata } from '#vue/editor/commands/registry'
+export type { EditorCommandMetadata } from '#vue/editor/commands/registry'
 export type { EditorCommand, EditorCommandId } from '#vue/editor/commands/use'
 export { useMenuModel } from '#vue/editor/menu-model/use'
 export type { MenuActionNode, MenuEntry, MenuSeparatorNode } from '#vue/editor/menu-model/use'

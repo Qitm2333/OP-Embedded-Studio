@@ -57,12 +57,13 @@
     "addAutoLayout": "Dodaj auto-layout",
     "bringToFront": "Przenieś na wierzch",
     "sendToBack": "Przenieś na spód",
-    "toggleVisibility": "Widoczność",
-    "toggleLock": "Blokada",
     "moveToPage": "Przenieś na stronę",
     "zoomTo100": "Zoom 100%",
     "zoomToFit": "Dopasuj do ekranu",
-    "zoomToSelection": "Zoom do zaznaczenia"
+    "zoomToSelection": "Zoom do zaznaczenia",
+    "groupSelection": "Grupuj",
+    "showHide": "Widoczność",
+    "lockUnlock": "Blokada"
   },
   "tools": {
     "move": "Przesuń",

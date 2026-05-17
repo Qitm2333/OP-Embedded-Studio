@@ -2,6 +2,9 @@ import { tinykeys } from 'tinykeys'
 import type { KeyBindingMap } from 'tinykeys'
 import { onScopeDispose } from 'vue'
 
+import { editorCommandMetadata } from '@open-pencil/vue'
+import type { EditorCommandId } from '@open-pencil/vue'
+
 import { TOOL_SHORTCUTS } from '@/app/editor/session'
 import { isEditing } from '@/app/shell/keyboard/focus'
 import { bindSpaceHandTool } from '@/app/shell/keyboard/space-tool'
@@ -19,11 +22,17 @@ type ShortcutDefinition = {
 }
 
 function commandShortcut(
-  id: string,
-  keys: string | string[],
-  command: Parameters<KeyboardShortcutOptions['runCommand']>[0]
-): ShortcutDefinition {
-  return { id, keys, run: ({ runCommand }) => runCommand(command) }
+  command: EditorCommandId,
+  keys = editorCommandMetadata(command).keybinding
+): ShortcutDefinition | null {
+  return keys ? { id: command, keys, run: ({ runCommand }) => runCommand(command) } : null
+}
+
+function commandShortcuts(...commands: EditorCommandId[]): ShortcutDefinition[] {
+  return commands.flatMap((command) => {
+    const shortcut = commandShortcut(command)
+    return shortcut ? [shortcut] : []
+  })
 }
 
 function shouldIgnoreShortcut(event: KeyboardEvent, options: KeyboardShortcutOptions) {
@@ -63,42 +72,41 @@ export function registerKeyboardShortcuts(options: KeyboardShortcutOptions) {
   })
 
   const shortcuts: ShortcutDefinition[] = [
-    commandShortcut('create-component', '$mod+Alt+KeyK', 'selection.createComponent'),
-    commandShortcut('detach-instance', '$mod+Alt+KeyB', 'selection.detachInstance'),
-    commandShortcut('create-component-set', '$mod+Shift+KeyK', 'selection.createComponentSet'),
-    commandShortcut('toggle-visibility', '$mod+Shift+KeyH', 'selection.toggleVisibility'),
-    commandShortcut('toggle-lock', '$mod+Shift+KeyL', 'selection.toggleLock'),
+    ...commandShortcuts(
+      'selection.createComponent',
+      'selection.detachInstance',
+      'selection.createComponentSet',
+      'selection.toggleVisibility',
+      'selection.toggleLock'
+    ),
     {
       id: 'export-selection-png',
       keys: '$mod+Shift+KeyE',
       run: ({ actions }) => actions.exportSelectionPng()
     },
     { id: 'save-as', keys: '$mod+Shift+KeyS', run: ({ store }) => void store.saveFigFileAs() },
-    commandShortcut('ungroup', '$mod+Shift+KeyG', 'selection.ungroup'),
-    commandShortcut('redo-shift', '$mod+Shift+KeyZ', 'edit.redo'),
+    ...commandShortcuts('selection.ungroup', 'edit.redo'),
     { id: 'toggle-ui', keys: '$mod+Backslash', run: ({ actions }) => actions.toggleUI() },
     { id: 'toggle-ai', keys: '$mod+KeyJ', run: ({ actions }) => actions.toggleAI() },
     { id: 'close-tab', keys: '$mod+KeyW', run: ({ closeActiveTab }) => closeActiveTab() },
     { id: 'new-tab', keys: ['$mod+KeyN', '$mod+KeyT'], run: ({ createTab }) => createTab() },
-    commandShortcut('undo', '$mod+KeyZ', 'edit.undo'),
-    commandShortcut('redo', '$mod+KeyY', 'edit.redo'),
-    commandShortcut('zoom-100', '$mod+Digit0', 'view.zoom100'),
-    commandShortcut('zoom-fit', '$mod+Digit1', 'view.zoomFit'),
-    commandShortcut('zoom-selection', '$mod+Digit2', 'view.zoomSelection'),
-    commandShortcut('duplicate', '$mod+KeyD', 'selection.duplicate'),
-    commandShortcut('select-all', '$mod+KeyA', 'selection.selectAll'),
+    ...commandShortcuts(
+      'edit.undo',
+      'view.zoom100',
+      'view.zoomFit',
+      'view.zoomSelection',
+      'selection.duplicate',
+      'selection.selectAll'
+    ),
     { id: 'save', keys: '$mod+KeyS', run: ({ store }) => void store.saveFigFile() },
     { id: 'open-file', keys: '$mod+KeyO', run: ({ openFileDialog }) => openFileDialog() },
-    commandShortcut('group', '$mod+KeyG', 'selection.group'),
-    commandShortcut('zoom-fit-shift', 'Shift+Digit1', 'view.zoomFit'),
-    commandShortcut('zoom-selection-shift', 'Shift+Digit2', 'view.zoomSelection'),
+    ...commandShortcuts('selection.group'),
     {
       id: 'toggle-auto-layout',
       keys: 'Shift+KeyA',
       run: ({ actions }) => actions.toggleAutoLayout()
     },
-    commandShortcut('bring-to-front', 'BracketRight', 'selection.bringToFront'),
-    commandShortcut('send-to-back', 'BracketLeft', 'selection.sendToBack'),
+    ...commandShortcuts('selection.bringToFront', 'selection.sendToBack'),
     { id: 'delete-backspace', keys: 'Backspace', run: ({ actions }) => actions.smartDelete(false) },
     { id: 'delete', keys: 'Delete', run: ({ actions }) => actions.smartDelete(false) },
     { id: 'delete-alt', keys: 'Alt+Delete', run: ({ actions }) => actions.smartDelete(true) },

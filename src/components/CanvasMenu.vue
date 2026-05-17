@@ -13,8 +13,10 @@ import {
   useEditorCommands,
   useI18n,
   useMenuModel,
-  useSelectionState
+  useSelectionState,
+  editorCommandMetadata
 } from '@open-pencil/vue'
+import type { EditorCommandId } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { createCanvasMenuActions } from '@/app/editor/canvas/menu-actions'
@@ -46,15 +48,8 @@ const cls = {
 
 const staticContextCommandIds = new Set(['selection.duplicate', 'selection.delete'])
 
-const contextCommandTestIds: Record<string, string> = {
-  'selection.duplicate': 'context-duplicate',
-  'selection.delete': 'context-delete',
-  'selection.bringToFront': 'context-bring-to-front',
-  'selection.sendToBack': 'context-send-to-back',
-  'selection.group': 'context-group',
-  'selection.createComponent': 'context-create-component',
-  'selection.toggleVisibility': 'context-toggle-visibility',
-  'selection.toggleLock': 'context-toggle-lock'
+function contextCommandTestId(id: EditorCommandId | undefined): string | undefined {
+  return id ? editorCommandMetadata(id).contextTestId : undefined
 }
 </script>
 
@@ -126,7 +121,7 @@ const contextCommandTestIds: Record<string, string> = {
       </ContextMenuSub>
       <ContextMenuItem
         v-else
-        v-test-id="item.id ? contextCommandTestIds[item.id] : undefined"
+        v-test-id="contextCommandTestId(item.id)"
         :class="canvasMenuItemClass(item.label, cls)"
         :disabled="item.disabled"
         @select="item.action?.()"
