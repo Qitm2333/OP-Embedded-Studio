@@ -13,7 +13,17 @@ function normalizePropName(value: string): string {
 }
 
 function isEmptyPropValue(v: ComponentPropValue): boolean {
-  return v.boolValue === undefined && v.textValue === undefined && v.guidValue === undefined
+  return (
+    v.boolValue === undefined &&
+    v.textValue === undefined &&
+    v.textDataValue === undefined &&
+    v.guidValue === undefined
+  )
+}
+
+function propTextCharacters(value: ComponentPropValue): string | undefined {
+  if (typeof value.textValue === 'string') return value.textValue
+  return value.textValue?.characters ?? value.textDataValue?.characters
 }
 
 /**
@@ -60,6 +70,7 @@ function resolveAssignmentValue(
   if (variableValue?.symbolIdValue?.guid) return { guidValue: variableValue.symbolIdValue.guid }
   if (variableValue?.boolValue !== undefined) return { boolValue: variableValue.boolValue }
   if (variableValue?.textValue !== undefined) return { textValue: variableValue.textValue }
+  if (variableValue?.textDataValue !== undefined) return { textDataValue: variableValue.textDataValue }
 
   return resolveDefaults ? (ctx.propDefaults.get(key) ?? assignment.value) : assignment.value
 }
@@ -101,6 +112,54 @@ function fallbackRefsForChild(
   return refs.length > 0 ? refs : undefined
 }
 
+function applyComponentPropRef(
+  ctx: OverrideContext,
+  childId: string,
+  ref: ComponentPropRef,
+  val: ComponentPropValue,
+  modified?: Set<string>
+): void {
+  const child = ctx.graph.getNode(childId)
+  if (!child) return
+
+  if (ref.componentPropNodeField === 'VISIBLE' && val.boolValue !== undefined) {
+    ctx.graph.updateNode(childId, { visible: val.boolValue })
+    modified?.add(childId)
+    return
+  }
+
+  if (ref.componentPropNodeField === 'TEXT_DATA') {
+    const text = propTextCharacters(val)
+    if (text === undefined || child.type !== 'TEXT') return
+    ctx.graph.updateNode(childId, { text })
+    modified?.add(childId)
+    return
+  }
+
+  if (ref.componentPropNodeField !== 'OVERRIDDEN_SYMBOL_ID') return
+  const swapId = propTextCharacters(val) ?? (val.guidValue ? guidToString(val.guidValue) : undefined)
+  if (!swapId) return
+  const newCompId = ctx.guidToNodeId.get(swapId)
+  if (!newCompId) return
+  repopulateInstance(ctx, childId, newCompId)
+  modified?.add(childId)
+}
+
+function applyChildPropRefs(
+  ctx: OverrideContext,
+  childId: string,
+  refs: ComponentPropRef[] | undefined,
+  valueByDef: Map<string, ComponentPropValue>,
+  modified?: Set<string>
+): void {
+  if (!refs) return
+  for (const ref of refs) {
+    if (!ref.defID) continue
+    const val = valueByDef.get(guidToString(ref.defID))
+    if (val) applyComponentPropRef(ctx, childId, ref, val, modified)
+  }
+}
+
 function applyPropAssignments(
   ctx: OverrideContext,
   parentId: string,
@@ -121,27 +180,7 @@ function applyPropAssignments(
     const refs =
       findPropRefs(ctx, child.componentId, propRefsMap) ??
       fallbackRefsForChild(ctx, child.name, valueByDef)
-    if (refs) {
-      for (const ref of refs) {
-        if (!ref.defID) continue
-        const val = valueByDef.get(guidToString(ref.defID))
-        if (!val) continue
-
-        if (ref.componentPropNodeField === 'VISIBLE' && val.boolValue !== undefined) {
-          ctx.graph.updateNode(childId, { visible: val.boolValue })
-          modified?.add(childId)
-        } else if (ref.componentPropNodeField === 'OVERRIDDEN_SYMBOL_ID') {
-          const swapId = val.textValue ?? (val.guidValue ? guidToString(val.guidValue) : undefined)
-          if (!swapId) continue
-          const newCompId = ctx.guidToNodeId.get(swapId)
-          if (newCompId) {
-            repopulateInstance(ctx, childId, newCompId)
-            modified?.add(childId)
-          }
-        }
-      }
-    }
-
+    applyChildPropRefs(ctx, childId, refs, valueByDef, modified)
     applyPropAssignments(ctx, childId, valueByDef, propRefsMap, modified)
   }
 }

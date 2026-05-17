@@ -19,9 +19,12 @@ export interface ComponentPropRef {
   componentPropNodeField: string
 }
 
+export type ComponentPropTextValue = string | { characters?: string }
+
 export type ComponentPropValue = {
   boolValue?: boolean
-  textValue?: string
+  textValue?: ComponentPropTextValue
+  textDataValue?: { characters?: string }
   guidValue?: GUID
 }
 
@@ -32,6 +35,7 @@ export interface ComponentPropAssignment {
     value?: {
       boolValue?: boolean
       textValue?: string
+      textDataValue?: { characters?: string }
       symbolIdValue?: { guid?: GUID }
     }
   }
