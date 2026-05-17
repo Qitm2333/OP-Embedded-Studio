@@ -1,4 +1,4 @@
-import { canMakeBooleanSourceNode, nodeHasVisibleStroke } from '#core/canvas/boolean'
+import { canMakeBooleanSourceNode, hasVisibleStrokeSourceNode } from '#core/canvas/boolean'
 import { flattenNodesToVectorProps, outlineStrokeNodesToVectorProps } from '#core/canvas/flatten'
 import { restoreSubtree, snapshotSubtree } from '#core/editor/clipboard/subtree-history'
 import type { EditorContext } from '#core/editor/types'
@@ -76,7 +76,7 @@ export function outlineStrokeSelected(ctx: EditorContext, selectedNodes: SceneNo
   return flattenSelected(ctx, selectedNodes, {
     label: 'Outline stroke',
     canFlattenNode: (node) =>
-      canMakeBooleanSourceNode(node, ctx.graph) && nodeHasVisibleStroke(node),
+      canMakeBooleanSourceNode(node, ctx.graph) && hasVisibleStrokeSourceNode(node, ctx.graph),
     vectorPropsFactory: outlineStrokeNodesToVectorProps
   })
 }

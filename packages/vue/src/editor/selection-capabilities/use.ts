@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 
-import { canMakeBooleanSourceNode, nodeHasVisibleStroke } from '@open-pencil/core/canvas'
+import { canMakeBooleanSourceNode, hasVisibleStrokeSourceNode } from '@open-pencil/core/canvas'
 
 import { useSelectionState } from '#vue/editor/selection-state/use'
 import { useSceneComputed } from '#vue/internal/scene-computed/use'
@@ -56,7 +56,9 @@ export function useSelectionCapabilities() {
       return (
         nodes.length > 0 &&
         nodes.every(
-          (node) => nodeHasVisibleStroke(node) && canMakeBooleanSourceNode(node, editor.graph)
+          (node) =>
+            hasVisibleStrokeSourceNode(node, editor.graph) &&
+            canMakeBooleanSourceNode(node, editor.graph)
         )
       )
     }),

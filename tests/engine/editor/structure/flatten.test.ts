@@ -94,6 +94,30 @@ describe('flattenSelected', () => {
     surface.delete()
   })
 
+  test('outlines stroked descendants inside groups', async () => {
+    const { editor, surface } = await createEditorWithRenderer()
+    const pageId = editor.state.currentPageId
+    const rect = editor.graph.createNode('RECTANGLE', pageId, {
+      x: 20,
+      y: 30,
+      width: 40,
+      height: 30,
+      fills: [TRANSPARENT],
+      strokes: [{ type: 'SOLID', color: BLACK, weight: 8, opacity: 1, visible: true }]
+    })
+    editor.select([rect.id])
+    editor.groupSelected()
+
+    editor.outlineStrokeSelected()
+
+    const [vectorId] = [...editor.state.selectedIds]
+    const vector = editor.graph.getNode(vectorId)
+    expect(vector?.type).toBe('VECTOR')
+    expect(vector?.name).toBe('Outline stroke')
+    expect(vector?.vectorNetwork?.vertices.length).toBeGreaterThan(0)
+    surface.delete()
+  })
+
   test('does not outline fill-only shapes as strokes', async () => {
     const { editor, surface } = await createEditorWithRenderer()
     const pageId = editor.state.currentPageId

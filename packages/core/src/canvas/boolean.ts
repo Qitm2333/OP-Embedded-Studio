@@ -66,7 +66,9 @@ function lineStrokePath(r: SkiaRenderer, node: SceneNode): Path | null {
   path.moveTo(0, 0)
   path.lineTo(node.width, node.height)
   const stroke = node.strokes.find((item) => item.visible)
-  return path.stroke({ width: stroke?.weight ?? 1 })
+  const outline = path.stroke({ width: stroke?.weight ?? 1 })
+  path.delete()
+  return outline
 }
 
 function baseShapePath(r: SkiaRenderer, node: SceneNode): Path | null {
@@ -180,6 +182,15 @@ export function makeBooleanSourcePath(
   return path
 }
 
+export function hasVisibleStrokeSourceNode(node: SceneNode, graph: SceneGraph): boolean {
+  if (nodeHasVisibleStroke(node)) return true
+  if (!canContainFlattenableChildren(node)) return false
+  return node.childIds.some((childId) => {
+    const child = graph.getNode(childId)
+    return child?.visible === true && hasVisibleStrokeSourceNode(child, graph)
+  })
+}
+
 export function makeStrokeOutlinePath(
   r: SkiaRenderer,
   node: SceneNode,
@@ -220,7 +231,6 @@ export function makeStrokeOutlinePath(
   if (node.type === 'LINE') return path
   const outline = new r.ck.Path()
   addVisibleStrokeOutlines(outline, path, node)
-  path.delete()
   return outline
 }
 
