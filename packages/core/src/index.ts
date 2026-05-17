@@ -177,6 +177,14 @@ export {
   type LocalFontAccessState
 } from './text/fonts'
 export {
+  fontFaceFromFigmaFontName,
+  fontFaceRenderFamily,
+  normalizeFontStyleName,
+  parseFontStyle,
+  type FontFaceRef,
+  type ParsedFontStyle
+} from './text/font-face'
+export {
   ARABIC_LOCAL_FALLBACK_FAMILIES,
   ARABIC_REMOTE_FALLBACK_FAMILIES,
   cjkLocalFallbackFamilies,

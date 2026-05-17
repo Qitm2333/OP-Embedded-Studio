@@ -118,14 +118,16 @@ function buildTruncateOpts(
 
 function resolveParagraphFontFamilies(
   primary: string,
+  style: string,
   arabicFallbacks: readonly string[],
   cjkFallbacks: readonly string[]
 ): string[] {
-  const key = `${primary}\0${arabicFallbacks.join('\0')}\0${cjkFallbacks.join('\0')}`
+  const renderPrimary = fontManager.renderFamily(primary, style)
+  const key = `${renderPrimary}\0${arabicFallbacks.join('\0')}\0${cjkFallbacks.join('\0')}`
   const cached = fontFamilyCache.get(key)
   if (cached) return cached
 
-  const families = [primary]
+  const families = [renderPrimary]
   if (primary !== DEFAULT_FONT_FAMILY) families.push(DEFAULT_FONT_FAMILY)
   families.push(...arabicFallbacks, ...cjkFallbacks)
 
@@ -172,7 +174,7 @@ function addStyledRuns(
   node: SceneNode,
   baseColor: Float32Array,
   baseFontSize: number,
-  fontFamilies: (primary: string) => string[],
+  fontFamilies: (primary: string, weight: number, italic?: boolean) => string[],
   halfLeading: boolean
 ): void {
   const ck = r.ck
@@ -199,11 +201,15 @@ function addStyledRuns(
     builder.pushStyle(
       new ck.TextStyle({
         color: runColor,
-        fontFamilies: fontFamilies(s.fontFamily ?? (node.fontFamily || DEFAULT_FONT_FAMILY)),
+        fontFamilies: fontFamilies(
+          s.fontFamily ?? (node.fontFamily || DEFAULT_FONT_FAMILY),
+          s.fontWeight ?? node.fontWeight,
+          s.italic ?? node.italic
+        ),
         fontSize: runFontSize,
         fontStyle: {
-          weight: { value: (s.fontWeight ?? node.fontWeight) || 400 } as FontWeight,
-          slant: (s.italic ?? node.italic) ? ck.FontSlant.Italic : ck.FontSlant.Upright
+          weight: { value: 400 } as FontWeight,
+          slant: ck.FontSlant.Upright
         },
         letterSpacing: s.letterSpacing ?? (node.letterSpacing || 0),
         decoration: textDecorationValue(ck, s.textDecoration ?? node.textDecoration),
@@ -236,8 +242,13 @@ export function buildParagraph(
 
   const truncateOpts = buildTruncateOpts(node, baseFontSize)
 
-  const fontFamilies = (primary: string) =>
-    resolveParagraphFontFamilies(primary, arabicFallbacks, cjkFallbacks)
+  const fontFamilies = (primary: string, weight: number, italic = false) =>
+    resolveParagraphFontFamilies(
+      primary,
+      weightToStyle(weight, italic),
+      arabicFallbacks,
+      cjkFallbacks
+    )
 
   const paraStyle = new ck.ParagraphStyle({
     textAlign: getParagraphTextAlign(ck, node),
@@ -245,11 +256,15 @@ export function buildParagraph(
     ...truncateOpts,
     textStyle: {
       color: baseColor,
-      fontFamilies: fontFamilies(node.fontFamily || DEFAULT_FONT_FAMILY),
+      fontFamilies: fontFamilies(
+        node.fontFamily || DEFAULT_FONT_FAMILY,
+        node.fontWeight,
+        node.italic
+      ),
       fontSize: baseFontSize,
       fontStyle: {
-        weight: { value: node.fontWeight || 400 } as FontWeight,
-        slant: node.italic ? ck.FontSlant.Italic : ck.FontSlant.Upright
+        weight: { value: 400 } as FontWeight,
+        slant: ck.FontSlant.Upright
       },
       letterSpacing: node.letterSpacing || 0,
       decoration: textDecorationValue(ck, node.textDecoration),

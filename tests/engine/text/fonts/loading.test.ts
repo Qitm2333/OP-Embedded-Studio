@@ -31,6 +31,8 @@ describe('styleToWeight', () => {
     expect(styleToWeight('Thin')).toBe(100)
     expect(styleToWeight('Medium')).toBe(500)
     expect(styleToWeight('SemiBold')).toBe(600)
+    expect(styleToWeight('Semi Bold')).toBe(600)
+    expect(styleToWeight('DemiBold')).toBe(600)
     expect(styleToWeight('ExtraBold')).toBe(800)
     expect(styleToWeight('Black')).toBe(900)
   })
@@ -38,6 +40,7 @@ describe('styleToWeight', () => {
   test('handles italic variants', () => {
     expect(styleToWeight('Bold Italic')).toBe(700)
     expect(styleToWeight('Light Italic')).toBe(300)
+    expect(styleToWeight('600 Italic')).toBe(600)
   })
 
   test('case insensitive', () => {
@@ -122,6 +125,24 @@ describe('FontManager loaded font cache', () => {
 
     manager.detachProvider(second.provider)
     expect(manager.provider()).toBeNull()
+  })
+
+  test('registers loaded faces under exact render families', () => {
+    const manager = new FontManager()
+    const recording = createRecordingProvider()
+
+    manager.attachProvider({} as CanvasKit, recording.provider)
+    manager.markLoaded('Inter', 'SemiBold', new ArrayBuffer(12))
+
+    const renderFamily = manager.renderFamily('Inter', 'SemiBold')
+
+    expect(renderFamily).toBe('__op_font__Inter__SemiBold')
+    expect(recording.registrations).toEqual([
+      { family: 'Inter', byteLength: 12 },
+      { family: '__op_font__Inter__SemiBold', byteLength: 12 }
+    ])
+    expect(manager.renderFamily('Inter', 'SemiBold')).toBe(renderFamily)
+    expect(recording.registrations).toHaveLength(2)
   })
 
   test('loads downloaded cache before other sources', async () => {

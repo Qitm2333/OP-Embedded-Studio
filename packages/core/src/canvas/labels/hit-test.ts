@@ -14,7 +14,7 @@ import {
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import type { Vector } from '#core/types'
 
-import type { LabelCache } from './cache'
+import type { CachedComponent, CachedSection, LabelCache } from './cache'
 
 function measureGlyphWidth(font: Font, text: string): number {
   const glyphIds = font.getGlyphIDs(text)
@@ -78,6 +78,22 @@ function walkLabelTree(
   return result
 }
 
+interface LabelHitContext {
+  canvasX: number
+  canvasY: number
+  zoom: number
+  font: Font
+}
+
+function labelHitContext(
+  canvasX: number,
+  canvasY: number,
+  zoom: number,
+  font: Font
+): LabelHitContext {
+  return { canvasX, canvasY, zoom, font }
+}
+
 function hitCachedLabel<T extends { nodeId: string; absX: number; absY: number }>(
   graph: SceneGraph,
   items: readonly T[],
@@ -91,6 +107,15 @@ function hitCachedLabel<T extends { nodeId: string; absX: number; absY: number }
     if (result) return result
   }
   return null
+}
+
+function hitCachedLabelWithContext<T extends { nodeId: string; absX: number; absY: number }>(
+  graph: SceneGraph,
+  items: readonly T[],
+  context: LabelHitContext,
+  hit: (node: SceneNode, item: T, context: LabelHitContext) => SceneNode | null
+): SceneNode | null {
+  return hitCachedLabel(graph, items, (node, item) => hit(node, item, context))
 }
 
 function hitSectionTitle(
@@ -113,12 +138,40 @@ function hitSectionTitle(
   return hitInRect(hit.x, hit.y, 0, pillY, pillW, pillH) ? child : null
 }
 
-export function hitTestSectionTitle(graph: SceneGraph, canvasX: number, canvasY: number, zoom: number, pageId: string, font: Font | null, labelCache?: LabelCache): SceneNode | null {
+function hitCachedSectionTitle(
+  child: SceneNode,
+  section: CachedSection,
+  context: LabelHitContext
+): SceneNode | null {
+  return hitSectionTitle(
+    child,
+    section.absX,
+    section.absY,
+    section.nested,
+    context.canvasX,
+    context.canvasY,
+    context.zoom,
+    context.font
+  )
+}
+
+export function hitTestSectionTitle(
+  graph: SceneGraph,
+  canvasX: number,
+  canvasY: number,
+  zoom: number,
+  pageId: string,
+  font: Font | null,
+  labelCache?: LabelCache
+): SceneNode | null {
   if (!font) return null
 
   if (labelCache) {
-    return hitCachedLabel(graph, labelCache.getAllSections(), (child, section) =>
-      hitSectionTitle(child, section.absX, section.absY, section.nested, canvasX, canvasY, zoom, font)
+    return hitCachedLabelWithContext(
+      graph,
+      labelCache.getAllSections(),
+      labelHitContext(canvasX, canvasY, zoom, font),
+      hitCachedSectionTitle
     )
   }
 
@@ -146,14 +199,35 @@ function hitComponentLabel(
   return hitInRect(canvasX, canvasY, ax, labelY, labelW, labelH) ? child : null
 }
 
-export function hitTestComponentLabel(graph: SceneGraph, canvasX: number, canvasY: number, zoom: number, pageId: string, font: Font | null, labelCache?: LabelCache): SceneNode | null {
+function hitCachedComponentLabel(
+  child: SceneNode,
+  component: CachedComponent,
+  context: LabelHitContext
+): SceneNode | null {
+  const { canvasX, canvasY, zoom, font } = context
+  return hitComponentLabel(child, component.absX, component.absY, canvasX, canvasY, zoom, font)
+}
+
+export function hitTestComponentLabel(
+  graph: SceneGraph,
+  canvasX: number,
+  canvasY: number,
+  zoom: number,
+  pageId: string,
+  font: Font | null,
+  labelCache?: LabelCache
+): SceneNode | null {
   if (!font) return null
 
-  if (labelCache) {
-    return hitCachedLabel(graph, labelCache.getAllComponents(), (child, component) =>
-      hitComponentLabel(child, component.absX, component.absY, canvasX, canvasY, zoom, font)
-    )
-  }
+  const cachedHit = labelCache
+    ? hitCachedLabelWithContext(
+        graph,
+        labelCache.getAllComponents(),
+        labelHitContext(canvasX, canvasY, zoom, font),
+        hitCachedComponentLabel
+      )
+    : null
+  if (cachedHit) return cachedHit
 
   const LABEL_TYPES = new Set(['COMPONENT', 'COMPONENT_SET'])
 

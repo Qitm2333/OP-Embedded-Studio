@@ -4,6 +4,7 @@ import { DEFAULT_FONT_FAMILY, IS_BROWSER, GOOGLE_FONTS_API_KEY } from '#core/con
 import type { SceneGraph } from '#core/scene-graph'
 import { fontFallbackEntry } from '#core/text/fallbacks'
 import type { FontFallbackScript } from '#core/text/fallbacks'
+import { fontFaceRenderFamily, parseFontStyle } from '#core/text/font-face'
 
 export interface FontInfo {
   family: string
@@ -70,16 +71,7 @@ export function isVariableFont(data: ArrayBuffer): boolean {
 }
 
 export function styleToWeight(style: string): number {
-  const s = style.toLowerCase().replace(/[\s-_]/g, '')
-  if (s.includes('thin') || s.includes('hairline')) return 100
-  if (s.includes('extralight') || s.includes('ultralight')) return 200
-  if (s.includes('light')) return 300
-  if (s.includes('medium')) return 500
-  if (s.includes('semibold') || s.includes('demibold')) return 600
-  if (s.includes('extrabold') || s.includes('ultrabold')) return 800
-  if (s.includes('black') || s.includes('heavy')) return 900
-  if (s.includes('bold')) return 700
-  return 400
+  return parseFontStyle(style).weight
 }
 
 export function weightToStyle(weight: number, italic = false): string {
@@ -103,6 +95,7 @@ export class FontManager {
   private fallbackUserAgent: string | undefined
   private googleFontsCache = new Map<string, Record<string, string>>()
   private googleFontsFailed = new Set<string>()
+  private registeredRenderFamilies = new Set<string>()
   private cjkFallbackFamilies: string[] = []
   private cjkFallbackPromise: Promise<string[]> | null = null
   private arabicFallbackFamilies: string[] = []
@@ -110,6 +103,7 @@ export class FontManager {
 
   attachProvider(_canvasKit: CanvasKit, provider: TypefaceFontProvider): void {
     this.fontProvider = provider
+    this.registeredRenderFamilies.clear()
     for (const [cacheKey, data] of this.loadedFamilies) {
       const family = cacheKey.slice(0, cacheKey.indexOf('|'))
       this.registerFontInCanvasKit(family, data)
@@ -252,6 +246,21 @@ export class FontManager {
 
   loadedData(family: string, style: string): ArrayBuffer | null {
     return this.loadedFamilies.get(`${family}|${style}`) ?? null
+  }
+
+  renderFamily(family: string, style: string): string {
+    const data = this.loadedData(family, style)
+    if (!data) return family
+
+    const renderFamily = fontFaceRenderFamily(family, style)
+    if (!this.registeredRenderFamilies.has(renderFamily)) {
+      if (this.registerFontInCanvasKit(renderFamily, data)) {
+        this.registeredRenderFamilies.add(renderFamily)
+      } else {
+        return family
+      }
+    }
+    return renderFamily
   }
 
   collectFontKeys(graph: SceneGraph, nodeIds: string[]): Array<[string, string]> {
