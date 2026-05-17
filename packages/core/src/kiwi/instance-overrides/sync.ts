@@ -23,6 +23,7 @@ type SyncFn = (
 ) => void
 
 type DirectSyncKey = 'text' | 'visible' | 'opacity' | 'locked' | 'layoutGrow' | 'textAutoResize'
+type CopiedSyncKey = 'fills' | 'strokes' | 'effects' | 'styleRuns'
 
 function assignDirectUpdate(
   key: DirectSyncKey,
@@ -77,16 +78,49 @@ function syncDirectFields(
   for (const sync of DIRECT_SYNCERS) sync(source, target, updates, protections)
 }
 
+function assignCopiedUpdate(
+  key: CopiedSyncKey,
+  source: SceneNode,
+  updates: Partial<SceneNode>
+): void {
+  switch (key) {
+    case 'fills':
+      updates.fills = copyFills(source.fills)
+      break
+    case 'strokes':
+      updates.strokes = copyStrokes(source.strokes)
+      break
+    case 'effects':
+      updates.effects = copyEffects(source.effects)
+      break
+    case 'styleRuns':
+      updates.styleRuns = copyStyleRuns(source.styleRuns)
+      break
+  }
+}
+
+function copiedSync(key: CopiedSyncKey, field: ProtectedField): SyncFn {
+  return (source, target, updates, protections) => {
+    if (source[key] !== target[key] && canSync(protections, target.id, field)) {
+      assignCopiedUpdate(key, source, updates)
+    }
+  }
+}
+
+const COPIED_SYNCERS: SyncFn[] = [
+  copiedSync('fills', 'fills'),
+  copiedSync('strokes', 'strokes'),
+  copiedSync('effects', 'effects'),
+  copiedSync('styleRuns', 'styleRuns')
+]
+
 function syncCopiedFields(
   source: SceneNode,
   target: SceneNode,
   updates: Partial<SceneNode>,
   protections?: ProtectionMap
 ): void {
-  if (source.fills !== target.fills && canSync(protections, target.id, 'fills')) updates.fills = copyFills(source.fills)
-  if (source.strokes !== target.strokes && canSync(protections, target.id, 'strokes')) updates.strokes = copyStrokes(source.strokes)
-  if (source.effects !== target.effects && canSync(protections, target.id, 'effects')) updates.effects = copyEffects(source.effects)
-  if (source.styleRuns !== target.styleRuns && canSync(protections, target.id, 'styleRuns')) updates.styleRuns = copyStyleRuns(source.styleRuns)
+  for (const sync of COPIED_SYNCERS) sync(source, target, updates, protections)
 }
 
 export function syncNodeProps(
