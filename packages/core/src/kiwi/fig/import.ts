@@ -349,7 +349,7 @@ function parseDocumentColorSpace(nodeChanges: NodeChange[]): 'srgb' | 'display-p
   return documentNode?.documentColorProfile === 'DISPLAY_P3' ? 'display-p3' : 'srgb'
 }
 
-function applyTextStyleRefs(changeMap: Map<string, NodeChange>): void {
+function applyStyleRefs(changeMap: Map<string, NodeChange>): void {
   const textStyleFields = [
     'fontSize',
     'fontName',
@@ -360,10 +360,16 @@ function applyTextStyleRefs(changeMap: Map<string, NodeChange>): void {
   ] as const
 
   for (const nc of changeMap.values()) {
+    const fillStyleGuid = nc.styleIdForFill?.guid
+    if (fillStyleGuid) {
+      const style = changeMap.get(guidToString(fillStyleGuid))
+      if (style?.styleType === 'FILL' && style.fillPaints) nc.fillPaints = style.fillPaints
+    }
+
     if (nc.type !== 'TEXT') continue
-    const styleGuid = nc.styleIdForText?.guid
-    if (!styleGuid) continue
-    const style = changeMap.get(guidToString(styleGuid))
+    const textStyleGuid = nc.styleIdForText?.guid
+    if (!textStyleGuid) continue
+    const style = changeMap.get(guidToString(textStyleGuid))
     if (style?.type !== 'TEXT' || style.styleType !== 'TEXT') continue
     for (const field of textStyleFields) {
       if (field === 'textDecoration') {
@@ -399,7 +405,7 @@ export function importNodeChanges(
   }
 
   const { changeMap, parentMap, childrenMap } = buildChangeMaps(nodeChanges)
-  applyTextStyleRefs(changeMap)
+  applyStyleRefs(changeMap)
   const assetRefs = buildAssetRefMap(changeMap)
   setVariableColorResolver(buildVariableColorResolver(changeMap, assetRefs))
 

@@ -75,6 +75,45 @@ describe('fig-import: text properties', () => {
     expect(styled?.textDecoration).toBe('NONE')
   })
 
+  test('applies shared fill style refs', () => {
+    const graph = importNodeChanges([
+      doc(),
+      canvas(),
+      node('ROUNDED_RECTANGLE', 30, 1, {
+        name: 'slate/900',
+        styleType: 'FILL',
+        fillPaints: [
+          {
+            type: 'SOLID',
+            color: { r: 0.05882352963089943, g: 0.09019608050584793, b: 0.16470588743686676, a: 1 },
+            opacity: 1,
+            visible: true,
+            blendMode: 'NORMAL'
+          }
+        ]
+      } as Partial<NodeChange>),
+      node('ROUNDED_RECTANGLE', 10, 1, {
+        fillPaints: [
+          {
+            type: 'SOLID',
+            color: { r: 1, g: 1, b: 1, a: 1 },
+            opacity: 1,
+            visible: true,
+            blendMode: 'NORMAL'
+          }
+        ],
+        styleIdForFill: { guid: { sessionID: 1, localID: 30 } }
+      } as Partial<NodeChange>)
+    ])
+    const styled = graph.getChildren(graph.getPages()[0].id).find((node) => node.name === 'ROUNDED_RECTANGLE_10')
+    expect(styled?.fills[0]?.color).toEqual({
+      r: 0.05882352963089943,
+      g: 0.09019608050584793,
+      b: 0.16470588743686676,
+      a: 1
+    })
+  })
+
   test('font weight mapping', () => {
     const cases = [
       ['Bold', 700],

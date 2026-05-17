@@ -353,6 +353,7 @@ export interface NodeChange {
   }
   styleType?: string
   styleIdForText?: { guid?: GUID }
+  styleIdForFill?: { guid?: GUID }
   textUserLayoutVersion?: number
   textExplicitLayoutVersion?: number
   textBidiVersion?: number
