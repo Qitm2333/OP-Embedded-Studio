@@ -27,11 +27,18 @@ function resolveSizeOnlyPosition(
   return withinParent ? { x: source.x, y: source.y } : { x: 0, y: 0 }
 }
 
-function buildDsdTextUpdates(d: DerivedSymbolOverride, blobs: Uint8Array[]): Partial<SceneNode> {
+function buildDsdTextUpdates(
+  d: DerivedSymbolOverride,
+  blobs: Uint8Array[],
+  target: SceneNode
+): Partial<SceneNode> {
   const updates: Partial<SceneNode> = {}
   if (d.fontSize !== undefined) updates.fontSize = d.fontSize
   if (d.lineHeight !== undefined) updates.lineHeight = convertLineHeight(d.lineHeight, d.fontSize)
   if (d.letterSpacing !== undefined) updates.letterSpacing = convertLetterSpacing(d.letterSpacing, d.fontSize)
+  if (d.strokeWeight !== undefined && target.strokes.length > 0) {
+    updates.strokes = target.strokes.map((stroke) => ({ ...stroke, weight: d.strokeWeight as number }))
+  }
   const figmaDerivedTextGlyphs = convertFigmaDerivedTextGlyphs(d.derivedTextData, blobs)
   if (figmaDerivedTextGlyphs.length > 0) updates.figmaDerivedTextGlyphs = figmaDerivedTextGlyphs
   return updates
@@ -43,7 +50,7 @@ export function buildDsdLayoutUpdates(
   d: DerivedSymbolOverride,
   target: SceneNode
 ): { updates: Partial<SceneNode>; hasSize: boolean } {
-  const updates: Partial<SceneNode> = buildDsdTextUpdates(d, ctx.blobs)
+  const updates: Partial<SceneNode> = buildDsdTextUpdates(d, ctx.blobs, target)
   const figmaDerivedLayout: NonNullable<SceneNode['figmaDerivedLayout']> = {}
 
   if (d.size) {

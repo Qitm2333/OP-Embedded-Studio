@@ -91,6 +91,15 @@ function scaleVectorNetwork(
   }
 }
 
+function scaledStrokes(source: SceneNode, child: SceneNode, shapeScaleX: number, shapeScaleY: number) {
+  if (source.strokes.length !== child.strokes.length) return undefined
+  if (Math.abs(shapeScaleX - shapeScaleY) >= 0.001) return undefined
+  return child.strokes.map((stroke, strokeIndex) => ({
+    ...stroke,
+    weight: source.strokes[strokeIndex].weight
+  }))
+}
+
 function scaleChildren(
   graph: SceneGraph,
   instance: SceneNode,
@@ -131,6 +140,7 @@ function scaleChildren(
     if (source.vectorNetwork) {
       updates.vectorNetwork = scaleVectorNetwork(source.vectorNetwork, shapeScaleX, shapeScaleY)
     }
+    updates.strokes = scaledStrokes(source, child, shapeScaleX, shapeScaleY)
     graph.updateNode(child.id, updates)
     scaled.add(child.id)
 
@@ -201,6 +211,12 @@ function propagateScaling(ctx: OverrideContext, scaled: Set<string>): void {
         if (source.strokeGeometry.length > 0)
           cu.strokeGeometry = copyGeometryPaths(source.strokeGeometry)
         if (source.vectorNetwork) cu.vectorNetwork = structuredClone(source.vectorNetwork)
+      }
+      if (source.strokes.length === clone.strokes.length) {
+        cu.strokes = clone.strokes.map((stroke, strokeIndex) => ({
+          ...stroke,
+          weight: source.strokes[strokeIndex].weight
+        }))
       }
       if (Object.keys(cu).length > 0) graph.updateNode(cloneId, cu)
       queue.push(cloneId)
