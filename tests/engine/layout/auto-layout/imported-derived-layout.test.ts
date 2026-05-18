@@ -103,4 +103,29 @@ describe('imported auto-layout bounds', () => {
 
     expect(graph.getNode(field.id)).toMatchObject({ x: 0, y: 0, width: 276, height: 40 })
   })
+
+  test('uses Yoga positions for imported instances while preserving imported size', () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const row = graph.createNode('FRAME', page.id, {
+      width: 200,
+      height: 40,
+      layoutMode: 'HORIZONTAL',
+      primaryAxisSizing: 'FIXED',
+      counterAxisSizing: 'FIXED',
+      primaryAxisAlign: 'MAX',
+      counterAxisAlign: 'CENTER'
+    })
+    const instance = graph.createNode('INSTANCE', row.id, {
+      x: 0,
+      y: 0,
+      width: 40,
+      height: 20,
+      figmaDerivedLayout: { x: 0, y: 0, width: 40, height: 20 }
+    })
+
+    computeAllLayouts(graph)
+
+    expect(graph.getNode(instance.id)).toMatchObject({ x: 160, y: 10, width: 40, height: 20 })
+  })
 })

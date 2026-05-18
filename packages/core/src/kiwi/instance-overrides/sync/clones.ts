@@ -38,11 +38,7 @@ export function syncChildrenDeep(
     const tgtNode = graph.getNode(tgt.childIds[i])
     if (!srcNode || !tgtNode || srcNode.type !== tgtNode.type) continue
 
-    if (
-      srcNode.type === 'INSTANCE' &&
-      swappedInstances.has(src.childIds[i]) &&
-      srcNode.componentId !== tgtNode.componentId
-    ) {
+    if (srcNode.type === 'INSTANCE' && srcNode.componentId !== tgtNode.componentId) {
       recloneChildren(graph, src.childIds[i], tgtNode, swappedInstances, protections)
       continue
     }
