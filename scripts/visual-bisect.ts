@@ -176,7 +176,8 @@ async function exportOpenPencilSubset(indices: number[], path: string): Promise<
   }
 
   try {
-    const nodeIds = indices.map((index) => childIds[index])
+    const nodeIds =
+      rootNode.type === 'CANVAS' ? indices.map((index) => childIds[index]) : [rootNode.id]
     const data = await headlessRenderNodes(graph, page.id, nodeIds, {
       scale,
       format: 'PNG',

@@ -337,7 +337,7 @@ describe('computeVisualBounds', () => {
     expect(multiStroke.height).toBe(noEffects.height + 8)
   })
 
-  test('component set stroke geometry does not expand export bounds', () => {
+  test('inside stroke geometry does not expand export bounds', () => {
     const strokeGeometry = [
       {
         commandsBlob: commandsBlobFromPoints([
@@ -347,39 +347,57 @@ describe('computeVisualBounds', () => {
       }
     ]
     const nodes = {
-      set: {
-        id: 'set',
-        type: 'COMPONENT_SET',
+      inside: {
+        id: 'inside',
+        type: 'COMPONENT',
         width: 100,
         height: 50,
         visible: true,
+        strokes: [
+          {
+            weight: 1,
+            visible: true,
+            align: 'INSIDE' as const,
+            color: { r: 0, g: 0, b: 0, a: 1 },
+            opacity: 1
+          }
+        ],
         strokeGeometry,
         childIds: []
       },
-      frame: {
-        id: 'frame',
+      outside: {
+        id: 'outside',
         type: 'FRAME',
         width: 100,
         height: 50,
         visible: true,
+        strokes: [
+          {
+            weight: 1,
+            visible: true,
+            align: 'OUTSIDE' as const,
+            color: { r: 0, g: 0, b: 0, a: 1 },
+            opacity: 1
+          }
+        ],
         strokeGeometry,
         childIds: []
       }
     }
 
-    const componentSetBounds = computeDescendantVisualBounds(
-      ['set'],
+    const insideBounds = computeDescendantVisualBounds(
+      ['inside'],
       (id) => nodes[id as keyof typeof nodes],
       () => ({ x: 10, y: 20 })
     )
-    const frameBounds = computeDescendantVisualBounds(
-      ['frame'],
+    const outsideBounds = computeDescendantVisualBounds(
+      ['outside'],
       (id) => nodes[id as keyof typeof nodes],
       () => ({ x: 10, y: 20 })
     )
 
-    expect(componentSetBounds).toEqual({ minX: 10, minY: 20, maxX: 110, maxY: 70 })
-    expect(frameBounds).toEqual({ minX: 9, minY: 19, maxX: 111, maxY: 71 })
+    expect(insideBounds).toEqual({ minX: 10, minY: 20, maxX: 110, maxY: 70 })
+    expect(outsideBounds).toEqual({ minX: 9, minY: 19, maxX: 111, maxY: 71 })
   })
 
   test('multiple effects accumulate directional overflow', () => {
