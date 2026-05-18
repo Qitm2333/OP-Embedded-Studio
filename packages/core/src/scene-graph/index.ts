@@ -402,11 +402,8 @@ export class SceneGraph {
       if (node.textPicture && textChanged) node.textPicture = null
       if (node.figmaDerivedTextGlyphs && 'text' in changes) node.figmaDerivedTextGlyphs = null
     }
-    changes = Object.fromEntries(
-      (Object.entries(changes) as Array<[string, unknown]>).filter(([, value]) =>
-        value !== undefined
-      )
-    ) as Partial<SceneNode>
+    const entries = Object.entries(changes) as Array<[string, unknown]>
+    changes = Object.fromEntries(entries.filter(([, value]) => value !== undefined)) as Partial<SceneNode>
     if (changes.vectorNetwork) {
       changes = { ...changes, vectorNetwork: normalizeVectorNetwork(changes.vectorNetwork) }
     }
