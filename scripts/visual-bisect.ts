@@ -179,7 +179,7 @@ async function exportOpenPencilSubset(indices: number[], path: string): Promise<
     const data = await headlessRenderNodes(
       graph,
       page.id,
-      rootNode.type === 'CANVAS' ? indices.map((index) => childIds[index]) : [rootNode.id],
+      indices.map((index) => childIds[index]),
       {
         scale,
         format: 'PNG'
