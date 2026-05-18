@@ -60,7 +60,8 @@ function applyNodeTransforms(
   const rotation =
     overlays.rotationPreview?.nodeId === nodeId ? overlays.rotationPreview.angle : node.rotation
   if (rotation !== 0) {
-    canvas.rotate(rotation, node.width / 2, node.height / 2)
+    if (node.type === 'LINE') canvas.rotate(rotation, 0, 0)
+    else canvas.rotate(rotation, node.width / 2, node.height / 2)
   }
 
   if (node.flipX || node.flipY) {

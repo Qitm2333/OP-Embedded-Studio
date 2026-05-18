@@ -328,9 +328,27 @@ function convertLayoutPadding(
   }
 }
 
-function convertLayoutProps(
-  nc: NodeChange
-): Pick<
+function visibleContainerDerivedLayout(
+  nc: NodeChange,
+  layoutMode: SceneNode['layoutMode'],
+  primaryAxisSizing: SceneNode['primaryAxisSizing'],
+  counterAxisSizing: SceneNode['counterAxisSizing']
+): SceneNode['figmaDerivedLayout'] | undefined {
+  const hasHugAxis = primaryAxisSizing === 'HUG' || counterAxisSizing === 'HUG'
+  const hasVisiblePaint =
+    (nc.fillPaints?.some((paint) => paint.visible !== false) ?? false) ||
+    (nc.strokePaints?.some((paint) => paint.visible !== false) ?? false)
+  if (layoutMode === 'NONE' || !hasHugAxis || !hasVisiblePaint) return undefined
+
+  return {
+    x: nc.transform?.m02 ?? 0,
+    y: nc.transform?.m12 ?? 0,
+    width: nc.size?.x ?? 100,
+    height: nc.size?.y ?? 100
+  }
+}
+
+function convertLayoutProps(nc: NodeChange): Pick<
   SceneNode,
   | 'layoutMode'
   | 'itemSpacing'
@@ -351,13 +369,24 @@ function convertLayoutProps(
   | 'itemReverseZIndex'
   | 'strokesIncludedInLayout'
   | 'layoutDirection'
-> {
+> &
+  Partial<Pick<SceneNode, 'figmaDerivedLayout'>> {
+  const layoutMode = mapStackMode(nc.stackMode)
+  const primaryAxisSizing = mapStackSizing(nc.stackPrimarySizing)
+  const counterAxisSizing = mapStackSizing(nc.stackCounterSizing)
+  const figmaDerivedLayout = visibleContainerDerivedLayout(
+    nc,
+    layoutMode,
+    primaryAxisSizing,
+    counterAxisSizing
+  )
+
   return {
-    layoutMode: mapStackMode(nc.stackMode),
+    layoutMode,
     itemSpacing: nc.stackSpacing ?? 0,
     ...convertLayoutPadding(nc),
-    primaryAxisSizing: mapStackSizing(nc.stackPrimarySizing),
-    counterAxisSizing: mapStackSizing(nc.stackCounterSizing),
+    primaryAxisSizing,
+    counterAxisSizing,
     primaryAxisAlign: mapStackJustify(nc.stackPrimaryAlignItems ?? nc.stackJustify),
     counterAxisAlign: mapStackCounterAlign(nc.stackCounterAlignItems ?? nc.stackCounterAlign),
     layoutWrap: nc.stackWrap === 'WRAP' ? 'WRAP' : 'NO_WRAP',
@@ -372,7 +401,8 @@ function convertLayoutProps(
     layoutDirection:
       (getOpenPencilPluginValue(nc, LAYOUT_DIRECTION_PLUGIN_KEY) as
         | SceneNode['layoutDirection']
-        | null) || 'AUTO'
+        | null) || 'AUTO',
+    ...(figmaDerivedLayout ? { figmaDerivedLayout } : {})
   }
 }
 
