@@ -49,7 +49,9 @@
 - Fix variable picker popovers and color binding swatches.
 - Fix dashed strokes on vector nodes and gradient fills on text.
 - Fix inner shadow rendering on text nodes.
+- Fix imported Figma-derived underlined text rendering.
 - Fix exponential `.fig` file growth on repeated save/load cycles.
+- Fix opening large `.fig` files so every page populates component instances, preventing missing nested content when switching pages.
 - Fix canvas size badges scaling with zoom.
 - Fix layout inspector dropdown anchoring and spacing/padding icon clarity.
 - Fix section drawing and color input forwarding in the property panel.
