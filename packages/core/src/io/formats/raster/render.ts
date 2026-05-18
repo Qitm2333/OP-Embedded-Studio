@@ -109,32 +109,87 @@ function renderToSurface(
   setup: (canvas: Canvas) => void,
   trimTransparent = false
 ): Uint8Array | null {
-  const surface = ck.MakeSurface(width, height)
-  if (!surface) return null
+  const renderScale = 2
+  const renderWidth = width * renderScale
+  const renderHeight = height * renderScale
+  const pixels = ck.Malloc(Uint8Array, renderWidth * renderHeight * 4)
+  const surface = ck.MakeRasterDirectSurface(
+    {
+      alphaType: ck.AlphaType.Premul,
+      colorType: ck.ColorType.RGBA_8888,
+      colorSpace: ck.ColorSpace.SRGB,
+      width: renderWidth,
+      height: renderHeight
+    },
+    pixels,
+    renderWidth * 4
+  )
+  if (!surface) {
+    ck.Free(pixels)
+    return null
+  }
 
   try {
     const canvas = surface.getCanvas()
+    canvas.scale(renderScale, renderScale)
     setup(canvas)
     renderer.renderSceneToCanvas(canvas, renderGraph, pageId)
     surface.flush()
-    const foundAlphaBounds = trimTransparent ? findAlphaBounds(ck, canvas, width, height) : null
+
+    const highResImage = surface.makeImageSnapshot()
+    const downsamplePixels = ck.Malloc(Uint8Array, width * height * 4)
+    const downsampleSurface = ck.MakeRasterDirectSurface(
+      {
+        alphaType: ck.AlphaType.Premul,
+        colorType: ck.ColorType.RGBA_8888,
+        colorSpace: ck.ColorSpace.SRGB,
+        width,
+        height
+      },
+      downsamplePixels,
+      width * 4
+    )
+    if (!downsampleSurface) {
+      ck.Free(downsamplePixels)
+      highResImage.delete()
+      return null
+    }
+    const downsampleCanvas = downsampleSurface.getCanvas()
+    downsampleCanvas.clear(ck.TRANSPARENT)
+    downsampleCanvas.drawImageRectOptions(
+      highResImage,
+      ck.LTRBRect(0, 0, renderWidth, renderHeight),
+      ck.LTRBRect(0, 0, width, height),
+      ck.FilterMode.Linear,
+      ck.MipmapMode.None,
+      null
+    )
+    downsampleSurface.flush()
+    highResImage.delete()
+
+    const foundAlphaBounds = trimTransparent
+      ? findAlphaBounds(ck, downsampleCanvas, width, height)
+      : null
     const alphaBounds =
       foundAlphaBounds && shouldTrimAlphaBounds(foundAlphaBounds, width, height)
         ? foundAlphaBounds
         : null
     const image = alphaBounds
-      ? surface.makeImageSnapshot([
+      ? downsampleSurface.makeImageSnapshot([
           alphaBounds.minX,
           alphaBounds.minY,
           alphaBounds.maxX,
           alphaBounds.maxY
         ])
-      : surface.makeImageSnapshot()
+      : downsampleSurface.makeImageSnapshot()
     const encoded = image.encodeToBytes(ckImageFormat(ck, format), quality)
     image.delete()
+    downsampleSurface.delete()
+    ck.Free(downsamplePixels)
     return encoded ? new Uint8Array(encoded) : null
   } finally {
     surface.delete()
+    ck.Free(pixels)
   }
 }
 
