@@ -209,7 +209,7 @@ export async function exportFigFile(
     if (page.internalOnly) canvasNc.internalOnly = true
     nodeChanges.push(canvasNc)
 
-    const children = graph.getChildren(page.id)
+    const children = graph.getChildren(page.id).filter((child) => !child.internalOnly)
     for (let i = 0; i < children.length; i++) {
       nodeChanges.push(
         ...sceneNodeToKiwi(

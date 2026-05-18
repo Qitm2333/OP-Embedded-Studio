@@ -190,8 +190,8 @@ function exportTextData(node: SceneNode): NodeChange['textData'] {
   }
 }
 
-export function safeColor(c: Color): Color {
-  return { r: c.r, g: c.g, b: c.b, a: c.a }
+export function safeColor(c: Color | Omit<Color, 'a'>): Color {
+  return { r: c.r, g: c.g, b: c.b, a: 'a' in c ? c.a : 1 }
 }
 
 function fillToKiwiPaint(f: SceneNode['fills'][number]): Paint {
@@ -266,7 +266,7 @@ function serializeTextProps(
   nc.textAutoResize = autoResize
   nc.textAlignHorizontal = node.textAlignHorizontal
   nc.textAlignVertical = 'TOP'
-  nc.textUserLayoutVersion = 5
+  nc.textUserLayoutVersion = 4
   nc.textExplicitLayoutVersion = 1
   nc.textBidiVersion = 1
   nc.textDecorationSkipInk = true
@@ -275,7 +275,7 @@ function serializeTextProps(
   nc.fontVersion = ''
   nc.emojiImageSet = 'APPLE'
   if (fontDigestMap) nc.derivedTextData = buildDerivedTextData(node, fontDigestMap, blobs)
-  nc.lineHeight = node.lineHeight != null ? { value: node.lineHeight, units: 'PIXELS' } : { value: 100, units: 'PERCENT' }
+  if (node.lineHeight != null) nc.lineHeight = { value: node.lineHeight, units: 'PIXELS' }
   nc.letterSpacing = { value: node.letterSpacing, units: 'PIXELS' }
   if (node.textDecoration !== 'NONE') {
     nc.textDecoration = node.textDecoration === 'UNDERLINE' ? 'UNDERLINE' : 'STRIKETHROUGH'

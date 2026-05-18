@@ -87,8 +87,8 @@ function applyOverrideLayout(ov: Record<string, unknown>, updates: Partial<Scene
 }
 
 function applyOverrideStrokes(ov: Record<string, unknown>, updates: Partial<SceneNode>): void {
-  if (ov.strokeWeight != null && !ov.strokePaints) {
-    updates.strokes = updates.strokes ?? []
+  if (ov.strokeWeight != null && !ov.strokePaints && updates.strokes) {
+    for (const stroke of updates.strokes) stroke.weight = ov.strokeWeight as number
   }
   if (ov.strokeAlign != null && updates.strokes) {
     let align: 'INSIDE' | 'OUTSIDE' | 'CENTER' = 'CENTER'
