@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { ellipsizeComponentLabel } from '#core/canvas/labels/draw'
+import { ellipsizeLabelText } from '#core/canvas/labels/text'
 
 const fixedWidthFont = {
   getGlyphIDs(text: string) {
@@ -9,18 +9,18 @@ const fixedWidthFont = {
   getGlyphWidths(glyphs: number[]) {
     return glyphs.map(() => 10)
   }
-} as Parameters<typeof ellipsizeComponentLabel>[0]
+} as Parameters<typeof ellipsizeLabelText>[0]
 
-describe('component label text', () => {
+describe('label text', () => {
   test('keeps labels that fit inside the component width', () => {
-    expect(ellipsizeComponentLabel(fixedWidthFont, 'Button', 60)).toBe('Button')
+    expect(ellipsizeLabelText(fixedWidthFont, 'Button', 60)).toBe('Button')
   })
 
   test('ellipsizes labels that exceed the component width', () => {
-    expect(ellipsizeComponentLabel(fixedWidthFont, 'Very long component', 55)).toBe('Very…')
+    expect(ellipsizeLabelText(fixedWidthFont, 'Very long component', 55)).toBe('Very…')
   })
 
   test('returns only ellipsis when only the ellipsis fits', () => {
-    expect(ellipsizeComponentLabel(fixedWidthFont, 'Component', 10)).toBe('…')
+    expect(ellipsizeLabelText(fixedWidthFont, 'Component', 10)).toBe('…')
   })
 })

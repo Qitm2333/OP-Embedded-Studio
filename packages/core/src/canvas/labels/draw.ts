@@ -13,6 +13,8 @@ import {
 } from '#core/constants'
 import type { SceneNode, SceneGraph } from '#core/scene-graph'
 
+import { ellipsizeLabelText } from './text'
+
 export function drawSectionTitles(r: SkiaRenderer, canvas: Canvas, graph: SceneGraph): void {
   if (!r.sectionTitleFont) return
 
@@ -98,34 +100,6 @@ function drawSectionTitle(
   canvas.restore()
 }
 
-function measureText(font: Font, text: string): number {
-  const glyphIds = font.getGlyphIDs(text)
-  const widths = font.getGlyphWidths(glyphIds)
-  let result = 0
-  for (const width of widths) result += width
-  return result
-}
-
-export function ellipsizeComponentLabel(font: Font, text: string, maxWidth: number): string {
-  if (maxWidth <= 0) return ''
-  if (measureText(font, text) <= maxWidth) return text
-
-  const ellipsis = '…'
-  const ellipsisWidth = measureText(font, ellipsis)
-  if (maxWidth <= ellipsisWidth) return ellipsis
-
-  let width = 0
-  let end = 0
-  const glyphIds = font.getGlyphIDs(text)
-  const widths = font.getGlyphWidths(glyphIds)
-  for (let index = 0; index < widths.length; index++) {
-    if (width + widths[index] + ellipsisWidth > maxWidth) break
-    width += widths[index]
-    end = index + 1
-  }
-  return text.slice(0, end) + ellipsis
-}
-
 export function drawComponentLabels(r: SkiaRenderer, canvas: Canvas, graph: SceneGraph): void {
   if (!r.componentLabelFont) return
 
@@ -149,7 +123,7 @@ export function drawComponentLabels(r: SkiaRenderer, canvas: Canvas, graph: Scen
     }
 
     const maxTextWidth = node.width * r.zoom - iconS - COMPONENT_LABEL_ICON_GAP
-    const displayText = ellipsizeComponentLabel(font, node.name, maxTextWidth)
+    const displayText = ellipsizeLabelText(font, node.name, maxTextWidth)
     if (!displayText) continue
 
     const iconX = labelX

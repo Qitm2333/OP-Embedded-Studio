@@ -14,6 +14,8 @@ import type { SceneNode, SceneGraph } from '#core/scene-graph'
 
 import type { SkiaRenderer, RenderOverlays } from '#core/canvas/renderer'
 
+import { ellipsizeLabelText } from './text'
+
 function getOverlayRotation(node: SceneNode, overlays?: RenderOverlays): number {
   return overlays?.rotationPreview?.nodeId === node.id
     ? overlays.rotationPreview.angle
@@ -76,10 +78,13 @@ function drawSingleFrameTitle(
 
   r.auxFill.setColor(r.selColor())
 
+  const displayText = ellipsizeLabelText(labelFont, node.name, node.width * r.zoom)
+  if (!displayText) return
+
   canvas.save()
   canvas.translate(origin[0] * r.zoom + r.panX, origin[1] * r.zoom + r.panY)
   if (overlayRotation !== 0) canvas.rotate(overlayRotation, 0, 0)
-  canvas.drawText(node.name, 0, -LABEL_OFFSET_Y, r.auxFill, labelFont)
+  canvas.drawText(displayText, 0, -LABEL_OFFSET_Y, r.auxFill, labelFont)
   canvas.restore()
 }
 
