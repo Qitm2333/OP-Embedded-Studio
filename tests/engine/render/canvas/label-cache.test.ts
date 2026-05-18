@@ -136,32 +136,28 @@ describe('LabelCache', () => {
     expect(nested?.nested).toBe(true)
   })
 
-  it('collects components and component sets', () => {
+  it('collects top-level components and component sets', () => {
     const { g, pageId } = buildGraph()
     const cache = new LabelCache()
 
     cache.update(g, pageId, 1)
     const components = cache.getComponents(g, { x: -1000, y: -1000, w: 3000, h: 3000 })
 
-    expect(components.length).toBe(3)
+    expect(components.length).toBe(2)
     const names = components.map((c) => c.node.name).sort()
-    expect(names).toEqual(['Button', 'Button Set', 'Standalone'])
+    expect(names).toEqual(['Button Set', 'Standalone'])
   })
 
-  it('identifies components inside component sets', () => {
+  it('skips components nested inside other components', () => {
     const { g, pageId } = buildGraph()
     const cache = new LabelCache()
 
     cache.update(g, pageId, 1)
     const components = cache.getComponents(g, { x: -1000, y: -1000, w: 3000, h: 3000 })
 
-    const buttonSet = components.find((c) => c.node.name === 'Button Set')
-    const button = components.find((c) => c.node.name === 'Button')
-    const standalone = components.find((c) => c.node.name === 'Standalone')
-
-    expect(buttonSet?.inside).toBe(false)
-    expect(button?.inside).toBe(true)
-    expect(standalone?.inside).toBe(false)
+    expect(components.find((c) => c.node.name === 'Button Set')).toBeDefined()
+    expect(components.find((c) => c.node.name === 'Button')).toBeUndefined()
+    expect(components.find((c) => c.node.name === 'Standalone')).toBeDefined()
   })
 
   it('skips invisible nodes', () => {
@@ -216,8 +212,8 @@ describe('LabelCache', () => {
     expect(nested?.absY).toBe(10)
 
     const components = cache.getComponents(g, { x: -1000, y: -1000, w: 3000, h: 3000 })
-    const button = components.find((c) => c.node.name === 'Button')
-    expect(button?.absX).toBe(310)
-    expect(button?.absY).toBe(10)
+    const buttonSet = components.find((c) => c.node.name === 'Button Set')
+    expect(buttonSet?.absX).toBe(300)
+    expect(buttonSet?.absY).toBe(0)
   })
 })

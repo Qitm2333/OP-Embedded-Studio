@@ -22,6 +22,7 @@ interface Viewport {
 }
 
 const LABEL_TYPES = new Set(['COMPONENT', 'COMPONENT_SET'])
+const COMPONENT_LABEL_PARENT_TYPES = new Set(['CANVAS', 'SECTION'])
 
 function isInViewport(absX: number, absY: number, w: number, h: number, vp: Viewport): boolean {
   return absX + w >= vp.x && absY + h >= vp.y && absX <= vp.x + vp.w && absY <= vp.y + vp.h
@@ -137,7 +138,9 @@ export class LabelCache {
         this.sections.push({ nodeId: childId, absX: ax, absY: ay, nested: insideSection })
         this.walkChildren(graph, childId, ax, ay, true)
       } else if (LABEL_TYPES.has(child.type)) {
-        this.components.push({ nodeId: childId, absX: ax, absY: ay, parentType })
+        if (COMPONENT_LABEL_PARENT_TYPES.has(parentType)) {
+          this.components.push({ nodeId: childId, absX: ax, absY: ay, parentType })
+        }
         if (child.childIds.length > 0) {
           this.walkChildren(graph, childId, ax, ay, insideSection)
         }
