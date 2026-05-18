@@ -104,6 +104,17 @@ function makeGradientLocalMatrix(
   ])
 }
 
+export function linearGradientEndpoints(
+  width: number,
+  height: number,
+  transform: NonNullable<Fill['gradientTransform']>
+) {
+  return {
+    start: { x: (transform.m00 + transform.m02) * width, y: (transform.m10 + transform.m12) * height },
+    end: { x: transform.m02 * width, y: transform.m12 * height }
+  }
+}
+
 export function applyGradientFill(
   r: SkiaRenderer,
   fill: Fill,
@@ -135,10 +146,11 @@ export function applyGradientFill(
   const h = node.height
 
   if (fill.type === 'GRADIENT_LINEAR') {
-    const startX = t.m02 * w
-    const startY = t.m12 * h
-    const endX = (t.m00 + t.m02) * w
-    const endY = (t.m10 + t.m12) * h
+    const { start, end } = linearGradientEndpoints(w, h, t)
+    const startX = start.x
+    const startY = start.y
+    const endX = end.x
+    const endY = end.y
     const shader = r.ck.Shader.MakeLinearGradient(
       [startX, startY],
       [endX, endY],
