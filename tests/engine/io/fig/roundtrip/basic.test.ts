@@ -180,6 +180,30 @@ describe('roundtrip: export → re-import', () => {
     expect(types.get('ELLIPSE')).toBe(1)
   })
 
+  test('preserves component sets', async () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const componentSet = graph.createNode('COMPONENT_SET', page.id, {
+      name: 'Button',
+      width: 240,
+      height: 80
+    })
+    graph.createNode('COMPONENT', componentSet.id, {
+      name: 'Primary',
+      x: 16,
+      y: 16,
+      width: 96,
+      height: 40
+    })
+
+    const figBytes = await exportFigFile(graph)
+    const parsed = await parseFigFile(figBytes.buffer as ArrayBuffer)
+    const parsedSet = parsed.getAllNodes().find((node) => node.name === 'Button')
+
+    expect(parsedSet).toBeDefined()
+    expect(expectDefined(parsedSet, 'parsedSet').type).toBe('COMPONENT_SET')
+  })
+
   test('preserves node names', () => {
     const names = new Set(reImportedNodes.map((n) => n.name))
     expect(names.has('Container')).toBe(true)
