@@ -14,6 +14,7 @@ interface RenderOptions {
   format: ExportFormat
   quality?: number
   colorSpace?: RenderColorSpace
+  trimTransparent?: boolean
 }
 
 function ensureSinglePageSelection(graph: SceneGraph, pageId: string, nodeIds: string[]): boolean {
@@ -49,6 +50,36 @@ function ckImageFormat(ck: CanvasKit, format: ExportFormat) {
   }
 }
 
+function findAlphaBounds(ck: CanvasKit, canvas: Canvas, width: number, height: number) {
+  const pixels = canvas.readPixels(0, 0, {
+    alphaType: ck.AlphaType.Unpremul,
+    colorType: ck.ColorType.RGBA_8888,
+    colorSpace: ck.ColorSpace.SRGB,
+    width,
+    height
+  })
+  if (!pixels) return null
+
+  let minX = width
+  let minY = height
+  let maxX = -1
+  let maxY = -1
+
+  for (let y = 0; y < height; y++) {
+    const row = y * width * 4
+    for (let x = 0; x < width; x++) {
+      if (pixels[row + x * 4 + 3] === 0) continue
+      minX = Math.min(minX, x)
+      minY = Math.min(minY, y)
+      maxX = Math.max(maxX, x + 1)
+      maxY = Math.max(maxY, y + 1)
+    }
+  }
+
+  if (maxX < minX || maxY < minY) return null
+  return { minX, minY, maxX, maxY }
+}
+
 function renderToSurface(
   ck: CanvasKit,
   renderer: SkiaRenderer,
@@ -58,7 +89,8 @@ function renderToSurface(
   height: number,
   format: ExportFormat,
   quality: number,
-  setup: (canvas: Canvas) => void
+  setup: (canvas: Canvas) => void,
+  trimTransparent = false
 ): Uint8Array | null {
   const surface = ck.MakeSurface(width, height)
   if (!surface) return null
@@ -68,7 +100,15 @@ function renderToSurface(
     setup(canvas)
     renderer.renderSceneToCanvas(canvas, renderGraph, pageId)
     surface.flush()
-    const image = surface.makeImageSnapshot()
+    const alphaBounds = trimTransparent ? findAlphaBounds(ck, canvas, width, height) : null
+    const image = alphaBounds
+      ? surface.makeImageSnapshot([
+          alphaBounds.minX,
+          alphaBounds.minY,
+          alphaBounds.maxX,
+          alphaBounds.maxY
+        ])
+      : surface.makeImageSnapshot()
     const encoded = image.encodeToBytes(ckImageFormat(ck, format), quality)
     image.delete()
     return encoded ? new Uint8Array(encoded) : null
@@ -122,7 +162,8 @@ export function renderNodesToImage(
       canvas.clear(ck.TRANSPARENT)
       canvas.scale(options.scale, options.scale)
       canvas.translate(-bounds.minX, -bounds.minY)
-    }
+    },
+    options.trimTransparent
   )
 }
 

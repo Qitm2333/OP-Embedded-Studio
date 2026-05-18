@@ -77,7 +77,8 @@ async function renderRaster(
       {
         scale,
         format: options.format,
-        quality: options.quality
+        quality: options.quality,
+        trimTransparent: request.target.scope === 'page' || request.target.scope === 'document'
       }
     )
   }
@@ -85,7 +86,8 @@ async function renderRaster(
   return headlessRenderNodes(request.graph, target.pageId, target.nodeIds, {
     scale,
     format: options.format,
-    quality: options.quality
+    quality: options.quality,
+    trimTransparent: request.target.scope === 'page' || request.target.scope === 'document'
   })
 }
 

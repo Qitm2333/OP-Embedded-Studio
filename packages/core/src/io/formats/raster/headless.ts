@@ -35,7 +35,12 @@ export async function headlessRenderNodes(
   graph: SceneGraph,
   pageId: string,
   nodeIds: string[],
-  options: { scale?: number; format?: ExportFormat; quality?: number } = {}
+  options: {
+    scale?: number
+    format?: ExportFormat
+    quality?: number
+    trimTransparent?: boolean
+  } = {}
 ): Promise<Uint8Array | null> {
   const { ck, renderer } = await getRenderer()
   renderer.invalidateAllPictures()
@@ -44,7 +49,8 @@ export async function headlessRenderNodes(
     return renderNodesToImage(ck, renderer, graph, pageId, nodeIds, {
       scale: options.scale ?? 1,
       format: options.format ?? 'PNG',
-      quality: options.quality
+      quality: options.quality,
+      trimTransparent: options.trimTransparent
     })
   } finally {
     restoreTextMeasurer()
