@@ -2,7 +2,21 @@ import { describe, test, expect } from 'bun:test'
 
 import type { Vector } from '@open-pencil/core'
 
-import { computeVisualBounds } from '#core/geometry'
+import { computeDescendantVisualBounds, computeVisualBounds } from '#core/geometry'
+
+function commandsBlobFromPoints(points: Vector[]): Uint8Array {
+  const blob = new Uint8Array(points.length * 9 + 1)
+  const view = new DataView(blob.buffer)
+  let offset = 0
+  for (const point of points) {
+    blob[offset] = 1
+    view.setFloat32(offset + 1, point.x, true)
+    view.setFloat32(offset + 5, point.y, true)
+    offset += 9
+  }
+  blob[offset] = 0
+  return blob
+}
 
 describe('computeVisualBounds', () => {
   const idPos = (id: string) => {
@@ -321,6 +335,51 @@ describe('computeVisualBounds', () => {
     // strokeOverflow takes max: OUTSIDE(2)=2, CENTER(4)=4, INSIDE(0)=0 → max=4
     expect(multiStroke.width).toBe(noEffects.width + 8) // 4 per side × 2
     expect(multiStroke.height).toBe(noEffects.height + 8)
+  })
+
+  test('component set stroke geometry does not expand export bounds', () => {
+    const strokeGeometry = [
+      {
+        commandsBlob: commandsBlobFromPoints([
+          { x: -1, y: -1 },
+          { x: 101, y: 51 }
+        ])
+      }
+    ]
+    const nodes = {
+      set: {
+        id: 'set',
+        type: 'COMPONENT_SET',
+        width: 100,
+        height: 50,
+        visible: true,
+        strokeGeometry,
+        childIds: []
+      },
+      frame: {
+        id: 'frame',
+        type: 'FRAME',
+        width: 100,
+        height: 50,
+        visible: true,
+        strokeGeometry,
+        childIds: []
+      }
+    }
+
+    const componentSetBounds = computeDescendantVisualBounds(
+      ['set'],
+      (id) => nodes[id as keyof typeof nodes],
+      () => ({ x: 10, y: 20 })
+    )
+    const frameBounds = computeDescendantVisualBounds(
+      ['frame'],
+      (id) => nodes[id as keyof typeof nodes],
+      () => ({ x: 10, y: 20 })
+    )
+
+    expect(componentSetBounds).toEqual({ minX: 10, minY: 20, maxX: 110, maxY: 70 })
+    expect(frameBounds).toEqual({ minX: 9, minY: 19, maxX: 111, maxY: 71 })
   })
 
   test('multiple effects accumulate directional overflow', () => {

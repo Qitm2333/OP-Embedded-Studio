@@ -329,7 +329,7 @@ export function nodeVisualBounds(
 
   const localGeometry = geometryBlobBounds([
     ...(node.fillGeometry ?? []),
-    ...(node.strokeGeometry ?? [])
+    ...(node.type === 'COMPONENT_SET' ? [] : (node.strokeGeometry ?? []))
   ])
   if (localGeometry) {
     bounds = unionVisualBounds(bounds, transformedLocalBounds(node, localGeometry, abs)) ?? bounds
