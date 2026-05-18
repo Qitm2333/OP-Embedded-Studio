@@ -72,22 +72,14 @@ function drawSingleFrameTitle(
 
   const world = getWorldMatrix({ ...node, rotation: overlayRotation }, graph)
 
-  // World -> screen (pan + zoom)
-  const view = r.ck.Matrix.multiply(
-    r.ck.Matrix.translated(r.panX, r.panY),
-    r.ck.Matrix.scaled(r.zoom, r.zoom)
-  )
-
-  const m = r.ck.Matrix.multiply(view, world)
+  const origin = r.ck.Matrix.mapPoints(world, [0, 0])
 
   r.auxFill.setColor(r.selColor())
 
   canvas.save()
-  canvas.concat(m)
-
-  // After concat(m), local (0,0) is node's top-left in screen space (after rotation etc.)
+  canvas.translate(origin[0] * r.zoom + r.panX, origin[1] * r.zoom + r.panY)
+  if (overlayRotation !== 0) canvas.rotate(overlayRotation, 0, 0)
   canvas.drawText(node.name, 0, -LABEL_OFFSET_Y, r.auxFill, labelFont)
-
   canvas.restore()
 }
 
