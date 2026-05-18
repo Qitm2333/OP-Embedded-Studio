@@ -3,7 +3,10 @@ import { beforeAll, describe, expect, test } from 'bun:test'
 import { renderNodesToImage, SceneGraph, SkiaRenderer } from '@open-pencil/core'
 
 import { initCanvasKit } from '#cli/headless'
-import { snapFigmaDerivedGlyphBaseline } from '#core/canvas/text-derived'
+import {
+  shouldUseHardFigmaDerivedGlyphCoverage,
+  snapFigmaDerivedGlyphBaseline
+} from '#core/canvas/text-derived'
 
 import { expectDefined } from '#tests/helpers/assert'
 
@@ -38,6 +41,12 @@ describe('derived text rendering', () => {
     expect(snapFigmaDerivedGlyphBaseline(47.45454406738281)).toBe(47)
     expect(snapFigmaDerivedGlyphBaseline(15.090909004211426)).toBe(15)
     expect(snapFigmaDerivedGlyphBaseline(17.81818199157715)).toBe(18)
+  })
+
+  test('uses hard source coverage only for regular 20px derived glyphs', () => {
+    expect(shouldUseHardFigmaDerivedGlyphCoverage({ fontSize: 20, fontWeight: 400 })).toBeTrue()
+    expect(shouldUseHardFigmaDerivedGlyphCoverage({ fontSize: 20, fontWeight: 600 })).toBeFalse()
+    expect(shouldUseHardFigmaDerivedGlyphCoverage({ fontSize: 14, fontWeight: 500 })).toBeFalse()
   })
 
   test('draws Figma-derived glyphs even when the font is unavailable', async () => {
