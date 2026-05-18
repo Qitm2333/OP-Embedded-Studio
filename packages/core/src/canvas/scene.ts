@@ -8,7 +8,12 @@ import { vectorNetworkToCenterlinePath } from '#core/vector'
 import { renderBooleanOperation } from './boolean'
 import { nodeHasRadius } from './shapes'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
-import { drawStyledRRectStroke, getStrokeCapEntity, getStrokeJoinEntity } from './strokes'
+import {
+  drawDashedRRectWithSolidCorners,
+  drawStyledRRectStroke,
+  getStrokeCapEntity,
+  getStrokeJoinEntity
+} from './strokes'
 import { drawFigmaDerivedText } from './text-derived'
 
 function drawVisibleFills(
@@ -243,9 +248,14 @@ export function renderComponentSet(
 
   const visibleStrokes = node.strokes.filter((stroke) => stroke.visible)
   if (visibleStrokes.length > 0) {
-    forVisibleStrokes(r, node, graph, (stroke, color) =>
-      drawStyledRRectStroke(r, canvas, rrect, node, stroke, color)
-    )
+    forVisibleStrokes(r, node, graph, (stroke, color) => {
+      const dashPhase = stroke.dashPattern?.[1] ?? 0
+      if (stroke.dashPattern && stroke.dashPattern.length > 0) {
+        drawDashedRRectWithSolidCorners(r, canvas, node, stroke, color, 5, dashPhase)
+      } else {
+        drawStyledRRectStroke(r, canvas, rrect, node, stroke, color, dashPhase)
+      }
+    })
     return
   }
 

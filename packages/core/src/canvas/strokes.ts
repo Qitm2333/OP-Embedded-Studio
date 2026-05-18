@@ -27,13 +27,81 @@ export function getStrokeJoinEntity(r: SkiaRenderer, join: string | undefined): 
   }
 }
 
+function strokeInset(stroke: Stroke): number {
+  if (stroke.align === 'INSIDE') return stroke.weight / 2
+  if (stroke.align === 'OUTSIDE') return -stroke.weight / 2
+  return 0
+}
+
+export function drawDashedRRectWithSolidCorners(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  node: SceneNode,
+  stroke: Stroke,
+  color: Color,
+  cornerRadius: number,
+  dashPhase = 0
+): void {
+  const dash = stroke.dashPattern ?? []
+  const inset = strokeInset(stroke)
+  const left = inset
+  const top = inset
+  const right = node.width - inset
+  const bottom = node.height - inset
+  const radius = Math.max(0, cornerRadius - inset)
+
+  r.strokePaint.setColor(r.ck.Color4f(color.r, color.g, color.b, color.a))
+  r.strokePaint.setStrokeWidth(stroke.weight)
+  r.strokePaint.setAlphaf(stroke.opacity)
+  r.strokePaint.setStrokeCap(r.ck.StrokeCap.Butt)
+  r.strokePaint.setStrokeJoin(getStrokeJoinEntity(r, stroke.join))
+  r.strokePaint.setPathEffect(null)
+
+  canvas.drawArc(
+    r.ck.LTRBRect(left, top, left + radius * 2, top + radius * 2),
+    180,
+    90,
+    false,
+    r.strokePaint
+  )
+  canvas.drawArc(
+    r.ck.LTRBRect(right - radius * 2, top, right, top + radius * 2),
+    270,
+    90,
+    false,
+    r.strokePaint
+  )
+  canvas.drawArc(
+    r.ck.LTRBRect(right - radius * 2, bottom - radius * 2, right, bottom),
+    0,
+    90,
+    false,
+    r.strokePaint
+  )
+  canvas.drawArc(
+    r.ck.LTRBRect(left, bottom - radius * 2, left + radius * 2, bottom),
+    90,
+    90,
+    false,
+    r.strokePaint
+  )
+
+  r.strokePaint.setPathEffect(dash.length > 0 ? r.ck.PathEffect.MakeDash(dash, dashPhase) : null)
+  canvas.drawLine(left + radius, top, right - radius, top, r.strokePaint)
+  canvas.drawLine(right, top + radius, right, bottom - radius, r.strokePaint)
+  canvas.drawLine(right - radius, bottom, left + radius, bottom, r.strokePaint)
+  canvas.drawLine(left, bottom - radius, left, top + radius, r.strokePaint)
+  r.strokePaint.setPathEffect(null)
+}
+
 export function drawStyledRRectStroke(
   r: SkiaRenderer,
   canvas: Canvas,
   rrect: Float32Array,
   node: SceneNode,
   stroke: Stroke,
-  color: Color
+  color: Color,
+  dashPhase = 0
 ): void {
   const dash = stroke.dashPattern ?? []
   r.strokePaint.setColor(r.ck.Color4f(color.r, color.g, color.b, color.a))
@@ -41,7 +109,7 @@ export function drawStyledRRectStroke(
   r.strokePaint.setAlphaf(stroke.opacity)
   r.strokePaint.setStrokeCap(getStrokeCapEntity(r, stroke.cap))
   r.strokePaint.setStrokeJoin(getStrokeJoinEntity(r, stroke.join))
-  r.strokePaint.setPathEffect(dash.length > 0 ? r.ck.PathEffect.MakeDash(dash, 0) : null)
+  r.strokePaint.setPathEffect(dash.length > 0 ? r.ck.PathEffect.MakeDash(dash, dashPhase) : null)
   r.drawRRectStrokeWithAlign(canvas, rrect, node, stroke)
   r.strokePaint.setPathEffect(null)
 }
