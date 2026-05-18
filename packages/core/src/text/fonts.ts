@@ -1,4 +1,5 @@
 import type { CanvasKit, TypefaceFontProvider } from 'canvaskit-wasm'
+import { uniq } from 'es-toolkit/array'
 
 import { DEFAULT_FONT_FAMILY, IS_BROWSER, GOOGLE_FONTS_API_KEY } from '#core/constants'
 import type { SceneGraph } from '#core/scene-graph'
@@ -204,7 +205,7 @@ export class FontManager {
 
   async listFamilies(): Promise<string[]> {
     const fonts = this.localFonts ?? (await this.requestLocalFontAccess())
-    return [...new Set(fonts.map((f) => f.family))].sort()
+    return uniq(fonts.map((f) => f.family)).sort()
   }
 
   async fetchBundledFont(url: string): Promise<ArrayBuffer | null> {

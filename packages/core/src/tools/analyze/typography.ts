@@ -1,3 +1,5 @@
+import { orderBy, sortBy } from 'es-toolkit/array'
+
 import { defineTool } from '#core/tools/schema'
 
 export const analyzeTypography = defineTool({
@@ -43,16 +45,16 @@ export const analyzeTypography = defineTool({
       return false
     })
 
-    const styles = [...styleMap.values()].sort((a, b) => b.count - a.count)
+    const styles = orderBy([...styleMap.values()], ['count'], ['desc'])
 
     if (args.group_by === 'family') {
       const byFamily = new Map<string, number>()
       for (const s of styles) byFamily.set(s.family, (byFamily.get(s.family) ?? 0) + s.count)
       return {
         totalTextNodes,
-        groups: [...byFamily.entries()]
-          .sort((a, b) => b[1] - a[1])
-          .map(([family, count]) => ({ family, count }))
+        groups: orderBy([...byFamily.entries()], [(entry) => entry[1]], ['desc']).map(
+          ([family, count]) => ({ family, count })
+        )
       }
     }
 
@@ -61,9 +63,10 @@ export const analyzeTypography = defineTool({
       for (const s of styles) bySize.set(s.size, (bySize.get(s.size) ?? 0) + s.count)
       return {
         totalTextNodes,
-        groups: [...bySize.entries()]
-          .sort((a, b) => a[0] - b[0])
-          .map(([size, count]) => ({ size, count }))
+        groups: sortBy([...bySize.entries()], [(entry) => entry[0]]).map(([size, count]) => ({
+          size,
+          count
+        }))
       }
     }
 
@@ -72,9 +75,9 @@ export const analyzeTypography = defineTool({
       for (const s of styles) byWeight.set(s.weight, (byWeight.get(s.weight) ?? 0) + s.count)
       return {
         totalTextNodes,
-        groups: [...byWeight.entries()]
-          .sort((a, b) => b[1] - a[1])
-          .map(([weight, count]) => ({ weight, count }))
+        groups: orderBy([...byWeight.entries()], [(entry) => entry[1]], ['desc']).map(
+          ([weight, count]) => ({ weight, count })
+        )
       }
     }
 

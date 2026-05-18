@@ -1,3 +1,5 @@
+import { omit } from 'es-toolkit/object'
+
 import type { CharacterStyleOverride, StyleRun, TextDecoration } from '#core/scene-graph'
 
 export function getStyleAt(runs: StyleRun[], index: number): CharacterStyleOverride {
@@ -51,11 +53,7 @@ export function removeStyleFromRange(
     if (chars[i]) {
       const current = chars[i]
       if (!current) continue
-      const copy = Object.fromEntries(
-        Object.entries(current).filter(
-          ([key]) => !keys.includes(key as keyof CharacterStyleOverride)
-        )
-      ) as CharacterStyleOverride
+      const copy = omit(current, keys) as CharacterStyleOverride
       chars[i] = Object.keys(copy).length > 0 ? copy : null
     }
   }

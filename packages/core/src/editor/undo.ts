@@ -1,3 +1,5 @@
+import { pick } from 'es-toolkit/object'
+
 import type { SceneNode } from '#core/scene-graph'
 import type { UndoEntry } from '#core/scene-graph/undo'
 import type { Rect, Vector } from '#core/types'
@@ -9,6 +11,7 @@ import {
   snapshotPage as createPageSnapshot,
   type PageSnapshot
 } from './history/snapshot'
+
 import type { EditorContext } from './types'
 
 export function createUndoActions(ctx: EditorContext) {
@@ -110,9 +113,7 @@ export function createUndoActions(ctx: EditorContext) {
   function commitNodeUpdate(nodeId: string, previous: Partial<SceneNode>, label = 'Update') {
     const node = ctx.graph.getNode(nodeId)
     if (!node) return
-    const current = Object.fromEntries(
-      (Object.keys(previous) as (keyof SceneNode)[]).map((key) => [key, node[key]])
-    ) as Partial<SceneNode>
+    const current = pick(node, Object.keys(previous) as (keyof SceneNode)[]) as Partial<SceneNode>
     ctx.undo.push({
       label,
       forward: () => {

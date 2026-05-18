@@ -1,3 +1,5 @@
+import { orderBy } from 'es-toolkit/array'
+
 import { colorDistance, colorToHex } from '#core/color'
 import { defineTool } from '#core/tools/schema'
 import type { Color } from '#core/types'
@@ -67,7 +69,7 @@ export const analyzeColors = defineTool({
       return false
     })
 
-    const colors = [...colorMap.values()].sort((a, b) => b.count - a.count).slice(0, limit)
+    const colors = orderBy([...colorMap.values()], ['count'], ['desc']).slice(0, limit)
 
     const result: Record<string, unknown> = {
       totalNodes,
@@ -76,9 +78,11 @@ export const analyzeColors = defineTool({
     }
 
     if (args.show_similar) {
-      const hardcoded = [...colorMap.values()]
-        .filter((c) => !c.variableName)
-        .sort((a, b) => b.count - a.count)
+      const hardcoded = orderBy(
+        [...colorMap.values()].filter((c) => !c.variableName),
+        ['count'],
+        ['desc']
+      )
       const used = new Set<string>()
       const clusters: { colors: string[]; totalCount: number; suggestedHex: string }[] = []
 
@@ -102,7 +106,7 @@ export const analyzeColors = defineTool({
         }
       }
 
-      result.similarClusters = clusters.sort((a, b) => b.colors.length - a.colors.length)
+      result.similarClusters = orderBy(clusters, [(cluster) => cluster.colors.length], ['desc'])
     }
 
     return result

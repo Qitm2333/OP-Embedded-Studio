@@ -1,3 +1,5 @@
+import { uniq } from 'es-toolkit/array'
+
 import { defineTool } from '#core/tools/schema'
 
 export const listFonts = defineTool({
@@ -43,7 +45,7 @@ export const listAvailableFonts = defineTool({
   },
   execute: async (figma, args) => {
     const fonts = await figma.listAvailableFontsAsync()
-    let families = Array.from(new Set(fonts.map((font) => font.fontName.family)))
+    let families = uniq(fonts.map((font) => font.fontName.family))
     if (args.family) {
       const q = args.family.toLowerCase()
       families = families.filter((family) => family.toLowerCase().includes(q))

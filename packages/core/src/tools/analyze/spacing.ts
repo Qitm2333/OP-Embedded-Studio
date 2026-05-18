@@ -1,3 +1,5 @@
+import { orderBy } from 'es-toolkit/array'
+
 import { defineTool } from '#core/tools/schema'
 
 export const analyzeSpacing = defineTool({
@@ -36,13 +38,13 @@ export const analyzeSpacing = defineTool({
       return false
     })
 
-    const gaps = [...gapMap.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .map(([value, count]) => ({ value, count, onGrid: value % gridSize === 0 }))
+    const gaps = orderBy([...gapMap.entries()], [(entry) => entry[1]], ['desc']).map(
+      ([value, count]) => ({ value, count, onGrid: value % gridSize === 0 })
+    )
 
-    const paddings = [...paddingMap.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .map(([value, count]) => ({ value, count, onGrid: value % gridSize === 0 }))
+    const paddings = orderBy([...paddingMap.entries()], [(entry) => entry[1]], ['desc']).map(
+      ([value, count]) => ({ value, count, onGrid: value % gridSize === 0 })
+    )
 
     const offGridGaps = gaps.filter((gap) => !gap.onGrid)
     const offGridPaddings = paddings.filter((padding) => !padding.onGrid)

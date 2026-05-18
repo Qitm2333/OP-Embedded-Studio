@@ -1,3 +1,5 @@
+import { pick } from 'es-toolkit/object'
+
 import { computeLayout } from '#core/layout'
 import type { LayoutMode, SceneNode } from '#core/scene-graph'
 
@@ -58,7 +60,7 @@ function captureLayoutState(node: SceneNode): Partial<SceneNode> {
 }
 
 function pickState(node: SceneNode, keys: (keyof SceneNode)[]): Partial<SceneNode> {
-  return Object.fromEntries(keys.map((key) => [key, node[key]])) as Partial<SceneNode>
+  return pick(node, keys) as Partial<SceneNode>
 }
 
 function layoutModeUpdates(

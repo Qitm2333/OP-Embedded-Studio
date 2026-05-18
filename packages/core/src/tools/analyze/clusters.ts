@@ -1,3 +1,5 @@
+import { orderBy, sortBy } from 'es-toolkit/array'
+
 import { defineTool } from '#core/tools/schema'
 
 interface SizedItem {
@@ -64,8 +66,7 @@ export const analyzeClusters = defineTool({
 
       const width = Math.round(raw.width / 10) * 10
       const height = Math.round(raw.height / 10) * 10
-      const childSignature = [...childTypes.entries()]
-        .sort(([a], [b]) => a.localeCompare(b))
+      const childSignature = sortBy([...childTypes.entries()], [([type]) => type])
         .map(([type, count]) => `${type}:${count}`)
         .join(',')
       const signature = `${raw.type}:${width}x${height}|${childSignature}`
@@ -83,9 +84,10 @@ export const analyzeClusters = defineTool({
       return false
     })
 
-    const clusters = [...signatureMap.entries()]
-      .filter(([, nodes]) => nodes.length >= minCount)
-      .map(([signature, nodes]) => {
+    const clusters = orderBy(
+      [...signatureMap.entries()]
+        .filter(([, nodes]) => nodes.length >= minCount)
+        .map(([signature, nodes]) => {
         const avgWidth = nodes.reduce((sum, node) => sum + node.width, 0) / nodes.length
         const avgHeight = nodes.reduce((sum, node) => sum + node.height, 0) / nodes.length
         const widths = nodes.map((node) => node.width)
@@ -94,19 +96,20 @@ export const analyzeClusters = defineTool({
         const heightRange = Math.max(...heights) - Math.min(...heights)
         const confidence = calcClusterConfidence(nodes)
 
-        return {
-          signature,
-          count: nodes.length,
-          avgWidth: Math.round(avgWidth),
-          avgHeight: Math.round(avgHeight),
-          widthRange: Math.round(widthRange),
-          heightRange: Math.round(heightRange),
-          confidence,
-          examples: nodes.slice(0, 3).map((node) => ({ id: node.id, name: node.name }))
-        }
-      })
-      .sort((a, b) => b.count - a.count)
-      .slice(0, limit)
+          return {
+            signature,
+            count: nodes.length,
+            avgWidth: Math.round(avgWidth),
+            avgHeight: Math.round(avgHeight),
+            widthRange: Math.round(widthRange),
+            heightRange: Math.round(heightRange),
+            confidence,
+            examples: nodes.slice(0, 3).map((node) => ({ id: node.id, name: node.name }))
+          }
+        }),
+      ['count'],
+      ['desc']
+    ).slice(0, limit)
 
     return { totalNodes, clusters }
   }

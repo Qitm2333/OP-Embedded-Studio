@@ -1,9 +1,11 @@
+import { isNotNil } from 'es-toolkit/predicate'
+
 import type { EditorContext } from '#core/editor/types'
 import { computeBounds } from '#core/geometry'
 
 export function createClipboardPlacementActions(ctx: EditorContext) {
   function centerNodesAt(nodeIds: string[], cx: number, cy: number) {
-    const items = nodeIds.map((id) => ctx.graph.getNode(id)).filter((node) => node != null)
+    const items = nodeIds.map((id) => ctx.graph.getNode(id)).filter(isNotNil)
     const bounds = computeBounds(items)
     if (bounds.width === 0 && bounds.height === 0 && items.length === 0) return
     const dx = cx - (bounds.x + bounds.width / 2)

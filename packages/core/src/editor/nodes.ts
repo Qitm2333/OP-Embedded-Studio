@@ -1,3 +1,5 @@
+import { pick } from 'es-toolkit/object'
+
 import type { SceneNode } from '#core/scene-graph'
 
 import { createLayoutModeActions } from './layout-mode'
@@ -18,9 +20,7 @@ export function createNodeActions(ctx: EditorContext) {
   function updateNodeWithUndo(id: string, changes: Partial<SceneNode>, label = 'Update') {
     const node = ctx.graph.getNode(id)
     if (!node) return
-    const previous = Object.fromEntries(
-      (Object.keys(changes) as (keyof SceneNode)[]).map((key) => [key, node[key]])
-    ) as Partial<SceneNode>
+    const previous = pick(node, Object.keys(changes) as (keyof SceneNode)[]) as Partial<SceneNode>
     ctx.graph.updateNode(id, changes)
     ctx.runLayoutForNode(id)
     ctx.undo.push({

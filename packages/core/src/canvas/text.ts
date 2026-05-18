@@ -1,4 +1,5 @@
 import type { CanvasKit, FontWeight, Paragraph, TypefaceFontProvider } from 'canvaskit-wasm'
+import { uniq } from 'es-toolkit/array'
 
 import { getCanvasKit } from '#core/canvaskit'
 import { resolveRGBAForPreview } from '#core/color/management'
@@ -133,7 +134,7 @@ function resolveParagraphFontFamilies(
   if (primary !== DEFAULT_FONT_FAMILY) families.push(DEFAULT_FONT_FAMILY)
   families.push(...arabicFallbacks, ...cjkFallbacks)
 
-  const resolved = [...new Set(families)]
+  const resolved = uniq(families)
   fontFamilyCache.set(key, resolved)
   if (fontFamilyCache.size > FONT_FAMILY_CACHE_LIMIT) {
     const oldestKey = fontFamilyCache.keys().next().value

@@ -319,6 +319,7 @@
     "canvaskit-wasm": "^0.40.0",
     "culori": "^4.0.2",
     "diff": "^8.0.3",
+    "es-toolkit": "^1.46.1",
     "expr-eval": "^2.0.2",
     "fflate": "^0.8.2",
     "fontoxpath": "^3.34.0",

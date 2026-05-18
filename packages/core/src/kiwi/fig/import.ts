@@ -1,3 +1,5 @@
+import { isNotNil } from 'es-toolkit/predicate'
+
 import { BLACK } from '#core/constants'
 import type { NodeChange, VariableDataValuesEntry, Color, GUID } from '#core/kiwi/binary/codec'
 import { populateAndApplyOverrides } from '#core/kiwi/instance-overrides'
@@ -424,7 +426,7 @@ export function importNodeChanges(
   }
   const activeRootIds =
     options.populate === 'first-page'
-      ? [firstPageId, ...componentPageIds].filter(Boolean)
+      ? [firstPageId, ...componentPageIds].filter(isNotNil)
       : undefined
 
   populateAndApplyOverrides(

@@ -1,3 +1,5 @@
+import { omit } from 'es-toolkit/object'
+
 import type { EditorContext } from '#core/editor/types'
 import { randomHex } from '#core/random'
 import { buildVariantName, parseVariantName } from '#core/scene-graph/variant-name'
@@ -77,9 +79,7 @@ export function createVariantActions(ctx: EditorContext) {
     for (const childId of node.childIds) {
       const child = ctx.graph.getNode(childId)
       if (!child) continue
-      const values = Object.fromEntries(
-        Object.entries(child.componentPropertyValues).filter(([key]) => key !== def.name)
-      )
+      const values = omit(child.componentPropertyValues, [def.name])
       ctx.graph.updateNode(childId, { componentPropertyValues: values })
     }
     ctx.undo.push({
@@ -95,9 +95,7 @@ export function createVariantActions(ctx: EditorContext) {
           for (const cid of n.childIds) {
             const c = ctx.graph.getNode(cid)
             if (!c) continue
-            const v = Object.fromEntries(
-              Object.entries(c.componentPropertyValues).filter(([key]) => key !== def.name)
-            )
+            const v = omit(c.componentPropertyValues, [def.name])
             ctx.graph.updateNode(cid, { componentPropertyValues: v })
           }
         }
@@ -128,9 +126,7 @@ export function createVariantActions(ctx: EditorContext) {
       if (!child) continue
       const values = { ...child.componentPropertyValues }
       if (prevName in values) {
-        const nextValues = Object.fromEntries(
-          Object.entries(values).filter(([key]) => key !== prevName)
-        )
+        const nextValues: Record<string, string> = omit(values, [prevName])
         nextValues[newName] = values[prevName]
         ctx.graph.updateNode(childId, { componentPropertyValues: nextValues })
       }

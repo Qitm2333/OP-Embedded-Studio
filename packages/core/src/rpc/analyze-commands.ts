@@ -1,3 +1,5 @@
+import { orderBy, sortBy } from 'es-toolkit/array'
+
 import { colorToHex, colorDistance as colorDist } from '#core/color'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import type { Color } from '#core/types'
@@ -27,7 +29,7 @@ interface ColorCluster {
 function clusterColors(colors: ColorInfo[], threshold: number): ColorCluster[] {
   const clusters: ColorCluster[] = []
   const used = new Set<string>()
-  const sorted = [...colors].sort((a, b) => b.count - a.count)
+  const sorted = orderBy(colors, ['count'], ['desc'])
 
   for (const color of sorted) {
     if (used.has(color.hex)) continue
@@ -50,7 +52,7 @@ function clusterColors(colors: ColorInfo[], threshold: number): ColorCluster[] {
     if (cluster.colors.length > 1) clusters.push(cluster)
   }
 
-  return clusters.sort((a, b) => b.colors.length - a.colors.length)
+  return orderBy(clusters, [(cluster) => cluster.colors.length], ['desc'])
 }
 
 function collectColors(graph: SceneGraph): { colors: ColorInfo[]; totalNodes: number } {
@@ -118,7 +120,7 @@ export const analyzeColorsCommand: RpcCommand<AnalyzeColorsArgs, AnalyzeColorsRe
           args.threshold ?? 15
         )
       : []
-    return { colors: colors.sort((a, b) => b.count - a.count), totalNodes, clusters }
+    return { colors: orderBy(colors, ['count'], ['desc']), totalNodes, clusters }
   }
 }
 
@@ -166,7 +168,7 @@ export const analyzeTypographyCommand: RpcCommand<AnalyzeTypographyArgs, Analyze
         }
       }
 
-      return { styles: [...styleMap.values()].sort((a, b) => b.count - a.count), totalTextNodes }
+      return { styles: orderBy([...styleMap.values()], ['count'], ['desc']), totalTextNodes }
     }
   }
 
@@ -210,9 +212,11 @@ export const analyzeSpacingCommand: RpcCommand<void, AnalyzeSpacingResult> = {
     }
 
     const toValues = (map: Map<number, number>) =>
-      [...map.entries()]
-        .map(([value, count]) => ({ value, count }))
-        .sort((a, b) => b.count - a.count)
+      orderBy(
+        [...map.entries()].map(([value, count]) => ({ value, count })),
+        ['count'],
+        ['desc']
+      )
 
     return { gaps: toValues(gapMap), paddings: toValues(paddingMap), totalNodes }
   }
@@ -250,9 +254,8 @@ function buildSignature(graph: SceneGraph, node: SceneNode): string {
     if (!child) continue
     childTypes.set(child.type, (childTypes.get(child.type) ?? 0) + 1)
   }
-  const childPart = [...childTypes.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([t, c]) => `${t}:${c}`)
+  const childPart = sortBy([...childTypes.entries()], [([type]) => type])
+    .map(([type, count]) => `${type}:${count}`)
     .join(',')
   const w = Math.round(node.width / 10) * 10
   const h = Math.round(node.height / 10) * 10
@@ -287,11 +290,13 @@ export const analyzeClustersCommand: RpcCommand<AnalyzeClustersArgs, AnalyzeClus
       sigMap.set(sig, arr)
     }
 
-    const clusters = [...sigMap.entries()]
-      .filter(([, nodes]) => nodes.length >= minCount)
-      .map(([signature, nodes]) => ({ signature, nodes }))
-      .sort((a, b) => b.nodes.length - a.nodes.length)
-      .slice(0, limit)
+    const clusters = orderBy(
+      [...sigMap.entries()]
+        .filter(([, nodes]) => nodes.length >= minCount)
+        .map(([signature, nodes]) => ({ signature, nodes })),
+      [(cluster) => cluster.nodes.length],
+      ['desc']
+    ).slice(0, limit)
 
     return { clusters, totalNodes }
   }
