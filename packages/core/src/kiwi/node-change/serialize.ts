@@ -1,7 +1,7 @@
 import { hexToBytes } from '#core/bytes/hex'
-import { encodePathCommandsBlob } from '#core/kiwi/node-change/path-commands'
 import { buildDerivedTextData as buildSharedDerivedTextData } from '#core/text/derived-text/data'
 import { normalizeFontFamily, weightToFigmaStyle, weightToStyle } from '#core/text/fonts'
+import { encodePathCommandsBlob } from '#core/kiwi/node-change/path-commands'
 import { getGlyphOutlineMetricsSync } from '#core/text/opentype'
 import { encodeVectorNetworkBlob, buildStyleOverrideTable } from '#core/vector'
 export {
@@ -17,10 +17,9 @@ import type { NodeChange, Paint, VariableConsumptionEntry } from '#core/kiwi/bin
 import type { SceneGraph, SceneNode, CharacterStyleOverride } from '#core/scene-graph'
 import type { Color, GUID, Matrix } from '#core/types'
 
-import { guidToString, stringToGuid, VARIABLE_BINDING_FIELDS } from './convert'
+import { stringToGuid, VARIABLE_BINDING_FIELDS } from './convert'
 import { sceneNodeToKiwiWithContext, type KiwiNodeChange } from './export-node'
 import {
-  BOUND_VARIABLES_PLUGIN_KEY,
   LAYOUT_DIRECTION_PLUGIN_KEY,
   TEXT_DIRECTION_PLUGIN_KEY,
   upsertPluginData
@@ -107,8 +106,7 @@ function buildDerivedTextData(
   }
 
   const style = weightToStyle(node.fontWeight, node.italic)
-  const glyphMetrics =
-    getGlyphOutlineMetricsSync(node.fontFamily, style, node.text, node.fontSize) ?? []
+  const glyphMetrics = getGlyphOutlineMetricsSync(node.fontFamily, style, node.text, node.fontSize) ?? []
   const lineHeight = node.lineHeight ?? Math.ceil(node.fontSize * 1.2)
   const glyphAdvance = node.text.length > 0 ? node.width / Math.max(node.text.length, 1) : 0
 
@@ -346,16 +344,13 @@ function serializeVariableBindings(
 ): void {
   if (Object.keys(node.boundVariables).length === 0) return
   const entries: VariableConsumptionEntry[] = []
-  const roundtripBindings: Record<string, string> = {}
   const typeMap: Record<string, string> = { COLOR: 'COLOR', BOOLEAN: 'BOOLEAN', STRING: 'STRING' }
   for (const [field, varId] of Object.entries(node.boundVariables)) {
+    const kiwiField = VARIABLE_BINDING_FIELDS[field]
+    if (!kiwiField) continue
     const variable = graph.variables.get(varId)
     if (!variable) continue
     const varGuid = varIdToGuid?.get(varId) ?? stringToGuid(varId)
-    roundtripBindings[field] = guidToString(varGuid)
-
-    const kiwiField = VARIABLE_BINDING_FIELDS[field]
-    if (!kiwiField) continue
     const resolvedType = typeMap[variable.type] ?? 'FLOAT'
     entries.push({
       variableData: {
@@ -365,9 +360,6 @@ function serializeVariableBindings(
       },
       variableField: kiwiField
     })
-  }
-  if (Object.keys(roundtripBindings).length > 0) {
-    upsertPluginData(node, BOUND_VARIABLES_PLUGIN_KEY, JSON.stringify(roundtripBindings))
   }
   if (entries.length > 0) nc.variableConsumptionMap = { entries }
 }

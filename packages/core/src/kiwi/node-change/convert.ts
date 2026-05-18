@@ -17,7 +17,6 @@ import {
   extractPluginRelaunchData,
   getOpenPencilPluginValue,
   LAYOUT_DIRECTION_PLUGIN_KEY,
-  NODE_TYPE_PLUGIN_KEY,
   TEXT_DIRECTION_PLUGIN_KEY
 } from './plugin-data'
 import { resolveGeometryPaths, resolveVectorNetwork } from './vector-geometry'
@@ -256,8 +255,7 @@ function convertCornerProps(
 
 function importedTextLineHeight(nc: NodeChange): number | null {
   const derivedLineHeight = nc.derivedTextData?.baselines?.[0]?.lineHeight
-  if (derivedLineHeight !== undefined && Number.isFinite(derivedLineHeight))
-    return derivedLineHeight
+  if (derivedLineHeight !== undefined && Number.isFinite(derivedLineHeight)) return derivedLineHeight
   return convertLineHeight(nc.lineHeight, nc.fontSize)
 }
 
@@ -350,9 +348,7 @@ function visibleContainerDerivedLayout(
   }
 }
 
-function convertLayoutProps(
-  nc: NodeChange
-): Pick<
+function convertLayoutProps(nc: NodeChange): Pick<
   SceneNode,
   | 'layoutMode'
   | 'itemSpacing'
@@ -448,12 +444,7 @@ export function nodeChangeToProps(
   blobs: Uint8Array[]
 ): Partial<SceneNode> & { nodeType: NodeType | 'DOCUMENT' | 'VARIABLE' } {
   let nodeType = mapNodeType(nc.type)
-  if (
-    (nodeType === 'FRAME' && isComponentSet(nc)) ||
-    getOpenPencilPluginValue(nc, NODE_TYPE_PLUGIN_KEY) === 'COMPONENT_SET'
-  ) {
-    nodeType = 'COMPONENT_SET'
-  }
+  if (nodeType === 'FRAME' && isComponentSet(nc)) nodeType = 'COMPONENT_SET'
 
   const vectorAndStrokeProps = convertVectorAndStrokeProps(nc, blobs)
 

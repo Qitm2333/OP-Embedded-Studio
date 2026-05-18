@@ -6,8 +6,6 @@ import { guidToString } from './guid'
 export const OPEN_PENCIL_PLUGIN_ID = 'open-pencil'
 export const TEXT_DIRECTION_PLUGIN_KEY = 'textDirection'
 export const LAYOUT_DIRECTION_PLUGIN_KEY = 'layoutDirection'
-export const NODE_TYPE_PLUGIN_KEY = 'nodeType'
-export const BOUND_VARIABLES_PLUGIN_KEY = 'boundVariables'
 
 export function upsertPluginData(
   node: { pluginData: PluginDataEntry[] },
@@ -21,26 +19,8 @@ export function upsertPluginData(
   node.pluginData = pluginData
 }
 
-function parseBoundVariablesPluginValue(value: string | null): Record<string, string> {
-  if (!value) return {}
-  try {
-    const parsed = JSON.parse(value) as unknown
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-    return Object.fromEntries(
-      Object.entries(parsed).filter(
-        (entry): entry is [string, string] =>
-          typeof entry[0] === 'string' && typeof entry[1] === 'string'
-      )
-    )
-  } catch {
-    return {}
-  }
-}
-
 export function extractBoundVariables(nc: NodeChange): Record<string, string> {
-  const bindings = parseBoundVariablesPluginValue(
-    getOpenPencilPluginValue(nc, BOUND_VARIABLES_PLUGIN_KEY)
-  )
+  const bindings: Record<string, string> = {}
   nc.fillPaints?.forEach((paint, i) => {
     if (paint.colorVariableBinding) {
       bindings[`fills/${i}/color`] = guidToString(paint.colorVariableBinding.variableID)

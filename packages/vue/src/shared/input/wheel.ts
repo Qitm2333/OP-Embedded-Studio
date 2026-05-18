@@ -2,7 +2,6 @@ import { useEventListener } from '@vueuse/core'
 import type { Ref } from 'vue'
 
 import type { Editor } from '@open-pencil/core/editor'
-
 import { createRafScheduler } from '#vue/shared/input/raf-scheduler'
 
 type WheelAccum = {
@@ -32,14 +31,14 @@ function normalizeWheelDelta(e: WheelEvent): { dx: number; dy: number } {
 
 const WHEEL_ZOOM_SPEED = 1.25
 
-function wheelDeltaModeScale(event: WheelEvent) {
-  if (event.deltaMode === 1) return 0.05
-  return event.deltaMode ? 1 : 0.002
-}
-
 function wheelZoomDelta(event: WheelEvent) {
   const factor = event.ctrlKey && isMacOs() ? 10 : 1
-  return -event.deltaY * wheelDeltaModeScale(event) * factor * WHEEL_ZOOM_SPEED
+  return (
+    -event.deltaY *
+    (event.deltaMode === 1 ? 0.05 : (event.deltaMode ? 1 : 0.002)) *
+    factor *
+    WHEEL_ZOOM_SPEED
+  )
 }
 
 export function setupWheelPanZoom(canvasRef: Ref<HTMLCanvasElement | null>, editor: Editor) {

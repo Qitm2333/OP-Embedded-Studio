@@ -3,12 +3,7 @@ import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import type { Color, GUID, Matrix } from '#core/types'
 
 import { stringToGuid } from './guid'
-import {
-  mergePluginData,
-  NODE_TYPE_PLUGIN_KEY,
-  serializePluginRelaunchData,
-  upsertPluginData
-} from './plugin-data'
+import { mergePluginData, serializePluginRelaunchData } from './plugin-data'
 
 export type KiwiNodeChange = NodeChange & Record<string, unknown>
 
@@ -50,37 +45,14 @@ interface SceneNodeToKiwiContext {
 
 const DEFAULT_STROKE_WEIGHT = 1
 
-function applyColorVariableBinding(
-  context: SceneNodeToKiwiContext,
-  node: SceneNode,
-  paint: Paint,
-  field: string
-): Paint {
-  const variableId = node.boundVariables[field]
-  if (!variableId) return paint
-  return {
-    ...paint,
-    colorVariableBinding: {
-      variableID: context.varIdToGuid?.get(variableId) ?? stringToGuid(variableId)
-    }
-  }
-}
-
 function createStrokePaints(context: SceneNodeToKiwiContext, node: SceneNode): Paint[] {
-  return node.strokes.map((stroke, index) =>
-    applyColorVariableBinding(
-      context,
-      node,
-      {
-        type: 'SOLID',
-        color: context.safeColor(stroke.color),
-        opacity: stroke.opacity,
-        visible: stroke.visible,
-        blendMode: 'NORMAL'
-      },
-      `strokes/${index}/color`
-    )
-  )
+  return node.strokes.map((stroke) => ({
+    type: 'SOLID',
+    color: context.safeColor(stroke.color),
+    opacity: stroke.opacity,
+    visible: stroke.visible,
+    blendMode: 'NORMAL'
+  }))
 }
 
 function componentPropertyValue(value: string) {
@@ -147,16 +119,7 @@ function applyNodeVisualProps(
     nc.borderLeftWeight = node.borderLeftWeight
   }
 
-  if (node.fills.length > 0) {
-    nc.fillPaints = node.fills.map((fill, index) =>
-      applyColorVariableBinding(
-        context,
-        node,
-        context.fillToKiwiPaint(fill),
-        `fills/${index}/color`
-      )
-    )
-  }
+  if (node.fills.length > 0) nc.fillPaints = node.fills.map(context.fillToKiwiPaint)
 
   context.serializeCornerRadii(node, nc)
 
@@ -221,7 +184,6 @@ export function sceneNodeToKiwiWithContext(
 
   applyNodeVisualProps(context, node, nc)
   applyComponentMetadata(node, nc)
-  if (node.type === 'COMPONENT_SET') upsertPluginData(node, NODE_TYPE_PLUGIN_KEY, node.type)
   if (strokePaints.length > 0) nc.strokePaints = strokePaints
 
   context.serializeLayoutProps(node, nc)
