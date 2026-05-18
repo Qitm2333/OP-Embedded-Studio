@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.12.0 — 2026-05-18
+
 ### Added
 
 - Assets panel — browse, search, and insert document components directly from the left sidebar.
