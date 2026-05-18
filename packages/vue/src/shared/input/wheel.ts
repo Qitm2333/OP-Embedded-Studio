@@ -7,10 +7,14 @@ import { createRafScheduler } from '#vue/shared/input/raf-scheduler'
 type WheelAccum = {
   deltaX: number
   deltaY: number
-  zoomDelta: number
+  zoomScale: number
   zoomCenterX: number
   zoomCenterY: number
   hasZoom: boolean
+}
+
+function isMacOs() {
+  return typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform)
 }
 
 function normalizeWheelDelta(e: WheelEvent): { dx: number; dy: number } {
@@ -25,11 +29,23 @@ function normalizeWheelDelta(e: WheelEvent): { dx: number; dy: number } {
   return { dx: deltaX, dy: deltaY }
 }
 
+const WHEEL_ZOOM_SPEED = 1.25
+
+function wheelZoomDelta(event: WheelEvent) {
+  const factor = event.ctrlKey && isMacOs() ? 10 : 1
+  return (
+    -event.deltaY *
+    (event.deltaMode === 1 ? 0.05 : (event.deltaMode ? 1 : 0.002)) *
+    factor *
+    WHEEL_ZOOM_SPEED
+  )
+}
+
 export function setupWheelPanZoom(canvasRef: Ref<HTMLCanvasElement | null>, editor: Editor) {
   const wheelAccum: WheelAccum = {
     deltaX: 0,
     deltaY: 0,
-    zoomDelta: 0,
+    zoomScale: 1,
     zoomCenterX: 0,
     zoomCenterY: 0,
     hasZoom: false
@@ -38,13 +54,17 @@ export function setupWheelPanZoom(canvasRef: Ref<HTMLCanvasElement | null>, edit
   function flushWheel() {
     editor.setHoveredNode(null)
     if (wheelAccum.hasZoom) {
-      editor.applyZoom(wheelAccum.zoomDelta, wheelAccum.zoomCenterX, wheelAccum.zoomCenterY)
+      editor.setZoomAroundPoint(
+        editor.state.zoom * wheelAccum.zoomScale,
+        wheelAccum.zoomCenterX,
+        wheelAccum.zoomCenterY
+      )
     } else {
       editor.pan(wheelAccum.deltaX, wheelAccum.deltaY)
     }
     wheelAccum.deltaX = 0
     wheelAccum.deltaY = 0
-    wheelAccum.zoomDelta = 0
+    wheelAccum.zoomScale = 1
     wheelAccum.hasZoom = false
   }
 
@@ -59,7 +79,7 @@ export function setupWheelPanZoom(canvasRef: Ref<HTMLCanvasElement | null>, edit
       const rect = canvas.getBoundingClientRect()
       wheelAccum.zoomCenterX = e.clientX - rect.left
       wheelAccum.zoomCenterY = e.clientY - rect.top
-      wheelAccum.zoomDelta += dy
+      wheelAccum.zoomScale *= 2 ** wheelZoomDelta(e)
       wheelAccum.hasZoom = true
     } else {
       wheelAccum.deltaX -= dx

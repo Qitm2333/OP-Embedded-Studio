@@ -14,6 +14,7 @@ use std::{
 };
 use tauri::{Emitter, Manager};
 use tauri_plugin_fs::FsExt;
+#[cfg(target_os = "macos")]
 use window::show_main_window;
 
 #[derive(Clone, serde::Serialize)]
@@ -134,6 +135,7 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app, event| match event {
+            #[cfg(target_os = "macos")]
             tauri::RunEvent::Opened { urls } => {
                 let paths = urls
                     .into_iter()

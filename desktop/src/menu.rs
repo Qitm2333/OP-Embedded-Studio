@@ -1,5 +1,8 @@
 use serde::Deserialize;
-use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, Submenu, SubmenuBuilder};
+use tauri::menu::{MenuBuilder, MenuItemBuilder, Submenu, SubmenuBuilder};
+
+#[cfg(target_os = "macos")]
+use tauri::menu::PredefinedMenuItem;
 
 #[derive(Deserialize)]
 struct MenuGroup {
