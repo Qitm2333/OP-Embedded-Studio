@@ -39,7 +39,9 @@ const { values, positionals } = parseArgs({
     threshold: { type: 'string', default: '0.25' },
     depth: { type: 'string', default: '8' },
     'min-size': { type: 'string', default: '1' },
-    background: { type: 'string', default: '#f9f9f9' }
+    background: { type: 'string', default: '#f9f9f9' },
+    'root-node-id': { type: 'string' },
+    'figma-root-id': { type: 'string' }
   }
 })
 
@@ -55,6 +57,8 @@ Options:
   --depth N             Max bisection depth (default: 8)
   --min-size N          Stop splitting groups at this child count (default: 1)
   --background HEX      Matte color for transparent pixels (default: #f9f9f9)
+  --root-node-id ID     OpenPencil node whose children should be bisected
+  --figma-root-id ID    Matching Figma node whose children should be bisected
 
 What it does:
   It hides all top-level page children except a candidate subset in both Figma
@@ -79,14 +83,19 @@ if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true })
 const graph = await loadGraph(figPath, pageName)
 const page = graph.getPages().find((candidate) => candidate.name === pageName)
 if (!page) throw new Error(`Page not found in .fig: ${pageName}`)
-const childIds = [...page.childIds]
+const rootNodeId = values['root-node-id'] ?? page.id
+const figmaRootId = values['figma-root-id'] ?? figmaPageId
+const rootNode = graph.getNode(rootNodeId)
+if (!rootNode) throw new Error(`Root node not found in .fig: ${rootNodeId}`)
+const childIds = [...rootNode.childIds]
 const childNames = childIds.map((id) => graph.getNode(id)?.name ?? id)
 
 console.log(`Visual bisect: ${basename(figPath)} / ${pageName}`)
-console.log(`Top-level children: ${childIds.length}`)
+console.log(`Root: ${rootNode.name} (${rootNode.id})`)
+console.log(`Children: ${childIds.length}`)
 console.log(`Output: ${outputDir}`)
 
-const initialVisibility = await captureFigmaVisibility(figmaPageId)
+const initialVisibility = await captureFigmaVisibility(figmaRootId)
 const results: BisectResult[] = []
 
 try {
@@ -95,7 +104,7 @@ try {
     0
   )
 } finally {
-  await restoreFigmaVisibility(figmaPageId, initialVisibility)
+  await restoreFigmaVisibility(figmaRootId, initialVisibility)
 }
 
 results.sort((a, b) => b.metrics.above40 - a.metrics.above40 || a.indices.length - b.indices.length)
@@ -143,7 +152,7 @@ async function compareSubset(indices: number[], depth: number): Promise<BisectRe
   const figmaPath = `${outputDir}/${stem}-figma.png`
   const openPencilPath = `${outputDir}/${stem}-open-pencil.png`
 
-  await exportFigmaSubset(figmaPageId, indices, figmaPath)
+  await exportFigmaSubset(figmaRootId, indices, figmaPath)
   await exportOpenPencilSubset(indices, openPencilPath)
 
   return {
@@ -170,7 +179,7 @@ async function exportOpenPencilSubset(indices: number[], path: string): Promise<
     const data = await headlessRenderNodes(
       graph,
       page.id,
-      indices.map((index) => childIds[index]),
+      rootNode.type === 'CANVAS' ? indices.map((index) => childIds[index]) : [rootNode.id],
       {
         scale,
         format: 'PNG'
@@ -193,9 +202,9 @@ async function exportFigmaSubset(pageId: string, indices: number[], path: string
 
 async function captureFigmaVisibility(pageId: string): Promise<boolean[]> {
   const code = `
-    const page = figma.getNodeById(${JSON.stringify(pageId)});
-    if (!page || page.type !== 'PAGE') throw new Error('Page not found: ${pageId}');
-    return page.children.map((child) => child.visible);
+    const node = figma.getNodeById(${JSON.stringify(pageId)});
+    if (!node || !('children' in node)) throw new Error('Node has no children: ${pageId}');
+    return node.children.map((child) => child.visible);
   `
   const out = await $`figma-use eval ${code} --json`.quiet()
   return JSON.parse(out.text().trim())
@@ -204,9 +213,9 @@ async function captureFigmaVisibility(pageId: string): Promise<boolean[]> {
 async function setFigmaVisibleIndices(pageId: string, indices: number[]): Promise<void> {
   const code = `
     const visible = new Set(${JSON.stringify(indices)});
-    const page = figma.getNodeById(${JSON.stringify(pageId)});
-    if (!page || page.type !== 'PAGE') throw new Error('Page not found: ${pageId}');
-    page.children.forEach((child, index) => { child.visible = visible.has(index); });
+    const node = figma.getNodeById(${JSON.stringify(pageId)});
+    if (!node || !('children' in node)) throw new Error('Node has no children: ${pageId}');
+    node.children.forEach((child, index) => { child.visible = visible.has(index); });
   `
   await $`figma-use eval ${code}`.quiet()
 }
@@ -214,9 +223,9 @@ async function setFigmaVisibleIndices(pageId: string, indices: number[]): Promis
 async function restoreFigmaVisibility(pageId: string, visibility: boolean[]): Promise<void> {
   const code = `
     const visibility = ${JSON.stringify(visibility)};
-    const page = figma.getNodeById(${JSON.stringify(pageId)});
-    if (!page || page.type !== 'PAGE') return;
-    page.children.forEach((child, index) => { child.visible = visibility[index] ?? child.visible; });
+    const node = figma.getNodeById(${JSON.stringify(pageId)});
+    if (!node || !('children' in node)) return;
+    node.children.forEach((child, index) => { child.visible = visibility[index] ?? child.visible; });
   `
   await $`figma-use eval ${code}`.quiet().nothrow()
 }
