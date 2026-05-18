@@ -2,6 +2,7 @@ mod fig_container;
 mod fonts;
 mod menu;
 mod menu_events;
+#[cfg(target_os = "macos")]
 mod window;
 
 use fig_container::build_fig_file;
@@ -134,7 +135,7 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|app, event| match event {
+        .run(|_app, event| match event {
             #[cfg(target_os = "macos")]
             tauri::RunEvent::Opened { urls } => {
                 let paths = urls
@@ -142,7 +143,7 @@ pub fn run() {
                     .filter_map(|url| url.to_file_path().ok())
                     .filter_map(file_association_path)
                     .collect();
-                queue_open_paths(app, paths);
+                queue_open_paths(_app, paths);
             }
             #[cfg(target_os = "macos")]
             tauri::RunEvent::Reopen {
@@ -150,7 +151,7 @@ pub fn run() {
                 ..
             } => {
                 if !has_visible_windows {
-                    show_main_window(app);
+                    show_main_window(_app);
                 }
             }
             _ => {}
