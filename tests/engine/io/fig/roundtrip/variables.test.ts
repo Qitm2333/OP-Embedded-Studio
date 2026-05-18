@@ -64,22 +64,56 @@ describe('variable roundtrip', () => {
     const graph = new SceneGraph()
     const col = graph.createCollection('Tokens')
     const floatVar = graph.createVariable('radius', 'FLOAT', col.id, 12)
+    const fillVar = graph.createVariable('surface', 'COLOR', col.id, { r: 1, g: 1, b: 1, a: 1 })
+    const strokeVar = graph.createVariable('border', 'COLOR', col.id, {
+      r: 0.1,
+      g: 0.2,
+      b: 0.3,
+      a: 1
+    })
 
     const page = graph.getPages()[0]
     const rect = graph.createNode('RECTANGLE', page.id, {
       name: 'Bound Rect',
       width: 100,
       height: 100,
-      cornerRadius: 12
+      cornerRadius: 12,
+      fills: [
+        {
+          type: 'SOLID',
+          color: { r: 1, g: 1, b: 1, a: 1 },
+          opacity: 1,
+          visible: true,
+          blendMode: 'NORMAL'
+        }
+      ],
+      strokes: [
+        {
+          color: { r: 0.1, g: 0.2, b: 0.3, a: 1 },
+          weight: 1,
+          opacity: 1,
+          visible: true,
+          align: 'INSIDE',
+          cap: 'NONE',
+          join: 'MITER',
+          dashPattern: []
+        }
+      ]
     })
     graph.bindVariable(rect.id, 'cornerRadius', floatVar.id)
+    graph.bindVariable(rect.id, 'fills/0/color', fillVar.id)
+    graph.bindVariable(rect.id, 'strokes/0/color', strokeVar.id)
 
     const exported = await exportFigFile(graph)
     const reimported = await parseFigFile(exported.buffer as ArrayBuffer)
 
     const reimportedRect = [...reimported.getAllNodes()].find((n) => n.name === 'Bound Rect')
     expect(reimportedRect).toBeDefined()
-    expect(Object.keys(reimportedRect.boundVariables)).toContain('cornerRadius')
+    expect(Object.keys(expectDefined(reimportedRect, 'reimportedRect').boundVariables)).toContain(
+      'cornerRadius'
+    )
+    expect(Object.keys(reimportedRect.boundVariables)).toContain('fills/0/color')
+    expect(Object.keys(reimportedRect.boundVariables)).toContain('strokes/0/color')
   })
 
   test('material3.fig variables survive round-trip', async () => {

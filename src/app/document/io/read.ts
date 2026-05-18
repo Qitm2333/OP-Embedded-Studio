@@ -1,5 +1,6 @@
 import type { Editor, EditorState } from '@open-pencil/core/editor'
 import { readFigFile } from '@open-pencil/core/io/formats/fig'
+import { computeAllLayouts } from '@open-pencil/core/layout'
 
 import { yieldToUI } from '@/app/document/io/browser'
 import { applyImportedDocument } from '@/app/document/io/imported-document'
@@ -80,6 +81,7 @@ export function createReloadActions({
       fileHandle
     })
     if (!imported) return
+    computeAllLayouts(imported)
     editor.replaceGraph(imported)
 
     editor.undo.clear()
