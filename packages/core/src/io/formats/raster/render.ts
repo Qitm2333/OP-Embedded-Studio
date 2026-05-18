@@ -80,6 +80,23 @@ function findAlphaBounds(ck: CanvasKit, canvas: Canvas, width: number, height: n
   return { minX, minY, maxX, maxY }
 }
 
+const MIN_TRANSPARENT_TRIM_INSET = 2
+
+function shouldTrimAlphaBounds(
+  alphaBounds: NonNullable<ReturnType<typeof findAlphaBounds>>,
+  width: number,
+  height: number
+): boolean {
+  return (
+    Math.max(
+      alphaBounds.minX,
+      alphaBounds.minY,
+      width - alphaBounds.maxX,
+      height - alphaBounds.maxY
+    ) >= MIN_TRANSPARENT_TRIM_INSET
+  )
+}
+
 function renderToSurface(
   ck: CanvasKit,
   renderer: SkiaRenderer,
@@ -100,7 +117,11 @@ function renderToSurface(
     setup(canvas)
     renderer.renderSceneToCanvas(canvas, renderGraph, pageId)
     surface.flush()
-    const alphaBounds = trimTransparent ? findAlphaBounds(ck, canvas, width, height) : null
+    const foundAlphaBounds = trimTransparent ? findAlphaBounds(ck, canvas, width, height) : null
+    const alphaBounds =
+      foundAlphaBounds && shouldTrimAlphaBounds(foundAlphaBounds, width, height)
+        ? foundAlphaBounds
+        : null
     const image = alphaBounds
       ? surface.makeImageSnapshot([
           alphaBounds.minX,
