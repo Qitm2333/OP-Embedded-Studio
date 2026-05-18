@@ -1,8 +1,50 @@
-import type { Canvas, Paint } from 'canvaskit-wasm'
+import type { Canvas, EmbindEnumEntity, Paint } from 'canvaskit-wasm'
 
 import type { SceneNode, Stroke } from '#core/scene-graph'
+import type { Color } from '#core/types'
 
 import type { SkiaRenderer } from './renderer'
+
+export function getStrokeCapEntity(r: SkiaRenderer, cap: string | undefined): EmbindEnumEntity {
+  switch (cap) {
+    case 'ROUND':
+      return r.ck.StrokeCap.Round
+    case 'SQUARE':
+      return r.ck.StrokeCap.Square
+    default:
+      return r.ck.StrokeCap.Butt
+  }
+}
+
+export function getStrokeJoinEntity(r: SkiaRenderer, join: string | undefined): EmbindEnumEntity {
+  switch (join) {
+    case 'ROUND':
+      return r.ck.StrokeJoin.Round
+    case 'BEVEL':
+      return r.ck.StrokeJoin.Bevel
+    default:
+      return r.ck.StrokeJoin.Miter
+  }
+}
+
+export function drawStyledRRectStroke(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  rrect: Float32Array,
+  node: SceneNode,
+  stroke: Stroke,
+  color: Color
+): void {
+  const dash = stroke.dashPattern ?? []
+  r.strokePaint.setColor(r.ck.Color4f(color.r, color.g, color.b, color.a))
+  r.strokePaint.setStrokeWidth(stroke.weight)
+  r.strokePaint.setAlphaf(stroke.opacity)
+  r.strokePaint.setStrokeCap(getStrokeCapEntity(r, stroke.cap))
+  r.strokePaint.setStrokeJoin(getStrokeJoinEntity(r, stroke.join))
+  r.strokePaint.setPathEffect(dash.length > 0 ? r.ck.PathEffect.MakeDash(dash, 0) : null)
+  r.drawRRectStrokeWithAlign(canvas, rrect, node, stroke)
+  r.strokePaint.setPathEffect(null)
+}
 
 export function drawNodeStroke(
   r: SkiaRenderer,

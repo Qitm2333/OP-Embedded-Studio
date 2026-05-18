@@ -1,4 +1,4 @@
-import type { Canvas, EmbindEnumEntity, Path } from 'canvaskit-wasm'
+import type { Canvas, Path } from 'canvaskit-wasm'
 
 import { DROP_HIGHLIGHT_ALPHA, DROP_HIGHLIGHT_STROKE, SECTION_CORNER_RADIUS } from '#core/constants'
 import type { SceneNode, SceneGraph, Fill } from '#core/scene-graph'
@@ -8,6 +8,7 @@ import { vectorNetworkToCenterlinePath } from '#core/vector'
 import { renderBooleanOperation } from './boolean'
 import { nodeHasRadius } from './shapes'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
+import { drawStyledRRectStroke, getStrokeCapEntity, getStrokeJoinEntity } from './strokes'
 import { drawFigmaDerivedText } from './text-derived'
 
 function drawVisibleFills(
@@ -240,6 +241,14 @@ export function renderComponentSet(
 
   drawVisibleFills(r, node, graph, () => canvas.drawRRect(rrect, r.fillPaint))
 
+  const visibleStrokes = node.strokes.filter((stroke) => stroke.visible)
+  if (visibleStrokes.length > 0) {
+    forVisibleStrokes(r, node, graph, (stroke, color) =>
+      drawStyledRRectStroke(r, canvas, rrect, node, stroke, color)
+    )
+    return
+  }
+
   r.auxStroke.setStrokeWidth(r.COMPONENT_SET_BORDER_WIDTH / r.zoom)
   r.auxStroke.setColor(r.compColor())
   r.auxStroke.setPathEffect(
@@ -289,28 +298,6 @@ function getShadowShapeChild(node: SceneNode, graph: SceneGraph): SceneNode | nu
   const child = graph.getNode(node.childIds[0])
   if (!child?.visible) return null
   return child
-}
-
-function getCapEntity(r: SkiaRenderer, cap: string | undefined): EmbindEnumEntity {
-  switch (cap) {
-    case 'ROUND':
-      return r.ck.StrokeCap.Round
-    case 'SQUARE':
-      return r.ck.StrokeCap.Square
-    default:
-      return r.ck.StrokeCap.Butt
-  }
-}
-
-function getJoinEntity(r: SkiaRenderer, join: string | undefined): EmbindEnumEntity {
-  switch (join) {
-    case 'ROUND':
-      return r.ck.StrokeJoin.Round
-    case 'BEVEL':
-      return r.ck.StrokeJoin.Bevel
-    default:
-      return r.ck.StrokeJoin.Miter
-  }
 }
 
 function drawVectorStrokeGeometry(
@@ -376,8 +363,8 @@ function drawVectorPathStrokes(
     r.strokePaint.setColor(r.ck.Color4f(sc.r, sc.g, sc.b, sc.a))
     r.strokePaint.setAlphaf(stroke.opacity)
     r.strokePaint.setStrokeWidth(stroke.weight)
-    r.strokePaint.setStrokeCap(getCapEntity(r, stroke.cap ?? 'NONE'))
-    r.strokePaint.setStrokeJoin(getJoinEntity(r, stroke.join ?? 'MITER'))
+    r.strokePaint.setStrokeCap(getStrokeCapEntity(r, stroke.cap ?? 'NONE'))
+    r.strokePaint.setStrokeJoin(getStrokeJoinEntity(r, stroke.join ?? 'MITER'))
     r.strokePaint.setShader(null)
     const effect = r.ck.PathEffect.MakeDash(dash, 0)
     r.strokePaint.setPathEffect(effect)
@@ -389,8 +376,8 @@ function drawVectorPathStrokes(
   const strokeOpts = {
     width: stroke.weight,
     miter_limit: 4,
-    cap: getCapEntity(r, stroke.cap ?? 'NONE'),
-    join: getJoinEntity(r, stroke.join ?? 'MITER')
+    cap: getStrokeCapEntity(r, stroke.cap ?? 'NONE'),
+    join: getStrokeJoinEntity(r, stroke.join ?? 'MITER')
   }
   r.fillPaint.setColor(r.ck.Color4f(sc.r, sc.g, sc.b, sc.a))
   r.fillPaint.setAlphaf(stroke.opacity)
@@ -422,10 +409,10 @@ function drawRegularStroke(
   r.strokePaint.setAlphaf(stroke.opacity)
 
   if (stroke.cap) {
-    r.strokePaint.setStrokeCap(getCapEntity(r, stroke.cap))
+    r.strokePaint.setStrokeCap(getStrokeCapEntity(r, stroke.cap))
   }
   if (stroke.join) {
-    r.strokePaint.setStrokeJoin(getJoinEntity(r, stroke.join))
+    r.strokePaint.setStrokeJoin(getStrokeJoinEntity(r, stroke.join))
   }
   if (stroke.dashPattern && stroke.dashPattern.length > 0) {
     r.strokePaint.setPathEffect(r.ck.PathEffect.MakeDash(stroke.dashPattern, 0))
