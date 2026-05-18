@@ -6,8 +6,8 @@ import type { Color } from '#core/types'
 import { vectorNetworkToCenterlinePath } from '#core/vector'
 
 import { renderBooleanOperation } from './boolean'
-import { nodeHasRadius } from './shapes'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
+import { nodeHasRadius } from './shapes'
 import {
   drawDashedRRectWithSolidCorners,
   drawStyledRRectStroke,
@@ -557,15 +557,6 @@ export function renderText(r: SkiaRenderer, canvas: Canvas, node: SceneNode, fil
   }
 
   const paragraphY = 0
-  if (!r.isNodeFontLoaded(node)) {
-    canvas.restore()
-    return
-  }
-  if (isGradientFill(fill) && drawGradientText(r, canvas, node, paragraphY)) {
-    canvas.restore()
-    return
-  }
-
   if (node.textPicture) {
     const pic = r.ck.MakePicture(node.textPicture)
     if (pic) {
@@ -576,6 +567,15 @@ export function renderText(r: SkiaRenderer, canvas: Canvas, node: SceneNode, fil
     }
   }
   if (drawFigmaDerivedText(r, canvas, node)) {
+    canvas.restore()
+    return
+  }
+
+  if (!r.isNodeFontLoaded(node)) {
+    canvas.restore()
+    return
+  }
+  if (isGradientFill(fill) && drawGradientText(r, canvas, node, paragraphY)) {
     canvas.restore()
     return
   }
