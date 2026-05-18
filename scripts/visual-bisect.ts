@@ -176,15 +176,12 @@ async function exportOpenPencilSubset(indices: number[], path: string): Promise<
   }
 
   try {
-    const data = await headlessRenderNodes(
-      graph,
-      page.id,
-      indices.map((index) => childIds[index]),
-      {
-        scale,
-        format: 'PNG'
-      }
-    )
+    const nodeIds = indices.map((index) => childIds[index])
+    const data = await headlessRenderNodes(graph, page.id, nodeIds, {
+      scale,
+      format: 'PNG',
+      trimTransparent: nodeIds.every((id) => graph.getNode(id)?.type === 'TEXT')
+    })
     if (!data) throw new Error(`OpenPencil render produced no image for ${indices.join(',')}`)
     await Bun.write(path, data)
   } finally {
