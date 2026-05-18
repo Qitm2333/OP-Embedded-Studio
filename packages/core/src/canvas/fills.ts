@@ -199,9 +199,11 @@ export function applyImageFill(
   if (!img) {
     const data = graph.images.get(hash)
     if (!data) return false
-    img = r.ck.MakeImageFromEncoded(data) ?? undefined
-    if (img) r.imageCache.set(hash, img)
-    else return false
+    const decoded = r.ck.MakeImageFromEncoded(data) ?? undefined
+    if (!decoded) return false
+    img = decoded.makeCopyWithDefaultMipmaps()
+    decoded.delete()
+    r.imageCache.set(hash, img)
   }
 
   const imgW = img.width()
@@ -235,11 +237,11 @@ export function applyImageFill(
     sy = (imgH - sh) / 2
   }
 
-  const shader = img.makeShaderCubic(
+  const shader = img.makeShaderOptions(
     r.ck.TileMode.Clamp,
     r.ck.TileMode.Clamp,
-    1 / 3,
-    1 / 3,
+    r.ck.FilterMode.Linear,
+    r.ck.MipmapMode.Linear,
     r.ck.Matrix.multiply(
       r.ck.Matrix.scaled(node.width / sw, node.height / sh),
       r.ck.Matrix.translated(-sx, -sy)
