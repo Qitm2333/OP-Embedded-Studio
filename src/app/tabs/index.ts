@@ -108,7 +108,7 @@ export async function openFileInNewTab(
   try {
     const isFig = file.name.toLowerCase().endsWith('.fig')
     const { graph: imported, sourceFormat } = isFig
-      ? { graph: await readFigFile(file, { populate: 'first-page' }), sourceFormat: 'fig' }
+      ? { graph: await readFigFile(file), sourceFormat: 'fig' }
       : await io.readDocument({
           name: file.name,
           mimeType: file.type || undefined,
