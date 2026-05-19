@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import { PopoverClose, PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui'
+import {
+  PopoverClose,
+  PopoverContent,
+  PopoverPortal,
+  PopoverRoot,
+  PopoverTrigger,
+  TooltipContent,
+  TooltipPortal,
+  TooltipRoot,
+  TooltipTrigger
+} from 'reka-ui'
 import { ref } from 'vue'
 import { useI18n } from '@open-pencil/vue'
 
@@ -10,11 +20,12 @@ import MaxTokensSection from '@/components/chat/ProviderSettings/MaxTokensSectio
 import ProviderSelectField from '@/components/chat/ProviderSelect/ProviderSelectField.vue'
 import StockPhotoKeysSection from '@/components/chat/ProviderSettings/StockPhotoKeysSection.vue'
 import { provideProviderSettings } from '@/components/chat/ProviderSettings/context'
-import Tip from '@/components/ui/Tip.vue'
 import { usePopoverUI } from '@/components/ui/popover'
+import { useTooltipUI } from '@/components/ui/tooltip'
 
 const { dialogs } = useI18n()
 const cls = usePopoverUI({ content: 'isolate z-[51] w-64 p-3' })
+const tooltipCls = useTooltipUI({ content: 'animate-in zoom-in-95 fade-in' })
 const popoverOpen = ref(false)
 const providerSettings = provideProviderSettings()
 
@@ -30,14 +41,21 @@ function onInteractOutside(e: Event) {
 
 <template>
   <PopoverRoot @update:open="popoverOpen = $event">
-    <Tip :label="dialogs.providerSettings" :disabled="popoverOpen">
-      <PopoverTrigger
-        data-test-id="provider-settings-trigger"
-        class="rounded p-0.5 text-muted hover:bg-hover hover:text-surface"
-      >
-        <icon-lucide-settings class="size-3" />
-      </PopoverTrigger>
-    </Tip>
+    <TooltipRoot :open="popoverOpen ? false : undefined">
+      <TooltipTrigger as-child>
+        <PopoverTrigger
+          data-test-id="provider-settings-trigger"
+          class="rounded p-0.5 text-muted hover:bg-hover hover:text-surface"
+        >
+          <icon-lucide-settings class="size-3" />
+        </PopoverTrigger>
+      </TooltipTrigger>
+      <TooltipPortal>
+        <TooltipContent side="top" :side-offset="4" :class="tooltipCls.content">
+          {{ dialogs.providerSettings }}
+        </TooltipContent>
+      </TooltipPortal>
+    </TooltipRoot>
 
     <PopoverPortal>
       <PopoverContent
