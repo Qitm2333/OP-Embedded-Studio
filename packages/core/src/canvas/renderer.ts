@@ -44,6 +44,13 @@ import type {
   Paragraph
 } from 'canvaskit-wasm'
 
+export interface SubtreePictureCacheEntry {
+  picture: SkPicture
+  pageId: string | null
+  sceneVersion: number
+  positionPreviewVersion: number
+}
+
 import type { RenderOverlays, RulerTheme } from './renderer/types'
 
 export class SkiaRenderer {
@@ -123,6 +130,7 @@ export class SkiaRenderer {
   sceneBackingLastViewportEventAt = 0
   lastSceneViewport: { panX: number; panY: number; zoom: number } | null = null
   nodePictureCache = new Map<string, SkPicture | null>()
+  subtreePictureCache = new Map<string, SubtreePictureCacheEntry>()
   readonly labelCache = new LabelCache()
   readonly profiler: RenderProfiler
 

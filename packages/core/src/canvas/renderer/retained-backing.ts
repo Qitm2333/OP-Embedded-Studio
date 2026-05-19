@@ -1,6 +1,7 @@
 import type { Canvas, Image as CKImage, Surface } from 'canvaskit-wasm'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
+import { computeDescendantVisualBounds } from '#core/geometry'
 import type { SceneGraph } from '#core/scene-graph'
 
 import type { RenderLayer } from './pipeline'
@@ -162,12 +163,61 @@ function createSceneBackingSurface(r: SkiaRenderer, width: number, height: numbe
   })
 }
 
+function cachedSubtreePicture(
+  r: SkiaRenderer,
+  graph: SceneGraph,
+  childId: string,
+  sceneVersion: number
+) {
+  const cached = r.subtreePictureCache.get(childId)
+  if (
+    cached &&
+    cached.pageId === r.pageId &&
+    cached.sceneVersion === sceneVersion &&
+    cached.positionPreviewVersion === graph.positionPreviewVersion
+  ) {
+    return cached.picture
+  }
+
+  cached?.picture.delete()
+  const bounds = computeDescendantVisualBounds(
+    [childId],
+    (id) => graph.getNode(id),
+    (id) => graph.getAbsolutePosition(id)
+  )
+  if (!bounds) return null
+
+  const recorder = new r.ck.PictureRecorder()
+  const recCanvas = recorder.beginRecording(
+    r.ck.LTRBRect(bounds.minX, bounds.minY, bounds.maxX, bounds.maxY)
+  )
+  const prevViewport = r.worldViewport
+  r.worldViewport = {
+    x: bounds.minX,
+    y: bounds.minY,
+    w: bounds.maxX - bounds.minX,
+    h: bounds.maxY - bounds.minY
+  }
+  r.renderNode(recCanvas, graph, childId, {})
+  r.worldViewport = prevViewport
+  const picture = recorder.finishRecordingAsPicture()
+  recorder.delete()
+  r.subtreePictureCache.set(childId, {
+    picture,
+    pageId: r.pageId,
+    sceneVersion,
+    positionPreviewVersion: graph.positionPreviewVersion
+  })
+  return picture
+}
+
 function renderBackingChild(
   r: SkiaRenderer,
   graph: SceneGraph,
   surface: Surface,
   childId: string,
-  backing: ReturnType<typeof sceneBackingGeometry>
+  backing: ReturnType<typeof sceneBackingGeometry>,
+  sceneVersion: number
 ): void {
   const canvas = surface.getCanvas()
   const prevViewport = r.worldViewport
@@ -181,7 +231,9 @@ function renderBackingChild(
   canvas.scale(r.dpr, r.dpr)
   canvas.translate(backing.panX, backing.panY)
   canvas.scale(r.zoom, r.zoom)
-  r.renderNode(canvas, graph, childId, {})
+  const picture = cachedSubtreePicture(r, graph, childId, sceneVersion)
+  if (picture) canvas.drawPicture(picture)
+  else r.renderNode(canvas, graph, childId, {})
   canvas.restore()
   r.worldViewport = prevViewport
 }
@@ -289,7 +341,7 @@ function stepSceneBackingBuild(r: SkiaRenderer, sceneVersion: number): boolean {
   do {
     const childId = build.childIds[build.index]
     if (!childId) break
-    renderBackingChild(r, build.graph, build.surface, childId, backing)
+    renderBackingChild(r, build.graph, build.surface, childId, backing, build.sceneVersion)
     build.index++
   } while (build.index < build.childIds.length && now() - startedAt < SCENE_BACKING_BUILD_BUDGET_MS)
 
@@ -315,7 +367,9 @@ function recordSceneBacking(r: SkiaRenderer, graph: SceneGraph, sceneVersion: nu
   canvas.clear(r.ck.Color4f(r.pageColor.r, r.pageColor.g, r.pageColor.b, 1))
   const pageNode = graph.getNode(r.pageId ?? graph.rootId)
   if (pageNode) {
-    for (const childId of pageNode.childIds) renderBackingChild(r, graph, surface, childId, backing)
+    for (const childId of pageNode.childIds) {
+      renderBackingChild(r, graph, surface, childId, backing, sceneVersion)
+    }
   }
   surface.flush()
   const image = surface.makeImageSnapshot()

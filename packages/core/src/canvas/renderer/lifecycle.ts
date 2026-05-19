@@ -1,4 +1,5 @@
 import type { SkiaRenderer } from '#core/canvas/renderer'
+import { clearSubtreePictureCache } from '#core/canvas/renderer/state'
 import { fontManager } from '#core/text/fonts'
 
 function clearRetainedSceneState(r: SkiaRenderer): void {
@@ -61,6 +62,7 @@ export function destroyRenderer(r: SkiaRenderer): void {
   r.maskFilterCache.clear()
   for (const pic of r.nodePictureCache.values()) pic?.delete()
   r.nodePictureCache.clear()
+  clearSubtreePictureCache(r)
   clearRetainedSceneState(r)
   r._flashPaint?.delete()
   r.profiler.destroy()
