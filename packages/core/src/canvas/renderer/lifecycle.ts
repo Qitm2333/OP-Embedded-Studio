@@ -1,6 +1,14 @@
 import type { SkiaRenderer } from '#core/canvas/renderer'
 import { fontManager } from '#core/text/fonts'
 
+function clearRetainedSceneState(r: SkiaRenderer): void {
+  r.scenePicture?.delete()
+  r.sceneBacking?.image.delete()
+  r.sceneBacking = null
+  r.sceneBackingBuild?.surface.delete()
+  r.sceneBackingBuild = null
+}
+
 export function destroyRenderer(r: SkiaRenderer): void {
   if (r.destroyed) return
   r.destroyed = true
@@ -53,9 +61,7 @@ export function destroyRenderer(r: SkiaRenderer): void {
   r.maskFilterCache.clear()
   for (const pic of r.nodePictureCache.values()) pic?.delete()
   r.nodePictureCache.clear()
-  r.scenePicture?.delete()
-  r.sceneBacking?.image.delete()
-  r.sceneBacking = null
+  clearRetainedSceneState(r)
   r._flashPaint?.delete()
   r.profiler.destroy()
   r.surface.delete()

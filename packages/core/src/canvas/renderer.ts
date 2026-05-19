@@ -98,6 +98,26 @@ export class SkiaRenderer {
   } | null = null
   sceneBackingPreviewUntil = 0
   sceneBackingNeedsCrispRender = false
+  sceneBackingBuild: {
+    surface: Surface
+    graph: SceneGraph
+    childIds: string[]
+    index: number
+    startedAt: number
+    pageId: string | null
+    sceneVersion: number
+    positionPreviewVersion: number
+    panX: number
+    panY: number
+    zoom: number
+    width: number
+    height: number
+    dpr: number
+    worldX: number
+    worldY: number
+    worldWidth: number
+    worldHeight: number
+  } | null = null
   sceneBackingAverageRecordMs = 40
   sceneBackingAverageViewportIntervalMs = 80
   sceneBackingLastViewportEventAt = 0
