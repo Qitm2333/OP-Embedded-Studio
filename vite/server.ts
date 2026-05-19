@@ -1,4 +1,12 @@
-import type { ServerOptions } from 'vite'
+import { normalizePath, type ServerOptions } from 'vite'
+
+const WATCHED_MARKDOWN_ROOTS = ['/src/', '/packages/core/src/', '/packages/vue/src/']
+
+function ignoreMarkdownOutsideSource(path: string): boolean {
+  const normalized = normalizePath(path)
+  if (!normalized.endsWith('.md')) return false
+  return !WATCHED_MARKDOWN_ROOTS.some((root) => normalized.includes(root))
+}
 
 export const WATCH_IGNORED = [
   '**/desktop/**',
@@ -8,7 +16,8 @@ export const WATCH_IGNORED = [
   '**/tests/**',
   '**/.worktrees/**',
   '**/.github/**',
-  '**/.pi/**'
+  '**/.pi/**',
+  ignoreMarkdownOutsideSource
 ]
 
 export function createDevServerOptions(host: string | undefined): ServerOptions {
