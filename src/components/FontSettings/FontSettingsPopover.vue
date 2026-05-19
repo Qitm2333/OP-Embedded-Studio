@@ -2,6 +2,7 @@
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui'
 import { onMounted } from 'vue'
 
+import { isTauri } from '@/app/tauri/env'
 import { useFontSettings } from '@/components/FontSettings/use'
 import { useButtonUI } from '@/components/ui/button'
 import { usePopoverUI } from '@/components/ui/popover'
@@ -24,6 +25,8 @@ const primaryButton = useButtonUI({
   size: 'sm',
   ui: { base: 'w-full px-2 py-1.5 text-[10px] font-medium disabled:opacity-50' }
 })
+const showDownloadedFonts = isTauri()
+
 const {
   accessState,
   accessStateLabel,
@@ -33,10 +36,12 @@ const {
   cacheUpdatedLabel,
   canRequestLocalFonts,
   status,
+  googleFontsEnabled,
   clearCache,
   downloadFallbacks,
   refreshSummary,
-  requestAccess
+  requestAccess,
+  setGoogleFontsEnabled
 } = useFontSettings()
 
 onMounted(() => {
@@ -73,7 +78,11 @@ onMounted(() => {
             <div>
               <h3 class="text-[11px] font-semibold text-surface">Font settings</h3>
               <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
-                Access system fonts, predownload fallback packs, and manage cached downloads.
+                {{
+                  showDownloadedFonts
+                    ? 'Access system fonts, Google Fonts, fallback packs, and cached downloads.'
+                    : 'Allow browser access to local fonts and manage Google Fonts.'
+                }}
               </p>
             </div>
           </div>
@@ -84,10 +93,14 @@ onMounted(() => {
               <span class="text-surface">{{ accessStateLabel }}</span>
             </div>
             <div class="flex justify-between gap-3 text-muted">
+              <span>Google Fonts</span>
+              <span class="text-surface">{{ googleFontsEnabled ? 'Enabled' : 'Disabled' }}</span>
+            </div>
+            <div v-if="showDownloadedFonts" class="flex justify-between gap-3 text-muted">
               <span>Downloaded cache</span>
               <span class="text-surface">{{ cacheCount }} fonts · {{ cacheSize }}</span>
             </div>
-            <div class="flex justify-between gap-3 text-muted">
+            <div v-if="showDownloadedFonts" class="flex justify-between gap-3 text-muted">
               <span>Last updated</span>
               <span class="text-surface">{{ cacheUpdatedLabel }}</span>
             </div>
@@ -118,6 +131,27 @@ onMounted(() => {
 
             <div class="grid grid-cols-[1fr_auto] gap-2 rounded border border-border p-2">
               <div>
+                <p class="text-[10px] font-medium text-surface">Google Fonts</p>
+                <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
+                  Show fonts from Google in the font picker.
+                </p>
+              </div>
+              <button
+                type="button"
+                data-test-id="font-settings-toggle-google-fonts"
+                :class="secondaryButton.base"
+                :disabled="busyAction !== null"
+                @click="setGoogleFontsEnabled(!googleFontsEnabled)"
+              >
+                {{ googleFontsEnabled ? 'Disable' : 'Enable' }}
+              </button>
+            </div>
+
+            <div
+              v-if="showDownloadedFonts"
+              class="grid grid-cols-[1fr_auto] gap-2 rounded border border-border p-2"
+            >
+              <div>
                 <p class="text-[10px] font-medium text-surface">Fallback packs</p>
                 <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
                   Download CJK and Arabic fallbacks before opening files that need them.
@@ -135,7 +169,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-1.5">
+          <div v-if="showDownloadedFonts" class="grid grid-cols-2 gap-1.5">
             <button
               type="button"
               data-test-id="font-settings-refresh-cache"

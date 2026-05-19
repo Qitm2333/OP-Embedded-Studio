@@ -9,18 +9,23 @@ import {
   ComboboxItemIndicator,
   ComboboxPortal,
   ComboboxRoot,
+  ComboboxTrigger,
   ComboboxVirtualizer,
   ComboboxViewport,
   type AcceptableValue
 } from 'reka-ui'
 
-import { useFontPicker, type FontAccessController } from '#vue/primitives/FontPicker/useFontPicker'
+import {
+  useFontPicker,
+  type FontAccessController,
+  type FontFamilyOption
+} from '#vue/primitives/FontPicker/useFontPicker'
 
 import type { FontPickerUi } from '#vue/primitives/FontPicker/types'
 
 const { listFamilies, localFontAccess, ui, emptySearchText, emptyFontsText, emptyFontsHint } =
   defineProps<{
-    listFamilies: () => Promise<string[]>
+    listFamilies: () => Promise<string[] | FontFamilyOption[]>
     localFontAccess?: FontAccessController
     ui?: FontPickerUi
     emptySearchText?: string
@@ -61,11 +66,13 @@ const { searchTerm, open, filtered, loading, accessState, requestAccess, select 
     "
   >
     <ComboboxAnchor as-child>
-      <slot name="trigger" :value="modelValue" :open="open">
-        <button :class="ui?.trigger">
-          <span class="truncate">{{ modelValue }}</span>
-        </button>
-      </slot>
+      <ComboboxTrigger as-child>
+        <slot name="trigger" :value="modelValue" :open="open">
+          <button :class="ui?.trigger">
+            <span class="truncate">{{ modelValue }}</span>
+          </button>
+        </slot>
+      </ComboboxTrigger>
     </ComboboxAnchor>
 
     <ComboboxPortal>
@@ -81,6 +88,7 @@ const { searchTerm, open, filtered, loading, accessState, requestAccess, select 
         <slot name="search" :search-term="searchTerm">
           <ComboboxInput
             v-model="searchTerm"
+            :display-value="() => ''"
             :class="ui?.search"
             placeholder="Search fonts…"
             autocomplete="off"
@@ -94,21 +102,26 @@ const { searchTerm, open, filtered, loading, accessState, requestAccess, select 
           <ComboboxVirtualizer
             v-slot="{ option }"
             :options="filtered"
-            :text-content="(family: string) => family"
+            :text-content="(option: FontFamilyOption) => option.family"
             :estimate-size="36"
           >
-            <slot name="item" :family="option" :selected="option === modelValue">
-              <ComboboxItem
-                :value="option"
-                :class="ui?.item"
-                :style="{ fontFamily: `'${option}', sans-serif` }"
+            <ComboboxItem
+              :value="option.family"
+              :class="ui?.item"
+              :style="{ fontFamily: `'${option.family}', sans-serif` }"
+            >
+              <slot
+                name="item"
+                :family="option.family"
+                :source="option.source"
+                :selected="option.family === modelValue"
               >
                 <ComboboxItemIndicator>
-                  <slot name="indicator" :selected="option === modelValue" />
+                  <slot name="indicator" :selected="option.family === modelValue" />
                 </ComboboxItemIndicator>
-                <span class="truncate">{{ option }}</span>
-              </ComboboxItem>
-            </slot>
+                <span class="truncate">{{ option.family }}</span>
+              </slot>
+            </ComboboxItem>
           </ComboboxVirtualizer>
 
           <div v-if="filtered.length === 0 && searchTerm" :class="ui?.empty">

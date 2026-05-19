@@ -16,7 +16,7 @@ const cls = usePopoverUI({
 })
 const selectCls = useSelectUI({
   trigger: 'w-full rounded px-2 py-1 text-xs',
-  item: 'w-full gap-2 px-2 py-2 text-sm'
+  item: 'w-full gap-2 px-3 py-2.5 text-sm leading-tight'
 })
 
 const ui = computed<FontPickerUi>(() => ({
@@ -24,7 +24,7 @@ const ui = computed<FontPickerUi>(() => ({
   content: cls.content,
   item: selectCls.item,
   search:
-    'w-full border-b border-border bg-transparent px-2 py-1 text-xs text-surface outline-none placeholder:text-muted',
+    'w-full border-b border-border bg-transparent px-3 py-2 text-sm text-surface outline-none placeholder:text-muted',
   empty: 'px-2 py-3 text-center text-xs text-muted',
   emptyAction: 'mt-2 rounded bg-accent px-2 py-1 text-xs font-medium text-white disabled:opacity-50'
 }))
@@ -52,15 +52,18 @@ const localFontAccess = {
       </button>
     </template>
 
-    <template #item="{ family, selected }">
-      <div
-        data-test-id="font-picker-item"
-        :class="selectCls.item"
-        :style="{ fontFamily: `'${family}', sans-serif` }"
-      >
+    <template #item="{ family, selected, source }">
+      <div data-test-id="font-picker-item" class="flex min-w-0 flex-1 items-center gap-2">
         <icon-lucide-check v-if="selected" class="size-3 shrink-0 text-accent" />
         <span v-else class="size-3 shrink-0" />
-        <span class="truncate">{{ family }}</span>
+        <span class="truncate" :style="{ fontFamily: `'${family}', sans-serif` }">{{
+          family
+        }}</span>
+        <span
+          class="font-sans ml-auto shrink-0 rounded bg-input px-1.5 py-0.5 text-[9px] uppercase text-muted"
+        >
+          {{ source }}
+        </span>
       </div>
     </template>
   </FontPickerRoot>

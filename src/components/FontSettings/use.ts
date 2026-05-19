@@ -1,10 +1,11 @@
 import { computed, ref } from 'vue'
 
-import type { LocalFontAccessState } from '@open-pencil/core/text'
+import type { FontFamilyOption, LocalFontAccessState } from '@open-pencil/core/text'
 
 import {
   clearDownloadedFontCache,
   downloadedFontCacheSummary,
+  googleFontsEnabled,
   localFontAccessState,
   predownloadFallbackFonts,
   requestLocalFontAccess
@@ -21,7 +22,8 @@ export interface FontSettingsActions {
   downloadedFontCacheSummary: () => Promise<FontCacheSummary>
   localFontAccessState: () => LocalFontAccessState
   predownloadFallbackFonts: () => Promise<unknown>
-  requestLocalFontAccess: () => Promise<string[]>
+  requestLocalFontAccess: () => Promise<string[] | FontFamilyOption[]>
+  googleFontsEnabled: { value: boolean }
 }
 
 export type FontSettingsBusyAction = 'access' | 'download' | 'clear' | 'refresh'
@@ -31,7 +33,8 @@ const defaultActions: FontSettingsActions = {
   downloadedFontCacheSummary,
   localFontAccessState,
   predownloadFallbackFonts,
-  requestLocalFontAccess
+  requestLocalFontAccess,
+  googleFontsEnabled
 }
 
 export function useFontSettings(actions: FontSettingsActions = defaultActions) {
@@ -41,6 +44,7 @@ export function useFontSettings(actions: FontSettingsActions = defaultActions) {
   const accessState = ref(actions.localFontAccessState())
   const busyAction = ref<FontSettingsBusyAction | null>(null)
   const status = ref('')
+  const googleFontsEnabled = actions.googleFontsEnabled
 
   const accessStateLabel = computed(() => {
     if (accessState.value === 'granted') return 'Enabled'
@@ -91,6 +95,11 @@ export function useFontSettings(actions: FontSettingsActions = defaultActions) {
     }
   }
 
+  function setGoogleFontsEnabled(enabled: boolean) {
+    googleFontsEnabled.value = enabled
+    status.value = enabled ? 'Google Fonts enabled.' : 'Google Fonts disabled.'
+  }
+
   async function downloadFallbacks() {
     busyAction.value = 'download'
     status.value = ''
@@ -128,9 +137,11 @@ export function useFontSettings(actions: FontSettingsActions = defaultActions) {
     cacheSize,
     cacheUpdatedLabel,
     status,
+    googleFontsEnabled,
     clearCache,
     downloadFallbacks,
     refreshSummary,
-    requestAccess
+    requestAccess,
+    setGoogleFontsEnabled
   }
 }

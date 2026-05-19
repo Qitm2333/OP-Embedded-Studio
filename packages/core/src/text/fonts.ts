@@ -3,9 +3,9 @@ import { uniq } from 'es-toolkit/array'
 
 import { DEFAULT_FONT_FAMILY, IS_BROWSER, GOOGLE_FONTS_API_KEY } from '#core/constants'
 import type { SceneGraph } from '#core/scene-graph'
+import { fontFaceRenderFamily, parseFontStyle } from '#core/text/face'
 import { fontFallbackEntry } from '#core/text/fallbacks'
 import type { FontFallbackScript } from '#core/text/fallbacks'
-import { fontFaceRenderFamily, parseFontStyle } from '#core/text/face'
 
 export interface FontInfo {
   family: string
@@ -15,6 +15,12 @@ export interface FontInfo {
 }
 
 export type LocalFontAccessState = 'unsupported' | 'prompt' | 'granted' | 'denied'
+export type FontFamilySource = 'local' | 'google' | 'bundled'
+
+export interface FontFamilyOption {
+  family: string
+  source: FontFamilySource
+}
 
 export interface DownloadedFontCache {
   read(family: string, style: string): Promise<ArrayBuffer | null>
@@ -131,6 +137,8 @@ export class FontManager {
   private fallbackUserAgent: string | undefined
   private googleFontsCache = new Map<string, Record<string, string>>()
   private googleFontsFailed = new Set<string>()
+  private googleFamiliesCache: string[] | null = null
+  private googleFamiliesPromise: Promise<string[]> | null = null
   private registeredRenderFamilies = new Set<string>()
   private cjkFallbackFamilies: string[] = []
   private cjkFallbackPromise: Promise<string[]> | null = null
@@ -204,8 +212,23 @@ export class FontManager {
   }
 
   async listFamilies(): Promise<string[]> {
+    const options = await this.listFamilyOptions()
+    return options.map((option) => option.family)
+  }
+
+  async listFamilyOptions(): Promise<FontFamilyOption[]> {
     const fonts = this.localFonts ?? (await this.requestLocalFontAccess())
-    return uniq(fonts.map((f) => f.family)).sort()
+    const googleFamilies = await this.listGoogleFamilies()
+    const byFamily = new Map<string, FontFamilyOption>()
+    byFamily.set(DEFAULT_FONT_FAMILY, { family: DEFAULT_FONT_FAMILY, source: 'bundled' })
+    for (const family of googleFamilies) byFamily.set(family, { family, source: 'google' })
+    for (const font of fonts) byFamily.set(font.family, { family: font.family, source: 'local' })
+    return [...byFamily.values()].sort((a, b) => a.family.localeCompare(b.family))
+  }
+
+  preloadGoogleFamilies(): void {
+    if (this.googleFamiliesCache || this.googleFamiliesPromise) return
+    this.googleFamiliesPromise = this.loadGoogleFamilies()
   }
 
   async fetchBundledFont(url: string): Promise<ArrayBuffer | null> {
@@ -436,6 +459,29 @@ export class FontManager {
     if (result) this.googleFontsCache.set(family, result)
     else this.googleFontsFailed.add(family)
     return result
+  }
+
+  private async listGoogleFamilies(): Promise<string[]> {
+    if (this.googleFamiliesCache) return this.googleFamiliesCache
+    this.googleFamiliesPromise ??= this.loadGoogleFamilies()
+    return this.googleFamiliesPromise
+  }
+
+  private async loadGoogleFamilies(): Promise<string[]> {
+    if (typeof fetch === 'undefined') return []
+
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/webfonts/v1/webfonts?key=${GOOGLE_FONTS_API_KEY}`
+      )
+      if (!response.ok) return []
+      const data = (await response.json()) as { items?: Array<{ family?: string }> }
+      const families = uniq(data.items?.flatMap((item) => (item.family ? [item.family] : [])) ?? [])
+      this.googleFamiliesCache = families.sort()
+      return this.googleFamiliesCache
+    } catch {
+      return []
+    }
   }
 
   private async fetchGoogleFontFiles(family: string): Promise<Record<string, string> | null> {
