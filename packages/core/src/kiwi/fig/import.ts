@@ -1,6 +1,7 @@
 import { isNotNil } from 'es-toolkit/predicate'
 
 import { BLACK } from '#core/constants'
+import { setLazyFigImportContext } from '#core/kiwi/fig/lazy-import'
 import type { NodeChange, VariableDataValuesEntry, Color, GUID } from '#core/kiwi/binary/codec'
 import { populateAndApplyOverrides } from '#core/kiwi/instance-overrides'
 import type { InstanceNodeChange } from '#core/kiwi/instance-overrides'
@@ -360,6 +361,21 @@ export interface FigImportOptions {
   populate?: 'all' | 'first-page'
 }
 
+function rememberLazyFigImportContext(
+  graph: SceneGraph,
+  changeMap: Map<string, NodeChange>,
+  guidToNodeId: Map<string, string>,
+  blobs: Uint8Array[],
+  populatedRootIds: string[]
+): void {
+  setLazyFigImportContext(graph, {
+    changeMap: changeMap as Map<string, InstanceNodeChange>,
+    guidToNodeId,
+    blobs,
+    populatedRootIds: new Set(populatedRootIds)
+  })
+}
+
 export function importNodeChanges(
   nodeChanges: NodeChange[],
   blobs: Uint8Array[] = [],
@@ -436,6 +452,8 @@ export function importNodeChanges(
     blobs,
     activeRootIds
   )
+
+  if (activeRootIds) rememberLazyFigImportContext(graph, changeMap, guidToNodeId, blobs, activeRootIds)
 
   setVariableColorResolver(null)
 

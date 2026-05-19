@@ -18,12 +18,12 @@ export async function readReloadSource({
     const bytes = await tauriRead(filePath)
     const blob = new Blob([bytes])
     const file = new File([blob], `${documentName}.fig`)
-    return readFigFile(file)
+    return readFigFile(file, { populate: 'first-page' })
   }
 
   if (fileHandle) {
     const file = await fileHandle.getFile()
-    return readFigFile(file)
+    return readFigFile(file, { populate: 'first-page' })
   }
 
   return null

@@ -45,7 +45,7 @@ export function createOpenActions({
     try {
       state.loading = true
       await yieldToUI()
-      const imported = await readFigFile(file)
+      const imported = await readFigFile(file, { populate: 'first-page' })
       await yieldToUI()
       await applyImportedDocument(editor, imported)
       state.documentName = file.name.replace(/\.fig$/i, '')

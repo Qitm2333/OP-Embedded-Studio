@@ -109,14 +109,15 @@ export async function openFileInNewTab(
   try {
     const isFig = file.name.toLowerCase().endsWith('.fig')
     const { graph: imported, sourceFormat } = isFig
-      ? { graph: await readFigFile(file), sourceFormat: 'fig' }
+      ? { graph: await readFigFile(file, { populate: 'first-page' }), sourceFormat: 'fig' }
       : await io.readDocument({
           name: file.name,
           mimeType: file.type || undefined,
           data: new Uint8Array(await file.arrayBuffer())
         })
 
-    computeAllLayouts(imported)
+    const firstPageId = imported.getPages()[0]?.id
+    if (firstPageId) computeAllLayouts(imported, firstPageId)
     store.replaceGraph(imported)
     store.undo.clear()
     store.setDocumentSource(file.name, sourceFormat, handle, path)

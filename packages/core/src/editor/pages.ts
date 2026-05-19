@@ -1,3 +1,4 @@
+import { populateLazyFigImportRoots } from '#core/kiwi/fig/lazy-import'
 import { computeAllLayouts } from '#core/layout'
 import { fontManager } from '#core/text/fonts'
 import type { Color } from '#core/types'
@@ -22,6 +23,8 @@ export function createPageActions(ctx: EditorContext) {
 
     pageViewportStore.restorePageViewport(pageId)
 
+    const populated = populateLazyFigImportRoots(ctx.graph, [pageId])
+
     const toLoad = fontManager.collectFontKeys(
       ctx.graph,
       ctx.graph.getChildren(pageId).map((n) => n.id)
@@ -29,7 +32,7 @@ export function createPageActions(ctx: EditorContext) {
     if (toLoad.length > 0) {
       await Promise.all(toLoad.map(([family, style]) => ctx.loadFont(family, style)))
     }
-    if (ctx.getRenderer()) {
+    if (ctx.getRenderer() || populated) {
       computeAllLayouts(ctx.graph, pageId)
     }
     ctx.requestRender()
