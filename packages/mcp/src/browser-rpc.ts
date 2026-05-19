@@ -5,7 +5,7 @@ import type { WebSocket } from 'ws'
 const RPC_TIMEOUT = 30_000
 
 const APP_NOT_CONNECTED_MESSAGE =
-  'OpenPencil app is not connected. STOP and tell the user: "The OpenPencil desktop app is not running, no document is open, or the desktop app is connected to a different MCP server. Please start OpenPencil, open a document, and verify http://127.0.0.1:7600/health returns status=ok, then try again." Do NOT attempt to start the app yourself or retry automatically.'
+  'OpenPencil app is not connected. STOP and tell the user: "The OpenPencil desktop app is not running, no document is open, or the desktop app is connected to a different MCP server. Please start OpenPencil, open a document, and try again." Do NOT attempt to start the app yourself or retry automatically.'
 
 type PendingRequest = {
   resolve: (value: unknown) => void
