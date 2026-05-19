@@ -81,7 +81,8 @@ export function createReloadActions({
       fileHandle
     })
     if (!imported) return
-    computeAllLayouts(imported)
+    const pageId = imported.getNode(snapshot.pageId) ? snapshot.pageId : imported.getPages()[0]?.id
+    if (pageId) computeAllLayouts(imported, pageId)
     editor.replaceGraph(imported)
 
     editor.undo.clear()

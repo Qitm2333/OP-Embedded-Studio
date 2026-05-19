@@ -27,6 +27,20 @@ export function serializeSceneGraph(graph: SceneGraph): SerializedSceneGraph {
   }
 }
 
+export function serializedSceneGraphTransferList(data: SerializedSceneGraph): Transferable[] {
+  const buffers = new Set<ArrayBuffer>()
+  for (const [, image] of data.images) {
+    if (
+      image.buffer instanceof ArrayBuffer &&
+      image.byteOffset === 0 &&
+      image.byteLength === image.buffer.byteLength
+    ) {
+      buffers.add(image.buffer)
+    }
+  }
+  return [...buffers]
+}
+
 export function deserializeSceneGraph(data: SerializedSceneGraph): SceneGraph {
   const graph = new SceneGraph()
   graph.rootId = data.rootId
