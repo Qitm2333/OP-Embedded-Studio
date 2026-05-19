@@ -98,6 +98,9 @@ export class SkiaRenderer {
   } | null = null
   sceneBackingPreviewUntil = 0
   sceneBackingNeedsCrispRender = false
+  sceneBackingAverageRecordMs = 40
+  sceneBackingAverageViewportIntervalMs = 80
+  sceneBackingLastViewportEventAt = 0
   lastSceneViewport: { panX: number; panY: number; zoom: number } | null = null
   nodePictureCache = new Map<string, SkPicture | null>()
   readonly labelCache = new LabelCache()

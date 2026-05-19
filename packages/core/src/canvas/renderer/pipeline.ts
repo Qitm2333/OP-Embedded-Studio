@@ -118,12 +118,41 @@ function canUseScenePicture(
 
 const now = typeof performance !== 'undefined' ? () => performance.now() : () => 0
 const SCENE_BACKING_SCALE = 3
-const SCENE_BACKING_PREVIEW_IDLE_MS = 180
+const FRAME_BUDGET_60HZ_MS = 1000 / 60
+const MIN_SCENE_BACKING_IDLE_FRAMES = 2
+const MAX_SCENE_BACKING_IDLE_FRAMES = 18
+const MAX_SCENE_BACKING_QUIET_INPUT_INTERVALS = 4
 
 function measure<T>(fn: () => T): { value: T; duration: number } {
   const start = now()
   const value = fn()
   return { value, duration: now() - start }
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
+}
+
+function smoothAverage(previous: number, next: number, weight = 0.2): number {
+  return previous * (1 - weight) + next * weight
+}
+
+function sceneBackingPreviewIdleMs(r: SkiaRenderer): number {
+  const minDelay = FRAME_BUDGET_60HZ_MS * MIN_SCENE_BACKING_IDLE_FRAMES
+  const maxDelay = FRAME_BUDGET_60HZ_MS * MAX_SCENE_BACKING_IDLE_FRAMES
+  const renderMs = clamp(r.sceneBackingAverageRecordMs, minDelay, maxDelay)
+  const inputIntervalMs = clamp(r.sceneBackingAverageViewportIntervalMs, 1, maxDelay)
+  if (inputIntervalMs > FRAME_BUDGET_60HZ_MS * MAX_SCENE_BACKING_QUIET_INPUT_INTERVALS) {
+    return renderMs
+  }
+
+  const expectedEventsDuringRender = renderMs / inputIntervalMs
+  const quietInputIntervals = clamp(
+    expectedEventsDuringRender,
+    1,
+    MAX_SCENE_BACKING_QUIET_INPUT_INTERVALS
+  )
+  return clamp(Math.max(renderMs, inputIntervalMs * quietInputIntervals), minDelay, maxDelay)
 }
 
 export function render(
@@ -256,7 +285,16 @@ function updateSceneBackingPreviewState(r: SkiaRenderer, layer: RenderLayer): vo
     previous.panY !== r.panY ||
     previous.zoom !== r.zoom
   if (viewportChanged) {
-    r.sceneBackingPreviewUntil = now() + SCENE_BACKING_PREVIEW_IDLE_MS
+    const timestamp = now()
+    if (r.sceneBackingLastViewportEventAt > 0) {
+      const interval = timestamp - r.sceneBackingLastViewportEventAt
+      r.sceneBackingAverageViewportIntervalMs = smoothAverage(
+        r.sceneBackingAverageViewportIntervalMs,
+        clamp(interval, 1, 500)
+      )
+    }
+    r.sceneBackingLastViewportEventAt = timestamp
+    r.sceneBackingPreviewUntil = timestamp + sceneBackingPreviewIdleMs(r)
     r.sceneBackingNeedsCrispRender = !!r.sceneBacking
     r.lastSceneViewport = { panX: r.panX, panY: r.panY, zoom: r.zoom }
   }
@@ -310,6 +348,7 @@ function drawSceneBacking(
 }
 
 function recordSceneBacking(r: SkiaRenderer, graph: SceneGraph, sceneVersion: number): void {
+  const startedAt = now()
   const marginX = r.viewportWidth * ((SCENE_BACKING_SCALE - 1) / 2)
   const marginY = r.viewportHeight * ((SCENE_BACKING_SCALE - 1) / 2)
   const width = Math.max(1, Math.ceil(r.viewportWidth + marginX * 2))
@@ -364,6 +403,10 @@ function recordSceneBacking(r: SkiaRenderer, graph: SceneGraph, sceneVersion: nu
   r.scenePicturePositionPreviewVersion = graph.positionPreviewVersion
   r.scenePicturePageId = r.pageId
   r.sceneBackingNeedsCrispRender = false
+  r.sceneBackingAverageRecordMs = smoothAverage(
+    r.sceneBackingAverageRecordMs,
+    clamp(now() - startedAt, 1, 1_000)
+  )
 }
 
 function renderSceneBacking(
