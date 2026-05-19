@@ -85,7 +85,7 @@ const sectionCls = useSectionUI()
           </button>
         </div>
 
-        <div v-if="effectsCtx.expandedIndex.value === i" class="flex flex-col gap-1.5 py-1.5">
+        <div class="flex flex-col gap-1.5 py-1.5">
           <template v-if="effectsCtx.isShadow(effect.type)">
             <div class="flex items-center gap-1.5">
               <ScrubInput
@@ -158,6 +158,7 @@ const sectionCls = useSectionUI()
 
           <template v-else>
             <ScrubInput
+              class="w-24 flex-none"
               icon="B"
               :model-value="effect.radius"
               :min="0"

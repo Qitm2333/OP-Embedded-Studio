@@ -5,7 +5,7 @@
 ### Fixes
 
 - Fix the web font picker so Google Fonts remain available in Safari, local font access is requested on first open when supported, font sources are labeled, and Google font previews load lazily for visible rows.
-- Fix background blur rendering so it blurs the backdrop behind a layer instead of applying a no-op content filter.
+- Fix background blur rendering so it blurs the backdrop behind a layer instead of applying a no-op content filter, and keep effect parameter controls visible in the properties panel.
 
 ## 0.12.0 — 2026-05-18
 
