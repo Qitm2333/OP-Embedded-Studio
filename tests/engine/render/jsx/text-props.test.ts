@@ -61,6 +61,36 @@ describe('text props round-trip', () => {
     expect(jsx).toContain('truncate')
   })
 
+  it('accepts Figma-style text aliases', async () => {
+    const g = makeSceneGraph()
+    const [result] = await renderJSX(
+      g,
+      '<Text text="Alias text" fontSize={24} fontFamily="Inter" fontWeight={700} fill="#123456" textHorizontalAlignment="CENTER" textVerticalAlignment="CENTER" />'
+    )
+    const n = getNodeOrThrow(g, result.id)
+    expect(n.text).toBe('Alias text')
+    expect(n.fontSize).toBe(24)
+    expect(n.fontFamily).toBe('Inter')
+    expect(n.fontWeight).toBe(700)
+    expect(n.textAlignHorizontal).toBe('CENTER')
+    expect(n.textAlignVertical).toBe('CENTER')
+    expect(n.fills[0]?.type).toBe('SOLID')
+  })
+
+  it('accepts characters as a text content alias', async () => {
+    const g = makeSceneGraph()
+    const [result] = await renderJSX(g, '<Text characters="Characters text" color="#000" />')
+    const n = getNodeOrThrow(g, result.id)
+    expect(n.text).toBe('Characters text')
+  })
+
+  it('prefers text children over text prop alias', async () => {
+    const g = makeSceneGraph()
+    const [result] = await renderJSX(g, '<Text text="Prop text" color="#000">Child text</Text>')
+    const n = getNodeOrThrow(g, result.id)
+    expect(n.text).toBe('Child text')
+  })
+
   it('defaults omit text props', async () => {
     const g = makeSceneGraph()
     const [result] = await renderJSX(g, '<Text color="#000">Plain</Text>')

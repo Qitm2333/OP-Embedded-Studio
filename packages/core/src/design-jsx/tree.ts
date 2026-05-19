@@ -89,7 +89,10 @@ export type StyleProps = {
   wrap?: boolean
   rowGap?: number
   justify?: 'start' | 'end' | 'center' | 'between'
+  justifyContent?: 'start' | 'end' | 'center' | 'between'
   items?: 'start' | 'end' | 'center' | 'stretch'
+  align?: 'start' | 'end' | 'center' | 'stretch'
+  alignItems?: 'start' | 'end' | 'center' | 'stretch'
   grow?: number
 
   w?: number | 'fill' | 'hug'
@@ -125,6 +128,7 @@ export type StyleProps = {
   opacity?: number
   blendMode?: string
   rotate?: number
+  rotation?: number
   overflow?: 'hidden' | 'visible'
   shadow?: string
   blur?: number
@@ -136,7 +140,13 @@ export type StyleProps = {
   weight?: number | 'bold' | 'medium' | 'normal'
   fontWeight?: number | 'bold' | 'medium' | 'normal'
   color?: string
+  text?: string
+  characters?: string
   textAlign?: 'left' | 'center' | 'right' | 'justified'
+  textAlignHorizontal?: 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED'
+  textHorizontalAlignment?: 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED'
+  textAlignVertical?: 'TOP' | 'CENTER' | 'BOTTOM'
+  textVerticalAlignment?: 'TOP' | 'CENTER' | 'BOTTOM'
   textAutoResize?: 'none' | 'width' | 'height'
 }
 

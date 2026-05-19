@@ -22,6 +22,7 @@ export const nodeReplaceWith = defineTool({
       id: result.id,
       name: result.name,
       type: result.type,
+      ...(result.warnings ? { warnings: result.warnings } : {}),
       children: results
         .slice(1)
         .map((child) => ({ id: child.id, name: child.name, type: child.type }))

@@ -4,6 +4,7 @@ import { computeAllLayouts } from '@open-pencil/core/layout'
 import { ALL_TOOLS } from '@open-pencil/core/tools'
 
 import type { EditorStore } from '@/app/editor/active-store'
+import { ensureGraphFonts } from '@/app/editor/fonts'
 
 type FigmaFactory = () => FigmaAPI
 
@@ -18,6 +19,7 @@ export function createAutomationToolHandler(makeFigma: FigmaFactory) {
       x: toolArgs.x as number | undefined,
       y: toolArgs.y as number | undefined
     })
+    await ensureGraphFonts(store.graph, [result.id])
     computeAllLayouts(store.graph, store.state.currentPageId)
     store.requestRender()
     store.flashNodes([result.id])
@@ -46,6 +48,8 @@ export function createAutomationToolHandler(makeFigma: FigmaFactory) {
     }
 
     if (def.mutates) {
+      const pageNode = store.graph.getNode(store.state.currentPageId)
+      if (pageNode) await ensureGraphFonts(store.graph, pageNode.childIds)
       computeAllLayouts(store.graph, store.state.currentPageId)
       store.requestRender()
       store.flashNodes(extractNodeIds(result))

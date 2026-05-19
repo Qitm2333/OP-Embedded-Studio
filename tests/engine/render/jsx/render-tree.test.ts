@@ -322,4 +322,43 @@ describe('renderJSX (string → scene graph)', () => {
     expect(node.x).toBe(100)
     expect(node.y).toBe(200)
   })
+
+  it('accepts rotation as an alias for rotate', async () => {
+    const g = makeSceneGraph()
+    const [result] = await renderJSX(g, '<Rectangle name="Rotated" w={50} h={50} rotation={15} />')
+    const node = getNodeOrThrow(g, result.id)
+
+    expect(node.rotation).toBe(15)
+  })
+
+  it('strips HTML comments before JSX parsing', async () => {
+    const g = makeSceneGraph()
+    const [result] = await renderJSX(
+      g,
+      '<Frame name="Comments" w={50} h={50}><!-- generated note --><Text color="#000">Ok</Text></Frame>'
+    )
+    const node = getNodeOrThrow(g, result.id)
+
+    expect(node.name).toBe('Comments')
+    expect(node.childIds.length).toBe(1)
+  })
+
+  it('warns about unsupported props', async () => {
+    const g = makeSceneGraph()
+    const [result] = await renderJSX(g, '<Frame name="Warn" w={50} h={50} mt={8} />')
+
+    expect(result.warnings).toEqual(['Unsupported prop "mt" on <frame> is ignored.'])
+  })
+
+  it('accepts CSS-style layout aliases', async () => {
+    const g = makeSceneGraph()
+    const [result] = await renderJSX(
+      g,
+      '<Frame name="Aliases" w={200} h={100} flex="row" justifyContent="center" alignItems="center"><Rectangle w={20} h={20} /></Frame>'
+    )
+    const node = getNodeOrThrow(g, result.id)
+
+    expect(node.primaryAxisAlign).toBe('CENTER')
+    expect(node.counterAxisAlign).toBe('CENTER')
+  })
 })

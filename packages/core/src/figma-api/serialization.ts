@@ -28,7 +28,21 @@ export function nodeProxyToJSON(
   if (n.cornerRadius > 0) obj.cornerRadius = n.cornerRadius
   if (!n.visible) obj.visible = false
   if (n.text) obj.characters = n.text
-  if (n.type === 'TEXT') obj.textDirection = n.textDirection
+  if (n.type === 'TEXT') {
+    obj.fontFamily = n.fontFamily
+    obj.fontSize = n.fontSize
+    obj.fontWeight = n.fontWeight
+    obj.italic = n.italic
+    obj.textAlignHorizontal = n.textAlignHorizontal
+    obj.textAlignVertical = n.textAlignVertical
+    obj.textAutoResize = n.textAutoResize
+    obj.textDirection = n.textDirection
+    if (n.lineHeight != null) obj.lineHeight = n.lineHeight
+    if (n.letterSpacing !== 0) obj.letterSpacing = n.letterSpacing
+    if (n.textCase !== 'ORIGINAL') obj.textCase = n.textCase
+    if (n.textDecoration !== 'NONE') obj.textDecoration = n.textDecoration
+    if (n.maxLines != null) obj.maxLines = n.maxLines
+  }
   if (n.layoutMode !== 'NONE') {
     obj.layoutMode = n.layoutMode
     obj.layoutDirection = n.layoutDirection

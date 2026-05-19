@@ -4,12 +4,12 @@ import * as v from 'valibot'
 
 import { computeAllLayouts } from '@open-pencil/core/layout'
 import type { SceneNode } from '@open-pencil/core/scene-graph'
-import { fontManager } from '@open-pencil/core/text'
 import { CORE_TOOLS, toolsToAI } from '@open-pencil/core/tools'
 import type { StepBudget, ToolLogEntry } from '@open-pencil/core/tools'
 
 import { makeFigmaFromStore } from '@/app/automation/bridge/figma-factory'
 import { getActiveEditorStore } from '@/app/editor/active-store'
+import { ensureGraphFonts } from '@/app/editor/fonts'
 import type { EditorStore } from '@/app/editor/active-store'
 
 export const MAX_AGENT_STEPS = 50
@@ -99,20 +99,7 @@ export function createAITools(store: EditorStore) {
         if (def.mutates) {
           const pageId = store.state.currentPageId
           const pageNode = store.graph.getNode(pageId)
-          if (pageNode) {
-            const fontKeys = fontManager.collectFontKeys(store.graph, pageNode.childIds)
-            const missing = fontKeys.filter(([family]) => !fontManager.isLoaded(family))
-            if (missing.length > 0) {
-              const results = await Promise.all(
-                missing.map(([family, style]) => fontManager.loadFont(family, style))
-              )
-              if (results.some((r) => r !== null)) {
-                for (const [, node] of store.graph.nodes) {
-                  if (node.type === 'TEXT' && node.textPicture) node.textPicture = null
-                }
-              }
-            }
-          }
+          if (pageNode) await ensureGraphFonts(store.graph, pageNode.childIds)
           computeAllLayouts(store.graph, pageId)
           store.requestRender()
           if (beforeSnapshot) {

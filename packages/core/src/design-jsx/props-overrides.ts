@@ -29,6 +29,19 @@ const TEXT_ALIGN_MAP: Record<string, SceneNode['textAlignHorizontal']> = {
   justified: 'JUSTIFIED'
 }
 
+const TEXT_VERTICAL_ALIGN_MAP: Record<string, SceneNode['textAlignVertical']> = {
+  top: 'TOP',
+  center: 'CENTER',
+  bottom: 'BOTTOM'
+}
+
+const TEXT_ALIGN_ALIAS_MAP: Record<string, SceneNode['textAlignHorizontal']> = {
+  ...TEXT_ALIGN_MAP,
+  left_align: 'LEFT',
+  center_align: 'CENTER',
+  right_align: 'RIGHT'
+}
+
 const TEXT_AUTO_RESIZE_MAP: Record<string, SceneNode['textAutoResize']> = {
   none: 'NONE',
   width: 'WIDTH_AND_HEIGHT',
@@ -141,11 +154,16 @@ function applyVisualOverrides(props: Record<string, unknown>, o: Partial<SceneNo
   if (props.cornerSmoothing !== undefined) o.cornerSmoothing = props.cornerSmoothing as number
 
   if (props.opacity !== undefined) o.opacity = props.opacity as number
-  if (props.rotate !== undefined) o.rotation = props.rotate as number
+  applyTransformOverrides(props, o)
   if (props.blendMode !== undefined) {
     o.blendMode = (props.blendMode as string).toUpperCase() as SceneNode['blendMode']
   }
   if (props.overflow === 'hidden') o.clipsContent = true
+}
+
+function applyTransformOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
+  const rotation = props.rotate ?? props.rotation
+  if (rotation !== undefined) o.rotation = rotation as number
 }
 
 function applyPaddingOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
@@ -173,7 +191,14 @@ function applyPaddingOverrides(props: Record<string, unknown>, o: Partial<SceneN
 }
 
 const PADDING_KEYS = ['p', 'padding', 'px', 'py', 'pt', 'pr', 'pb', 'pl'] as const
-const AUTO_LAYOUT_TRIGGER_KEYS = [...PADDING_KEYS, 'justify', 'items'] as const
+const AUTO_LAYOUT_TRIGGER_KEYS = [
+  ...PADDING_KEYS,
+  'justify',
+  'justifyContent',
+  'items',
+  'align',
+  'alignItems'
+] as const
 
 function hasAutoLayoutTriggerProps(props: Record<string, unknown>): boolean {
   return AUTO_LAYOUT_TRIGGER_KEYS.some((k) => props[k] !== undefined)
@@ -272,6 +297,20 @@ function applyAutoLayoutSizing(
   if (counterDim === 'hug') o.counterAxisSizing = 'HUG'
 }
 
+function applyLayoutAlignmentOverrides(
+  props: Record<string, unknown>,
+  o: Partial<SceneNode>
+): void {
+  const justify = props.justify ?? props.justifyContent
+  if (justify) {
+    o.primaryAxisAlign = ALIGN_MAP[justify as string] ?? 'MIN'
+  }
+  const items = props.items ?? props.align ?? props.alignItems
+  if (items) {
+    o.counterAxisAlign = COUNTER_ALIGN_MAP[items as string] ?? 'MIN'
+  }
+}
+
 function shouldEnableAutoLayout(props: Record<string, unknown>, isText: boolean): boolean {
   if (props.flex !== undefined) return true
   if (!isText && hasAutoLayoutTriggerProps(props)) return true
@@ -311,12 +350,7 @@ function applyLayoutOverrides(
     if (props.rowGap !== undefined) o.counterAxisSpacing = props.rowGap as number
   }
 
-  if (props.justify) {
-    o.primaryAxisAlign = ALIGN_MAP[props.justify as string] ?? 'MIN'
-  }
-  if (props.items) {
-    o.counterAxisAlign = COUNTER_ALIGN_MAP[props.items as string] ?? 'MIN'
-  }
+  applyLayoutAlignmentOverrides(props, o)
 
   applyPaddingOverrides(props, o)
 
@@ -358,8 +392,21 @@ function applyTextStyleOverrides(props: Record<string, unknown>, o: Partial<Scen
     o.textTruncation = 'ENDING'
   }
 
-  if (props.textAlign) {
-    o.textAlignHorizontal = TEXT_ALIGN_MAP[props.textAlign as string] ?? 'LEFT'
+  applyTextAlignmentOverrides(props, o)
+}
+
+function applyTextAlignmentOverrides(
+  props: Record<string, unknown>,
+  o: Partial<SceneNode>
+): void {
+  const textAlign = props.textAlign ?? props.textAlignHorizontal ?? props.textHorizontalAlignment
+  if (typeof textAlign === 'string') {
+    o.textAlignHorizontal = TEXT_ALIGN_ALIAS_MAP[textAlign.toLowerCase()] ?? 'LEFT'
+  }
+
+  const textAlignVertical = props.textAlignVertical ?? props.textVerticalAlignment
+  if (typeof textAlignVertical === 'string') {
+    o.textAlignVertical = TEXT_VERTICAL_ALIGN_MAP[textAlignVertical.toLowerCase()] ?? 'TOP'
   }
 }
 

@@ -55,6 +55,7 @@ export const render = defineTool({
       name: result.name,
       type: result.type,
       children: result.childIds,
+      ...(result.warnings ? { warnings: result.warnings } : {}),
       ...(results.length > 1
         ? {
             siblings: results

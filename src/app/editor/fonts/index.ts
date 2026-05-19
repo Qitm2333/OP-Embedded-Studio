@@ -1,5 +1,6 @@
 import { useLocalStorage } from '@vueuse/core'
 
+import type { SceneGraph } from '@open-pencil/core/scene-graph'
 import {
   fontManager,
   styleToWeight,
@@ -111,6 +112,23 @@ export async function listFonts(): Promise<TauriFontFamily[]> {
     return getTauriFonts()
   }
   return []
+}
+
+export async function ensureGraphFonts(graph: SceneGraph, nodeIds: string[]): Promise<boolean> {
+  const fontKeys = fontManager.collectFontKeys(graph, nodeIds)
+  const missing = fontKeys.filter(([family, style]) => !fontManager.isStyleLoaded(family, style))
+  if (missing.length === 0) return false
+
+  const results = await Promise.all(missing.map(([family, style]) => loadFont(family, style)))
+  const loaded = results.some((result) => result !== null)
+  if (loaded) clearTextPictures(graph)
+  return loaded
+}
+
+function clearTextPictures(graph: SceneGraph): void {
+  for (const [, node] of graph.nodes) {
+    if (node.type === 'TEXT') node.textPicture = null
+  }
 }
 
 export async function loadFont(family: string, style = 'Regular'): Promise<ArrayBuffer | null> {

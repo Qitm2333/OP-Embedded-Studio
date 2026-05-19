@@ -67,4 +67,30 @@ describe('render', () => {
     expect(result.type).toBe('FRAME')
     expect(result.children.length).toBeGreaterThan(0)
   })
+
+  test('returns JSX warnings', async () => {
+    const { figma } = setupToolTest()
+    const tool = getTool('render')
+    const result = (await tool.execute(figma, {
+      jsx: '<Frame name="Card" w={200} h={100} mt={8} />'
+    })) as ToolResult
+    expect(result.warnings).toEqual(['Unsupported prop "mt" on <frame> is ignored.'])
+  })
+
+  test('get_node exposes text style fields', async () => {
+    const { figma } = setupToolTest()
+    const render = getTool('render')
+    const card = (await render.execute(figma, {
+      jsx: '<Frame name="Card" w={200} h={100}><Text name="Title" size={24} weight={700} font="Inter" color="#111" textAlign="center">Hello</Text></Frame>'
+    })) as ToolResult
+    const textId = (card.children as string[])[0]
+    const getNode = getTool('get_node')
+    const result = getNode.execute(figma, { id: textId, depth: 0 }) as ToolResult
+
+    expect(result.characters).toBe('Hello')
+    expect(result.fontFamily).toBe('Inter')
+    expect(result.fontSize).toBe(24)
+    expect(result.fontWeight).toBe(700)
+    expect(result.textAlignHorizontal).toBe('CENTER')
+  })
 })

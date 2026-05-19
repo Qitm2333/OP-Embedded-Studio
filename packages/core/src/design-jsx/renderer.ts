@@ -35,6 +35,7 @@ export interface RenderResult {
   name: string
   type: NodeType
   childIds: string[]
+  warnings?: string[]
 }
 
 export async function renderTree(
@@ -102,8 +103,10 @@ async function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): 
   const overrides = propsToOverrides(tree.props, isText, parentLayout)
 
   if (isText) {
-    const textContent = tree.children.filter((c): c is string => typeof c === 'string').join('')
-    if (textContent) overrides.text = textContent
+    const childText = tree.children.filter((c): c is string => typeof c === 'string').join('')
+    const propText = tree.props.text ?? tree.props.characters
+    if (childText) overrides.text = childText
+    else if (typeof propText === 'string') overrides.text = propText
   }
 
   const node = graph.createNode(nodeType, parentId, overrides)
