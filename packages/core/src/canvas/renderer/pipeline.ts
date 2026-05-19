@@ -117,6 +117,7 @@ function canUseScenePicture(
 }
 
 const now = typeof performance !== 'undefined' ? () => performance.now() : () => 0
+const SCENE_BACKING_SCALE = 2
 
 function measure<T>(fn: () => T): { value: T; duration: number } {
   const start = now()
@@ -171,34 +172,23 @@ export function render(
   if (layer !== 'overlays') {
     canvas.save()
     canvas.scale(r.dpr, r.dpr)
-    canvas.translate(r.panX, r.panY)
-    canvas.scale(r.zoom, r.zoom)
 
     p.beginPhase('render:scene')
-    if (canUsePicture) {
-      p.setScenePictureMode('hit')
-      p.beginPhase('render:drawPicture')
-      if (r.scenePicture) {
-        const picture = r.scenePicture
-        const { duration } = measure(() => canvas.drawPicture(picture))
-        p.setScenePictureDrawTime(duration)
-      }
-      p.endPhase('render:drawPicture')
-    } else if (hasVolatileOverlays) {
-      p.setScenePictureMode('volatile', cacheMissReason)
-      r._nodeCount = 0
-      r._culledCount = 0
-      p.beginPhase('render:volatile')
-      renderPageChildren(r, canvas, graph, overlays)
-      p.endPhase('render:volatile')
+    if (layer === 'scene' && renderSceneBacking(r, canvas, graph, sceneVersion)) {
+      p.setScenePictureMode('hit', 'backing')
     } else {
-      p.setScenePictureMode('record', cacheMissReason)
-      r._nodeCount = 0
-      r._culledCount = 0
-      p.beginPhase('render:recordPicture')
-      const { duration } = measure(() => recordScenePicture(r, canvas, graph, sceneVersion))
-      p.setScenePictureRecordTime(duration)
-      p.endPhase('render:recordPicture')
+      canvas.translate(r.panX, r.panY)
+      canvas.scale(r.zoom, r.zoom)
+      renderSceneContent(
+        r,
+        canvas,
+        graph,
+        overlays,
+        sceneVersion,
+        canUsePicture,
+        cacheMissReason,
+        hasVolatileOverlays
+      )
     }
     p.endPhase('render:scene')
 
@@ -253,6 +243,150 @@ export function render(
 
   p.setNodeCounts(r._nodeCount, r._culledCount)
   p.endFrame()
+}
+
+function backingCoverageContainsLiveViewport(r: SkiaRenderer, sceneVersion: number): boolean {
+  const backing = r.sceneBacking
+  if (!backing) return false
+  if (backing.pageId !== r.pageId) return false
+  if (backing.sceneVersion !== sceneVersion) return false
+  if (backing.positionPreviewVersion !== r.scenePicturePositionPreviewVersion) return false
+  if (Math.abs(backing.zoom - r.zoom) > 0.0001) return false
+
+  const liveX = -r.panX / r.zoom
+  const liveY = -r.panY / r.zoom
+  const liveW = r.viewportWidth / r.zoom
+  const liveH = r.viewportHeight / r.zoom
+  return (
+    liveX >= backing.worldX &&
+    liveY >= backing.worldY &&
+    liveX + liveW <= backing.worldX + backing.worldWidth &&
+    liveY + liveH <= backing.worldY + backing.worldHeight
+  )
+}
+
+function drawSceneBacking(r: SkiaRenderer, canvas: Canvas, sceneVersion: number): boolean {
+  const backing = r.sceneBacking
+  if (!backing || !backingCoverageContainsLiveViewport(r, sceneVersion)) return false
+
+  const scale = r.zoom / backing.zoom
+  const x = r.panX - backing.panX * scale
+  const y = r.panY - backing.panY * scale
+  r.opacityPaint.setAlphaf(1)
+  canvas.drawImageRect(
+    backing.image,
+    r.ck.LTRBRect(0, 0, backing.width * backing.dpr, backing.height * backing.dpr),
+    r.ck.LTRBRect(x, y, x + backing.width * scale, y + backing.height * scale),
+    r.opacityPaint,
+    true
+  )
+  return true
+}
+
+function recordSceneBacking(r: SkiaRenderer, graph: SceneGraph, sceneVersion: number): void {
+  const marginX = r.viewportWidth * ((SCENE_BACKING_SCALE - 1) / 2)
+  const marginY = r.viewportHeight * ((SCENE_BACKING_SCALE - 1) / 2)
+  const width = Math.max(1, Math.ceil(r.viewportWidth + marginX * 2))
+  const height = Math.max(1, Math.ceil(r.viewportHeight + marginY * 2))
+  const surface = r.surface.makeSurface({
+    width: Math.ceil(width * r.dpr),
+    height: Math.ceil(height * r.dpr),
+    colorType: r.ck.ColorType.RGBA_8888,
+    alphaType: r.ck.AlphaType.Premul,
+    colorSpace: r.ck.ColorSpace.SRGB
+  })
+  const canvas = surface.getCanvas()
+  canvas.clear(r.ck.Color4f(r.pageColor.r, r.pageColor.g, r.pageColor.b, 1))
+  canvas.save()
+  canvas.scale(r.dpr, r.dpr)
+  const backingPanX = r.panX + marginX
+  const backingPanY = r.panY + marginY
+  const prevViewport = r.worldViewport
+  r.worldViewport = {
+    x: -backingPanX / r.zoom,
+    y: -backingPanY / r.zoom,
+    w: width / r.zoom,
+    h: height / r.zoom
+  }
+  canvas.translate(backingPanX, backingPanY)
+  canvas.scale(r.zoom, r.zoom)
+  renderPageChildren(r, canvas, graph, {})
+  canvas.restore()
+  surface.flush()
+  const image = surface.makeImageSnapshot()
+  surface.delete()
+  r.worldViewport = prevViewport
+
+  r.sceneBacking?.image.delete()
+  r.sceneBacking = {
+    image,
+    pageId: r.pageId,
+    sceneVersion,
+    positionPreviewVersion: graph.positionPreviewVersion,
+    panX: backingPanX,
+    panY: backingPanY,
+    zoom: r.zoom,
+    width,
+    height,
+    dpr: r.dpr,
+    worldX: -backingPanX / r.zoom,
+    worldY: -backingPanY / r.zoom,
+    worldWidth: width / r.zoom,
+    worldHeight: height / r.zoom
+  }
+  r.scenePictureVersion = sceneVersion
+  r.scenePicturePositionPreviewVersion = graph.positionPreviewVersion
+  r.scenePicturePageId = r.pageId
+}
+
+function renderSceneBacking(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  graph: SceneGraph,
+  sceneVersion: number
+): boolean {
+  if (!backingCoverageContainsLiveViewport(r, sceneVersion)) {
+    recordSceneBacking(r, graph, sceneVersion)
+  }
+  return drawSceneBacking(r, canvas, sceneVersion)
+}
+
+function renderSceneContent(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  graph: SceneGraph,
+  overlays: RenderOverlays,
+  sceneVersion: number,
+  canUsePicture: boolean,
+  cacheMissReason: string,
+  hasVolatileOverlays: boolean
+): void {
+  const p = r.profiler
+  if (canUsePicture) {
+    p.setScenePictureMode('hit')
+    p.beginPhase('render:drawPicture')
+    if (r.scenePicture) {
+      const picture = r.scenePicture
+      const { duration } = measure(() => canvas.drawPicture(picture))
+      p.setScenePictureDrawTime(duration)
+    }
+    p.endPhase('render:drawPicture')
+  } else if (hasVolatileOverlays) {
+    p.setScenePictureMode('volatile', cacheMissReason)
+    r._nodeCount = 0
+    r._culledCount = 0
+    p.beginPhase('render:volatile')
+    renderPageChildren(r, canvas, graph, overlays)
+    p.endPhase('render:volatile')
+  } else {
+    p.setScenePictureMode('record', cacheMissReason)
+    r._nodeCount = 0
+    r._culledCount = 0
+    p.beginPhase('render:recordPicture')
+    const { duration } = measure(() => recordScenePicture(r, canvas, graph, sceneVersion))
+    p.setScenePictureRecordTime(duration)
+    p.endPhase('render:recordPicture')
+  }
 }
 
 function renderPageChildren(

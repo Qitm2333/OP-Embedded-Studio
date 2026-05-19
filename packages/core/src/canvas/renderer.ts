@@ -80,6 +80,22 @@ export class SkiaRenderer {
   scenePictureVersion = -1
   scenePicturePositionPreviewVersion = -1
   scenePicturePageId: string | null = null
+  sceneBacking: {
+    image: CKImage
+    pageId: string | null
+    sceneVersion: number
+    positionPreviewVersion: number
+    panX: number
+    panY: number
+    zoom: number
+    width: number
+    height: number
+    dpr: number
+    worldX: number
+    worldY: number
+    worldWidth: number
+    worldHeight: number
+  } | null = null
   nodePictureCache = new Map<string, SkPicture | null>()
   readonly labelCache = new LabelCache()
   readonly profiler: RenderProfiler

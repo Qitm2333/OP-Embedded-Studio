@@ -54,6 +54,8 @@ export function destroyRenderer(r: SkiaRenderer): void {
   for (const pic of r.nodePictureCache.values()) pic?.delete()
   r.nodePictureCache.clear()
   r.scenePicture?.delete()
+  r.sceneBacking?.image.delete()
+  r.sceneBacking = null
   r._flashPaint?.delete()
   r.profiler.destroy()
   r.surface.delete()
