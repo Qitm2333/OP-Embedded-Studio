@@ -300,18 +300,28 @@ function updateSceneBackingPreviewState(r: SkiaRenderer, layer: RenderLayer): vo
   }
 }
 
-function backingCoverageContainsLiveViewport(
-  r: SkiaRenderer,
-  sceneVersion: number,
-  allowStaleZoom: boolean
-): boolean {
+function backingMetadataMatches(r: SkiaRenderer, sceneVersion: number): boolean {
+  const backing = r.sceneBacking
+  return !!(
+    backing &&
+    backing.pageId === r.pageId &&
+    backing.sceneVersion === sceneVersion &&
+    backing.positionPreviewVersion === r.scenePicturePositionPreviewVersion
+  )
+}
+
+function backingScreenCoverageContainsViewport(r: SkiaRenderer): boolean {
   const backing = r.sceneBacking
   if (!backing) return false
-  if (backing.pageId !== r.pageId) return false
-  if (backing.sceneVersion !== sceneVersion) return false
-  if (backing.positionPreviewVersion !== r.scenePicturePositionPreviewVersion) return false
-  if (!allowStaleZoom && Math.abs(backing.zoom - r.zoom) > 0.0001) return false
+  const scale = r.zoom / backing.zoom
+  const x = r.panX - backing.panX * scale
+  const y = r.panY - backing.panY * scale
+  return x <= 0 && y <= 0 && x + backing.width * scale >= r.viewportWidth && y + backing.height * scale >= r.viewportHeight
+}
 
+function backingWorldCoverageContainsLiveViewport(r: SkiaRenderer): boolean {
+  const backing = r.sceneBacking
+  if (!backing) return false
   const liveX = -r.panX / r.zoom
   const liveY = -r.panY / r.zoom
   const liveW = r.viewportWidth / r.zoom
@@ -322,6 +332,17 @@ function backingCoverageContainsLiveViewport(
     liveX + liveW <= backing.worldX + backing.worldWidth &&
     liveY + liveH <= backing.worldY + backing.worldHeight
   )
+}
+
+function backingCoverageContainsLiveViewport(
+  r: SkiaRenderer,
+  sceneVersion: number,
+  allowStaleZoom: boolean
+): boolean {
+  if (!backingMetadataMatches(r, sceneVersion)) return false
+  const crispZoom = Math.abs((r.sceneBacking?.zoom ?? r.zoom) - r.zoom) <= 0.0001
+  if (allowStaleZoom && backingScreenCoverageContainsViewport(r)) return true
+  return crispZoom && backingWorldCoverageContainsLiveViewport(r)
 }
 
 function drawSceneBacking(
