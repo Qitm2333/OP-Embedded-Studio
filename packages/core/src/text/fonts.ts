@@ -215,9 +215,9 @@ export class FontManager {
     }
     const { readFile } = await import(/* @vite-ignore */ 'node:fs/promises')
     const { resolve, dirname } = await import(/* @vite-ignore */ 'node:path')
-    const { createRequire } = await import(/* @vite-ignore */ 'node:module')
-    const require = createRequire(import.meta.url)
-    const packageRoot = dirname(require.resolve('@open-pencil/core/package.json'))
+    const { fileURLToPath } = await import(/* @vite-ignore */ 'node:url')
+    const packageJsonUrl = import.meta.resolve('@open-pencil/core/package.json')
+    const packageRoot = dirname(fileURLToPath(packageJsonUrl))
     const assetPath = resolve(packageRoot, `assets${url}`)
     const buf = await readFile(assetPath)
     return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)

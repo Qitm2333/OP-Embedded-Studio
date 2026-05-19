@@ -45,6 +45,13 @@
           {
             "name": "@/types",
             "message": "Import types directly from @open-pencil/core."
+          },
+          {
+            "name": "node:module",
+            "importNames": [
+              "createRequire"
+            ],
+            "message": "Use ESM imports or import.meta.resolve instead of createRequire/require."
           }
         ],
         "patterns": [

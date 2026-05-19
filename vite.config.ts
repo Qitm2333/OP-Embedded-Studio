@@ -1,5 +1,7 @@
 import process from 'node:process'
 
+import packageJson from './package.json'
+
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import IconsResolver from 'unplugin-icons/resolver'
@@ -21,6 +23,7 @@ export default defineConfig(async ({ command }) => ({
     alias: createOpenPencilAliases(__dirname)
   },
   define: {
+    __OPENPENCIL_APP_VERSION__: JSON.stringify(packageJson.version),
     __OPENPENCIL_LOCAL_AUTOMATION_TOKEN__: JSON.stringify(localAutomationToken(command))
   },
   plugins: [
