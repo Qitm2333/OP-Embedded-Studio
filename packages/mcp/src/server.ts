@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { resolveCommand } from 'package-manager-detector/commands'
 import { detect, getUserAgent } from 'package-manager-detector/detect'
-import { WebSocketServer, type WebSocket } from 'ws'
+import { WebSocketServer } from 'ws'
 
 import packageJson from '../package.json'
 import { bearerToken, isAuthorized, mcpRequestToken } from './auth'
@@ -72,64 +72,16 @@ export function startServer(options: ServerOptions = {}) {
   // --- WebSocket: browser connects here ---
 
   const wss = new WebSocketServer({ port: wsPort, host: '127.0.0.1' })
-  const wsClients = new Set<WebSocket>()
-
-  function sendRegisterToken(ws: WebSocket) {
-    const token = browserRpc.currentRpcToken()
-    if (token && ws.readyState === ws.OPEN) {
-      ws.send(JSON.stringify({ type: 'register', token }))
-    }
-  }
-
-  function broadcastRegisterToken() {
-    for (const client of wsClients) sendRegisterToken(client)
-  }
-
-  async function handleClientRequest(ws: WebSocket, msg: Record<string, unknown>) {
-    const id = typeof msg.id === 'string' ? msg.id : null
-    if (!id) return
-    const { type: _type, id: _id, ...body } = msg
-    try {
-      const result = await sendToBrowser(body)
-      if (ws.readyState === ws.OPEN) {
-        ws.send(JSON.stringify({ type: 'response', id, ok: true, ...(result as object) }))
-      }
-    } catch (e) {
-      if (ws.readyState === ws.OPEN) {
-        ws.send(
-          JSON.stringify({
-            type: 'response',
-            id,
-            ok: false,
-            error: e instanceof Error ? e.message : String(e)
-          })
-        )
-      }
-    }
-  }
 
   wss.on('connection', (ws) => {
-    wsClients.add(ws)
-    sendRegisterToken(ws)
+    browserRpc.handleConnection(ws)
 
     ws.on('message', (raw) => {
       const data = typeof raw === 'string' ? raw : Buffer.from(raw as Buffer).toString('utf-8')
-      let msg: Record<string, unknown>
-      try {
-        msg = JSON.parse(data) as Record<string, unknown>
-      } catch {
-        return
-      }
-      if (msg.type === 'request') {
-        void handleClientRequest(ws, msg)
-        return
-      }
       browserRpc.handleMessage(data, ws)
-      if (msg.type === 'register') broadcastRegisterToken()
     })
 
     ws.on('close', () => {
-      wsClients.delete(ws)
       browserRpc.handleClose(ws)
     })
   })
