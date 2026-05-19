@@ -2,9 +2,26 @@
 
 ## Unreleased
 
-### Fixes
+## 0.12.2 — 2026-05-19
+
+### Added
 
 - Allow OpenRouter users to enter any model ID from provider settings with cached autocomplete suggestions for tool-capable models, while keeping the curated dropdown as the default when no custom model is set.
+
+### Changed
+
+- Use localized app tooltips instead of native browser titles across editor controls, panels, and menus.
+- Update Claude Code MCP setup documentation and the docs landing screenshot.
+- Ignore non-source Markdown files in the app dev watcher so documentation edits do not reload the running editor.
+
+### Fixes
+
+- Route Claude Code stdio MCP requests through the live OpenPencil app connection, including immediate disconnected errors when no document is connected.
+- Keep MCP disconnected guidance focused on starting OpenPencil and opening a document.
+- Improve agent-rendered JSX compatibility with Figma-style text, alignment, and rotation aliases; strip HTML comments; and report unsupported props from render tools.
+- Load exact text font styles after MCP and AI tool mutations so newly created bold/weighted text renders immediately.
+- Include text style fields in MCP `get_node` output so agents can verify generated text accurately.
+- Keep provider settings tooltip/popover composition working in WebKit.
 
 ## 0.12.1 — 2026-05-19
 

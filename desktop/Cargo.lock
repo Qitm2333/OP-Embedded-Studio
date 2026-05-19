@@ -2639,7 +2639,7 @@ dependencies = [
 
 [[package]]
 name = "open_pencil"
-version = "0.12.1"
+version = "0.12.2"
 dependencies = [
  "fix-path-env",
  "font-kit",
