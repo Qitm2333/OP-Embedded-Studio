@@ -15,9 +15,9 @@ import { useI18n } from '@open-pencil/vue'
 import { nodeIcon } from '@/app/editor/icons'
 import { useEditorStore } from '@/app/editor/active-store'
 import { openExternalLink } from '@/app/shell/ui'
+import AppInput from '@/components/ui/AppInput.vue'
 import { useButtonUI } from '@/components/ui/button'
 import { useDialogUI } from '@/components/ui/dialog'
-import { useInputUI } from '@/components/ui/input'
 import Tip from '@/components/ui/Tip.vue'
 
 type LocalAsset = {
@@ -41,7 +41,6 @@ const selectedAssetId = ref<string | null>(null)
 const previewUrl = ref<string | null>(null)
 const previewLoading = ref(false)
 let previewRequestId = 0
-const input = useInputUI({ size: 'sm' })
 const insertButton = useButtonUI({ tone: 'ghost', size: 'iconSm' })
 const primaryButton = useButtonUI({ tone: 'accent', size: 'md' })
 const dialog = useDialogUI({ content: 'flex w-[720px] max-w-[92vw] flex-col overflow-hidden' })
@@ -179,11 +178,11 @@ function insertSelectedAsset() {
       {{ panels.assets }}
     </header>
     <div class="shrink-0 px-2 pb-2">
-      <input
+      <AppInput
         v-model="query"
-        data-test-id="assets-search"
-        :class="input.base"
         type="search"
+        test-id="assets-search"
+        size="sm"
         :placeholder="panels.searchLocalComponents"
       />
     </div>

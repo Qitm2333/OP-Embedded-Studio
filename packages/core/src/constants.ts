@@ -208,6 +208,7 @@ export const AI_PROVIDERS: AIProviderDef[] = [
     keyPlaceholder: 'sk-or-…',
     keyURL: 'https://openrouter.ai/keys',
     defaultModel: 'anthropic/claude-sonnet-4.6',
+    supportsCustomModel: true,
     models: [
       { id: 'anthropic/claude-sonnet-4.6', name: 'Claude Sonnet 4.6', tag: 'Best for design' },
       { id: 'anthropic/claude-opus-4.6', name: 'Claude Opus 4.6', tag: 'Smartest' },

@@ -2,7 +2,8 @@
 import { computed, ref } from 'vue'
 
 import ProviderSelectField from '@/components/chat/ProviderSelect/ProviderSelectField.vue'
-import { useInputUI } from '@/components/ui/input'
+import AppInput from '@/components/ui/AppInput.vue'
+import AppTextButton from '@/components/ui/AppTextButton.vue'
 import { useAIChat } from '@/app/ai/chat/use'
 import { ACP_AGENTS } from '@open-pencil/core/constants'
 import { openExternalLink } from '@/app/shell/ui'
@@ -44,32 +45,27 @@ function save() {
     <form v-if="!isACP" class="flex w-full flex-col gap-2" @submit.prevent="save">
       <ProviderSelectField test-id="provider-selector" />
 
-      <!-- Base URL (OpenAI-compatible only) -->
-      <input
+      <!-- Base URL (compatible providers only) -->
+      <AppInput
         v-if="providerDef.supportsCustomBaseURL"
         v-model="baseURLInput"
-        type="text"
-        data-test-id="provider-base-url"
+        test-id="provider-base-url"
         :placeholder="dialogs.baseURLPlaceholder"
-        :class="useInputUI().base"
       />
 
-      <!-- Custom model ID (OpenAI-compatible only) -->
-      <input
-        v-if="providerDef.supportsCustomModel"
+      <!-- Optional custom model ID for providers that support arbitrary model IDs. -->
+      <AppInput
+        v-if="providerDef.supportsCustomModel && providerID !== 'openrouter'"
         v-model="customModelInput"
-        type="text"
-        data-test-id="provider-custom-model"
+        test-id="provider-custom-model"
         :placeholder="dialogs.modelIDPlaceholder"
-        :class="useInputUI().base"
       />
 
-      <input
+      <AppInput
         v-model="keyInput"
         type="password"
-        data-test-id="api-key-input"
+        test-id="api-key-input"
         :placeholder="providerDef.keyPlaceholder"
-        :class="useInputUI().base"
       />
 
       <button
@@ -105,15 +101,15 @@ function save() {
       </p>
     </div>
 
-    <button
+    <AppTextButton
       v-if="!isACP && providerDef.keyURL"
-      type="button"
-      data-test-id="api-key-get-link"
-      class="mt-2.5 cursor-pointer text-[10px] text-muted underline hover:text-surface"
+      test-id="api-key-get-link"
+      underline
+      :ui="{ base: 'mt-2.5' }"
       @click="openExternalLink(providerDef.keyURL as string)"
     >
       {{ dialogs.getAPIKey({ provider: providerDef.name }) }}
-    </button>
+    </AppTextButton>
 
     <p
       v-if="providerID === 'openrouter'"

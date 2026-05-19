@@ -1,37 +1,52 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { useI18n } from '@open-pencil/vue'
 
-import { useInputUI } from '@/components/ui/input'
+import { listProviderModels } from '@/app/ai/chat/provider-models'
+import AppComboboxInput from '@/components/ui/AppComboboxInput.vue'
+import ProviderSettingsField from '@/components/chat/ProviderSettings/ProviderSettingsField.vue'
+import ProviderSettingsInput from '@/components/chat/ProviderSettings/ProviderSettingsInput.vue'
 import { useProviderSettingsContext } from '@/components/chat/ProviderSettings/context'
 
 const ctx = useProviderSettingsContext()
 const { dialogs } = useI18n()
+const suggestedModels = ref<Array<{ id: string; name: string }>>([])
+const showModelSuggestions = computed(() => ctx.providerID === 'openrouter')
+
+async function loadModelSuggestions() {
+  if (!showModelSuggestions.value || suggestedModels.value.length) return
+  suggestedModels.value = await listProviderModels(ctx.providerID)
+}
 </script>
 
 <template>
   <template v-if="!ctx.isACP">
-    <div v-if="ctx.providerDef.supportsCustomBaseURL" class="flex flex-col gap-1">
-      <label class="text-[10px] text-muted">{{ dialogs.baseURL }}</label>
-      <input
+    <ProviderSettingsField v-if="ctx.providerDef.supportsCustomBaseURL" :label="dialogs.baseURL">
+      <ProviderSettingsInput
         v-model="ctx.baseURLInput"
-        type="text"
-        data-test-id="provider-settings-base-url"
+        test-id="provider-settings-base-url"
         placeholder="http://localhost:11434/v1"
-        :class="useInputUI({ size: 'sm' }).base"
         @change="ctx.save"
       />
-    </div>
+    </ProviderSettingsField>
 
-    <div v-if="ctx.providerDef.supportsCustomModel" class="flex flex-col gap-1">
-      <label class="text-[10px] text-muted">{{ dialogs.modelID }}</label>
-      <input
+    <ProviderSettingsField v-if="ctx.providerDef.supportsCustomModel" :label="dialogs.modelID">
+      <AppComboboxInput
+        v-if="showModelSuggestions"
         v-model="ctx.customModelInput"
-        type="text"
-        data-test-id="provider-settings-custom-model"
+        test-id="provider-settings-custom-model"
+        :options="suggestedModels.map((model) => ({ value: model.id, label: model.name }))"
+        placeholder="e.g. meta-llama/llama-3.3-70b-instruct"
+        @focusin="loadModelSuggestions"
+        @update:model-value="ctx.save"
+      />
+      <ProviderSettingsInput
+        v-else
+        v-model="ctx.customModelInput"
+        test-id="provider-settings-custom-model"
         placeholder="e.g. llama-3.3-70b"
-        :class="useInputUI({ size: 'sm' }).base"
         @change="ctx.save"
       />
-    </div>
+    </ProviderSettingsField>
   </template>
 </template>

@@ -9,6 +9,7 @@ import {
   SelectViewport
 } from 'reka-ui'
 
+import AppBadge from '@/components/ui/AppBadge.vue'
 import { useSelectUI } from '@/components/ui/select'
 import { useAIChat } from '@/app/ai/chat/use'
 
@@ -37,9 +38,7 @@ const selectCls = useSelectUI({
             :class="selectCls.item"
           >
             <SelectItemText class="flex-1">{{ model.name }}</SelectItemText>
-            <span v-if="model.tag" class="rounded bg-accent/10 px-1 py-px text-[9px] text-accent">
-              {{ model.tag }}
-            </span>
+            <AppBadge v-if="model.tag">{{ model.tag }}</AppBadge>
           </SelectItem>
         </SelectViewport>
       </SelectContent>

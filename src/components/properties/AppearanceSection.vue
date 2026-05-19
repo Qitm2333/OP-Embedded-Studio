@@ -6,6 +6,7 @@ import { useAppearance, useI18n } from '@open-pencil/vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import VariableScrubInput from '@/components/properties/VariableScrubInput.vue'
 import Tip from '@/components/ui/Tip.vue'
+import { useIconButtonUI } from '@/components/ui/icon-button'
 import { useSectionUI } from '@/components/ui/section'
 
 const { panels } = useI18n()
@@ -126,8 +127,10 @@ function onToggleCorners() {
         <Tip :label="panels.independentCornerRadii">
           <button
             data-test-id="independent-corners-toggle"
-            class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-            :class="{ '!border-accent !text-accent': showIndependentCorners }"
+            :class="[
+              useIconButtonUI({ size: 'md', ui: { base: 'size-[26px] shrink-0' } }).base,
+              { '!border-accent !text-accent': showIndependentCorners }
+            ]"
             @click="onToggleCorners"
           >
             <svg

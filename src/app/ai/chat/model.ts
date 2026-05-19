@@ -16,10 +16,19 @@ export type ModelConfig = {
   customAPIType: 'completions' | 'responses'
 }
 
+export function resolveLanguageModelID(
+  config: Pick<ModelConfig, 'providerID' | 'modelID' | 'customModelID'>
+) {
+  const customModelID = config.customModelID.trim()
+  if (config.providerID === 'openrouter') return customModelID || config.modelID
+  if (config.providerID === 'openai-compatible' || config.providerID === 'anthropic-compatible') {
+    return customModelID
+  }
+  return config.modelID
+}
+
 export function createLanguageModel(config: ModelConfig): LanguageModel {
-  const needsCustomModel =
-    config.providerID === 'openai-compatible' || config.providerID === 'anthropic-compatible'
-  const effectiveModelID = needsCustomModel ? config.customModelID : config.modelID
+  const effectiveModelID = resolveLanguageModelID(config)
 
   switch (config.providerID) {
     case 'openrouter': {

@@ -4,9 +4,9 @@ import { computed, ref } from 'vue'
 
 import ProviderModelSelect from '@/components/chat/ProviderModelSelect.vue'
 import ProviderSettings from '@/components/chat/ProviderSettings/ProviderSettings.vue'
+import AppInput from '@/components/ui/AppInput.vue'
 import Tip from '@/components/ui/Tip.vue'
 import { useButtonUI } from '@/components/ui/button'
-import { useInputUI } from '@/components/ui/input'
 import { useAIChat } from '@/app/ai/chat/use'
 import { useI18n } from '@open-pencil/vue'
 
@@ -35,9 +35,14 @@ const acpAgentName = computed(() => {
 const isCustomProvider = computed(
   () => providerID.value === 'openai-compatible' || providerID.value === 'anthropic-compatible'
 )
+const customModelName = computed(() => customModelID.value.trim())
+const usesCustomModel = computed(
+  () => !!providerDef.value.supportsCustomModel && !!customModelName.value
+)
 
 const selectedModelName = computed(() => {
-  if (isCustomProvider.value) return customModelID.value || 'No model'
+  if (usesCustomModel.value) return customModelName.value
+  if (isCustomProvider.value) return 'No model'
   return providerDef.value.models.find((m) => m.id === modelID.value)?.name ?? modelID.value
 })
 
@@ -61,7 +66,7 @@ function handleSubmit(e: Event) {
             {{ acpAgentName }}
           </div>
         </template>
-        <template v-else-if="isCustomProvider">
+        <template v-else-if="isCustomProvider || usesCustomModel">
           <div
             class="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-muted"
             data-test-id="chat-custom-model-label"
@@ -81,12 +86,11 @@ function handleSubmit(e: Event) {
 
       <!-- Input form -->
       <form class="flex gap-1.5" @submit="handleSubmit">
-        <input
+        <AppInput
           v-model="input"
-          type="text"
-          data-test-id="chat-input"
+          test-id="chat-input"
           :placeholder="dialogs.describeChange"
-          :class="useInputUI({ ui: { base: 'min-w-0 flex-1 placeholder:text-muted' } }).base"
+          :ui="{ base: 'min-w-0 flex-1 placeholder:text-muted' }"
           :disabled="isStreaming"
           @paste.stop
           @copy.stop

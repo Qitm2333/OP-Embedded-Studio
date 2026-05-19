@@ -6,7 +6,7 @@ import type { ComputedRef, Ref } from 'vue'
 import { ACP_AGENTS } from '@open-pencil/core/constants'
 import type { ACPAgentID, AIProviderID } from '@open-pencil/core/constants'
 
-import { createLanguageModel } from '@/app/ai/chat/model'
+import { createLanguageModel, resolveLanguageModelID } from '@/app/ai/chat/model'
 import SYSTEM_PROMPT from '@/app/ai/chat/system-prompt.md?raw'
 import { MAX_AGENT_STEPS, createAITools, recordStepUsage, resetRunSteps } from '@/app/ai/tools'
 import type { getActiveEditorStore } from '@/app/editor/active-store'
@@ -70,7 +70,8 @@ export function createToolLoopTransport({
   maxOutputTokens
 }: ToolLoopTransportOptions) {
   const tools = createAITools(store)
-  const cacheProviderOptions = supportsAnthropicCaching(providerID, modelID)
+  const effectiveModelID = resolveLanguageModelID({ providerID, modelID, customModelID })
+  const cacheProviderOptions = supportsAnthropicCaching(providerID, effectiveModelID)
     ? ANTHROPIC_CACHE_CONTROL
     : undefined
 

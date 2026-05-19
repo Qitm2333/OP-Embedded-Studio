@@ -141,6 +141,7 @@ test('clicking AI tab shows provider setup when no key set', async () => {
   await chatTab().click()
   await expect(apiKeyInput()).toBeVisible()
   await expect(page.getByText('Connect an AI provider to start chatting.')).toBeVisible()
+  await expect(page.getByTestId('provider-custom-model')).toBeHidden()
 })
 
 test('saving API key shows chat interface', async () => {
@@ -190,7 +191,8 @@ test('model selector is visible and clickable', async () => {
   await expect(page.getByText('Best for design')).toBeVisible()
   await expect(page.getByText('Free').first()).toBeVisible()
 
-  await page.keyboard.press('Escape')
+  await page.getByRole('option', { name: /Claude Sonnet 4\.6/ }).click()
+  await expect(page.getByRole('option', { name: /Claude Sonnet 4\.6/ })).toBeHidden()
 })
 
 test('tool calls render in assistant message', async () => {
@@ -218,6 +220,26 @@ test('switching tabs preserves chat', async () => {
 
   await chatTab().click()
   await expect(page.getByText('Hello there', { exact: true })).toBeVisible({ timeout: 10000 })
+})
+
+test('OpenRouter accepts a custom model ID from provider settings', async () => {
+  const customModel = 'meta-llama/llama-3.3-70b-instruct'
+
+  await page.keyboard.press('Escape')
+  await page.getByTestId('provider-settings-trigger').click()
+  const customModelInput = page.getByTestId('provider-settings-custom-model')
+  await expect(customModelInput).toBeVisible()
+  await customModelInput.fill(customModel)
+  await page.getByTestId('provider-settings-done').click()
+
+  await expect(page.getByTestId('chat-custom-model-label')).toContainText(customModel)
+  await expect(page.getByTestId('chat-model-selector')).toBeHidden()
+
+  await page.getByTestId('provider-settings-trigger').click()
+  await page.getByTestId('provider-settings-custom-model').fill('')
+  await page.getByTestId('provider-settings-done').click()
+
+  await expect(page.getByTestId('chat-model-selector')).toBeVisible()
 })
 
 test('transport errors show an actionable toast', async () => {

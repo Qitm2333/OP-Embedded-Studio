@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { selectTarget } from '@open-pencil/vue'
+import AppInput from '@/components/ui/AppInput.vue'
 import { useCollabPanelContext } from '@/components/CollabPanel/context'
 
 const collab = useCollabPanelContext()
@@ -8,11 +9,11 @@ const collab = useCollabPanelContext()
 <template>
   <div class="mb-3 text-xs font-medium text-surface">{{ collab.dialogs.roomLink }}</div>
   <div class="mb-3 flex items-center gap-1.5">
-    <input
-      :value="collab.shareUrl"
+    <AppInput
+      :model-value="collab.shareUrl"
       readonly
-      data-test-id="collab-room-link"
-      class="min-w-0 flex-1 rounded border border-border bg-input px-2 py-1 text-xs text-surface"
+      test-id="collab-room-link"
+      :ui="{ base: 'min-w-0 flex-1' }"
       @focus="selectTarget($event)"
     />
     <button

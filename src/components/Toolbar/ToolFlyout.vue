@@ -9,6 +9,7 @@ import {
 
 import IconChevronDown from '~icons/lucide/chevron-down'
 
+import AppShortcutText from '@/components/ui/AppShortcutText.vue'
 import { menu } from '@/components/ui/menu'
 import ToolButton from '@/components/Toolbar/ToolButton.vue'
 import {
@@ -105,9 +106,9 @@ function activeKeyForTool() {
             >
               <component :is="toolIcons[sub]" class="size-3.5" />
               <span class="flex-1">{{ toolLabels[sub] }}</span>
-              <span v-if="!mobile && toolShortcuts[sub]" class="text-[11px] text-muted">
+              <AppShortcutText v-if="!mobile && toolShortcuts[sub]">
                 {{ toolShortcuts[sub] }}
-              </span>
+              </AppShortcutText>
             </DropdownMenuItem>
           </ToolbarItem>
         </DropdownMenuContent>

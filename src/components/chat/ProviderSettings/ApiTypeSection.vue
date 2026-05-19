@@ -2,6 +2,7 @@
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 import { useI18n } from '@open-pencil/vue'
 
+import ProviderSettingsField from '@/components/chat/ProviderSettings/ProviderSettingsField.vue'
 import { useProviderSettingsContext } from '@/components/chat/ProviderSettings/context'
 
 const ctx = useProviderSettingsContext()
@@ -9,8 +10,10 @@ const { dialogs } = useI18n()
 </script>
 
 <template>
-  <div v-if="!ctx.isACP && ctx.providerID === 'openai-compatible'" class="flex flex-col gap-1">
-    <label class="text-[10px] text-muted">{{ dialogs.apiType }}</label>
+  <ProviderSettingsField
+    v-if="!ctx.isACP && ctx.providerID === 'openai-compatible'"
+    :label="dialogs.apiType"
+  >
     <TabsRoot
       :model-value="ctx.customAPIType"
       data-test-id="provider-settings-api-type"
@@ -34,5 +37,5 @@ const { dialogs } = useI18n()
       <TabsContent value="completions" />
       <TabsContent value="responses" />
     </TabsRoot>
-  </div>
+  </ProviderSettingsField>
 </template>

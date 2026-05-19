@@ -10,6 +10,7 @@ import { activeTab } from '@/app/tabs'
 import AcpPermissionDialog from '@/components/chat/AcpPermissionDialog.vue'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
+import AppTextButton from '@/components/ui/AppTextButton.vue'
 import ProviderSetup from '@/components/chat/ProviderSetup.vue'
 import { useAIChat } from '@/app/ai/chat/use'
 import { toast } from '@/app/shell/ui'
@@ -185,31 +186,31 @@ function handleClearChat() {
         v-if="messages.length > 0"
         class="flex shrink-0 items-center gap-1 border-t border-border px-3 py-1"
       >
-        <button
+        <AppTextButton
           v-if="IS_DEV"
-          class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
+          :ui="{ base: 'flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-hover' }"
           @click="handleCopyDebug"
         >
           <icon-lucide-clipboard-copy v-if="!debugCopied" class="size-3" />
           <icon-lucide-check v-else class="size-3 text-green-400" />
           {{ debugCopied ? 'Copied' : 'Copy log' }}
-        </button>
-        <button
+        </AppTextButton>
+        <AppTextButton
           v-if="IS_DEV && hasAcpDebugEntries()"
-          class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
+          :ui="{ base: 'flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-hover' }"
           @click="handleCopyAcpLog"
         >
           <icon-lucide-bug v-if="!acpLogCopied" class="size-3" />
           <icon-lucide-check v-else class="size-3 text-green-400" />
           {{ acpLogCopied ? 'Copied' : 'ACP log' }}
-        </button>
-        <button
-          class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
+        </AppTextButton>
+        <AppTextButton
+          :ui="{ base: 'flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-hover' }"
           @click="handleClearChat"
         >
           <icon-lucide-trash-2 class="size-3" />
           Clear
-        </button>
+        </AppTextButton>
       </div>
 
       <ChatInput :status="status" @submit="handleSubmit" @stop="handleStop" />

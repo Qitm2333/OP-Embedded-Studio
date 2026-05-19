@@ -20,6 +20,7 @@ import {
 import IconChevronRight from '~icons/lucide/chevron-right'
 
 import { vTestId, useI18n } from '@open-pencil/vue'
+import AppShortcutText from '@/components/ui/AppShortcutText.vue'
 import { useMenuUI } from '@/components/ui/menu'
 import { IS_TAURI } from '@/constants'
 import { useAppMenu } from '@/app/shell/menu/app-menu'
@@ -127,9 +128,9 @@ const subMenuCls = useMenuUI({ content: 'min-w-44' })
                           @select="runMenuAction(sub)"
                         >
                           <span class="flex-1">{{ menuLabel(sub) }}</span>
-                          <span v-if="menuShortcut(sub)" class="text-[11px] text-muted">{{
+                          <AppShortcutText v-if="menuShortcut(sub)">{{
                             menuShortcut(sub)
-                          }}</span>
+                          }}</AppShortcutText>
                         </MenubarItem>
                       </template>
                     </MenubarSubContent>
@@ -153,9 +154,9 @@ const subMenuCls = useMenuUI({ content: 'min-w-44' })
                   @select="runMenuAction(item)"
                 >
                   <span class="flex-1">{{ menuLabel(item) }}</span>
-                  <span v-if="menuShortcut(item)" class="text-[11px] text-muted">{{
+                  <AppShortcutText v-if="menuShortcut(item)">{{
                     menuShortcut(item)
-                  }}</span>
+                  }}</AppShortcutText>
                 </MenubarItem>
               </template>
             </MenubarContent>

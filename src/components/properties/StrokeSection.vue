@@ -177,8 +177,10 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
         <Tip :label="panels.strokeSides">
           <button
             data-test-id="stroke-sides-toggle"
-            class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-            :class="{ '!border-accent !text-accent': expandedSides }"
+            :class="[
+              useIconButtonUI({ size: 'md', ui: { base: 'size-[26px] shrink-0' } }).base,
+              { '!border-accent !text-accent': expandedSides }
+            ]"
             @click="onToggleSides(activeNode!)"
           >
             <svg class="size-3.5" viewBox="0 0 14 14" fill="currentColor">

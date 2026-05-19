@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppInput from '@/components/ui/AppInput.vue'
 import { useCollabPanelContext } from '@/components/CollabPanel/context'
 
 const collab = useCollabPanelContext()
@@ -12,13 +13,12 @@ const collab = useCollabPanelContext()
 
   <div class="mb-3">
     <label class="mb-1 block text-xs text-muted">{{ collab.dialogs.yourName }}</label>
-    <input
+    <AppInput
       v-model="collab.nameDraft"
-      data-test-id="collab-name-input"
-      class="w-full rounded border border-border bg-input px-2 py-1 text-xs text-surface"
+      test-id="collab-name-input"
       :placeholder="collab.dialogs.enterYourName"
       autofocus
-      @keydown.enter="collab.join"
+      @enter="collab.join"
     />
   </div>
 

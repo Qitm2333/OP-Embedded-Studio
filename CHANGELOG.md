@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixes
+
+- Allow OpenRouter users to enter any model ID from provider settings with cached autocomplete suggestions for tool-capable models, while keeping the curated dropdown as the default when no custom model is set.
+
 ## 0.12.1 — 2026-05-19
 
 ### Fixes
@@ -357,13 +361,11 @@
 - Fix text typography lost on Figma clipboard import — preserve fontFamily, fontWeight, fontSize, lineHeight
 - Fix `copyFill` missing `gradientTransform` and `imageTransform` — gradient fills now round-trip correctly
 
-
 ### Performance
 
 - Event-driven rendering and component sync — `SceneGraph` emits typed events on mutations; `requestRender()` calls reduced from 94 to 22, component instance sync uses microtask batching with deduplication
 - Replace `structuredClone` with typed copy helpers for fills, strokes, effects, and style runs (~24× faster in hot paths)
 - Filter .fig unzip to only decompress canvas and image entries, skipping metadata cruft
-
 
 ### Improvements
 
@@ -492,7 +494,6 @@
 
 - Apple code signing and notarization for macOS builds
 - Git LFS storage moved from GitHub to Cloudflare R2
-
 
 ### Fixes
 

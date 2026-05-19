@@ -32,6 +32,7 @@ import { appMenuShortcutLabel } from '@/app/shell/menu/shortcut'
 import { createCanvasMenuActions } from '@/app/editor/canvas/menu/actions'
 import { useCanvasContextMenu } from '@/app/editor/canvas/menu/context'
 import { canvasMenuItemClass, canvasMenuShortcutClass } from '@/app/editor/canvas/menu/model'
+import AppShortcutText from '@/components/ui/AppShortcutText.vue'
 import { menu, useMenuUI } from '@/components/ui/menu'
 
 const store = useEditorStore()
@@ -88,7 +89,7 @@ function contextCommandIcon(id: EditorCommandId | undefined): Component | undefi
       @select="execCommand('copy')"
     >
       <span>{{ t.copy }}</span
-      ><span class="text-[11px] text-muted">{{ appMenuShortcutLabel('copy') }}</span>
+      ><AppShortcutText>{{ appMenuShortcutLabel('copy') }}</AppShortcutText>
     </ContextMenuItem>
     <ContextMenuItem
       data-test-id="context-cut"
@@ -97,11 +98,11 @@ function contextCommandIcon(id: EditorCommandId | undefined): Component | undefi
       @select="execCommand('cut')"
     >
       <span>{{ t.cut }}</span
-      ><span class="text-[11px] text-muted">{{ appMenuShortcutLabel('cut') }}</span>
+      ><AppShortcutText>{{ appMenuShortcutLabel('cut') }}</AppShortcutText>
     </ContextMenuItem>
     <ContextMenuItem data-test-id="context-paste" :class="cls.item" @select="execCommand('paste')">
       <span>{{ t.pasteHere }}</span
-      ><span class="text-[11px] text-muted">{{ appMenuShortcutLabel('paste') }}</span>
+      ><AppShortcutText>{{ appMenuShortcutLabel('paste') }}</AppShortcutText>
     </ContextMenuItem>
     <ContextMenuItem
       data-test-id="context-paste-to-replace"
@@ -118,9 +119,9 @@ function contextCommandIcon(id: EditorCommandId | undefined): Component | undefi
       @select="getCommand('selection.duplicate').run()"
     >
       <span>{{ getCommand('selection.duplicate').label }}</span
-      ><span class="text-[11px] text-muted">{{
+      ><AppShortcutText>{{
         formatShortcut(editorCommandMetadata('selection.duplicate').shortcut)
-      }}</span>
+      }}</AppShortcutText>
     </ContextMenuItem>
     <ContextMenuItem
       data-test-id="context-delete"
@@ -129,9 +130,7 @@ function contextCommandIcon(id: EditorCommandId | undefined): Component | undefi
       @select="getCommand('selection.delete').run()"
     >
       <span>{{ getCommand('selection.delete').label }}</span
-      ><span class="text-[11px] text-muted">{{
-        editorCommandMetadata('selection.delete').shortcut
-      }}</span>
+      ><AppShortcutText>{{ editorCommandMetadata('selection.delete').shortcut }}</AppShortcutText>
     </ContextMenuItem>
 
     <template v-for="(item, i) in contextMenu" :key="`menu-${i}`">
@@ -160,7 +159,7 @@ function contextCommandIcon(id: EditorCommandId | undefined): Component | undefi
                   />
                   <span class="truncate">{{ sub.label }}</span>
                 </span>
-                <span v-if="sub.shortcut" class="text-[11px] text-muted">{{ sub.shortcut }}</span>
+                <AppShortcutText v-if="sub.shortcut">{{ sub.shortcut }}</AppShortcutText>
               </template>
             </ContextMenuItem>
           </ContextMenuSubContent>

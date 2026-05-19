@@ -871,6 +871,7 @@ const noDirectStorageAccess = {
     const file = normalizedFilename(context)
     const allowedFiles = [
       '/src/app/ai/chat/storage.ts',
+      '/src/app/cache/index.ts',
       '/src/app/shell/layout-storage.ts',
       '/packages/vue/src/i18n/locale.ts'
     ]
