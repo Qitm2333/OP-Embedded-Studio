@@ -96,6 +96,9 @@ export class SkiaRenderer {
     worldWidth: number
     worldHeight: number
   } | null = null
+  sceneBackingPreviewUntil = 0
+  sceneBackingNeedsCrispRender = false
+  lastSceneViewport: { panX: number; panY: number; zoom: number } | null = null
   nodePictureCache = new Map<string, SkPicture | null>()
   readonly labelCache = new LabelCache()
   readonly profiler: RenderProfiler

@@ -117,7 +117,8 @@ function canUseScenePicture(
 }
 
 const now = typeof performance !== 'undefined' ? () => performance.now() : () => 0
-const SCENE_BACKING_SCALE = 2
+const SCENE_BACKING_SCALE = 3
+const SCENE_BACKING_PREVIEW_IDLE_MS = 180
 
 function measure<T>(fn: () => T): { value: T; duration: number } {
   const start = now()
@@ -154,6 +155,7 @@ export function render(
     w: r.viewportWidth / r.zoom,
     h: r.viewportHeight / r.zoom
   }
+  updateSceneBackingPreviewState(r, layer)
 
   const hasPositionPreview =
     graph.positionPreviewVersion !== r.scenePicturePositionPreviewVersion &&
@@ -245,13 +247,32 @@ export function render(
   p.endFrame()
 }
 
-function backingCoverageContainsLiveViewport(r: SkiaRenderer, sceneVersion: number): boolean {
+function updateSceneBackingPreviewState(r: SkiaRenderer, layer: RenderLayer): void {
+  if (layer !== 'scene') return
+  const previous = r.lastSceneViewport
+  const viewportChanged =
+    !previous ||
+    previous.panX !== r.panX ||
+    previous.panY !== r.panY ||
+    previous.zoom !== r.zoom
+  if (viewportChanged) {
+    r.sceneBackingPreviewUntil = now() + SCENE_BACKING_PREVIEW_IDLE_MS
+    r.sceneBackingNeedsCrispRender = !!r.sceneBacking
+    r.lastSceneViewport = { panX: r.panX, panY: r.panY, zoom: r.zoom }
+  }
+}
+
+function backingCoverageContainsLiveViewport(
+  r: SkiaRenderer,
+  sceneVersion: number,
+  allowStaleZoom: boolean
+): boolean {
   const backing = r.sceneBacking
   if (!backing) return false
   if (backing.pageId !== r.pageId) return false
   if (backing.sceneVersion !== sceneVersion) return false
   if (backing.positionPreviewVersion !== r.scenePicturePositionPreviewVersion) return false
-  if (Math.abs(backing.zoom - r.zoom) > 0.0001) return false
+  if (!allowStaleZoom && Math.abs(backing.zoom - r.zoom) > 0.0001) return false
 
   const liveX = -r.panX / r.zoom
   const liveY = -r.panY / r.zoom
@@ -265,9 +286,14 @@ function backingCoverageContainsLiveViewport(r: SkiaRenderer, sceneVersion: numb
   )
 }
 
-function drawSceneBacking(r: SkiaRenderer, canvas: Canvas, sceneVersion: number): boolean {
+function drawSceneBacking(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  sceneVersion: number,
+  allowStaleZoom: boolean
+): boolean {
   const backing = r.sceneBacking
-  if (!backing || !backingCoverageContainsLiveViewport(r, sceneVersion)) return false
+  if (!backing || !backingCoverageContainsLiveViewport(r, sceneVersion, allowStaleZoom)) return false
 
   const scale = r.zoom / backing.zoom
   const x = r.panX - backing.panX * scale
@@ -337,6 +363,7 @@ function recordSceneBacking(r: SkiaRenderer, graph: SceneGraph, sceneVersion: nu
   r.scenePictureVersion = sceneVersion
   r.scenePicturePositionPreviewVersion = graph.positionPreviewVersion
   r.scenePicturePageId = r.pageId
+  r.sceneBackingNeedsCrispRender = false
 }
 
 function renderSceneBacking(
@@ -345,10 +372,13 @@ function renderSceneBacking(
   graph: SceneGraph,
   sceneVersion: number
 ): boolean {
-  if (!backingCoverageContainsLiveViewport(r, sceneVersion)) {
+  const allowStaleZoom = now() < r.sceneBackingPreviewUntil
+  if (!backingCoverageContainsLiveViewport(r, sceneVersion, allowStaleZoom)) {
     recordSceneBacking(r, graph, sceneVersion)
   }
-  return drawSceneBacking(r, canvas, sceneVersion)
+  const crisp = Math.abs((r.sceneBacking?.zoom ?? r.zoom) - r.zoom) <= 0.0001
+  r.sceneBackingNeedsCrispRender = !crisp
+  return drawSceneBacking(r, canvas, sceneVersion, allowStaleZoom)
 }
 
 function renderSceneContent(

@@ -32,6 +32,13 @@ export function createCanvasSurfaceManager({
   shouldShowRulers: () => boolean
 }) {
   const state: SurfaceManagerState = { renderer: null, glContext: null }
+  let sceneBackingRenderTimer: ReturnType<typeof setTimeout> | null = null
+
+  function clearSceneBackingRenderTimer() {
+    if (sceneBackingRenderTimer === null) return
+    clearTimeout(sceneBackingRenderTimer)
+    sceneBackingRenderTimer = null
+  }
 
   function createSurface(
     canvas: HTMLCanvasElement,
@@ -83,6 +90,11 @@ export function createCanvasSurfaceManager({
       options?.layer ?? 'full'
     )
     renderLoop.markRendered()
+    clearSceneBackingRenderTimer()
+    if (options?.layer === 'scene' && state.renderer.sceneBackingNeedsCrispRender) {
+      const delay = Math.max(0, state.renderer.sceneBackingPreviewUntil - performance.now())
+      sceneBackingRenderTimer = setTimeout(() => renderLoop.markDirty(), delay)
+    }
   }
 
   const renderLoop = createCanvasRenderLoop(editor, renderNow, { layer: options?.layer })
@@ -109,6 +121,7 @@ export function createCanvasSurfaceManager({
   }
 
   function destroy() {
+    clearSceneBackingRenderTimer()
     renderLoop.pause()
     if (state.renderer) editor.removeCanvasRenderer(state.renderer)
     state.renderer?.destroy()
