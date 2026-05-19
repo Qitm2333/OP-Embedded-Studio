@@ -31,6 +31,14 @@ export default defineConfig({
       fullyParallel: false
     },
     {
+      name: 'openpencil-webkit',
+      testDir: './tests/e2e',
+      testMatch: '**/*.webkit.spec.ts',
+      use: {
+        browserName: 'webkit'
+      }
+    },
+    {
       name: 'figma',
       testDir: './tests/figma'
     }

@@ -2,6 +2,7 @@
 import { PropertyListRoot, useFillControls, useOkHCL, useI18n } from '@open-pencil/vue'
 
 import FillPicker from '@/components/FillPicker.vue'
+import Tip from '@/components/ui/Tip.vue'
 import ColorStyleRow from '@/components/properties/ColorStyleRow.vue'
 import {
   boundVariableSwatchBackground,
@@ -41,13 +42,15 @@ function updateFill(
     <div data-test-id="fill-section" :class="sectionCls.wrapper">
       <div class="flex items-center justify-between">
         <label :class="sectionCls.label">{{ panels.fill }}</label>
-        <button
-          data-test-id="fill-section-add"
-          :class="useIconButtonUI().base"
-          @click="actions.add({ ...fillCtx.defaultFill })"
-        >
-          +
-        </button>
+        <Tip :label="panels.addFill">
+          <button
+            data-test-id="fill-section-add"
+            :class="useIconButtonUI().base"
+            @click="actions.add({ ...fillCtx.defaultFill })"
+          >
+            +
+          </button>
+        </Tip>
       </div>
       <p v-if="isMixed" class="text-[11px] text-muted">{{ panels.mixedFillsHelp }}</p>
       <ColorStyleRow
@@ -63,6 +66,7 @@ function updateFill(
         unbind-test-id="fill-unbind-variable"
         data-test-id="fill-item"
         :data-test-index="i"
+        :remove-label="panels.removeFill"
         @patch="actions.patch(i, $event)"
         @toggle-visibility="actions.toggleVisibility(i)"
         @remove="actions.remove(i)"

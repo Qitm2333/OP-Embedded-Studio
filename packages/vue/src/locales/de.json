@@ -41,7 +41,8 @@
     "copyNodeId": "Knoten-ID kopieren",
     "copyXPath": "XPath kopieren",
     "checkUpdates": "Nach Updates suchen…",
-    "booleanOperations": "Boolean operations"
+    "booleanOperations": "Boolean operations",
+    "strikethrough": "Durchstreichen"
   },
   "commands": {
     "undo": "Rückgängig",
@@ -220,7 +221,15 @@
     "description": "Beschreibung",
     "documentation": "Dokumentation",
     "openDocs": "Dokumentation öffnen",
-    "properties": "Eigenschaften"
+    "properties": "Eigenschaften",
+    "removeFill": "Füllung entfernen",
+    "removeStroke": "Kontur entfernen",
+    "removeEffect": "Effekt entfernen",
+    "removeExport": "Export entfernen",
+    "effectSettings": "Effekteinstellungen",
+    "expandEffectSettings": "Effekteinstellungen erweitern",
+    "collapseEffectSettings": "Effekteinstellungen einklappen",
+    "toggleExportPreview": "Exportvorschau umschalten"
   },
   "pages": {
     "newPage": "Neue Seite",
@@ -297,7 +306,18 @@
     "getPexelsAPIKey": "Get free Pexels API key →",
     "getUnsplashAccessKey": "Get free Unsplash access key →",
     "completions": "Completions",
-    "responses": "Responses"
+    "responses": "Responses",
+    "copiedExclamation": "Kopiert!",
+    "copyMessage": "Nachricht kopieren",
+    "copyJSXReference": "JSX-Prop-Referenz in die Zwischenablage kopieren",
+    "newTab": "Neuer Tab",
+    "closeTab": "{name} schließen",
+    "showUI": "UI anzeigen ({shortcut})",
+    "fontSettings": "Schrifteinstellungen",
+    "you": "Du",
+    "youSuffix": "du",
+    "followingPeerStop": "Folge {name} (zum Stoppen klicken)",
+    "clickToFollowPeer": "Klicken, um {name} zu folgen"
   },
   "variableTypes": {
     "color": "Farbe",

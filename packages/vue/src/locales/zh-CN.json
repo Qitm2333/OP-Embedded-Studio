@@ -41,7 +41,8 @@
     "copyNodeId": "复制节点 ID",
     "copyXPath": "复制 XPath",
     "checkUpdates": "检查更新…",
-    "booleanOperations": "Boolean operations"
+    "booleanOperations": "Boolean operations",
+    "strikethrough": "删除线"
   },
   "commands": {
     "undo": "撤销",
@@ -220,7 +221,15 @@
     "description": "描述",
     "documentation": "文档",
     "openDocs": "打开文档",
-    "properties": "属性"
+    "properties": "属性",
+    "removeFill": "移除填充",
+    "removeStroke": "移除描边",
+    "removeEffect": "移除效果",
+    "removeExport": "移除导出",
+    "effectSettings": "效果设置",
+    "expandEffectSettings": "展开效果设置",
+    "collapseEffectSettings": "收起效果设置",
+    "toggleExportPreview": "切换导出预览"
   },
   "pages": {
     "newPage": "新建页面",
@@ -297,7 +306,18 @@
     "getPexelsAPIKey": "Get free Pexels API key →",
     "getUnsplashAccessKey": "Get free Unsplash access key →",
     "completions": "Completions",
-    "responses": "Responses"
+    "responses": "Responses",
+    "copiedExclamation": "已复制！",
+    "copyMessage": "复制消息",
+    "copyJSXReference": "将 JSX 属性参考复制到剪贴板",
+    "newTab": "新标签页",
+    "closeTab": "关闭 {name}",
+    "showUI": "显示界面（{shortcut}）",
+    "fontSettings": "字体设置",
+    "you": "你",
+    "youSuffix": "你",
+    "followingPeerStop": "正在跟随 {name}（点击停止）",
+    "clickToFollowPeer": "点击跟随 {name}"
   },
   "variableTypes": {
     "color": "颜色",

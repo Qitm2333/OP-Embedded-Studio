@@ -4,10 +4,12 @@ import { onMounted } from 'vue'
 
 import { isTauri } from '@/app/tauri/env'
 import { useFontSettings } from '@/components/FontSettings/use'
+import { useI18n } from '@open-pencil/vue'
 import Tip from '@/components/ui/Tip.vue'
 import { useButtonUI } from '@/components/ui/button'
 import { usePopoverUI } from '@/components/ui/popover'
 
+const { dialogs } = useI18n()
 const cls = usePopoverUI({ content: 'isolate z-[51] w-80 p-3' })
 const trigger = useButtonUI({
   tone: 'ghost',
@@ -52,7 +54,7 @@ onMounted(() => {
 
 <template>
   <PopoverRoot @update:open="$event && refreshSummary()">
-    <Tip label="Font settings">
+    <Tip :label="dialogs.fontSettings">
       <PopoverTrigger data-test-id="font-settings-trigger" :class="trigger.base">
         <icon-lucide-settings class="size-3.5" />
       </PopoverTrigger>
@@ -75,7 +77,7 @@ onMounted(() => {
               <icon-lucide-type class="size-4" />
             </div>
             <div>
-              <h3 class="text-[11px] font-semibold text-surface">Font settings</h3>
+              <h3 class="text-[11px] font-semibold text-surface">{{ dialogs.fontSettings }}</h3>
               <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
                 {{
                   showDownloadedFonts

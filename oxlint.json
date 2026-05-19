@@ -149,6 +149,8 @@
     ],
     "open-pencil/no-structuredclone-scene-arrays": "error",
     "open-pencil/no-vue-style-blocks": "error",
+    "open-pencil/no-native-title-attributes-in-vue": "error",
+    "open-pencil/no-hardcoded-tip-labels-in-vue": "error",
     "open-pencil/no-raw-test-id-string-props": "error",
     "open-pencil/no-dynamic-data-test-id-in-vue": "error",
     "open-pencil/no-test-id-helper-bind-in-vue": "error",

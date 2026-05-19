@@ -198,6 +198,56 @@ const noVueStyleBlocks = {
   }
 }
 
+const noNativeTitleAttributesInVue = {
+  meta: {
+    docs: {
+      description: 'Disallow native title attributes in Vue components — use Tip/Reka tooltip'
+    }
+  },
+  create(context) {
+    const file = normalizedFilename(context)
+    if (!file.endsWith('.vue')) return {}
+    if (!file.includes('/src/') && !file.includes('/packages/vue/src/')) return {}
+
+    return {
+      Program(node) {
+        const source = context.sourceCode.getText()
+        if (/\s:?title=/.test(source)) {
+          context.report({
+            node,
+            message: 'Use the shared tooltip UI instead of native title attributes.'
+          })
+        }
+      }
+    }
+  }
+}
+
+const noHardcodedTipLabelsInVue = {
+  meta: {
+    docs: {
+      description: 'Disallow hardcoded Tip labels — use localized i18n messages'
+    }
+  },
+  create(context) {
+    const file = normalizedFilename(context)
+    if (!file.endsWith('.vue')) return {}
+    if (!file.includes('/src/') && !file.includes('/packages/vue/src/')) return {}
+
+    return {
+      Program(node) {
+        const source = context.sourceCode.getText()
+        if (/<Tip\b[^>]*\slabel=["']/.test(source)) {
+          context.report({
+            node,
+            message: 'Use a localized binding for Tip labels, not a hardcoded string.'
+          })
+        }
+      }
+    }
+  }
+}
+
 const TEST_ID_FORMAT = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
 
 const noRawTestIdStringProps = {
@@ -1579,6 +1629,8 @@ const plugin = {
     'no-inline-named-types': noInlineNamedTypes,
     'no-structuredclone-scene-arrays': noStructuredCloneSceneArrays,
     'no-vue-style-blocks': noVueStyleBlocks,
+    'no-native-title-attributes-in-vue': noNativeTitleAttributesInVue,
+    'no-hardcoded-tip-labels-in-vue': noHardcodedTipLabelsInVue,
     'no-raw-test-id-string-props': noRawTestIdStringProps,
     'no-dynamic-data-test-id-in-vue': noDynamicDataTestIdInVue,
     'no-test-id-helper-bind-in-vue': noTestIdHelperBindInVue,

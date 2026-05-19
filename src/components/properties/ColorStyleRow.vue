@@ -2,6 +2,7 @@
 import ScrubInput from '@/components/ScrubInput.vue'
 import BoundVariableButton from '@/components/properties/BoundVariableButton.vue'
 import VariablePickerPopover from '@/components/properties/VariablePickerPopover.vue'
+import Tip from '@/components/ui/Tip.vue'
 import { useIconButtonUI } from '@/components/ui/icon-button'
 
 import { vTestId, useI18n } from '@open-pencil/vue'
@@ -24,7 +25,8 @@ const {
   visibilityTestId,
   applyVariableTestId,
   unbindTestId,
-  variableColor
+  variableColor,
+  removeLabel
 } = defineProps<{
   item: { opacity: number; visible: boolean }
   index: number
@@ -34,6 +36,7 @@ const {
   applyVariableTestId?: string
   unbindTestId?: string
   variableColor?: Color
+  removeLabel: string
 }>()
 
 const emit = defineEmits<{
@@ -98,18 +101,22 @@ const { panels, dialogs } = useI18n()
       @detach="bindingApi.unbindVariable(activeNodeId, index)"
     />
 
-    <button
-      v-test-id="visibilityTestId"
-      :data-visible="item.visible ? 'true' : 'false'"
-      class="shrink-0 cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
-      @click="emit('toggleVisibility')"
-    >
-      <icon-lucide-eye v-if="item.visible" data-test-id="visibility-icon-on" class="size-3.5" />
-      <icon-lucide-eye-off v-else data-test-id="visibility-icon-off" class="size-3.5" />
-    </button>
+    <Tip :label="panels.toggleVisibility">
+      <button
+        v-test-id="visibilityTestId"
+        :data-visible="item.visible ? 'true' : 'false'"
+        class="shrink-0 cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
+        @click="emit('toggleVisibility')"
+      >
+        <icon-lucide-eye v-if="item.visible" data-test-id="visibility-icon-on" class="size-3.5" />
+        <icon-lucide-eye-off v-else data-test-id="visibility-icon-off" class="size-3.5" />
+      </button>
+    </Tip>
 
-    <button :class="useIconButtonUI({ ui: { base: 'shrink-0' } }).base" @click="emit('remove')">
-      −
-    </button>
+    <Tip :label="removeLabel">
+      <button :class="useIconButtonUI({ ui: { base: 'shrink-0' } }).base" @click="emit('remove')">
+        −
+      </button>
+    </Tip>
   </div>
 </template>

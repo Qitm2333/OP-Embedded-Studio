@@ -41,7 +41,8 @@
     "copyNodeId": "Copier l'ID du nœud",
     "copyXPath": "Copier le XPath",
     "checkUpdates": "Rechercher des mises à jour…",
-    "booleanOperations": "Boolean operations"
+    "booleanOperations": "Boolean operations",
+    "strikethrough": "Barré"
   },
   "commands": {
     "undo": "Annuler",
@@ -220,7 +221,15 @@
     "description": "Description",
     "documentation": "Documentation",
     "openDocs": "Ouvrir la doc",
-    "properties": "Propriétés"
+    "properties": "Propriétés",
+    "removeFill": "Supprimer le remplissage",
+    "removeStroke": "Supprimer le contour",
+    "removeEffect": "Supprimer l’effet",
+    "removeExport": "Supprimer l’export",
+    "effectSettings": "Réglages de l’effet",
+    "expandEffectSettings": "Développer les réglages de l’effet",
+    "collapseEffectSettings": "Réduire les réglages de l’effet",
+    "toggleExportPreview": "Afficher/masquer l’aperçu d’export"
   },
   "pages": {
     "newPage": "Nouvelle page",
@@ -297,7 +306,18 @@
     "getPexelsAPIKey": "Get free Pexels API key →",
     "getUnsplashAccessKey": "Get free Unsplash access key →",
     "completions": "Completions",
-    "responses": "Responses"
+    "responses": "Responses",
+    "copiedExclamation": "Copié !",
+    "copyMessage": "Copier le message",
+    "copyJSXReference": "Copier la référence des props JSX dans le presse-papiers",
+    "newTab": "Nouvel onglet",
+    "closeTab": "Fermer {name}",
+    "showUI": "Afficher l’interface ({shortcut})",
+    "fontSettings": "Réglages des polices",
+    "you": "Vous",
+    "youSuffix": "vous",
+    "followingPeerStop": "Suit {name} (cliquer pour arrêter)",
+    "clickToFollowPeer": "Cliquer pour suivre {name}"
   },
   "variableTypes": {
     "color": "Couleur",

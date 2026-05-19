@@ -4,6 +4,9 @@ import { TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 
 import Tip from '@/components/ui/Tip.vue'
 import { useTabsStore, createTab } from '@/app/tabs'
+import { useI18n } from '@open-pencil/vue'
+
+const { dialogs } = useI18n()
 
 const { tabs, activeTabId, switchTab, closeTab } = useTabsStore()
 
@@ -43,12 +46,12 @@ function onClose(e: MouseEvent, tabId: string) {
       >
         <icon-lucide-file class="size-3 shrink-0 opacity-50" />
         <span class="min-w-0 flex-1 truncate">{{ tab.name }}</span>
-        <Tip :label="`Close ${tab.name}`">
+        <Tip :label="dialogs.closeTab({ name: tab.name })">
           <button
             data-test-id="tabbar-close"
             class="flex size-4 shrink-0 cursor-pointer items-center justify-center rounded opacity-0 transition-opacity group-hover/tab:opacity-100 hover:bg-hover data-[state=active]:opacity-100"
             :class="tab.isActive ? 'opacity-100' : ''"
-            :aria-label="`Close ${tab.name}`"
+            :aria-label="dialogs.closeTab({ name: tab.name })"
             tabindex="-1"
             @click="onClose($event, tab.id)"
           >
@@ -57,11 +60,11 @@ function onClose(e: MouseEvent, tabId: string) {
         </Tip>
       </TabsTrigger>
     </TabsList>
-    <Tip label="New tab">
+    <Tip :label="dialogs.newTab">
       <button
         data-test-id="tabbar-new"
         class="flex size-9 shrink-0 cursor-pointer items-center justify-center text-muted transition-colors hover:text-surface"
-        aria-label="New tab"
+        :aria-label="dialogs.newTab"
         @click="createTab()"
       >
         <icon-lucide-plus class="size-3.5" />

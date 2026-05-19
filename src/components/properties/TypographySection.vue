@@ -154,7 +154,7 @@ const fontLoader = { load: loadFont }
               <icon-lucide-underline class="size-3.5" />
             </button>
           </Tip>
-          <Tip label="Strikethrough">
+          <Tip :label="menu.strikethrough">
             <button
               class="flex cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white"
               :data-state="ctx.activeFormatting.value.includes('strikethrough') ? 'on' : 'off'"

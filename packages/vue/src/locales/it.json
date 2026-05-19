@@ -41,7 +41,8 @@
     "copyNodeId": "Copia ID nodo",
     "copyXPath": "Copia XPath",
     "checkUpdates": "Controlla aggiornamenti…",
-    "booleanOperations": "Boolean operations"
+    "booleanOperations": "Boolean operations",
+    "strikethrough": "Barrato"
   },
   "commands": {
     "undo": "Annulla",
@@ -220,7 +221,15 @@
     "description": "Descrizione",
     "documentation": "Documentazione",
     "openDocs": "Apri documentazione",
-    "properties": "Proprietà"
+    "properties": "Proprietà",
+    "removeFill": "Rimuovi riempimento",
+    "removeStroke": "Rimuovi traccia",
+    "removeEffect": "Rimuovi effetto",
+    "removeExport": "Rimuovi esportazione",
+    "effectSettings": "Impostazioni effetto",
+    "expandEffectSettings": "Espandi impostazioni effetto",
+    "collapseEffectSettings": "Comprimi impostazioni effetto",
+    "toggleExportPreview": "Mostra/nascondi anteprima esportazione"
   },
   "pages": {
     "newPage": "Nuova pagina",
@@ -297,7 +306,18 @@
     "getPexelsAPIKey": "Get free Pexels API key →",
     "getUnsplashAccessKey": "Get free Unsplash access key →",
     "completions": "Completions",
-    "responses": "Responses"
+    "responses": "Responses",
+    "copiedExclamation": "Copiato!",
+    "copyMessage": "Copia messaggio",
+    "copyJSXReference": "Copia riferimento props JSX negli appunti",
+    "newTab": "Nuova scheda",
+    "closeTab": "Chiudi {name}",
+    "showUI": "Mostra interfaccia ({shortcut})",
+    "fontSettings": "Impostazioni font",
+    "you": "Tu",
+    "youSuffix": "tu",
+    "followingPeerStop": "Segui {name} (clic per interrompere)",
+    "clickToFollowPeer": "Fai clic per seguire {name}"
   },
   "variableTypes": {
     "color": "Colore",

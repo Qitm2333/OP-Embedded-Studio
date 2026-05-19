@@ -14,7 +14,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 
 import { vTestId } from '@open-pencil/vue'
 
-import Tip from '@/components/ui/Tip.vue'
+import { useTooltipUI } from '@/components/ui/tooltip'
 
 import type { Variable } from '@open-pencil/core/scene-graph'
 
@@ -52,10 +52,12 @@ const emit = defineEmits<{
 }>()
 
 const open = ref(false)
+const tooltipOpen = ref(false)
 const creating = ref(false)
 const createName = ref('')
 const createInput = ref<HTMLInputElement | null>(null)
 const canCreate = computed(() => createName.value.trim().length > 0)
+const tooltipCls = useTooltipUI({ content: 'animate-in zoom-in-95 fade-in' })
 
 watch(open, (value) => {
   if (!value) creating.value = false
@@ -80,16 +82,28 @@ function submitCreate() {
 
 <template>
   <PopoverRoot v-model:open="open">
-    <Tip :label="triggerLabel" :disabled="open">
+    <div class="relative shrink-0">
       <PopoverTrigger
         v-test-id="triggerTestId"
         :aria-label="triggerLabel"
         class="shrink-0 cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
         @pointerdown.prevent.stop
+        @mouseenter="tooltipOpen = true"
+        @mouseleave="tooltipOpen = false"
+        @focus="tooltipOpen = true"
+        @blur="tooltipOpen = false"
       >
         <icon-lucide-diamond-plus class="size-3.5" />
       </PopoverTrigger>
-    </Tip>
+      <div
+        v-if="tooltipOpen && !open"
+        role="tooltip"
+        :class="tooltipCls.content"
+        class="pointer-events-none absolute right-0 bottom-full z-50 mb-1 whitespace-nowrap"
+      >
+        {{ triggerLabel }}
+      </div>
+    </div>
     <PopoverPortal>
       <PopoverContent
         side="left"

@@ -2,6 +2,7 @@
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ColorInput from '@/components/ColorPicker/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
+import Tip from '@/components/ui/Tip.vue'
 import { useIconButtonUI } from '@/components/ui/icon-button'
 import { useSectionUI } from '@/components/ui/section'
 import { PropertyListRoot, vTestId, useEffectsControls, useI18n } from '@open-pencil/vue'
@@ -24,13 +25,15 @@ const sectionCls = useSectionUI()
     <div data-test-id="effects-section" :class="sectionCls.wrapper">
       <div class="flex items-center justify-between">
         <label :class="sectionCls.label">{{ panels.effects }}</label>
-        <button
-          data-test-id="effects-section-add"
-          :class="useIconButtonUI().base"
-          @click="actions.add(effectsCtx.createDefaultEffect())"
-        >
-          +
-        </button>
+        <Tip :label="panels.addEffect">
+          <button
+            data-test-id="effects-section-add"
+            :class="useIconButtonUI().base"
+            @click="actions.add(effectsCtx.createDefaultEffect())"
+          >
+            +
+          </button>
+        </Tip>
       </div>
 
       <p v-if="isMixed" class="text-[11px] text-muted">{{ panels.mixedEffectsHelp }}</p>
@@ -42,19 +45,27 @@ const sectionCls = useSectionUI()
         :data-test-index="i"
       >
         <div class="group flex items-center gap-1.5 py-0.5">
-          <button
-            v-if="effectsCtx.isShadow(effect.type)"
-            class="size-5 shrink-0 cursor-pointer rounded border border-border"
-            :style="{ background: colorToCSS(effect.color) }"
-            @click="effectsCtx.toggleExpand(i)"
-          />
-          <button
-            v-else
-            class="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input"
-            @click="effectsCtx.toggleExpand(i)"
+          <Tip
+            :label="
+              effectsCtx.expandedIndex.value === i
+                ? panels.collapseEffectSettings
+                : panels.expandEffectSettings
+            "
           >
-            <icon-lucide-blend class="size-3 text-muted" />
-          </button>
+            <button
+              v-if="effectsCtx.isShadow(effect.type)"
+              class="size-5 shrink-0 cursor-pointer rounded border border-border"
+              :style="{ background: colorToCSS(effect.color) }"
+              @click="effectsCtx.toggleExpand(i)"
+            />
+            <button
+              v-else
+              class="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input"
+              @click="effectsCtx.toggleExpand(i)"
+            >
+              <icon-lucide-blend class="size-3 text-muted" />
+            </button>
+          </Tip>
 
           <AppSelect
             :model-value="effect.type"
@@ -64,25 +75,29 @@ const sectionCls = useSectionUI()
             "
           />
 
-          <button
-            v-test-id="`effect-visibility-${i}`"
-            :data-visible="effect.visible ? 'true' : 'false'"
-            class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
-            @click="actions.toggleVisibility(i)"
-          >
-            <icon-lucide-eye
-              v-if="effect.visible"
-              data-test-id="visibility-icon-on"
-              class="size-3.5"
-            />
-            <icon-lucide-eye-off v-else data-test-id="visibility-icon-off" class="size-3.5" />
-          </button>
-          <button
-            :class="useIconButtonUI().base"
-            @click="effectsCtx.handleRemove(actions.remove, i)"
-          >
-            −
-          </button>
+          <Tip :label="panels.toggleVisibility">
+            <button
+              v-test-id="`effect-visibility-${i}`"
+              :data-visible="effect.visible ? 'true' : 'false'"
+              class="cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
+              @click="actions.toggleVisibility(i)"
+            >
+              <icon-lucide-eye
+                v-if="effect.visible"
+                data-test-id="visibility-icon-on"
+                class="size-3.5"
+              />
+              <icon-lucide-eye-off v-else data-test-id="visibility-icon-off" class="size-3.5" />
+            </button>
+          </Tip>
+          <Tip :label="panels.removeEffect">
+            <button
+              :class="useIconButtonUI().base"
+              @click="effectsCtx.handleRemove(actions.remove, i)"
+            >
+              −
+            </button>
+          </Tip>
         </div>
 
         <div class="flex flex-col gap-1.5 py-1.5">

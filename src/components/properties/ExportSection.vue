@@ -2,6 +2,7 @@
 import { ref, computed, watch, onScopeDispose } from 'vue'
 
 import AppSelect from '@/components/ui/AppSelect.vue'
+import Tip from '@/components/ui/Tip.vue'
 import { useIconButtonUI } from '@/components/ui/icon-button'
 import { useSectionUI } from '@/components/ui/section'
 import { useEditorStore } from '@/app/editor/active-store'
@@ -131,9 +132,15 @@ onScopeDispose(() => {
   <div data-test-id="export-section" :class="sectionCls.wrapper">
     <div class="flex items-center justify-between">
       <label :class="sectionCls.label">{{ panels.export }}</label>
-      <button data-test-id="export-section-add" :class="useIconButtonUI().base" @click="addSetting">
-        +
-      </button>
+      <Tip :label="panels.addExport">
+        <button
+          data-test-id="export-section-add"
+          :class="useIconButtonUI().base"
+          @click="addSetting"
+        >
+          +
+        </button>
+      </Tip>
     </div>
 
     <div
@@ -154,9 +161,14 @@ onScopeDispose(() => {
         :options="FORMAT_OPTIONS"
         @update:model-value="updateFormat(i, $event as ExportFormatId)"
       />
-      <button :class="useIconButtonUI({ ui: { base: 'shrink-0' } }).base" @click="removeSetting(i)">
-        −
-      </button>
+      <Tip :label="panels.removeExport">
+        <button
+          :class="useIconButtonUI({ ui: { base: 'shrink-0' } }).base"
+          @click="removeSetting(i)"
+        >
+          −
+        </button>
+      </Tip>
     </div>
 
     <button
@@ -169,16 +181,17 @@ onScopeDispose(() => {
       {{ panels.export }} {{ activeName }}
     </button>
 
-    <button
-      v-if="activeSettings.length > 0"
-      data-test-id="export-preview-toggle"
-      class="mt-1 flex w-full cursor-pointer items-center gap-1 rounded border-none bg-transparent px-0 py-1 text-[11px] text-muted hover:text-surface"
-      @click="showPreview = !showPreview"
-    >
-      <icon-lucide-chevron-down v-if="showPreview" class="size-3" />
-      <icon-lucide-chevron-right v-else class="size-3" />
-      {{ panels.exportPreview }}
-    </button>
+    <Tip v-if="activeSettings.length > 0" :label="panels.toggleExportPreview">
+      <button
+        data-test-id="export-preview-toggle"
+        class="mt-1 flex w-full cursor-pointer items-center gap-1 rounded border-none bg-transparent px-0 py-1 text-[11px] text-muted hover:text-surface"
+        @click="showPreview = !showPreview"
+      >
+        <icon-lucide-chevron-down v-if="showPreview" class="size-3" />
+        <icon-lucide-chevron-right v-else class="size-3" />
+        {{ panels.exportPreview }}
+      </button>
+    </Tip>
 
     <div v-if="showPreview && previewUrl" class="mt-1 overflow-hidden rounded border border-border">
       <img

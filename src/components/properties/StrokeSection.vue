@@ -91,13 +91,15 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
     <div data-test-id="stroke-section" :class="sectionCls.wrapper">
       <div class="flex items-center justify-between">
         <label :class="sectionCls.label">{{ panels.stroke }}</label>
-        <button
-          data-test-id="stroke-section-add"
-          :class="useIconButtonUI().base"
-          @click="actions.add(strokeCtx.defaultStroke)"
-        >
-          +
-        </button>
+        <Tip :label="panels.addStroke">
+          <button
+            data-test-id="stroke-section-add"
+            :class="useIconButtonUI().base"
+            @click="actions.add(strokeCtx.defaultStroke)"
+          >
+            +
+          </button>
+        </Tip>
       </div>
 
       <p v-if="isMixed" class="text-[11px] text-muted">{{ panels.mixedStrokesHelp }}</p>
@@ -115,6 +117,7 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
         unbind-test-id="stroke-unbind-variable"
         data-test-id="stroke-item"
         :data-test-index="i"
+        :remove-label="panels.removeStroke"
         @patch="actions.patch(i, $event)"
         @toggle-visibility="actions.toggleVisibility(i)"
         @remove="actions.remove(i)"
@@ -197,27 +200,29 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
         v-if="!isMixed && (items as unknown[]).length > 0"
         class="mt-1.5 flex items-center gap-1.5"
       >
-        <button
-          data-test-id="stroke-dash-toggle"
-          :aria-label="panels.strokeDash"
-          class="flex h-[26px] shrink-0 cursor-pointer items-center gap-1 rounded border bg-input px-1.5 text-[11px]"
-          :class="
-            dashState((items as Stroke[])[0]).on
-              ? '!border-accent !text-accent'
-              : 'border-border text-muted hover:bg-hover hover:text-surface'
-          "
-          @click="toggleDash((items as Stroke[])[0], actions.patch)"
-        >
-          <svg
-            class="size-3"
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
+        <Tip :label="panels.strokeDash">
+          <button
+            data-test-id="stroke-dash-toggle"
+            :aria-label="panels.strokeDash"
+            class="flex h-[26px] shrink-0 cursor-pointer items-center gap-1 rounded border bg-input px-1.5 text-[11px]"
+            :class="
+              dashState((items as Stroke[])[0]).on
+                ? '!border-accent !text-accent'
+                : 'border-border text-muted hover:bg-hover hover:text-surface'
+            "
+            @click="toggleDash((items as Stroke[])[0], actions.patch)"
           >
-            <line x1="1" y1="6" x2="11" y2="6" stroke-dasharray="3 2" />
-          </svg>
-        </button>
+            <svg
+              class="size-3"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <line x1="1" y1="6" x2="11" y2="6" stroke-dasharray="3 2" />
+            </svg>
+          </button>
+        </Tip>
         <template v-if="dashState((items as Stroke[])[0]).on">
           <ScrubInput
             class="flex-1"

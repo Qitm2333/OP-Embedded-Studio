@@ -6,8 +6,10 @@ import { useClipboard } from '@vueuse/core'
 import Tip from '@/components/ui/Tip.vue'
 import { toast } from '@/app/shell/ui'
 import { useToastUI } from '@/components/ui/toast'
+import { useI18n } from '@open-pencil/vue'
 
 const { copy, copied } = useClipboard({ copiedDuring: 1500 })
+const { dialogs } = useI18n()
 </script>
 
 <template>
@@ -29,7 +31,10 @@ const { copy, copied } = useClipboard({ copiedDuring: 1500 })
       <ToastDescription class="min-w-0 flex-1 select-text">
         {{ t.message }}<span v-if="t.count > 1" class="ml-1.5 opacity-70">×{{ t.count }}</span>
       </ToastDescription>
-      <Tip v-if="t.variant !== 'default'" :label="copied ? 'Copied!' : 'Copy message'">
+      <Tip
+        v-if="t.variant !== 'default'"
+        :label="copied ? dialogs.copiedExclamation : dialogs.copyMessage"
+      >
         <button
           data-test-id="toast-copy-message"
           class="mt-0.5 shrink-0 cursor-pointer rounded p-0.5 opacity-70 hover:opacity-100"

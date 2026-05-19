@@ -40,14 +40,16 @@ function onInteractOutside(e: Event) {
 </script>
 
 <template>
-  <PopoverRoot @update:open="popoverOpen = $event">
-    <TooltipRoot :open="popoverOpen ? false : undefined">
+  <TooltipRoot :open="popoverOpen ? false : undefined">
+    <PopoverRoot v-model:open="popoverOpen">
       <TooltipTrigger as-child>
-        <PopoverTrigger
-          data-test-id="provider-settings-trigger"
-          class="rounded p-0.5 text-muted hover:bg-hover hover:text-surface"
-        >
-          <icon-lucide-settings class="size-3" />
+        <PopoverTrigger as-child>
+          <button
+            data-test-id="provider-settings-trigger"
+            class="rounded p-0.5 text-muted hover:bg-hover hover:text-surface"
+          >
+            <icon-lucide-settings class="size-3" />
+          </button>
         </PopoverTrigger>
       </TooltipTrigger>
       <TooltipPortal>
@@ -55,36 +57,36 @@ function onInteractOutside(e: Event) {
           {{ dialogs.providerSettings }}
         </TooltipContent>
       </TooltipPortal>
-    </TooltipRoot>
 
-    <PopoverPortal>
-      <PopoverContent
-        side="top"
-        :side-offset="8"
-        align="end"
-        :collision-padding="16"
-        :avoid-collisions="true"
-        :class="cls.content"
-        @interact-outside="onInteractOutside"
-      >
-        <div class="flex flex-col gap-2.5">
-          <h3 class="text-[11px] font-semibold text-surface">{{ dialogs.aiProvider }}</h3>
-          <ProviderSelectField test-id="provider-settings-provider" />
-          <MaxTokensSection />
-          <StockPhotoKeysSection />
-          <CustomEndpointSection />
-          <ApiTypeSection />
-          <ApiKeySection />
+      <PopoverPortal>
+        <PopoverContent
+          side="top"
+          :side-offset="8"
+          align="end"
+          :collision-padding="16"
+          :avoid-collisions="true"
+          :class="cls.content"
+          @interact-outside="onInteractOutside"
+        >
+          <div class="flex flex-col gap-2.5">
+            <h3 class="text-[11px] font-semibold text-surface">{{ dialogs.aiProvider }}</h3>
+            <ProviderSelectField test-id="provider-settings-provider" />
+            <MaxTokensSection />
+            <StockPhotoKeysSection />
+            <CustomEndpointSection />
+            <ApiTypeSection />
+            <ApiKeySection />
 
-          <PopoverClose
-            class="mt-1 w-full rounded bg-accent px-2 py-1 text-center text-[11px] font-medium text-white hover:bg-accent/90"
-            data-test-id="provider-settings-done"
-            @click="providerSettings.save"
-          >
-            {{ dialogs.done }}
-          </PopoverClose>
-        </div>
-      </PopoverContent>
-    </PopoverPortal>
-  </PopoverRoot>
+            <PopoverClose
+              class="mt-1 w-full rounded bg-accent px-2 py-1 text-center text-[11px] font-medium text-white hover:bg-accent/90"
+              data-test-id="provider-settings-done"
+              @click="providerSettings.save"
+            >
+              {{ dialogs.done }}
+            </PopoverClose>
+          </div>
+        </PopoverContent>
+      </PopoverPortal>
+    </PopoverRoot>
+  </TooltipRoot>
 </template>

@@ -72,7 +72,7 @@ function copyReference() {
         </AppTextButton>
       </div>
       <div class="flex items-center gap-1">
-        <Tip label="Copy JSX prop reference to clipboard">
+        <Tip :label="dialogs.copyJSXReference">
           <AppTextButton
             test-id="code-panel-copy-ref"
             :ui="{
