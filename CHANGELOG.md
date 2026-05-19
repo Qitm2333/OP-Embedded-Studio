@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixes
+
+- Fix the web font picker so Google Fonts remain available in Safari, local font access is requested on first open when supported, font sources are labeled, and Google font previews load lazily for visible rows.
+
 ## 0.12.0 — 2026-05-18
 
 ### Added
