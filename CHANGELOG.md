@@ -2,8 +2,14 @@
 
 ## Unreleased
 
+## 0.12.1 — 2026-05-19
+
 ### Fixes
 
+- Fix `.fig` round-trips for OpenPencil component sets and variable bindings, and recompute imported layouts after opening documents.
+- Report desktop/MCP package version mismatches explicitly and include package-manager-aware install guidance from the MCP server.
+- Support scoped MCP `save_file({ path })` workflows while keeping file saving in the desktop app.
+- Use native Tauri path handling for save parent directories so Unicode and Windows paths are handled correctly.
 - Fix the web font picker so Google Fonts remain available in Safari, local font access is requested on first open when supported, font sources are labeled, and Google font previews load lazily for visible rows.
 - Fix background blur rendering so it blurs the backdrop behind a layer instead of applying a no-op content filter, and keep effect parameter controls visible in the properties panel.
 
