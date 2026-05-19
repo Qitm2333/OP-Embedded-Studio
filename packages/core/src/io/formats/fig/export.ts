@@ -4,6 +4,7 @@ import { deflateSync } from 'fflate'
 import type { SkiaRenderer } from '#core/canvas'
 import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from '#core/constants'
 import { renderThumbnail } from '#core/io/formats/raster'
+import { populateAllLazyFigImportRoots } from '#core/kiwi/fig/lazy-import'
 import { initCodec, getCompiledSchema, getSchemaBytes } from '#core/kiwi/binary/codec'
 import type { NodeChange } from '#core/kiwi/binary/codec'
 import { stringToGuid } from '#core/kiwi/node-change/convert'
@@ -175,6 +176,7 @@ export async function exportFigFile(
   renderer?: SkiaRenderer,
   pageId?: string
 ): Promise<Uint8Array> {
+  populateAllLazyFigImportRoots(graph)
   await initCodec()
   const compiled = getCompiledSchema()
   const schemaDeflated = deflateSync(getSchemaBytes())

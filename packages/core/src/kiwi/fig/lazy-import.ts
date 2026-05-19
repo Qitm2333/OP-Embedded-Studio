@@ -19,10 +19,11 @@ export function getLazyFigImportContext(graph: SceneGraph): LazyFigImportContext
   return lazyFigImportContexts.get(graph)
 }
 
-export function populateLazyFigImportRoots(graph: SceneGraph, rootIds: Iterable<string>): boolean {
-  const context = getLazyFigImportContext(graph)
-  if (!context) return false
-
+function populateRoots(
+  graph: SceneGraph,
+  context: LazyFigImportContext,
+  rootIds: Iterable<string>
+): boolean {
   const pending = [...rootIds].filter((id) => id && !context.populatedRootIds.has(id))
   if (pending.length === 0) return false
 
@@ -36,4 +37,19 @@ export function populateLazyFigImportRoots(graph: SceneGraph, rootIds: Iterable<
 
   for (const id of pending) context.populatedRootIds.add(id)
   return true
+}
+
+export function populateLazyFigImportRoots(graph: SceneGraph, rootIds: Iterable<string>): boolean {
+  const context = getLazyFigImportContext(graph)
+  return context ? populateRoots(graph, context, rootIds) : false
+}
+
+export function populateAllLazyFigImportRoots(graph: SceneGraph): boolean {
+  const context = getLazyFigImportContext(graph)
+  if (!context) return false
+  return populateRoots(
+    graph,
+    context,
+    graph.getPages(true).map((page) => page.id)
+  )
 }
