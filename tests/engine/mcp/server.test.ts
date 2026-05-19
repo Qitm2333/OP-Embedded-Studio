@@ -1,5 +1,7 @@
 import { describe, expect, test, beforeEach, afterEach } from 'bun:test'
 import type { AddressInfo } from 'node:net'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 
 import { serve } from '@hono/node-server'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
@@ -27,6 +29,8 @@ interface MockBrowser {
   requests: MockBrowserRequest[]
   close: () => void
 }
+
+const TEST_MCP_ROOT = path.join(tmpdir(), 'open-pencil-mcp-root')
 
 function connectMockBrowser(port: number, graph: SceneGraph): Promise<MockBrowser> {
   return new Promise((resolve, reject) => {
@@ -59,7 +63,11 @@ function connectMockBrowser(port: number, graph: SceneGraph): Promise<MockBrowse
             api.currentPage = api.wrapNode(graph.getPages()[0].id)
             result = await def.execute(api, args.args ?? {})
             if (def.mutates) computeAllLayouts(graph)
-          } else if (command === 'save_file' || command === 'new_document' || command === 'open_file') {
+          } else if (
+            command === 'save_file' ||
+            command === 'new_document' ||
+            command === 'open_file'
+          ) {
             result = {}
           } else {
             result = executeRpcCommand(graph, command, args ?? {})
@@ -248,7 +256,7 @@ describe('MCP server with mcpRoot', () => {
       app,
       wss,
       close: closeServer
-    } = startServer({ httpPort: 0, wsPort: 0, mcpRoot: '/tmp' })
+    } = startServer({ httpPort: 0, wsPort: 0, mcpRoot: TEST_MCP_ROOT })
     const httpServer = serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' })
     const actualWsPort = await waitForWsListening(wss)
 
@@ -277,7 +285,7 @@ describe('MCP server with mcpRoot', () => {
       app,
       wss,
       close: closeServer
-    } = startServer({ httpPort: 0, wsPort: 0, mcpRoot: '/tmp' })
+    } = startServer({ httpPort: 0, wsPort: 0, mcpRoot: TEST_MCP_ROOT })
     const httpServer = serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' })
     const actualWsPort = await waitForWsListening(wss)
 
@@ -290,14 +298,15 @@ describe('MCP server with mcpRoot', () => {
     )
     await client.connect(transport)
 
+    const savePath = path.join(TEST_MCP_ROOT, 'unicode', 'пример.fig')
     const result = await client.callTool({
       name: 'save_file',
-      arguments: { path: '/tmp/unicode/пример.fig' }
+      arguments: { path: savePath }
     })
 
     expect(result.isError).not.toBe(true)
     const request = browser.requests.find((item) => item.command === 'save_file')
-    expect(request?.args).toEqual({ path: '/tmp/unicode/пример.fig' })
+    expect(request?.args).toEqual({ path: savePath })
 
     await client.close()
     browser.close()
@@ -310,7 +319,7 @@ describe('MCP server with mcpRoot', () => {
       app,
       wss,
       close: closeServer
-    } = startServer({ httpPort: 0, wsPort: 0, mcpRoot: '/tmp' })
+    } = startServer({ httpPort: 0, wsPort: 0, mcpRoot: TEST_MCP_ROOT })
     const httpServer = serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' })
     const actualWsPort = await waitForWsListening(wss)
 
@@ -325,7 +334,7 @@ describe('MCP server with mcpRoot', () => {
 
     const result = await client.callTool({
       name: 'save_file',
-      arguments: { path: '/var/tmp/out.fig' }
+      arguments: { path: path.join(path.dirname(TEST_MCP_ROOT), 'outside.fig') }
     })
 
     expect(result.isError).toBe(true)

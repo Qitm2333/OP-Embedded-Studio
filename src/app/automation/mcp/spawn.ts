@@ -19,8 +19,12 @@ export interface AutomationServerHandle {
   authToken: string | null
 }
 
-const DEV_AUTOMATION_AUTH_TOKEN = import.meta.env.DEV ? __OPENPENCIL_LOCAL_AUTOMATION_TOKEN__ : null
-const APP_VERSION = __OPENPENCIL_APP_VERSION__
+const DEV_AUTOMATION_AUTH_TOKEN =
+  import.meta.env.DEV && typeof __OPENPENCIL_LOCAL_AUTOMATION_TOKEN__ === 'string'
+    ? __OPENPENCIL_LOCAL_AUTOMATION_TOKEN__
+    : null
+const APP_VERSION =
+  typeof __OPENPENCIL_APP_VERSION__ === 'string' ? __OPENPENCIL_APP_VERSION__ : '0.0.0-test'
 const noop = () => undefined
 
 let runtimeAutomationAuthToken: string | null = DEV_AUTOMATION_AUTH_TOKEN

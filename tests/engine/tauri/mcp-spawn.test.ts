@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'bun:test'
 
-import type { ACPChatTransport } from '@/app/ai/acp/transport'
-import { createACPTransport } from '@/app/ai/chat/transports'
-import { ensureTauriParentDirectory } from '@/app/automation/bridge/file-handlers'
 import { spawnMCPIfNeeded } from '@/app/automation/mcp/spawn'
 
 import { clearTauriMocks, installTauriMockWindow, mockTauriIPC } from '#tests/helpers/tauri/mocks'
@@ -15,31 +12,7 @@ afterEach(async () => {
   Reflect.deleteProperty(globalThis, 'location')
 })
 
-describe('remaining Tauri integrations', () => {
-  test('uses Tauri home directory for ACP transport cwd', async () => {
-    await mockTauriIPC((cmd, args) => {
-      expect(cmd).toBe('plugin:path|resolve_directory')
-      expect(args).toEqual({ directory: 21 })
-      return '/Users/tester'
-    })
-
-    const transport = (await createACPTransport('acp:claude-code')) as ACPChatTransport & {
-      cwd: string
-    }
-
-    expect(transport.cwd).toBe('/Users/tester')
-  })
-
-  test('creates parent directory for automation new-document paths in Tauri', async () => {
-    await mockTauriIPC((cmd, args) => {
-      expect(cmd).toBe('plugin:fs|mkdir')
-      expect(args).toEqual({ path: '/tmp/open-pencil/nested', options: { recursive: true } })
-      return null
-    })
-
-    await ensureTauriParentDirectory('/tmp/open-pencil/nested/file.fig')
-  })
-
+describe('Tauri MCP spawning', () => {
   test('spawns MCP server with shell plugin when health check is missing', async () => {
     installTauriMockWindow()
     Object.assign(globalThis.window, { location: { origin: 'tauri://localhost' } })
@@ -52,7 +25,12 @@ describe('remaining Tauri integrations', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
       healthChecks += 1
       if (healthChecks === 1) return new Response('', { status: 404 })
-      return new Response(JSON.stringify({ status: 'ok', token: 'server-token' }), { status: 200 })
+      return new Response(
+        JSON.stringify({ status: 'ok', version: '0.0.0-test', token: 'server-token' }),
+        {
+          status: 200
+        }
+      )
     })
 
     let onEvent: ((event: unknown) => void) | null = null

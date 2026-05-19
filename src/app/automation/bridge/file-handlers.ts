@@ -16,8 +16,12 @@ export async function handleSaveFile(store: EditorStore, args: unknown): Promise
 
 export async function ensureTauriParentDirectory(path: string): Promise<void> {
   if (!isTauri()) return
-  const { mkdir } = await import('@tauri-apps/plugin-fs')
-  const dir = path.replace(/[\\/][^\\/]+$/, '')
+  const [{ dirname }, { mkdir }] = await Promise.all([
+    import('@tauri-apps/api/path'),
+    import('@tauri-apps/plugin-fs')
+  ])
+  const dir = await dirname(path)
+  if (dir === path) return
   await mkdir(dir, { recursive: true })
 }
 
