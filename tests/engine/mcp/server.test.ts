@@ -93,6 +93,19 @@ function connectMockBrowser(port: number, graph: SceneGraph): Promise<MockBrowse
   })
 }
 
+function readWsJson<T>(ws: WebSocket): Promise<T> {
+  return new Promise((resolve, reject) => {
+    ws.once('message', (raw) => {
+      try {
+        resolve(JSON.parse(raw.toString()) as T)
+      } catch (error) {
+        reject(error)
+      }
+    })
+    ws.once('error', reject)
+  })
+}
+
 function waitForWsListening(wss: InstanceType<typeof WebSocket.Server>): Promise<number> {
   return new Promise((resolve) => {
     if (wss.address()) {
@@ -247,6 +260,51 @@ describe('MCP server', () => {
     expect(result.isError).not.toBe(true)
     const data = parseResult(result) as { prompt: string }
     expect(data.prompt.length).toBeGreaterThan(100)
+  })
+})
+
+describe('MCP WebSocket stdio bridge routing', () => {
+  test('forwards stdio client requests to the registered desktop app', async () => {
+    const { wss, close: closeServer } = startServer({ httpPort: 0, wsPort: 0 })
+    const wsPort = await waitForWsListening(wss)
+    const graph = new SceneGraph()
+    const browser = await connectMockBrowser(wsPort, graph)
+    const clientWs = new WebSocket(`ws://127.0.0.1:${wsPort}`)
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        clientWs.once('open', () => resolve())
+        clientWs.once('error', reject)
+      })
+      const register = await readWsJson<{ type: string; token?: string }>(clientWs)
+      expect(register.type).toBe('register')
+      expect(register.token).toBeTruthy()
+
+      clientWs.send(
+        JSON.stringify({
+          type: 'request',
+          id: 'stdio-1',
+          command: 'tool',
+          args: { name: 'get_current_page', args: {} }
+        })
+      )
+      const response = await readWsJson<{
+        type: string
+        id: string
+        ok?: boolean
+        result?: { name: string }
+      }>(clientWs)
+
+      expect(response.type).toBe('response')
+      expect(response.id).toBe('stdio-1')
+      expect(response.ok).toBe(true)
+      expect(response.result?.name).toBe('Page 1')
+      expect(browser.requests.at(-1)?.command).toBe('tool')
+    } finally {
+      clientWs.close()
+      browser.close()
+      closeServer()
+    }
   })
 })
 

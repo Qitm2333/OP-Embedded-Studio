@@ -1,17 +1,16 @@
-
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { resolveCommand } from 'package-manager-detector/commands'
-import { detect, getUserAgent } from 'package-manager-detector/detect'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { WebSocketServer } from 'ws'
+import { resolveCommand } from 'package-manager-detector/commands'
+import { detect, getUserAgent } from 'package-manager-detector/detect'
+import { WebSocketServer, type WebSocket } from 'ws'
 
+import packageJson from '../package.json'
 import { bearerToken, isAuthorized, mcpRequestToken } from './auth'
 import { createBrowserRpcBridge } from './browser-rpc'
 import { MCP_CORS_HEADERS, MCP_CORS_METHODS, MCP_EXPOSED_HEADERS } from './http-options'
 import { preprocessRpc } from './jsx-preprocess'
 import { createMcpSessionManager } from './mcp-sessions'
-import packageJson from '../package.json'
 import { registerTools } from './tool/registration'
 
 export const MCP_VERSION: string = packageJson.version
@@ -73,19 +72,64 @@ export function startServer(options: ServerOptions = {}) {
   // --- WebSocket: browser connects here ---
 
   const wss = new WebSocketServer({ port: wsPort, host: '127.0.0.1' })
+  const wsClients = new Set<WebSocket>()
+
+  function sendRegisterToken(ws: WebSocket) {
+    const token = browserRpc.currentRpcToken()
+    if (token && ws.readyState === ws.OPEN) {
+      ws.send(JSON.stringify({ type: 'register', token }))
+    }
+  }
+
+  function broadcastRegisterToken() {
+    for (const client of wsClients) sendRegisterToken(client)
+  }
+
+  async function handleClientRequest(ws: WebSocket, msg: Record<string, unknown>) {
+    const id = typeof msg.id === 'string' ? msg.id : null
+    if (!id) return
+    const { type: _type, id: _id, ...body } = msg
+    try {
+      const result = await sendToBrowser(body)
+      if (ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify({ type: 'response', id, ok: true, ...(result as object) }))
+      }
+    } catch (e) {
+      if (ws.readyState === ws.OPEN) {
+        ws.send(
+          JSON.stringify({
+            type: 'response',
+            id,
+            ok: false,
+            error: e instanceof Error ? e.message : String(e)
+          })
+        )
+      }
+    }
+  }
 
   wss.on('connection', (ws) => {
-    const token = browserRpc.currentRpcToken()
-    if (token) ws.send(JSON.stringify({ type: 'register', token }))
+    wsClients.add(ws)
+    sendRegisterToken(ws)
 
     ws.on('message', (raw) => {
-      browserRpc.handleMessage(
-        typeof raw === 'string' ? raw : Buffer.from(raw as Buffer).toString('utf-8'),
-        ws
-      )
+      const data = typeof raw === 'string' ? raw : Buffer.from(raw as Buffer).toString('utf-8')
+      let msg: Record<string, unknown>
+      try {
+        msg = JSON.parse(data) as Record<string, unknown>
+      } catch {
+        return
+      }
+      if (msg.type === 'request') {
+        void handleClientRequest(ws, msg)
+        return
+      }
+      browserRpc.handleMessage(data, ws)
+      if (msg.type === 'register') broadcastRegisterToken()
     })
 
     ws.on('close', () => {
+      wsClients.delete(ws)
       browserRpc.handleClose(ws)
     })
   })
