@@ -64,8 +64,7 @@ export function applyClippedBlur(
 
   canvas.save()
   r.clipNodeShape(canvas, node, rect, hasRadius)
-  r.effectLayerPaint.setImageFilter(r.getCachedBlur(sigma))
-  canvas.saveLayer(r.effectLayerPaint)
+  canvas.saveLayer(undefined, rect, r.getCachedBlur(sigma), undefined, r.ck.TileMode.Clamp)
   canvas.restore()
   // Exit guard: ensure shared paint is in clean state
   r.effectLayerPaint.setImageFilter(null)

@@ -2,6 +2,7 @@ import { describe, expect, mock, test } from 'bun:test'
 
 import type { Canvas } from 'canvaskit-wasm'
 
+import { applyClippedBlur } from '#core/canvas/effects'
 import { renderNode } from '#core/canvas/scene'
 import { renderEffects } from '#core/canvas/shadows'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
@@ -75,6 +76,35 @@ describe('Renderer handles all effect types (Behavioral)', () => {
     }
     renderEffects(r, canvas as Canvas, node as SceneNode, new Float32Array(4), false, 'behind')
     expect(r.applyClippedBlur).toHaveBeenCalled()
+  })
+
+  test('background blur uses a backdrop filter instead of a layer content filter', () => {
+    const blurFilter = { kind: 'blur' }
+    const r = createMockRenderer({
+      clipNodeShape: mock(() => undefined),
+      getCachedBlur: mock(() => blurFilter)
+    })
+    const canvas = createMockCanvas()
+    const rect = new Float32Array([0, 0, 100, 100])
+    const node: Partial<SceneNode> = {
+      type: 'RECTANGLE',
+      width: 100,
+      height: 100,
+      fills: [],
+      childIds: [],
+      effects: []
+    }
+
+    applyClippedBlur(r, canvas as Canvas, node as SceneNode, rect, false, 5)
+
+    expect(r.effectLayerPaint.setImageFilter).toHaveBeenCalledWith(null)
+    expect(canvas.saveLayer).toHaveBeenCalledWith(
+      undefined,
+      rect,
+      blurFilter,
+      undefined,
+      r.ck.TileMode.Clamp
+    )
   })
 
   test('handles LAYER_BLUR in renderNode', () => {
