@@ -95,13 +95,29 @@ function connectMockBrowser(port: number, graph: SceneGraph): Promise<MockBrowse
 
 function readWsJson<T>(ws: WebSocket): Promise<T> {
   return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error('Timed out waiting for WebSocket message')),
+      1000
+    )
     ws.once('message', (raw) => {
+      clearTimeout(timer)
       try {
         resolve(JSON.parse(raw.toString()) as T)
       } catch (error) {
         reject(error)
       }
     })
+    ws.once('error', (error) => {
+      clearTimeout(timer)
+      reject(error)
+    })
+  })
+}
+
+function openWs(url: string): Promise<WebSocket> {
+  const ws = new WebSocket(url)
+  return new Promise((resolve, reject) => {
+    ws.once('open', () => resolve(ws))
     ws.once('error', reject)
   })
 }
@@ -269,13 +285,9 @@ describe('MCP WebSocket stdio bridge routing', () => {
     const wsPort = await waitForWsListening(wss)
     const graph = new SceneGraph()
     const browser = await connectMockBrowser(wsPort, graph)
-    const clientWs = new WebSocket(`ws://127.0.0.1:${wsPort}`)
+    const clientWs = await openWs(`ws://127.0.0.1:${wsPort}`)
 
     try {
-      await new Promise<void>((resolve, reject) => {
-        clientWs.once('open', () => resolve())
-        clientWs.once('error', reject)
-      })
       const register = await readWsJson<{ type: string; token?: string }>(clientWs)
       expect(register.type).toBe('register')
       expect(register.token).toBeTruthy()
@@ -303,6 +315,85 @@ describe('MCP WebSocket stdio bridge routing', () => {
     } finally {
       clientWs.close()
       browser.close()
+      closeServer()
+    }
+  })
+
+  test('returns a disconnected response instead of timing out when no app is registered', async () => {
+    const { wss, close: closeServer } = startServer({ httpPort: 0, wsPort: 0 })
+    const wsPort = await waitForWsListening(wss)
+    const clientWs = await openWs(`ws://127.0.0.1:${wsPort}`)
+
+    try {
+      clientWs.send(
+        JSON.stringify({
+          type: 'request',
+          id: 'stdio-no-app',
+          command: 'tool',
+          args: { name: 'get_current_page', args: {} }
+        })
+      )
+      const response = await readWsJson<{ type: string; id: string; ok?: boolean; error?: string }>(
+        clientWs
+      )
+
+      expect(response.type).toBe('response')
+      expect(response.id).toBe('stdio-no-app')
+      expect(response.ok).toBe(false)
+      expect(response.error).toContain('OpenPencil app is not connected')
+    } finally {
+      clientWs.close()
+      closeServer()
+    }
+  })
+
+  test('notifies already-connected stdio clients when the desktop app registers later', async () => {
+    const { wss, close: closeServer } = startServer({ httpPort: 0, wsPort: 0 })
+    const wsPort = await waitForWsListening(wss)
+    const clientWs = await openWs(`ws://127.0.0.1:${wsPort}`)
+    const graph = new SceneGraph()
+    let browser: MockBrowser | null = null
+
+    try {
+      browser = await connectMockBrowser(wsPort, graph)
+      const register = await readWsJson<{ type: string; token?: string }>(clientWs)
+      expect(register.type).toBe('register')
+      expect(register.token).toBeTruthy()
+    } finally {
+      clientWs.close()
+      browser?.close()
+      closeServer()
+    }
+  })
+
+  test('routes new requests to the latest registered desktop app after reconnect', async () => {
+    const { wss, close: closeServer } = startServer({ httpPort: 0, wsPort: 0 })
+    const wsPort = await waitForWsListening(wss)
+    const firstBrowser = await connectMockBrowser(wsPort, new SceneGraph())
+    const secondBrowser = await connectMockBrowser(wsPort, new SceneGraph())
+    const clientWs = await openWs(`ws://127.0.0.1:${wsPort}`)
+
+    try {
+      await readWsJson<{ type: string; token?: string }>(clientWs)
+      clientWs.send(
+        JSON.stringify({
+          type: 'request',
+          id: 'stdio-after-reconnect',
+          command: 'tool',
+          args: { name: 'get_current_page', args: {} }
+        })
+      )
+      const response = await readWsJson<{ type: string; id: string; ok?: boolean }>(clientWs)
+
+      expect(response.type).toBe('response')
+      expect(response.id).toBe('stdio-after-reconnect')
+      expect(response.ok).toBe(true)
+      expect(firstBrowser.requests).toHaveLength(0)
+      expect(secondBrowser.requests.at(-1)?.command).toBe('tool')
+    } finally {
+      clientWs.close()
+      firstBrowser.close()
+      secondBrowser.close()
       closeServer()
     }
   })
