@@ -4,6 +4,7 @@ import { onMounted } from 'vue'
 
 import { isTauri } from '@/app/tauri/env'
 import { useFontSettings } from '@/components/FontSettings/use'
+import Tip from '@/components/ui/Tip.vue'
 import { useButtonUI } from '@/components/ui/button'
 import { usePopoverUI } from '@/components/ui/popover'
 
@@ -51,13 +52,11 @@ onMounted(() => {
 
 <template>
   <PopoverRoot @update:open="$event && refreshSummary()">
-    <PopoverTrigger
-      data-test-id="font-settings-trigger"
-      :class="trigger.base"
-      title="Font settings"
-    >
-      <icon-lucide-settings class="size-3.5" />
-    </PopoverTrigger>
+    <Tip label="Font settings">
+      <PopoverTrigger data-test-id="font-settings-trigger" :class="trigger.base">
+        <icon-lucide-settings class="size-3.5" />
+      </PopoverTrigger>
+    </Tip>
 
     <PopoverPortal>
       <PopoverContent

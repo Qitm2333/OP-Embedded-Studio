@@ -14,6 +14,8 @@ import { computed, nextTick, ref, watch } from 'vue'
 
 import { vTestId } from '@open-pencil/vue'
 
+import Tip from '@/components/ui/Tip.vue'
+
 import type { Variable } from '@open-pencil/core/scene-graph'
 
 const searchTerm = defineModel<string>('searchTerm', { default: '' })
@@ -78,15 +80,16 @@ function submitCreate() {
 
 <template>
   <PopoverRoot v-model:open="open">
-    <PopoverTrigger
-      v-test-id="triggerTestId"
-      :aria-label="triggerLabel"
-      :title="triggerLabel"
-      class="shrink-0 cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
-      @pointerdown.prevent.stop
-    >
-      <icon-lucide-diamond-plus class="size-3.5" />
-    </PopoverTrigger>
+    <Tip :label="triggerLabel" :disabled="open">
+      <PopoverTrigger
+        v-test-id="triggerTestId"
+        :aria-label="triggerLabel"
+        class="shrink-0 cursor-pointer border-none bg-transparent p-0 text-muted hover:text-surface"
+        @pointerdown.prevent.stop
+      >
+        <icon-lucide-diamond-plus class="size-3.5" />
+      </PopoverTrigger>
+    </Tip>
     <PopoverPortal>
       <PopoverContent
         side="left"

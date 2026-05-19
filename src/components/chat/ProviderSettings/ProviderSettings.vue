@@ -10,6 +10,7 @@ import MaxTokensSection from '@/components/chat/ProviderSettings/MaxTokensSectio
 import ProviderSelectField from '@/components/chat/ProviderSelect/ProviderSelectField.vue'
 import StockPhotoKeysSection from '@/components/chat/ProviderSettings/StockPhotoKeysSection.vue'
 import { provideProviderSettings } from '@/components/chat/ProviderSettings/context'
+import Tip from '@/components/ui/Tip.vue'
 import { usePopoverUI } from '@/components/ui/popover'
 
 const { dialogs } = useI18n()
@@ -29,13 +30,14 @@ function onInteractOutside(e: Event) {
 
 <template>
   <PopoverRoot @update:open="popoverOpen = $event">
-    <PopoverTrigger
-      data-test-id="provider-settings-trigger"
-      class="rounded p-0.5 text-muted hover:bg-hover hover:text-surface"
-      :title="popoverOpen ? undefined : dialogs.providerSettings"
-    >
-      <icon-lucide-settings class="size-3" />
-    </PopoverTrigger>
+    <Tip :label="dialogs.providerSettings" :disabled="popoverOpen">
+      <PopoverTrigger
+        data-test-id="provider-settings-trigger"
+        class="rounded p-0.5 text-muted hover:bg-hover hover:text-surface"
+      >
+        <icon-lucide-settings class="size-3" />
+      </PopoverTrigger>
+    </Tip>
 
     <PopoverPortal>
       <PopoverContent

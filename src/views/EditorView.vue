@@ -26,6 +26,7 @@ import MobileHud from '@/components/MobileHud/MobileHud.vue'
 import PropertiesPanel from '@/components/PropertiesPanel.vue'
 import SafariBanner from '@/components/SafariBanner.vue'
 import TabBar from '@/components/TabBar.vue'
+import Tip from '@/components/ui/Tip.vue'
 import Toolbar from '@/components/Toolbar/Toolbar.vue'
 
 const route = useRoute()
@@ -192,14 +193,15 @@ onUnmounted(() => {
           <span data-test-id="editor-document-name" class="text-xs text-surface">{{
             store.state.documentName
           }}</span>
-          <button
-            data-test-id="editor-show-ui"
-            class="ml-1 flex size-6 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
-            :title="`Show UI (${formatShortcut(appMenuShortcut('toggle-ui'))})`"
-            @click="store.state.showUI = true"
-          >
-            <icon-lucide-sidebar class="size-3.5" />
-          </button>
+          <Tip :label="`Show UI (${formatShortcut(appMenuShortcut('toggle-ui'))})`">
+            <button
+              data-test-id="editor-show-ui"
+              class="ml-1 flex size-6 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
+              @click="store.state.showUI = true"
+            >
+              <icon-lucide-sidebar class="size-3.5" />
+            </button>
+          </Tip>
         </div>
       </div>
     </div>

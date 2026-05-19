@@ -10,6 +10,7 @@ import { useI18n, useSceneComputed } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import AppTextButton from '@/components/ui/AppTextButton.vue'
+import Tip from '@/components/ui/Tip.vue'
 
 import type { JSXFormat } from '@open-pencil/core/design-jsx'
 
@@ -71,15 +72,18 @@ function copyReference() {
         </AppTextButton>
       </div>
       <div class="flex items-center gap-1">
-        <AppTextButton
-          test-id="code-panel-copy-ref"
-          :ui="{ base: 'flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] hover:bg-hover' }"
-          title="Copy JSX prop reference to clipboard"
-          @click="copyReference"
-        >
-          <icon-lucide-check v-if="copiedRef" class="size-3 text-[var(--color-success)]" />
-          <icon-lucide-book-open v-else class="size-3" />
-        </AppTextButton>
+        <Tip label="Copy JSX prop reference to clipboard">
+          <AppTextButton
+            test-id="code-panel-copy-ref"
+            :ui="{
+              base: 'flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] hover:bg-hover'
+            }"
+            @click="copyReference"
+          >
+            <icon-lucide-check v-if="copiedRef" class="size-3 text-[var(--color-success)]" />
+            <icon-lucide-book-open v-else class="size-3" />
+          </AppTextButton>
+        </Tip>
         <AppTextButton
           test-id="code-panel-copy"
           :ui="{ base: 'flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] hover:bg-hover' }"
