@@ -159,12 +159,12 @@ Use Claude Code, Codex, or Gemini CLI directly in the chat panel. The agent conn
 
 **Setup (Claude Code):**
 
-1. Install the ACP adapter: `npm i -g @agentclientprotocol/claude-agent-acp`
+1. Install the ACP adapter: `npm install -g @agentclientprotocol/claude-agent-acp`
 2. Add MCP permission to `~/.claude/settings.json`:
    ```json
    {
      "permissions": {
-       "allow": ["mcp__open-pencil"]
+       "allow": ["mcp__open-pencil__*"]
      }
    }
    ```
@@ -177,8 +177,11 @@ Connect Claude Code, Cursor, Windsurf, or any MCP client to inspect, modify, and
 **Stdio** (Claude Code, Cursor, Windsurf):
 
 ```sh
-bun add -g @open-pencil/mcp
+npm install -g @open-pencil/mcp
+claude mcp add --scope user open-pencil -- openpencil-mcp
 ```
+
+For other MCP clients:
 
 ```json
 {

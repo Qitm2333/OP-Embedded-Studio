@@ -7,12 +7,49 @@ Two transports: **stdio** for MCP clients, **HTTP** for browser extensions and s
 ## Install
 
 ```sh
-bun add -g @open-pencil/mcp
+npm install -g @open-pencil/mcp
 ```
 
 ## Stdio (Claude Code, Cursor, etc.)
 
-Add to your MCP config (e.g. `~/.claude/settings.json` or `.cursor/mcp.json`):
+The stdio server connects to the running OpenPencil app via WebSocket (port 7601). Make sure the desktop app is open with a document loaded.
+
+### Claude Code
+
+Install the MCP package and register it with Claude Code:
+
+```sh
+npm install -g @open-pencil/mcp
+claude mcp add --scope user open-pencil -- openpencil-mcp
+```
+
+Check the connection:
+
+```sh
+claude mcp list
+```
+
+Claude Code asks before using each MCP tool unless you allow the server's tools. To auto-approve OpenPencil tools only, add this to `~/.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": ["mcp__open-pencil__*"]
+  }
+}
+```
+
+This is narrower than `--permission-mode bypassPermissions`, which skips prompts for every tool. You can also approve tools interactively from Claude's prompt by choosing “Yes, and don't ask again”.
+
+Example prompt:
+
+```text
+Use the open-pencil MCP server to inspect the current page and create a small hero section on the canvas.
+```
+
+### Other MCP clients
+
+Add to your MCP config (for example `.cursor/mcp.json`):
 
 ```json
 {
@@ -23,8 +60,6 @@ Add to your MCP config (e.g. `~/.claude/settings.json` or `.cursor/mcp.json`):
   }
 }
 ```
-
-The stdio server connects to the running OpenPencil app via WebSocket (port 7601). Make sure the app is open with a document loaded.
 
 Or run from source without installing:
 

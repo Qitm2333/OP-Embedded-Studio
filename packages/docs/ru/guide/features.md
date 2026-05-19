@@ -76,7 +76,7 @@ CLI: `open-pencil export design.fig -f jsx --style tailwind`
 Подключайте Claude Code, Cursor, Windsurf или любой MCP-клиент для чтения и записи файлов `.fig` в headless-режиме. 90+ инструментов. Два транспорта: stdio и HTTP.
 
 ```sh
-bun add -g @open-pencil/mcp
+npm install -g @open-pencil/mcp
 ```
 
 ```json

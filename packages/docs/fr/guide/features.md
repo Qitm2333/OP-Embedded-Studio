@@ -76,7 +76,7 @@ Voir [Chat IA](/programmable/ai-chat) pour la configuration et les détails des 
 Connectez Claude Code, Cursor, Windsurf ou tout client MCP pour lire et écrire des fichiers `.fig` en mode headless. 90+ outils. Deux transports : stdio et HTTP.
 
 ```sh
-bun add -g @open-pencil/mcp
+npm install -g @open-pencil/mcp
 ```
 
 ```json

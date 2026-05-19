@@ -76,7 +76,7 @@ See [AI Chat](/programmable/ai-chat) for setup and provider details.
 Connect Claude Code, Cursor, Windsurf, or any MCP client to read and write `.fig` files headlessly. 90+ tools. Two transports: stdio and HTTP.
 
 ```sh
-bun add -g @open-pencil/mcp
+npm install -g @open-pencil/mcp
 ```
 
 ```json
