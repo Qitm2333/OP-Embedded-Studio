@@ -16,15 +16,22 @@ import {
 
 import { startServer, paramToZod } from '#mcp/server'
 
+interface MockBrowserRequest {
+  command: string
+  args?: unknown
+}
+
 interface MockBrowser {
   ws: WebSocket
   graph: SceneGraph
+  requests: MockBrowserRequest[]
   close: () => void
 }
 
 function connectMockBrowser(port: number, graph: SceneGraph): Promise<MockBrowser> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(`ws://127.0.0.1:${port}`)
+    const requests: MockBrowserRequest[] = []
     const token = 'test-token-' + Date.now()
 
     ws.on('open', () => {
@@ -41,6 +48,7 @@ function connectMockBrowser(port: number, graph: SceneGraph): Promise<MockBrowse
 
         try {
           const command = msg.command
+          requests.push({ command, args: msg.args })
           const args = msg.args as { name?: string; args?: Record<string, unknown> } | undefined
 
           let result: unknown
@@ -51,6 +59,8 @@ function connectMockBrowser(port: number, graph: SceneGraph): Promise<MockBrowse
             api.currentPage = api.wrapNode(graph.getPages()[0].id)
             result = await def.execute(api, args.args ?? {})
             if (def.mutates) computeAllLayouts(graph)
+          } else if (command === 'save_file' || command === 'new_document' || command === 'open_file') {
+            result = {}
           } else {
             result = executeRpcCommand(graph, command, args ?? {})
           }
@@ -68,7 +78,7 @@ function connectMockBrowser(port: number, graph: SceneGraph): Promise<MockBrowse
         }
       })
 
-      resolve({ ws, graph, close: () => ws.close() })
+      resolve({ ws, graph, requests, close: () => ws.close() })
     })
 
     ws.on('error', reject)
@@ -255,6 +265,71 @@ describe('MCP server with mcpRoot', () => {
     const names = tools.map((t) => t.name)
     expect(names).toContain('open_file')
     expect(names).toContain('new_document')
+
+    await client.close()
+    browser.close()
+    closeServer()
+    httpServer.close()
+  })
+
+  test('save_file accepts an explicit path inside mcpRoot', async () => {
+    const {
+      app,
+      wss,
+      close: closeServer
+    } = startServer({ httpPort: 0, wsPort: 0, mcpRoot: '/tmp' })
+    const httpServer = serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' })
+    const actualWsPort = await waitForWsListening(wss)
+
+    const graph = new SceneGraph()
+    const browser = await connectMockBrowser(actualWsPort, graph)
+
+    const client = new Client({ name: 'test-root-save', version: '0.0.0' })
+    const transport = new StreamableHTTPClientTransport(
+      new URL(`http://127.0.0.1:${(httpServer.address() as AddressInfo).port}/mcp`)
+    )
+    await client.connect(transport)
+
+    const result = await client.callTool({
+      name: 'save_file',
+      arguments: { path: '/tmp/unicode/пример.fig' }
+    })
+
+    expect(result.isError).not.toBe(true)
+    const request = browser.requests.find((item) => item.command === 'save_file')
+    expect(request?.args).toEqual({ path: '/tmp/unicode/пример.fig' })
+
+    await client.close()
+    browser.close()
+    closeServer()
+    httpServer.close()
+  })
+
+  test('save_file rejects paths outside mcpRoot', async () => {
+    const {
+      app,
+      wss,
+      close: closeServer
+    } = startServer({ httpPort: 0, wsPort: 0, mcpRoot: '/tmp' })
+    const httpServer = serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' })
+    const actualWsPort = await waitForWsListening(wss)
+
+    const graph = new SceneGraph()
+    const browser = await connectMockBrowser(actualWsPort, graph)
+
+    const client = new Client({ name: 'test-root-save-outside', version: '0.0.0' })
+    const transport = new StreamableHTTPClientTransport(
+      new URL(`http://127.0.0.1:${(httpServer.address() as AddressInfo).port}/mcp`)
+    )
+    await client.connect(transport)
+
+    const result = await client.callTool({
+      name: 'save_file',
+      arguments: { path: '/var/tmp/out.fig' }
+    })
+
+    expect(result.isError).toBe(true)
+    expect(browser.requests.some((item) => item.command === 'save_file')).toBe(false)
 
     await client.close()
     browser.close()
