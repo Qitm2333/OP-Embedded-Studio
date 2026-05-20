@@ -1,6 +1,9 @@
+import type {
+  ComponentPropRef,
+  ComponentPropValue,
+  OverrideContext
+} from '#core/kiwi/instance-overrides/types'
 import { guidToString } from '#core/kiwi/node-change/convert'
-
-import type { ComponentPropRef, ComponentPropValue, OverrideContext } from '#core/kiwi/instance-overrides/types'
 
 import { normalizePropName, stringToGuidParts } from './values'
 
@@ -11,12 +14,15 @@ export function findPropRefs(
 ): ComponentPropRef[] | undefined {
   let sourceId: string | undefined = nodeId
   for (let depth = 0; sourceId && depth < 10; depth++) {
-    const figmaId = ctx.nodeIdToGuid.get(sourceId)
+    const node = ctx.graph.getNode(sourceId)
+    const overrideKey = node?.overrideKey
+      ? (ctx.overrideKeyToGuid.get(node.overrideKey) ?? node.overrideKey)
+      : undefined
+    const figmaId = ctx.nodeIdToGuid.get(sourceId) ?? overrideKey
     if (figmaId) {
       const refs = propRefsMap.get(figmaId)
       if (refs) return refs
     }
-    const node = ctx.graph.getNode(sourceId)
     const nextId = node?.componentId ?? undefined
     if (nextId === sourceId) break
     sourceId = nextId

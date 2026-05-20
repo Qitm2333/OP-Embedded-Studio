@@ -365,6 +365,7 @@ function collectDescendantVisualBounds(
       maxY: abs.y + node.height
     }
     childClip = childClip ? intersectVisualBounds(childClip, nodeClip) : nodeClip
+    if (!childClip) return bounds
   }
 
   for (const childId of node.childIds ?? []) {

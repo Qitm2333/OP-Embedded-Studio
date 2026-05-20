@@ -400,6 +400,50 @@ describe('computeVisualBounds', () => {
     expect(outsideBounds).toEqual({ minX: 9, minY: 19, maxX: 111, maxY: 71 })
   })
 
+  test('nested clipping stops descendants outside the ancestor clip', () => {
+    const nodes = {
+      root: {
+        id: 'root',
+        type: 'FRAME',
+        width: 100,
+        height: 100,
+        visible: true,
+        clipsContent: true,
+        childIds: ['row']
+      },
+      row: {
+        id: 'row',
+        type: 'FRAME',
+        width: 100,
+        height: 50,
+        visible: true,
+        clipsContent: true,
+        childIds: ['cell']
+      },
+      cell: {
+        id: 'cell',
+        type: 'FRAME',
+        width: 50,
+        height: 50,
+        visible: true,
+        childIds: []
+      }
+    }
+    const positions: Record<keyof typeof nodes, Vector> = {
+      root: { x: 0, y: 0 },
+      row: { x: 0, y: 120 },
+      cell: { x: 0, y: 120 }
+    }
+
+    const bounds = computeDescendantVisualBounds(
+      ['root'],
+      (id) => nodes[id as keyof typeof nodes],
+      (id) => positions[id as keyof typeof positions]
+    )
+
+    expect(bounds).toEqual({ minX: 0, minY: 0, maxX: 100, maxY: 100 })
+  })
+
   test('multiple effects accumulate directional overflow', () => {
     const noEffects = computeVisualBounds([{ id: 'r1', width: 50, height: 60 }], idPos)
     const multiEffect = computeVisualBounds(

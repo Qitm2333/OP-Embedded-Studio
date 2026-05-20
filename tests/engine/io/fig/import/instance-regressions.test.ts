@@ -39,8 +39,8 @@ describe('derived instance layout regressions', () => {
     expect(inputFrame?.width).toBeCloseTo(375.7498, 3)
     expect(inputFrame?.height).toBeCloseTo(39.3803, 3)
     expect(content).toMatchObject({ x: 0, y: 0 })
-    expect(firstBadge?.x).toBeCloseTo(7.1268, 3)
-    expect(firstBadge?.y).toBeCloseTo(5.3451, 3)
+    expect(firstBadge?.x).toBeCloseTo(8, 3)
+    expect(firstBadge?.y).toBeCloseTo(6, 3)
     expect(firstBadge?.width).toBeCloseTo(85.3239, 3)
     expect(firstBadge?.height).toBeCloseTo(28.6901, 3)
     expect(firstBadgeContent).toMatchObject({ x: 0, y: 0 })
@@ -48,6 +48,31 @@ describe('derived instance layout regressions', () => {
     expect(placeholderFrame?.y).toBeCloseTo(0, 3)
     expect(placeholderText?.x).toBeCloseTo(14.2535, 3)
     expect(placeholderText?.y).toBeCloseTo(10.6901, 3)
+  })
+
+  test('propagates nested badge component property overrides through cloned instances', () => {
+    const input = previewChild(layoutGraph, layoutNodes, 'Input')
+    const inputRoot = childNamed(layoutGraph, input, '_input')
+    const inputFrame = childNamed(layoutGraph, inputRoot, 'Input')
+    const content = childNamed(layoutGraph, inputFrame, 'Content')
+    const tags = childNamed(layoutGraph, content, 'Tags')
+    const badges = tags
+      ? layoutGraph.getChildren(tags.id).filter((node) => node.name === 'Badge')
+      : []
+
+    expect(badges).toHaveLength(3)
+    for (const badge of badges) {
+      const badgeContent = childNamed(layoutGraph, badge, '_badge-and-tag')
+      const avatar = childNamed(layoutGraph, badgeContent, 'Avatar')
+      const closeIcon = childNamed(layoutGraph, badgeContent, 'Close-Icon')
+      const avatarShape = avatar ? layoutGraph.getChildren(avatar.id)[0] : undefined
+      const closeGlyph = childNamed(layoutGraph, closeIcon, 'x')
+
+      expect(avatar?.visible).toBe(true)
+      expect(closeIcon?.visible).toBe(true)
+      expect(closeGlyph?.visible).toBe(true)
+      expect(avatarShape?.fills.some((fill) => fill.type === 'IMAGE' && fill.visible)).toBe(true)
+    }
   })
 
   test('does not collapse unrelated datepicker instances to the page origin', () => {
@@ -75,6 +100,26 @@ describe('derived instance layout regressions', () => {
       expect(icon?.y).toBeCloseTo(0, 3)
       expect(label?.y).toBeCloseTo(0, 3)
       expect(icon?.height).toBeCloseTo(label?.height ?? 0, 3)
+    }
+  })
+
+  test('propagates static icon color overrides through checked-list clones', () => {
+    const title = previewChild(layoutGraph, layoutNodes, 'Title + Description')
+    const checkedList = childNamed(layoutGraph, title, 'Checked List')
+    const listItems = checkedList ? layoutGraph.getChildren(checkedList.id) : []
+    expect(listItems).toHaveLength(3)
+
+    for (const item of listItems) {
+      const list = childNamed(layoutGraph, item, '_list')
+      const inline = childNamed(layoutGraph, list, 'Inline')
+      const icon = childNamed(layoutGraph, inline, 'Static Icon')
+      const iconRoot = childNamed(layoutGraph, icon, '_icon-xs')
+      const check = childNamed(layoutGraph, iconRoot, 'check')
+      const vector = check ? layoutGraph.getChildren(check.id)[0] : undefined
+      const stroke = vector?.strokes[0]
+
+      expect(stroke?.visible).toBe(true)
+      expect(stroke?.color).toMatchObject({ r: 1, g: 1, b: 1, a: 1 })
     }
   })
 
@@ -145,9 +190,9 @@ describe('derived instance layout regressions', () => {
     const logoBounds = logoGroup ? computeContentBounds(layoutGraph, [logoGroup.id]) : null
     const logoAbs = logoGroup ? layoutGraph.getAbsolutePosition(logoGroup.id) : { x: 0, y: 0 }
     const logo = logoGroup
-    expect(logoBounds?.minX).toBeLessThan(logoAbs.x)
-    expect(logoBounds?.minY).toBeLessThan(logoAbs.y)
-    expect(logoBounds?.maxX).toBeGreaterThan(logoAbs.x + (logo?.width ?? 0))
-    expect(logoBounds?.maxY).toBeGreaterThan(logoAbs.y + (logo?.height ?? 0))
+    expect(logoBounds?.minX).toBeLessThanOrEqual(logoAbs.x)
+    expect(logoBounds?.minY).toBeLessThanOrEqual(logoAbs.y)
+    expect(logoBounds?.maxX).toBeGreaterThanOrEqual(logoAbs.x + (logo?.width ?? 0))
+    expect(logoBounds?.maxY).toBeGreaterThanOrEqual(logoAbs.y + (logo?.height ?? 0))
   })
 })

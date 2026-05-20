@@ -1,5 +1,10 @@
+import { buildCloneIndex, instanceAndClones } from '#core/kiwi/instance-overrides/clone-index'
 import { applyComponentPropRef } from '#core/kiwi/instance-overrides/component-props/apply'
-import { fallbackRefsForChild, findPropRefs, valueForRef } from '#core/kiwi/instance-overrides/component-props/refs'
+import {
+  fallbackRefsForChild,
+  findPropRefs,
+  valueForRef
+} from '#core/kiwi/instance-overrides/component-props/refs'
 import { assignmentsToValueMap } from '#core/kiwi/instance-overrides/component-props/values'
 import { resolveOverrideTarget } from '#core/kiwi/instance-overrides/resolve'
 import type {
@@ -8,6 +13,7 @@ import type {
   ComponentPropValue,
   OverrideContext
 } from '#core/kiwi/instance-overrides/types'
+import type { SceneNode } from '#core/scene-graph'
 
 function applyChildPropRefs(
   ctx: OverrideContext,
@@ -21,6 +27,32 @@ function applyChildPropRefs(
     const val = valueForRef(ref, valueByDef)
     if (val) applyComponentPropRef(ctx, childId, ref, val, modified)
   }
+}
+
+function sourceChildPropRefs(
+  ctx: OverrideContext,
+  sourceParentId: string | null | undefined,
+  child: SceneNode,
+  propRefsMap: Map<string, ComponentPropRef[]>
+): ComponentPropRef[] | undefined {
+  if (!sourceParentId) return undefined
+  const sourceParent = ctx.graph.getNode(sourceParentId)
+  if (!sourceParent) return undefined
+
+  let fallbackMatchId: string | undefined
+  for (const sourceChildId of sourceParent.childIds) {
+    const sourceChild = ctx.graph.getNode(sourceChildId)
+    if (!sourceChild) continue
+    if (sourceChild.componentId && sourceChild.componentId === child.componentId) {
+      const refs = findPropRefs(ctx, sourceChild.id, propRefsMap)
+      if (refs) return refs
+    }
+    if (!fallbackMatchId && sourceChild.name === child.name && sourceChild.type === child.type) {
+      fallbackMatchId = sourceChild.id
+    }
+  }
+
+  return fallbackMatchId ? findPropRefs(ctx, fallbackMatchId, propRefsMap) : undefined
 }
 
 function applyPropAssignments(
@@ -41,6 +73,7 @@ function applyPropAssignments(
     }
 
     const refs =
+      sourceChildPropRefs(ctx, parent.componentId, child, propRefsMap) ??
       findPropRefs(ctx, child.componentId, propRefsMap) ??
       fallbackRefsForChild(ctx, child.name, valueByDef)
     applyChildPropRefs(ctx, childId, refs, valueByDef, modified)
@@ -77,6 +110,8 @@ export function applyOverrideAssignments(
   propRefsMap: Map<string, ComponentPropRef[]>,
   modified: Set<string>
 ): void {
+  const clonesBySource = buildCloneIndex(ctx)
+  const clonesByInstance = new Map<string, string[]>()
   for (const [figmaId, nc] of ctx.changeMap) {
     const instanceNodeId = ctx.guidToNodeId.get(figmaId)
     if (!instanceNodeId || (ctx.activeNodeIds && !ctx.activeNodeIds.has(instanceNodeId))) continue
@@ -90,16 +125,17 @@ export function applyOverrideAssignments(
       const guids = ov.guidPath?.guids
       if (!guids?.length) continue
 
-      const targetId = resolveOverrideTarget(ctx, instanceNodeId, guids)
-      if (!targetId) continue
+      const valueByDef = assignmentsToValueMap(ctx, ov.componentPropAssignments, true)
+      for (const targetInstanceId of instanceAndClones(
+        instanceNodeId,
+        clonesBySource,
+        clonesByInstance
+      )) {
+        const targetId = resolveOverrideTarget(ctx, targetInstanceId, guids)
+        if (!targetId) continue
 
-      applyPropAssignments(
-        ctx,
-        targetId,
-        assignmentsToValueMap(ctx, ov.componentPropAssignments, true),
-        propRefsMap,
-        modified
-      )
+        applyPropAssignments(ctx, targetId, valueByDef, propRefsMap, modified)
+      }
     }
   }
 }
