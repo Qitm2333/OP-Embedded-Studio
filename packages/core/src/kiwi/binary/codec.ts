@@ -10,7 +10,7 @@
 import { decompress as zstdDecompress } from 'fzstd'
 
 import { parseColor } from '#core/color'
-import { compileSchema, encodeBinarySchema } from '#core/kiwi/kiwi-schema'
+import { compileSchema, encodeBinarySchema } from '#core/kiwi/schema-runtime'
 
 import { isZstdCompressed, getKiwiMessageType } from './protocol'
 import figmaSchema from './schema'

@@ -1,7 +1,3 @@
-/* eslint-disable max-lines -- generated kiwi schema definition */
-import { parseSchema } from '#core/kiwi/kiwi-schema'
-
-const schemaText = `
 package Fig;
 
 enum MessageType {
@@ -905,7 +901,9 @@ message Glyph {
   float fontSize = 4;
   uint firstCharacter = 5;
   float advance = 6;
-  float rotation = 7;
+  uint[] emojiCodePoints = 7;
+  EmojiImageSet emojiImageSet = 8;
+  float rotation = 9;
 }
 
 message Decoration {
@@ -1537,8 +1535,8 @@ message NodeChange {
   float gridColumnGap = 438;
   GridTrackSize[] gridColumnSizes = 474;
   GridTrackSize[] gridRowSizes = 475;
-  StackWrap stackWrap = 476;
-  float stackCounterSpacing = 477;
+  StackWrap stackWrap = 323;
+  float stackCounterSpacing = 324;
 }
 
 message VideoPlayback {
@@ -2395,6 +2393,3 @@ enum ARIARole {
   ALERTDIALOG = 80;
   DIALOG = 81;
 }
-`
-
-export default parseSchema(schemaText)

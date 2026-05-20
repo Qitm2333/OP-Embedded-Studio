@@ -61,7 +61,7 @@ describe('text node export', () => {
     await initCodec()
 
     const { unzipSync, inflateSync } = await import('fflate')
-    const { decodeBinarySchema, compileSchema, ByteBuffer } = await import('#core/kiwi/kiwi-schema')
+    const { decodeBinarySchema, compileSchema, ByteBuffer } = await import('#core/kiwi/schema-runtime')
     const { parseFigKiwiChunks } = await import('@open-pencil/core')
 
     const graph = new SceneGraph()
@@ -122,7 +122,7 @@ describe('text node export', () => {
     await initCodec()
 
     const { unzipSync, inflateSync } = await import('fflate')
-    const { decodeBinarySchema, compileSchema, ByteBuffer } = await import('#core/kiwi/kiwi-schema')
+    const { decodeBinarySchema, compileSchema, ByteBuffer } = await import('#core/kiwi/schema-runtime')
     const { parseFigKiwiChunks } = await import('@open-pencil/core')
 
     const graph = new SceneGraph()
@@ -162,7 +162,7 @@ describe('text node export', () => {
     await initCodec()
 
     const { unzipSync, inflateSync } = await import('fflate')
-    const { decodeBinarySchema, compileSchema, ByteBuffer } = await import('#core/kiwi/kiwi-schema')
+    const { decodeBinarySchema, compileSchema, ByteBuffer } = await import('#core/kiwi/schema-runtime')
     const { parseFigKiwiChunks } = await import('@open-pencil/core')
 
     const graph = new SceneGraph()
@@ -205,7 +205,7 @@ describe('text node export', () => {
     await initCodec()
 
     const { unzipSync, inflateSync } = await import('fflate')
-    const { decodeBinarySchema, compileSchema, ByteBuffer } = await import('#core/kiwi/kiwi-schema')
+    const { decodeBinarySchema, compileSchema, ByteBuffer } = await import('#core/kiwi/schema-runtime')
     const { parseFigKiwiChunks } = await import('@open-pencil/core')
 
     const graph = new SceneGraph()

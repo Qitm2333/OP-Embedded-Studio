@@ -268,7 +268,7 @@ OpenPencil follows a Reka UI-inspired component namespace structure:
 - No module-level mutable state in components — use the editor store
 - Prefer `tw-animate-css` for animations — don't hand-write `<style>` transition keyframes
 - No duplicated component logic — if two components share data (icon maps, util functions, constants), export from one place and import in both
-- `packages/core/src/kiwi/kiwi-schema/` is vendored — don't modify
+- `packages/core/src/kiwi/schema-runtime/` contains the vendored Kiwi codec runtime; keep runtime changes minimal and prefer wrappers/helpers for project-specific validation
 - Core code must guard browser APIs: `typeof window !== 'undefined'`, `typeof document === 'undefined'`
 - Constants in `src/constants.ts` — no magic numbers in components or composables
 

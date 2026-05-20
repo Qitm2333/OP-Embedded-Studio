@@ -34,7 +34,7 @@ const rendererPath = coreSourcePath('canvas/renderer.ts')
 const sgTypesPath = coreSourcePath('scene-graph/types.ts')
 const nodeExportPath = coreSourcePath('kiwi/node-change/export-node.ts')
 const convertPath = coreSourcePath('kiwi/node-change/paint.ts')
-const schemaPath = coreSourcePath('kiwi/binary/schema.ts')
+const schemaPath = coreSourcePath('kiwi/binary/schema/fig.kiwi')
 const codecPath = coreSourcePath('kiwi/binary/codec.ts')
 const lifecyclePath = coreSourcePath('canvas/renderer/lifecycle.ts')
 

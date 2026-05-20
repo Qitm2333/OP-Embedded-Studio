@@ -4,7 +4,7 @@ import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/binary/code
 import type { NodeChange as KiwiNodeChange } from './kiwi/binary/codec'
 import { populateAndApplyOverrides } from './kiwi/instance-overrides'
 import type { InstanceNodeChange } from './kiwi/instance-overrides'
-import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/kiwi-schema'
+import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/schema-runtime'
 import { nodeChangeToProps, sortChildren } from './kiwi/node-change/convert'
 import {
   sceneNodeToKiwi,
