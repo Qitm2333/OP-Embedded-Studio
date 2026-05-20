@@ -99,16 +99,16 @@ function parseGuidOrNull(value: string) {
   return /^\d+:\d+$/.test(value) ? stringToGuid(value) : null
 }
 
-const FIGMA_PAYLOAD_FIELDS_UNSAFE_FOR_EXPORT = new Set([
-  'variableConsumptionMap',
-  'parameterConsumptionMap',
-  'colorVar',
-  'opacityVar'
-])
+const FIGMA_PAYLOAD_VARIABLE_MAP_FIELDS = new Set(['variableConsumptionMap', 'parameterConsumptionMap'])
+const FIGMA_PAYLOAD_PAINT_VARIABLE_FIELDS = new Set(['colorVar', 'opacityVar'])
 
-function materializeFigmaPayload(value: unknown, blobs: Uint8Array[]): unknown {
+function materializeFigmaPayload(
+  value: unknown,
+  blobs: Uint8Array[],
+  options: { includeVariableMaps?: boolean } = {}
+): unknown {
   if (value instanceof Uint8Array) return value
-  if (Array.isArray(value)) return value.map((item) => materializeFigmaPayload(item, blobs))
+  if (Array.isArray(value)) return value.map((item) => materializeFigmaPayload(item, blobs, options))
   if (!value || typeof value !== 'object') return value
   if ('__openPencilFigmaBlob' in value) {
     const blob = (value as { __openPencilFigmaBlob?: Uint8Array | Record<string, number> })
@@ -121,8 +121,9 @@ function materializeFigmaPayload(value: unknown, blobs: Uint8Array[]): unknown {
 
   const materialized: Record<string, unknown> = {}
   for (const [key, child] of Object.entries(value)) {
-    if (FIGMA_PAYLOAD_FIELDS_UNSAFE_FOR_EXPORT.has(key)) continue
-    materialized[key] = materializeFigmaPayload(child, blobs)
+    if (FIGMA_PAYLOAD_PAINT_VARIABLE_FIELDS.has(key)) continue
+    if (!options.includeVariableMaps && FIGMA_PAYLOAD_VARIABLE_MAP_FIELDS.has(key)) continue
+    materialized[key] = materializeFigmaPayload(child, blobs, options)
   }
   return materialized
 }
@@ -177,7 +178,9 @@ function applyInstancePayload(
   if (symbolID) {
     const symbolData: Record<string, unknown> = { symbolID }
     if (node.figmaSymbolOverrides.length > 0) {
-      symbolData.symbolOverrides = materializeFigmaPayload(node.figmaSymbolOverrides, context.blobs)
+      symbolData.symbolOverrides = materializeFigmaPayload(node.figmaSymbolOverrides, context.blobs, {
+        includeVariableMaps: true
+      })
     }
     if (node.figmaUniformScaleFactor != null) {
       symbolData.uniformScaleFactor = node.figmaUniformScaleFactor
@@ -187,11 +190,14 @@ function applyInstancePayload(
   if (node.figmaComponentPropAssignments.length > 0) {
     nc.componentPropAssignments = materializeFigmaPayload(
       node.figmaComponentPropAssignments,
-      context.blobs
+      context.blobs,
+      { includeVariableMaps: true }
     )
   }
   if (node.figmaDerivedSymbolData.length > 0) {
-    nc.derivedSymbolData = materializeFigmaPayload(node.figmaDerivedSymbolData, context.blobs)
+    nc.derivedSymbolData = materializeFigmaPayload(node.figmaDerivedSymbolData, context.blobs, {
+      includeVariableMaps: true
+    })
   }
   if (node.figmaDerivedSymbolDataLayoutVersion != null) {
     nc.derivedSymbolDataLayoutVersion = node.figmaDerivedSymbolDataLayoutVersion
