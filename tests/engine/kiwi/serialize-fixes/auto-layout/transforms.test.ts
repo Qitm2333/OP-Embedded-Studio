@@ -7,7 +7,7 @@ import { expectDefined, getNodeOrThrow } from '#tests/helpers/assert'
 import { ROOT_GUID, pageId } from '../helpers'
 
 describe('Fix 1: auto-layout child transforms', () => {
-  test('auto-layout child gets zero transform regardless of its x/y', () => {
+  test('auto-layout child preserves its stored transform offsets', () => {
     const graph = new SceneGraph()
     const parent = graph.createNode('FRAME', pageId(graph), {
       name: 'AutoLayout',
@@ -48,8 +48,8 @@ describe('Fix 1: auto-layout child transforms', () => {
       'child node change'
     )
     expect(childNc).toBeDefined()
-    expect(childNc.transform.m02).toBe(0)
-    expect(childNc.transform.m12).toBe(0)
+    expect(childNc.transform.m02).toBe(50)
+    expect(childNc.transform.m12).toBe(100)
   })
 
   test('absolute-positioned child inside auto-layout keeps its real x/y', () => {
@@ -130,7 +130,7 @@ describe('Fix 1: auto-layout child transforms', () => {
     expect(childNc.transform.m12).toBe(45)
   })
 
-  test('horizontal auto-layout child also gets zero transform', () => {
+  test('horizontal auto-layout child also preserves its stored transform offsets', () => {
     const graph = new SceneGraph()
     const parent = graph.createNode('FRAME', pageId(graph), {
       name: 'HorizontalLayout',
@@ -164,8 +164,8 @@ describe('Fix 1: auto-layout child transforms', () => {
       changes.find((nc) => nc.name === 'Item'),
       'item node change'
     )
-    expect(itemNc.transform.m02).toBe(0)
-    expect(itemNc.transform.m12).toBe(0)
+    expect(itemNc.transform.m02).toBe(200)
+    expect(itemNc.transform.m12).toBe(50)
   })
 })
 

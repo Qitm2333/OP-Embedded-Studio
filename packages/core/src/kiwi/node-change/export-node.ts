@@ -23,7 +23,7 @@ interface SceneNodeToKiwiContext {
   mapToFigmaType: (type: SceneNode['type']) => string
   fillToKiwiPaint: (fill: SceneNode['fills'][number]) => Paint
   safeColor: (color: Color) => Color
-  computeExportTransform: (node: SceneNode, graph: SceneGraph) => Matrix
+  computeExportTransform: (node: SceneNode) => Matrix
   serializeCornerRadii: (node: SceneNode, nc: KiwiNodeChange) => void
   serializeTextProps: (
     node: SceneNode,
@@ -250,7 +250,7 @@ export function sceneNodeToKiwiWithContext(
     opacity: node.opacity,
     phase: 'CREATED',
     size: { x: node.width, y: node.height },
-    transform: context.computeExportTransform(node, context.graph),
+    transform: context.computeExportTransform(node),
     strokeWeight: node.strokes[0]?.weight ?? DEFAULT_STROKE_WEIGHT,
     strokeAlign: node.strokes[0]?.align ?? 'INSIDE'
   }
