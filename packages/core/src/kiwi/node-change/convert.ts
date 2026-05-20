@@ -714,6 +714,7 @@ function extractFigmaSymbolMetadata(
 ): Pick<
   SceneNode,
   | 'figmaSymbolOverrides'
+  | 'figmaComponentPropAssignments'
   | 'figmaDerivedSymbolData'
   | 'figmaDerivedSymbolDataLayoutVersion'
   | 'figmaUniformScaleFactor'
@@ -723,6 +724,10 @@ function extractFigmaSymbolMetadata(
     | undefined
   return {
     figmaSymbolOverrides: preserveFigmaPayloadBlobs(sd?.symbolOverrides ?? [], blobs) as unknown[],
+    figmaComponentPropAssignments: preserveFigmaPayloadBlobs(
+      nc.componentPropAssignments ?? [],
+      blobs
+    ) as unknown[],
     figmaDerivedSymbolData: preserveFigmaPayloadBlobs(nc.derivedSymbolData ?? [], blobs) as unknown[],
     figmaDerivedSymbolDataLayoutVersion:
       typeof nc.derivedSymbolDataLayoutVersion === 'number' ? nc.derivedSymbolDataLayoutVersion : null,

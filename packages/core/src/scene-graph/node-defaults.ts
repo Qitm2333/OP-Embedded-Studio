@@ -51,6 +51,7 @@ export function createDefaultNode(
     figmaGuid: null,
     figmaLayout: null,
     figmaSymbolOverrides: [],
+    figmaComponentPropAssignments: [],
     figmaDerivedSymbolData: [],
     figmaDerivedSymbolDataLayoutVersion: null,
     figmaUniformScaleFactor: null,

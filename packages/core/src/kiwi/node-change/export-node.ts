@@ -170,6 +170,12 @@ function applyInstancePayload(
     }
     nc.symbolData = symbolData as KiwiNodeChange['symbolData']
   }
+  if (node.figmaComponentPropAssignments.length > 0) {
+    nc.componentPropAssignments = materializeFigmaPayload(
+      node.figmaComponentPropAssignments,
+      context.blobs
+    )
+  }
   if (node.figmaDerivedSymbolData.length > 0) {
     nc.derivedSymbolData = materializeFigmaPayload(node.figmaDerivedSymbolData, context.blobs)
   }
