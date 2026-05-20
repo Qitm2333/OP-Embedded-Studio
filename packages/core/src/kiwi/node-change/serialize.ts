@@ -322,8 +322,53 @@ function serializeTextProps(
   }
 }
 
+function normalizeStackMode(
+  value: string | undefined
+): KiwiNodeChange['stackMode'] {
+  return value === 'HORIZONTAL' || value === 'VERTICAL' || value === 'NONE' ? value : undefined
+}
+
+function normalizeStackSizing(
+  value: string | undefined
+): KiwiNodeChange['stackPrimarySizing'] {
+  return value === 'FIXED' || value === 'RESIZE_TO_FIT' || value === 'RESIZE_TO_FIT_WITH_IMPLICIT_SIZE'
+    ? value
+    : undefined
+}
+
+function normalizeStackJustify(value: string | undefined): string | undefined {
+  return value === 'SPACE_EVENLY' ? 'SPACE_BETWEEN' : value
+}
+
+function normalizeStackCounterAlign(value: string | undefined): string | undefined {
+  return value === 'SPACE_EVENLY' ? 'SPACE_BETWEEN' : value
+}
+
 function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
   upsertPluginData(node, LAYOUT_DIRECTION_PLUGIN_KEY, node.layoutDirection)
+  const figmaLayout = node.figmaLayout
+  if (figmaLayout) {
+    nc.stackMode = normalizeStackMode(figmaLayout.stackMode)
+    nc.stackSpacing = figmaLayout.stackSpacing
+    nc.stackPadding = figmaLayout.stackPadding
+    nc.stackPaddingRight = figmaLayout.stackPaddingRight
+    nc.stackPaddingBottom = figmaLayout.stackPaddingBottom
+    nc.stackCounterAlign = normalizeStackCounterAlign(figmaLayout.stackCounterAlign)
+    nc.stackJustify = normalizeStackJustify(figmaLayout.stackJustify)
+    nc.stackCounterAlignItems = normalizeStackCounterAlign(figmaLayout.stackCounterAlignItems)
+    nc.stackPrimaryAlignItems = normalizeStackJustify(figmaLayout.stackPrimaryAlignItems)
+    nc.stackPrimarySizing = normalizeStackSizing(figmaLayout.stackPrimarySizing)
+    nc.stackCounterSizing = normalizeStackSizing(figmaLayout.stackCounterSizing)
+    nc.stackVerticalPadding = figmaLayout.stackVerticalPadding
+    nc.stackHorizontalPadding = figmaLayout.stackHorizontalPadding
+    nc.stackWrap = figmaLayout.stackWrap
+    nc.stackPositioning = figmaLayout.stackPositioning
+    nc.stackChildPrimaryGrow = figmaLayout.stackChildPrimaryGrow
+    nc.stackChildAlignSelf = figmaLayout.stackChildAlignSelf
+    nc.stackCounterSpacing = figmaLayout.stackCounterSpacing
+    nc.bordersTakeSpace = figmaLayout.bordersTakeSpace
+    return
+  }
   if (node.layoutMode !== 'NONE' && node.layoutMode !== 'GRID') {
     nc.stackMode = node.layoutMode
     nc.stackSpacing = node.itemSpacing

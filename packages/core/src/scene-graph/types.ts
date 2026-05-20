@@ -229,6 +229,34 @@ export interface VariantPropSpec {
   value: string
 }
 
+export type FigmaLayoutMetadata = Partial<
+  Record<
+    | 'stackMode'
+    | 'stackCounterAlign'
+    | 'stackJustify'
+    | 'stackCounterAlignItems'
+    | 'stackPrimaryAlignItems'
+    | 'stackPrimarySizing'
+    | 'stackCounterSizing'
+    | 'stackWrap'
+    | 'stackPositioning'
+    | 'stackChildAlignSelf',
+    string
+  > &
+    Record<
+      | 'stackSpacing'
+      | 'stackPadding'
+      | 'stackPaddingRight'
+      | 'stackPaddingBottom'
+      | 'stackVerticalPadding'
+      | 'stackHorizontalPadding'
+      | 'stackChildPrimaryGrow'
+      | 'stackCounterSpacing',
+      number
+    > &
+    Record<'bordersTakeSpace', boolean>
+>
+
 export interface SceneNode {
   id: string
   type: NodeType
@@ -283,6 +311,7 @@ export interface SceneNode {
   verticalConstraint: ConstraintType
 
   layoutMode: LayoutMode
+  figmaLayout: FigmaLayoutMetadata | null
   layoutDirection: LayoutDirection
   layoutWrap: LayoutWrap
   primaryAxisAlign: LayoutAlign

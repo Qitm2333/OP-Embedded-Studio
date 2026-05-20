@@ -46,6 +46,7 @@ export function createDefaultNode(
     lineHeight: null,
     letterSpacing: 0,
     layoutMode: 'NONE',
+    figmaLayout: null,
     layoutDirection: 'AUTO',
     layoutWrap: 'NO_WRAP',
     primaryAxisAlign: 'MIN',

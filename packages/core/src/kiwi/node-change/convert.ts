@@ -355,6 +355,7 @@ function convertLayoutProps(
 ): Pick<
   SceneNode,
   | 'layoutMode'
+  | 'figmaLayout'
   | 'itemSpacing'
   | 'paddingTop'
   | 'paddingBottom'
@@ -387,6 +388,27 @@ function convertLayoutProps(
 
   return {
     layoutMode,
+    figmaLayout: {
+      stackMode: nc.stackMode,
+      stackSpacing: nc.stackSpacing,
+      stackPadding: nc.stackPadding,
+      stackPaddingRight: nc.stackPaddingRight,
+      stackPaddingBottom: nc.stackPaddingBottom,
+      stackCounterAlign: nc.stackCounterAlign,
+      stackJustify: nc.stackJustify,
+      stackCounterAlignItems: nc.stackCounterAlignItems,
+      stackPrimaryAlignItems: nc.stackPrimaryAlignItems,
+      stackPrimarySizing: nc.stackPrimarySizing,
+      stackCounterSizing: nc.stackCounterSizing,
+      stackVerticalPadding: nc.stackVerticalPadding,
+      stackHorizontalPadding: nc.stackHorizontalPadding,
+      stackWrap: nc.stackWrap,
+      stackPositioning: nc.stackPositioning,
+      stackChildPrimaryGrow: nc.stackChildPrimaryGrow,
+      stackChildAlignSelf: nc.stackChildAlignSelf,
+      stackCounterSpacing: nc.stackCounterSpacing,
+      bordersTakeSpace: nc.bordersTakeSpace as boolean | undefined
+    },
     itemSpacing: nc.stackSpacing ?? 0,
     ...convertLayoutPadding(nc),
     primaryAxisSizing,
