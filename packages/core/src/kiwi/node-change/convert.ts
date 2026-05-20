@@ -482,6 +482,8 @@ export function nodeChangeToProps(
   return {
     nodeType,
     name: nc.name ?? nodeType,
+    figmaGuid: nc.guid ? guidToString(nc.guid) : null,
+    ...extractFigmaSymbolMetadata(nc),
     ...convertTransformProps(nc),
     opacity: nc.opacity ?? 1,
     visible: nc.visible ?? true,
@@ -671,6 +673,18 @@ export function sortChildren(
       if (aPos > bPos) return 1
       return 0
     })
+  }
+}
+
+function extractFigmaSymbolMetadata(
+  nc: NodeChange
+): Pick<SceneNode, 'figmaSymbolOverrides' | 'figmaUniformScaleFactor'> {
+  const sd = nc.symbolData as
+    | { symbolOverrides?: unknown[]; uniformScaleFactor?: number }
+    | undefined
+  return {
+    figmaSymbolOverrides: structuredClone(sd?.symbolOverrides ?? []),
+    figmaUniformScaleFactor: typeof sd?.uniformScaleFactor === 'number' ? sd.uniformScaleFactor : null
   }
 }
 

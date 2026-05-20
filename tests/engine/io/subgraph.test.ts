@@ -1,7 +1,11 @@
+import { readFileSync } from 'node:fs'
+
 import { describe, expect, test } from 'bun:test'
 
 import { exportFigFile, extractExportGraph, parseFigFile } from '@open-pencil/core/io'
 import { initCodec } from '@open-pencil/core/kiwi'
+import { parseFigBuffer } from '@open-pencil/core/kiwi/fig/parse/core'
+import { guidToString } from '@open-pencil/core/kiwi/node-change/guid'
 import { SceneGraph } from '@open-pencil/core/scene-graph'
 
 describe('export subgraph extraction', () => {
@@ -86,5 +90,26 @@ describe('export subgraph extraction', () => {
       (node) => node.type === 'INSTANCE' && node.name === instance.name
     )
     expect(reparsedInstance?.childIds).toEqual([])
+  })
+
+  test('fig export preserves imported instance symbol overrides and guids', async () => {
+    await initCodec()
+    const fixture = new Uint8Array(readFileSync('tests/fixtures/gold-preview.fig'))
+    const graph = await parseFigFile(
+      fixture.buffer.slice(fixture.byteOffset, fixture.byteOffset + fixture.byteLength) as ArrayBuffer
+    )
+    const exported = await exportFigFile(graph)
+    const parsed = parseFigBuffer(exported.buffer as ArrayBuffer)
+    const input = parsed.nodeChanges.find(
+      (node) => node.guid && guidToString(node.guid) === '1:3503'
+    )
+    const lists = parsed.nodeChanges.find(
+      (node) => node.guid && guidToString(node.guid) === '1:3491'
+    )
+
+    expect(input?.type).toBe('INSTANCE')
+    expect(input?.symbolData?.symbolOverrides?.length).toBe(9)
+    expect(input?.symbolData?.uniformScaleFactor).toBeCloseTo(0.8908441662788391)
+    expect(lists?.symbolData?.symbolOverrides?.length).toBe(5)
   })
 })

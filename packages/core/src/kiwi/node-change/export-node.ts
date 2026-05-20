@@ -99,6 +99,17 @@ function parseGuidOrNull(value: string) {
   return /^\d+:\d+$/.test(value) ? stringToGuid(value) : null
 }
 
+function sanitizeSymbolOverride(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sanitizeSymbolOverride)
+  if (!value || typeof value !== 'object') return value
+  const sanitized: Record<string, unknown> = {}
+  for (const [key, child] of Object.entries(value)) {
+    if (key === 'variableConsumptionMap' || key === 'parameterConsumptionMap') continue
+    sanitized[key] = sanitizeSymbolOverride(child)
+  }
+  return sanitized
+}
+
 function resolveInstanceComponentId(context: SceneNodeToKiwiContext, componentId: string): string {
   const seen = new Set<string>()
   let currentId = componentId
@@ -119,7 +130,9 @@ function getOrCreateNodeGuid(
   if (!context.graph.getNode(nodeId)) return undefined
   const existing = context.nodeIdToGuid?.get(nodeId)
   if (existing) return existing
-  const guid = { sessionID: 1, localID: localIdCounter.value++ }
+  const node = context.graph.getNode(nodeId)
+  const importedGuid = node?.figmaGuid ? parseGuidOrNull(node.figmaGuid) : null
+  const guid = importedGuid ?? { sessionID: 1, localID: localIdCounter.value++ }
   context.nodeIdToGuid?.set(nodeId, guid)
   return guid
 }
@@ -263,7 +276,16 @@ export function sceneNodeToKiwiWithContext(
       resolveInstanceComponentId(context, node.componentId),
       localIdCounter
     )
-    if (symbolID) nc.symbolData = { symbolID }
+    if (symbolID) {
+      const symbolData: Record<string, unknown> = { symbolID }
+      if (node.figmaSymbolOverrides.length > 0) {
+        symbolData.symbolOverrides = sanitizeSymbolOverride(node.figmaSymbolOverrides)
+      }
+      if (node.figmaUniformScaleFactor != null) {
+        symbolData.uniformScaleFactor = node.figmaUniformScaleFactor
+      }
+      nc.symbolData = symbolData as KiwiNodeChange['symbolData']
+    }
   }
   if (node.type === 'COMPONENT_SET') upsertPluginData(node, NODE_TYPE_PLUGIN_KEY, node.type)
   if (strokePaints.length > 0) nc.strokePaints = strokePaints

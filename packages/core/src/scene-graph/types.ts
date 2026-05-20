@@ -311,7 +311,10 @@ export interface SceneNode {
   verticalConstraint: ConstraintType
 
   layoutMode: LayoutMode
+  figmaGuid: string | null
   figmaLayout: FigmaLayoutMetadata | null
+  figmaSymbolOverrides: unknown[]
+  figmaUniformScaleFactor: number | null
   layoutDirection: LayoutDirection
   layoutWrap: LayoutWrap
   primaryAxisAlign: LayoutAlign
