@@ -184,6 +184,10 @@ function applyImportedCanvasFields(page: FigExportPage, canvasNc: KiwiNodeChange
   if ('backgroundColor' in page.figmaRawNodeFields) {
     canvasNc.backgroundColor = structuredClone(page.figmaRawNodeFields.backgroundColor)
   }
+  const strokeJoin = page.figmaRawNodeFields.strokeJoin
+  if (typeof strokeJoin === 'string') canvasNc.strokeJoin = strokeJoin
+  const strokeWeight = page.figmaRawNodeFields.strokeWeight
+  if (typeof strokeWeight === 'number') canvasNc.strokeWeight = strokeWeight
 }
 
 function buildCanvasEntries(
