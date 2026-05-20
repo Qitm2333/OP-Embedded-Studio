@@ -1612,6 +1612,7 @@ message ComponentPropDef {
   ComponentPropType type = 6;
   bool isDeleted = 7;
   ComponentPropPreferredValues preferredValues = 8;
+  VariableData varValue = 9;
 }
 
 message ComponentPropValue {

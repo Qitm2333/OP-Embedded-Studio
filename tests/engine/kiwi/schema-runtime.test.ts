@@ -12,6 +12,7 @@ describe('Kiwi schema runtime', () => {
     expectFieldNumber(figSchema, 'Paint', 'colorVar', 21)
     expectFieldNumber(figSchema, 'TextLineData', 'sourceDirectionality', 9)
     expectFieldNumber(figSchema, 'NodeChange', 'pageType', 397)
+    expectFieldNumber(figSchema, 'ComponentPropDef', 'varValue', 9)
 
     expectEnumValue(figSchema, 'VariableField', 'TEXT_DATA', 11)
     expectEnumValue(figSchema, 'VariableField', 'STACK_COUNTER_SPACING', 23)
