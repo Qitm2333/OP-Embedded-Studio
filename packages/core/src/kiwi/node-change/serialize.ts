@@ -1,4 +1,4 @@
-import { hexToBytes } from '#core/bytes/hex'
+import { bytesToHex, hexToBytes } from '#core/bytes/hex'
 import { encodePathCommandsBlob } from '#core/kiwi/node-change/path-commands'
 import { buildDerivedTextData as buildSharedDerivedTextData } from '#core/text/derived-text/data'
 import { normalizeFontFamily, weightToFigmaStyle, weightToStyle } from '#core/text/fonts'
@@ -74,10 +74,24 @@ function textLines(text: string): NonNullable<NodeChange['textData']>['lines'] {
   return Array.from({ length: lineCount }, () => ({ lineType: 'PLAIN' }))
 }
 
+function appendGlyphBlob(
+  blobs: Uint8Array[],
+  glyphBlobMap: Map<string, number>,
+  blob: Uint8Array
+): number {
+  const key = bytesToHex(blob)
+  const existing = glyphBlobMap.get(key)
+  if (existing !== undefined) return existing
+  const index = blobs.push(blob) - 1
+  glyphBlobMap.set(key, index)
+  return index
+}
+
 function buildDerivedTextData(
   node: SceneNode,
   digestMap: Map<string, Uint8Array>,
-  blobs: Uint8Array[]
+  blobs: Uint8Array[],
+  glyphBlobMap: Map<string, number>
 ): NodeChange['derivedTextData'] {
   const fontMeta: NonNullable<NodeChange['derivedTextData']>['fontMetaData'] = []
   const seen = new Set<string>()
@@ -106,20 +120,41 @@ function buildDerivedTextData(
     )
   }
 
-  const style = weightToStyle(node.fontWeight, node.italic)
-  const glyphMetrics =
-    getGlyphOutlineMetricsSync(node.fontFamily, style, node.text, node.fontSize) ?? []
   const lineHeight = node.lineHeight ?? Math.ceil(node.fontSize * 1.2)
   const glyphAdvance = node.text.length > 0 ? node.width / Math.max(node.text.length, 1) : 0
 
-  const glyphs = glyphMetrics.map((glyph, index) => ({
-    commandsBlob: blobs.push(encodePathCommandsBlob(glyph.commands, node.fontSize)) - 1,
-    position: { x: glyph.x || index * glyphAdvance, y: lineHeight },
-    fontSize: node.fontSize,
-    firstCharacter: index,
-    advance: glyph.advance || glyphAdvance,
-    rotation: 0
-  }))
+  const derivedGlyphs = node.figmaDerivedTextGlyphs ?? []
+  const glyphs =
+    derivedGlyphs.length > 0
+      ? derivedGlyphs.map((glyph, index) => ({
+          commandsBlob: appendGlyphBlob(blobs, glyphBlobMap, glyph.commandsBlob),
+          position: { x: glyph.x, y: glyph.y },
+          fontSize: glyph.fontSize,
+          firstCharacter: index,
+          advance:
+            index + 1 < derivedGlyphs.length
+              ? Math.max(derivedGlyphs[index + 1].x - glyph.x, 0)
+              : glyphAdvance,
+          rotation: 0
+        }))
+      : (getGlyphOutlineMetricsSync(
+          node.fontFamily,
+          weightToStyle(node.fontWeight, node.italic),
+          node.text,
+          node.fontSize
+        ) ?? []
+        ).map((glyph, index) => ({
+          commandsBlob: appendGlyphBlob(
+            blobs,
+            glyphBlobMap,
+            encodePathCommandsBlob(glyph.commands, node.fontSize)
+          ),
+          position: { x: glyph.x || index * glyphAdvance, y: lineHeight },
+          fontSize: node.fontSize,
+          firstCharacter: index,
+          advance: glyph.advance || glyphAdvance,
+          rotation: 0
+        }))
 
   const logicalIndexToCharacterOffsetMap = Array.from(
     { length: node.text.length + 1 },
@@ -254,7 +289,8 @@ function serializeTextProps(
   nc: KiwiNodeChange,
   graph: SceneGraph,
   fontDigestMap: Map<string, Uint8Array> | undefined,
-  blobs: Uint8Array[]
+  blobs: Uint8Array[],
+  glyphBlobMap: Map<string, number> | undefined
 ): void {
   upsertPluginData(node, TEXT_DIRECTION_PLUGIN_KEY, node.textDirection)
   nc.fontSize = node.fontSize
@@ -276,7 +312,9 @@ function serializeTextProps(
   nc.fontVariantContextualLigatures = true
   nc.fontVersion = ''
   nc.emojiImageSet = 'APPLE'
-  if (fontDigestMap) nc.derivedTextData = buildDerivedTextData(node, fontDigestMap, blobs)
+  if (fontDigestMap) {
+    nc.derivedTextData = buildDerivedTextData(node, fontDigestMap, blobs, glyphBlobMap ?? new Map())
+  }
   if (node.lineHeight != null) nc.lineHeight = { value: node.lineHeight, units: 'PIXELS' }
   nc.letterSpacing = { value: node.letterSpacing, units: 'PIXELS' }
   if (node.textDecoration !== 'NONE') {
@@ -421,13 +459,15 @@ export function sceneNodeToKiwi(
   blobs: Uint8Array[],
   nodeIdToGuid?: Map<string, GUID>,
   fontDigestMap?: Map<string, Uint8Array>,
-  varIdToGuid?: Map<string, GUID>
+  varIdToGuid?: Map<string, GUID>,
+  glyphBlobMap = new Map<string, number>()
 ): KiwiNodeChange[] {
   return sceneNodeToKiwiWithContext(node, parentGuid, childIndex, localIdCounter, {
     graph,
     blobs,
     nodeIdToGuid,
     fontDigestMap,
+    glyphBlobMap,
     varIdToGuid,
     fractionalPosition,
     mapToFigmaType,

@@ -17,6 +17,7 @@ interface SceneNodeToKiwiContext {
   blobs: Uint8Array[]
   nodeIdToGuid?: Map<string, GUID>
   fontDigestMap?: Map<string, Uint8Array>
+  glyphBlobMap?: Map<string, number>
   varIdToGuid?: Map<string, GUID>
   fractionalPosition: (index: number) => string
   mapToFigmaType: (type: SceneNode['type']) => string
@@ -29,7 +30,8 @@ interface SceneNodeToKiwiContext {
     nc: KiwiNodeChange,
     graph: SceneGraph,
     fontDigestMap: Map<string, Uint8Array> | undefined,
-    blobs: Uint8Array[]
+    blobs: Uint8Array[],
+    glyphBlobMap: Map<string, number> | undefined
   ) => void
   serializeLayoutProps: (node: SceneNode, nc: KiwiNodeChange) => void
   serializeGeometry: (node: SceneNode, nc: KiwiNodeChange, blobs: Uint8Array[]) => void
@@ -173,7 +175,14 @@ function applyNodeVisualProps(
   }
 
   if (node.type === 'TEXT') {
-    context.serializeTextProps(node, nc, context.graph, context.fontDigestMap, context.blobs)
+    context.serializeTextProps(
+      node,
+      nc,
+      context.graph,
+      context.fontDigestMap,
+      context.blobs,
+      context.glyphBlobMap
+    )
   }
 
   nc.frameMaskDisabled = !node.clipsContent
