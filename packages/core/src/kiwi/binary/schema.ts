@@ -1369,6 +1369,11 @@ message NodeChange {
   GUID inheritEffectStyleID = 169;
   GUID inheritGridStyleID = 170;
   GUID inheritFillStyleIDForStroke = 185;
+  StyleId styleIdForFill = 332;
+  StyleId styleIdForStrokeFill = 333;
+  StyleId styleIdForText = 334;
+  StyleId styleIdForEffect = 335;
+  StyleId styleIdForGrid = 336;
   bool isFillStyle = 157 [deprecated];
   bool isStrokeStyle = 161 [deprecated];
   StyleType styleType = 163;
@@ -1519,6 +1524,7 @@ message NodeChange {
   DerivedTextData derivedTextData = 359;
   EmojiImageSet emojiImageSet = 391;
   uint textExplicitLayoutVersion = 396;
+  VariableDataMap parameterConsumptionMap = 445;
   Paint[] textDecorationFillPaints = 411;
   bool textDecorationSkipInk = 412;
   Number textUnderlineOffset = 413;
@@ -2058,6 +2064,16 @@ enum VariableResolvedDataType {
   TEXT_DATA = 8;
 }
 
+message AssetRef {
+  string key = 1;
+  string version = 2;
+}
+
+message StyleId {
+  GUID guid = 1;
+  AssetRef assetRef = 2;
+}
+
 message VariableID {
   GUID guid = 1;
 }
@@ -2131,6 +2147,7 @@ enum VariableField {
   STACK_PADDING_RIGHT = 8;
   STACK_PADDING_BOTTOM = 9;
   VISIBLE = 10;
+  TEXT_DATA = 11;
   WIDTH = 12;
   HEIGHT = 13;
   RECTANGLE_TOP_LEFT_CORNER_RADIUS = 14;

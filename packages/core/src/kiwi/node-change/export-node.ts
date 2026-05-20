@@ -113,9 +113,7 @@ function materializeFigmaPayload(value: unknown, blobs: Uint8Array[]): unknown {
 
   const materialized: Record<string, unknown> = {}
   for (const [key, child] of Object.entries(value)) {
-    if (key === 'variableConsumptionMap' || key === 'parameterConsumptionMap' || key === 'fontMetaData') {
-      continue
-    }
+    if (key === 'fontMetaData') continue
     materialized[key] = materializeFigmaPayload(child, blobs)
   }
   return materialized
