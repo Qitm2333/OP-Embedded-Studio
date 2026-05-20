@@ -20,6 +20,7 @@ export function createDefaultNode(
     rotation: 0,
     figmaRawSize: null,
     figmaRawTransform: null,
+    figmaRawNodeFields: {},
     figmaDerivedLayout: null,
     fills:
       type === 'TEXT'

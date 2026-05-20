@@ -846,7 +846,8 @@ message Paint {
   Video video = 18;
   uint originalImageWidth = 19;
   uint originalImageHeight = 20;
-  PaintVariableBinding variableBinding = 21; // Not in .fig files. Discovered via WS sniffing 2026-01
+  VariableData colorVar = 21;
+  VariableData opacityVar = 38;
 }
 
 message FontMetaData {
@@ -904,6 +905,7 @@ message Glyph {
   float fontSize = 4;
   uint firstCharacter = 5;
   float advance = 6;
+  float rotation = 7;
 }
 
 message Decoration {
@@ -1705,6 +1707,12 @@ message TextLineData {
   int indentationLevel = 2;
   Directionality directionality = 3;
   DirectionalityIntent directionalityIntent = 4;
+  int downgradeStyleId = 5;
+  int consistencyStyleId = 6;
+  int listStartOffset = 7;
+  bool isFirstLineOfList = 8;
+  SourceDirectionality sourceDirectionality = 9;
+  int styleId = 10;
 }
 
 enum BulletType {
@@ -1723,6 +1731,12 @@ enum LineType {
 enum Directionality {
   LTR = 0;
   RTL = 1;
+}
+
+enum SourceDirectionality {
+  AUTO = 0;
+  LTR = 1;
+  RTL = 2;
 }
 
 enum DirectionalityIntent {
@@ -2053,6 +2067,7 @@ enum VariableDataType {
   COLOR = 4;
   SYMBOL_ID = 7;
   TEXT_DATA = 9;
+  PROP_REF = 13;
 }
 
 enum VariableResolvedDataType {
@@ -2076,6 +2091,7 @@ message StyleId {
 
 message VariableID {
   GUID guid = 1;
+  AssetRef assetRef = 2;
 }
 
 message SymbolId {
@@ -2140,6 +2156,8 @@ enum VariableScope {
 enum VariableField {
   MISSING = 0;
   CORNER_RADIUS = 1;
+  PARAGRAPH_SPACING = 2;
+  PARAGRAPH_INDENT = 3;
   STROKE_WEIGHT = 4;
   STACK_SPACING = 5;
   STACK_PADDING_LEFT = 6;
@@ -2154,11 +2172,54 @@ enum VariableField {
   RECTANGLE_TOP_RIGHT_CORNER_RADIUS = 15;
   RECTANGLE_BOTTOM_LEFT_CORNER_RADIUS = 16;
   RECTANGLE_BOTTOM_RIGHT_CORNER_RADIUS = 17;
+  BORDER_TOP_WEIGHT = 18;
+  BORDER_BOTTOM_WEIGHT = 19;
+  BORDER_LEFT_WEIGHT = 20;
+  BORDER_RIGHT_WEIGHT = 21;
+  VARIANT_PROPERTIES = 22;
+  STACK_COUNTER_SPACING = 23;
+  MIN_WIDTH = 24;
+  MAX_WIDTH = 25;
+  MIN_HEIGHT = 26;
+  MAX_HEIGHT = 27;
+  FONT_FAMILY = 28;
+  FONT_STYLE = 29;
+  FONT_VARIATIONS = 30;
   OPACITY = 31;
   FONT_SIZE = 32;
   LETTER_SPACING = 34;
   LINE_HEIGHT = 36;
-  STACK_COUNTER_SPACING = 23;
+  OVERRIDDEN_SYMBOL_ID = 37;
+  HYPERLINK = 38;
+  CMS_SERIALIZED_RICH_TEXT_DATA = 39;
+  SLOT_CONTENT_ID = 40;
+  GRID_ROW_GAP = 41;
+  GRID_COLUMN_GAP = 42;
+  X_POSITION = 43;
+  Y_POSITION = 44;
+  ROTATION = 45;
+  MOTION_TRANSLATION_X = 46;
+  MOTION_TRANSLATION_Y = 47;
+  MOTION_ROTATION = 48;
+  MOTION_SCALE_X = 49;
+  MOTION_SCALE_Y = 50;
+  MOTION_SHEAR = 51;
+  SCROLL_OFFSET_X = 52;
+  SCROLL_OFFSET_Y = 53;
+  PATH_TRIM_START = 54;
+  PATH_TRIM_END = 55;
+  DISSOLVE_PROGRESS = 56;
+  EASING_DATA = 57;
+  MEDIA_CURRENT_TIME = 58;
+  TRANSFORM_3D_PERSPECTIVE = 59;
+  TRANSFORM_3D_TRANSLATION_Z = 60;
+  TRANSFORM_3D_ROTATION_X = 61;
+  TRANSFORM_3D_ROTATION_Y = 62;
+  TRANSFORM_3D_ROTATION_Z = 63;
+  POLYGON_COUNT = 64;
+  ARC_DATA_STARTING_ANGLE = 65;
+  ARC_DATA_ENDING_ANGLE = 66;
+  ARC_DATA_INNER_RADIUS = 67;
 }
 
 message VariableDataMapEntry {

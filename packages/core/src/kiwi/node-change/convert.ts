@@ -483,7 +483,7 @@ export function nodeChangeToProps(
     nodeType,
     name: nc.name ?? nodeType,
     figmaGuid: nc.guid ? guidToString(nc.guid) : null,
-    ...extractFigmaRawGeometry(nc),
+    ...extractFigmaRawGeometry(nc, blobs),
     ...extractFigmaSymbolMetadata(nc, blobs),
     ...convertTransformProps(nc),
     opacity: nc.opacity ?? 1,
@@ -682,6 +682,7 @@ interface PreservedFigmaBlob {
 }
 
 function preserveFigmaPayloadBlobs(value: unknown, blobs: Uint8Array[]): unknown {
+  if (value instanceof Uint8Array) return value
   if (Array.isArray(value)) return value.map((item) => preserveFigmaPayloadBlobs(item, blobs))
   if (!value || typeof value !== 'object') return value
   const result: Record<string, unknown> = {}
@@ -699,12 +700,38 @@ function preserveFigmaPayloadBlobs(value: unknown, blobs: Uint8Array[]): unknown
   return result
 }
 
+const FIGMA_RAW_NODE_FIELD_KEYS = [
+  'styleIdForFill',
+  'styleIdForStrokeFill',
+  'styleIdForText',
+  'styleIdForEffect',
+  'styleIdForGrid',
+  'variableConsumptionMap',
+  'parameterConsumptionMap',
+  'editInfo',
+  'miterLimit',
+  'strokeWeight',
+  'strokeJoin',
+  'fillPaints',
+  'strokePaints',
+  'effects',
+  'fillGeometry',
+  'strokeGeometry'
+]
+
 function extractFigmaRawGeometry(
-  nc: NodeChange
-): Pick<SceneNode, 'figmaRawSize' | 'figmaRawTransform'> {
+  nc: NodeChange,
+  blobs: Uint8Array[]
+): Pick<SceneNode, 'figmaRawSize' | 'figmaRawTransform' | 'figmaRawNodeFields'> {
+  const figmaRawNodeFields: Record<string, unknown> = {}
+  for (const key of FIGMA_RAW_NODE_FIELD_KEYS) {
+    const value = (nc as Record<string, unknown>)[key]
+    if (value !== undefined) figmaRawNodeFields[key] = preserveFigmaPayloadBlobs(value, blobs)
+  }
   return {
     figmaRawSize: nc.size ? { ...nc.size } : null,
-    figmaRawTransform: nc.transform ? { ...nc.transform } : null
+    figmaRawTransform: nc.transform ? { ...nc.transform } : null,
+    figmaRawNodeFields
   }
 }
 

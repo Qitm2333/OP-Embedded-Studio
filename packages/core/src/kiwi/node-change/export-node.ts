@@ -100,6 +100,7 @@ function parseGuidOrNull(value: string) {
 }
 
 function materializeFigmaPayload(value: unknown, blobs: Uint8Array[]): unknown {
+  if (value instanceof Uint8Array) return value
   if (Array.isArray(value)) return value.map((item) => materializeFigmaPayload(item, blobs))
   if (!value || typeof value !== 'object') return value
   if ('__openPencilFigmaBlob' in value) {
@@ -113,7 +114,6 @@ function materializeFigmaPayload(value: unknown, blobs: Uint8Array[]): unknown {
 
   const materialized: Record<string, unknown> = {}
   for (const [key, child] of Object.entries(value)) {
-    if (key === 'fontMetaData') continue
     materialized[key] = materializeFigmaPayload(child, blobs)
   }
   return materialized
@@ -144,6 +144,14 @@ function getOrCreateNodeGuid(
   const guid = importedGuid ?? { sessionID: 1, localID: localIdCounter.value++ }
   context.nodeIdToGuid?.set(nodeId, guid)
   return guid
+}
+
+function applyRawFigmaNodeFields(
+  context: SceneNodeToKiwiContext,
+  node: SceneNode,
+  nc: KiwiNodeChange
+): void {
+  Object.assign(nc, materializeFigmaPayload(node.figmaRawNodeFields, context.blobs))
 }
 
 function applyInstancePayload(
@@ -330,6 +338,7 @@ export function sceneNodeToKiwiWithContext(
   context.serializeLayoutProps(node, nc)
   context.serializeGeometry(node, nc, context.blobs)
   context.serializeVariableBindings(node, nc, context.graph, context.varIdToGuid)
+  applyRawFigmaNodeFields(context, node, nc)
 
   const pluginData = mergePluginData(node.pluginData)
   if (pluginData.length > 0) nc.pluginData = pluginData
