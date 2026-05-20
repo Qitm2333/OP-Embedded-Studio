@@ -1199,6 +1199,13 @@ message WidgetPointer {
 enum EditorType {
   DESIGN = 0;
   WHITEBOARD = 1;
+  SLIDES = 2;
+  DEV_HANDOFF = 3;
+  SITES = 4;
+  COOPER = 5;
+  ILLUSTRATION = 6;
+  FIGMAKE = 7;
+  FIGSPEC = 8;
 }
 
 message NodeChange {
@@ -1522,6 +1529,7 @@ message NodeChange {
   DerivedTextData derivedTextData = 359;
   EmojiImageSet emojiImageSet = 391;
   uint textExplicitLayoutVersion = 396;
+  EditorType pageType = 397;
   VariableDataMap parameterConsumptionMap = 445;
   Paint[] textDecorationFillPaints = 411;
   bool textDecorationSkipInk = 412;

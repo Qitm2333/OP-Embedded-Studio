@@ -560,6 +560,7 @@ export function makeCanvasNodeChange(
     strokeWeight: DEFAULT_STROKE_WEIGHT,
     strokeAlign: 'CENTER',
     strokeJoin: 'MITER',
+    pageType: 'DESIGN',
     ...extra
   }
 }
