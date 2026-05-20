@@ -11,8 +11,8 @@ export type {
 } from './types'
 
 import { guidToString } from '#core/kiwi/node-change/convert'
-import type { SceneGraph } from '#core/scene-graph'
-import { copyFills } from '#core/scene-graph/copy'
+import type { SceneGraph, SceneNode } from '#core/scene-graph'
+import { copyFills, copyStyleRuns } from '#core/scene-graph/copy'
 
 import { applyConstraintScaling } from './constraints'
 import { applyDerivedSymbolData } from './derived-symbol-data'
@@ -83,6 +83,55 @@ function propagateResolvedFills(
       if (!source || source.fills === node.fills) continue
       if (protectedNodes.has(node.id) && !protectedNodes.has(source.id)) continue
       graph.updateNode(node.id, { fills: copyFills(source.fills) })
+      changed = true
+    }
+    if (!changed) return
+  }
+}
+
+function propagateResolvedChildPlacementClones(graph: SceneGraph): void {
+  for (let pass = 0; pass < 10; pass++) {
+    let changed = false
+    for (const node of graph.getAllNodes()) {
+      if (node.type !== 'INSTANCE' || !node.componentId) continue
+      const source = graph.getNode(node.componentId)
+      if (!source || source.childIds.length !== node.childIds.length) continue
+      for (let i = 0; i < node.childIds.length; i++) {
+        const sourceChild = graph.getNode(source.childIds[i])
+        const child = graph.getNode(node.childIds[i])
+        if (!sourceChild || !child) continue
+        if (sourceChild.overrideKey && child.overrideKey && sourceChild.overrideKey !== child.overrideKey) {
+          continue
+        }
+        const updates: Partial<SceneNode> = {}
+        if (!sourceChild.visible && child.visible) updates.visible = false
+        if (sourceChild.x !== child.x) updates.x = sourceChild.x
+        if (sourceChild.y !== child.y) updates.y = sourceChild.y
+        if (Object.keys(updates).length === 0) continue
+        graph.updateNode(child.id, updates)
+        changed = true
+      }
+    }
+    if (!changed) return
+  }
+}
+
+function propagateResolvedTextClones(graph: SceneGraph): void {
+  for (let pass = 0; pass < 10; pass++) {
+    let changed = false
+    for (const node of graph.getAllNodes()) {
+      if (node.type !== 'TEXT' || !node.componentId) continue
+      const source = graph.getNode(node.componentId)
+      if (source?.type !== 'TEXT' || source.text !== node.text) continue
+      graph.updateNode(node.id, {
+        width: source.width,
+        height: source.height,
+        fills: copyFills(source.fills),
+        styleRuns: copyStyleRuns(source.styleRuns),
+        figmaDerivedTextGlyphs: source.figmaDerivedTextGlyphs
+          ? structuredClone(source.figmaDerivedTextGlyphs)
+          : undefined
+      })
       changed = true
     }
     if (!changed) return
@@ -213,6 +262,7 @@ export function populateAndApplyOverrides(
         ctx.protectedFields
       )
     }
+    propagateResolvedChildPlacementClones(graph)
   }
 
   applyDerivedSymbolData(ctx)
@@ -221,5 +271,6 @@ export function populateAndApplyOverrides(
     new Set([...ctx.kiwiPropertyNodes, ...overriddenNodes]),
     ctx.activeNodeIds
   )
+  propagateResolvedTextClones(graph)
   applyConstraintScaling(ctx)
 }

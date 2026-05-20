@@ -123,7 +123,7 @@ describe('derived instance layout regressions', () => {
     }
   })
 
-  test('propagates static icon color overrides with lazy first-page import', async () => {
+  test('propagates nested component overrides with lazy first-page import', async () => {
     const graph = await parseFigFile(readFixtureBytes('gold-preview.fig').buffer as ArrayBuffer, {
       populate: 'first-page'
     })
@@ -144,6 +144,27 @@ describe('derived instance layout regressions', () => {
 
       expect(vector?.strokes[0]?.color).toMatchObject({ r: 1, g: 1, b: 1, a: 1 })
     }
+
+    const dropzone = previewChild(graph, nodes, 'Drag’ n’ Drop File Uploads')
+    const dropzoneRoot = childNamed(graph, dropzone, '_drag-n-drop-file-upload')
+    const content = childNamed(graph, dropzoneRoot, 'Content')
+    const titleRow = childNamed(graph, content, 'Title')
+    const links = childNamed(graph, titleRow, 'Links')
+    const linkRoot = childNamed(graph, links, '_link-default')
+    const chevronLeft = childNamed(graph, linkRoot, 'chevron-left')
+    const placeholder = childNamed(graph, linkRoot, 'Placeholder')
+    const linkText = childNamed(graph, placeholder, 'Link')
+
+    expect(chevronLeft?.visible).toBe(false)
+    expect(placeholder?.x).toBeCloseTo(0, 3)
+    expect(linkText?.text).toBe('browse')
+    expect(linkText?.fills[0]?.color).toMatchObject({
+      r: 0.14509804546833038,
+      g: 0.38823530077934265,
+      b: 0.9215686321258545,
+      a: 1
+    })
+    expect(linkText?.figmaDerivedTextGlyphs?.length).toBeGreaterThan(0)
   })
 
   test('preserves WYSIWYG toolbar padding', () => {

@@ -6,6 +6,7 @@ import type {
   OverrideContext
 } from '#core/kiwi/instance-overrides/types'
 import { guidToString } from '#core/kiwi/node-change/convert'
+import { copyFills, copyStyleRuns } from '#core/scene-graph/copy'
 
 import { propTextCharacters } from './values'
 
@@ -42,12 +43,18 @@ function applyTextProp(
   const child = ctx.graph.getNode(childId)
   const text = propTextCharacters(val)
   if (text === undefined || child?.type !== 'TEXT') return
-  applyPatchAndMark(
-    ctx,
-    childId,
-    { targetId: childId, source: 'component-prop', props: { text } },
-    modified
-  )
+  const source = child.componentId ? ctx.graph.getNode(child.componentId) : null
+  const props: Parameters<typeof applyPatchAndMark>[2]['props'] = { text }
+  if (source?.type === 'TEXT' && source.text === text) {
+    props.width = source.width
+    props.height = source.height
+    props.fills = copyFills(source.fills)
+    props.styleRuns = copyStyleRuns(source.styleRuns)
+    props.figmaDerivedTextGlyphs = source.figmaDerivedTextGlyphs
+      ? structuredClone(source.figmaDerivedTextGlyphs)
+      : undefined
+  }
+  applyPatchAndMark(ctx, childId, { targetId: childId, source: 'component-prop', props }, modified)
 }
 
 function applySwapProp(
