@@ -35,6 +35,39 @@ describe('Renderer handles all effect types (Behavioral)', () => {
     expect(canvas.drawRect).toHaveBeenCalled()
   })
 
+  test('drop shadow follows stroke geometry when the node has no visible fill', () => {
+    const strokePath = { kind: 'stroke' }
+    const r = createMockRenderer({
+      getFillGeometry: mock(() => [{ kind: 'fill' }]),
+      getStrokeGeometry: mock(() => [strokePath])
+    })
+    const canvas = createMockCanvas()
+    const node: Partial<SceneNode> = {
+      type: 'RECTANGLE',
+      width: 100,
+      height: 100,
+      fills: [],
+      childIds: [],
+      strokeGeometry: [{ commandsBlob: new Uint8Array([0]) }],
+      effects: [
+        {
+          type: 'DROP_SHADOW',
+          visible: true,
+          color: { r: 0, g: 0, b: 0, a: 0.5 },
+          offset: { x: 0, y: 3 },
+          radius: 3,
+          spread: 0
+        }
+      ]
+    }
+
+    renderEffects(r, canvas as Canvas, node as SceneNode, new Float32Array(4), false, 'behind')
+
+    expect(r.getFillGeometry).not.toHaveBeenCalled()
+    expect(r.getStrokeGeometry).toHaveBeenCalledWith(node)
+    expect(canvas.drawPath).toHaveBeenCalledWith(strokePath, r.auxFill)
+  })
+
   test('handles INNER_SHADOW', () => {
     const r = createMockRenderer()
     const canvas = createMockCanvas()

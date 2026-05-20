@@ -46,12 +46,15 @@ function drawShapeDropShadow(
   const sp = effect.spread
   const shapeNode = shadowShapeChild ?? node
   const shapeHasRadius = shadowShapeChild ? nodeHasRadius(shadowShapeChild) : hasRadius
-  const geometryShadow = !shadowShapeChild
-    ? r.getFillGeometry(node) ??
-      (!node.fills.some((fill) => fill.visible) && node.strokeGeometry.length > 0
-        ? r.getStrokeGeometry(node)
-        : null)
-    : null
+  const hasVisibleFill = node.fills.some((fill) => fill.visible)
+  let geometryShadow = null
+  if (!shadowShapeChild) {
+    if (hasVisibleFill) {
+      geometryShadow = r.getFillGeometry(node)
+    } else if (node.strokeGeometry.length > 0) {
+      geometryShadow = r.getStrokeGeometry(node)
+    }
+  }
 
   r.auxFill.setColor(r.color4f(effect.color.r, effect.color.g, effect.color.b, effect.color.a))
   r.auxFill.setMaskFilter(r.getCachedMaskBlur(effect.radius / 2))
