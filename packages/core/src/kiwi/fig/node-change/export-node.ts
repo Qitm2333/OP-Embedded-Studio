@@ -1,3 +1,4 @@
+import { bytesToHex } from '#core/bytes/hex'
 import type { NodeChange, Paint } from '#core/kiwi/fig/codec'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import type { Color, GUID, Matrix, Vector } from '#core/types'
@@ -15,6 +16,7 @@ export type KiwiNodeChange = NodeChange & Record<string, unknown>
 interface SceneNodeToKiwiContext {
   graph: SceneGraph
   blobs: Uint8Array[]
+  blobIndexByHex?: Map<string, number>
   nodeIdToGuid?: Map<string, GUID>
   fontDigestMap?: Map<string, Uint8Array>
   glyphBlobMap?: Map<string, number>
@@ -125,25 +127,43 @@ function paintVariableKey(value: unknown): string | null {
     : null
 }
 
+interface MaterializeFigmaPayloadOptions {
+  blobIndexByHex?: Map<string, number>
+  includePaintVariables?: boolean
+  includeVariableMaps?: boolean
+  paintVariableColorMap?: Map<string, Color>
+}
+
+function materializeFigmaBlob(
+  value: { __openPencilFigmaBlob?: Uint8Array | Record<string, number> },
+  blobs: Uint8Array[],
+  options: MaterializeFigmaPayloadOptions
+): number {
+  const blob = value.__openPencilFigmaBlob
+  const bytes = blob instanceof Uint8Array ? blob : new Uint8Array(Object.values(blob ?? {}))
+  const key = bytesToHex(bytes)
+  const existing = options.blobIndexByHex?.get(key)
+  if (existing !== undefined) return existing
+  const index = blobs.length
+  blobs.push(bytes)
+  options.blobIndexByHex?.set(key, index)
+  return index
+}
+
 function materializeFigmaPayload(
   value: unknown,
   blobs: Uint8Array[],
-  options: {
-    includePaintVariables?: boolean
-    includeVariableMaps?: boolean
-    paintVariableColorMap?: Map<string, Color>
-  } = {}
+  options: MaterializeFigmaPayloadOptions = {}
 ): unknown {
   if (value instanceof Uint8Array) return value
   if (Array.isArray(value)) return value.map((item) => materializeFigmaPayload(item, blobs, options))
   if (!value || typeof value !== 'object') return value
   if ('__openPencilFigmaBlob' in value) {
-    const blob = (value as { __openPencilFigmaBlob?: Uint8Array | Record<string, number> })
-      .__openPencilFigmaBlob
-    const bytes = blob instanceof Uint8Array ? blob : new Uint8Array(Object.values(blob ?? {}))
-    const index = blobs.length
-    blobs.push(bytes)
-    return index
+    return materializeFigmaBlob(
+      value as { __openPencilFigmaBlob?: Uint8Array | Record<string, number> },
+      blobs,
+      options
+    )
   }
 
   const materialized: Record<string, unknown> = {}
@@ -237,7 +257,12 @@ function applyRawFigmaNodeFields(
   node: SceneNode,
   nc: KiwiNodeChange
 ): void {
-  Object.assign(nc, materializeFigmaPayload(node.figmaRawNodeFields, context.blobs))
+  Object.assign(
+    nc,
+    materializeFigmaPayload(node.figmaRawNodeFields, context.blobs, {
+      blobIndexByHex: context.blobIndexByHex
+    })
+  )
 }
 
 function applyInstancePayload(
@@ -256,6 +281,7 @@ function applyInstancePayload(
     const symbolData: Record<string, unknown> = { symbolID }
     if (node.figmaSymbolOverrides.length > 0) {
       symbolData.symbolOverrides = materializeFigmaPayload(node.figmaSymbolOverrides, context.blobs, {
+        blobIndexByHex: context.blobIndexByHex,
         includeVariableMaps: true,
         paintVariableColorMap: context.paintVariableColorMap
       })
@@ -269,11 +295,16 @@ function applyInstancePayload(
     nc.componentPropAssignments = materializeFigmaPayload(
       node.figmaComponentPropAssignments,
       context.blobs,
-      { includeVariableMaps: true, paintVariableColorMap: context.paintVariableColorMap }
+      {
+        blobIndexByHex: context.blobIndexByHex,
+        includeVariableMaps: true,
+        paintVariableColorMap: context.paintVariableColorMap
+      }
     )
   }
   if (node.figmaDerivedSymbolData.length > 0) {
     nc.derivedSymbolData = materializeFigmaPayload(node.figmaDerivedSymbolData, context.blobs, {
+      blobIndexByHex: context.blobIndexByHex,
       includeVariableMaps: true,
       paintVariableColorMap: context.paintVariableColorMap
     })
@@ -330,6 +361,24 @@ function exportNodeTransform(context: SceneNodeToKiwiContext, node: SceneNode): 
   return node.figmaRawTransform ? { ...node.figmaRawTransform } : context.computeExportTransform(node)
 }
 
+function hasRawGeometryPayload(node: SceneNode): boolean {
+  return 'fillGeometry' in node.figmaRawNodeFields || 'strokeGeometry' in node.figmaRawNodeFields
+}
+
+function hasRawVectorPayload(node: SceneNode): boolean {
+  return 'vectorData' in node.figmaRawNodeFields
+}
+
+function nodeForGeometryExport(node: SceneNode): SceneNode {
+  if (!hasRawGeometryPayload(node) && !hasRawVectorPayload(node)) return node
+  return {
+    ...node,
+    fillGeometry: hasRawGeometryPayload(node) ? [] : node.fillGeometry,
+    strokeGeometry: hasRawGeometryPayload(node) ? [] : node.strokeGeometry,
+    vectorNetwork: hasRawVectorPayload(node) ? null : node.vectorNetwork
+  }
+}
+
 function applyNodeVisualProps(
   context: SceneNodeToKiwiContext,
   node: SceneNode,
@@ -379,12 +428,12 @@ function applyNodeVisualProps(
     )
   }
 
-  nc.frameMaskDisabled = !node.clipsContent
+  if (node.type !== 'VECTOR') nc.frameMaskDisabled = !node.clipsContent
   if (node.horizontalConstraint !== 'MIN') nc.horizontalConstraint = node.horizontalConstraint
   if (node.verticalConstraint !== 'MIN') nc.verticalConstraint = node.verticalConstraint
   if (node.strokeCap !== 'NONE') nc.strokeCap = node.strokeCap
   if (node.strokeJoin !== 'MITER') nc.strokeJoin = node.strokeJoin
-  if (node.strokeMiterLimit !== 28.96) nc.miterLimit = node.strokeMiterLimit
+  if (!node.figmaGuid && node.strokeMiterLimit !== 28.96) nc.miterLimit = node.strokeMiterLimit
   if (node.dashPattern.length > 0) nc.dashPattern = node.dashPattern
   if (node.arcData) {
     nc.arcData = {
@@ -412,7 +461,10 @@ export function sceneNodeToKiwiWithContext(
 
   const nc: KiwiNodeChange = {
     guid,
-    parentIndex: { guid: parentGuid, position: context.fractionalPosition(childIndex) },
+    parentIndex: {
+      guid: parentGuid,
+      position: node.figmaParentIndexPosition ?? context.fractionalPosition(childIndex)
+    },
     type: context.mapToFigmaType(node.type),
     name: node.name,
     visible: node.visible,
@@ -432,7 +484,7 @@ export function sceneNodeToKiwiWithContext(
   if (strokePaints.length > 0) nc.strokePaints = strokePaints
 
   context.serializeLayoutProps(node, nc)
-  context.serializeGeometry(node, nc, context.blobs)
+  context.serializeGeometry(nodeForGeometryExport(node), nc, context.blobs)
   context.serializeVariableBindings(node, nc, context.graph, context.varIdToGuid)
   applyRawFigmaNodeFields(context, node, nc)
 

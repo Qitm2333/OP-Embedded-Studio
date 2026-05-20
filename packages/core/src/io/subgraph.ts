@@ -12,7 +12,7 @@ function cloneIntoGraph(source: SceneGraph, ids: Set<string>): SceneGraph {
   const graph = new SceneGraph()
   graph.rootId = source.rootId
   graph.nodes = new Map()
-  graph.images = new Map(source.images)
+  graph.images = new Map()
   graph.variables = new Map()
   graph.variableCollections = new Map()
   graph.activeMode = new Map(source.activeMode)
@@ -51,11 +51,11 @@ function cloneIntoGraph(source: SceneGraph, ids: Set<string>): SceneGraph {
     node.childIds = node.childIds.filter((childId) => ids.has(childId))
   }
 
-  const variableIds = new Set<string>()
-  for (const node of graph.nodes.values()) {
-    for (const variableId of Object.values(node.boundVariables)) {
-      collectVariableClosure(source, variableId, variableIds)
-    }
+  const { imageHashes, variableIds } = collectReferencedResources(source, graph)
+
+  for (const imageHash of imageHashes) {
+    const image = source.images.get(imageHash)
+    if (image) graph.images.set(imageHash, image)
   }
 
   for (const variableId of variableIds) {
@@ -76,6 +76,20 @@ function cloneIntoGraph(source: SceneGraph, ids: Set<string>): SceneGraph {
 
   graph.clearAbsPosCache()
   return graph
+}
+
+function collectReferencedResources(source: SceneGraph, graph: SceneGraph) {
+  const imageHashes = new Set<string>()
+  const variableIds = new Set<string>()
+  for (const node of graph.nodes.values()) {
+    for (const fill of node.fills) {
+      if (fill.type === 'IMAGE' && fill.imageHash) imageHashes.add(fill.imageHash)
+    }
+    for (const variableId of Object.values(node.boundVariables)) {
+      collectVariableClosure(source, variableId, variableIds)
+    }
+  }
+  return { imageHashes, variableIds }
 }
 
 function collectVariableClosure(source: SceneGraph, variableId: string, out: Set<string>) {

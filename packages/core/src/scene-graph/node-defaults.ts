@@ -50,6 +50,7 @@ export function createDefaultNode(
     letterSpacing: 0,
     layoutMode: 'NONE',
     figmaGuid: null,
+    figmaParentIndexPosition: null,
     figmaLayout: null,
     figmaSymbolOverrides: [],
     figmaComponentPropAssignments: [],

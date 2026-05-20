@@ -19,6 +19,21 @@ import type { VariableType, VariableValue } from '#core/scene-graph'
 type AssetRef = { key: string; version?: string }
 type AliasRef = { guid?: GUID; assetRef?: AssetRef }
 
+function applyImportedCanvasMetadata(page: ReturnType<SceneGraph['addPage']>, canvasNc: NodeChange) {
+  page.figmaParentIndexPosition = canvasNc.parentIndex?.position ?? null
+  if (canvasNc.backgroundColor) page.figmaRawNodeFields.backgroundColor = structuredClone(canvasNc.backgroundColor)
+  page.figmaRawNodeFields.strokeJoin = canvasNc.strokeJoin
+  page.figmaRawNodeFields.strokeWeight = canvasNc.strokeWeight
+  if (canvasNc.pageType) page.figmaRawNodeFields.pageType = canvasNc.pageType
+}
+
+function applyImportedDocumentMetadata(graph: SceneGraph, docNc: NodeChange | undefined) {
+  const rootNode = graph.getNode(graph.rootId)
+  if (!docNc || !rootNode) return
+  rootNode.figmaRawNodeFields.strokeJoin = docNc.strokeJoin
+  rootNode.figmaRawNodeFields.strokeWeight = docNc.strokeWeight
+}
+
 function assetRefKey(assetRef: AssetRef): string {
   return assetRef.version ? `${assetRef.key}@${assetRef.version}` : assetRef.key
 }
@@ -281,12 +296,15 @@ function importPages(
   }
 
   if (docId) {
+    applyImportedDocumentMetadata(graph, changeMap.get(docId))
+
     for (const canvasId of childrenMap.get(docId) ?? []) {
       const canvasNc = changeMap.get(canvasId)
       if (!canvasNc) continue
       if (canvasNc.type === 'CANVAS') {
         const page = graph.addPage(canvasNc.name ?? 'Page')
         page.figmaGuid = canvasId
+        applyImportedCanvasMetadata(page, canvasNc)
         canvasIdToPageId.set(canvasId, page.id)
         if (canvasNc.internalOnly) page.internalOnly = true
         created.add(canvasId)

@@ -345,7 +345,7 @@ function normalizeStackCounterAlign(value: string | undefined): string | undefin
 }
 
 function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
-  upsertPluginData(node, LAYOUT_DIRECTION_PLUGIN_KEY, node.layoutDirection)
+  if (!node.figmaGuid) upsertPluginData(node, LAYOUT_DIRECTION_PLUGIN_KEY, node.layoutDirection)
   const figmaLayout = node.figmaLayout
   if (figmaLayout) {
     nc.stackMode = normalizeStackMode(figmaLayout.stackMode)
@@ -497,11 +497,13 @@ export function sceneNodeToKiwi(
   fontDigestMap?: Map<string, Uint8Array>,
   varIdToGuid?: Map<string, GUID>,
   glyphBlobMap = new Map<string, number>(),
-  paintVariableColorMap?: Map<string, Color>
+  paintVariableColorMap?: Map<string, Color>,
+  blobIndexByHex?: Map<string, number>
 ): KiwiNodeChange[] {
   return sceneNodeToKiwiWithContext(node, parentGuid, childIndex, localIdCounter, {
     graph,
     blobs,
+    blobIndexByHex,
     nodeIdToGuid,
     fontDigestMap,
     glyphBlobMap,

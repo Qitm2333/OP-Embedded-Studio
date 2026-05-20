@@ -315,6 +315,7 @@ export interface SceneNode {
 
   layoutMode: LayoutMode
   figmaGuid: string | null
+  figmaParentIndexPosition: string | null
   figmaLayout: FigmaLayoutMetadata | null
   figmaSymbolOverrides: unknown[]
   figmaComponentPropAssignments: unknown[]

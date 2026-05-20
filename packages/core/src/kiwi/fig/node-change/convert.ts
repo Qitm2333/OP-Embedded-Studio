@@ -482,7 +482,7 @@ export function nodeChangeToProps(
   return {
     nodeType,
     name: nc.name ?? nodeType,
-    figmaGuid: nc.guid ? guidToString(nc.guid) : null,
+    ...extractFigmaNodeIdentity(nc),
     ...extractFigmaRawGeometry(nc, blobs),
     ...extractFigmaSymbolMetadata(nc, blobs),
     ...convertTransformProps(nc),
@@ -653,6 +653,13 @@ function isComponentSet(nc: NodeChange): boolean {
   return defs.some((d) => d.type === 'VARIANT')
 }
 
+function extractFigmaNodeIdentity(nc: NodeChange) {
+  return {
+    figmaGuid: nc.guid ? guidToString(nc.guid) : null,
+    figmaParentIndexPosition: nc.parentIndex?.position ?? null
+  }
+}
+
 export function sortChildren(
   children: string[],
   parentNc: NodeChange,
@@ -687,7 +694,7 @@ function preserveFigmaPayloadBlobs(value: unknown, blobs: Uint8Array[]): unknown
   if (!value || typeof value !== 'object') return value
   const result: Record<string, unknown> = {}
   for (const [key, child] of Object.entries(value)) {
-    if (key === 'commandsBlob' && typeof child === 'number') {
+    if ((key === 'commandsBlob' || key === 'vectorNetworkBlob') && typeof child === 'number') {
       const blob: unknown = blobs[child]
       result[key] = {
         __openPencilFigmaBlob:
@@ -718,9 +725,17 @@ const FIGMA_RAW_NODE_FIELD_KEYS = [
   'variableConsumptionMap',
   'parameterConsumptionMap',
   'editInfo',
+  'backgroundColor',
+  'pageType',
+  'guides',
   'miterLimit',
   'strokeWeight',
   'strokeJoin',
+  'borderStrokeWeightsIndependent',
+  'borderTopWeight',
+  'borderRightWeight',
+  'borderBottomWeight',
+  'borderLeftWeight',
   'textAutoResize',
   'textData',
   'lineHeight',
@@ -736,6 +751,7 @@ const FIGMA_RAW_NODE_FIELD_KEYS = [
   'fillPaints',
   'strokePaints',
   'effects',
+  'vectorData',
   'fillGeometry',
   'strokeGeometry'
 ]

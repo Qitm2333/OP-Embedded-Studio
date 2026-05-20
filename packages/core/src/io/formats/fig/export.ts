@@ -178,6 +178,14 @@ function appendVariablesForCollection(
   }
 }
 
+function applyImportedCanvasFields(page: FigExportPage, canvasNc: KiwiNodeChange): void {
+  if (!page.figmaGuid) return
+  if (!('pageType' in page.figmaRawNodeFields)) delete canvasNc.pageType
+  if ('backgroundColor' in page.figmaRawNodeFields) {
+    canvasNc.backgroundColor = structuredClone(page.figmaRawNodeFields.backgroundColor)
+  }
+}
+
 function buildCanvasEntries(
   graph: SceneGraph,
   pages: FigExportPage[],
@@ -195,11 +203,18 @@ function buildCanvasEntries(
     nodeIdToGuid.set(page.id, canvasGuid)
     if (page.internalOnly) internalCanvasGuid = canvasGuid
 
-    const canvasNc = makeCanvasNodeChange(canvasGuid, docGuid, fractionalPosition(p), page.name, {
-      backgroundOpacity: 1,
-      backgroundColor: { ...CANVAS_BG_COLOR },
-      backgroundEnabled: true
-    })
+    const canvasNc = makeCanvasNodeChange(
+      canvasGuid,
+      docGuid,
+      page.figmaParentIndexPosition ?? fractionalPosition(p),
+      page.name,
+      {
+        backgroundOpacity: 1,
+        backgroundColor: { ...CANVAS_BG_COLOR },
+        backgroundEnabled: true
+      }
+    )
+    applyImportedCanvasFields(page, canvasNc)
     if (page.internalOnly) canvasNc.internalOnly = true
     canvasEntries.push({ page, canvasGuid, canvasNc })
   }
@@ -236,7 +251,10 @@ export async function exportFigFile(
   const docGuid = { sessionID: 0, localID: 0 }
   const localIdCounter = { value: 2 }
 
-  const nodeChanges: KiwiNodeChange[] = [makeDocumentNodeChange(docGuid, graph.documentColorSpace)]
+  const documentNc = makeDocumentNodeChange(docGuid, graph.documentColorSpace)
+  const rootNode = graph.getNode(graph.rootId)
+  if (rootNode) Object.assign(documentNc, rootNode.figmaRawNodeFields)
+  const nodeChanges: KiwiNodeChange[] = [documentNc]
 
   const blobs: Uint8Array[] = []
   const pages = graph.getPages(true)
@@ -245,6 +263,7 @@ export async function exportFigFile(
   const modeIdToGuid = new Map<string, GUID>()
   const fontDigestMap = await buildFontDigestMap(graph)
   const glyphBlobMap = new Map<string, number>()
+  const blobIndexByHex = new Map<string, number>()
   const paintVariableColorMap = buildFigmaPaintVariableColorMap(graph)
 
   assignVariableGuids(graph, localIdCounter, varIdToGuid, modeIdToGuid)
@@ -278,7 +297,8 @@ export async function exportFigFile(
           fontDigestMap,
           varIdToGuid,
           glyphBlobMap,
-          paintVariableColorMap
+          paintVariableColorMap,
+          blobIndexByHex
         )
       )
     }
