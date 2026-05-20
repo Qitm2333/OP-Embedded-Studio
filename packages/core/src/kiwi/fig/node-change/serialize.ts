@@ -53,7 +53,7 @@ export function mapToFigmaType(type: SceneNode['type']): string {
     case 'COMPONENT':
       return 'SYMBOL'
     case 'COMPONENT_SET':
-      return 'SYMBOL'
+      return 'FRAME'
     case 'INSTANCE':
       return 'INSTANCE'
     case 'CONNECTOR':
@@ -250,21 +250,21 @@ function fillToKiwiPaint(f: SceneNode['fills'][number]): Paint {
 }
 
 function serializeCornerRadii(node: SceneNode, nc: KiwiNodeChange): void {
-  if (node.cornerRadius > 0 || node.independentCorners) {
+  const hasCornerRadius = node.independentCorners
+    ? node.topLeftRadius > 0 ||
+      node.topRightRadius > 0 ||
+      node.bottomLeftRadius > 0 ||
+      node.bottomRightRadius > 0
+    : node.cornerRadius > 0
+  if (hasCornerRadius) {
     nc.cornerRadius = node.cornerRadius
-    nc.rectangleCornerRadiiIndependent = node.independentCorners
-    nc.rectangleTopLeftCornerRadius = node.independentCorners
-      ? node.topLeftRadius
-      : node.cornerRadius
-    nc.rectangleTopRightCornerRadius = node.independentCorners
-      ? node.topRightRadius
-      : node.cornerRadius
-    nc.rectangleBottomLeftCornerRadius = node.independentCorners
-      ? node.bottomLeftRadius
-      : node.cornerRadius
-    nc.rectangleBottomRightCornerRadius = node.independentCorners
-      ? node.bottomRightRadius
-      : node.cornerRadius
+    if (node.independentCorners) {
+      nc.rectangleCornerRadiiIndependent = true
+      nc.rectangleTopLeftCornerRadius = node.topLeftRadius
+      nc.rectangleTopRightCornerRadius = node.topRightRadius
+      nc.rectangleBottomLeftCornerRadius = node.bottomLeftRadius
+      nc.rectangleBottomRightCornerRadius = node.bottomRightRadius
+    }
   }
   if (node.cornerSmoothing > 0) {
     nc.cornerSmoothing = node.cornerSmoothing

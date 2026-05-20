@@ -2147,6 +2147,10 @@ message SymbolId {
   GUID guid = 1;
 }
 
+message PropRefValue {
+  GUID defId = 1;
+}
+
 message VariableSetID {
   GUID guid = 1;
 }
@@ -2158,6 +2162,7 @@ message VariableAnyValue {
   VariableID alias = 4;
   Color colorValue = 5;
   SymbolId symbolIdValue = 8;
+  PropRefValue propRefValue = 13;
 }
 
 message VariableData {

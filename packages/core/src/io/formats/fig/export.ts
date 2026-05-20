@@ -29,6 +29,13 @@ const THUMBNAIL_1X1 = Uint8Array.from(
 )
 
 type KiwiNodeChange = NodeChange & Record<string, unknown>
+type FigExportPage = ReturnType<SceneGraph['getPages']>[number]
+
+interface CanvasExportEntry {
+  page: FigExportPage
+  canvasGuid: GUID
+  canvasNc: KiwiNodeChange
+}
 
 function variableValueToKiwi(
   value: VariableValue,
@@ -170,6 +177,50 @@ function appendVariablesForCollection(
   }
 }
 
+function buildCanvasEntries(
+  graph: SceneGraph,
+  pages: FigExportPage[],
+  docGuid: GUID,
+  localIdCounter: { value: number },
+  nodeIdToGuid: Map<string, GUID>
+): { canvasEntries: CanvasExportEntry[]; internalCanvasGuid: GUID | null } {
+  const canvasEntries: CanvasExportEntry[] = []
+  let internalCanvasGuid: GUID | null = null
+  for (let p = 0; p < pages.length; p++) {
+    const page = pages[p]
+    const canvasGuid = page.figmaGuid
+      ? stringToGuid(page.figmaGuid)
+      : { sessionID: 0, localID: localIdCounter.value++ }
+    nodeIdToGuid.set(page.id, canvasGuid)
+    if (page.internalOnly) internalCanvasGuid = canvasGuid
+
+    const canvasNc = makeCanvasNodeChange(canvasGuid, docGuid, fractionalPosition(p), page.name, {
+      backgroundOpacity: 1,
+      backgroundColor: { ...CANVAS_BG_COLOR },
+      backgroundEnabled: true
+    })
+    if (page.internalOnly) canvasNc.internalOnly = true
+    canvasEntries.push({ page, canvasGuid, canvasNc })
+  }
+
+  if (graph.variableCollections.size > 0 && internalCanvasGuid === null) {
+    internalCanvasGuid = { sessionID: 0, localID: localIdCounter.value++ }
+    canvasEntries.push({
+      page: { id: '', name: 'Internal Only Canvas', internalOnly: true } as FigExportPage,
+      canvasGuid: internalCanvasGuid,
+      canvasNc: makeCanvasNodeChange(
+        internalCanvasGuid,
+        docGuid,
+        fractionalPosition(canvasEntries.length),
+        'Internal Only Canvas',
+        { internalOnly: true }
+      )
+    })
+  }
+
+  return { canvasEntries, internalCanvasGuid }
+}
+
 export async function exportFigFile(
   graph: SceneGraph,
   ck?: CanvasKit,
@@ -193,25 +244,24 @@ export async function exportFigFile(
   const modeIdToGuid = new Map<string, GUID>()
   const fontDigestMap = await buildFontDigestMap(graph)
   const glyphBlobMap = new Map<string, number>()
-  let internalCanvasGuid: GUID | null = null
 
   assignVariableGuids(graph, localIdCounter, varIdToGuid, modeIdToGuid)
 
-  for (let p = 0; p < pages.length; p++) {
-    const page = pages[p]
-    const canvasLocalID = localIdCounter.value++
-    const canvasGuid = { sessionID: 0, localID: canvasLocalID }
+  const { canvasEntries, internalCanvasGuid } = buildCanvasEntries(
+    graph,
+    pages,
+    docGuid,
+    localIdCounter,
+    nodeIdToGuid
+  )
 
-    if (page.internalOnly) internalCanvasGuid = canvasGuid
+  for (const entry of canvasEntries) nodeChanges.push(entry.canvasNc)
 
-    const canvasNc = makeCanvasNodeChange(canvasGuid, docGuid, fractionalPosition(p), page.name, {
-      backgroundOpacity: 1,
-      backgroundColor: { ...CANVAS_BG_COLOR },
-      backgroundEnabled: true
-    })
-    if (page.internalOnly) canvasNc.internalOnly = true
-    nodeChanges.push(canvasNc)
-
+  const orderedCanvasEntries = [
+    ...canvasEntries.filter((entry) => entry.page.internalOnly),
+    ...canvasEntries.filter((entry) => !entry.page.internalOnly)
+  ]
+  for (const { page, canvasGuid } of orderedCanvasEntries) {
     const children = graph.getChildren(page.id).filter((child) => !child.internalOnly)
     for (let i = 0; i < children.length; i++) {
       nodeChanges.push(
@@ -231,21 +281,7 @@ export async function exportFigFile(
     }
   }
 
-  if (graph.variableCollections.size > 0) {
-    if (!internalCanvasGuid) {
-      const internalLocalID = localIdCounter.value++
-      internalCanvasGuid = { sessionID: 0, localID: internalLocalID }
-      nodeChanges.push(
-        makeCanvasNodeChange(
-          internalCanvasGuid,
-          docGuid,
-          fractionalPosition(pages.length),
-          'Internal Only Canvas',
-          { internalOnly: true }
-        )
-      )
-    }
-
+  if (graph.variableCollections.size > 0 && internalCanvasGuid) {
     appendVariableNodeChanges(graph, nodeChanges, internalCanvasGuid, varIdToGuid, modeIdToGuid)
   }
 

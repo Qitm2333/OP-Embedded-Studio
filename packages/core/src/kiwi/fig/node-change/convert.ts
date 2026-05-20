@@ -710,6 +710,8 @@ const FIGMA_RAW_NODE_FIELD_KEYS = [
   'componentPropRefs',
   'variantPropSpecs',
   'stateGroupPropertyValueOrders',
+  'isStateGroup',
+  'version',
   'sourceLibraryKey',
   'userFacingVersion',
   'sortPosition',

@@ -102,6 +102,19 @@ function parseGuidOrNull(value: string) {
 const FIGMA_PAYLOAD_VARIABLE_MAP_FIELDS = new Set(['variableConsumptionMap', 'parameterConsumptionMap'])
 const FIGMA_PAYLOAD_PAINT_VARIABLE_FIELDS = new Set(['colorVar', 'opacityVar'])
 
+function isPropRefVariableMapEntry(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const entry = value as { variableData?: { dataType?: string; value?: { propRefValue?: unknown } } }
+  return entry.variableData?.dataType === 'PROP_REF' || !!entry.variableData?.value?.propRefValue
+}
+
+function materializeSafeVariableMap(value: unknown, blobs: Uint8Array[]): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const entries = (value as { entries?: unknown[] }).entries?.filter(isPropRefVariableMapEntry) ?? []
+  if (entries.length === 0) return undefined
+  return { entries: entries.map((entry) => materializeFigmaPayload(entry, blobs)) }
+}
+
 function materializeFigmaPayload(
   value: unknown,
   blobs: Uint8Array[],
@@ -122,7 +135,11 @@ function materializeFigmaPayload(
   const materialized: Record<string, unknown> = {}
   for (const [key, child] of Object.entries(value)) {
     if (FIGMA_PAYLOAD_PAINT_VARIABLE_FIELDS.has(key)) continue
-    if (!options.includeVariableMaps && FIGMA_PAYLOAD_VARIABLE_MAP_FIELDS.has(key)) continue
+    if (!options.includeVariableMaps && FIGMA_PAYLOAD_VARIABLE_MAP_FIELDS.has(key)) {
+      const variableMap = materializeSafeVariableMap(child, blobs)
+      if (variableMap !== undefined) materialized[key] = variableMap
+      continue
+    }
     materialized[key] = materializeFigmaPayload(child, blobs, options)
   }
   return materialized
@@ -213,8 +230,8 @@ function applyComponentMetadata(node: SceneNode, nc: KiwiNodeChange): void {
   if (overrideKey) nc.overrideKey = overrideKey
   if (node.sharedSymbolVersion) nc.sharedSymbolVersion = node.sharedSymbolVersion
   if (node.publishedVersion) nc.publishedVersion = node.publishedVersion
-  if (node.isPublishable) nc.isPublishable = true
-  if (node.type === 'COMPONENT' || node.type === 'COMPONENT_SET' || node.isSymbolPublishable) {
+  if (node.type === 'COMPONENT_SET' || node.isPublishable) nc.isPublishable = node.isPublishable
+  if (node.type === 'COMPONENT' || node.isSymbolPublishable) {
     nc.isSymbolPublishable = node.isSymbolPublishable
   }
   if (node.symbolDescription) nc.symbolDescription = node.symbolDescription
