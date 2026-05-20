@@ -279,7 +279,10 @@ export function sceneNodeToKiwiWithContext(
   }
 
   const result: KiwiNodeChange[] = [nc]
-  const children = context.graph.getChildren(node.id).filter((child) => !child.internalOnly)
+  const children =
+    node.type === 'INSTANCE'
+      ? []
+      : context.graph.getChildren(node.id).filter((child) => !child.internalOnly)
   for (let i = 0; i < children.length; i++) {
     result.push(...context.sceneNodeToKiwi(children[i], guid, i, localIdCounter, context))
   }

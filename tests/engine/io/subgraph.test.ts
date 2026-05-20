@@ -56,7 +56,7 @@ describe('export subgraph extraction', () => {
     expect(extracted.graph.getNode(libraryPage.id)?.type).toBe('CANVAS')
   })
 
-  test('fig page export preserves valid instance component references', async () => {
+  test('fig page export preserves valid instance component references without serializing instance children', async () => {
     await initCodec()
     const graph = new SceneGraph()
     const page = graph.getPages()[0]
@@ -79,5 +79,12 @@ describe('export subgraph extraction', () => {
     expect(parsedInstance?.type).toBe('INSTANCE')
     expect(parsedInstance?.componentId).toBeTruthy()
     expect(parsed.getNode(parsedInstance?.componentId ?? '')?.type).toBe('COMPONENT')
+
+    const exportedAgain = await exportFigFile(extracted.graph)
+    const reparsed = await parseFigFile(exportedAgain.buffer as ArrayBuffer)
+    const reparsedInstance = [...reparsed.getAllNodes()].find(
+      (node) => node.type === 'INSTANCE' && node.name === instance.name
+    )
+    expect(reparsedInstance?.childIds).toEqual([])
   })
 })

@@ -56,9 +56,8 @@ describe('roundtrip: text glyph blobs', () => {
     const output = countGlyphBlobs(exported)
 
     expect(input.glyphsWithBlob).toBeGreaterThan(0)
-    expect(output.glyphsWithBlob).toBeGreaterThan(0)
-    expect(output.uniqueGlyphBlobs).toBeLessThan(output.glyphsWithBlob / 100)
-    expect(output.uniqueGlyphBlobs).toBeLessThanOrEqual(input.uniqueGlyphBlobs + 20)
+    expect(output.glyphsWithBlob).toBe(input.glyphsWithBlob)
+    expect(output.uniqueGlyphBlobs).toBeLessThanOrEqual(input.uniqueGlyphBlobs)
   })
 
   test('deduplicates generated glyph blobs across repeated text', async () => {
