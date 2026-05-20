@@ -1528,8 +1528,10 @@ message NodeChange {
   VariableScope[] variableScopes = 353;
   DerivedTextData derivedTextData = 359;
   EmojiImageSet emojiImageSet = 391;
+  string sourceLibraryKey = 395;
   uint textExplicitLayoutVersion = 396;
   EditorType pageType = 397;
+  string userFacingVersion = 399;
   VariableDataMap parameterConsumptionMap = 445;
   Paint[] textDecorationFillPaints = 411;
   bool textDecorationSkipInk = 412;
@@ -1541,6 +1543,7 @@ message NodeChange {
   float gridColumnGap = 438;
   GridTrackSize[] gridColumnSizes = 474;
   GridTrackSize[] gridRowSizes = 475;
+  VariantPropSpec[] variantPropSpecs = 483;
   StackWrap stackWrap = 476;
   float stackCounterSpacing = 477;
 }
@@ -1582,6 +1585,11 @@ message ComponentPropRef {
   bool isDeleted = 5;
 }
 
+message VariantPropSpec {
+  GUID propDefId = 1;
+  string value = 2;
+}
+
 enum ComponentPropNodeField {
   VISIBLE = 0;
   TEXT_DATA = 1;
@@ -1617,6 +1625,19 @@ enum ComponentPropType {
   TEXT = 1;
   COLOR = 2;
   INSTANCE_SWAP = 3;
+  VARIANT = 4;
+  NUMBER = 5;
+  IMAGE = 6;
+  SLOT = 7;
+  EASING = 8;
+  COLOR_ARRAY = 9;
+  VECTOR = 10;
+  LINE = 11;
+  CIRCLE = 12;
+  ROTATION_3D = 13;
+  CIRCLE_POINT = 14;
+  GRADIENT = 15;
+  COLOR_POINT = 16;
 }
 
 message ComponentPropPreferredValues {
