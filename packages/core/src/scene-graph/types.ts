@@ -314,6 +314,8 @@ export interface SceneNode {
   figmaGuid: string | null
   figmaLayout: FigmaLayoutMetadata | null
   figmaSymbolOverrides: unknown[]
+  figmaDerivedSymbolData: unknown[]
+  figmaDerivedSymbolDataLayoutVersion: number | null
   figmaUniformScaleFactor: number | null
   layoutDirection: LayoutDirection
   layoutWrap: LayoutWrap

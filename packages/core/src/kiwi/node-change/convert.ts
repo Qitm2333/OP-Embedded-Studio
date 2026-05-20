@@ -483,7 +483,7 @@ export function nodeChangeToProps(
     nodeType,
     name: nc.name ?? nodeType,
     figmaGuid: nc.guid ? guidToString(nc.guid) : null,
-    ...extractFigmaSymbolMetadata(nc),
+    ...extractFigmaSymbolMetadata(nc, blobs),
     ...convertTransformProps(nc),
     opacity: nc.opacity ?? 1,
     visible: nc.visible ?? true,
@@ -676,14 +676,46 @@ export function sortChildren(
   }
 }
 
+interface PreservedFigmaBlob {
+  __openPencilFigmaBlob: Uint8Array
+}
+
+function preserveFigmaPayloadBlobs(value: unknown, blobs: Uint8Array[]): unknown {
+  if (Array.isArray(value)) return value.map((item) => preserveFigmaPayloadBlobs(item, blobs))
+  if (!value || typeof value !== 'object') return value
+  const result: Record<string, unknown> = {}
+  for (const [key, child] of Object.entries(value)) {
+    if (key === 'commandsBlob' && typeof child === 'number') {
+      const blob: unknown = blobs[child]
+      result[key] = {
+        __openPencilFigmaBlob:
+          blob instanceof Uint8Array ? blob : new Uint8Array(Object.values(blob as Record<string, number>))
+      } satisfies PreservedFigmaBlob
+    } else {
+      result[key] = preserveFigmaPayloadBlobs(child, blobs)
+    }
+  }
+  return result
+}
+
 function extractFigmaSymbolMetadata(
-  nc: NodeChange
-): Pick<SceneNode, 'figmaSymbolOverrides' | 'figmaUniformScaleFactor'> {
+  nc: NodeChange,
+  blobs: Uint8Array[]
+): Pick<
+  SceneNode,
+  | 'figmaSymbolOverrides'
+  | 'figmaDerivedSymbolData'
+  | 'figmaDerivedSymbolDataLayoutVersion'
+  | 'figmaUniformScaleFactor'
+> {
   const sd = nc.symbolData as
     | { symbolOverrides?: unknown[]; uniformScaleFactor?: number }
     | undefined
   return {
-    figmaSymbolOverrides: structuredClone(sd?.symbolOverrides ?? []),
+    figmaSymbolOverrides: preserveFigmaPayloadBlobs(sd?.symbolOverrides ?? [], blobs) as unknown[],
+    figmaDerivedSymbolData: preserveFigmaPayloadBlobs(nc.derivedSymbolData ?? [], blobs) as unknown[],
+    figmaDerivedSymbolDataLayoutVersion:
+      typeof nc.derivedSymbolDataLayoutVersion === 'number' ? nc.derivedSymbolDataLayoutVersion : null,
     figmaUniformScaleFactor: typeof sd?.uniformScaleFactor === 'number' ? sd.uniformScaleFactor : null
   }
 }

@@ -49,6 +49,8 @@ export function createDefaultNode(
     figmaGuid: null,
     figmaLayout: null,
     figmaSymbolOverrides: [],
+    figmaDerivedSymbolData: [],
+    figmaDerivedSymbolDataLayoutVersion: null,
     figmaUniformScaleFactor: null,
     layoutDirection: 'AUTO',
     layoutWrap: 'NO_WRAP',

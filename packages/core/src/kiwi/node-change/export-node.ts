@@ -99,15 +99,26 @@ function parseGuidOrNull(value: string) {
   return /^\d+:\d+$/.test(value) ? stringToGuid(value) : null
 }
 
-function sanitizeSymbolOverride(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(sanitizeSymbolOverride)
+function materializeFigmaPayload(value: unknown, blobs: Uint8Array[]): unknown {
+  if (Array.isArray(value)) return value.map((item) => materializeFigmaPayload(item, blobs))
   if (!value || typeof value !== 'object') return value
-  const sanitized: Record<string, unknown> = {}
-  for (const [key, child] of Object.entries(value)) {
-    if (key === 'variableConsumptionMap' || key === 'parameterConsumptionMap') continue
-    sanitized[key] = sanitizeSymbolOverride(child)
+  if ('__openPencilFigmaBlob' in value) {
+    const blob = (value as { __openPencilFigmaBlob?: Uint8Array | Record<string, number> })
+      .__openPencilFigmaBlob
+    const bytes = blob instanceof Uint8Array ? blob : new Uint8Array(Object.values(blob ?? {}))
+    const index = blobs.length
+    blobs.push(bytes)
+    return index
   }
-  return sanitized
+
+  const materialized: Record<string, unknown> = {}
+  for (const [key, child] of Object.entries(value)) {
+    if (key === 'variableConsumptionMap' || key === 'parameterConsumptionMap' || key === 'fontMetaData') {
+      continue
+    }
+    materialized[key] = materializeFigmaPayload(child, blobs)
+  }
+  return materialized
 }
 
 function resolveInstanceComponentId(context: SceneNodeToKiwiContext, componentId: string): string {
@@ -279,12 +290,18 @@ export function sceneNodeToKiwiWithContext(
     if (symbolID) {
       const symbolData: Record<string, unknown> = { symbolID }
       if (node.figmaSymbolOverrides.length > 0) {
-        symbolData.symbolOverrides = sanitizeSymbolOverride(node.figmaSymbolOverrides)
+        symbolData.symbolOverrides = materializeFigmaPayload(node.figmaSymbolOverrides, context.blobs)
       }
       if (node.figmaUniformScaleFactor != null) {
         symbolData.uniformScaleFactor = node.figmaUniformScaleFactor
       }
       nc.symbolData = symbolData as KiwiNodeChange['symbolData']
+    }
+    if (node.figmaDerivedSymbolData.length > 0) {
+      nc.derivedSymbolData = materializeFigmaPayload(node.figmaDerivedSymbolData, context.blobs)
+    }
+    if (node.figmaDerivedSymbolDataLayoutVersion != null) {
+      nc.derivedSymbolDataLayoutVersion = node.figmaDerivedSymbolDataLayoutVersion
     }
   }
   if (node.type === 'COMPONENT_SET') upsertPluginData(node, NODE_TYPE_PLUGIN_KEY, node.type)
