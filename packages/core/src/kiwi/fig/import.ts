@@ -286,6 +286,7 @@ function importPages(
       if (!canvasNc) continue
       if (canvasNc.type === 'CANVAS') {
         const page = graph.addPage(canvasNc.name ?? 'Page')
+        page.figmaGuid = canvasId
         canvasIdToPageId.set(canvasId, page.id)
         if (canvasNc.internalOnly) page.internalOnly = true
         created.add(canvasId)
