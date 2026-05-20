@@ -82,6 +82,21 @@ function collectImageEntries(graph: SceneGraph): Array<{ name: string; data: Uin
 const THUMBNAIL_WIDTH = 400
 const THUMBNAIL_HEIGHT = 225
 
+async function renderFigThumbnail(
+  graph: SceneGraph,
+  pageId: string | undefined,
+  ck?: CanvasKit,
+  renderer?: SkiaRenderer
+): Promise<Uint8Array> {
+  if (!pageId) return THUMBNAIL_1X1
+  if (ck && renderer) {
+    return renderThumbnail(ck, renderer, graph, pageId, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT) ?? THUMBNAIL_1X1
+  }
+  if (IS_BROWSER || IS_TAURI) return THUMBNAIL_1X1
+  const { headlessRenderThumbnail } = await import('#core/io/formats/raster')
+  return (await headlessRenderThumbnail(graph, pageId, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)) ?? THUMBNAIL_1X1
+}
+
 function assignVariableGuids(
   graph: SceneGraph,
   localIdCounter: { value: number },
@@ -326,10 +341,7 @@ export async function exportFigFile(
   const kiwiData = compiled.encodeMessage(msg)
 
   const currentPageId = pageId ?? pages[0]?.id
-  const thumbnailPng =
-    (ck && renderer && currentPageId
-      ? renderThumbnail(ck, renderer, graph, currentPageId, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
-      : null) ?? THUMBNAIL_1X1
+  const thumbnailPng = await renderFigThumbnail(graph, currentPageId, ck, renderer)
 
   const metaJson = JSON.stringify({
     version: 1,
