@@ -1,6 +1,7 @@
 import type { Canvas, Image as CKImage, Surface } from 'canvaskit-wasm'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
+import { clearSubtreePictureCache } from '#core/canvas/renderer/state'
 import { computeDescendantVisualBounds } from '#core/geometry'
 import type { SceneGraph } from '#core/scene-graph'
 
@@ -163,12 +164,31 @@ function createSceneBackingSurface(r: SkiaRenderer, width: number, height: numbe
   })
 }
 
+function ensureSubtreePictureCacheScope(
+  r: SkiaRenderer,
+  graph: SceneGraph,
+  sceneVersion: number
+): void {
+  if (
+    r.subtreePictureCachePageId === r.pageId &&
+    r.subtreePictureCacheSceneVersion === sceneVersion &&
+    r.subtreePictureCachePositionPreviewVersion === graph.positionPreviewVersion
+  ) {
+    return
+  }
+  clearSubtreePictureCache(r)
+  r.subtreePictureCachePageId = r.pageId
+  r.subtreePictureCacheSceneVersion = sceneVersion
+  r.subtreePictureCachePositionPreviewVersion = graph.positionPreviewVersion
+}
+
 function cachedSubtreePicture(
   r: SkiaRenderer,
   graph: SceneGraph,
   childId: string,
   sceneVersion: number
 ) {
+  ensureSubtreePictureCacheScope(r, graph, sceneVersion)
   const cached = r.subtreePictureCache.get(childId)
   if (
     cached &&

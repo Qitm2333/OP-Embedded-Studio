@@ -131,6 +131,9 @@ export class SkiaRenderer {
   lastSceneViewport: { panX: number; panY: number; zoom: number } | null = null
   nodePictureCache = new Map<string, SkPicture | null>()
   subtreePictureCache = new Map<string, SubtreePictureCacheEntry>()
+  subtreePictureCachePageId: string | null = null
+  subtreePictureCacheSceneVersion = -1
+  subtreePictureCachePositionPreviewVersion = -1
   readonly labelCache = new LabelCache()
   readonly profiler: RenderProfiler
 
