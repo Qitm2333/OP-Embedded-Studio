@@ -101,7 +101,9 @@ function parseGuidOrNull(value: string) {
 
 const FIGMA_PAYLOAD_FIELDS_UNSAFE_FOR_EXPORT = new Set([
   'variableConsumptionMap',
-  'parameterConsumptionMap'
+  'parameterConsumptionMap',
+  'colorVar',
+  'opacityVar'
 ])
 
 function materializeFigmaPayload(value: unknown, blobs: Uint8Array[]): unknown {
