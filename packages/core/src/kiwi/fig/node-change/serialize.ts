@@ -496,7 +496,8 @@ export function sceneNodeToKiwi(
   nodeIdToGuid?: Map<string, GUID>,
   fontDigestMap?: Map<string, Uint8Array>,
   varIdToGuid?: Map<string, GUID>,
-  glyphBlobMap = new Map<string, number>()
+  glyphBlobMap = new Map<string, number>(),
+  paintVariableColorMap?: Map<string, Color>
 ): KiwiNodeChange[] {
   return sceneNodeToKiwiWithContext(node, parentGuid, childIndex, localIdCounter, {
     graph,
@@ -505,6 +506,7 @@ export function sceneNodeToKiwi(
     fontDigestMap,
     glyphBlobMap,
     varIdToGuid,
+    paintVariableColorMap,
     fractionalPosition,
     mapToFigmaType,
     fillToKiwiPaint,

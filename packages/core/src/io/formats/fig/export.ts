@@ -8,6 +8,7 @@ import { populateAllLazyFigImportRoots } from '#core/kiwi/fig/lazy-import'
 import { initCodec, getCompiledSchema, getSchemaBytes } from '#core/kiwi/fig/codec'
 import type { NodeChange } from '#core/kiwi/fig/codec'
 import { stringToGuid } from '#core/kiwi/fig/node-change/convert'
+import { buildFigmaPaintVariableColorMap } from '#core/kiwi/fig/node-change/export-node'
 import {
   sceneNodeToKiwi,
   fractionalPosition,
@@ -244,6 +245,7 @@ export async function exportFigFile(
   const modeIdToGuid = new Map<string, GUID>()
   const fontDigestMap = await buildFontDigestMap(graph)
   const glyphBlobMap = new Map<string, number>()
+  const paintVariableColorMap = buildFigmaPaintVariableColorMap(graph)
 
   assignVariableGuids(graph, localIdCounter, varIdToGuid, modeIdToGuid)
 
@@ -275,7 +277,8 @@ export async function exportFigFile(
           nodeIdToGuid,
           fontDigestMap,
           varIdToGuid,
-          glyphBlobMap
+          glyphBlobMap,
+          paintVariableColorMap
         )
       )
     }

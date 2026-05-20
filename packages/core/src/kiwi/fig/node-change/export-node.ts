@@ -19,6 +19,7 @@ interface SceneNodeToKiwiContext {
   fontDigestMap?: Map<string, Uint8Array>
   glyphBlobMap?: Map<string, number>
   varIdToGuid?: Map<string, GUID>
+  paintVariableColorMap?: Map<string, Color>
   fractionalPosition: (index: number) => string
   mapToFigmaType: (type: SceneNode['type']) => string
   fillToKiwiPaint: (fill: SceneNode['fills'][number]) => Paint
@@ -115,10 +116,23 @@ function materializeSafeVariableMap(value: unknown, blobs: Uint8Array[]): unknow
   return { entries: entries.map((entry) => materializeFigmaPayload(entry, blobs)) }
 }
 
+function paintVariableKey(value: unknown): string | null {
+  if (!value || typeof value !== 'object') return null
+  const assetRef = (value as { value?: { alias?: { assetRef?: { key?: unknown; version?: unknown } } } })
+    .value?.alias?.assetRef
+  return typeof assetRef?.key === 'string'
+    ? `${assetRef.key}:${typeof assetRef.version === 'string' ? assetRef.version : ''}`
+    : null
+}
+
 function materializeFigmaPayload(
   value: unknown,
   blobs: Uint8Array[],
-  options: { includeVariableMaps?: boolean } = {}
+  options: {
+    includePaintVariables?: boolean
+    includeVariableMaps?: boolean
+    paintVariableColorMap?: Map<string, Color>
+  } = {}
 ): unknown {
   if (value instanceof Uint8Array) return value
   if (Array.isArray(value)) return value.map((item) => materializeFigmaPayload(item, blobs, options))
@@ -133,8 +147,11 @@ function materializeFigmaPayload(
   }
 
   const materialized: Record<string, unknown> = {}
+  const paintVariableColor = options.paintVariableColorMap?.get(
+    paintVariableKey((value as { colorVar?: unknown }).colorVar) ?? ''
+  )
   for (const [key, child] of Object.entries(value)) {
-    if (FIGMA_PAYLOAD_PAINT_VARIABLE_FIELDS.has(key)) continue
+    if (FIGMA_PAYLOAD_PAINT_VARIABLE_FIELDS.has(key) && !options.includePaintVariables) continue
     if (!options.includeVariableMaps && FIGMA_PAYLOAD_VARIABLE_MAP_FIELDS.has(key)) {
       const variableMap = materializeSafeVariableMap(child, blobs)
       if (variableMap !== undefined) materialized[key] = variableMap
@@ -142,7 +159,50 @@ function materializeFigmaPayload(
     }
     materialized[key] = materializeFigmaPayload(child, blobs, options)
   }
+  if (paintVariableColor) materialized.color = paintVariableColor
   return materialized
+}
+
+function collectPaintVariableColorCounts(
+  value: unknown,
+  counts: Map<string, Map<string, { color: Color; count: number }>>
+): void {
+  if (!value || typeof value !== 'object') return
+  if (Array.isArray(value)) {
+    for (const item of value) collectPaintVariableColorCounts(item, counts)
+    return
+  }
+
+  const paint = value as { color?: Color; colorVar?: unknown }
+  const key = paintVariableKey(paint.colorVar)
+  if (key && paint.color) {
+    const colorKey = [paint.color.r, paint.color.g, paint.color.b, paint.color.a]
+      .map((component) => Math.round(component * 255))
+      .join(',')
+    const colorCounts = counts.get(key) ?? new Map<string, { color: Color; count: number }>()
+    const current = colorCounts.get(colorKey)
+    colorCounts.set(colorKey, { color: paint.color, count: (current?.count ?? 0) + 1 })
+    counts.set(key, colorCounts)
+  }
+
+  for (const child of Object.values(value)) collectPaintVariableColorCounts(child, counts)
+}
+
+export function buildFigmaPaintVariableColorMap(graph: SceneGraph): Map<string, Color> {
+  const counts = new Map<string, Map<string, { color: Color; count: number }>>()
+  for (const node of graph.nodes.values()) {
+    collectPaintVariableColorCounts(node.figmaRawNodeFields, counts)
+    collectPaintVariableColorCounts(node.figmaSymbolOverrides, counts)
+    collectPaintVariableColorCounts(node.figmaComponentPropAssignments, counts)
+    collectPaintVariableColorCounts(node.figmaDerivedSymbolData, counts)
+  }
+
+  const colors = new Map<string, Color>()
+  for (const [key, colorCounts] of counts) {
+    const [mostCommon] = [...colorCounts.values()].sort((a, b) => b.count - a.count)
+    colors.set(key, mostCommon.color)
+  }
+  return colors
 }
 
 function resolveInstanceComponentId(context: SceneNodeToKiwiContext, componentId: string): string {
@@ -196,7 +256,8 @@ function applyInstancePayload(
     const symbolData: Record<string, unknown> = { symbolID }
     if (node.figmaSymbolOverrides.length > 0) {
       symbolData.symbolOverrides = materializeFigmaPayload(node.figmaSymbolOverrides, context.blobs, {
-        includeVariableMaps: true
+        includeVariableMaps: true,
+        paintVariableColorMap: context.paintVariableColorMap
       })
     }
     if (node.figmaUniformScaleFactor != null) {
@@ -208,12 +269,13 @@ function applyInstancePayload(
     nc.componentPropAssignments = materializeFigmaPayload(
       node.figmaComponentPropAssignments,
       context.blobs,
-      { includeVariableMaps: true }
+      { includeVariableMaps: true, paintVariableColorMap: context.paintVariableColorMap }
     )
   }
   if (node.figmaDerivedSymbolData.length > 0) {
     nc.derivedSymbolData = materializeFigmaPayload(node.figmaDerivedSymbolData, context.blobs, {
-      includeVariableMaps: true
+      includeVariableMaps: true,
+      paintVariableColorMap: context.paintVariableColorMap
     })
   }
   if (node.figmaDerivedSymbolDataLayoutVersion != null) {
