@@ -74,6 +74,9 @@ describe('RTL auto-layout input', () => {
       startY: 40,
       currentX: 100,
       currentY: 40,
+      startScreenX: 100,
+      startScreenY: 40,
+      dragStarted: true,
       originals: new Map([[second.id, { x: second.x, y: second.y, parentId: frame.id }]]),
       autoLayoutParentId: frame.id
     }

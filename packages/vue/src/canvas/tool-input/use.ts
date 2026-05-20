@@ -13,6 +13,8 @@ type ToolMouseDownOptions = {
   event: MouseEvent
   cx: number
   cy: number
+  sx: number
+  sy: number
   editor: Editor
   hitFns: HitTestFns
   cursorOverride: Ref<string | null>
@@ -27,6 +29,8 @@ export function handleToolMouseDown({
   event,
   cx,
   cy,
+  sx,
+  sy,
   editor,
   hitFns,
   cursorOverride,
@@ -42,7 +46,7 @@ export function handleToolMouseDown({
   }
 
   if (tool === 'SELECT') {
-    handleSelectDown(event, cx, cy, editor, hitFns, tryStartRotation, handleTextEditClick, setDrag)
+    handleSelectDown(event, cx, cy, sx, sy, editor, hitFns, tryStartRotation, handleTextEditClick, setDrag)
     return
   }
 

@@ -12,6 +12,7 @@ import type { DragMove } from '#vue/shared/input/types'
 
 const AUTO_LAYOUT_REORDER_CLICK_SLOP = 3
 const AUTO_LAYOUT_CROSS_AXIS_DRAG_TOLERANCE = 96
+export const MOVE_DRAG_START_THRESHOLD_PX = 3
 
 function isInsideAutoLayoutDragBounds(parentId: string, cx: number, cy: number, editor: Editor) {
   const parent = editor.graph.getNode(parentId)
@@ -44,9 +45,27 @@ export function detectAutoLayoutParent(editor: Editor): string | undefined {
   return undefined
 }
 
-export function handleMoveMove(d: DragMove, cx: number, cy: number, editor: Editor) {
+function isPastDragStartThreshold(d: DragMove, sx: number, sy: number) {
+  const dx = sx - d.startScreenX
+  const dy = sy - d.startScreenY
+  return dx * dx + dy * dy >= MOVE_DRAG_START_THRESHOLD_PX * MOVE_DRAG_START_THRESHOLD_PX
+}
+
+export function handleMoveMove(
+  d: DragMove,
+  cx: number,
+  cy: number,
+  sx: number,
+  sy: number,
+  editor: Editor
+) {
   d.currentX = cx
   d.currentY = cy
+
+  if (!d.dragStarted) {
+    if (!isPastDragStartThreshold(d, sx, sy)) return
+    d.dragStarted = true
+  }
 
   let dx = cx - d.startX
   let dy = cy - d.startY
@@ -113,6 +132,13 @@ function applyFinalPositions(d: DragMove, editor: Editor) {
 }
 
 export function handleMoveUp(d: DragMove, editor: Editor) {
+  if (!d.dragStarted) {
+    editor.setLayoutInsertIndicator(null)
+    editor.setSnapGuides([])
+    editor.setDropTarget(null)
+    return
+  }
+
   const indicator = editor.state.layoutInsertIndicator
   editor.setLayoutInsertIndicator(null)
   editor.setSnapGuides([])
