@@ -1520,6 +1520,8 @@ message NodeChange {
   VariableSetID variableSetID = 313;
   VariableResolvedDataType variableResolvedType = 314;
   VariableDataValues variableDataValues = 315;
+  StackWrap stackWrap = 323;
+  float stackCounterSpacing = 324;
   VariableScope[] variableScopes = 353;
   DerivedTextData derivedTextData = 359;
   EmojiImageSet emojiImageSet = 391;
@@ -1535,8 +1537,6 @@ message NodeChange {
   float gridColumnGap = 438;
   GridTrackSize[] gridColumnSizes = 474;
   GridTrackSize[] gridRowSizes = 475;
-  StackWrap stackWrap = 323;
-  float stackCounterSpacing = 324;
 }
 
 message VideoPlayback {
