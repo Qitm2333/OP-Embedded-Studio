@@ -1196,6 +1196,13 @@ message WidgetPointer {
   GUID nodeId = 1;
 }
 
+message EditInfo {
+  string timestampIso8601 = 1;
+  string userId = 2;
+  uint lastEditedAt = 3;
+  uint createdAt = 4;
+}
+
 enum EditorType {
   DESIGN = 0;
   WHITEBOARD = 1;
@@ -1525,6 +1532,7 @@ message NodeChange {
   VariableSetID variableSetID = 313;
   VariableResolvedDataType variableResolvedType = 314;
   VariableDataValues variableDataValues = 315;
+  EditInfo editInfo = 331;
   VariableScope[] variableScopes = 353;
   DerivedTextData derivedTextData = 359;
   EmojiImageSet emojiImageSet = 391;

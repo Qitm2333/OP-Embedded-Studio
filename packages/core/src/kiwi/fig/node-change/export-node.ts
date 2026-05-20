@@ -214,7 +214,9 @@ function applyComponentMetadata(node: SceneNode, nc: KiwiNodeChange): void {
   if (node.sharedSymbolVersion) nc.sharedSymbolVersion = node.sharedSymbolVersion
   if (node.publishedVersion) nc.publishedVersion = node.publishedVersion
   if (node.isPublishable) nc.isPublishable = true
-  if (node.isSymbolPublishable) nc.isSymbolPublishable = true
+  if (node.type === 'COMPONENT' || node.type === 'COMPONENT_SET' || node.isSymbolPublishable) {
+    nc.isSymbolPublishable = node.isSymbolPublishable
+  }
   if (node.symbolDescription) nc.symbolDescription = node.symbolDescription
   if (node.symbolLinks.length > 0) nc.symbolLinks = structuredClone(node.symbolLinks)
   const componentPropDefs = node.componentPropertyDefinitions
