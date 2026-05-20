@@ -81,7 +81,10 @@ function drawShapeDropShadow(
         r.auxFill.setMaskFilter(null)
         r.auxFill.setColor(r.ck.BLACK)
         r.auxFill.setBlendMode(r.ck.BlendMode.DstOut)
+        canvas.save()
+        canvas.translate(-effect.offset.x, -effect.offset.y)
         for (const path of fillGeometry) canvas.drawPath(path, r.auxFill)
+        canvas.restore()
         r.auxFill.setBlendMode(r.ck.BlendMode.SrcOver)
       }
     }

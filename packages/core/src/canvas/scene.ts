@@ -449,7 +449,13 @@ function drawNodeStroke(
   vectorPaths: Path[] | null,
   vectorStroke: Path[] | null
 ): void {
-  if (!sg && vectorStroke && stroke.align === 'CENTER' && node.cornerRadius === 0) {
+  const shouldStrokeVectorCenterline =
+    vectorStroke &&
+    stroke.align === 'CENTER' &&
+    node.cornerRadius === 0 &&
+    node.type === 'VECTOR' &&
+    !node.fills.some((fill) => fill.visible)
+  if (shouldStrokeVectorCenterline) {
     const outlineKey = `${node.id}|${stroke.weight}|${stroke.cap ?? 'NONE'}|${stroke.join ?? 'MITER'}`
     drawVectorPathStrokes(r, canvas, vectorStroke, stroke, sc, outlineKey)
     return
