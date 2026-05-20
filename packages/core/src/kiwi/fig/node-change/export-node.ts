@@ -105,17 +105,40 @@ function parseGuidOrNull(value: string) {
 const FIGMA_PAYLOAD_VARIABLE_MAP_FIELDS = new Set(['variableConsumptionMap', 'parameterConsumptionMap'])
 const FIGMA_PAYLOAD_PAINT_VARIABLE_FIELDS = new Set(['colorVar', 'opacityVar'])
 
+const SUPPORTED_VARIABLE_DATA_TYPES = new Set([
+  'BOOLEAN',
+  'FLOAT',
+  'STRING',
+  'ALIAS',
+  'COLOR',
+  'SYMBOL_ID',
+  'TEXT_DATA',
+  'PROP_REF'
+])
+
+function isSupportedVariableMapEntry(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const entry = value as { variableData?: { dataType?: string; value?: { propRefValue?: unknown } } }
+  const dataType = entry.variableData?.dataType
+  return (typeof dataType === 'string' && SUPPORTED_VARIABLE_DATA_TYPES.has(dataType)) || !!entry.variableData?.value?.propRefValue
+}
+
 function isPropRefVariableMapEntry(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false
   const entry = value as { variableData?: { dataType?: string; value?: { propRefValue?: unknown } } }
   return entry.variableData?.dataType === 'PROP_REF' || !!entry.variableData?.value?.propRefValue
 }
 
-function materializeSafeVariableMap(value: unknown, blobs: Uint8Array[]): unknown {
+function materializeSafeVariableMap(
+  value: unknown,
+  blobs: Uint8Array[],
+  options: MaterializeFigmaPayloadOptions,
+  predicate: (value: unknown) => boolean
+): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
-  const entries = (value as { entries?: unknown[] }).entries?.filter(isPropRefVariableMapEntry) ?? []
+  const entries = (value as { entries?: unknown[] }).entries?.filter(predicate) ?? []
   if (entries.length === 0) return undefined
-  return { entries: entries.map((entry) => materializeFigmaPayload(entry, blobs)) }
+  return { entries: entries.map((entry) => materializeFigmaPayload(entry, blobs, options)) }
 }
 
 function paintVariableKey(value: unknown): string | null {
@@ -150,6 +173,19 @@ function materializeFigmaBlob(
   return index
 }
 
+function normalizeFigmaPayloadValue(key: string, value: unknown): unknown {
+  if (
+    (key === 'stackJustify' ||
+      key === 'stackPrimaryAlignItems' ||
+      key === 'stackCounterAlign' ||
+      key === 'stackCounterAlignItems') &&
+    value === 'SPACE_EVENLY'
+  ) {
+    return 'SPACE_BETWEEN'
+  }
+  return value
+}
+
 function materializeFigmaPayload(
   value: unknown,
   blobs: Uint8Array[],
@@ -172,12 +208,20 @@ function materializeFigmaPayload(
   )
   for (const [key, child] of Object.entries(value)) {
     if (FIGMA_PAYLOAD_PAINT_VARIABLE_FIELDS.has(key) && !options.includePaintVariables) continue
-    if (!options.includeVariableMaps && FIGMA_PAYLOAD_VARIABLE_MAP_FIELDS.has(key)) {
-      const variableMap = materializeSafeVariableMap(child, blobs)
+    if (FIGMA_PAYLOAD_VARIABLE_MAP_FIELDS.has(key)) {
+      const variableMap = materializeSafeVariableMap(
+        child,
+        blobs,
+        options,
+        options.includeVariableMaps ? isSupportedVariableMapEntry : isPropRefVariableMapEntry
+      )
       if (variableMap !== undefined) materialized[key] = variableMap
       continue
     }
-    materialized[key] = materializeFigmaPayload(child, blobs, options)
+    materialized[key] = normalizeFigmaPayloadValue(
+      key,
+      materializeFigmaPayload(child, blobs, options)
+    )
   }
   if (paintVariableColor) materialized.color = paintVariableColor
   return materialized

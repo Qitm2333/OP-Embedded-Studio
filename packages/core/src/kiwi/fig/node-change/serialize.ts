@@ -378,8 +378,8 @@ function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
     nc.stackPaddingRight = node.paddingRight
     nc.stackPrimarySizing = node.primaryAxisSizing === 'HUG' ? 'RESIZE_TO_FIT' : 'FIXED'
     nc.stackCounterSizing = node.counterAxisSizing === 'HUG' ? 'RESIZE_TO_FIT' : 'FIXED'
-    nc.stackPrimaryAlignItems = node.primaryAxisAlign
-    nc.stackCounterAlignItems = node.counterAxisAlign
+    nc.stackPrimaryAlignItems = normalizeStackJustify(node.primaryAxisAlign)
+    nc.stackCounterAlignItems = normalizeStackCounterAlign(node.counterAxisAlign)
     if (node.layoutWrap === 'WRAP') nc.stackWrap = 'WRAP'
     if (node.counterAxisSpacing > 0) nc.stackCounterSpacing = node.counterAxisSpacing
     nc.bordersTakeSpace = node.strokesIncludedInLayout

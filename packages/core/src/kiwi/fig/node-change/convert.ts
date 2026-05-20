@@ -702,10 +702,14 @@ function preserveFigmaPayloadBlobs(value: unknown, blobs: Uint8Array[]): unknown
   for (const [key, child] of Object.entries(value)) {
     if ((key === 'commandsBlob' || key === 'vectorNetworkBlob') && typeof child === 'number') {
       const blob: unknown = blobs[child]
-      result[key] = {
-        __openPencilFigmaBlob:
-          blob instanceof Uint8Array ? blob : new Uint8Array(Object.values(blob as Record<string, number>))
-      } satisfies PreservedFigmaBlob
+      if (blob == null) {
+        result[key] = child
+      } else {
+        result[key] = {
+          __openPencilFigmaBlob:
+            blob instanceof Uint8Array ? blob : new Uint8Array(Object.values(blob as Record<string, number>))
+        } satisfies PreservedFigmaBlob
+      }
     } else {
       result[key] = preserveFigmaPayloadBlobs(child, blobs)
     }
