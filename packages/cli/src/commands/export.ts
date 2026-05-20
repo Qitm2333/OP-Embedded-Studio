@@ -81,8 +81,7 @@ function exportFileName(defaultName: string, extension: string, scale?: number):
   return scale ? `${defaultName}@${scale}x.${extension}` : `${defaultName}.${extension}`
 }
 
-function targetLabel(scope: 'document' | 'node' | 'page', pageName?: string, nodeId?: string): string {
-  if (scope === 'document') return 'document'
+function targetLabel(pageName?: string, nodeId?: string): string {
   if (nodeId) return `node ${nodeId}`
   return pageName ? `page "${pageName}"` : 'first page'
 }
@@ -110,17 +109,9 @@ async function exportFromFile(format: string, args: ExportArgs) {
     process.exit(1)
   }
 
-  let target:
-    | { scope: 'document' }
-    | { scope: 'node'; nodeId: string }
-    | { scope: 'page'; pageId: string }
-  if (args.node) {
-    target = { scope: 'node', nodeId: args.node }
-  } else if (format === 'FIG' && !args.page) {
-    target = { scope: 'document' }
-  } else {
-    target = { scope: 'page', pageId: page.id }
-  }
+  const target = args.node
+    ? { scope: 'node' as const, nodeId: args.node }
+    : { scope: 'page' as const, pageId: page.id }
 
   if (args.thumbnail) {
     printError('Thumbnail export is not supported by the shared file export path yet.')
@@ -149,7 +140,7 @@ async function exportFromFile(format: string, args: ExportArgs) {
       )
   )
   await writeAndLog(output, result.data as string | Uint8Array)
-  console.log(ok(`Target: ${targetLabel(target.scope, args.page, args.node)}`))
+  console.log(ok(`Target: ${targetLabel(args.page, args.node)}`))
 }
 
 export default defineCommand({
