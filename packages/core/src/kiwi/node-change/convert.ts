@@ -483,6 +483,7 @@ export function nodeChangeToProps(
     nodeType,
     name: nc.name ?? nodeType,
     figmaGuid: nc.guid ? guidToString(nc.guid) : null,
+    ...extractFigmaRawGeometry(nc),
     ...extractFigmaSymbolMetadata(nc, blobs),
     ...convertTransformProps(nc),
     opacity: nc.opacity ?? 1,
@@ -696,6 +697,15 @@ function preserveFigmaPayloadBlobs(value: unknown, blobs: Uint8Array[]): unknown
     }
   }
   return result
+}
+
+function extractFigmaRawGeometry(
+  nc: NodeChange
+): Pick<SceneNode, 'figmaRawSize' | 'figmaRawTransform'> {
+  return {
+    figmaRawSize: nc.size ? { ...nc.size } : null,
+    figmaRawTransform: nc.transform ? { ...nc.transform } : null
+  }
 }
 
 function extractFigmaSymbolMetadata(

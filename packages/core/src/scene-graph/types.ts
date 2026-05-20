@@ -269,6 +269,8 @@ export interface SceneNode {
   width: number
   height: number
   rotation: number
+  figmaRawSize: Vector | null
+  figmaRawTransform: Matrix | null
   figmaDerivedLayout: Partial<Rect> | null
 
   fills: Fill[]

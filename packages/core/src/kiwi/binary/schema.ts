@@ -1580,6 +1580,7 @@ enum ComponentPropNodeField {
 message ComponentPropAssignment {
   GUID defID = 1;
   ComponentPropValue value = 2;
+  VariableData varValue = 3;
 }
 
 message ComponentPropDef {
@@ -2044,6 +2045,8 @@ enum VariableDataType {
   STRING = 2;
   ALIAS = 3;
   COLOR = 4;
+  SYMBOL_ID = 7;
+  TEXT_DATA = 9;
 }
 
 enum VariableResolvedDataType {
@@ -2051,9 +2054,15 @@ enum VariableResolvedDataType {
   FLOAT = 1;
   STRING = 2;
   COLOR = 4;
+  SYMBOL_ID = 6;
+  TEXT_DATA = 8;
 }
 
 message VariableID {
+  GUID guid = 1;
+}
+
+message SymbolId {
   GUID guid = 1;
 }
 
@@ -2067,6 +2076,7 @@ message VariableAnyValue {
   float floatValue = 3;
   VariableID alias = 4;
   Color colorValue = 5;
+  SymbolId symbolIdValue = 8;
 }
 
 message VariableData {

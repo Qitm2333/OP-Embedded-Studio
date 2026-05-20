@@ -18,6 +18,8 @@ export function createDefaultNode(
     width: 100,
     height: 100,
     rotation: 0,
+    figmaRawSize: null,
+    figmaRawTransform: null,
     figmaDerivedLayout: null,
     fills:
       type === 'TEXT'

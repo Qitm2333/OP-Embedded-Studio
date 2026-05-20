@@ -1,6 +1,6 @@
 import type { NodeChange, Paint } from '#core/kiwi/binary/codec'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
-import type { Color, GUID, Matrix } from '#core/types'
+import type { Color, GUID, Matrix, Vector } from '#core/types'
 
 import { stringToGuid } from './guid'
 import {
@@ -148,6 +148,36 @@ function getOrCreateNodeGuid(
   return guid
 }
 
+function applyInstancePayload(
+  context: SceneNodeToKiwiContext,
+  node: SceneNode,
+  nc: KiwiNodeChange,
+  localIdCounter: { value: number }
+): void {
+  if (node.type !== 'INSTANCE' || !node.componentId) return
+  const symbolID = getOrCreateNodeGuid(
+    context,
+    resolveInstanceComponentId(context, node.componentId),
+    localIdCounter
+  )
+  if (symbolID) {
+    const symbolData: Record<string, unknown> = { symbolID }
+    if (node.figmaSymbolOverrides.length > 0) {
+      symbolData.symbolOverrides = materializeFigmaPayload(node.figmaSymbolOverrides, context.blobs)
+    }
+    if (node.figmaUniformScaleFactor != null) {
+      symbolData.uniformScaleFactor = node.figmaUniformScaleFactor
+    }
+    nc.symbolData = symbolData as KiwiNodeChange['symbolData']
+  }
+  if (node.figmaDerivedSymbolData.length > 0) {
+    nc.derivedSymbolData = materializeFigmaPayload(node.figmaDerivedSymbolData, context.blobs)
+  }
+  if (node.figmaDerivedSymbolDataLayoutVersion != null) {
+    nc.derivedSymbolDataLayoutVersion = node.figmaDerivedSymbolDataLayoutVersion
+  }
+}
+
 function applyComponentMetadata(node: SceneNode, nc: KiwiNodeChange): void {
   if (node.componentKey) nc.componentKey = node.componentKey
   if (node.sourceLibraryKey) nc.sourceLibraryKey = node.sourceLibraryKey
@@ -183,6 +213,14 @@ function applyComponentMetadata(node: SceneNode, nc: KiwiNodeChange): void {
     })
     .filter((spec): spec is NonNullable<typeof spec> => spec !== null)
   if (variantPropSpecs.length > 0) nc.variantPropSpecs = variantPropSpecs
+}
+
+function exportNodeSize(node: SceneNode): Vector {
+  return node.figmaRawSize ? { ...node.figmaRawSize } : { x: node.width, y: node.height }
+}
+
+function exportNodeTransform(context: SceneNodeToKiwiContext, node: SceneNode): Matrix {
+  return node.figmaRawTransform ? { ...node.figmaRawTransform } : context.computeExportTransform(node)
 }
 
 function applyNodeVisualProps(
@@ -273,37 +311,15 @@ export function sceneNodeToKiwiWithContext(
     visible: node.visible,
     opacity: node.opacity,
     phase: 'CREATED',
-    size: { x: node.width, y: node.height },
-    transform: context.computeExportTransform(node),
+    size: exportNodeSize(node),
+    transform: exportNodeTransform(context, node),
     strokeWeight: node.strokes[0]?.weight ?? DEFAULT_STROKE_WEIGHT,
     strokeAlign: node.strokes[0]?.align ?? 'INSIDE'
   }
 
   applyNodeVisualProps(context, node, nc)
   applyComponentMetadata(node, nc)
-  if (node.type === 'INSTANCE' && node.componentId) {
-    const symbolID = getOrCreateNodeGuid(
-      context,
-      resolveInstanceComponentId(context, node.componentId),
-      localIdCounter
-    )
-    if (symbolID) {
-      const symbolData: Record<string, unknown> = { symbolID }
-      if (node.figmaSymbolOverrides.length > 0) {
-        symbolData.symbolOverrides = materializeFigmaPayload(node.figmaSymbolOverrides, context.blobs)
-      }
-      if (node.figmaUniformScaleFactor != null) {
-        symbolData.uniformScaleFactor = node.figmaUniformScaleFactor
-      }
-      nc.symbolData = symbolData as KiwiNodeChange['symbolData']
-    }
-    if (node.figmaDerivedSymbolData.length > 0) {
-      nc.derivedSymbolData = materializeFigmaPayload(node.figmaDerivedSymbolData, context.blobs)
-    }
-    if (node.figmaDerivedSymbolDataLayoutVersion != null) {
-      nc.derivedSymbolDataLayoutVersion = node.figmaDerivedSymbolDataLayoutVersion
-    }
-  }
+  applyInstancePayload(context, node, nc, localIdCounter)
   if (node.type === 'COMPONENT_SET') upsertPluginData(node, NODE_TYPE_PLUGIN_KEY, node.type)
   if (strokePaints.length > 0) nc.strokePaints = strokePaints
 

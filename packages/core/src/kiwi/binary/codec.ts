@@ -227,6 +227,7 @@ export interface VariableAnyValue {
   floatValue?: number
   colorValue?: Color
   alias?: { guid?: GUID; assetRef?: { key: string; version?: string } }
+  symbolIdValue?: { guid?: GUID }
 }
 
 export interface VariableDataEntry {
