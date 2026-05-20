@@ -1603,12 +1603,14 @@ enum ComponentPropNodeField {
   TEXT_DATA = 1;
   OVERRIDDEN_SYMBOL_ID = 2;
   INHERIT_FILL_STYLE_ID = 3;
+  SLOT_CONTENT_ID = 4;
 }
 
 message ComponentPropAssignment {
   GUID defID = 1;
   ComponentPropValue value = 2;
   VariableData varValue = 3;
+  DerivedTextData legacyDerivedTextData = 4;
 }
 
 message ComponentPropDef {
@@ -1621,12 +1623,14 @@ message ComponentPropDef {
   bool isDeleted = 7;
   ComponentPropPreferredValues preferredValues = 8;
   VariableData varValue = 9;
+  string description = 11;
 }
 
 message ComponentPropValue {
   bool boolValue = 1;
   TextData textValue = 2;
   GUID guidValue = 3;
+  float floatValue = 4;
 }
 
 enum ComponentPropType {
@@ -1649,8 +1653,19 @@ enum ComponentPropType {
   COLOR_POINT = 16;
 }
 
+enum InstanceSwapPreferredValueType {
+  COMPONENT = 0;
+  STATE_GROUP = 1;
+}
+
+message InstanceSwapPreferredValue {
+  InstanceSwapPreferredValueType type = 1;
+  string key = 2;
+}
+
 message ComponentPropPreferredValues {
   string[] stringValues = 1;
+  InstanceSwapPreferredValue[] instanceSwapValues = 2;
 }
 
 enum WidgetEvent {
