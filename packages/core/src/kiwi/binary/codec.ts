@@ -218,6 +218,7 @@ export interface Effect {
   visible?: boolean
   spread?: number
   blendMode?: string
+  showShadowBehindNode?: boolean
 }
 
 export interface VariableAnyValue {

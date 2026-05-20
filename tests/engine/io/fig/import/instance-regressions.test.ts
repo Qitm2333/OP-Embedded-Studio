@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, setDefaultTimeout, test } from 'bun:test'
 
-import { computeAllLayouts, type SceneGraph, type SceneNode } from '@open-pencil/core'
+import { computeAllLayouts, parseFigFile, type SceneGraph, type SceneNode } from '@open-pencil/core'
 
 import { computeContentBounds } from '#core/io/formats/raster/render'
 
-import { parseFixture } from '#tests/helpers/fig-fixtures'
+import { parseFixture, readFixtureBytes } from '#tests/helpers/fig-fixtures'
 import {
   childMatching,
   childNamed,
@@ -120,6 +120,29 @@ describe('derived instance layout regressions', () => {
 
       expect(stroke?.visible).toBe(true)
       expect(stroke?.color).toMatchObject({ r: 1, g: 1, b: 1, a: 1 })
+    }
+  })
+
+  test('propagates static icon color overrides with lazy first-page import', async () => {
+    const graph = await parseFigFile(readFixtureBytes('gold-preview.fig').buffer as ArrayBuffer, {
+      populate: 'first-page'
+    })
+    computeAllLayouts(graph)
+    const nodes = collectAllNodes(graph)
+    const title = previewChild(graph, nodes, 'Title + Description')
+    const checkedList = childNamed(graph, title, 'Checked List')
+    const listItems = checkedList ? graph.getChildren(checkedList.id) : []
+
+    expect(listItems).toHaveLength(3)
+    for (const item of listItems) {
+      const list = childNamed(graph, item, '_list')
+      const inline = childNamed(graph, list, 'Inline')
+      const icon = childNamed(graph, inline, 'Static Icon')
+      const iconRoot = childNamed(graph, icon, '_icon-xs')
+      const check = childNamed(graph, iconRoot, 'check')
+      const vector = check ? graph.getChildren(check.id)[0] : undefined
+
+      expect(vector?.strokes[0]?.color).toMatchObject({ r: 1, g: 1, b: 1, a: 1 })
     }
   })
 

@@ -143,6 +143,7 @@ export interface Effect {
   spread: number
   visible: boolean
   blendMode?: BlendMode
+  showShadowBehindNode?: boolean
 }
 
 export type ConstraintType = 'MIN' | 'CENTER' | 'MAX' | 'STRETCH' | 'SCALE'

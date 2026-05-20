@@ -117,6 +117,7 @@ export function convertEffects(effects?: KiwiEffect[]): Effect[] {
     radius: e.radius ?? 0,
     spread: e.spread ?? 0,
     visible: e.visible ?? true,
-    blendMode: (e.blendMode ?? 'NORMAL') as BlendMode
+    blendMode: (e.blendMode ?? 'NORMAL') as BlendMode,
+    showShadowBehindNode: e.showShadowBehindNode ?? true
   }))
 }

@@ -201,10 +201,11 @@ export function populateAndApplyOverrides(
     const populated = populateInstances(graph, activeRootIds)
     if (populated) ctx.activeNodeIds = populated
     const latePropModified = applyComponentProperties(ctx)
-    if (latePropModified.size > 0) {
+    const lateSeeds = new Set([...overriddenNodes, ...propModified, ...latePropModified])
+    if (lateSeeds.size > 0) {
       propagateOverridesTransitively(
         graph,
-        latePropModified,
+        lateSeeds,
         ctx.swappedInstances,
         ctx.componentIdRoot,
         overriddenNodes,

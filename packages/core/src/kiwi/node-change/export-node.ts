@@ -167,7 +167,8 @@ function applyNodeVisualProps(
       offset: effect.offset,
       radius: effect.radius,
       spread: effect.spread,
-      visible: effect.visible
+      visible: effect.visible,
+      showShadowBehindNode: effect.showShadowBehindNode
     }))
   }
 
