@@ -211,10 +211,10 @@ function collectPaintVariableColorCounts(
 export function buildFigmaPaintVariableColorMap(graph: SceneGraph): Map<string, Color> {
   const counts = new Map<string, Map<string, { color: Color; count: number }>>()
   for (const node of graph.nodes.values()) {
-    collectPaintVariableColorCounts(node.figmaRawNodeFields, counts)
-    collectPaintVariableColorCounts(node.figmaSymbolOverrides, counts)
-    collectPaintVariableColorCounts(node.figmaComponentPropAssignments, counts)
-    collectPaintVariableColorCounts(node.figmaDerivedSymbolData, counts)
+    collectPaintVariableColorCounts(node.source.fig.rawNodeFields, counts)
+    collectPaintVariableColorCounts(node.source.fig.symbolOverrides, counts)
+    collectPaintVariableColorCounts(node.source.fig.componentPropAssignments, counts)
+    collectPaintVariableColorCounts(node.source.fig.derivedSymbolData, counts)
   }
 
   const colors = new Map<string, Color>()
@@ -246,7 +246,7 @@ function getOrCreateNodeGuid(
   const existing = context.nodeIdToGuid?.get(nodeId)
   if (existing) return existing
   const node = context.graph.getNode(nodeId)
-  const importedGuid = node?.figmaGuid ? parseGuidOrNull(node.figmaGuid) : null
+  const importedGuid = node?.source.id ? parseGuidOrNull(node.source.id) : null
   const guid = importedGuid ?? { sessionID: 1, localID: localIdCounter.value++ }
   context.nodeIdToGuid?.set(nodeId, guid)
   return guid
@@ -259,7 +259,7 @@ function applyRawFigmaNodeFields(
 ): void {
   Object.assign(
     nc,
-    materializeFigmaPayload(node.figmaRawNodeFields, context.blobs, {
+    materializeFigmaPayload(node.source.fig.rawNodeFields, context.blobs, {
       blobIndexByHex: context.blobIndexByHex
     })
   )
@@ -279,21 +279,21 @@ function applyInstancePayload(
   )
   if (symbolID) {
     const symbolData: Record<string, unknown> = { symbolID }
-    if (node.figmaSymbolOverrides.length > 0) {
-      symbolData.symbolOverrides = materializeFigmaPayload(node.figmaSymbolOverrides, context.blobs, {
+    if (node.source.fig.symbolOverrides.length > 0) {
+      symbolData.symbolOverrides = materializeFigmaPayload(node.source.fig.symbolOverrides, context.blobs, {
         blobIndexByHex: context.blobIndexByHex,
         includeVariableMaps: true,
         paintVariableColorMap: context.paintVariableColorMap
       })
     }
-    if (node.figmaUniformScaleFactor != null) {
-      symbolData.uniformScaleFactor = node.figmaUniformScaleFactor
+    if (node.source.fig.uniformScaleFactor != null) {
+      symbolData.uniformScaleFactor = node.source.fig.uniformScaleFactor
     }
     nc.symbolData = symbolData as KiwiNodeChange['symbolData']
   }
-  if (node.figmaComponentPropAssignments.length > 0) {
+  if (node.source.fig.componentPropAssignments.length > 0) {
     nc.componentPropAssignments = materializeFigmaPayload(
-      node.figmaComponentPropAssignments,
+      node.source.fig.componentPropAssignments,
       context.blobs,
       {
         blobIndexByHex: context.blobIndexByHex,
@@ -302,15 +302,15 @@ function applyInstancePayload(
       }
     )
   }
-  if (node.figmaDerivedSymbolData.length > 0) {
-    nc.derivedSymbolData = materializeFigmaPayload(node.figmaDerivedSymbolData, context.blobs, {
+  if (node.source.fig.derivedSymbolData.length > 0) {
+    nc.derivedSymbolData = materializeFigmaPayload(node.source.fig.derivedSymbolData, context.blobs, {
       blobIndexByHex: context.blobIndexByHex,
       includeVariableMaps: true,
       paintVariableColorMap: context.paintVariableColorMap
     })
   }
-  if (node.figmaDerivedSymbolDataLayoutVersion != null) {
-    nc.derivedSymbolDataLayoutVersion = node.figmaDerivedSymbolDataLayoutVersion
+  if (node.source.fig.derivedSymbolDataLayoutVersion != null) {
+    nc.derivedSymbolDataLayoutVersion = node.source.fig.derivedSymbolDataLayoutVersion
   }
 }
 
@@ -354,19 +354,19 @@ function applyComponentMetadata(node: SceneNode, nc: KiwiNodeChange): void {
 }
 
 function exportNodeSize(node: SceneNode): Vector {
-  return node.figmaRawSize ? { ...node.figmaRawSize } : { x: node.width, y: node.height }
+  return node.source.fig.rawSize ? { ...node.source.fig.rawSize } : { x: node.width, y: node.height }
 }
 
 function exportNodeTransform(context: SceneNodeToKiwiContext, node: SceneNode): Matrix {
-  return node.figmaRawTransform ? { ...node.figmaRawTransform } : context.computeExportTransform(node)
+  return node.source.fig.rawTransform ? { ...node.source.fig.rawTransform } : context.computeExportTransform(node)
 }
 
 function hasRawGeometryPayload(node: SceneNode): boolean {
-  return 'fillGeometry' in node.figmaRawNodeFields || 'strokeGeometry' in node.figmaRawNodeFields
+  return 'fillGeometry' in node.source.fig.rawNodeFields || 'strokeGeometry' in node.source.fig.rawNodeFields
 }
 
 function hasRawVectorPayload(node: SceneNode): boolean {
-  return 'vectorData' in node.figmaRawNodeFields
+  return 'vectorData' in node.source.fig.rawNodeFields
 }
 
 function nodeForGeometryExport(node: SceneNode): SceneNode {
@@ -433,7 +433,7 @@ function applyNodeVisualProps(
   if (node.verticalConstraint !== 'MIN') nc.verticalConstraint = node.verticalConstraint
   if (node.strokeCap !== 'NONE') nc.strokeCap = node.strokeCap
   if (node.strokeJoin !== 'MITER') nc.strokeJoin = node.strokeJoin
-  if (!node.figmaGuid && node.strokeMiterLimit !== 28.96) nc.miterLimit = node.strokeMiterLimit
+  if (!node.source.id && node.strokeMiterLimit !== 28.96) nc.miterLimit = node.strokeMiterLimit
   if (node.dashPattern.length > 0) nc.dashPattern = node.dashPattern
   if (node.arcData) {
     nc.arcData = {
@@ -463,7 +463,7 @@ export function sceneNodeToKiwiWithContext(
     guid,
     parentIndex: {
       guid: parentGuid,
-      position: node.figmaParentIndexPosition ?? context.fractionalPosition(childIndex)
+      position: node.source.orderKey ?? context.fractionalPosition(childIndex)
     },
     type: context.mapToFigmaType(node.type),
     name: node.name,

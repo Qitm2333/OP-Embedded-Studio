@@ -194,14 +194,14 @@ function appendVariablesForCollection(
 }
 
 function applyImportedCanvasFields(page: FigExportPage, canvasNc: KiwiNodeChange): void {
-  if (!page.figmaGuid) return
-  if (!('pageType' in page.figmaRawNodeFields)) delete canvasNc.pageType
-  if ('backgroundColor' in page.figmaRawNodeFields) {
-    canvasNc.backgroundColor = structuredClone(page.figmaRawNodeFields.backgroundColor)
+  if (!page.source.id) return
+  if (!('pageType' in page.source.fig.rawNodeFields)) delete canvasNc.pageType
+  if ('backgroundColor' in page.source.fig.rawNodeFields) {
+    canvasNc.backgroundColor = structuredClone(page.source.fig.rawNodeFields.backgroundColor)
   }
-  const strokeJoin = page.figmaRawNodeFields.strokeJoin
+  const strokeJoin = page.source.fig.rawNodeFields.strokeJoin
   if (typeof strokeJoin === 'string') canvasNc.strokeJoin = strokeJoin
-  const strokeWeight = page.figmaRawNodeFields.strokeWeight
+  const strokeWeight = page.source.fig.rawNodeFields.strokeWeight
   if (typeof strokeWeight === 'number') canvasNc.strokeWeight = strokeWeight
 }
 
@@ -216,8 +216,8 @@ function buildCanvasEntries(
   let internalCanvasGuid: GUID | null = null
   for (let p = 0; p < pages.length; p++) {
     const page = pages[p]
-    const canvasGuid = page.figmaGuid
-      ? stringToGuid(page.figmaGuid)
+    const canvasGuid = page.source.id
+      ? stringToGuid(page.source.id)
       : { sessionID: 0, localID: localIdCounter.value++ }
     nodeIdToGuid.set(page.id, canvasGuid)
     if (page.internalOnly) internalCanvasGuid = canvasGuid
@@ -225,7 +225,7 @@ function buildCanvasEntries(
     const canvasNc = makeCanvasNodeChange(
       canvasGuid,
       docGuid,
-      page.figmaParentIndexPosition ?? fractionalPosition(p),
+      page.source.orderKey ?? fractionalPosition(p),
       page.name,
       {
         backgroundOpacity: 1,
@@ -272,7 +272,7 @@ export async function exportFigFile(
 
   const documentNc = makeDocumentNodeChange(docGuid, graph.documentColorSpace)
   const rootNode = graph.getNode(graph.rootId)
-  if (rootNode) Object.assign(documentNc, rootNode.figmaRawNodeFields)
+  if (rootNode) Object.assign(documentNc, rootNode.source.fig.rawNodeFields)
   const nodeChanges: KiwiNodeChange[] = [documentNc]
 
   const blobs: Uint8Array[] = []

@@ -20,18 +20,20 @@ type AssetRef = { key: string; version?: string }
 type AliasRef = { guid?: GUID; assetRef?: AssetRef }
 
 function applyImportedCanvasMetadata(page: ReturnType<SceneGraph['addPage']>, canvasNc: NodeChange) {
-  page.figmaParentIndexPosition = canvasNc.parentIndex?.position ?? null
-  if (canvasNc.backgroundColor) page.figmaRawNodeFields.backgroundColor = structuredClone(canvasNc.backgroundColor)
-  page.figmaRawNodeFields.strokeJoin = canvasNc.strokeJoin
-  page.figmaRawNodeFields.strokeWeight = canvasNc.strokeWeight
-  if (canvasNc.pageType) page.figmaRawNodeFields.pageType = canvasNc.pageType
+  page.source.format = 'fig'
+  page.source.orderKey = canvasNc.parentIndex?.position ?? null
+  if (canvasNc.backgroundColor) page.source.fig.rawNodeFields.backgroundColor = structuredClone(canvasNc.backgroundColor)
+  page.source.fig.rawNodeFields.strokeJoin = canvasNc.strokeJoin
+  page.source.fig.rawNodeFields.strokeWeight = canvasNc.strokeWeight
+  if (canvasNc.pageType) page.source.fig.rawNodeFields.pageType = canvasNc.pageType
 }
 
 function applyImportedDocumentMetadata(graph: SceneGraph, docNc: NodeChange | undefined) {
   const rootNode = graph.getNode(graph.rootId)
   if (!docNc || !rootNode) return
-  rootNode.figmaRawNodeFields.strokeJoin = docNc.strokeJoin
-  rootNode.figmaRawNodeFields.strokeWeight = docNc.strokeWeight
+  rootNode.source.format = 'fig'
+  rootNode.source.fig.rawNodeFields.strokeJoin = docNc.strokeJoin
+  rootNode.source.fig.rawNodeFields.strokeWeight = docNc.strokeWeight
 }
 
 function assetRefKey(assetRef: AssetRef): string {
@@ -303,7 +305,7 @@ function importPages(
       if (!canvasNc) continue
       if (canvasNc.type === 'CANVAS') {
         const page = graph.addPage(canvasNc.name ?? 'Page')
-        page.figmaGuid = canvasId
+        page.source.id = canvasId
         applyImportedCanvasMetadata(page, canvasNc)
         canvasIdToPageId.set(canvasId, page.id)
         if (canvasNc.internalOnly) page.internalOnly = true

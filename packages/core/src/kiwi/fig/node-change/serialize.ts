@@ -345,28 +345,28 @@ function normalizeStackCounterAlign(value: string | undefined): string | undefin
 }
 
 function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
-  if (!node.figmaGuid) upsertPluginData(node, LAYOUT_DIRECTION_PLUGIN_KEY, node.layoutDirection)
-  const figmaLayout = node.figmaLayout
-  if (figmaLayout) {
-    nc.stackMode = normalizeStackMode(figmaLayout.stackMode)
-    nc.stackSpacing = figmaLayout.stackSpacing
-    nc.stackPadding = figmaLayout.stackPadding
-    nc.stackPaddingRight = figmaLayout.stackPaddingRight
-    nc.stackPaddingBottom = figmaLayout.stackPaddingBottom
-    nc.stackCounterAlign = normalizeStackCounterAlign(figmaLayout.stackCounterAlign)
-    nc.stackJustify = normalizeStackJustify(figmaLayout.stackJustify)
-    nc.stackCounterAlignItems = normalizeStackCounterAlign(figmaLayout.stackCounterAlignItems)
-    nc.stackPrimaryAlignItems = normalizeStackJustify(figmaLayout.stackPrimaryAlignItems)
-    nc.stackPrimarySizing = normalizeStackSizing(figmaLayout.stackPrimarySizing)
-    nc.stackCounterSizing = normalizeStackSizing(figmaLayout.stackCounterSizing)
-    nc.stackVerticalPadding = figmaLayout.stackVerticalPadding
-    nc.stackHorizontalPadding = figmaLayout.stackHorizontalPadding
-    nc.stackWrap = figmaLayout.stackWrap
-    nc.stackPositioning = figmaLayout.stackPositioning
-    nc.stackChildPrimaryGrow = figmaLayout.stackChildPrimaryGrow
-    nc.stackChildAlignSelf = figmaLayout.stackChildAlignSelf
-    nc.stackCounterSpacing = figmaLayout.stackCounterSpacing
-    nc.bordersTakeSpace = figmaLayout.bordersTakeSpace
+  if (!node.source.id) upsertPluginData(node, LAYOUT_DIRECTION_PLUGIN_KEY, node.layoutDirection)
+  const figLayout = node.source.fig.layout
+  if (figLayout) {
+    nc.stackMode = normalizeStackMode(figLayout.stackMode)
+    nc.stackSpacing = figLayout.stackSpacing
+    nc.stackPadding = figLayout.stackPadding
+    nc.stackPaddingRight = figLayout.stackPaddingRight
+    nc.stackPaddingBottom = figLayout.stackPaddingBottom
+    nc.stackCounterAlign = normalizeStackCounterAlign(figLayout.stackCounterAlign)
+    nc.stackJustify = normalizeStackJustify(figLayout.stackJustify)
+    nc.stackCounterAlignItems = normalizeStackCounterAlign(figLayout.stackCounterAlignItems)
+    nc.stackPrimaryAlignItems = normalizeStackJustify(figLayout.stackPrimaryAlignItems)
+    nc.stackPrimarySizing = normalizeStackSizing(figLayout.stackPrimarySizing)
+    nc.stackCounterSizing = normalizeStackSizing(figLayout.stackCounterSizing)
+    nc.stackVerticalPadding = figLayout.stackVerticalPadding
+    nc.stackHorizontalPadding = figLayout.stackHorizontalPadding
+    nc.stackWrap = figLayout.stackWrap
+    nc.stackPositioning = figLayout.stackPositioning
+    nc.stackChildPrimaryGrow = figLayout.stackChildPrimaryGrow
+    nc.stackChildAlignSelf = figLayout.stackChildAlignSelf
+    nc.stackCounterSpacing = figLayout.stackCounterSpacing
+    nc.bordersTakeSpace = figLayout.bordersTakeSpace
     return
   }
   if (node.layoutMode !== 'NONE' && node.layoutMode !== 'GRID') {

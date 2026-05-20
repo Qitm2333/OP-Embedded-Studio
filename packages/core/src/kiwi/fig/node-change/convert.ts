@@ -355,7 +355,6 @@ function convertLayoutProps(
 ): Pick<
   SceneNode,
   | 'layoutMode'
-  | 'figmaLayout'
   | 'itemSpacing'
   | 'paddingTop'
   | 'paddingBottom'
@@ -388,27 +387,6 @@ function convertLayoutProps(
 
   return {
     layoutMode,
-    figmaLayout: {
-      stackMode: nc.stackMode,
-      stackSpacing: nc.stackSpacing,
-      stackPadding: nc.stackPadding,
-      stackPaddingRight: nc.stackPaddingRight,
-      stackPaddingBottom: nc.stackPaddingBottom,
-      stackCounterAlign: nc.stackCounterAlign,
-      stackJustify: nc.stackJustify,
-      stackCounterAlignItems: nc.stackCounterAlignItems,
-      stackPrimaryAlignItems: nc.stackPrimaryAlignItems,
-      stackPrimarySizing: nc.stackPrimarySizing,
-      stackCounterSizing: nc.stackCounterSizing,
-      stackVerticalPadding: nc.stackVerticalPadding,
-      stackHorizontalPadding: nc.stackHorizontalPadding,
-      stackWrap: nc.stackWrap,
-      stackPositioning: nc.stackPositioning,
-      stackChildPrimaryGrow: nc.stackChildPrimaryGrow,
-      stackChildAlignSelf: nc.stackChildAlignSelf,
-      stackCounterSpacing: nc.stackCounterSpacing,
-      bordersTakeSpace: nc.bordersTakeSpace as boolean | undefined
-    },
     itemSpacing: nc.stackSpacing ?? 0,
     ...convertLayoutPadding(nc),
     primaryAxisSizing,
@@ -482,9 +460,7 @@ export function nodeChangeToProps(
   return {
     nodeType,
     name: nc.name ?? nodeType,
-    ...extractFigmaNodeIdentity(nc),
-    ...extractFigmaRawGeometry(nc, blobs),
-    ...extractFigmaSymbolMetadata(nc, blobs),
+    source: extractSourceMetadata(nc, blobs),
     ...convertTransformProps(nc),
     opacity: nc.opacity ?? 1,
     visible: nc.visible ?? true,
@@ -653,10 +629,40 @@ function isComponentSet(nc: NodeChange): boolean {
   return defs.some((d) => d.type === 'VARIANT')
 }
 
-function extractFigmaNodeIdentity(nc: NodeChange) {
+function extractFigmaLayoutMetadata(nc: NodeChange): SceneNode['source']['fig']['layout'] {
   return {
-    figmaGuid: nc.guid ? guidToString(nc.guid) : null,
-    figmaParentIndexPosition: nc.parentIndex?.position ?? null
+    stackMode: nc.stackMode,
+    stackSpacing: nc.stackSpacing,
+    stackPadding: nc.stackPadding,
+    stackPaddingRight: nc.stackPaddingRight,
+    stackPaddingBottom: nc.stackPaddingBottom,
+    stackCounterAlign: nc.stackCounterAlign,
+    stackJustify: nc.stackJustify,
+    stackCounterAlignItems: nc.stackCounterAlignItems,
+    stackPrimaryAlignItems: nc.stackPrimaryAlignItems,
+    stackPrimarySizing: nc.stackPrimarySizing,
+    stackCounterSizing: nc.stackCounterSizing,
+    stackVerticalPadding: nc.stackVerticalPadding,
+    stackHorizontalPadding: nc.stackHorizontalPadding,
+    stackWrap: nc.stackWrap,
+    stackPositioning: nc.stackPositioning,
+    stackChildPrimaryGrow: nc.stackChildPrimaryGrow,
+    stackChildAlignSelf: nc.stackChildAlignSelf,
+    stackCounterSpacing: nc.stackCounterSpacing,
+    bordersTakeSpace: nc.bordersTakeSpace as boolean | undefined
+  }
+}
+
+function extractSourceMetadata(nc: NodeChange, blobs: Uint8Array[]): SceneNode['source'] {
+  return {
+    format: 'fig',
+    id: nc.guid ? guidToString(nc.guid) : null,
+    orderKey: nc.parentIndex?.position ?? null,
+    fig: {
+      ...extractFigmaRawGeometry(nc, blobs),
+      ...extractFigmaSymbolMetadata(nc, blobs),
+      layout: extractFigmaLayoutMetadata(nc)
+    }
   }
 }
 
@@ -759,16 +765,16 @@ const FIGMA_RAW_NODE_FIELD_KEYS = [
 function extractFigmaRawGeometry(
   nc: NodeChange,
   blobs: Uint8Array[]
-): Pick<SceneNode, 'figmaRawSize' | 'figmaRawTransform' | 'figmaRawNodeFields'> {
-  const figmaRawNodeFields: Record<string, unknown> = {}
+): Pick<SceneNode['source']['fig'], 'rawSize' | 'rawTransform' | 'rawNodeFields'> {
+  const rawNodeFields: Record<string, unknown> = {}
   for (const key of FIGMA_RAW_NODE_FIELD_KEYS) {
     const value = (nc as Record<string, unknown>)[key]
-    if (value !== undefined) figmaRawNodeFields[key] = preserveFigmaPayloadBlobs(value, blobs)
+    if (value !== undefined) rawNodeFields[key] = preserveFigmaPayloadBlobs(value, blobs)
   }
   return {
-    figmaRawSize: nc.size ? { ...nc.size } : null,
-    figmaRawTransform: nc.transform ? { ...nc.transform } : null,
-    figmaRawNodeFields
+    rawSize: nc.size ? { ...nc.size } : null,
+    rawTransform: nc.transform ? { ...nc.transform } : null,
+    rawNodeFields
   }
 }
 
@@ -776,26 +782,23 @@ function extractFigmaSymbolMetadata(
   nc: NodeChange,
   blobs: Uint8Array[]
 ): Pick<
-  SceneNode,
-  | 'figmaSymbolOverrides'
-  | 'figmaComponentPropAssignments'
-  | 'figmaDerivedSymbolData'
-  | 'figmaDerivedSymbolDataLayoutVersion'
-  | 'figmaUniformScaleFactor'
+  SceneNode['source']['fig'],
+  | 'symbolOverrides'
+  | 'componentPropAssignments'
+  | 'derivedSymbolData'
+  | 'derivedSymbolDataLayoutVersion'
+  | 'uniformScaleFactor'
 > {
   const sd = nc.symbolData as
     | { symbolOverrides?: unknown[]; uniformScaleFactor?: number }
     | undefined
   return {
-    figmaSymbolOverrides: preserveFigmaPayloadBlobs(sd?.symbolOverrides ?? [], blobs) as unknown[],
-    figmaComponentPropAssignments: preserveFigmaPayloadBlobs(
-      nc.componentPropAssignments ?? [],
-      blobs
-    ) as unknown[],
-    figmaDerivedSymbolData: preserveFigmaPayloadBlobs(nc.derivedSymbolData ?? [], blobs) as unknown[],
-    figmaDerivedSymbolDataLayoutVersion:
+    symbolOverrides: preserveFigmaPayloadBlobs(sd?.symbolOverrides ?? [], blobs) as unknown[],
+    componentPropAssignments: preserveFigmaPayloadBlobs(nc.componentPropAssignments ?? [], blobs) as unknown[],
+    derivedSymbolData: preserveFigmaPayloadBlobs(nc.derivedSymbolData ?? [], blobs) as unknown[],
+    derivedSymbolDataLayoutVersion:
       typeof nc.derivedSymbolDataLayoutVersion === 'number' ? nc.derivedSymbolDataLayoutVersion : null,
-    figmaUniformScaleFactor: typeof sd?.uniformScaleFactor === 'number' ? sd.uniformScaleFactor : null
+    uniformScaleFactor: typeof sd?.uniformScaleFactor === 'number' ? sd.uniformScaleFactor : null
   }
 }
 

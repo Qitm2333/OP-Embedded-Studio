@@ -119,26 +119,26 @@ function getSiblingGroups(ctx: OverrideContext): Map<string, string[]> {
   return groups
 }
 
-function sourceSiblingIndex(ctx: OverrideContext, figmaGuid: string): number | null {
+function sourceSiblingIndex(ctx: OverrideContext, sourceId: string): number | null {
   let cache = siblingIndexCache.get(ctx)
   if (!cache) {
     cache = new Map()
     siblingIndexCache.set(ctx, cache)
   }
-  if (cache.has(figmaGuid)) return cache.get(figmaGuid) ?? null
+  if (cache.has(sourceId)) return cache.get(sourceId) ?? null
 
-  const nc = ctx.changeMap.get(figmaGuid)
+  const nc = ctx.changeMap.get(sourceId)
   const parentId = nc?.parentIndex?.guid ? guidToString(nc.parentIndex.guid) : null
   const symbolId = nc?.symbolData?.symbolID ? guidToString(nc.symbolData.symbolID) : null
   if (!nc || !parentId || !symbolId) {
-    cache.set(figmaGuid, null)
+    cache.set(sourceId, null)
     return null
   }
 
   const siblings = getSiblingGroups(ctx).get(`${parentId}\0${symbolId}`) ?? []
-  const index = siblings.indexOf(figmaGuid)
+  const index = siblings.indexOf(sourceId)
   const result = index !== -1 ? index : null
-  cache.set(figmaGuid, result)
+  cache.set(sourceId, result)
   return result
 }
 
@@ -169,9 +169,9 @@ function findNodeBySourceSiblingIndex(
   ctx: OverrideContext,
   parentId: string,
   componentId: string,
-  figmaGuid: string
+  sourceId: string
 ): string | null {
-  const index = sourceSiblingIndex(ctx, figmaGuid)
+  const index = sourceSiblingIndex(ctx, sourceId)
   if (index == null) return null
 
   const targetRoot = ctx.preComputedRoot.get(componentId) ?? getComponentRoot(ctx, componentId)
@@ -265,13 +265,13 @@ export function findNodeByComponentId(
 /**
  * Resolve a guidPath to a target node within an instance subtree.
  *
- * Each GUID in the path identifies an overrideKey → figmaGuid → graph node.
+ * Each GUID in the path identifies an overrideKey → source id → graph node.
  * The chain walks from the instance down to the target.
  */
 function resolveOverrideStep(
   ctx: OverrideContext,
   currentId: string,
-  figmaGuid: string,
+  sourceId: string,
   remapped: string | undefined,
   targetNc: InstanceNodeChange | undefined
 ): string | null {
@@ -282,7 +282,7 @@ function resolveOverrideStep(
 
   return (
     findNodeByComponentId(ctx, currentId, remapped) ??
-    findNodeBySourceSiblingIndex(ctx, currentId, remapped, figmaGuid) ??
+    findNodeBySourceSiblingIndex(ctx, currentId, remapped, sourceId) ??
     findNodeByNameAndType(ctx, currentId, targetNc?.name, targetNc?.type)
   )
 }
@@ -295,14 +295,14 @@ export function resolveOverrideTarget(
   let currentId = instanceId
   for (let index = 0; index < guids.length; index++) {
     const key = guidToString(guids[index])
-    const figmaGuid = ctx.overrideKeyToGuid.get(key) ?? key
-    const targetNc = ctx.changeMap.get(figmaGuid)
+    const sourceId = ctx.overrideKeyToGuid.get(key) ?? key
+    const targetNc = ctx.changeMap.get(sourceId)
     const symbolGuid = targetNc?.symbolData?.symbolID
       ? guidToString(targetNc.symbolData.symbolID)
       : null
     const remapped =
-      ctx.guidToNodeId.get(figmaGuid) ?? (symbolGuid ? ctx.guidToNodeId.get(symbolGuid) : undefined)
-    const resolved = resolveOverrideStep(ctx, currentId, figmaGuid, remapped, targetNc)
+      ctx.guidToNodeId.get(sourceId) ?? (symbolGuid ? ctx.guidToNodeId.get(symbolGuid) : undefined)
+    const resolved = resolveOverrideStep(ctx, currentId, sourceId, remapped, targetNc)
     if (resolved) {
       currentId = resolved
       continue

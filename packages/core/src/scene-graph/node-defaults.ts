@@ -18,9 +18,22 @@ export function createDefaultNode(
     width: 100,
     height: 100,
     rotation: 0,
-    figmaRawSize: null,
-    figmaRawTransform: null,
-    figmaRawNodeFields: {},
+    source: {
+      format: null,
+      id: null,
+      orderKey: null,
+      fig: {
+        rawSize: null,
+        rawTransform: null,
+        rawNodeFields: {},
+        layout: null,
+        symbolOverrides: [],
+        componentPropAssignments: [],
+        derivedSymbolData: [],
+        derivedSymbolDataLayoutVersion: null,
+        uniformScaleFactor: null
+      }
+    },
     figmaDerivedLayout: null,
     fills:
       type === 'TEXT'
@@ -49,14 +62,6 @@ export function createDefaultNode(
     lineHeight: null,
     letterSpacing: 0,
     layoutMode: 'NONE',
-    figmaGuid: null,
-    figmaParentIndexPosition: null,
-    figmaLayout: null,
-    figmaSymbolOverrides: [],
-    figmaComponentPropAssignments: [],
-    figmaDerivedSymbolData: [],
-    figmaDerivedSymbolDataLayoutVersion: null,
-    figmaUniformScaleFactor: null,
     layoutDirection: 'AUTO',
     layoutWrap: 'NO_WRAP',
     primaryAxisAlign: 'MIN',

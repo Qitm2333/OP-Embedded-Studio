@@ -138,26 +138,26 @@ describe('Fix 1: auto-layout child transforms', () => {
       height: 24,
       layoutMode: 'HORIZONTAL',
       counterAxisSizing: 'HUG',
-      layoutAlignSelf: 'STRETCH',
-      figmaLayout: {
-        stackMode: 'HORIZONTAL',
-        stackPrimarySizing: 'FIXED',
-        stackCounterSizing: 'RESIZE_TO_FIT_WITH_IMPLICIT_SIZE',
-        stackChildAlignSelf: 'STRETCH'
-      }
+      layoutAlignSelf: 'STRETCH'
     })
+    parent.source.fig.layout = {
+      stackMode: 'HORIZONTAL',
+      stackPrimarySizing: 'FIXED',
+      stackCounterSizing: 'RESIZE_TO_FIT_WITH_IMPLICIT_SIZE',
+      stackChildAlignSelf: 'STRETCH'
+    }
 
-    graph.createNode('INSTANCE', parent.id, {
+    const child = graph.createNode('INSTANCE', parent.id, {
       name: 'Lists',
       width: 282.6666564941406,
       height: 24,
       layoutMode: 'VERTICAL',
-      layoutGrow: 1,
-      figmaLayout: {
-        stackMode: 'VERTICAL',
-        stackChildPrimaryGrow: 1
-      }
+      layoutGrow: 1
     })
+    child.source.fig.layout = {
+      stackMode: 'VERTICAL',
+      stackChildPrimaryGrow: 1
+    }
 
     const blobs: Uint8Array[] = []
     const changes = sceneNodeToKiwi(

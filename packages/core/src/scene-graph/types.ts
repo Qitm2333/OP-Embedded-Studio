@@ -18,6 +18,25 @@ export type SceneGraphEventHandlers = Partial<{
 
 export type DocumentColorSpace = 'srgb' | 'display-p3'
 
+export interface FigmaSourcePayload {
+  rawSize: Vector | null
+  rawTransform: Matrix | null
+  rawNodeFields: Record<string, unknown>
+  layout: FigmaLayoutMetadata | null
+  symbolOverrides: unknown[]
+  componentPropAssignments: unknown[]
+  derivedSymbolData: unknown[]
+  derivedSymbolDataLayoutVersion: number | null
+  uniformScaleFactor: number | null
+}
+
+export interface SourceMetadata {
+  format: 'fig' | null
+  id: string | null
+  orderKey: string | null
+  fig: FigmaSourcePayload
+}
+
 export type HandleMirroring = 'NONE' | 'ANGLE' | 'ANGLE_AND_LENGTH'
 export type WindingRule = 'NONZERO' | 'EVENODD'
 
@@ -269,9 +288,7 @@ export interface SceneNode {
   width: number
   height: number
   rotation: number
-  figmaRawSize: Vector | null
-  figmaRawTransform: Matrix | null
-  figmaRawNodeFields: Record<string, unknown>
+  source: SourceMetadata
   figmaDerivedLayout: Partial<Rect> | null
 
   fills: Fill[]
@@ -314,14 +331,6 @@ export interface SceneNode {
   verticalConstraint: ConstraintType
 
   layoutMode: LayoutMode
-  figmaGuid: string | null
-  figmaParentIndexPosition: string | null
-  figmaLayout: FigmaLayoutMetadata | null
-  figmaSymbolOverrides: unknown[]
-  figmaComponentPropAssignments: unknown[]
-  figmaDerivedSymbolData: unknown[]
-  figmaDerivedSymbolDataLayoutVersion: number | null
-  figmaUniformScaleFactor: number | null
   layoutDirection: LayoutDirection
   layoutWrap: LayoutWrap
   primaryAxisAlign: LayoutAlign
