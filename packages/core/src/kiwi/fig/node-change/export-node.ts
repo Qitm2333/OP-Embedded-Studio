@@ -99,6 +99,11 @@ function parseGuidOrNull(value: string) {
   return /^\d+:\d+$/.test(value) ? stringToGuid(value) : null
 }
 
+const FIGMA_PAYLOAD_FIELDS_UNSAFE_FOR_EXPORT = new Set([
+  'variableConsumptionMap',
+  'parameterConsumptionMap'
+])
+
 function materializeFigmaPayload(value: unknown, blobs: Uint8Array[]): unknown {
   if (value instanceof Uint8Array) return value
   if (Array.isArray(value)) return value.map((item) => materializeFigmaPayload(item, blobs))
@@ -114,6 +119,7 @@ function materializeFigmaPayload(value: unknown, blobs: Uint8Array[]): unknown {
 
   const materialized: Record<string, unknown> = {}
   for (const [key, child] of Object.entries(value)) {
+    if (FIGMA_PAYLOAD_FIELDS_UNSAFE_FOR_EXPORT.has(key)) continue
     materialized[key] = materializeFigmaPayload(child, blobs)
   }
   return materialized
