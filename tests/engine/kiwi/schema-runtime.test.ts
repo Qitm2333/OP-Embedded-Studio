@@ -1,6 +1,6 @@
 import { describe, test } from 'bun:test'
 
-import figSchema from '#core/kiwi/binary/schema'
+import figSchema from '#core/kiwi/fig/codec/schema'
 import { expectEnumValue, expectFieldNumber, validateSchema } from '#core/kiwi/schema-runtime'
 
 describe('Kiwi schema runtime', () => {

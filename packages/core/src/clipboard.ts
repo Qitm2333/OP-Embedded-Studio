@@ -1,11 +1,11 @@
 import { inflateSync, deflateSync } from 'fflate'
 
-import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/binary/codec'
-import type { NodeChange as KiwiNodeChange } from './kiwi/binary/codec'
-import { populateAndApplyOverrides } from './kiwi/instance-overrides'
-import type { InstanceNodeChange } from './kiwi/instance-overrides'
+import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/fig/codec'
+import type { NodeChange as KiwiNodeChange } from './kiwi/fig/codec'
+import { populateAndApplyOverrides } from './kiwi/fig/instance-overrides'
+import type { InstanceNodeChange } from './kiwi/fig/instance-overrides'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/schema-runtime'
-import { nodeChangeToProps, sortChildren } from './kiwi/node-change/convert'
+import { nodeChangeToProps, sortChildren } from './kiwi/fig/node-change/convert'
 import {
   sceneNodeToKiwi,
   buildFigKiwi,
@@ -14,7 +14,7 @@ import {
   makeDocumentNodeChange,
   makeCanvasNodeChange,
   buildFontDigestMap
-} from './kiwi/node-change/serialize'
+} from './kiwi/fig/node-change/serialize'
 import { randomInt } from './random'
 import type { SceneGraph, SceneNode } from './scene-graph'
 import { shapeTextForClipboard } from './canvas/text'

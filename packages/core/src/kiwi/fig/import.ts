@@ -2,17 +2,17 @@ import { isNotNil } from 'es-toolkit/predicate'
 
 import { BLACK } from '#core/constants'
 import { setLazyFigImportContext } from '#core/kiwi/fig/lazy-import'
-import type { NodeChange, VariableDataValuesEntry, Color, GUID } from '#core/kiwi/binary/codec'
-import { populateAndApplyOverrides } from '#core/kiwi/instance-overrides'
-import type { InstanceNodeChange } from '#core/kiwi/instance-overrides'
+import type { NodeChange, VariableDataValuesEntry, Color, GUID } from '#core/kiwi/fig/codec'
+import { populateAndApplyOverrides } from '#core/kiwi/fig/instance-overrides'
+import type { InstanceNodeChange } from '#core/kiwi/fig/instance-overrides'
 import {
   guidToString,
   nodeChangeToProps,
   sortChildren,
   setVariableColorResolver,
   VARIABLE_BINDING_FIELDS_INVERSE
-} from '#core/kiwi/node-change/convert'
-import { applyStyleRefsToFields } from '#core/kiwi/node-change/style-refs'
+} from '#core/kiwi/fig/node-change/convert'
+import { applyStyleRefsToFields } from '#core/kiwi/fig/node-change/style-refs'
 import { SceneGraph } from '#core/scene-graph'
 import type { VariableType, VariableValue } from '#core/scene-graph'
 

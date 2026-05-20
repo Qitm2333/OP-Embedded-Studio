@@ -1,4 +1,4 @@
-import type { NodeChange } from '#core/kiwi/binary/codec'
+import type { NodeChange } from '#core/kiwi/fig/codec'
 import type { SceneNode } from '#core/scene-graph'
 
 interface DerivedTextDataOptions {

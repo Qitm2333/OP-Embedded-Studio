@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
-import { protectField, type ProtectionMap } from '#core/kiwi/instance-overrides/patches'
-import { syncNodeProps } from '#core/kiwi/instance-overrides/sync'
+import { protectField, type ProtectionMap } from '#core/kiwi/fig/instance-overrides/patches'
+import { syncNodeProps } from '#core/kiwi/fig/instance-overrides/sync'
 import { SceneGraph } from '#core/scene-graph'
 import type { Fill, Stroke } from '#core/scene-graph'
 

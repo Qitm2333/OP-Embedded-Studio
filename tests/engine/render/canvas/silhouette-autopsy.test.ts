@@ -32,10 +32,10 @@ const effectsPath = coreSourcePath('canvas/effects.ts')
 const scenePath = coreSourcePath('canvas/scene.ts')
 const rendererPath = coreSourcePath('canvas/renderer.ts')
 const sgTypesPath = coreSourcePath('scene-graph/types.ts')
-const nodeExportPath = coreSourcePath('kiwi/node-change/export-node.ts')
-const convertPath = coreSourcePath('kiwi/node-change/paint.ts')
-const schemaPath = coreSourcePath('kiwi/binary/schema/fig.kiwi')
-const codecPath = coreSourcePath('kiwi/binary/codec.ts')
+const nodeExportPath = coreSourcePath('kiwi/fig/node-change/export-node.ts')
+const convertPath = coreSourcePath('kiwi/fig/node-change/paint.ts')
+const schemaPath = coreSourcePath('kiwi/fig/codec/schema/fig.kiwi')
+const codecPath = coreSourcePath('kiwi/fig/codec/index.ts')
 const lifecyclePath = coreSourcePath('canvas/renderer/lifecycle.ts')
 
 function readSource(path: string): string {
@@ -61,7 +61,7 @@ describe('Doc 01 — The Current Engine: Static Code Claims', () => {
     }
   })
 
-  test('C01-02: Kiwi EffectType enum has only 4 values, missing LAYER_BLUR (kiwi/binary/schema.ts:132-137)', () => {
+  test('C01-02: Kiwi EffectType enum has only 4 values, missing LAYER_BLUR (kiwi/fig/codec/schema.ts:132-137)', () => {
     const src = readSource(schemaPath)
     expect(src).toContain('INNER_SHADOW = 0')
     expect(src).toContain('DROP_SHADOW = 1')
@@ -70,7 +70,7 @@ describe('Doc 01 — The Current Engine: Static Code Claims', () => {
     expect(src).not.toContain('LAYER_BLUR =')
   })
 
-  test('C01-03: Kiwi codec Effect interface also has 5 types (kiwi/binary/codec.ts:212)', () => {
+  test('C01-03: Kiwi codec Effect interface also has 5 types (kiwi/fig/codec/index.ts:212)', () => {
     const src = readSource(codecPath)
     // The codec.ts file defines an Effect interface — verify all 5 types present
     // Use a targeted search near the Effect interface definition

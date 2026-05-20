@@ -1,5 +1,5 @@
-import { populateAndApplyOverrides } from '#core/kiwi/instance-overrides'
-import type { InstanceNodeChange } from '#core/kiwi/instance-overrides'
+import { populateAndApplyOverrides } from '#core/kiwi/fig/instance-overrides'
+import type { InstanceNodeChange } from '#core/kiwi/fig/instance-overrides'
 import type { SceneGraph } from '#core/scene-graph'
 
 export interface LazyFigImportContext {

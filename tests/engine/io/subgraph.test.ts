@@ -5,7 +5,7 @@ import { describe, expect, test } from 'bun:test'
 import { exportFigFile, extractExportGraph, parseFigFile } from '@open-pencil/core/io'
 import { initCodec } from '@open-pencil/core/kiwi'
 import { parseFigBuffer } from '@open-pencil/core/kiwi/fig/parse/core'
-import { guidToString } from '@open-pencil/core/kiwi/node-change/guid'
+import { guidToString } from '@open-pencil/core/kiwi/fig/node-change/guid'
 import { SceneGraph } from '@open-pencil/core/scene-graph'
 
 describe('export subgraph extraction', () => {

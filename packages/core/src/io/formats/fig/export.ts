@@ -5,9 +5,9 @@ import type { SkiaRenderer } from '#core/canvas'
 import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from '#core/constants'
 import { renderThumbnail } from '#core/io/formats/raster'
 import { populateAllLazyFigImportRoots } from '#core/kiwi/fig/lazy-import'
-import { initCodec, getCompiledSchema, getSchemaBytes } from '#core/kiwi/binary/codec'
-import type { NodeChange } from '#core/kiwi/binary/codec'
-import { stringToGuid } from '#core/kiwi/node-change/convert'
+import { initCodec, getCompiledSchema, getSchemaBytes } from '#core/kiwi/fig/codec'
+import type { NodeChange } from '#core/kiwi/fig/codec'
+import { stringToGuid } from '#core/kiwi/fig/node-change/convert'
 import {
   sceneNodeToKiwi,
   fractionalPosition,
@@ -15,7 +15,7 @@ import {
   safeColor,
   makeDocumentNodeChange,
   makeCanvasNodeChange
-} from '#core/kiwi/node-change/serialize'
+} from '#core/kiwi/fig/node-change/serialize'
 import type { SceneGraph, VariableValue } from '#core/scene-graph'
 import type { GUID } from '#core/types'
 
