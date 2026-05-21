@@ -88,9 +88,7 @@ export function createCanvasRenderLoop(
     editor.onEditorEvent('viewport:changed', scheduleRender)
   ]
 
-  if (options.layer !== 'scene') {
-    unsubscribe.push(editor.onEditorEvent('repaint:requested', scheduleRender))
-  }
+  unsubscribe.push(editor.onEditorEvent('repaint:requested', scheduleRender))
 
   if (shouldScheduleForSelection(options.layer)) {
     unsubscribe.push(editor.onEditorEvent('selection:changed', scheduleRender))

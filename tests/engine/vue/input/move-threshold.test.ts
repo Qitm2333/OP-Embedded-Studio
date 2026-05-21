@@ -46,4 +46,26 @@ describe('selection move drag threshold', () => {
     expect(node?.y).toBe(27)
     expect(drag.dragStarted).toBe(true)
   })
+
+  test('removes duplicate created for alt-click without movement', () => {
+    const editor = createEditor()
+    const pageId = editor.state.currentPageId
+    const node = editor.graph.createNode('RECTANGLE', pageId, {
+      name: 'Box',
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 80
+    })
+    editor.select([node.id])
+
+    const drag = createSelectionMoveDrag(10, 20, 100, 200, editor, true)
+    if (drag.type !== 'move') throw new Error('Expected move drag')
+    expect(editor.graph.getChildren(pageId)).toHaveLength(2)
+
+    handleMoveUp(drag, editor)
+
+    expect(editor.graph.getChildren(pageId).map((child) => child.id)).toEqual([node.id])
+    expect([...editor.state.selectedIds]).toEqual([node.id])
+  })
 })

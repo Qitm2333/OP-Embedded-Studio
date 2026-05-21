@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from 'bun:test'
 
-import { exportFigFile, initCodec, SceneGraph } from '@open-pencil/core'
+import { exportFigFile, initCodec, parseFigFile, SceneGraph } from '@open-pencil/core'
 
 import { parseFigBuffer } from '@open-pencil/core/kiwi/fig/parse/core'
 import { guidToString } from '@open-pencil/core/kiwi/fig/node-change/convert'
@@ -66,6 +66,64 @@ describe('fig roundtrip source metadata', () => {
 
     expect(changes.get('4:4812')?.parentIndex?.position).toBe('~~~~~~~~~~1')
     expect(changes.get('4:4813')?.parentIndex?.position).toBe('~~~~~~~~~~3')
+  })
+
+  test('edited imported nodes export current geometry and paints', async () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const rect = graph.createNode('RECTANGLE', page.id, {
+      name: 'Edited imported rect',
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 50,
+      fills: [
+        {
+          type: 'SOLID',
+          color: { r: 0, g: 0, b: 1, a: 1 },
+          opacity: 1,
+          visible: true,
+          blendMode: 'NORMAL'
+        }
+      ]
+    })
+    rect.source.format = 'fig'
+    rect.source.id = '4:500'
+    rect.source.fig.rawSize = { x: 80, y: 40 }
+    rect.source.fig.rawTransform = { m00: 1, m01: 0, m02: 1, m10: 0, m11: 1, m12: 2 }
+    rect.source.fig.rawNodeFields.fillPaints = [
+      {
+        type: 'SOLID',
+        color: { r: 1, g: 0, b: 0, a: 1 },
+        opacity: 1,
+        visible: true,
+        blendMode: 'NORMAL'
+      }
+    ]
+
+    graph.updateNode(rect.id, {
+      x: 30,
+      width: 120,
+      fills: [
+        {
+          type: 'SOLID',
+          color: { r: 0, g: 1, b: 0, a: 1 },
+          opacity: 1,
+          visible: true,
+          blendMode: 'NORMAL'
+        }
+      ]
+    })
+
+    const reimported = await parseFigFile((await exportFigFile(graph)).buffer as ArrayBuffer)
+    const exportedRect = [...reimported.getAllNodes()].find((node) => node.name === rect.name)
+
+    expect(exportedRect?.x).toBe(30)
+    expect(exportedRect?.width).toBe(120)
+    expect(exportedRect?.fills[0]?.type).toBe('SOLID')
+    if (exportedRect?.fills[0]?.type === 'SOLID') {
+      expect(exportedRect.fills[0].color).toEqual({ r: 0, g: 1, b: 0, a: 1 })
+    }
   })
 
   test('exports imported raw vector payloads without regenerating vector data', async () => {

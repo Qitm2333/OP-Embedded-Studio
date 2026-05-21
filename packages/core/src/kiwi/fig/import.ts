@@ -466,13 +466,15 @@ export function importNodeChanges(
       ? [firstPageId, ...componentPageIds].filter(isNotNil)
       : undefined
 
-  populateAndApplyOverrides(
-    graph,
-    changeMap as Map<string, InstanceNodeChange>,
-    guidToNodeId,
-    blobs,
-    activeRootIds
-  )
+  graph.preserveSourceMetadataDuring(() => {
+    populateAndApplyOverrides(
+      graph,
+      changeMap as Map<string, InstanceNodeChange>,
+      guidToNodeId,
+      blobs,
+      activeRootIds
+    )
+  })
 
   if (activeRootIds) rememberLazyFigImportContext(graph, changeMap, guidToNodeId, blobs, activeRootIds)
 

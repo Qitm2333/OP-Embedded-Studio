@@ -169,7 +169,15 @@ export function handleMoveUp(d: DragMove, editor: Editor) {
   }
 
   if (d.duplicated) {
-    editor.commitDuplicateMove([...d.originals.keys()], d.duplicatedPreviousSelection ?? new Set())
+    const previousSelection = d.duplicatedPreviousSelection ?? new Set<string>()
+    if (!moved) {
+      for (const id of [...d.originals.keys()].toReversed()) editor.graph.deleteNode(id)
+      editor.select([...previousSelection])
+      editor.requestRender()
+      editor.setDropTarget(null)
+      return
+    }
+    editor.commitDuplicateMove([...d.originals.keys()], previousSelection)
   } else if (moved) {
     editor.commitMoveWithReparent(d.originals)
   }

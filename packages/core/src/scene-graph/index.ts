@@ -7,6 +7,8 @@ import * as HitTest from './hit-test'
 import * as Instances from './instances'
 import { CONTAINER_TYPES, createDefaultNode } from './node-defaults'
 import { updateNodePreview } from './preview'
+import { clearEditedSourceMetadata } from './source-metadata'
+import { TEXT_PICTURE_KEYS } from './text-picture'
 import * as Variables from './variables'
 import { normalizeVectorNetwork } from './vector-network'
 
@@ -50,6 +52,7 @@ export class SceneGraph {
   readonly emitter: Emitter<SceneGraphEvents> = createNanoEvents()
   private absPosCache = new Map<string, Vector>()
   private previewMutationDepth = 0
+  private sourceMetadataPreservationDepth = 0
   positionPreviewVersion = 0
   instanceIndex = new Map<string, Set<string>>()
 
@@ -97,11 +100,6 @@ export class SceneGraph {
     }
   }
 
-  /**
-   * Count all descendants of a node (children, grandchildren, etc.).
-   * Used for per-page node counts in the renderer to determine if a page
-   * is "large" without counting nodes on other pages.
-   */
   countDescendants(nodeId: string): number {
     const node = this.nodes.get(nodeId)
     if (!node) return 0
@@ -113,9 +111,6 @@ export class SceneGraph {
       count++
       const child = this.nodes.get(id)
       if (child) {
-        // Use a for-of loop instead of spread: stack.push(...ids) places every
-        // element on the call stack as function arguments and crashes V8/JSC
-        // with RangeError on nodes with >~125k direct children.
         for (const childId of child.childIds) {
           stack.push(childId)
         }
@@ -289,14 +284,8 @@ export class SceneGraph {
     return node
   }
 
-  /**
-   * Properties that affect absolute position computation (getNodeLocalMatrix).
-   * Changing any of these on a node invalidates the absPosCache for that node
-   * and all its descendants. Other changes (fills, strokes, effects, plugin data)
-   * do NOT affect absolute position and can skip the expensive cache clear.
-   *
-   * These names MUST match the actual SceneNode field names (not Figma API proxy names).
-   */
+  static TEXT_PICTURE_KEYS: ReadonlySet<string> = TEXT_PICTURE_KEYS
+
   static LAYOUT_AFFECTING_KEYS: ReadonlySet<string> = new Set([
     'x',
     'y',
@@ -336,24 +325,7 @@ export class SceneGraph {
     'maxHeight'
   ])
 
-  static TEXT_PICTURE_KEYS: ReadonlySet<string> = new Set([
-    'text',
-    'fontSize',
-    'fontFamily',
-    'fontWeight',
-    'italic',
-    'textAlignHorizontal',
-    'textDirection',
-    'textAlignVertical',
-    'lineHeight',
-    'letterSpacing',
-    'textDecoration',
-    'textCase',
-    'styleRuns',
-    'fills',
-    'width',
-    'height'
-  ])
+
 
   runPreviewUpdates(fn: () => void): void {
     this.previewMutationDepth++
@@ -361,6 +333,14 @@ export class SceneGraph {
       fn()
     } finally {
       this.previewMutationDepth--
+    }
+  }
+  preserveSourceMetadataDuring(fn: () => void): void {
+    this.sourceMetadataPreservationDepth++
+    try {
+      fn()
+    } finally {
+      this.sourceMetadataPreservationDepth--
     }
   }
   updateNodePositionPreview(id: string, x: number, y: number): void {
@@ -398,7 +378,7 @@ export class SceneGraph {
       }
     }
     if (node.type === 'TEXT') {
-      const textChanged = Object.keys(changes).some((k) => SceneGraph.TEXT_PICTURE_KEYS.has(k))
+      const textChanged = Object.keys(changes).some((k) => TEXT_PICTURE_KEYS.has(k))
       if (node.textPicture && textChanged) node.textPicture = null
       if (node.figmaDerivedTextGlyphs && 'text' in changes) node.figmaDerivedTextGlyphs = null
     }
@@ -406,6 +386,9 @@ export class SceneGraph {
     changes = Object.fromEntries(
       entries.filter(([, value]) => value !== undefined)
     ) as Partial<SceneNode>
+    if (this.sourceMetadataPreservationDepth === 0) {
+      clearEditedSourceMetadata(node, Object.keys(changes))
+    }
     if (changes.vectorNetwork) {
       changes = { ...changes, vectorNetwork: normalizeVectorNetwork(changes.vectorNetwork) }
     }
