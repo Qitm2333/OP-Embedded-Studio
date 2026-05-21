@@ -2,6 +2,8 @@ import { describe, test, expect, beforeAll, setDefaultTimeout } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
+import { unzipSync } from 'fflate'
+
 import {
   parseFigFile,
   exportFigFile,
@@ -15,6 +17,42 @@ import { heavy } from '#tests/helpers/test-utils'
 setDefaultTimeout(30_000)
 
 const FIXTURES = resolve(import.meta.dir, '../../../../fixtures')
+const CUSTOM_FIG_KIWI_VERSION = 77
+
+function canvasFigVersion(figData: Uint8Array): number {
+  const zip = unzipSync(figData)
+  const canvasData = zip['canvas.fig'] ?? zip.canvas
+  expect(canvasData).toBeDefined()
+  return new DataView(canvasData.buffer, canvasData.byteOffset, canvasData.byteLength).getUint32(
+    8,
+    true
+  )
+}
+
+function compressInWorker(message: {
+  schemaDeflated: Uint8Array
+  kiwiData: Uint8Array
+  thumbnailPng: Uint8Array
+  metaJson: string
+  images: Array<{ name: string; data: Uint8Array }>
+  figKiwiVersion?: number
+}): Promise<Uint8Array> {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(
+      new URL('../../../../../packages/core/src/io/formats/fig/export-worker.ts', import.meta.url),
+      { type: 'module' }
+    )
+    worker.onmessage = (event: MessageEvent<Uint8Array>) => {
+      worker.terminate()
+      resolve(event.data)
+    }
+    worker.onerror = (event) => {
+      worker.terminate()
+      reject(new Error(event.message))
+    }
+    worker.postMessage(message, [])
+  })
+}
 
 describe('fig export compression', () => {
   test('compressFigDataSync produces valid zip', async () => {
@@ -48,6 +86,34 @@ describe('fig export compression', () => {
     expect(result.length).toBeGreaterThan(0)
     expect(result[0]).toBe(0x50)
     expect(result[1]).toBe(0x4b)
+  })
+
+  test('compression preserves custom fig-kiwi version in sync and worker paths', async () => {
+    const schemaDeflated = new Uint8Array([0x78, 0x01, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01])
+    const kiwiData = new Uint8Array([10, 20, 30])
+    const thumbnailPng = new Uint8Array([0x89, 0x50])
+    const metaJson = JSON.stringify({ version: 1, app: 'test' })
+    const images: Array<{ name: string; data: Uint8Array }> = []
+
+    const syncResult = compressFigDataSync(
+      schemaDeflated,
+      kiwiData,
+      thumbnailPng,
+      metaJson,
+      images,
+      CUSTOM_FIG_KIWI_VERSION
+    )
+    const workerResult = await compressInWorker({
+      schemaDeflated,
+      kiwiData,
+      thumbnailPng,
+      metaJson,
+      images,
+      figKiwiVersion: CUSTOM_FIG_KIWI_VERSION
+    })
+
+    expect(canvasFigVersion(syncResult)).toBe(CUSTOM_FIG_KIWI_VERSION)
+    expect(canvasFigVersion(workerResult)).toBe(CUSTOM_FIG_KIWI_VERSION)
   })
 })
 

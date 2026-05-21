@@ -389,7 +389,8 @@ function compressViaWorker(
   kiwiData: Uint8Array,
   thumbnailPng: Uint8Array,
   metaJson: string,
-  imageEntries: Array<{ name: string; data: Uint8Array }>
+  imageEntries: Array<{ name: string; data: Uint8Array }>,
+  figKiwiVersion?: number
 ): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL('./export-worker.ts', import.meta.url), {
@@ -409,7 +410,14 @@ function compressViaWorker(
     // internal buffer, so transferring kiwiData.buffer or schemaDeflated.buffer detaches
     // buffers that may be shared with other views, causing "already detached" errors on
     // subsequent saves. Structured clone (the default) copies the data safely.
-    worker.postMessage({ schemaDeflated, kiwiData, thumbnailPng, metaJson, images: imageEntries })
+    worker.postMessage({
+      schemaDeflated,
+      kiwiData,
+      thumbnailPng,
+      metaJson,
+      images: imageEntries,
+      figKiwiVersion
+    })
   })
 }
 
@@ -422,7 +430,14 @@ export function compressFigData(
   figKiwiVersion?: number
 ): Promise<Uint8Array> {
   if (canUseWorker()) {
-    return compressViaWorker(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries)
+    return compressViaWorker(
+      schemaDeflated,
+      kiwiData,
+      thumbnailPng,
+      metaJson,
+      imageEntries,
+      figKiwiVersion
+    )
   }
   return Promise.resolve(
     compressFigDataSync(
