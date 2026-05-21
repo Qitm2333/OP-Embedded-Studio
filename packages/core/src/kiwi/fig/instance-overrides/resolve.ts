@@ -343,7 +343,11 @@ function applyStrokeDescendants(ctx: OverrideContext, nodeId: string, strokes: S
     const node = ctx.graph.getNode(id)
     if (!node) return
     if (node.strokes.length > 0) {
-      if (index < strokes.length) ctx.graph.updateNode(id, { strokes: copyStrokes(strokes[index]) })
+      if (index < strokes.length) {
+        ctx.graph.preserveSourceMetadataDuring(() => {
+          ctx.graph.updateNode(id, { strokes: copyStrokes(strokes[index]) })
+        })
+      }
       index++
     }
     for (const childId of node.childIds) visit(childId)
@@ -364,7 +368,7 @@ export function repopulateInstance(ctx: OverrideContext, nodeId: string, compId:
   if (comp?.name && rootComp?.name && node.name === rootComp.name) {
     updates.name = comp.name
   }
-  ctx.graph.updateNode(nodeId, updates)
+  ctx.graph.preserveSourceMetadataDuring(() => ctx.graph.updateNode(nodeId, updates))
   if (comp && comp.childIds.length > 0) {
     ctx.graph.populateInstanceChildren(nodeId, compId)
     applyStrokeDescendants(ctx, nodeId, previousStrokes)

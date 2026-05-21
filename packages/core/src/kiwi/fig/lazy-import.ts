@@ -27,13 +27,15 @@ function populateRoots(
   const pending = [...rootIds].filter((id) => id && !context.populatedRootIds.has(id))
   if (pending.length === 0) return false
 
-  populateAndApplyOverrides(
-    graph,
-    context.changeMap,
-    context.guidToNodeId,
-    context.blobs,
-    pending
-  )
+  graph.preserveSourceMetadataDuring(() => {
+    populateAndApplyOverrides(
+      graph,
+      context.changeMap,
+      context.guidToNodeId,
+      context.blobs,
+      pending
+    )
+  })
 
   for (const id of pending) context.populatedRootIds.add(id)
   return true

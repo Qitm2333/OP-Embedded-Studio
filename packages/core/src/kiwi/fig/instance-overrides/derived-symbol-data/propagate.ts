@@ -54,7 +54,9 @@ export function propagateDsdChanges(
       const clone = ctx.graph.getNode(cloneId)
       if (!clone) continue
       const updates = buildCloneUpdates(ctx, source, clone, cloneId, sizeSet)
-      if (Object.keys(updates).length > 0) ctx.graph.updateNode(cloneId, updates)
+      if (Object.keys(updates).length > 0) {
+        ctx.graph.preserveSourceMetadataDuring(() => ctx.graph.updateNode(cloneId, updates))
+      }
       queue.push(cloneId)
     }
   }

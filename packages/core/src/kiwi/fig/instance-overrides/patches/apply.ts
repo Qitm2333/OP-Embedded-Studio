@@ -37,9 +37,10 @@ export function applyOverridePatch(ctx: OverrideContext, patch: OverridePatch): 
   if (patch.props && Object.keys(patch.props).length > 0) {
     const target = ctx.graph.getNode(patch.targetId)
     if (target) {
-      preserveStrokeShapeProps(target, patch.props)
-      ctx.graph.updateNode(patch.targetId, patch.props)
-      protectPatchProps(ctx.protectedFields, patch.targetId, patch.props)
+      const props = patch.props
+      preserveStrokeShapeProps(target, props)
+      ctx.graph.preserveSourceMetadataDuring(() => ctx.graph.updateNode(patch.targetId, props))
+      protectPatchProps(ctx.protectedFields, patch.targetId, props)
       changed = true
     }
   }
