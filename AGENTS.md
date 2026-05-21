@@ -375,8 +375,9 @@ Self-review checklist:
 ## Publishing
 
 - `bun publish` from package dirs — resolves `workspace:*` → actual versions
-- Core: `prepublishOnly` runs `tsc` to build `dist/` for Node.js consumers
-- CLI requires Bun runtime (`#!/usr/bin/env bun`)
+- Public packages publish built `dist/` output, not runtime TypeScript entrypoints
+- Core, Vue, MCP, and CLI build with tsdown before publishing
+- CLI publishes a Node-compatible `bin/openpencil.js` wrapper; do not point package `bin` entries at TypeScript source
 
 ## Reference
 

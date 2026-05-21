@@ -9,150 +9,149 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "bun": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js",
+      "import": "./dist/index.js"
     },
     "./scene-graph": {
-      "types": "./src/scene-graph/index.ts",
-      "bun": "./src/scene-graph/index.ts",
-      "default": "./src/scene-graph/index.ts"
+      "types": "./dist/scene-graph/index.d.ts",
+      "default": "./dist/scene-graph/index.js",
+      "import": "./dist/scene-graph/index.js"
     },
     "./color": {
-      "types": "./src/color/index.ts",
-      "bun": "./src/color/index.ts",
-      "default": "./src/color/index.ts"
+      "types": "./dist/color/index.d.ts",
+      "default": "./dist/color/index.js",
+      "import": "./dist/color/index.js"
     },
     "./text": {
-      "types": "./src/text/index.ts",
-      "bun": "./src/text/index.ts",
-      "default": "./src/text/index.ts"
+      "types": "./dist/text/index.d.ts",
+      "default": "./dist/text/index.js",
+      "import": "./dist/text/index.js"
     },
     "./vector": {
-      "types": "./src/vector/index.ts",
-      "bun": "./src/vector/index.ts",
-      "default": "./src/vector/index.ts"
+      "types": "./dist/vector/index.d.ts",
+      "default": "./dist/vector/index.js",
+      "import": "./dist/vector/index.js"
     },
     "./figma-api": {
-      "types": "./src/figma-api/index.ts",
-      "bun": "./src/figma-api/index.ts",
-      "default": "./src/figma-api/index.ts"
+      "types": "./dist/figma-api/index.d.ts",
+      "default": "./dist/figma-api/index.js",
+      "import": "./dist/figma-api/index.js"
     },
     "./icons": {
-      "types": "./src/icons/index.ts",
-      "bun": "./src/icons/index.ts",
-      "default": "./src/icons/index.ts"
+      "types": "./dist/icons/index.d.ts",
+      "default": "./dist/icons/index.js",
+      "import": "./dist/icons/index.js"
     },
     "./canvas": {
-      "types": "./src/canvas/index.ts",
-      "bun": "./src/canvas/index.ts",
-      "default": "./src/canvas/index.ts"
+      "types": "./dist/canvas/index.d.ts",
+      "default": "./dist/canvas/index.js",
+      "import": "./dist/canvas/index.js"
     },
     "./design-jsx": {
-      "types": "./src/design-jsx/index.ts",
-      "bun": "./src/design-jsx/index.ts",
-      "default": "./src/design-jsx/index.ts"
+      "types": "./dist/design-jsx/index.d.ts",
+      "default": "./dist/design-jsx/index.js",
+      "import": "./dist/design-jsx/index.js"
     },
     "./editor": {
-      "types": "./src/editor/index.ts",
-      "bun": "./src/editor/index.ts",
-      "default": "./src/editor/index.ts"
+      "types": "./dist/editor/index.d.ts",
+      "default": "./dist/editor/index.js",
+      "import": "./dist/editor/index.js"
     },
     "./tools": {
-      "types": "./src/tools/index.ts",
-      "bun": "./src/tools/index.ts",
-      "default": "./src/tools/index.ts"
+      "types": "./dist/tools/index.d.ts",
+      "default": "./dist/tools/index.js",
+      "import": "./dist/tools/index.js"
     },
     "./profiler": {
-      "types": "./src/profiler/index.ts",
-      "bun": "./src/profiler/index.ts",
-      "default": "./src/profiler/index.ts"
+      "types": "./dist/profiler/index.d.ts",
+      "default": "./dist/profiler/index.js",
+      "import": "./dist/profiler/index.js"
     },
     "./rpc": {
-      "types": "./src/rpc/index.ts",
-      "bun": "./src/rpc/index.ts",
-      "default": "./src/rpc/index.ts"
+      "types": "./dist/rpc/index.d.ts",
+      "default": "./dist/rpc/index.js",
+      "import": "./dist/rpc/index.js"
     },
     "./lint": {
-      "types": "./src/lint/index.ts",
-      "bun": "./src/lint/index.ts",
-      "default": "./src/lint/index.ts"
+      "types": "./dist/lint/index.d.ts",
+      "default": "./dist/lint/index.js",
+      "import": "./dist/lint/index.js"
     },
     "./io": {
-      "types": "./src/io/index.ts",
-      "bun": "./src/io/index.ts",
-      "default": "./src/io/index.ts"
+      "types": "./dist/io/index.d.ts",
+      "default": "./dist/io/index.js",
+      "import": "./dist/io/index.js"
     },
     "./io/formats/fig": {
-      "types": "./src/io/formats/fig/index.ts",
-      "bun": "./src/io/formats/fig/index.ts",
-      "default": "./src/io/formats/fig/index.ts"
+      "types": "./dist/io/formats/fig/index.d.ts",
+      "default": "./dist/io/formats/fig/index.js",
+      "import": "./dist/io/formats/fig/index.js"
     },
     "./io/formats/pen": {
-      "types": "./src/io/formats/pen/index.ts",
-      "bun": "./src/io/formats/pen/index.ts",
-      "default": "./src/io/formats/pen/index.ts"
+      "types": "./dist/io/formats/pen/index.d.ts",
+      "default": "./dist/io/formats/pen/index.js",
+      "import": "./dist/io/formats/pen/index.js"
     },
     "./io/formats/jsx": {
-      "types": "./src/io/formats/jsx/index.ts",
-      "bun": "./src/io/formats/jsx/index.ts",
-      "default": "./src/io/formats/jsx/index.ts"
+      "types": "./dist/io/formats/jsx/index.d.ts",
+      "default": "./dist/io/formats/jsx/index.js",
+      "import": "./dist/io/formats/jsx/index.js"
     },
     "./io/formats/raster": {
-      "types": "./src/io/formats/raster/index.ts",
-      "bun": "./src/io/formats/raster/index.ts",
-      "default": "./src/io/formats/raster/index.ts"
+      "types": "./dist/io/formats/raster/index.d.ts",
+      "default": "./dist/io/formats/raster/index.js",
+      "import": "./dist/io/formats/raster/index.js"
     },
     "./io/formats/svg": {
-      "types": "./src/io/formats/svg/index.ts",
-      "bun": "./src/io/formats/svg/index.ts",
-      "default": "./src/io/formats/svg/index.ts"
+      "types": "./dist/io/formats/svg/index.d.ts",
+      "default": "./dist/io/formats/svg/index.js",
+      "import": "./dist/io/formats/svg/index.js"
     },
     "./kiwi": {
-      "types": "./src/kiwi/index.ts",
-      "bun": "./src/kiwi/index.ts",
-      "default": "./src/kiwi/index.ts"
+      "types": "./dist/kiwi/index.d.ts",
+      "default": "./dist/kiwi/index.js",
+      "import": "./dist/kiwi/index.js"
     },
     "./constants": {
-      "types": "./src/constants.ts",
-      "bun": "./src/constants.ts",
-      "default": "./src/constants.ts"
+      "types": "./dist/constants.d.ts",
+      "default": "./dist/constants.js",
+      "import": "./dist/constants.js"
     },
     "./random": {
-      "types": "./src/random.ts",
-      "bun": "./src/random.ts",
-      "default": "./src/random.ts"
+      "types": "./dist/random.d.ts",
+      "default": "./dist/random.js",
+      "import": "./dist/random.js"
     },
     "./xpath": {
-      "types": "./src/xpath.ts",
-      "bun": "./src/xpath.ts",
-      "default": "./src/xpath.ts"
+      "types": "./dist/xpath.d.ts",
+      "default": "./dist/xpath.js",
+      "import": "./dist/xpath.js"
     },
     "./types": {
-      "types": "./src/types.ts",
-      "bun": "./src/types.ts",
-      "default": "./src/types.ts"
+      "types": "./dist/types.d.ts",
+      "default": "./dist/types.js",
+      "import": "./dist/types.js"
     },
     "./canvaskit": {
-      "types": "./src/canvaskit.ts",
-      "bun": "./src/canvaskit.ts",
-      "default": "./src/canvaskit.ts"
+      "types": "./dist/canvaskit.d.ts",
+      "default": "./dist/canvaskit.js",
+      "import": "./dist/canvaskit.js"
     },
     "./layout": {
-      "types": "./src/layout.ts",
-      "bun": "./src/layout.ts",
-      "default": "./src/layout.ts"
+      "types": "./dist/layout.d.ts",
+      "default": "./dist/layout.js",
+      "import": "./dist/layout.js"
     },
     "./geometry": {
-      "types": "./src/geometry.ts",
-      "bun": "./src/geometry.ts",
-      "default": "./src/geometry.ts"
+      "types": "./dist/geometry.d.ts",
+      "default": "./dist/geometry.js",
+      "import": "./dist/geometry.js"
     }
   },
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "src",
     "dist",
     "assets"
   ],
@@ -167,154 +166,12 @@
   },
   "publishConfig": {
     "access": "public",
-    "provenance": true,
-    "exports": {
-      ".": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/index.js",
-        "default": "./dist/index.js"
-      },
-      "./scene-graph": {
-        "types": "./dist/scene-graph/index.d.ts",
-        "import": "./dist/scene-graph/index.js",
-        "default": "./dist/scene-graph/index.js"
-      },
-      "./color": {
-        "types": "./dist/color/index.d.ts",
-        "import": "./dist/color/index.js",
-        "default": "./dist/color/index.js"
-      },
-      "./text": {
-        "types": "./dist/text/index.d.ts",
-        "import": "./dist/text/index.js",
-        "default": "./dist/text/index.js"
-      },
-      "./vector": {
-        "types": "./dist/vector/index.d.ts",
-        "import": "./dist/vector/index.js",
-        "default": "./dist/vector/index.js"
-      },
-      "./figma-api": {
-        "types": "./dist/figma-api/index.d.ts",
-        "import": "./dist/figma-api/index.js",
-        "default": "./dist/figma-api/index.js"
-      },
-      "./icons": {
-        "types": "./dist/icons/index.d.ts",
-        "import": "./dist/icons/index.js",
-        "default": "./dist/icons/index.js"
-      },
-      "./canvas": {
-        "types": "./dist/canvas/index.d.ts",
-        "import": "./dist/canvas/index.js",
-        "default": "./dist/canvas/index.js"
-      },
-      "./design-jsx": {
-        "types": "./dist/design-jsx/index.d.ts",
-        "import": "./dist/design-jsx/index.js",
-        "default": "./dist/design-jsx/index.js"
-      },
-      "./editor": {
-        "types": "./dist/editor/index.d.ts",
-        "import": "./dist/editor/index.js",
-        "default": "./dist/editor/index.js"
-      },
-      "./tools": {
-        "types": "./dist/tools/index.d.ts",
-        "import": "./dist/tools/index.js",
-        "default": "./dist/tools/index.js"
-      },
-      "./profiler": {
-        "types": "./dist/profiler/index.d.ts",
-        "import": "./dist/profiler/index.js",
-        "default": "./dist/profiler/index.js"
-      },
-      "./rpc": {
-        "types": "./dist/rpc/index.d.ts",
-        "import": "./dist/rpc/index.js",
-        "default": "./dist/rpc/index.js"
-      },
-      "./lint": {
-        "types": "./dist/lint/index.d.ts",
-        "import": "./dist/lint/index.js",
-        "default": "./dist/lint/index.js"
-      },
-      "./io": {
-        "types": "./dist/io/index.d.ts",
-        "import": "./dist/io/index.js",
-        "default": "./dist/io/index.js"
-      },
-      "./io/formats/fig": {
-        "types": "./dist/io/formats/fig/index.d.ts",
-        "import": "./dist/io/formats/fig/index.js",
-        "default": "./dist/io/formats/fig/index.js"
-      },
-      "./io/formats/pen": {
-        "types": "./dist/io/formats/pen/index.d.ts",
-        "import": "./dist/io/formats/pen/index.js",
-        "default": "./dist/io/formats/pen/index.js"
-      },
-      "./io/formats/jsx": {
-        "types": "./dist/io/formats/jsx/index.d.ts",
-        "import": "./dist/io/formats/jsx/index.js",
-        "default": "./dist/io/formats/jsx/index.js"
-      },
-      "./io/formats/raster": {
-        "types": "./dist/io/formats/raster/index.d.ts",
-        "import": "./dist/io/formats/raster/index.js",
-        "default": "./dist/io/formats/raster/index.js"
-      },
-      "./io/formats/svg": {
-        "types": "./dist/io/formats/svg/index.d.ts",
-        "import": "./dist/io/formats/svg/index.js",
-        "default": "./dist/io/formats/svg/index.js"
-      },
-      "./kiwi": {
-        "types": "./dist/kiwi/index.d.ts",
-        "import": "./dist/kiwi/index.js",
-        "default": "./dist/kiwi/index.js"
-      },
-      "./constants": {
-        "types": "./dist/constants.d.ts",
-        "import": "./dist/constants.js",
-        "default": "./dist/constants.js"
-      },
-      "./random": {
-        "types": "./dist/random.d.ts",
-        "import": "./dist/random.js",
-        "default": "./dist/random.js"
-      },
-      "./xpath": {
-        "types": "./dist/xpath.d.ts",
-        "import": "./dist/xpath.js",
-        "default": "./dist/xpath.js"
-      },
-      "./types": {
-        "types": "./dist/types.d.ts",
-        "import": "./dist/types.js",
-        "default": "./dist/types.js"
-      },
-      "./canvaskit": {
-        "types": "./dist/canvaskit.d.ts",
-        "import": "./dist/canvaskit.js",
-        "default": "./dist/canvaskit.js"
-      },
-      "./layout": {
-        "types": "./dist/layout.d.ts",
-        "import": "./dist/layout.js",
-        "default": "./dist/layout.js"
-      },
-      "./geometry": {
-        "types": "./dist/geometry.d.ts",
-        "import": "./dist/geometry.js",
-        "default": "./dist/geometry.js"
-      }
-    },
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts"
+    "provenance": true
   },
   "dependencies": {
+    "@chenglou/pretext": "^0.0.7",
     "@iconify/utils": "^3.1.0",
+    "@tauri-apps/api": "^2",
     "acorn": "^8.16.0",
     "canvaskit-wasm": "^0.40.0",
     "culori": "^4.0.2",
@@ -324,9 +181,11 @@
     "fflate": "^0.8.2",
     "fontoxpath": "^3.34.0",
     "fzstd": "^0.1.1",
+    "jspdf": "^4.2.1",
     "nanoevents": "^9.1.0",
     "opentype.js": "^1.3.4",
     "sucrase": "^3.35.1",
+    "svg2pdf.js": "^2.7.0",
     "svgpath": "^2.6.0",
     "twirlwind": "^0.3.0",
     "yoga-layout": "npm:@open-pencil/yoga-layout@3.3.0-grid.3"

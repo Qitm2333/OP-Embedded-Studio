@@ -111,7 +111,7 @@ open-pencil tree                     # Live-Dokument
 open-pencil export -f png            # Canvas-Screenshot
 ```
 
-Alle Befehle unterstützen `--json`. Installation: `bun add -g @open-pencil/cli`
+Alle Befehle unterstützen `--json`. Installation: `npm install -g @open-pencil/cli`
 
 ## Echtzeit-Kollaboration
 

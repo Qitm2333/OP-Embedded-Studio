@@ -3,6 +3,11 @@ import { serve } from '@hono/node-server'
 
 import { startServer } from './server.js'
 
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  process.stdout.write(`openpencil-mcp-http\n\nStart the OpenPencil MCP HTTP and WebSocket server.\n\nOptions:\n  --help, -h    Show this help message\n`)
+  process.exit(0)
+}
+
 const port = Number.parseInt(process.env.PORT ?? '7600', 10)
 const wsPort = Number.parseInt(process.env.WS_PORT ?? '7601', 10)
 const host = process.env.HOST ?? '127.0.0.1'
