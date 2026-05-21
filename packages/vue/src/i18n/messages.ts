@@ -129,6 +129,7 @@ export const toolMessages = i18n("tools", {
 });
 
 export const panelMessages = i18n("panels", {
+	nodeCopyString: " copy",
 	layers: "Layers",
 	pages: "Pages",
 	design: "Design",
@@ -237,6 +238,8 @@ export const panelMessages = i18n("panels", {
 	layersCount: params("{count} layers"),
 	goToMainComponent: "Go to Main Component",
 	detachInstance: "Detach Instance",
+
+	gap: "Gap",
 
 	solid: "Solid",
 	linearGradient: "Linear",

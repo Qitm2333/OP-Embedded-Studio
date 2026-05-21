@@ -65,7 +65,7 @@
 		"zoomToFit": "Ajustar a pantalla",
 		"zoomToSelection": "Zoom a selección",
 		"groupSelection": "Agrupar",
-		"frameSelection": "Frame selection",
+		"frameSelection": "Selección de marco",
 		"showHide": "Visibilidad",
 		"lockUnlock": "Bloqueo",
 		"unionSelection": "Selección de unión",
@@ -93,6 +93,7 @@
 		"hand": "Mano"
 	},
 	"panels": {
+		"nodeCopyString": " copia",
 		"layers": "Capas",
 		"pages": "Páginas",
 		"design": "Diseño",
@@ -183,6 +184,7 @@
 		"auto": "Auto",
 		"columns": "Columnas",
 		"rows": "Filas",
+		"gap": "Espaciado",
 		"sizingFixed": "Fijo",
 		"sizingHug": "Ajustar al contenido",
 		"sizingFill": "Rellenar",

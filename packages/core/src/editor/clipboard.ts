@@ -7,6 +7,8 @@ import { computeAllLayouts } from '#core/layout'
 import type { SceneNode } from '#core/scene-graph'
 import type { Vector } from '#core/types'
 
+import {useI18n} from "@open-pencil/vue";
+
 import { createClipboardCopyActions } from './clipboard/copy'
 import { createClipboardExportActions } from './clipboard/export'
 import { createClipboardFontActions } from './clipboard/fonts'
@@ -22,8 +24,10 @@ type PasteOptions = {
   replaceSelection?: boolean
 }
 
+
 export function createClipboardActions(ctx: EditorContext) {
   function duplicateSelected(selectedNodes: SceneNode[]) {
+	const {panels} = useI18n();
     const prevSelection = new Set(ctx.state.selectedIds)
     const selectedSet = new Set(selectedNodes.map((n) => n.id))
     const topLevel = selectedNodes.filter((n) => !n.parentId || !selectedSet.has(n.parentId))
@@ -34,7 +38,7 @@ export function createClipboardActions(ctx: EditorContext) {
     for (const node of topLevel) {
       const parentId = node.parentId ?? ctx.state.currentPageId
       const clone = ctx.graph.cloneTree(node.id, parentId, {
-        name: node.name + ' copy',
+        name: node.name + panels.value.nodeCopyString || ' copy',
         x: node.x + 20,
         y: node.y + 20
       })

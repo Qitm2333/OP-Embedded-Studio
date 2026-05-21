@@ -18,7 +18,7 @@ const { side = 'top', disabled = false } = defineProps<{
       <slot />
     </TooltipTrigger>
     <TooltipPortal>
-      <TooltipContent :side="side" :side-offset="4" :class="cls.content">
+      <TooltipContent v-if="label !== undefined" :side="side" :side-offset="4" :class="cls.content">
         {{ label }}
       </TooltipContent>
     </TooltipPortal>
