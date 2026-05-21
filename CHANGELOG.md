@@ -4,9 +4,21 @@
 
 ### Fixes
 
-- Improve `.fig` import/export fidelity for Figma-authored documents: preserve source round-trip metadata, internal canvases, component ordering, component property refs, variant defaults, glyph/text payloads, geometry, and safe paint/variable fallbacks.
-- Fix imported Figma instances in browser and lazy page loading so nested badge avatars/images, component swaps, icon colors, list text, and user edits survive open, save, and reimport.
-- Preserve original `fig-kiwi` container versions through worker exports and render real preview thumbnails for CLI `.fig` exports.
+- Greatly improve importing Figma `.fig` files with complex component systems: badges, avatars, icons, links, input fields, lists, date pickers, nested instances, component swaps, and variant properties now open much closer to their original Figma appearance.
+- Fix missing or white content in imported `.fig` files caused by unresolved Figma variable bindings, including image/avatar badges, icon colors, text colors, and variable-backed component overrides.
+- Preserve more Figma document details when opening and saving `.fig` files, including internal component pages, component ordering, page metadata, canvas backgrounds, text layout, glyph rendering, vector geometry, effects, shadows, and instance overrides.
+- Keep user edits after opening an imported `.fig` file: changing size, position, fills, text, or layout now wins over preserved Figma round-trip data when the document is saved again.
+- Fix `.fig` exports so files reopened in Figma or OpenPencil keep their pages, components, instances, text wrapping, icons, avatars, and preview thumbnail intact.
+- Fix live canvas updates during move/resize/edit previews so visible scene changes repaint immediately.
+- Fix accidental duplicate creation when Alt-clicking without dragging.
+- Fix MCP startup in the browser.
+- Fix CanvasKit loading outside the browser when project paths contain spaces.
+
+### Performance
+
+- Open large `.fig` files faster by deferring work for pages you have not viewed yet while still preparing all needed content before export.
+- Improve canvas responsiveness during zooming, panning, dragging, and editing by reusing cached scene backing where safe.
+- Speed up `.fig` export for documents with many preserved Figma paint and variable payloads.
 
 ## 0.12.2 — 2026-05-19
 
