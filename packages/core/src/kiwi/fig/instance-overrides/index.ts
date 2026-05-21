@@ -273,4 +273,5 @@ export function populateAndApplyOverrides(
   )
   propagateResolvedTextClones(graph)
   applyConstraintScaling(ctx)
+  applyComponentProperties(ctx)
 }
