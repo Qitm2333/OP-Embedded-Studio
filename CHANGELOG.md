@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Fixes
+
+- Improve `.fig` import/export fidelity for Figma-authored documents: preserve source round-trip metadata, internal canvases, component ordering, component property refs, variant defaults, glyph/text payloads, geometry, and safe paint/variable fallbacks.
+- Fix imported Figma instances in browser and lazy page loading so nested badge avatars/images, component swaps, icon colors, list text, and user edits survive open, save, and reimport.
+- Preserve original `fig-kiwi` container versions through worker exports and render real preview thumbnails for CLI `.fig` exports.
+
 ## 0.12.2 — 2026-05-19
 
 ### Added
