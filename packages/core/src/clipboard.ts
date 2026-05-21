@@ -337,6 +337,7 @@ export async function buildFigmaClipboardHTML(
       if (!source) return
       change.textAutoResize = 'NONE'
       change.textUserLayoutVersion = 5
+      change.lineHeight = { value: source.lineHeight ?? 100, units: source.lineHeight ? 'PIXELS' : 'PERCENT' }
       const shaped = await shapeTextForClipboard(source).catch(() => null)
       change.derivedTextData = await buildDerivedTextDataV4(source, fontDigestMap, shaped, blobs)
     })

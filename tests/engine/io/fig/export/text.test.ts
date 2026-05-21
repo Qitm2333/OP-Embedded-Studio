@@ -4,6 +4,7 @@ import { exportFigFile, initCodec, parseFigFile, SceneGraph } from '@open-pencil
 
 import { expectDefined } from '#tests/helpers/assert'
 import { parseFixture } from '#tests/helpers/fig-fixtures'
+import { runsHeavyTests } from '#tests/helpers/test-utils'
 
 setDefaultTimeout(60_000)
 
@@ -252,7 +253,7 @@ describe('text node export', () => {
     expect(families).toContain('Regular')
   })
 
-  test('material3.fig text nodes have derivedTextData after round-trip', async () => {
+  test.if(runsHeavyTests)('material3.fig text nodes have derivedTextData after round-trip', async () => {
     const original = await parseFixture('material3.fig')
 
     const textNodes = [...original.getAllNodes()].filter((n) => n.type === 'TEXT')

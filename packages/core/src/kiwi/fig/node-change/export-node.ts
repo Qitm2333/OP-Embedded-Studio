@@ -231,9 +231,11 @@ function collectPaintVariableColorCounts(
   value: unknown,
   counts: Map<string, Map<string, { color: Color; count: number }>>
 ): void {
-  if (!value || typeof value !== 'object') return
+  if (!value || typeof value !== 'object' || ArrayBuffer.isView(value)) return
   if (Array.isArray(value)) {
-    for (const item of value) collectPaintVariableColorCounts(item, counts)
+    for (const item of value) {
+      if (item && typeof item === 'object') collectPaintVariableColorCounts(item, counts)
+    }
     return
   }
 

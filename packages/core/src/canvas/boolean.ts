@@ -67,7 +67,7 @@ function lineStrokePath(r: SkiaRenderer, node: SceneNode): Path | null {
   path.lineTo(node.width, node.height)
   const stroke = node.strokes.find((item) => item.visible)
   const outline = path.stroke({ width: stroke?.weight ?? 1 })
-  path.delete()
+  if (outline !== path) path.delete()
   return outline
 }
 
