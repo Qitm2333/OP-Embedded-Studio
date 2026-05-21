@@ -54,7 +54,6 @@ const indicator = ui?.indicator ?? 'absolute left-1.5 inline-flex items-center j
 			  <SelectValue :placeholder="placeholder" />
 			  <icon-lucide-chevron-down class="ml-1 size-3 shrink-0 text-muted" />
 			</SelectTrigger>
-		</Tip>
     <SelectPortal>
       <SelectContent position="popper" :side-offset="2" :class="select.content">
         <SelectViewport :class="viewport">
@@ -72,5 +71,6 @@ const indicator = ui?.indicator ?? 'absolute left-1.5 inline-flex items-center j
         </SelectViewport>
       </SelectContent>
     </SelectPortal>
+		</Tip>
   </SelectRoot>
 </template>
