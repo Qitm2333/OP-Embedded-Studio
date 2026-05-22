@@ -229,6 +229,8 @@ Figma is a closed platform that actively fights programmatic access. Their MCP s
 
 OpenPencil is the alternative: open source (MIT), reads .fig files natively, every operation is scriptable, and your data never leaves your machine.
 
+See the [roadmap](https://openpencil.dev/development/roadmap) for product direction and current Figma compatibility gaps.
+
 ## Contributing
 
 ### Setup

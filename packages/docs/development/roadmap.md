@@ -1,11 +1,62 @@
 ---
-title: Figma Compatibility Matrix
-description: Current OpenPencil support for Figma design features, including import, rendering, UI editing, export round-trip, and raw Kiwi metadata coverage.
+title: Roadmap
+description: OpenPencil product roadmap and Figma compatibility tracking.
 ---
 
-# Figma Compatibility Matrix
+# Roadmap
 
-This page tracks OpenPencil's current compatibility with Figma Design features. It is based on Figma's public Help Center feature areas and the current OpenPencil scene graph, Kiwi import/export, CanvasKit renderer, UI panels, CLI, and MCP tools.
+OpenPencil is moving toward production-grade Figma compatibility while keeping design workflows scriptable, local-first, and fast on large files.
+
+## Current focus
+
+- Improve `.fig` import/export fidelity against real Figma files and Figma's own rendering.
+- Keep large design systems responsive in the browser and desktop app.
+- Make every important editor operation available through the CLI, MCP server, and SDK.
+- Keep files on the user's machine unless collaboration is explicitly enabled.
+
+## Near-term work
+
+### Figma fidelity
+
+- Preserve and round-trip more Figma metadata safely.
+- Add visual regression coverage for full multi-page `.fig` documents.
+- Close high-impact renderer gaps: masks, blend modes, corner smoothing, pattern fills, and variable font axes.
+- Improve boolean operation import so Figma `BOOLEAN_OPERATION` nodes remain editable where possible.
+
+### Editor depth
+
+- Complete variable inspector coverage for common numeric/text/layout fields.
+- Improve component and instance editing: variant switching, property editing, and override inspection.
+- Add first-class layout grid and guide rendering/editing.
+- Expand vector editing workflows without regressing imported vector fidelity.
+
+### Automation
+
+- Tighten the inspect → act → render/measure → compare loop for agents.
+- Improve deterministic CLI/MCP export and comparison tools for CI.
+- Add more design linting and migration helpers for batch `.fig` and `.pen` workflows.
+- Package desktop-side MCP integration so local agent workflows do not require global installs.
+
+### Performance and scale
+
+- Incremental layout and render invalidation for large documents.
+- Better renderer profiling surfaces for slow nodes, effects, masks, and imported files.
+- Smarter raster/retained caching that preserves fidelity during zoom and pan.
+
+## Later
+
+- Prototyping: frame connections, triggers, overlays, transitions, and preview mode.
+- Comments: pins, threads, resolution state, and collaboration-aware display.
+- Shared libraries: publish, consume, and update components/styles across files.
+- More platform polish: Windows code signing, PWA support, and packaged updater improvements.
+
+## Non-goals
+
+- Cloud-first storage or mandatory accounts.
+- Read-only automation surfaces that cannot modify documents.
+- Feature work that sacrifices `.fig` import/export fidelity for convenience.
+
+This section tracks OpenPencil's current compatibility with Figma Design features. It is based on Figma's public Help Center feature areas and the current OpenPencil scene graph, Kiwi import/export, CanvasKit renderer, UI panels, CLI, and MCP tools.
 
 Legend:
 
@@ -27,7 +78,7 @@ Figma's design documentation groups features into these areas:
 - Dev Mode: inspect, measurements, annotations, Code Connect, dev resources, ready-for-dev states, and Figma MCP.
 - Collaboration/file workflows: comments, version history, thumbnails, branches, library publishing, and multiplayer metadata.
 
-## Feature matrix
+## Figma compatibility matrix
 
 | Area | Import | Render | UI edit | Export round-trip | CLI/MCP | Notes |
 |---|---:|---:|---:|---:|---:|---|
@@ -155,3 +206,4 @@ These are parsed or visible in Figma docs and most likely to cause visible diffe
 | Property panels | `src/components/properties/**`, `packages/vue/src/controls/**` |
 | CLI | `packages/cli/src/index.ts`, `packages/cli/src/commands/**` |
 | MCP/tools | `packages/core/src/tools/**`, `packages/mcp/src/tool/registration.ts` |
+

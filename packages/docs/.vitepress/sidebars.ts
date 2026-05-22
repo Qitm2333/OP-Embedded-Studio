@@ -92,8 +92,8 @@ export const developmentSidebar = (prefix: string, label: string): DefaultTheme.
     items: [
       { text: 'Contributing', link: `${prefix}/development/contributing` },
       { text: 'Testing', link: `${prefix}/development/testing` },
+      { text: 'Roadmap', link: `${prefix}/development/roadmap` },
       { text: 'Renderer Profiler', link: `${prefix}/development/renderer-profiler` },
-      { text: 'Figma Compatibility', link: `${prefix}/development/figma-compatibility` },
       { text: 'Vector Conversion', link: `${prefix}/development/vector-conversion` },
     ],
   },
