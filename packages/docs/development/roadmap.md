@@ -128,8 +128,8 @@ Figma's design documentation groups features into these areas:
 | FigJam sticky/code/widget/stamp/media/highlight/washi tape | — | — | — | — | — | Not first-class scene nodes. Unsupported types generally fall back or are skipped. |
 | Solid fills | ✅ | ✅ | ✅ | ✅ | ✅ | Color variables supported for common fill cases. |
 | Gradients | ✅ | ✅ | ✅ | ✅ | ✅ | Linear/radial/angular/diamond support; Figma edge cases may differ. |
-| Image fills | ✅ | ✅ | ◐ | ✅ | ✅ | Fill/fit/crop/tile support exists; exact Figma image transform parity is partial. |
-| Pattern fills/strokes | — | — | — | — | — | Figma pattern fills are not currently modeled. |
+| Image fills | ✅ | ✅ | ◐ | ✅ | ✅ | Fill/fit/crop/tile support exists; imported tile transforms are applied, but exact Figma parity is still partial. |
+| Pattern fills/strokes | — | ◐ | — | — | — | Figma pattern paint objects are not first-class yet; image tile transforms cover a subset of pattern-like imported fills. |
 | Video/GIF/media fills | — | — | — | — | — | No video playback or media layer support. |
 | Layer/fill/effect blend modes | ✅ | ◐ | — | ✅ | ✅ | Canvas applies node, fill, and common shadow effect blend modes; Figma isolation edge cases remain partial. |
 | Opacity | ✅ | ✅ | ✅ | ✅ | ✅ | Node opacity uses save layers in the renderer. |
@@ -138,8 +138,8 @@ Figma's design documentation groups features into these areas:
 | Effects: shadows and blurs | ✅ | ✅ | ✅ | ✅ | ✅ | `showShadowBehindNode` is rendered but not exposed in UI. |
 | Effect styles | ↩ | — | — | ↩ | — | Style IDs round-trip; no style manager. |
 | Corner radius | ✅ | ✅ | ✅ | ✅ | ✅ | Uniform and independent radii supported. |
-| Corner smoothing | ✅ | — | — | ✅ | ✅ | Stored/exported but rendered as ordinary rounded rectangles. |
-| Masks | ✅ | ◐ | — | ✅ | ✅ | Common sibling mask stacks render; luminance masks, UI controls, and edge-case Figma semantics remain incomplete. |
+| Corner smoothing | ✅ | ✅ | — | ✅ | ✅ | Figma-style smoothed corners render for common uniform and independent-radius rectangles; exact parity still needs broader fixture tuning. |
+| Masks | ✅ | ◐ | — | ✅ | ✅ | Common sibling alpha/vector/luminance mask stacks render; UI controls and edge-case Figma semantics remain incomplete. |
 | Auto layout: vertical/horizontal | ✅ | ✅ | ✅ | ✅ | ✅ | Yoga-backed layout. |
 | Auto layout: wrap | ✅ | ✅ | ✅ | ✅ | ✅ | UI toggle exists. |
 | Auto layout: grid | ✅ | ◐ | ◐ | ✅ | ✅ | CSS-grid-like support is partial. |
@@ -203,15 +203,14 @@ OpenPencil deliberately preserves many Figma/Kiwi fields even when they are not 
 
 These are parsed or visible in Figma docs and most likely to cause visible differences in real design files:
 
-1. **Masks** — extend common sibling mask stacks with luminance masks and more exact `maskType` behavior.
-2. **Corner smoothing** — compare smoothed-corner output against Figma fixtures and tune remaining edge cases.
-3. **Pattern fills** — render imported Figma pattern/image tiling semantics beyond current image scale modes.
-4. **Pattern fills/strokes** — support Figma pattern fills and their transforms.
-5. **Font variations** — apply variable-font axes from imported Figma metadata.
-6. **Boolean operation import** — keep Figma `BOOLEAN_OPERATION` nodes as boolean operations where possible instead of importing them as vectors.
-7. **Layout grids and guides** — render/edit page guides and Figma layout grids, or clearly keep them round-trip-only.
-8. **Full component property and slot workflows** — support authoring, not just preserving imported payloads.
-9. **Prototype metadata** — start by preserving prototype flows/connections even before building playback.
+1. **Masks** — tune multi-mask stacks and exact Figma edge cases beyond the common alpha/vector/luminance path.
+2. **Corner smoothing** — expand Figma fixture comparisons and tune remaining stroke/effect edge cases.
+3. **Pattern fills/strokes** — support Figma pattern paint objects and transforms beyond image tile fills.
+4. **Font variations** — apply variable-font axes from imported Figma metadata.
+5. **Boolean operation import** — keep Figma `BOOLEAN_OPERATION` nodes as boolean operations where possible instead of importing them as vectors.
+6. **Layout grids and guides** — render/edit page guides and Figma layout grids, or clearly keep them round-trip-only.
+7. **Full component property and slot workflows** — support authoring, not just preserving imported payloads.
+8. **Prototype metadata** — start by preserving prototype flows/connections even before building playback.
 
 ## Code map
 

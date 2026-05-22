@@ -717,7 +717,7 @@ function preserveFigmaPayloadBlobs(value: unknown, blobs: Uint8Array[]): unknown
   return result
 }
 
-const FIGMA_RAW_NODE_FIELD_KEYS = [
+export const FIGMA_RAW_NODE_FIELD_KEYS = [
   'styleIdForFill',
   'styleIdForStrokeFill',
   'styleIdForText',

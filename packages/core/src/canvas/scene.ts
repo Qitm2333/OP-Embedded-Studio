@@ -138,7 +138,7 @@ function renderChildIds(
     childIds,
     (childId) => {
       const child = graph.getNode(childId)
-      return !!child?.visible && child.isMask
+      return child?.visible && child.isMask ? child.maskType : null
     },
     (childId) => r.renderNode(canvas, graph, childId, overlays, absX, absY),
     (childId) => {

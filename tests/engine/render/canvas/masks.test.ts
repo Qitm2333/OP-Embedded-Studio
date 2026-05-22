@@ -1,4 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test'
+
 import type { Canvas } from 'canvaskit-wasm'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
@@ -31,7 +32,10 @@ function createRenderer() {
     ck: {
       BlendMode: { SrcOver: 'SrcOver', DstIn: 'DstIn' },
       LTRBRect: mock(() => new Float32Array(4)),
-      ClipOp: { Intersect: 'Intersect' }
+      ClipOp: { Intersect: 'Intersect' },
+      ColorFilter: {
+        MakeLuma: mock(() => ({ delete: mock(() => undefined) }))
+      }
     },
     opacityPaint: {
       setAlphaf: mock(() => undefined),
@@ -79,6 +83,27 @@ describe('canvas masks', () => {
     expect(renderer.effectLayerPaint.setBlendMode).toHaveBeenCalledWith('DstIn')
     expect(renderer.effectLayerPaint.setBlendMode).toHaveBeenLastCalledWith('SrcOver')
     expect(canvas.saveLayer).toHaveBeenCalledTimes(2)
+  })
+
+  test('applies luminance masks through a luma color filter', () => {
+    const graph = new SceneGraph()
+    const frame = graph.createNode('FRAME', pageId(graph), { width: 200, height: 200 })
+    const mask = graph.createNode('RECTANGLE', frame.id, {
+      width: 100,
+      height: 100,
+      isMask: true,
+      maskType: 'LUMINANCE'
+    })
+    const clipped = graph.createNode('RECTANGLE', frame.id, { width: 200, height: 200 })
+    const { renderer, rendered } = createRenderer()
+    const canvas = createCanvas()
+
+    renderNode(renderer, canvas as Canvas, graph, frame.id, {})
+
+    expect(rendered).toEqual([frame.id, clipped.id, mask.id])
+    expect(renderer.ck.ColorFilter.MakeLuma).toHaveBeenCalled()
+    expect(renderer.effectLayerPaint.setColorFilter).toHaveBeenCalledWith(expect.any(Object))
+    expect(renderer.effectLayerPaint.setColorFilter).toHaveBeenLastCalledWith(null)
   })
 
   test('does not draw mask nodes as ordinary layers', () => {

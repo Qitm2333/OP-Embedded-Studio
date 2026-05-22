@@ -14,8 +14,9 @@
 - Fix MCP startup in the browser.
 - Fix CanvasKit loading outside the browser when project paths contain spaces.
 - Render imported Figma layer and fill blend modes such as multiply, screen, overlay, difference, hue, saturation, color, and luminosity.
-- Render common imported Figma mask stacks so visible layers above a mask are clipped by the mask shape.
+- Render common imported Figma mask stacks so visible layers above alpha, vector, or luminance masks are clipped by the mask shape.
 - Render Figma-style smoothed rectangle corners, including independent corner radii, and effect blend modes from imported Figma files.
+- Improve imported tiled image fills by applying Figma image transforms when repeating image patterns.
 
 ### Performance
 
