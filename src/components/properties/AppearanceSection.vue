@@ -68,65 +68,65 @@ function onToggleCorners() {
 
     <div class="flex gap-1.5">
       <Tip :label="panels.opacity">
-		  <VariableScrubInput
-			v-if="node"
-			suffix="%"
-			:model-value="opacityPercent"
-			:min="0"
-			:max="100"
-			:node-id="node.id"
-			binding-path="opacity"
-			@update:model-value="updateProp('opacity', $event / 100)"
-			@commit="(v: number, p: number) => commitProp('opacity', v / 100, p / 100)"
-		  >
-			<template #icon>
-			  <icon-lucide-blend class="size-3" />
-			</template>
-		  </VariableScrubInput>
-		  <ScrubInput
-			v-else
-			suffix="%"
-			:model-value="opacityPercent"
-			:min="0"
-			:max="100"
-			@update:model-value="updateProp('opacity', $event / 100)"
-			@commit="(v: number, p: number) => commitProp('opacity', v / 100, p / 100)"
-		  >
-			<template #icon>
-			  <icon-lucide-blend class="size-3" />
-			</template>
-		  </ScrubInput>
-	  </Tip>
+        <VariableScrubInput
+          v-if="node"
+          suffix="%"
+          :model-value="opacityPercent"
+          :min="0"
+          :max="100"
+          :node-id="node.id"
+          binding-path="opacity"
+          @update:model-value="updateProp('opacity', $event / 100)"
+          @commit="(v: number, p: number) => commitProp('opacity', v / 100, p / 100)"
+        >
+          <template #icon>
+            <icon-lucide-blend class="size-3" />
+          </template>
+        </VariableScrubInput>
+        <ScrubInput
+          v-else
+          suffix="%"
+          :model-value="opacityPercent"
+          :min="0"
+          :max="100"
+          @update:model-value="updateProp('opacity', $event / 100)"
+          @commit="(v: number, p: number) => commitProp('opacity', v / 100, p / 100)"
+        >
+          <template #icon>
+            <icon-lucide-blend class="size-3" />
+          </template>
+        </ScrubInput>
+      </Tip>
 
       <template v-if="hasCornerRadius">
-		  <Tip :label="panels.radius">
-				<VariableScrubInput
-				  v-if="!showIndependentCorners && node"
-				  data-test-id="corner-radius-input"
-				  :model-value="cornerRadiusValue"
-				  :min="0"
-				  :node-id="node.id"
-				  binding-path="cornerRadius"
-				  @update:model-value="updateProp('cornerRadius', $event)"
-				  @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
-				>
-				  <template #icon>
-					<icon-lucide-square-round-corner class="size-3" />
-				  </template>
-				</VariableScrubInput>
-				<ScrubInput
-				  v-else-if="!showIndependentCorners"
-				  data-test-id="corner-radius-input"
-				  :model-value="cornerRadiusValue"
-				  :min="0"
-				  @update:model-value="updateProp('cornerRadius', $event)"
-				  @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
-				>
-				  <template #icon>
-					<icon-lucide-square-round-corner class="size-3" />
-				  </template>
-				</ScrubInput>
-			</Tip>
+        <Tip :label="panels.radius">
+          <VariableScrubInput
+            v-if="!showIndependentCorners && node"
+            data-test-id="corner-radius-input"
+            :model-value="cornerRadiusValue"
+            :min="0"
+            :node-id="node.id"
+            binding-path="cornerRadius"
+            @update:model-value="updateProp('cornerRadius', $event)"
+            @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
+          >
+            <template #icon>
+              <icon-lucide-square-round-corner class="size-3" />
+            </template>
+          </VariableScrubInput>
+          <ScrubInput
+            v-else-if="!showIndependentCorners"
+            data-test-id="corner-radius-input"
+            :model-value="cornerRadiusValue"
+            :min="0"
+            @update:model-value="updateProp('cornerRadius', $event)"
+            @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
+          >
+            <template #icon>
+              <icon-lucide-square-round-corner class="size-3" />
+            </template>
+          </ScrubInput>
+        </Tip>
 
         <Tip :label="panels.independentCornerRadii">
           <button

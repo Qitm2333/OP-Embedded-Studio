@@ -103,54 +103,58 @@ const sectionCls = useSectionUI()
         <div class="flex flex-col gap-1.5 py-1.5">
           <template v-if="effectsCtx.isShadow(effect.type)">
             <div class="flex items-center gap-1.5">
-				<Tip :label="panels.xAxis">
-				  <ScrubInput
-					icon="X"
-					:model-value="effect.offset.x"
-					@update:model-value="
-					  effectsCtx.scrubEffect(activeNode, i, { offset: { ...effect.offset, x: $event } })
-					"
-					@commit="
-					  effectsCtx.commitEffect(activeNode, i, {
-						offset: { ...effect.offset, x: $event }
-					  })
-					"
-				  />
-				  </Tip>
-				  <Tip :label="panels.yAxis">
-					  <ScrubInput
-						icon="Y"
-						:model-value="effect.offset.y"
-						@update:model-value="
-						  effectsCtx.scrubEffect(activeNode, i, { offset: { ...effect.offset, y: $event } })
-						"
-						@commit="
-						  effectsCtx.commitEffect(activeNode, i, {
-							offset: { ...effect.offset, y: $event }
-						  })
-						"
-					  />
-				</Tip>
+              <Tip :label="panels.xAxis">
+                <ScrubInput
+                  icon="X"
+                  :model-value="effect.offset.x"
+                  @update:model-value="
+                    effectsCtx.scrubEffect(activeNode, i, {
+                      offset: { ...effect.offset, x: $event }
+                    })
+                  "
+                  @commit="
+                    effectsCtx.commitEffect(activeNode, i, {
+                      offset: { ...effect.offset, x: $event }
+                    })
+                  "
+                />
+              </Tip>
+              <Tip :label="panels.yAxis">
+                <ScrubInput
+                  icon="Y"
+                  :model-value="effect.offset.y"
+                  @update:model-value="
+                    effectsCtx.scrubEffect(activeNode, i, {
+                      offset: { ...effect.offset, y: $event }
+                    })
+                  "
+                  @commit="
+                    effectsCtx.commitEffect(activeNode, i, {
+                      offset: { ...effect.offset, y: $event }
+                    })
+                  "
+                />
+              </Tip>
             </div>
 
             <div class="flex items-center gap-1.5">
-				<Tip :label="panels.radius">
-				  <ScrubInput
-					icon="B"
-					:model-value="effect.radius"
-					:min="0"
-					@update:model-value="effectsCtx.scrubEffect(activeNode, i, { radius: $event })"
-					@commit="effectsCtx.commitEffect(activeNode, i, { radius: $event })"
-				  />
-				</Tip>
-				<Tip :label="panels.spread">
-				  <ScrubInput
-					icon="S"
-					:model-value="effect.spread"
-					@update:model-value="effectsCtx.scrubEffect(activeNode, i, { spread: $event })"
-					@commit="effectsCtx.commitEffect(activeNode, i, { spread: $event })"
-				  />
-			  </Tip>
+              <Tip :label="panels.radius">
+                <ScrubInput
+                  icon="B"
+                  :model-value="effect.radius"
+                  :min="0"
+                  @update:model-value="effectsCtx.scrubEffect(activeNode, i, { radius: $event })"
+                  @commit="effectsCtx.commitEffect(activeNode, i, { radius: $event })"
+                />
+              </Tip>
+              <Tip :label="panels.spread">
+                <ScrubInput
+                  icon="S"
+                  :model-value="effect.spread"
+                  @update:model-value="effectsCtx.scrubEffect(activeNode, i, { spread: $event })"
+                  @commit="effectsCtx.commitEffect(activeNode, i, { spread: $event })"
+                />
+              </Tip>
             </div>
 
             <div class="flex items-center gap-1.5">
@@ -159,25 +163,25 @@ const sectionCls = useSectionUI()
                 editable
                 @update="effectsCtx.updateColor(actions.patch, i, $event)"
               />
-			<Tip :label="panels.opacity">
-				  <ScrubInput
-					class="w-14"
-					suffix="%"
-					:model-value="Math.round(effect.color.a * 100)"
-					:min="0"
-					:max="100"
-					@update:model-value="
-					  effectsCtx.scrubEffect(activeNode, i, {
-						color: { ...effect.color, a: Math.max(0, Math.min(1, $event / 100)) }
-					  })
-					"
-					@commit="
-					  effectsCtx.commitEffect(activeNode, i, {
-						color: { ...effect.color, a: Math.max(0, Math.min(1, $event / 100)) }
-					  })
-					"
-				  />
-			</Tip>
+              <Tip :label="panels.opacity">
+                <ScrubInput
+                  class="w-14"
+                  suffix="%"
+                  :model-value="Math.round(effect.color.a * 100)"
+                  :min="0"
+                  :max="100"
+                  @update:model-value="
+                    effectsCtx.scrubEffect(activeNode, i, {
+                      color: { ...effect.color, a: Math.max(0, Math.min(1, $event / 100)) }
+                    })
+                  "
+                  @commit="
+                    effectsCtx.commitEffect(activeNode, i, {
+                      color: { ...effect.color, a: Math.max(0, Math.min(1, $event / 100)) }
+                    })
+                  "
+                />
+              </Tip>
             </div>
           </template>
 

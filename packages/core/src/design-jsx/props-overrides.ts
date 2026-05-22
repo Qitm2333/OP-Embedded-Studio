@@ -395,10 +395,7 @@ function applyTextStyleOverrides(props: Record<string, unknown>, o: Partial<Scen
   applyTextAlignmentOverrides(props, o)
 }
 
-function applyTextAlignmentOverrides(
-  props: Record<string, unknown>,
-  o: Partial<SceneNode>
-): void {
+function applyTextAlignmentOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
   const textAlign = props.textAlign ?? props.textAlignHorizontal ?? props.textHorizontalAlignment
   if (typeof textAlign === 'string') {
     o.textAlignHorizontal = TEXT_ALIGN_ALIAS_MAP[textAlign.toLowerCase()] ?? 'LEFT'

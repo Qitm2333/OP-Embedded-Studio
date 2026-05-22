@@ -150,36 +150,36 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
         v-if="!isMixed && (items as unknown[]).length > 0"
         class="mt-1 flex items-center gap-1.5"
       >
-		<AppSelect
-		  class="w-[72px]"
-		  :label="panels.strokeType"
-		  :model-value="strokeCtx.currentAlign(activeNode)"
-		  :options="strokeCtx.alignOptions"
-		  @update:model-value="strokeCtx.updateAlign($event as Stroke['align'], activeNode!)"
-		/>
-		<Tip :label="panels.strokeWeight">
-			<ScrubInput
-			  v-if="!expandedSides"
-			  class="flex-1"
-			  :model-value="activeNode!.strokes[0]?.weight ?? 1"
-			  :min="0"
-			  @update:model-value="actions.patch(0, { weight: $event })"
-			>
-			  <template #icon>
-				<svg
-				  class="size-3"
-				  viewBox="0 0 12 12"
-				  fill="none"
-				  stroke="currentColor"
-				  stroke-width="1.5"
-				>
-				  <line x1="1" y1="3" x2="11" y2="3" />
-				  <line x1="1" y1="6" x2="11" y2="6" />
-				  <line x1="1" y1="9" x2="11" y2="9" />
-				</svg>
-			  </template>
-			</ScrubInput>
-		</Tip>
+        <AppSelect
+          class="w-[72px]"
+          :label="panels.strokeType"
+          :model-value="strokeCtx.currentAlign(activeNode)"
+          :options="strokeCtx.alignOptions"
+          @update:model-value="strokeCtx.updateAlign($event as Stroke['align'], activeNode!)"
+        />
+        <Tip :label="panels.strokeWeight">
+          <ScrubInput
+            v-if="!expandedSides"
+            class="flex-1"
+            :model-value="activeNode!.strokes[0]?.weight ?? 1"
+            :min="0"
+            @update:model-value="actions.patch(0, { weight: $event })"
+          >
+            <template #icon>
+              <svg
+                class="size-3"
+                viewBox="0 0 12 12"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <line x1="1" y1="3" x2="11" y2="3" />
+                <line x1="1" y1="6" x2="11" y2="6" />
+                <line x1="1" y1="9" x2="11" y2="9" />
+              </svg>
+            </template>
+          </ScrubInput>
+        </Tip>
         <Tip :label="panels.strokeSides">
           <button
             data-test-id="stroke-sides-toggle"

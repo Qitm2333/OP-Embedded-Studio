@@ -70,7 +70,13 @@ function toScreenRect(r: SkiaRenderer, [x, y, width, height]: RectTuple) {
   )
 }
 
-function drawStripedRect(r: SkiaRenderer, canvas: Canvas, rectTuple: RectTuple, color: Color, fill: Color) {
+function drawStripedRect(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  rectTuple: RectTuple,
+  color: Color,
+  fill: Color
+) {
   const [, , width, height] = rectTuple
   if (width <= 0 || height <= 0) return
   const rect = toScreenRect(r, rectTuple)
@@ -209,13 +215,7 @@ function drawSpacingHover(
 ) {
   const rects = gapRects(node, graph)
   for (const rect of rects) {
-    drawStripedRect(
-      r,
-      canvas,
-      rect,
-      AUTO_LAYOUT_HOVER_MAGENTA,
-      AUTO_LAYOUT_HOVER_MAGENTA_FILL
-    )
+    drawStripedRect(r, canvas, rect, AUTO_LAYOUT_HOVER_MAGENTA, AUTO_LAYOUT_HOVER_MAGENTA_FILL)
   }
   if (!showValue || rects.length === 0) return
   const [x, y, width, height] = rects[0]

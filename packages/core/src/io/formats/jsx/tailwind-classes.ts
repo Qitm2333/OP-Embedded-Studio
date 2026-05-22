@@ -77,11 +77,7 @@ function applyPadding(style: Record<string, string>, node: SceneNode): void {
   else style.padding = `${px(pt)} ${px(pr)} ${px(pb)} ${px(pl)}`
 }
 
-function applyLayoutStyle(
-  style: Record<string, string>,
-  node: SceneNode,
-  graph: SceneGraph
-): void {
+function applyLayoutStyle(style: Record<string, string>, node: SceneNode, graph: SceneGraph): void {
   const ctx = getNodeContext(node, graph)
 
   if (ctx.isGrid) {
@@ -143,11 +139,9 @@ function applyAppearanceStyle(style: Record<string, string>, node: SceneNode): v
 function applyTextStyle(style: Record<string, string>, node: SceneNode): void {
   if (node.type !== 'TEXT') return
   style.fontSize = px(node.fontSize)
-  if (node.fontFamily && node.fontFamily !== DEFAULT_FONT_FAMILY)
-    style.fontFamily = node.fontFamily
+  if (node.fontFamily && node.fontFamily !== DEFAULT_FONT_FAMILY) style.fontFamily = node.fontFamily
   if (node.fontWeight !== 400) style.fontWeight = String(node.fontWeight)
-  if (node.textAlignHorizontal !== 'LEFT')
-    style.textAlign = node.textAlignHorizontal.toLowerCase()
+  if (node.textAlignHorizontal !== 'LEFT') style.textAlign = node.textAlignHorizontal.toLowerCase()
   const textColor = solidFillColor(node.fills)
   if (textColor) style.color = textColor
 }

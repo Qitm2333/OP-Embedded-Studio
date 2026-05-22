@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test'
 
-import { renderNode } from '#core/canvas/scene'
 import type { SkiaRenderer } from '#core/canvas/renderer'
+import { renderNode } from '#core/canvas/scene'
 import { SceneGraph } from '#core/scene-graph'
 
 function pageId(graph: SceneGraph) {

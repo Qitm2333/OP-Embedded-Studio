@@ -137,12 +137,13 @@ function buildDerivedTextData(
               : glyphAdvance,
           rotation: 0
         }))
-      : (getGlyphOutlineMetricsSync(
-          node.fontFamily,
-          weightToStyle(node.fontWeight, node.italic),
-          node.text,
-          node.fontSize
-        ) ?? []
+      : (
+          getGlyphOutlineMetricsSync(
+            node.fontFamily,
+            weightToStyle(node.fontWeight, node.italic),
+            node.text,
+            node.fontSize
+          ) ?? []
         ).map((glyph, index) => ({
           commandsBlob: appendGlyphBlob(
             blobs,
@@ -322,16 +323,14 @@ function serializeTextProps(
   }
 }
 
-function normalizeStackMode(
-  value: string | undefined
-): KiwiNodeChange['stackMode'] {
+function normalizeStackMode(value: string | undefined): KiwiNodeChange['stackMode'] {
   return value === 'HORIZONTAL' || value === 'VERTICAL' || value === 'NONE' ? value : undefined
 }
 
-function normalizeStackSizing(
-  value: string | undefined
-): KiwiNodeChange['stackPrimarySizing'] {
-  return value === 'FIXED' || value === 'RESIZE_TO_FIT' || value === 'RESIZE_TO_FIT_WITH_IMPLICIT_SIZE'
+function normalizeStackSizing(value: string | undefined): KiwiNodeChange['stackPrimarySizing'] {
+  return value === 'FIXED' ||
+    value === 'RESIZE_TO_FIT' ||
+    value === 'RESIZE_TO_FIT_WITH_IMPLICIT_SIZE'
     ? value
     : undefined
 }

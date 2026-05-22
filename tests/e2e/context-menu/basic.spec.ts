@@ -227,7 +227,7 @@ test('outline stroke is disabled for fill-only shapes', async () => {
   await editor.page.keyboard.press('Escape')
 })
 
- test('Copy/Paste as submenu exists', async () => {
+test('Copy/Paste as submenu exists', async () => {
   await rightClickShape(130, 130)
 
   const submenuTrigger = contextItem('context-copy-paste-as')

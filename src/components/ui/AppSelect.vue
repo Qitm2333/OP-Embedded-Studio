@@ -49,28 +49,28 @@ const indicator = ui?.indicator ?? 'absolute left-1.5 inline-flex items-center j
 
 <template>
   <SelectRoot v-model="modelValue">
-	  <Tip :label="label">
-		<SelectTrigger v-test-id="testId" :class="select.trigger">
-		  <SelectValue :placeholder="placeholder" />
-		  <icon-lucide-chevron-down class="ml-1 size-3 shrink-0 text-muted" />
-		</SelectTrigger>
-		<SelectPortal>
-		  <SelectContent position="popper" :side-offset="2" :class="select.content">
-			<SelectViewport :class="viewport">
-				  <SelectItem
-					v-for="opt in options"
-					:key="String(opt.value)"
-					:value="opt.value"
-					:class="select.item"
-				  >
-					<SelectItemIndicator :class="indicator">
-					  <icon-lucide-check class="size-3 text-accent" />
-					</SelectItemIndicator>
-					<SelectItemText>{{ opt.label }}</SelectItemText>
-				  </SelectItem>
-			</SelectViewport>
-		  </SelectContent>
-		</SelectPortal>
-		</Tip>
+    <Tip :label="label">
+      <SelectTrigger v-test-id="testId" :class="select.trigger">
+        <SelectValue :placeholder="placeholder" />
+        <icon-lucide-chevron-down class="ml-1 size-3 shrink-0 text-muted" />
+      </SelectTrigger>
+      <SelectPortal>
+        <SelectContent position="popper" :side-offset="2" :class="select.content">
+          <SelectViewport :class="viewport">
+            <SelectItem
+              v-for="opt in options"
+              :key="String(opt.value)"
+              :value="opt.value"
+              :class="select.item"
+            >
+              <SelectItemIndicator :class="indicator">
+                <icon-lucide-check class="size-3 text-accent" />
+              </SelectItemIndicator>
+              <SelectItemText>{{ opt.label }}</SelectItemText>
+            </SelectItem>
+          </SelectViewport>
+        </SelectContent>
+      </SelectPortal>
+    </Tip>
   </SelectRoot>
 </template>

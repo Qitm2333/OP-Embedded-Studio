@@ -150,19 +150,19 @@ onScopeDispose(() => {
       :data-test-index="i"
       class="flex items-center gap-1.5 py-0.5"
     >
-	  <AppSelect
-		v-if="formatSupportsScale(setting.format)"
-		:model-value="setting.scale"
-		:options="SCALE_OPTIONS"
-		:label="panels.exportScale"
-		@update:model-value="updateScale(i, Number($event))"
-	  />
-	  <AppSelect
-		:model-value="setting.format"
-		:options="FORMAT_OPTIONS"
-		:label="panels.exportFormat"
-		@update:model-value="updateFormat(i, $event as ExportFormatId)"
-	  />
+      <AppSelect
+        v-if="formatSupportsScale(setting.format)"
+        :model-value="setting.scale"
+        :options="SCALE_OPTIONS"
+        :label="panels.exportScale"
+        @update:model-value="updateScale(i, Number($event))"
+      />
+      <AppSelect
+        :model-value="setting.format"
+        :options="FORMAT_OPTIONS"
+        :label="panels.exportFormat"
+        @update:model-value="updateFormat(i, $event as ExportFormatId)"
+      />
       <Tip :label="panels.removeExport">
         <button
           :class="useIconButtonUI({ ui: { base: 'shrink-0' } }).base"

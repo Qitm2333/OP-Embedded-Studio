@@ -110,7 +110,10 @@ export function linearGradientEndpoints(
   transform: NonNullable<Fill['gradientTransform']>
 ) {
   return {
-    start: { x: (transform.m00 + transform.m02) * width, y: (transform.m10 + transform.m12) * height },
+    start: {
+      x: (transform.m00 + transform.m02) * width,
+      y: (transform.m10 + transform.m12) * height
+    },
     end: { x: transform.m02 * width, y: transform.m12 * height }
   }
 }
