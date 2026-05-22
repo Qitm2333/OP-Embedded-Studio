@@ -212,7 +212,7 @@ test('luminance masks and transformed tile fills', async () => {
           opacity: 1,
           imageHash,
           imageScaleMode: 'TILE',
-          imageTransform: { m00: 0.35, m01: 0, m02: 0.15, m10: 0, m11: 0.35, m12: 0.1 }
+          imageTransform: { m00: 3, m01: 0, m02: 0, m10: 0, m11: 3, m12: 0 }
         }
       ],
       strokes: [
@@ -252,7 +252,8 @@ test('luminance masks and transformed tile fills', async () => {
           gradientStops: [
             { color: { r: 0, g: 0, b: 0, a: 1 }, position: 0 },
             { color: { r: 1, g: 1, b: 1, a: 1 }, position: 1 }
-          ]
+          ],
+          gradientTransform: { m00: 1, m01: 0, m02: 0, m10: 0, m11: 1, m12: 0 }
         }
       ]
     })
