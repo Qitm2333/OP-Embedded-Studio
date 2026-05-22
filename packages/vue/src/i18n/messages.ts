@@ -40,6 +40,7 @@ export const menuMessages = i18n("menu", {
 	saveAs: "Save as…",
 	exportSelection: "Export selection…",
 	autosave: "Auto-save to local file",
+	closeTab: "Close tab",
 
 	copy: "Copy",
 	paste: "Paste",
@@ -129,6 +130,7 @@ export const toolMessages = i18n("tools", {
 });
 
 export const panelMessages = i18n("panels", {
+	untitled: "Untitled",
 	nodeCopyString: " copy",
 	layers: "Layers",
 	pages: "Pages",
@@ -290,6 +292,7 @@ export const panelMessages = i18n("panels", {
 	setToCurrentHeight: "Set to current height",
 	sizingFillFr: "Fill (fr)",
 	sizingFixedPx: "Fixed (px)",
+	searchFonts: "Search fonts...",
 });
 
 export const variableTypeMessages = i18n("variableTypes", {
