@@ -1,9 +1,7 @@
 import { CANVAS_BG_COLOR } from '#core/constants'
 import type { EditorState } from '#core/editor/types'
-import { useI18n } from "@open-pencil/vue"
 
 export function createDefaultEditorState(pageId: string): EditorState {
-	const { panels } = useI18n();
 	return {
 		activeTool: 'SELECT',
 		currentPageId: pageId,
@@ -20,7 +18,7 @@ export function createDefaultEditorState(pageId: string): EditorState {
 		penCursorY: null,
 		remoteCursors: [],
 		autoLayoutHover: null,
-		documentName: panels.value.untitled || 'Untitled',
+		documentName: 'Untitled',
 		panX: 0,
 		pageColor: { ...CANVAS_BG_COLOR },
 		panY: 0,
