@@ -284,8 +284,8 @@ function drawTextInnerShadow(
       restoreCount--
     }
     r.effectLayerPaint.setColorFilter(null)
-    solidBlackFilter?.delete()
-    tintFilter?.delete()
+    if (solidBlackFilter) solidBlackFilter.delete()
+    if (tintFilter) tintFilter.delete()
     resetEffectLayerPaint(r)
   }
 }

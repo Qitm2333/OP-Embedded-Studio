@@ -251,10 +251,12 @@ describe('Doc 02 — Formula Deconstruction: Static Code Claims', () => {
     // 6 restore: one per save/saveLayer
     const saveLayers = (body.match(/canvas\.saveLayer/g) || []).length
     const saves = (body.match(/canvas\.save\(\)/g) || []).length
-    const restores = (body.match(/canvas\.restore\(\)/g) || []).length
+    const restoreInLoop = body.includes('while (restoreCount > 0)')
+    const restoreCountIncrements = (body.match(/restoreCount\+\+/g) || []).length
     expect(saveLayers).toBe(4)
     expect(saves).toBe(2)
-    expect(restores).toBe(6) // 4 saveLayer + 2 save = 6 restores
+    expect(restoreInLoop).toBe(true)
+    expect(restoreCountIncrements).toBe(6) // 4 saveLayer + 2 save = 6 restores
   })
 
   test('C02-03: DecalBlur is used (not Clamp) for inner shadow (shadows.ts:184)', () => {
