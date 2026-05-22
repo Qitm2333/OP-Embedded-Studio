@@ -139,7 +139,7 @@ Figma's design documentation groups features into these areas:
 | Effect styles | ↩ | — | — | ↩ | — | Style IDs round-trip; no style manager. |
 | Corner radius | ✅ | ✅ | ✅ | ✅ | ✅ | Uniform and independent radii supported. |
 | Corner smoothing | ✅ | — | — | ✅ | ✅ | Stored/exported but rendered as ordinary rounded rectangles. |
-| Masks | ✅ | ◐ | — | ✅ | ✅ | `isMask`/`maskType` exist; true Figma mask stack/type semantics are incomplete. |
+| Masks | ✅ | ◐ | — | ✅ | ✅ | Common sibling mask stacks render; luminance masks, UI controls, and edge-case Figma semantics remain incomplete. |
 | Auto layout: vertical/horizontal | ✅ | ✅ | ✅ | ✅ | ✅ | Yoga-backed layout. |
 | Auto layout: wrap | ✅ | ✅ | ✅ | ✅ | ✅ | UI toggle exists. |
 | Auto layout: grid | ✅ | ◐ | ◐ | ✅ | ✅ | CSS-grid-like support is partial. |

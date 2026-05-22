@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- scene dispatch stays together while shape domains live in sibling modules */
 import type { Canvas, Path } from 'canvaskit-wasm'
 
 import { DROP_HIGHLIGHT_ALPHA, DROP_HIGHLIGHT_STROKE, SECTION_CORNER_RADIUS } from '#core/constants'
@@ -7,6 +8,7 @@ import { vectorNetworkToCenterlinePath } from '#core/vector'
 
 import { figmaBlendModeToSkia, needsIsolatedBlendLayer } from './blend'
 import { renderBooleanOperation } from './boolean'
+import { renderMaskedChildIds } from './masks'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
 import { nodeHasRadius } from './shapes'
 import {
@@ -106,6 +108,46 @@ function renderNodeContent(
   }
 }
 
+function renderMaskNodeContent(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  graph: SceneGraph,
+  node: SceneNode,
+  nodeId: string,
+  overlays: RenderOverlays
+): void {
+  canvas.save()
+  canvas.translate(node.x, node.y)
+  applyNodeTransforms(r, canvas, node, nodeId, overlays)
+  renderNodeContent(r, canvas, graph, node, nodeId, {})
+  canvas.restore()
+}
+
+function renderChildIds(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  graph: SceneGraph,
+  childIds: string[],
+  overlays: RenderOverlays,
+  absX: number,
+  absY: number
+): void {
+  renderMaskedChildIds(
+    r,
+    canvas,
+    childIds,
+    (childId) => {
+      const child = graph.getNode(childId)
+      return !!child?.visible && child.isMask
+    },
+    (childId) => r.renderNode(canvas, graph, childId, overlays, absX, absY),
+    (childId) => {
+      const child = graph.getNode(childId)
+      if (child) renderMaskNodeContent(r, canvas, graph, child, childId, overlays)
+    }
+  )
+}
+
 function renderChildren(
   r: SkiaRenderer,
   canvas: Canvas,
@@ -125,14 +167,10 @@ function renderChildren(
     } else {
       canvas.clipRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.ck.ClipOp.Intersect, true)
     }
-    for (const childId of node.childIds) {
-      r.renderNode(canvas, graph, childId, overlays, absX, absY)
-    }
+    renderChildIds(r, canvas, graph, node.childIds, overlays, absX, absY)
     canvas.restore()
   } else {
-    for (const childId of node.childIds) {
-      r.renderNode(canvas, graph, childId, overlays, absX, absY)
-    }
+    renderChildIds(r, canvas, graph, node.childIds, overlays, absX, absY)
   }
 }
 export function renderNode(
@@ -145,7 +183,7 @@ export function renderNode(
   parentAbsY = 0
 ): void {
   const node = graph.getNode(nodeId)
-  if (!node || !node.visible) return
+  if (!node || !node.visible || node.isMask) return
 
   // Hide the node being edited in node-edit mode (overlay draws it live)
   if (overlays.nodeEditState?.nodeId === nodeId) return
