@@ -5,6 +5,7 @@ import type { SceneNode, SceneGraph, Fill } from '#core/scene-graph'
 import type { Color } from '#core/types'
 import { vectorNetworkToCenterlinePath } from '#core/vector'
 
+import { figmaBlendModeToSkia, needsIsolatedBlendLayer } from './blend'
 import { renderBooleanOperation } from './boolean'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
 import { nodeHasRadius } from './shapes'
@@ -27,11 +28,12 @@ function drawVisibleFills(
     if (!fill.visible) continue
     if (!r.applyFill(fill, node, graph, fi)) continue
     r.fillPaint.setAlphaf(fill.opacity)
+    r.fillPaint.setBlendMode(figmaBlendModeToSkia(r.ck, fill.blendMode))
     draw(fill)
     r.fillPaint.setShader(null)
+    r.fillPaint.setBlendMode(r.ck.BlendMode.SrcOver)
   }
 }
-
 function isCulled(r: SkiaRenderer, node: SceneNode, absX: number, absY: number): boolean {
   const canCull =
     node.childIds.length === 0 ||
@@ -75,7 +77,6 @@ function applyNodeTransforms(
     canvas.scale(node.flipX ? -1 : 1, node.flipY ? -1 : 1)
   }
 }
-
 function renderNodeContent(
   r: SkiaRenderer,
   canvas: Canvas,
@@ -134,7 +135,6 @@ function renderChildren(
     }
   }
 }
-
 export function renderNode(
   r: SkiaRenderer,
   canvas: Canvas,
@@ -163,8 +163,10 @@ export function renderNode(
   canvas.save()
   canvas.translate(node.x, node.y)
 
-  if (node.opacity < 1) {
+  const needsNodeLayer = node.opacity < 1 || needsIsolatedBlendLayer(node.blendMode)
+  if (needsNodeLayer) {
     r.opacityPaint.setAlphaf(node.opacity)
+    r.opacityPaint.setBlendMode(figmaBlendModeToSkia(r.ck, node.blendMode))
     canvas.saveLayer(r.opacityPaint)
   }
 
@@ -192,8 +194,10 @@ export function renderNode(
     r.effectLayerPaint.setColorFilter(null)
     r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
   }
-  if (node.opacity < 1) {
+  if (needsNodeLayer) {
     canvas.restore()
+    r.opacityPaint.setAlphaf(1)
+    r.opacityPaint.setBlendMode(r.ck.BlendMode.SrcOver)
   }
   canvas.restore()
 }

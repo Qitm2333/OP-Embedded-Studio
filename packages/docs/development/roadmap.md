@@ -131,7 +131,7 @@ Figma's design documentation groups features into these areas:
 | Image fills | ✅ | ✅ | ◐ | ✅ | ✅ | Fill/fit/crop/tile support exists; exact Figma image transform parity is partial. |
 | Pattern fills/strokes | — | — | — | — | — | Figma pattern fills are not currently modeled. |
 | Video/GIF/media fills | — | — | — | — | — | No video playback or media layer support. |
-| Layer/fill/effect blend modes | ✅ | ◐ | — | ✅ | ✅ | Parsed/exported, SVG export maps some modes, but Canvas rendering does not fully apply node/fill/effect blend modes. |
+| Layer/fill/effect blend modes | ✅ | ◐ | — | ✅ | ✅ | Canvas applies node and fill blend modes; effect blend modes and Figma isolation edge cases are still partial. |
 | Opacity | ✅ | ✅ | ✅ | ✅ | ✅ | Node opacity uses save layers in the renderer. |
 | Strokes | ✅ | ✅ | ✅ | ✅ | ✅ | Weight, alignment, dashes, and side weights are supported. |
 | Stroke caps / joins / miter limit | ✅ | ✅ | ◐ | ✅ | ✅ | Renderer/export support exists; inspector controls are limited. |

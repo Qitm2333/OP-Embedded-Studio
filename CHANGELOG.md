@@ -13,6 +13,7 @@
 - Fix accidental duplicate creation when Alt-clicking without dragging.
 - Fix MCP startup in the browser.
 - Fix CanvasKit loading outside the browser when project paths contain spaces.
+- Render imported Figma layer and fill blend modes such as multiply, screen, overlay, difference, hue, saturation, color, and luminosity.
 
 ### Performance
 
