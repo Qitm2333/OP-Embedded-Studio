@@ -166,3 +166,123 @@ test('gradients and image fill modes', async () => {
   await editor.canvas.waitForRender()
   await expectCanvas('gradients-and-image-fill-modes')
 })
+
+test('luminance masks and transformed tile fills', async () => {
+  await editor.page.evaluate(async () => {
+    const store = window.openPencil?.getStore?.()
+    if (!store) throw new Error('OpenPencil store not initialized')
+    const pageId = store.state.currentPageId
+
+    const imageCanvas = document.createElement('canvas')
+    imageCanvas.width = 32
+    imageCanvas.height = 32
+    const ctx = imageCanvas.getContext('2d')
+    if (!ctx) throw new Error('Cannot create tile fixture canvas')
+    ctx.fillStyle = '#111827'
+    ctx.fillRect(0, 0, 32, 32)
+    ctx.fillStyle = '#f97316'
+    ctx.fillRect(0, 0, 16, 16)
+    ctx.fillStyle = '#38bdf8'
+    ctx.fillRect(16, 16, 16, 16)
+    ctx.fillStyle = '#facc15'
+    ctx.fillRect(20, 4, 8, 8)
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      imageCanvas.toBlob((result) => {
+        if (result) {
+          resolve(result)
+          return
+        }
+        reject(new Error('Failed to encode tile fixture'))
+      }, 'image/png')
+    })
+    const imageHash = store.storeImage(new Uint8Array(await blob.arrayBuffer()))
+
+    store.graph.createNode('RECTANGLE', pageId, {
+      name: 'Transformed tile fill visual',
+      x: 80,
+      y: 76,
+      width: 180,
+      height: 130,
+      cornerRadius: 18,
+      fills: [
+        {
+          type: 'IMAGE',
+          color: { r: 0, g: 0, b: 0, a: 1 },
+          visible: true,
+          opacity: 1,
+          imageHash,
+          imageScaleMode: 'TILE',
+          imageTransform: { m00: 0.35, m01: 0, m02: 0.15, m10: 0, m11: 0.35, m12: 0.1 }
+        }
+      ],
+      strokes: [
+        {
+          color: { r: 1, g: 1, b: 1, a: 0.85 },
+          weight: 2,
+          visible: true,
+          opacity: 1,
+          align: 'INSIDE'
+        }
+      ]
+    })
+
+    const frame = store.graph.createNode('FRAME', pageId, {
+      name: 'Luminance mask stack visual',
+      x: 320,
+      y: 76,
+      width: 240,
+      height: 130,
+      cornerRadius: 18,
+      fills: [{ type: 'SOLID', color: { r: 0.08, g: 0.1, b: 0.18, a: 1 }, visible: true, opacity: 1 }]
+    })
+    store.graph.createNode('RECTANGLE', frame.id, {
+      name: 'Luminance mask gradient',
+      x: 24,
+      y: 20,
+      width: 192,
+      height: 90,
+      isMask: true,
+      maskType: 'LUMINANCE',
+      fills: [
+        {
+          type: 'GRADIENT_LINEAR',
+          color: { r: 0, g: 0, b: 0, a: 1 },
+          visible: true,
+          opacity: 1,
+          gradientStops: [
+            { color: { r: 0, g: 0, b: 0, a: 1 }, position: 0 },
+            { color: { r: 1, g: 1, b: 1, a: 1 }, position: 1 }
+          ]
+        }
+      ]
+    })
+    for (let index = 0; index < 5; index++) {
+      store.graph.createNode('RECTANGLE', frame.id, {
+        name: `Masked color stripe ${index + 1}`,
+        x: 24 + index * 38,
+        y: 20,
+        width: 34,
+        height: 90,
+        fills: [
+          {
+            type: 'SOLID',
+            color: [
+              { r: 0.96, g: 0.35, b: 0.35, a: 1 },
+              { r: 0.96, g: 0.64, b: 0.16, a: 1 },
+              { r: 0.08, g: 0.73, b: 0.73, a: 1 },
+              { r: 0.23, g: 0.51, b: 0.96, a: 1 },
+              { r: 0.58, g: 0.27, b: 0.95, a: 1 }
+            ][index],
+            visible: true,
+            opacity: 1
+          }
+        ]
+      })
+    }
+
+    store.clearSelection()
+    store.requestRender()
+  })
+  await editor.canvas.waitForRender()
+  await expectCanvas('luminance-masks-and-transformed-tile-fills')
+})
