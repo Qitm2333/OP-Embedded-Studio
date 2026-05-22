@@ -2,8 +2,9 @@ import type { Canvas, Path } from 'canvaskit-wasm'
 
 import type { SceneNode } from '#core/scene-graph'
 
+import { figmaBlendModeToSkia } from './blend'
 import type { SkiaRenderer } from './renderer'
-import { makeNodeShapePath, nodeHasRadius } from './shapes'
+import { makeNodeShapePath, makeSmoothRRectPath, nodeHasRadius, nodeHasSmoothCorners } from './shapes'
 
 function resetEffectLayerPaint(r: SkiaRenderer): void {
   r.effectLayerPaint.setImageFilter(null)
@@ -108,6 +109,10 @@ function drawShadowCutout(
       canvas.drawOval(r.ltrb(0, 0, shapeNode.width, shapeNode.height), r.auxFill)
     } else if (isPathShape(shapeNode)) {
       drawPathShape(r, canvas, shapeNode, shapeHasRadius)
+    } else if (nodeHasSmoothCorners(shapeNode)) {
+      const path = makeSmoothRRectPath(r, shapeNode)
+      canvas.drawPath(path, r.auxFill)
+      path.delete()
     } else if (shapeHasRadius) {
       canvas.drawRRect(r.makeRRect(shapeNode), r.auxFill)
     } else {
@@ -143,6 +148,7 @@ function drawShapeDropShadow(
   r.auxFill.setColor(r.color4f(effect.color.r, effect.color.g, effect.color.b, effect.color.a))
   r.auxFill.setMaskFilter(r.getCachedMaskBlur(effect.radius / 2))
   r.auxFill.setImageFilter(null)
+  r.auxFill.setBlendMode(figmaBlendModeToSkia(r.ck, effect.blendMode))
   canvas.save()
   let savedLayer = false
   try {
@@ -163,6 +169,10 @@ function drawShapeDropShadow(
       canvas.drawOval(r.ltrb(-sp, -sp, shapeNode.width + sp, shapeNode.height + sp), r.auxFill)
     } else if (isPathShape(shapeNode)) {
       drawPathShape(r, canvas, shapeNode, shapeHasRadius, sp)
+    } else if (nodeHasSmoothCorners(shapeNode)) {
+      const path = makeSmoothRRectPath(r, shapeNode, sp)
+      canvas.drawPath(path, r.auxFill)
+      path.delete()
     } else if (shapeHasRadius) {
       canvas.drawRRect(r.makeRRectWithSpread(shapeNode, sp), r.auxFill)
     } else {
@@ -206,6 +216,7 @@ function renderDropShadow(
     if (shadowShapeChild) drawChildTransform(canvas, shadowShapeChild, effect.offset)
     else canvas.translate(effect.offset.x, effect.offset.y)
 
+    r.effectLayerPaint.setBlendMode(figmaBlendModeToSkia(r.ck, effect.blendMode))
     r.effectLayerPaint.setImageFilter(dropFilter)
     canvas.saveLayer(r.effectLayerPaint)
     savedLayer = true
@@ -303,6 +314,7 @@ function drawShapeInnerShadow(
   const shapeNode = shadowShapeChild ?? node
   r.auxFill.setColor(r.ck.Color4f(effect.color.r, effect.color.g, effect.color.b, effect.color.a))
   r.auxFill.setImageFilter(r.getCachedDecalBlur(effect.radius / 2))
+  r.auxFill.setBlendMode(figmaBlendModeToSkia(r.ck, effect.blendMode))
 
   const shapeRect = shadowShapeChild ? r.ck.LTRBRect(0, 0, shapeNode.width, shapeNode.height) : rect
   const shapeHasRadius = shadowShapeChild ? nodeHasRadius(shadowShapeChild) : hasRadius
@@ -326,6 +338,10 @@ function drawShapeInnerShadow(
       } finally {
         path.delete()
       }
+    } else if (nodeHasSmoothCorners(shapeNode)) {
+      const path = makeSmoothRRectPath(r, shapeNode)
+      canvas.clipPath(path, r.ck.ClipOp.Intersect, true)
+      path.delete()
     } else if (shapeHasRadius) {
       canvas.clipRRect(r.makeRRect(shapeNode), r.ck.ClipOp.Intersect, true)
     } else {
@@ -368,6 +384,13 @@ function drawShapeInnerShadow(
         } finally {
           innerPath.delete()
         }
+      } else if (nodeHasSmoothCorners(shapeNode)) {
+        const innerPath = makeSmoothRRectPath(r, shapeNode, -sp, localOffsetX, localOffsetY)
+        try {
+          bigPath.op(innerPath, r.ck.PathOp.Difference)
+        } finally {
+          innerPath.delete()
+        }
       } else if (shapeHasRadius) {
         const innerPath = new r.ck.Path()
         try {
@@ -399,6 +422,7 @@ function drawShapeInnerShadow(
   } finally {
     canvas.restore()
     r.auxFill.setImageFilter(null)
+    r.auxFill.setBlendMode(r.ck.BlendMode.SrcOver)
   }
 }
 

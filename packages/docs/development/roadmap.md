@@ -111,7 +111,7 @@ Figma's design documentation groups features into these areas:
 | Frames | ✅ | ✅ | ✅ | ✅ | ✅ | Includes clipping and auto-layout container behavior. |
 | Groups | ✅ | ✅ | ✅ | ✅ | ✅ | Grouping preserves visual positions. |
 | Sections | ✅ | ✅ | ✅ | ✅ | ✅ | Section rendering and title pills are OpenPencil-specific approximations. |
-| Rectangles / rounded rectangles | ✅ | ✅ | ✅ | ✅ | ✅ | Per-corner radii supported; corner smoothing is not rendered. |
+| Rectangles / rounded rectangles | ✅ | ✅ | ✅ | ✅ | ✅ | Per-corner radii and smoothed uniform corners render; independent-corner smoothing remains approximate. |
 | Ellipses / arcs | ✅ | ✅ | ◐ | ✅ | ✅ | `arcData` renders/exports; no full inspector controls. |
 | Lines | ✅ | ✅ | ✅ | ✅ | ✅ | Stroke caps/joins render but are not fully exposed in UI. |
 | Polygons / stars | ✅ | ✅ | ◐ | ✅ | ✅ | `pointCount` and `starInnerRadius` modeled. |
@@ -131,7 +131,7 @@ Figma's design documentation groups features into these areas:
 | Image fills | ✅ | ✅ | ◐ | ✅ | ✅ | Fill/fit/crop/tile support exists; exact Figma image transform parity is partial. |
 | Pattern fills/strokes | — | — | — | — | — | Figma pattern fills are not currently modeled. |
 | Video/GIF/media fills | — | — | — | — | — | No video playback or media layer support. |
-| Layer/fill/effect blend modes | ✅ | ◐ | — | ✅ | ✅ | Canvas applies node and fill blend modes; effect blend modes and Figma isolation edge cases are still partial. |
+| Layer/fill/effect blend modes | ✅ | ◐ | — | ✅ | ✅ | Canvas applies node, fill, and common shadow effect blend modes; Figma isolation edge cases remain partial. |
 | Opacity | ✅ | ✅ | ✅ | ✅ | ✅ | Node opacity uses save layers in the renderer. |
 | Strokes | ✅ | ✅ | ✅ | ✅ | ✅ | Weight, alignment, dashes, and side weights are supported. |
 | Stroke caps / joins / miter limit | ✅ | ✅ | ◐ | ✅ | ✅ | Renderer/export support exists; inspector controls are limited. |
@@ -203,9 +203,9 @@ OpenPencil deliberately preserves many Figma/Kiwi fields even when they are not 
 
 These are parsed or visible in Figma docs and most likely to cause visible differences in real design files:
 
-1. **Blend modes** — node, fill, and effect blend modes should be applied in CanvasKit rendering, not just stored/exported.
-2. **Masks** — implement Figma mask stacks and `maskType` behavior beyond frame clipping.
-3. **Corner smoothing** — render Figma's smooth/squircle corners instead of ordinary rounded rectangles.
+1. **Masks** — extend common sibling mask stacks with luminance masks and more exact `maskType` behavior.
+2. **Corner smoothing** — improve the current smoothed uniform-corner approximation for independent corners and stroke edge cases.
+3. **Pattern fills** — render imported Figma pattern/image tiling semantics beyond current image scale modes.
 4. **Pattern fills/strokes** — support Figma pattern fills and their transforms.
 5. **Font variations** — apply variable-font axes from imported Figma metadata.
 6. **Boolean operation import** — keep Figma `BOOLEAN_OPERATION` nodes as boolean operations where possible instead of importing them as vectors.

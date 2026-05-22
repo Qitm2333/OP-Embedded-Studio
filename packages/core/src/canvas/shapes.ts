@@ -17,6 +17,61 @@ export function nodeHasRadius(node: SceneNode): boolean {
   )
 }
 
+export function nodeHasSmoothCorners(node: SceneNode): boolean {
+  return !node.independentCorners && node.cornerRadius > 0 && node.cornerSmoothing > 0
+}
+
+function clampCornerRadius(width: number, height: number, radius: number): number {
+  return Math.max(0, Math.min(radius, width / 2, height / 2))
+}
+
+export function makeSmoothRRectPath(
+  r: SkiaRenderer,
+  node: SceneNode,
+  spread = 0,
+  offsetX = 0,
+  offsetY = 0
+): Path {
+  const path = new r.ck.Path()
+  const left = offsetX - spread
+  const top = offsetY - spread
+  const right = offsetX + node.width + spread
+  const bottom = offsetY + node.height + spread
+  const radius = clampCornerRadius(right - left, bottom - top, node.cornerRadius + spread)
+
+  if (radius === 0) {
+    path.addRect(r.ck.LTRBRect(left, top, right, bottom))
+    return path
+  }
+
+  const smoothing = Math.max(0, Math.min(node.cornerSmoothing, 1))
+  const exponent = 2 + smoothing * 3
+  const samples = 12
+  const addCorner = (cx: number, cy: number, startAngle: number, endAngle: number) => {
+    for (let i = 1; i <= samples; i++) {
+      const t = i / samples
+      const angle = startAngle + (endAngle - startAngle) * t
+      const cos = Math.cos(angle)
+      const sin = Math.sin(angle)
+      const x = cx + Math.sign(cos) * radius * Math.abs(cos) ** (2 / exponent)
+      const y = cy + Math.sign(sin) * radius * Math.abs(sin) ** (2 / exponent)
+      path.lineTo(x, y)
+    }
+  }
+
+  path.moveTo(left + radius, top)
+  path.lineTo(right - radius, top)
+  addCorner(right - radius, top + radius, -Math.PI / 2, 0)
+  path.lineTo(right, bottom - radius)
+  addCorner(right - radius, bottom - radius, 0, Math.PI / 2)
+  path.lineTo(left + radius, bottom)
+  addCorner(left + radius, bottom - radius, Math.PI / 2, Math.PI)
+  path.lineTo(left, top + radius)
+  addCorner(left + radius, top + radius, Math.PI, (Math.PI * 3) / 2)
+  path.close()
+  return path
+}
+
 export function makeNodeShapePath(
   r: SkiaRenderer,
   node: SceneNode,
@@ -43,7 +98,11 @@ export function makeNodeShapePath(
       break
     }
     default:
-      if (hasRadius) {
+      if (nodeHasSmoothCorners(node)) {
+        const smoothPath = makeSmoothRRectPath(r, node)
+        path.addPath(smoothPath)
+        smoothPath.delete()
+      } else if (hasRadius) {
         path.addRRect(r.makeRRect(node))
       } else {
         path.addRect(rect)
@@ -155,6 +214,10 @@ export function clipNodeShape(
   if (node.type === 'ELLIPSE') {
     const clipPath = new r.ck.Path()
     clipPath.addOval(rect)
+    canvas.clipPath(clipPath, r.ck.ClipOp.Intersect, true)
+    clipPath.delete()
+  } else if (nodeHasSmoothCorners(node)) {
+    const clipPath = makeSmoothRRectPath(r, node)
     canvas.clipPath(clipPath, r.ck.ClipOp.Intersect, true)
     clipPath.delete()
   } else if (hasRadius) {

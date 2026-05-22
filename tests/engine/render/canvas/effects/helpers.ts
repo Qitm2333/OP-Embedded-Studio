@@ -32,7 +32,7 @@ export function createMockRenderer(overrides: Partial<SkiaRenderer> = {}): SkiaR
       PathOp: { Difference: 0, Union: 1 },
       StrokeJoin: { Round: 0 },
       Matrix: { translated: mock(() => new Float32Array(9)) },
-      BlendMode: { SrcOver: 0, SrcIn: 1, DstOut: 2 },
+      BlendMode: { SrcOver: 0, SrcIn: 1, DstOut: 2, Screen: 3, Multiply: 4 },
       ColorType: { RGBA_8888: 0 },
       AlphaType: { Premul: 0, Unpremul: 1 },
       ColorSpace: { SRGB: 0 },

@@ -3,6 +3,7 @@ import type { Canvas, Paint } from 'canvaskit-wasm'
 import type { SceneNode, SceneGraph, Fill } from '#core/scene-graph'
 
 import type { SkiaRenderer } from './renderer'
+import { makeSmoothRRectPath, nodeHasSmoothCorners } from './shapes'
 
 export function drawNodeFill(
   r: SkiaRenderer,
@@ -50,7 +51,11 @@ export function drawNodeFill(
       break
     }
     default:
-      if (hasRadius) {
+      if (nodeHasSmoothCorners(node)) {
+        const path = makeSmoothRRectPath(r, node)
+        canvas.drawPath(path, r.fillPaint)
+        path.delete()
+      } else if (hasRadius) {
         canvas.drawRRect(r.makeRRect(node), r.fillPaint)
       } else {
         canvas.drawRect(rect, r.fillPaint)

@@ -4,6 +4,7 @@ import type { SceneNode, Stroke } from '#core/scene-graph'
 import type { Color } from '#core/types'
 
 import type { SkiaRenderer } from './renderer'
+import { makeSmoothRRectPath, nodeHasSmoothCorners } from './shapes'
 
 export function getStrokeCapEntity(r: SkiaRenderer, cap: string | undefined): EmbindEnumEntity {
   switch (cap) {
@@ -148,7 +149,11 @@ export function drawNodeStroke(
       break
     }
     default:
-      if (hasRadius) {
+      if (nodeHasSmoothCorners(node)) {
+        const path = makeSmoothRRectPath(r, node)
+        canvas.drawPath(path, r.strokePaint)
+        path.delete()
+      } else if (hasRadius) {
         canvas.drawRRect(r.makeRRect(node), r.strokePaint)
       } else {
         canvas.drawRect(rect, r.strokePaint)
@@ -199,6 +204,11 @@ export function drawRRectStrokeWithAlign(
   node: SceneNode,
   stroke: Stroke
 ): void {
+  if (nodeHasSmoothCorners(node)) {
+    drawStrokeWithAlign(r, canvas, node, r.ck.LTRBRect(0, 0, node.width, node.height), true, stroke.align)
+    return
+  }
+
   if (stroke.align === 'INSIDE') {
     canvas.save()
     canvas.clipRRect(rrect, r.ck.ClipOp.Intersect, true)

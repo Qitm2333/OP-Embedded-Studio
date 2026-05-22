@@ -10,7 +10,7 @@ import { figmaBlendModeToSkia, needsIsolatedBlendLayer } from './blend'
 import { renderBooleanOperation } from './boolean'
 import { renderMaskedChildIds } from './masks'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
-import { nodeHasRadius } from './shapes'
+import { makeSmoothRRectPath, nodeHasRadius, nodeHasSmoothCorners } from './shapes'
 import {
   drawDashedRRectWithSolidCorners,
   drawStyledRRectStroke,
@@ -162,7 +162,11 @@ function renderChildren(
     node.type === 'FRAME' || node.type === 'COMPONENT' || node.type === 'INSTANCE'
   if (isClippableContainer && node.clipsContent && node.childIds.length > 0) {
     canvas.save()
-    if (nodeHasRadius(node)) {
+    if (nodeHasSmoothCorners(node)) {
+      const clipPath = makeSmoothRRectPath(r, node)
+      canvas.clipPath(clipPath, r.ck.ClipOp.Intersect, true)
+      clipPath.delete()
+    } else if (nodeHasRadius(node)) {
       canvas.clipRRect(r.makeRRect(node), r.ck.ClipOp.Intersect, true)
     } else {
       canvas.clipRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.ck.ClipOp.Intersect, true)

@@ -72,6 +72,35 @@ describe('Renderer handles all effect types (Behavioral)', () => {
     expect(r.auxFill.setBlendMode).toHaveBeenCalledWith(r.ck.BlendMode.DstOut)
   })
 
+  test('applies effect blend modes to rendered shadow paint', () => {
+    const r = createMockRenderer()
+    const canvas = createMockCanvas()
+    const node: Partial<SceneNode> = {
+      type: 'RECTANGLE',
+      width: 100,
+      height: 100,
+      fills: [],
+      childIds: [],
+      strokeGeometry: [],
+      effects: [
+        {
+          type: 'DROP_SHADOW',
+          visible: true,
+          color: { r: 0, g: 0, b: 0, a: 0.5 },
+          offset: { x: 5, y: 5 },
+          radius: 10,
+          spread: 0,
+          blendMode: 'SCREEN'
+        }
+      ]
+    }
+
+    renderEffects(r, canvas as Canvas, node as SceneNode, new Float32Array(4), false, 'behind')
+
+    expect(r.auxFill.setBlendMode).toHaveBeenCalledWith(r.ck.BlendMode.Screen)
+    expect(r.auxFill.setBlendMode).toHaveBeenLastCalledWith(r.ck.BlendMode.SrcOver)
+  })
+
   test('handles INNER_SHADOW', () => {
     const r = createMockRenderer()
     const canvas = createMockCanvas()
