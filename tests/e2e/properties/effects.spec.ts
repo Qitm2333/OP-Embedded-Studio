@@ -136,6 +136,81 @@ test('inner shadow with spread', async () => {
   await expectCanvas('inner-shadow-with-spread')
 })
 
+test('smoothed corners with blended shadow', async () => {
+  await editor.page.evaluate(() => {
+    const store = window.openPencil?.getStore?.()
+    if (!store) throw new Error('OpenPencil store not initialized')
+    const pageId = store.state.currentPageId
+    store.graph.createNode('FRAME', pageId, {
+      name: 'Smooth Rectangle Backdrop',
+      x: 64,
+      y: 64,
+      width: 272,
+      height: 168,
+      cornerRadius: 20,
+      fills: [{ type: 'SOLID', color: { r: 0.08, g: 0.1, b: 0.18, a: 1 }, visible: true, opacity: 1 }]
+    })
+    store.graph.createNode('RECTANGLE', pageId, {
+      name: 'Uniform Smooth Radius',
+      x: 92,
+      y: 92,
+      width: 112,
+      height: 88,
+      cornerRadius: 28,
+      cornerSmoothing: 0.75,
+      fills: [{ type: 'SOLID', color: { r: 0.58, g: 0.27, b: 0.95, a: 1 }, visible: true, opacity: 1 }],
+      effects: [
+        {
+          type: 'DROP_SHADOW',
+          color: { r: 0.56, g: 0.33, b: 1, a: 0.72 },
+          offset: { x: 0, y: 0 },
+          radius: 28,
+          spread: 0,
+          blendMode: 'SCREEN',
+          visible: true
+        }
+      ]
+    })
+    store.graph.createNode('RECTANGLE', pageId, {
+      name: 'Independent Smooth Radius',
+      x: 212,
+      y: 92,
+      width: 92,
+      height: 88,
+      independentCorners: true,
+      topLeftRadius: 34,
+      topRightRadius: 10,
+      bottomRightRadius: 34,
+      bottomLeftRadius: 10,
+      cornerSmoothing: 1,
+      fills: [{ type: 'SOLID', color: { r: 0.08, g: 0.73, b: 0.73, a: 1 }, visible: true, opacity: 1 }],
+      strokes: [
+        {
+          color: { r: 1, g: 1, b: 1, a: 0.8 },
+          weight: 2,
+          visible: true,
+          opacity: 1,
+          align: 'INSIDE'
+        }
+      ],
+      effects: [
+        {
+          type: 'INNER_SHADOW',
+          color: { r: 0, g: 0, b: 0, a: 0.28 },
+          offset: { x: 0, y: 3 },
+          radius: 8,
+          spread: 0,
+          visible: true
+        }
+      ]
+    })
+    store.clearSelection()
+    store.requestRender()
+  })
+  await editor.canvas.waitForRender()
+  await expectCanvas('smoothed-corners-with-blended-shadow')
+})
+
 test('drop shadow on ellipse', async () => {
   await editor.page.evaluate(() => {
     const store = window.openPencil?.getStore?.()
