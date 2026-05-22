@@ -115,7 +115,10 @@ export function linearGradientEndpoints(
   transform: NonNullable<Fill['gradientTransform']>
 ) {
   return {
-    start: { x: (transform.m00 + transform.m02) * width, y: (transform.m10 + transform.m12) * height },
+    start: {
+      x: (transform.m00 + transform.m02) * width,
+      y: (transform.m10 + transform.m12) * height
+    },
     end: { x: transform.m02 * width, y: transform.m12 * height }
   }
 }
@@ -202,14 +205,21 @@ export function makeImageFillLocalMatrix(
   const scaleMode = fill.imageScaleMode ?? 'FILL'
   if (scaleMode === 'TILE' && !fill.imageTransform) return r.ck.Matrix.identity()
 
-  let sx: number, sy: number, sw: number, sh: number
   if ((scaleMode === 'CROP' || scaleMode === 'TILE') && fill.imageTransform) {
     const t = fill.imageTransform
-    sx = t.m02 * imgW
-    sy = t.m12 * imgH
-    sw = t.m00 * imgW
-    sh = t.m11 * imgH
-  } else if (scaleMode === 'FIT') {
+    const transform = [t.m00, t.m01, t.m02, t.m10, t.m11, t.m12, 0, 0, 1]
+    const inverse = r.ck.Matrix.invert(transform)
+    if (inverse) {
+      return r.ck.Matrix.multiply(
+        r.ck.Matrix.scaled(node.width, node.height),
+        inverse,
+        r.ck.Matrix.scaled(1 / imgW, 1 / imgH)
+      )
+    }
+  }
+
+  let sx: number, sy: number, sw: number, sh: number
+  if (scaleMode === 'FIT') {
     const scale = Math.min(node.width / imgW, node.height / imgH)
     sw = imgW
     sh = imgH

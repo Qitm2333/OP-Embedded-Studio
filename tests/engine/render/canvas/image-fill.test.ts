@@ -9,6 +9,7 @@ function createRenderer() {
     ck: {
       Matrix: {
         identity: mock(() => ['identity']),
+        invert: mock((matrix) => ['invert', matrix]),
         multiply: mock((...matrices) => ['multiply', ...matrices]),
         scaled: mock((x, y) => ['scaled', x, y]),
         translated: mock((x, y) => ['translated', x, y])
@@ -34,16 +35,25 @@ describe('canvas image fills', () => {
     expect(renderer.ck.Matrix.scaled).not.toHaveBeenCalled()
   })
 
-  test('uses imported tile transforms for patterned image fills', () => {
+  test('uses the full imported affine transform for patterned image fills', () => {
     const renderer = createRenderer()
+    const transform = { m00: 0.5, m01: 0.1, m02: 0.25, m10: -0.2, m11: 0.25, m12: 0.5 }
     const fill = {
       type: 'IMAGE',
       imageScaleMode: 'TILE',
-      imageTransform: { m00: 0.5, m01: 0, m02: 0.25, m10: 0, m11: 0.25, m12: 0.5 }
+      imageTransform: transform
     } as Fill
 
     const matrix = makeImageFillLocalMatrix(renderer, fill, node, 40, 40)
 
-    expect(matrix).toEqual(['multiply', ['scaled', 6, 8], ['translated', -10, -20]])
+    expect(renderer.ck.Matrix.invert).toHaveBeenCalledWith([
+      0.5, 0.1, 0.25, -0.2, 0.25, 0.5, 0, 0, 1
+    ])
+    expect(matrix).toEqual([
+      'multiply',
+      ['scaled', 120, 80],
+      ['invert', [0.5, 0.1, 0.25, -0.2, 0.25, 0.5, 0, 0, 1]],
+      ['scaled', 0.025, 0.025]
+    ])
   })
 })

@@ -128,8 +128,8 @@ Figma's design documentation groups features into these areas:
 | FigJam sticky/code/widget/stamp/media/highlight/washi tape | — | — | — | — | — | Not first-class scene nodes. Unsupported types generally fall back or are skipped. |
 | Solid fills | ✅ | ✅ | ✅ | ✅ | ✅ | Color variables supported for common fill cases. |
 | Gradients | ✅ | ✅ | ✅ | ✅ | ✅ | Linear/radial/angular/diamond support; Figma edge cases may differ. |
-| Image fills | ✅ | ✅ | ◐ | ✅ | ✅ | Fill/fit/crop/tile support exists; imported tile transforms are applied, but exact Figma parity is still partial. |
-| Pattern fills/strokes | — | ◐ | — | — | — | Figma pattern paint objects are not first-class yet; image tile transforms cover a subset of pattern-like imported fills. |
+| Image fills | ✅ | ✅ | ◐ | ✅ | ✅ | Fill/fit/crop/tile support exists; imported crop/tile affine transforms are applied, but exact Figma parity is still partial. |
+| Pattern fills/strokes | — | ◐ | — | — | — | Figma pattern paint objects are not first-class yet; transformed image tile fills cover a subset of pattern-like imported fills. |
 | Video/GIF/media fills | — | — | — | — | — | No video playback or media layer support. |
 | Layer/fill/effect blend modes | ✅ | ◐ | — | ✅ | ✅ | Canvas applies node, fill, and common shadow effect blend modes; Figma isolation edge cases remain partial. |
 | Opacity | ✅ | ✅ | ✅ | ✅ | ✅ | Node opacity uses save layers in the renderer. |
