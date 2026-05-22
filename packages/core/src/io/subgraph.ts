@@ -10,15 +10,9 @@ export interface ExtractedGraph {
 
 function cloneIntoGraph(source: SceneGraph, ids: Set<string>): SceneGraph {
   const graph = new SceneGraph()
-  const root = graph.getNode(graph.rootId)
-  if (root) {
-    root.childIds = []
-    root.width = 0
-    root.height = 0
-  }
+  graph.rootId = source.rootId
   graph.nodes = new Map()
-  if (root) graph.nodes.set(root.id, root)
-  graph.images = new Map(source.images)
+  graph.images = new Map()
   graph.variables = new Map()
   graph.variableCollections = new Map()
   graph.activeMode = new Map(source.activeMode)
@@ -57,11 +51,11 @@ function cloneIntoGraph(source: SceneGraph, ids: Set<string>): SceneGraph {
     node.childIds = node.childIds.filter((childId) => ids.has(childId))
   }
 
-  const variableIds = new Set<string>()
-  for (const node of graph.nodes.values()) {
-    for (const variableId of Object.values(node.boundVariables)) {
-      collectVariableClosure(source, variableId, variableIds)
-    }
+  const { imageHashes, variableIds } = collectReferencedResources(source, graph)
+
+  for (const imageHash of imageHashes) {
+    const image = source.images.get(imageHash)
+    if (image) graph.images.set(imageHash, image)
   }
 
   for (const variableId of variableIds) {
@@ -82,6 +76,20 @@ function cloneIntoGraph(source: SceneGraph, ids: Set<string>): SceneGraph {
 
   graph.clearAbsPosCache()
   return graph
+}
+
+function collectReferencedResources(source: SceneGraph, graph: SceneGraph) {
+  const imageHashes = new Set<string>()
+  const variableIds = new Set<string>()
+  for (const node of graph.nodes.values()) {
+    for (const fill of node.fills) {
+      if (fill.type === 'IMAGE' && fill.imageHash) imageHashes.add(fill.imageHash)
+    }
+    for (const variableId of Object.values(node.boundVariables)) {
+      collectVariableClosure(source, variableId, variableIds)
+    }
+  }
+  return { imageHashes, variableIds }
 }
 
 function collectVariableClosure(source: SceneGraph, variableId: string, out: Set<string>) {
@@ -113,6 +121,43 @@ function collectDescendants(source: SceneGraph, id: string, out: Set<string>) {
   if (!node) return
   for (const childId of node.childIds) {
     collectDescendants(source, childId, out)
+  }
+}
+
+function collectAncestors(source: SceneGraph, id: string, out: Set<string>) {
+  let current = source.getNode(id)
+  while (current?.parentId) {
+    out.add(current.parentId)
+    current = source.getNode(current.parentId)
+  }
+}
+
+function resolveInstanceComponentId(source: SceneGraph, componentId: string): string {
+  const seen = new Set<string>()
+  let currentId = componentId
+  while (!seen.has(currentId)) {
+    seen.add(currentId)
+    const node = source.getNode(currentId)
+    if (node?.type !== 'INSTANCE' || !node.componentId) return currentId
+    currentId = node.componentId
+  }
+  return componentId
+}
+
+function collectComponentDependencies(source: SceneGraph, ids: Set<string>) {
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const id of Array.from(ids)) {
+      const node = source.getNode(id)
+      if (node?.type !== 'INSTANCE' || !node.componentId) continue
+      const componentId = resolveInstanceComponentId(source, node.componentId)
+      if (ids.has(componentId)) continue
+      const before = ids.size
+      collectAncestors(source, componentId, ids)
+      collectDescendants(source, componentId, ids)
+      changed ||= ids.size !== before
+    }
   }
 }
 
@@ -156,12 +201,14 @@ function collectSelectionIds(source: SceneGraph, nodeIds: string[]): Set<string>
     ids.add(pageId)
   }
 
+  collectComponentDependencies(source, ids)
   return ids
 }
 
 function pageNodeIds(source: SceneGraph, pageId: string): Set<string> {
-  const ids = new Set<string>([source.rootId, pageId])
+  const ids = new Set<string>([source.rootId])
   collectDescendants(source, pageId, ids)
+  collectComponentDependencies(source, ids)
   return ids
 }
 

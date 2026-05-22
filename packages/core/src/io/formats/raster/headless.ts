@@ -65,13 +65,5 @@ export async function headlessRenderThumbnail(
 ): Promise<Uint8Array | null> {
   const { ck, renderer } = await getRenderer()
   renderer.invalidateAllPictures()
-  const page = graph.getNode(pageId)
-  const restoreTextMeasurer = page
-    ? await renderer.prepareForExport(graph, pageId, page.childIds)
-    : () => undefined
-  try {
-    return renderThumbnail(ck, renderer, graph, pageId, width, height)
-  } finally {
-    restoreTextMeasurer()
-  }
+  return renderThumbnail(ck, renderer, graph, pageId, width, height)
 }

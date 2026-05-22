@@ -21,6 +21,8 @@ export function handleSelectDown(
   e: MouseEvent,
   cx: number,
   cy: number,
+  sx: number,
+  sy: number,
   editor: Editor,
   fns: HitTestFns,
   tryStartRotation: (cx: number, cy: number) => boolean,
@@ -62,5 +64,5 @@ export function handleSelectDown(
 
   if (selectionIsLocked(editor)) return
 
-  setDrag(createSelectionMoveDrag(cx, cy, editor, e.altKey))
+  setDrag(createSelectionMoveDrag(cx, cy, sx, sy, editor, e.altKey))
 }

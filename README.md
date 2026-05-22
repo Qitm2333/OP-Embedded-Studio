@@ -36,7 +36,8 @@ Or download from the [releases page](https://github.com/open-pencil/open-pencil/
 ## CLI
 
 ```sh
-bun add -g @open-pencil/cli
+npm install -g @open-pencil/cli
+# or: bun add -g @open-pencil/cli
 ```
 
 ### Inspect design files

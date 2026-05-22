@@ -14,27 +14,30 @@ describe('Tauri downloaded font cache helpers', () => {
   test('summarizes manifest entries through mocked plugin-fs IPC', async () => {
     await mockTauriIPC((cmd, args) => {
       expect(cmd).toBe('plugin:fs|read_file')
-      expect(args).toMatchObject({ path: 'font-cache/v1/manifest.json' })
+      expect(args).toMatchObject({ path: 'cache/v1/font-cache/v1/manifest' })
       return [
         ...encoder.encode(
           JSON.stringify({
-            version: 1,
-            entries: {
-              one: {
-                family: 'Noto Sans SC',
-                style: 'Regular',
-                file: 'one.ttf',
-                byteLength: 10,
-                sha256: 'a',
-                updatedAt: 100
-              },
-              two: {
-                family: 'Noto Naskh Arabic',
-                style: 'Regular',
-                file: 'two.ttf',
-                byteLength: 25,
-                sha256: 'b',
-                updatedAt: 250
+            updatedAt: 300,
+            value: {
+              version: 1,
+              entries: {
+                one: {
+                  family: 'Noto Sans SC',
+                  style: 'Regular',
+                  file: 'one.ttf',
+                  byteLength: 10,
+                  sha256: 'a',
+                  updatedAt: 100
+                },
+                two: {
+                  family: 'Noto Naskh Arabic',
+                  style: 'Regular',
+                  file: 'two.ttf',
+                  byteLength: 25,
+                  sha256: 'b',
+                  updatedAt: 250
+                }
               }
             }
           })
@@ -76,7 +79,7 @@ describe('Tauri downloaded font cache helpers', () => {
       {
         cmd: 'plugin:fs|remove',
         args: {
-          path: 'font-cache/v1',
+          path: 'cache/v1/font-cache/v1',
           options: { baseDir: BaseDirectory.AppLocalData, recursive: true }
         }
       }

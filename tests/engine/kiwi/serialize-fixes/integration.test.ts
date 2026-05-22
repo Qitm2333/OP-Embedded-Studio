@@ -79,11 +79,11 @@ describe('Integration: auto-layout component with all fixes', () => {
       'Value node change'
     )
 
-    // Fix 1: children have zero transforms
-    expect(titleNc.transform.m02).toBe(0)
-    expect(titleNc.transform.m12).toBe(0)
-    expect(valueNc.transform.m02).toBe(0)
-    expect(valueNc.transform.m12).toBe(0)
+    // Fix 1: children preserve their stored transform offsets
+    expect(titleNc.transform.m02).toBe(16)
+    expect(titleNc.transform.m12).toBe(16)
+    expect(valueNc.transform.m02).toBe(16)
+    expect(valueNc.transform.m12).toBe(44)
 
     // Fix 2: frameMaskDisabled is inverse of clipsContent
     expect(cardNc.frameMaskDisabled).toBe(false) // clipsContent=true → frameMaskDisabled=false

@@ -18,6 +18,25 @@ export type SceneGraphEventHandlers = Partial<{
 
 export type DocumentColorSpace = 'srgb' | 'display-p3'
 
+export interface FigmaSourcePayload {
+  rawSize: Vector | null
+  rawTransform: Matrix | null
+  rawNodeFields: Record<string, unknown>
+  layout: FigmaLayoutMetadata | null
+  symbolOverrides: unknown[]
+  componentPropAssignments: unknown[]
+  derivedSymbolData: unknown[]
+  derivedSymbolDataLayoutVersion: number | null
+  uniformScaleFactor: number | null
+}
+
+export interface SourceMetadata {
+  format: 'fig' | null
+  id: string | null
+  orderKey: string | null
+  fig: FigmaSourcePayload
+}
+
 export type HandleMirroring = 'NONE' | 'ANGLE' | 'ANGLE_AND_LENGTH'
 export type WindingRule = 'NONZERO' | 'EVENODD'
 
@@ -229,6 +248,34 @@ export interface VariantPropSpec {
   value: string
 }
 
+export type FigmaLayoutMetadata = Partial<
+  Record<
+    | 'stackMode'
+    | 'stackCounterAlign'
+    | 'stackJustify'
+    | 'stackCounterAlignItems'
+    | 'stackPrimaryAlignItems'
+    | 'stackPrimarySizing'
+    | 'stackCounterSizing'
+    | 'stackWrap'
+    | 'stackPositioning'
+    | 'stackChildAlignSelf',
+    string
+  > &
+    Record<
+      | 'stackSpacing'
+      | 'stackPadding'
+      | 'stackPaddingRight'
+      | 'stackPaddingBottom'
+      | 'stackVerticalPadding'
+      | 'stackHorizontalPadding'
+      | 'stackChildPrimaryGrow'
+      | 'stackCounterSpacing',
+      number
+    > &
+    Record<'bordersTakeSpace', boolean>
+>
+
 export interface SceneNode {
   id: string
   type: NodeType
@@ -241,6 +288,7 @@ export interface SceneNode {
   width: number
   height: number
   rotation: number
+  source: SourceMetadata
   figmaDerivedLayout: Partial<Rect> | null
 
   fills: Fill[]

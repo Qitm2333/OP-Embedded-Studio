@@ -165,6 +165,20 @@ describe('derived instance layout regressions', () => {
       a: 1
     })
     expect(linkText?.figmaDerivedTextGlyphs?.length).toBeGreaterThan(0)
+
+    const input = previewChild(graph, nodes, 'Input')
+    const inputRoot = childNamed(graph, input, '_input')
+    const inputFrame = childNamed(graph, inputRoot, 'Input')
+    const inputContent = childNamed(graph, inputFrame, 'Content')
+    const tags = childNamed(graph, inputContent, 'Tags')
+    const badge = childNamed(graph, tags, 'Badge')
+    const badgeContent = childNamed(graph, badge, '_badge-and-tag')
+    const avatar = childNamed(graph, badgeContent, 'Avatar')
+    const avatarShape = avatar ? graph.getChildren(avatar.id)[0] : undefined
+
+    expect(avatar?.visible).toBe(true)
+    expect(avatarShape?.visible).toBe(true)
+    expect(avatarShape?.fills.some((fill) => fill.type === 'IMAGE' && fill.visible)).toBe(true)
   })
 
   test('preserves WYSIWYG toolbar padding', () => {

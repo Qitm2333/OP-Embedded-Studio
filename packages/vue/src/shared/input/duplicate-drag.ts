@@ -8,6 +8,8 @@ type DragOriginal = { x: number; y: number; parentId: string }
 export function duplicateAndDrag(
   cx: number,
   cy: number,
+  sx: number,
+  sy: number,
   editor: Editor
 ): { originals: Map<string, DragOriginal>; drag: DragState } {
   const previousSelection = new Set(editor.state.selectedIds)
@@ -37,6 +39,9 @@ export function duplicateAndDrag(
       startY: cy,
       currentX: cx,
       currentY: cy,
+      startScreenX: sx,
+      startScreenY: sy,
+      dragStarted: true,
       originals: newOriginals,
       duplicated: true,
       duplicatedPreviousSelection: previousSelection

@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 
-import { buildDsdLayoutUpdates } from '#core/kiwi/instance-overrides/derived-symbol-data/layout'
-import { propagateDsdChanges } from '#core/kiwi/instance-overrides/derived-symbol-data/propagate'
-import type { OverrideContext } from '#core/kiwi/instance-overrides'
+import { buildDsdLayoutUpdates } from '#core/kiwi/fig/instance-overrides/derived-symbol-data/layout'
+import { propagateDsdChanges } from '#core/kiwi/fig/instance-overrides/derived-symbol-data/propagate'
+import type { OverrideContext } from '#core/kiwi/fig/instance-overrides'
 import { SceneGraph } from '#core/scene-graph'
 
 function pageId(graph: SceneGraph): string {

@@ -1,4 +1,4 @@
-import { IS_BROWSER, IS_TAURI } from '@open-pencil/core/constants'
+import { IS_TAURI } from '@open-pencil/core/constants'
 
 const APP_CACHE_DIR = 'cache/v1'
 const STORAGE_PREFIX = 'open-pencil:cache:v1:'
@@ -7,11 +7,11 @@ const textEncoder = new TextEncoder()
 const textDecoder = new TextDecoder()
 
 function isTauriRuntime() {
-  return IS_TAURI
+  return IS_TAURI || ('window' in globalThis && '__TAURI_INTERNALS__' in window)
 }
 
 function isStorageAvailable() {
-  return IS_BROWSER || 'window' in globalThis
+  return 'window' in globalThis && !!window.localStorage
 }
 
 function cachePath(key: string) {

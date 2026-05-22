@@ -168,7 +168,8 @@ export const figFormat: IOFormatAdapter = {
       graph,
       context?.canvasKit,
       context?.renderer,
-      options?.thumbnailPageId
+      options?.thumbnailPageId,
+      options?.renderThumbnail ?? false
     )
     return {
       format: 'fig',
@@ -183,7 +184,8 @@ export const figFormat: IOFormatAdapter = {
       extracted.graph,
       context?.canvasKit,
       context?.renderer,
-      options?.thumbnailPageId ?? extracted.pageId ?? undefined
+      options?.thumbnailPageId ?? extracted.pageId ?? undefined,
+      options?.renderThumbnail ?? false
     )
     return {
       format: 'fig',

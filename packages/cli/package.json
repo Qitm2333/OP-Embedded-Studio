@@ -7,9 +7,16 @@
     "#cli/*": "./src/*"
   },
   "bin": {
-    "openpencil": "./src/index.ts"
+    "openpencil": "./bin/openpencil.js"
   },
-  "files": ["src"],
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "scripts": {
+    "build": "bunx tsdown --config tsdown.config.ts",
+    "prepublishOnly": "bun run build"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/open-pencil/open-pencil.git",

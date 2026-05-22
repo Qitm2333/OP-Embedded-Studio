@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import { importNodeChanges } from '#core/kiwi/fig/import'
-import type { NodeChange } from '#core/kiwi/binary/codec'
+import type { NodeChange } from '#core/kiwi/fig/codec'
 
 const documentGuid = { sessionID: 0, localID: 0 }
 const pageGuid = { sessionID: 0, localID: 1 }

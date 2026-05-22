@@ -2,22 +2,39 @@ import { isNotNil } from 'es-toolkit/predicate'
 
 import { BLACK } from '#core/constants'
 import { setLazyFigImportContext } from '#core/kiwi/fig/lazy-import'
-import type { NodeChange, VariableDataValuesEntry, Color, GUID } from '#core/kiwi/binary/codec'
-import { populateAndApplyOverrides } from '#core/kiwi/instance-overrides'
-import type { InstanceNodeChange } from '#core/kiwi/instance-overrides'
+import type { NodeChange, VariableDataValuesEntry, Color, GUID } from '#core/kiwi/fig/codec'
+import { populateAndApplyOverrides } from '#core/kiwi/fig/instance-overrides'
+import type { InstanceNodeChange } from '#core/kiwi/fig/instance-overrides'
 import {
   guidToString,
   nodeChangeToProps,
   sortChildren,
   setVariableColorResolver,
   VARIABLE_BINDING_FIELDS_INVERSE
-} from '#core/kiwi/node-change/convert'
-import { applyStyleRefsToFields } from '#core/kiwi/node-change/style-refs'
+} from '#core/kiwi/fig/node-change/convert'
+import { applyStyleRefsToFields } from '#core/kiwi/fig/node-change/style-refs'
 import { SceneGraph } from '#core/scene-graph'
 import type { VariableType, VariableValue } from '#core/scene-graph'
 
 type AssetRef = { key: string; version?: string }
 type AliasRef = { guid?: GUID; assetRef?: AssetRef }
+
+function applyImportedCanvasMetadata(page: ReturnType<SceneGraph['addPage']>, canvasNc: NodeChange) {
+  page.source.format = 'fig'
+  page.source.orderKey = canvasNc.parentIndex?.position ?? null
+  if (canvasNc.backgroundColor) page.source.fig.rawNodeFields.backgroundColor = structuredClone(canvasNc.backgroundColor)
+  page.source.fig.rawNodeFields.strokeJoin = canvasNc.strokeJoin
+  page.source.fig.rawNodeFields.strokeWeight = canvasNc.strokeWeight
+  if (canvasNc.pageType) page.source.fig.rawNodeFields.pageType = canvasNc.pageType
+}
+
+function applyImportedDocumentMetadata(graph: SceneGraph, docNc: NodeChange | undefined) {
+  const rootNode = graph.getNode(graph.rootId)
+  if (!docNc || !rootNode) return
+  rootNode.source.format = 'fig'
+  rootNode.source.fig.rawNodeFields.strokeJoin = docNc.strokeJoin
+  rootNode.source.fig.rawNodeFields.strokeWeight = docNc.strokeWeight
+}
 
 function assetRefKey(assetRef: AssetRef): string {
   return assetRef.version ? `${assetRef.key}@${assetRef.version}` : assetRef.key
@@ -281,11 +298,15 @@ function importPages(
   }
 
   if (docId) {
+    applyImportedDocumentMetadata(graph, changeMap.get(docId))
+
     for (const canvasId of childrenMap.get(docId) ?? []) {
       const canvasNc = changeMap.get(canvasId)
       if (!canvasNc) continue
       if (canvasNc.type === 'CANVAS') {
         const page = graph.addPage(canvasNc.name ?? 'Page')
+        page.source.id = canvasId
+        applyImportedCanvasMetadata(page, canvasNc)
         canvasIdToPageId.set(canvasId, page.id)
         if (canvasNc.internalOnly) page.internalOnly = true
         created.add(canvasId)
@@ -445,13 +466,15 @@ export function importNodeChanges(
       ? [firstPageId, ...componentPageIds].filter(isNotNil)
       : undefined
 
-  populateAndApplyOverrides(
-    graph,
-    changeMap as Map<string, InstanceNodeChange>,
-    guidToNodeId,
-    blobs,
-    activeRootIds
-  )
+  graph.preserveSourceMetadataDuring(() => {
+    populateAndApplyOverrides(
+      graph,
+      changeMap as Map<string, InstanceNodeChange>,
+      guidToNodeId,
+      blobs,
+      activeRootIds
+    )
+  })
 
   if (activeRootIds) rememberLazyFigImportContext(graph, changeMap, guidToNodeId, blobs, activeRootIds)
 

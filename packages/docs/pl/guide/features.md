@@ -111,7 +111,7 @@ open-pencil tree                     # Aktywny dokument
 open-pencil export -f png            # Zrzut ekranu canvasu
 ```
 
-Wszystkie komendy obsługują `--json`. Instalacja: `bun add -g @open-pencil/cli`
+Wszystkie komendy obsługują `--json`. Instalacja: `npm install -g @open-pencil/cli`
 
 ## Współpraca w czasie rzeczywistym
 

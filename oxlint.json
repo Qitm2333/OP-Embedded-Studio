@@ -415,7 +415,7 @@
     },
     {
       "files": [
-        "**/kiwi/kiwi-schema/**"
+        "**/kiwi/schema-runtime/**"
       ],
       "rules": {
         "typescript/no-explicit-any": "off",

@@ -346,10 +346,11 @@ const noPrototypeOrGeneratedImports = createImportRule(
       return 'Do not import generated desktop artifacts from TypeScript/app code.'
     }
     if (
-      resolved.startsWith('packages/core/src/kiwi/kiwi-schema/') &&
-      !sourceRel.startsWith('packages/core/src/kiwi/kiwi-schema/')
+      resolved.startsWith('packages/core/src/kiwi/schema-runtime/') &&
+      resolved !== 'packages/core/src/kiwi/schema-runtime/index.ts' &&
+      !sourceRel.startsWith('packages/core/src/kiwi/schema-runtime/')
     ) {
-      return 'Do not import vendored Kiwi schema internals directly; use the supported Kiwi APIs.'
+      return 'Do not import Kiwi schema runtime internals directly; use the supported Kiwi APIs.'
     }
     return null
   }

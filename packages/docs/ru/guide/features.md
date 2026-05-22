@@ -111,7 +111,7 @@ open-pencil tree                     # Текущий документ
 open-pencil export -f png            # Скриншот канваса
 ```
 
-Все команды поддерживают `--json`. Установка: `bun add -g @open-pencil/cli`
+Все команды поддерживают `--json`. Установка: `npm install -g @open-pencil/cli`
 
 ## Совместная работа в реальном времени
 

@@ -1,9 +1,21 @@
+import { readFileSync } from 'node:fs'
+
 import { defineConfig } from 'tsdown'
 import type { Plugin } from 'rolldown'
 
-function rawMd(): Plugin {
+const packageJson = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
+  dependencies?: Record<string, string>
+}
+
+function rawText(): Plugin {
   return {
-    name: 'raw-md',
+    name: 'raw-text',
+    load(id) {
+      if (id.endsWith('?raw')) {
+        const path = id.slice(0, -'?raw'.length)
+        return `export default ${JSON.stringify(readFileSync(path, 'utf8'))}`
+      }
+    },
     transform(code, id) {
       if (id.endsWith('.md')) {
         return { code: `export default ${JSON.stringify(code)}`, map: null }
@@ -14,7 +26,7 @@ function rawMd(): Plugin {
 
 export default defineConfig({
   entry: ['src/**/*.ts', '!src/**/*.d.ts'],
-  plugins: [rawMd()],
+  plugins: [rawText()],
   unbundle: true,
   platform: 'neutral',
   format: ['esm'],
@@ -23,22 +35,7 @@ export default defineConfig({
   clean: true,
   outDir: './dist',
   deps: {
-    neverBundle: [
-      '@iconify/utils',
-      'canvaskit-wasm',
-      'culori',
-      'diff',
-      'expr-eval',
-      'fflate',
-      'fontoxpath',
-      'fzstd',
-      'nanoevents',
-      'opentype.js',
-      'sucrase',
-      'svgpath',
-      'yoga-layout',
-      /^node:/
-    ],
+    neverBundle: [...Object.keys(packageJson.dependencies ?? {}), /^node:/],
     onlyBundle: false
   }
 })

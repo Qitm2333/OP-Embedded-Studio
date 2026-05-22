@@ -7,7 +7,7 @@ import { expectDefined, getNodeOrThrow } from '#tests/helpers/assert'
 import { ROOT_GUID, pageId } from '../helpers'
 
 describe('Fix 1: auto-layout child transforms', () => {
-  test('auto-layout child gets zero transform regardless of its x/y', () => {
+  test('auto-layout child preserves its stored transform offsets', () => {
     const graph = new SceneGraph()
     const parent = graph.createNode('FRAME', pageId(graph), {
       name: 'AutoLayout',
@@ -48,8 +48,8 @@ describe('Fix 1: auto-layout child transforms', () => {
       'child node change'
     )
     expect(childNc).toBeDefined()
-    expect(childNc.transform.m02).toBe(0)
-    expect(childNc.transform.m12).toBe(0)
+    expect(childNc.transform.m02).toBe(50)
+    expect(childNc.transform.m12).toBe(100)
   })
 
   test('absolute-positioned child inside auto-layout keeps its real x/y', () => {
@@ -130,7 +130,64 @@ describe('Fix 1: auto-layout child transforms', () => {
     expect(childNc.transform.m12).toBe(45)
   })
 
-  test('horizontal auto-layout child also gets zero transform', () => {
+  test('preserves imported Figma layout metadata for instance roundtrips', () => {
+    const graph = new SceneGraph()
+    const parent = graph.createNode('FRAME', pageId(graph), {
+      name: 'Checked List',
+      width: 878,
+      height: 24,
+      layoutMode: 'HORIZONTAL',
+      counterAxisSizing: 'HUG',
+      layoutAlignSelf: 'STRETCH'
+    })
+    parent.source.fig.layout = {
+      stackMode: 'HORIZONTAL',
+      stackPrimarySizing: 'FIXED',
+      stackCounterSizing: 'RESIZE_TO_FIT_WITH_IMPLICIT_SIZE',
+      stackChildAlignSelf: 'STRETCH'
+    }
+
+    const child = graph.createNode('INSTANCE', parent.id, {
+      name: 'Lists',
+      width: 282.6666564941406,
+      height: 24,
+      layoutMode: 'VERTICAL',
+      layoutGrow: 1
+    })
+    child.source.fig.layout = {
+      stackMode: 'VERTICAL',
+      stackChildPrimaryGrow: 1
+    }
+
+    const blobs: Uint8Array[] = []
+    const changes = sceneNodeToKiwi(
+      getNodeOrThrow(graph, parent.id),
+      ROOT_GUID,
+      0,
+      { value: 100 },
+      graph,
+      blobs
+    ) as Record<string, unknown>[]
+
+    const parentNc = expectDefined(
+      changes.find((nc) => nc.name === 'Checked List'),
+      'parent node change'
+    )
+    expect(parentNc.stackCounterSizing).toBe('RESIZE_TO_FIT_WITH_IMPLICIT_SIZE')
+
+    const instanceNc = expectDefined(
+      changes.find((nc) => nc.name === 'Lists'),
+      'instance node change'
+    )
+    expect(instanceNc.stackMode).toBe('VERTICAL')
+    expect(instanceNc.stackChildPrimaryGrow).toBe(1)
+    expect(instanceNc.stackPrimarySizing).toBeUndefined()
+    expect(instanceNc.stackCounterSizing).toBeUndefined()
+    expect(instanceNc.stackPrimaryAlignItems).toBeUndefined()
+    expect(instanceNc.stackCounterAlignItems).toBeUndefined()
+  })
+
+  test('horizontal auto-layout child also preserves its stored transform offsets', () => {
     const graph = new SceneGraph()
     const parent = graph.createNode('FRAME', pageId(graph), {
       name: 'HorizontalLayout',
@@ -164,8 +221,8 @@ describe('Fix 1: auto-layout child transforms', () => {
       changes.find((nc) => nc.name === 'Item'),
       'item node change'
     )
-    expect(itemNc.transform.m02).toBe(0)
-    expect(itemNc.transform.m12).toBe(0)
+    expect(itemNc.transform.m02).toBe(200)
+    expect(itemNc.transform.m12).toBe(50)
   })
 })
 

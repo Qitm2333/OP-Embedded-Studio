@@ -1,12 +1,41 @@
+import { createRequire } from 'node:module'
+
 import raw from 'unplugin-raw/rolldown'
 import vue from 'unplugin-vue/rolldown'
 import { defineConfig } from 'tsdown'
+
+const require = createRequire(import.meta.url)
+
+function atlaskitSubpathResolver() {
+  const aliases = new Map([
+    [
+      '@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item',
+      '@atlaskit/pragmatic-drag-and-drop-hitbox/dist/esm/tree-item.js'
+    ],
+    [
+      '@atlaskit/pragmatic-drag-and-drop/combine',
+      '@atlaskit/pragmatic-drag-and-drop/dist/esm/entry-point/combine.js'
+    ],
+    [
+      '@atlaskit/pragmatic-drag-and-drop/element/adapter',
+      '@atlaskit/pragmatic-drag-and-drop/dist/esm/adapter/element-adapter.js'
+    ]
+  ])
+
+  return {
+    name: 'atlaskit-subpath-resolver',
+    resolveId(id) {
+      const target = aliases.get(id)
+      return target ? require.resolve(target) : null
+    }
+  }
+}
 
 export default defineConfig({
   entry: {
     index: './src/index.ts'
   },
-  platform: 'neutral',
+  platform: 'browser',
   format: ['esm'],
   dts: {
     vue: true,
@@ -21,6 +50,12 @@ export default defineConfig({
     moduleSideEffects: false
   },
   deps: {
+    alwaysBundle: [
+      '@atlaskit/pragmatic-drag-and-drop',
+      /^@atlaskit\/pragmatic-drag-and-drop\//,
+      '@atlaskit/pragmatic-drag-and-drop-hitbox',
+      /^@atlaskit\/pragmatic-drag-and-drop-hitbox\//
+    ],
     neverBundle: [
       'vue',
       /^vue\//,
@@ -33,15 +68,11 @@ export default defineConfig({
       '@nanostores/i18n',
       'nanostores',
       '@tanstack/vue-table',
-      'reka-ui',
-      '@atlaskit/pragmatic-drag-and-drop',
-      /^@atlaskit\/pragmatic-drag-and-drop\//,
-      '@atlaskit/pragmatic-drag-and-drop-hitbox',
-      /^@atlaskit\/pragmatic-drag-and-drop-hitbox\//
+      'reka-ui'
     ],
     onlyBundle: false
   },
-  plugins: [raw(), vue()],
+  plugins: [atlaskitSubpathResolver(), raw(), vue()],
   inputOptions: {
     preserveEntrySignatures: 'allow-extension',
     checks: {

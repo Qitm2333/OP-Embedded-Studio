@@ -18,6 +18,22 @@ export function createDefaultNode(
     width: 100,
     height: 100,
     rotation: 0,
+    source: {
+      format: null,
+      id: null,
+      orderKey: null,
+      fig: {
+        rawSize: null,
+        rawTransform: null,
+        rawNodeFields: {},
+        layout: null,
+        symbolOverrides: [],
+        componentPropAssignments: [],
+        derivedSymbolData: [],
+        derivedSymbolDataLayoutVersion: null,
+        uniformScaleFactor: null
+      }
+    },
     figmaDerivedLayout: null,
     fills:
       type === 'TEXT'

@@ -1,5 +1,5 @@
-import { populateAndApplyOverrides } from '#core/kiwi/instance-overrides'
-import type { InstanceNodeChange } from '#core/kiwi/instance-overrides'
+import { populateAndApplyOverrides } from '#core/kiwi/fig/instance-overrides'
+import type { InstanceNodeChange } from '#core/kiwi/fig/instance-overrides'
 import type { SceneGraph } from '#core/scene-graph'
 
 export interface LazyFigImportContext {
@@ -27,13 +27,15 @@ function populateRoots(
   const pending = [...rootIds].filter((id) => id && !context.populatedRootIds.has(id))
   if (pending.length === 0) return false
 
-  populateAndApplyOverrides(
-    graph,
-    context.changeMap,
-    context.guidToNodeId,
-    context.blobs,
-    pending
-  )
+  graph.preserveSourceMetadataDuring(() => {
+    populateAndApplyOverrides(
+      graph,
+      context.changeMap,
+      context.guidToNodeId,
+      context.blobs,
+      pending
+    )
+  })
 
   for (const id of pending) context.populatedRootIds.add(id)
   return true

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import { importNodeChanges } from '@open-pencil/core'
-import type { NodeChange } from '#core/kiwi/binary/codec'
+import type { NodeChange } from '#core/kiwi/fig/codec'
 
 import { canvas, doc, node } from './legacy/helpers'
 

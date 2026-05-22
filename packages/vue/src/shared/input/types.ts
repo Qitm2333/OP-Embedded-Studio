@@ -19,6 +19,9 @@ export interface DragMove {
   startY: number
   currentX: number
   currentY: number
+  startScreenX: number
+  startScreenY: number
+  dragStarted: boolean
   originals: Map<string, { x: number; y: number; parentId: string }>
   duplicated?: boolean
   duplicatedPreviousSelection?: Set<string>

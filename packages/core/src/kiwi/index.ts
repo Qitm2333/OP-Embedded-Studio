@@ -29,7 +29,7 @@ export {
   type VariableDataValuesEntry,
   type ParentIndex,
   type FigmaMessage
-} from './binary/codec'
+} from './fig/codec'
 export {
   MESSAGE_TYPES,
   NODE_TYPES,
@@ -48,4 +48,4 @@ export {
   getKiwiMessageType,
   parseVarint,
   FIG_WIRE_MAGIC
-} from './binary/protocol'
+} from './fig/codec/protocol'

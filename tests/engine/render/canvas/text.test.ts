@@ -336,8 +336,8 @@ describe('renderText headless visual', () => {
         const g = pixels[i + 1]
         const b = pixels[i + 2]
         if (g > 220) continue
-        if (x < 110 && r > b + 40) redTextPixels++
-        if (x >= 110 && b > r + 40) blueTextPixels++
+        if (x < 110 && b > r + 40) blueTextPixels++
+        if (x >= 110 && r > b + 40) redTextPixels++
       }
     }
 

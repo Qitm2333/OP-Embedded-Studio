@@ -301,7 +301,7 @@ export {
   sceneNodeToKiwi,
   fractionalPosition,
   mapToFigmaType
-} from './kiwi/node-change/serialize'
+} from './kiwi/fig/node-change/serialize'
 export { buildDerivedTextDataV4 } from './text/derived-text/clipboard'
 
 export {

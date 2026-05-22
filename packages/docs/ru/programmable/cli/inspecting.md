@@ -9,7 +9,7 @@ CLI позволяет исследовать дизайн-документы б
 
 ::: tip Установка
 ```sh
-bun add -g @open-pencil/cli
+npm install -g @open-pencil/cli
 # или
 brew install open-pencil/tap/open-pencil
 ```

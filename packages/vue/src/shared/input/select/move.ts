@@ -59,10 +59,12 @@ function detectDragAutoLayoutParent(originals: Map<string, MoveOriginal>, editor
 export function createSelectionMoveDrag(
   cx: number,
   cy: number,
+  sx: number,
+  sy: number,
   editor: Editor,
   duplicate: boolean
 ): DragState {
-  if (duplicate && editor.state.selectedIds.size > 0) return duplicateAndDrag(cx, cy, editor).drag
+  if (duplicate && editor.state.selectedIds.size > 0) return duplicateAndDrag(cx, cy, sx, sy, editor).drag
 
   const originals = collectMoveOriginals(editor)
 
@@ -72,6 +74,9 @@ export function createSelectionMoveDrag(
     startY: cy,
     currentX: cx,
     currentY: cy,
+    startScreenX: sx,
+    startScreenY: sy,
+    dragStarted: false,
     originals,
     autoLayoutParentId: detectDragAutoLayoutParent(originals, editor)
   }

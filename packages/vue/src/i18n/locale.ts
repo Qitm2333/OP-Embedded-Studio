@@ -21,16 +21,19 @@ export const localeSetting = atom<Locale | undefined>(undefined)
 
 export const locale = localeFrom(localeSetting, browser({ available: AVAILABLE_LOCALES }))
 
-export function setLocale(code: Locale) {
-  localeSetting.set(code)
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem(LOCALE_STORAGE_KEY, code)
-  }
+function getLocalStorage(): Storage | null {
+  if (typeof localStorage === 'undefined') return null
+  if (typeof localStorage.getItem !== 'function') return null
+  if (typeof localStorage.setItem !== 'function') return null
+  return localStorage
 }
 
-if (typeof localStorage !== 'undefined') {
-  const saved = localStorage.getItem(LOCALE_STORAGE_KEY) as Locale | null
-  if (saved && AVAILABLE_LOCALES.includes(saved)) {
-    localeSetting.set(saved)
-  }
+export function setLocale(code: Locale) {
+  localeSetting.set(code)
+  getLocalStorage()?.setItem(LOCALE_STORAGE_KEY, code)
+}
+
+const saved = getLocalStorage()?.getItem(LOCALE_STORAGE_KEY) as Locale | null | undefined
+if (saved && AVAILABLE_LOCALES.includes(saved)) {
+  localeSetting.set(saved)
 }

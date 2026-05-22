@@ -47,7 +47,7 @@ describe('Tauri font helpers', () => {
 
     const { listFamilies, listFonts } = await import('@/app/editor/fonts')
 
-    await expect(listFamilies()).resolves.toEqual(['System UI'])
+    await expect(listFamilies()).resolves.toEqual([{ family: 'System UI', source: 'local' }])
     await expect(listFonts()).resolves.toEqual([
       { family: 'System UI', styles: ['Regular', 'Bold'] }
     ])

@@ -66,6 +66,7 @@ export interface IOContext {
 
 export interface FigWriteOptions {
   thumbnailPageId?: string
+  renderThumbnail?: boolean
 }
 
 export interface RasterExportOptions {

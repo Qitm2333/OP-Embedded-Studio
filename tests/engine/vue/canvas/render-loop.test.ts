@@ -106,7 +106,7 @@ describe('canvas render loop', () => {
     }
   })
 
-  test('scene layers ignore overlay-only repaint and selection events', () => {
+  test('scene layers render on repaint but ignore selection events', () => {
     const scheduler = createFrameScheduler()
     try {
       const { editor, emit } = createEditor()
@@ -119,11 +119,10 @@ describe('canvas render loop', () => {
         { layer: 'scene' }
       )
 
-      emit('repaint:requested')
       emit('selection:changed')
       expect(scheduler.pendingCount).toBe(0)
 
-      emit('viewport:changed')
+      emit('repaint:requested')
       expect(scheduler.pendingCount).toBe(1)
       scheduler.flush()
       expect(renders).toBe(1)

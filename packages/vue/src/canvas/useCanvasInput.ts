@@ -163,6 +163,8 @@ export function useCanvasInput(
       event: e,
       cx,
       cy,
+      sx,
+      sy,
       editor,
       hitFns,
       cursorOverride,
@@ -202,14 +204,14 @@ export function useCanvasInput(
       return
     }
 
-    const { cx, cy } = getCoords(e)
+    const { sx, sy, cx, cy } = getCoords(e)
 
     if (d.type === 'rotate') {
       handleRotateMove(d, cx, cy, e.shiftKey)
       return
     }
     if (d.type === 'move') {
-      handleMoveMove(d, cx, cy, editor)
+      handleMoveMove(d, cx, cy, sx, sy, editor)
       return
     }
     if (d.type === 'text-select') {

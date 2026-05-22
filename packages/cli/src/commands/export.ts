@@ -119,9 +119,11 @@ async function exportFromFile(format: string, args: ExportArgs) {
   }
 
   const formatId = format.toLowerCase()
-  let options: { format?: string; scale?: number; quality?: number } | undefined
+  let options: { format?: string; scale?: number; quality?: number; renderThumbnail?: boolean } | undefined
   if (format === 'JSX') {
     options = { format: args.style }
+  } else if (format === 'FIG') {
+    options = { renderThumbnail: true }
   } else if (format === 'PNG' || format === 'JPG' || format === 'WEBP') {
     options = {
       format,

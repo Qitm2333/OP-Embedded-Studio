@@ -9,7 +9,7 @@ The CLI lets you explore design documents without opening the editor. Every comm
 
 ::: tip Install
 ```sh
-bun add -g @open-pencil/cli
+npm install -g @open-pencil/cli
 # or
 brew install open-pencil/tap/open-pencil
 ```

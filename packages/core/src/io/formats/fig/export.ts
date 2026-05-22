@@ -5,9 +5,10 @@ import type { SkiaRenderer } from '#core/canvas'
 import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from '#core/constants'
 import { renderThumbnail } from '#core/io/formats/raster'
 import { populateAllLazyFigImportRoots } from '#core/kiwi/fig/lazy-import'
-import { initCodec, getCompiledSchema, getSchemaBytes } from '#core/kiwi/binary/codec'
-import type { NodeChange } from '#core/kiwi/binary/codec'
-import { stringToGuid } from '#core/kiwi/node-change/convert'
+import { initCodec, getCompiledSchema, getSchemaBytes } from '#core/kiwi/fig/codec'
+import type { NodeChange } from '#core/kiwi/fig/codec'
+import { stringToGuid } from '#core/kiwi/fig/node-change/convert'
+import { buildFigmaPaintVariableColorMap } from '#core/kiwi/fig/node-change/export-node'
 import {
   sceneNodeToKiwi,
   fractionalPosition,
@@ -15,7 +16,7 @@ import {
   safeColor,
   makeDocumentNodeChange,
   makeCanvasNodeChange
-} from '#core/kiwi/node-change/serialize'
+} from '#core/kiwi/fig/node-change/serialize'
 import type { SceneGraph, VariableValue } from '#core/scene-graph'
 import type { GUID } from '#core/types'
 
@@ -29,6 +30,13 @@ const THUMBNAIL_1X1 = Uint8Array.from(
 )
 
 type KiwiNodeChange = NodeChange & Record<string, unknown>
+type FigExportPage = ReturnType<SceneGraph['getPages']>[number]
+
+interface CanvasExportEntry {
+  page: FigExportPage
+  canvasGuid: GUID
+  canvasNc: KiwiNodeChange
+}
 
 function variableValueToKiwi(
   value: VariableValue,
@@ -73,6 +81,22 @@ function collectImageEntries(graph: SceneGraph): Array<{ name: string; data: Uin
 
 const THUMBNAIL_WIDTH = 400
 const THUMBNAIL_HEIGHT = 225
+
+async function renderFigThumbnail(
+  graph: SceneGraph,
+  pageId: string | undefined,
+  ck?: CanvasKit,
+  renderer?: SkiaRenderer,
+  renderHeadless = false
+): Promise<Uint8Array> {
+  if (!pageId) return THUMBNAIL_1X1
+  if (ck && renderer) {
+    return renderThumbnail(ck, renderer, graph, pageId, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT) ?? THUMBNAIL_1X1
+  }
+  if (!renderHeadless || IS_BROWSER || IS_TAURI) return THUMBNAIL_1X1
+  const { headlessRenderThumbnail } = await import('#core/io/formats/raster')
+  return (await headlessRenderThumbnail(graph, pageId, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)) ?? THUMBNAIL_1X1
+}
 
 function assignVariableGuids(
   graph: SceneGraph,
@@ -170,11 +194,75 @@ function appendVariablesForCollection(
   }
 }
 
+function applyImportedCanvasFields(page: FigExportPage, canvasNc: KiwiNodeChange): void {
+  if (!page.source.id) return
+  if (!('pageType' in page.source.fig.rawNodeFields)) delete canvasNc.pageType
+  if ('backgroundColor' in page.source.fig.rawNodeFields) {
+    canvasNc.backgroundColor = structuredClone(page.source.fig.rawNodeFields.backgroundColor)
+  }
+  const strokeJoin = page.source.fig.rawNodeFields.strokeJoin
+  if (typeof strokeJoin === 'string') canvasNc.strokeJoin = strokeJoin
+  const strokeWeight = page.source.fig.rawNodeFields.strokeWeight
+  if (typeof strokeWeight === 'number') canvasNc.strokeWeight = strokeWeight
+}
+
+function buildCanvasEntries(
+  graph: SceneGraph,
+  pages: FigExportPage[],
+  docGuid: GUID,
+  localIdCounter: { value: number },
+  nodeIdToGuid: Map<string, GUID>
+): { canvasEntries: CanvasExportEntry[]; internalCanvasGuid: GUID | null } {
+  const canvasEntries: CanvasExportEntry[] = []
+  let internalCanvasGuid: GUID | null = null
+  for (let p = 0; p < pages.length; p++) {
+    const page = pages[p]
+    const canvasGuid = page.source.id
+      ? stringToGuid(page.source.id)
+      : { sessionID: 0, localID: localIdCounter.value++ }
+    nodeIdToGuid.set(page.id, canvasGuid)
+    if (page.internalOnly) internalCanvasGuid = canvasGuid
+
+    const canvasNc = makeCanvasNodeChange(
+      canvasGuid,
+      docGuid,
+      page.source.orderKey ?? fractionalPosition(p),
+      page.name,
+      {
+        backgroundOpacity: 1,
+        backgroundColor: { ...CANVAS_BG_COLOR },
+        backgroundEnabled: true
+      }
+    )
+    applyImportedCanvasFields(page, canvasNc)
+    if (page.internalOnly) canvasNc.internalOnly = true
+    canvasEntries.push({ page, canvasGuid, canvasNc })
+  }
+
+  if (graph.variableCollections.size > 0 && internalCanvasGuid === null) {
+    internalCanvasGuid = { sessionID: 0, localID: localIdCounter.value++ }
+    canvasEntries.push({
+      page: { id: '', name: 'Internal Only Canvas', internalOnly: true } as FigExportPage,
+      canvasGuid: internalCanvasGuid,
+      canvasNc: makeCanvasNodeChange(
+        internalCanvasGuid,
+        docGuid,
+        fractionalPosition(canvasEntries.length),
+        'Internal Only Canvas',
+        { internalOnly: true }
+      )
+    })
+  }
+
+  return { canvasEntries, internalCanvasGuid }
+}
+
 export async function exportFigFile(
   graph: SceneGraph,
   ck?: CanvasKit,
   renderer?: SkiaRenderer,
-  pageId?: string
+  pageId?: string,
+  renderHeadlessThumbnail = false
 ): Promise<Uint8Array> {
   populateAllLazyFigImportRoots(graph)
   await initCodec()
@@ -184,7 +272,10 @@ export async function exportFigFile(
   const docGuid = { sessionID: 0, localID: 0 }
   const localIdCounter = { value: 2 }
 
-  const nodeChanges: KiwiNodeChange[] = [makeDocumentNodeChange(docGuid, graph.documentColorSpace)]
+  const documentNc = makeDocumentNodeChange(docGuid, graph.documentColorSpace)
+  const rootNode = graph.getNode(graph.rootId)
+  if (rootNode) Object.assign(documentNc, rootNode.source.fig.rawNodeFields)
+  const nodeChanges: KiwiNodeChange[] = [documentNc]
 
   const blobs: Uint8Array[] = []
   const pages = graph.getPages(true)
@@ -192,25 +283,27 @@ export async function exportFigFile(
   const varIdToGuid = new Map<string, GUID>()
   const modeIdToGuid = new Map<string, GUID>()
   const fontDigestMap = await buildFontDigestMap(graph)
-  let internalCanvasGuid: GUID | null = null
+  const glyphBlobMap = new Map<string, number>()
+  const blobIndexByHex = new Map<string, number>()
+  const paintVariableColorMap = buildFigmaPaintVariableColorMap(graph)
 
   assignVariableGuids(graph, localIdCounter, varIdToGuid, modeIdToGuid)
 
-  for (let p = 0; p < pages.length; p++) {
-    const page = pages[p]
-    const canvasLocalID = localIdCounter.value++
-    const canvasGuid = { sessionID: 0, localID: canvasLocalID }
+  const { canvasEntries, internalCanvasGuid } = buildCanvasEntries(
+    graph,
+    pages,
+    docGuid,
+    localIdCounter,
+    nodeIdToGuid
+  )
 
-    if (page.internalOnly) internalCanvasGuid = canvasGuid
+  for (const entry of canvasEntries) nodeChanges.push(entry.canvasNc)
 
-    const canvasNc = makeCanvasNodeChange(canvasGuid, docGuid, fractionalPosition(p), page.name, {
-      backgroundOpacity: 1,
-      backgroundColor: { ...CANVAS_BG_COLOR },
-      backgroundEnabled: true
-    })
-    if (page.internalOnly) canvasNc.internalOnly = true
-    nodeChanges.push(canvasNc)
-
+  const orderedCanvasEntries = [
+    ...canvasEntries.filter((entry) => entry.page.internalOnly),
+    ...canvasEntries.filter((entry) => !entry.page.internalOnly)
+  ]
+  for (const { page, canvasGuid } of orderedCanvasEntries) {
     const children = graph.getChildren(page.id).filter((child) => !child.internalOnly)
     for (let i = 0; i < children.length; i++) {
       nodeChanges.push(
@@ -223,27 +316,16 @@ export async function exportFigFile(
           blobs,
           nodeIdToGuid,
           fontDigestMap,
-          varIdToGuid
+          varIdToGuid,
+          glyphBlobMap,
+          paintVariableColorMap,
+          blobIndexByHex
         )
       )
     }
   }
 
-  if (graph.variableCollections.size > 0) {
-    if (!internalCanvasGuid) {
-      const internalLocalID = localIdCounter.value++
-      internalCanvasGuid = { sessionID: 0, localID: internalLocalID }
-      nodeChanges.push(
-        makeCanvasNodeChange(
-          internalCanvasGuid,
-          docGuid,
-          fractionalPosition(pages.length),
-          'Internal Only Canvas',
-          { internalOnly: true }
-        )
-      )
-    }
-
+  if (graph.variableCollections.size > 0 && internalCanvasGuid) {
     appendVariableNodeChanges(graph, nodeChanges, internalCanvasGuid, varIdToGuid, modeIdToGuid)
   }
 
@@ -261,10 +343,13 @@ export async function exportFigFile(
   const kiwiData = compiled.encodeMessage(msg)
 
   const currentPageId = pageId ?? pages[0]?.id
-  const thumbnailPng =
-    (ck && renderer && currentPageId
-      ? renderThumbnail(ck, renderer, graph, currentPageId, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
-      : null) ?? THUMBNAIL_1X1
+  const thumbnailPng = await renderFigThumbnail(
+    graph,
+    currentPageId,
+    ck,
+    renderer,
+    renderHeadlessThumbnail
+  )
 
   const metaJson = JSON.stringify({
     version: 1,
@@ -304,7 +389,8 @@ function compressViaWorker(
   kiwiData: Uint8Array,
   thumbnailPng: Uint8Array,
   metaJson: string,
-  imageEntries: Array<{ name: string; data: Uint8Array }>
+  imageEntries: Array<{ name: string; data: Uint8Array }>,
+  figKiwiVersion?: number
 ): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL('./export-worker.ts', import.meta.url), {
@@ -324,7 +410,14 @@ function compressViaWorker(
     // internal buffer, so transferring kiwiData.buffer or schemaDeflated.buffer detaches
     // buffers that may be shared with other views, causing "already detached" errors on
     // subsequent saves. Structured clone (the default) copies the data safely.
-    worker.postMessage({ schemaDeflated, kiwiData, thumbnailPng, metaJson, images: imageEntries })
+    worker.postMessage({
+      schemaDeflated,
+      kiwiData,
+      thumbnailPng,
+      metaJson,
+      images: imageEntries,
+      figKiwiVersion
+    })
   })
 }
 
@@ -337,7 +430,14 @@ export function compressFigData(
   figKiwiVersion?: number
 ): Promise<Uint8Array> {
   if (canUseWorker()) {
-    return compressViaWorker(schemaDeflated, kiwiData, thumbnailPng, metaJson, imageEntries)
+    return compressViaWorker(
+      schemaDeflated,
+      kiwiData,
+      thumbnailPng,
+      metaJson,
+      imageEntries,
+      figKiwiVersion
+    )
   }
   return Promise.resolve(
     compressFigDataSync(
