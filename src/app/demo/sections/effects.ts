@@ -5,7 +5,7 @@ import type { EditorStore } from '@/app/editor/session'
 export function createEffectsSection(store: EditorStore) {
   const { graph } = store
 
-  const effectsSectionId = store.createShape('SECTION', 60, 840, 920, 480)
+  const effectsSectionId = store.createShape('SECTION', 60, 840, 920, 640)
   graph.updateNode(effectsSectionId, {
     name: 'Effects',
     fills: [solid(DEMO_COLORS.white)]
@@ -213,5 +213,119 @@ export function createEffectsSection(store: EditorStore) {
     fontSize: 14,
     fontWeight: 600,
     fills: [solid(DEMO_COLORS.black)]
+  })
+
+  const blendMaskLabel = store.createShape('TEXT', 32, 488, 240, 20, effectsSectionId)
+  graph.updateNode(blendMaskLabel, {
+    name: 'Label',
+    text: 'Blend modes & masks',
+    fontSize: 13,
+    fontWeight: 600,
+    fills: [solid(DEMO_COLORS.gray500)]
+  })
+
+  const blendCard = store.createShape('FRAME', 32, 520, 256, 92, effectsSectionId)
+  graph.updateNode(blendCard, {
+    name: 'Blend Mode Stack',
+    cornerRadius: 16,
+    fills: [solid(DEMO_COLORS.gray50)],
+    strokes: thinStroke(DEMO_COLORS.gray200)
+  })
+  const blendBase = store.createShape('ELLIPSE', 24, 18, 72, 72, blendCard)
+  graph.updateNode(blendBase, {
+    name: 'Multiply Blue',
+    fills: [solid({ r: 0.16, g: 0.46, b: 1, a: 0.8 })],
+    blendMode: 'MULTIPLY'
+  })
+  const blendMiddle = store.createShape('ELLIPSE', 70, 18, 72, 72, blendCard)
+  graph.updateNode(blendMiddle, {
+    name: 'Multiply Red',
+    fills: [solid({ r: 1, g: 0.22, b: 0.34, a: 0.8 })],
+    blendMode: 'MULTIPLY'
+  })
+  const blendTop = store.createShape('ELLIPSE', 116, 18, 72, 72, blendCard)
+  graph.updateNode(blendTop, {
+    name: 'Screen Gold',
+    fills: [solid({ r: 1, g: 0.72, b: 0.16, a: 0.72 })],
+    blendMode: 'SCREEN'
+  })
+  const blendText = store.createShape('TEXT', 168, 32, 72, 32, blendCard)
+  graph.updateNode(blendText, {
+    name: 'Label',
+    text: 'Multiply\n+ Screen',
+    fontSize: 12,
+    fontWeight: 600,
+    lineHeight: 16,
+    fills: [solid(DEMO_COLORS.gray500)]
+  })
+
+  const fillBlendCard = store.createShape('FRAME', 312, 520, 204, 92, effectsSectionId)
+  graph.updateNode(fillBlendCard, {
+    name: 'Fill Blend Card',
+    cornerRadius: 16,
+    fills: [
+      gradient([
+        { color: DEMO_COLORS.purple, position: 0 },
+        { color: DEMO_COLORS.blue, position: 1 }
+      ]),
+      { ...solid(DEMO_COLORS.orange, 0.7), blendMode: 'OVERLAY' }
+    ],
+    effects: [dropShadow(0, 6, 18, 0, { r: 0.23, g: 0.51, b: 0.96, a: 0.2 })]
+  })
+  const fillBlendText = store.createShape('TEXT', 20, 32, 164, 24, fillBlendCard)
+  graph.updateNode(fillBlendText, {
+    name: 'Label',
+    text: 'Overlay fill',
+    fontSize: 16,
+    fontWeight: 700,
+    fills: [solid(DEMO_COLORS.white)]
+  })
+
+  const maskCard = store.createShape('FRAME', 540, 520, 300, 92, effectsSectionId)
+  graph.updateNode(maskCard, {
+    name: 'Mask Stack Card',
+    cornerRadius: 16,
+    fills: [solid(DEMO_COLORS.gray50)],
+    strokes: thinStroke(DEMO_COLORS.gray200),
+    clipsContent: true
+  })
+  const maskBg = store.createShape('RECTANGLE', 0, 0, 300, 92, maskCard)
+  graph.updateNode(maskBg, {
+    name: 'Backdrop',
+    fills: [solid({ r: 0.08, g: 0.1, b: 0.18, a: 1 })]
+  })
+  const maskText = store.createShape('TEXT', 104, 26, 172, 36, maskCard)
+  graph.updateNode(maskText, {
+    name: 'Label',
+    text: 'Sibling mask stack\nfrom imported files',
+    fontSize: 13,
+    fontWeight: 600,
+    lineHeight: 17,
+    fills: [solid(DEMO_COLORS.white)]
+  })
+  const maskShape = store.createShape('ELLIPSE', 22, 16, 60, 60, maskCard)
+  graph.updateNode(maskShape, {
+    name: 'Avatar Mask',
+    fills: [solid(DEMO_COLORS.white)],
+    isMask: true,
+    maskType: 'ALPHA'
+  })
+  const stripeA = store.createShape('RECTANGLE', 14, 12, 84, 28, maskCard)
+  graph.updateNode(stripeA, {
+    name: 'Masked Stripe A',
+    rotation: -20,
+    fills: [solid(DEMO_COLORS.blue)]
+  })
+  const stripeB = store.createShape('RECTANGLE', 14, 36, 84, 28, maskCard)
+  graph.updateNode(stripeB, {
+    name: 'Masked Stripe B',
+    rotation: -20,
+    fills: [solid(DEMO_COLORS.purple)]
+  })
+  const stripeC = store.createShape('RECTANGLE', 14, 60, 84, 28, maskCard)
+  graph.updateNode(stripeC, {
+    name: 'Masked Stripe C',
+    rotation: -20,
+    fills: [solid(DEMO_COLORS.teal)]
   })
 }
