@@ -45,7 +45,10 @@ export function updateSceneBackingPreviewState(r: SkiaRenderer, layer: RenderLay
   if (layer !== 'scene') return
   const previous = r.lastSceneViewport
   const viewportChanged =
-    !previous || previous.panX !== r.panX || previous.panY !== r.panY || previous.zoom !== r.zoom
+    !previous ||
+    previous.panX !== r.panX ||
+    previous.panY !== r.panY ||
+    previous.zoom !== r.zoom
   if (viewportChanged) {
     const timestamp = now()
     if (r.sceneBackingLastViewportEventAt > 0) {
@@ -76,31 +79,13 @@ function backingMetadataMatches(
   )
 }
 
-function scenePictureMetadataMatches(
-  r: SkiaRenderer,
-  sceneVersion: number,
-  positionPreviewVersion: number
-): boolean {
-  return !!(
-    r.scenePicture &&
-    r.scenePicturePageId === r.pageId &&
-    r.scenePictureVersion === sceneVersion &&
-    r.scenePicturePositionPreviewVersion === positionPreviewVersion
-  )
-}
-
 function backingScreenCoverageContainsViewport(r: SkiaRenderer): boolean {
   const backing = r.sceneBacking
   if (!backing) return false
   const scale = r.zoom / backing.zoom
   const x = r.panX - backing.panX * scale
   const y = r.panY - backing.panY * scale
-  return (
-    x <= 0 &&
-    y <= 0 &&
-    x + backing.width * scale >= r.viewportWidth &&
-    y + backing.height * scale >= r.viewportHeight
-  )
+  return x <= 0 && y <= 0 && x + backing.width * scale >= r.viewportWidth && y + backing.height * scale >= r.viewportHeight
 }
 
 function backingWorldCoverageContainsLiveViewport(r: SkiaRenderer): boolean {
@@ -144,7 +129,12 @@ function drawSceneBacking(
   const backing = r.sceneBacking
   if (
     !backing ||
-    !backingCoverageContainsLiveViewport(r, sceneVersion, allowStaleZoom, positionPreviewVersion)
+    !backingCoverageContainsLiveViewport(
+      r,
+      sceneVersion,
+      allowStaleZoom,
+      positionPreviewVersion
+    )
   ) {
     return false
   }
@@ -449,16 +439,6 @@ export function renderSceneBacking(
     positionPreviewVersion
   )
   if (!hasCoverage) {
-    const canDeferBackingRecordDuringViewportPreview =
-      allowStaleZoom &&
-      backingMetadataMatches(r, sceneVersion, positionPreviewVersion) &&
-      scenePictureMetadataMatches(r, sceneVersion, positionPreviewVersion)
-    if (canDeferBackingRecordDuringViewportPreview) {
-      cancelSceneBackingBuild(r)
-      r.sceneBackingNeedsCrispRender = true
-      return false
-    }
-
     if (
       !r.sceneBacking ||
       !backingMetadataMatches(r, sceneVersion, positionPreviewVersion) ||
@@ -484,3 +464,4 @@ export function renderSceneBacking(
     positionPreviewVersion
   )
 }
+

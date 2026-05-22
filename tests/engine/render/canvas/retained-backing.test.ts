@@ -1,5 +1,4 @@
 import { expect, mock, test } from 'bun:test'
-
 import type { Canvas, Image as CKImage, Surface } from 'canvaskit-wasm'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
@@ -146,39 +145,6 @@ test('retained scene backing allows same-zoom previews while panning', () => {
 
   expect(renderSceneBacking(r, canvas, graph, 1)).toBe(true)
   expect(canvas.drawImageRectOptions).toHaveBeenCalled()
-})
-
-test('retained scene backing defers coverage-miss rebuilds during active viewport previews', () => {
-  const r = createRenderer(() => null)
-  r.zoom = 0.5
-  r.sceneBackingPreviewUntil = Number.POSITIVE_INFINITY
-  r.scenePicture = {} as SkiaRenderer['scenePicture']
-  r.scenePictureVersion = 1
-  r.scenePicturePositionPreviewVersion = 0
-  r.scenePicturePageId = 'page'
-  r.sceneBacking = {
-    image: { delete: mock() } as CKImage,
-    pageId: 'page',
-    sceneVersion: 1,
-    positionPreviewVersion: 0,
-    panX: 0,
-    panY: 0,
-    zoom: 1,
-    width: 100,
-    height: 100,
-    dpr: 1,
-    worldX: 0,
-    worldY: 0,
-    worldWidth: 100,
-    worldHeight: 100
-  } as NonNullable<SkiaRenderer['sceneBacking']>
-  const canvas = createCanvas()
-  const graph = createGraph()
-
-  expect(renderSceneBacking(r, canvas, graph, 1)).toBe(false)
-  expect(r.surface.makeSurface).not.toHaveBeenCalled()
-  expect(canvas.drawImageRectOptions).not.toHaveBeenCalled()
-  expect(r.sceneBackingNeedsCrispRender).toBe(true)
 })
 
 test('retained scene backing invalidates stale position-preview metadata', () => {
