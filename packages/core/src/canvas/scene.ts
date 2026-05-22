@@ -534,22 +534,25 @@ function drawGradientText(
   if (!r.fontsLoaded || !r.fontProvider) return false
 
   const paragraph = r.buildParagraph(node, r.ck.Color4f(0, 0, 0, 1))
-  r.effectLayerPaint.setImageFilter(null)
-  r.effectLayerPaint.setColorFilter(null)
-  r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
-  canvas.saveLayer(r.effectLayerPaint)
-  canvas.drawParagraph(paragraph, 0, paragraphY)
-  paragraph.delete()
+  try {
+    r.effectLayerPaint.setImageFilter(null)
+    r.effectLayerPaint.setColorFilter(null)
+    r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
+    canvas.saveLayer(r.effectLayerPaint)
+    canvas.drawParagraph(paragraph, 0, paragraphY)
 
-  r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcIn)
-  canvas.saveLayer(r.effectLayerPaint)
-  canvas.drawRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.fillPaint)
-  canvas.restore()
-  canvas.restore()
-  r.effectLayerPaint.setImageFilter(null)
-  r.effectLayerPaint.setColorFilter(null)
-  r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
-  return true
+    r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcIn)
+    canvas.saveLayer(r.effectLayerPaint)
+    canvas.drawRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.fillPaint)
+    canvas.restore()
+    canvas.restore()
+    return true
+  } finally {
+    paragraph.delete()
+    r.effectLayerPaint.setImageFilter(null)
+    r.effectLayerPaint.setColorFilter(null)
+    r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
+  }
 }
 
 export function renderText(r: SkiaRenderer, canvas: Canvas, node: SceneNode, fill?: Fill): void {
