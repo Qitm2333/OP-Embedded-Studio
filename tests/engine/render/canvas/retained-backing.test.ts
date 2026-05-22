@@ -17,7 +17,9 @@ function createRenderer(surfaceFactory: () => Surface | null) {
         top,
         right,
         bottom
-      ])
+      ]),
+      FilterMode: { Linear: 'Linear' },
+      MipmapMode: { None: 'None' }
     } as SkiaRenderer['ck'],
     surface: {
       makeSurface: mock(surfaceFactory)
@@ -54,7 +56,8 @@ function createRenderer(surfaceFactory: () => Surface | null) {
 
 function createCanvas() {
   const canvas: Partial<Canvas> = {
-    drawImageRect: mock()
+    drawImageRect: mock(),
+    drawImageRectOptions: mock()
   }
   return canvas as Canvas
 }
@@ -79,8 +82,69 @@ test('retained scene backing falls back when CanvasKit cannot create an offscree
 
   expect(renderSceneBacking(r, canvas, graph, 1)).toBe(false)
   expect(r.surface.makeSurface).toHaveBeenCalled()
-  expect(canvas.drawImageRect).not.toHaveBeenCalled()
+  expect(canvas.drawImageRectOptions).not.toHaveBeenCalled()
   expect(r.sceneBacking).toBeNull()
+})
+
+test('retained scene backing filters cross-zoom previews instead of falling back to live rendering', () => {
+  const r = createRenderer(() => null)
+  r.zoom = 1
+  r.sceneBackingPreviewUntil = Number.POSITIVE_INFINITY
+  r.sceneBacking = {
+    image: { delete: mock() } as CKImage,
+    pageId: 'page',
+    sceneVersion: 1,
+    positionPreviewVersion: 0,
+    panX: 0,
+    panY: 0,
+    zoom: 0.5,
+    width: 300,
+    height: 300,
+    dpr: 1,
+    worldX: 0,
+    worldY: 0,
+    worldWidth: 600,
+    worldHeight: 600
+  } as NonNullable<SkiaRenderer['sceneBacking']>
+  const canvas = createCanvas()
+  const graph = createGraph()
+
+  expect(renderSceneBacking(r, canvas, graph, 1)).toBe(true)
+  expect(canvas.drawImageRectOptions).toHaveBeenCalledWith(
+    r.sceneBacking.image,
+    expect.anything(),
+    expect.anything(),
+    r.ck.FilterMode.Linear,
+    r.ck.MipmapMode.None,
+    r.opacityPaint
+  )
+})
+
+test('retained scene backing allows same-zoom previews while panning', () => {
+  const r = createRenderer(() => null)
+  r.zoom = 1
+  r.sceneBackingPreviewUntil = Number.POSITIVE_INFINITY
+  r.sceneBacking = {
+    image: { delete: mock() } as CKImage,
+    pageId: 'page',
+    sceneVersion: 1,
+    positionPreviewVersion: 0,
+    panX: 0,
+    panY: 0,
+    zoom: 1,
+    width: 300,
+    height: 300,
+    dpr: 1,
+    worldX: 0,
+    worldY: 0,
+    worldWidth: 300,
+    worldHeight: 300
+  } as NonNullable<SkiaRenderer['sceneBacking']>
+  const canvas = createCanvas()
+  const graph = createGraph()
+
+  expect(renderSceneBacking(r, canvas, graph, 1)).toBe(true)
+  expect(canvas.drawImageRectOptions).toHaveBeenCalled()
 })
 
 test('retained scene backing invalidates stale position-preview metadata', () => {
@@ -106,5 +170,5 @@ test('retained scene backing invalidates stale position-preview metadata', () =>
   const graph = createGraph(2)
 
   expect(renderSceneBacking(r, canvas, graph, 1)).toBe(false)
-  expect(canvas.drawImageRect).not.toHaveBeenCalled()
+  expect(canvas.drawImageRectOptions).not.toHaveBeenCalled()
 })

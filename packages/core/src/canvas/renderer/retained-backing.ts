@@ -103,6 +103,10 @@ function backingWorldCoverageContainsLiveViewport(r: SkiaRenderer): boolean {
   )
 }
 
+function backingZoomMatchesLiveViewport(r: SkiaRenderer): boolean {
+  return Math.abs((r.sceneBacking?.zoom ?? r.zoom) - r.zoom) <= 0.0001
+}
+
 function backingCoverageContainsLiveViewport(
   r: SkiaRenderer,
   sceneVersion: number,
@@ -110,7 +114,7 @@ function backingCoverageContainsLiveViewport(
   positionPreviewVersion: number
 ): boolean {
   if (!backingMetadataMatches(r, sceneVersion, positionPreviewVersion)) return false
-  const crispZoom = Math.abs((r.sceneBacking?.zoom ?? r.zoom) - r.zoom) <= 0.0001
+  const crispZoom = backingZoomMatchesLiveViewport(r)
   if (allowStaleZoom && backingScreenCoverageContainsViewport(r)) return true
   return crispZoom && backingWorldCoverageContainsLiveViewport(r)
 }
@@ -139,12 +143,13 @@ function drawSceneBacking(
   const x = r.panX - backing.panX * scale
   const y = r.panY - backing.panY * scale
   r.opacityPaint.setAlphaf(1)
-  canvas.drawImageRect(
+  canvas.drawImageRectOptions(
     backing.image,
     r.ck.LTRBRect(0, 0, backing.width * backing.dpr, backing.height * backing.dpr),
     r.ck.LTRBRect(x, y, x + backing.width * scale, y + backing.height * scale),
-    r.opacityPaint,
-    true
+    r.ck.FilterMode.Linear,
+    r.ck.MipmapMode.None,
+    r.opacityPaint
   )
   return true
 }
