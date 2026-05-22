@@ -14,6 +14,8 @@ export const LOCALES: Record<string, { hreflang: string; ogLocale: string; prefi
 
 export const siteHead: [string, Record<string, string>][] = [
   ['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }],
+  ['link', { rel: 'alternate', type: 'text/plain', title: 'llms.txt', href: '/llms.txt' }],
+  ['link', { rel: 'alternate', type: 'text/plain', title: 'llms-full.txt', href: '/llms-full.txt' }],
   ['meta', { property: 'og:type', content: 'website' }],
   ['meta', { property: 'og:site_name', content: 'OpenPencil' }],
   ['meta', { property: 'og:image', content: `${BASE}/screenshot.png` }],

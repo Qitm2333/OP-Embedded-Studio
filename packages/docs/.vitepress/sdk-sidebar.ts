@@ -51,7 +51,7 @@ const SDK_COMPOSABLE_PAGES = [
 const SDK_ADVANCED_PAGES = [
   { text: 'useNodeProps', slug: 'use-node-props' },
   { text: 'useSceneComputed', slug: 'use-scene-computed' },
-  { text: 'useFillVariableBinding', slug: 'use-fill-variable-binding' },
+  { text: 'useColorVariableBinding', slug: 'use-color-variable-binding' },
   { text: 'useFillPicker', slug: 'use-fill-picker' },
   { text: 'useGradientStops', slug: 'use-gradient-stops' },
   { text: 'useFontPicker', slug: 'use-font-picker' },

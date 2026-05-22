@@ -89,6 +89,9 @@
     "yoga-layout": "npm:@open-pencil/yoga-layout@3.3.0-grid.3",
     "zod": "^4.3.6"
   },
+  "overrides": {
+    "brace-expansion": "5.0.6"
+  },
   "devDependencies": {
     "@agentclientprotocol/sdk": "^0.14.1",
     "@feature-sliced/steiger-plugin": "^0.5.8",

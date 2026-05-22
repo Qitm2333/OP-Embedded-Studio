@@ -1,3 +1,8 @@
+---
+title: Scene Graph
+description: Technical reference for OpenPencil's flat scene graph, node lookup, tree relationships, mutations, events, and traversal APIs.
+---
+
 # Scene Graph
 
 ## In-Memory Representation

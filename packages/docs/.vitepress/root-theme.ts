@@ -34,7 +34,6 @@ export const rootThemeConfig = (): DefaultTheme.Config => ({
         items: [
           { text: 'Contributing', link: '/development/contributing' },
           { text: 'Testing', link: '/development/testing' },
-          { text: 'OpenSpec Workflow', link: '/development/openspec' },
           { text: 'Roadmap', link: '/development/roadmap' },
         ],
       },

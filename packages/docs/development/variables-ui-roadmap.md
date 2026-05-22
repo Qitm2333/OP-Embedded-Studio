@@ -1,3 +1,8 @@
+---
+title: Variables UI Roadmap
+description: Current status and planned UI work for OpenPencil design variables, bindings, modes, aliases, and token workflows.
+---
+
 # Variables UI Roadmap
 
 OpenPencil already supports local variable collections, modes, aliases, import/export, a variables dialog, color bindings, and several number bindings in the inspector. The remaining work should focus on making variables feel complete in day-to-day editing instead of expanding scope into remote libraries.
