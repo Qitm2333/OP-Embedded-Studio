@@ -171,10 +171,10 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 
 | Fonctionnalité | Statut | Notes |
 |---------------|--------|-------|
-| Connexions de prototype | 🔲 | Prévu pour la Phase 6 |
-| Déclencheurs (clic, survol, glisser, etc.) | 🔲 | Prévu pour la Phase 6 |
-| Actions (naviguer, overlay, scroll, etc.) | 🔲 | Prévu pour la Phase 6 |
-| Animations et transitions | 🔲 | Prévu pour la Phase 6 |
+| Connexions de prototype | 🔲 | Pas encore pris en charge |
+| Déclencheurs (clic, survol, glisser, etc.) | 🔲 | Pas encore pris en charge |
+| Actions (naviguer, overlay, scroll, etc.) | 🔲 | Pas encore pris en charge |
+| Animations et transitions | 🔲 | Pas encore pris en charge |
 | Smart animate | 🔲 | Auto-animer les calques correspondants |
 | Overlays | 🔲 | Prototypage modal/popover |
 | Comportement de scroll et overflow | 🔲 | Frames scrollables dans les prototypes |
@@ -207,7 +207,7 @@ Comparaison fonctionnalité par fonctionnalité des capacités de Figma Design a
 
 | Fonctionnalité | Statut | Notes |
 |---------------|--------|-------|
-| Commentaires (épingler, fils, résoudre) | 🔲 | Prévu pour la Phase 6 |
+| Commentaires (épingler, fils, résoudre) | 🔲 | Pas encore pris en charge |
 | Multijoueur en temps réel | ✅ | P2P via Trystero + Yjs CRDT, curseurs, mode suivi ; sans serveur |
 | Chat au curseur | 🔲 | Bulles de chat inline au curseur |
 | Branching et merging | 🔲 | Branches de version pour fichiers de design |

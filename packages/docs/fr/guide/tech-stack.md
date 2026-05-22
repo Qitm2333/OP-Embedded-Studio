@@ -62,8 +62,8 @@ Le projet a migré de React vers Vue 3 très tôt. Le système de réactivité d
 
 Yoga est maintenu par Meta, éprouvé sur des milliards d'appareils React Native et implémente la spécification CSS flexbox.
 
-## Technologies planifiées
+## Technologies supplémentaires
 
-| Technologie | Objectif | Phase |
-|-----------|---------|-------|
-| CSS Grid dans Yoga | Auto layout basé sur une grille | ✅ Livré via [fork Yoga](https://github.com/open-pencil/yoga/tree/grid) (`@open-pencil/yoga-layout`) |
+| Technologie | Objectif | Statut |
+|-----------|---------|--------|
+| CSS Grid dans Yoga | Auto layout basé sur une grille | Livré via [fork Yoga](https://github.com/open-pencil/yoga/tree/grid) (`@open-pencil/yoga-layout`) |

@@ -229,42 +229,6 @@ Figma is a closed platform that actively fights programmatic access. Their MCP s
 
 OpenPencil is the alternative: open source (MIT), reads .fig files natively, every operation is scriptable, and your data never leaves your machine.
 
-## Roadmap
-
-OpenPencil is moving toward production-grade Figma compatibility while keeping every workflow scriptable and local-first.
-
-### Compatibility and fidelity
-
-- Improve `.fig` import/export parity across large real-world design systems, including component sets, variants, nested instances, variables, auto layout, vector networks, and derived Figma text
-- Expand automated visual compatibility coverage across full multi-page documents, not just isolated fixtures
-- Continue renderer parity work for Skia/CanvasKit output: strokes, effects, gradients, image fills, text outlines, masks, blend modes, export bounds, and raster export compositing
-- Build focused regression fixtures for every discovered Figma compatibility edge case before broadening behavior
-
-### Editor capabilities
-
-- Prototyping — frame transitions, interaction triggers, overlay management, and preview mode
-- Component libraries — publish, share, and consume design systems across files
-- Grid authoring UI — column/row span controls, grid overlays on canvas, and richer inspector controls
-- Variables UI — complete variable collection editing, binding discovery, and token-oriented workflows
-
-### Performance and scale
-
-- Raster tile caching for instant zoom/pan on complex documents
-- Renderer profiling tools for isolating slow nodes, effects, masks, and large imported documents
-- Incremental layout/render invalidation for large documents and collaborative sessions
-
-### Automation and CI
-
-- CI tools for design linting, code export, visual regression, and design-token checks in pipelines
-- Deeper MCP/CLI workflows for headless inspection, migration, and batch editing of `.fig` and `.pen` files
-- More deterministic export and comparison utilities for compatibility testing
-
-### Platform polish
-
-- Shader effects (SkSL) — custom visual effects via GPU shaders
-- Windows code signing with Azure Authenticode certificates
-- Packaged desktop-side MCP integration so agent workflows do not require global installs
-
 ## Contributing
 
 ### Setup

@@ -171,10 +171,10 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 
 | Funktion | Status | Anmerkungen |
 |----------|--------|-------------|
-| Prototyp-Verbindungen | 🔲 | Geplant für Phase 6 |
-| Auslöser (Klick, Hover, Ziehen usw.) | 🔲 | Geplant für Phase 6 |
-| Aktionen (Navigieren, Overlay, Scroll usw.) | 🔲 | Geplant für Phase 6 |
-| Animationen & Übergänge | 🔲 | Geplant für Phase 6 |
+| Prototyp-Verbindungen | 🔲 | Noch nicht unterstützt |
+| Auslöser (Klick, Hover, Ziehen usw.) | 🔲 | Noch nicht unterstützt |
+| Aktionen (Navigieren, Overlay, Scroll usw.) | 🔲 | Noch nicht unterstützt |
+| Animationen & Übergänge | 🔲 | Noch nicht unterstützt |
 | Smart Animate | 🔲 | Übereinstimmende Ebenen automatisch animieren |
 | Overlays | 🔲 | Modale/Popover-Prototypen |
 | Scroll- & Overflow-Verhalten | 🔲 | Scrollbare Frames in Prototypen |
@@ -207,7 +207,7 @@ Feature-für-Feature-Vergleich der Figma-Design-Funktionen mit dem aktuellen Imp
 
 | Funktion | Status | Anmerkungen |
 |----------|--------|-------------|
-| Kommentare (Anheften, Threads, Auflösen) | 🔲 | Geplant für Phase 6 |
+| Kommentare (Anheften, Threads, Auflösen) | 🔲 | Noch nicht unterstützt |
 | Echtzeit-Multiplayer | ✅ | P2P via Trystero + Yjs CRDT, Cursor, Folgemodus; kein Server |
 | Cursor-Chat | 🔲 | Inline-Chat-Blasen am Cursor |
 | Branching & Merging | 🔲 | Versions-Branches für Design-Dateien |

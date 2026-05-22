@@ -173,10 +173,10 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Prototype connections | 🔲 | Planned for Phase 6 |
-| Triggers (click, hover, drag, etc.) | 🔲 | Planned for Phase 6 |
-| Actions (navigate, overlay, scroll, etc.) | 🔲 | Planned for Phase 6 |
-| Animations & transitions | 🔲 | Planned for Phase 6 |
+| Prototype connections | 🔲 | Not supported yet |
+| Triggers (click, hover, drag, etc.) | 🔲 | Not supported yet |
+| Actions (navigate, overlay, scroll, etc.) | 🔲 | Not supported yet |
+| Animations & transitions | 🔲 | Not supported yet |
 | Smart animate | 🔲 | Auto-animate matching layers |
 | Overlays | 🔲 | Modal/popover prototyping |
 | Scroll & overflow behavior | 🔲 | Scrollable frames in prototypes |
@@ -209,7 +209,7 @@ Feature-by-feature comparison of Figma Design capabilities with Open Pencil's cu
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Comments (pin, thread, resolve) | 🔲 | Planned for Phase 6 |
+| Comments (pin, thread, resolve) | 🔲 | Not supported yet |
 | Real-time multiplayer | ✅ | P2P via Trystero + Yjs CRDT, cursors, follow mode; no server required |
 | Cursor chat | 🔲 | Inline chat bubbles at cursor |
 | Branching & merging | 🔲 | Version branches for design files |
