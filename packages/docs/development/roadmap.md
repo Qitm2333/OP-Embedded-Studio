@@ -5,13 +5,13 @@ description: OpenPencil product roadmap and Figma compatibility tracking.
 
 # Roadmap
 
-OpenPencil is moving toward production-grade Figma compatibility while keeping design workflows scriptable, local-first, and fast on large files.
+OpenPencil is moving toward production-grade Figma compatibility while keeping design documents programmable, local-first, and fast on large files.
 
 ## Current focus
 
 - Improve `.fig` import/export fidelity against real Figma files and Figma's own rendering.
 - Keep large design systems responsive in the browser and desktop app.
-- Make every important editor operation available through the CLI, MCP server, and SDK.
+- Treat the scene graph as a programmable design document: every important read, write, export, diff, and validation operation should be reachable through UI, CLI, MCP, and SDK surfaces.
 - Keep files on the user's machine unless collaboration is explicitly enabled.
 
 ## Near-term work
@@ -30,9 +30,18 @@ OpenPencil is moving toward production-grade Figma compatibility while keeping d
 - Add first-class layout grid and guide rendering/editing.
 - Expand vector editing workflows without regressing imported vector fidelity.
 
-### Automation
+### Agent workflows
 
-- Tighten the inspect → act → render/measure → compare loop for agents.
+- Polish the official `SKILL.md` guidance for OpenPencil so agents use the full inspect → act → render/measure → compare → iterate loop instead of relying on one-shot prompting.
+- Publish tested AI workflow recipes for common tasks: create from prompt, edit a selected design, compare against a screenshot or Figma reference, fix visual regressions, extract tokens, and batch-migrate files.
+- Make agent workflows measurable by default: every substantial operation should be able to produce a render, structured diff, lint result, or comparison artifact.
+- Keep MCP, CLI, and SDK operations aligned so agent skills can run the same workflow in desktop, browser, CI, or headless file mode.
+
+### Tooling and API parity
+
+- Maintain a public tool/API reference that maps editor operations to CLI commands, MCP tools, SDK APIs, and Figma Plugin API-compatible eval usage.
+- Add coverage tests that detect when a core editor capability exists in the UI but is missing from CLI/MCP/SDK, or vice versa.
+- Keep tool outputs structured enough for agents to chain safely: node IDs, bounds, diffs, render artifacts, diagnostics, and machine-readable error details.
 - Improve deterministic CLI/MCP export and comparison tools for CI.
 - Add more design linting and migration helpers for batch `.fig` and `.pen` workflows.
 - Package desktop-side MCP integration so local agent workflows do not require global installs.
@@ -52,6 +61,14 @@ OpenPencil is moving toward production-grade Figma compatibility while keeping d
 - Store shader layer configuration in OpenPencil documents and export graceful fallbacks when a target format cannot preserve the live effect.
 
 ## Later
+
+### SDK and embedded editor
+
+- Document the Vue SDK and core subpath exports as a platform for custom editor shells, embedded design surfaces, and automation-specific UIs.
+- Provide examples for embedding OpenPencil in product tools: read-only previews, editable canvases, design review surfaces, and agent-controlled editors.
+- Keep the renderer, editor core, and tool registry framework-agnostic enough for headless and embedded use.
+
+### Product depth
 
 - Prototyping: frame connections, triggers, overlays, transitions, and preview mode.
 - Comments: pins, threads, resolution state, and collaboration-aware display.
