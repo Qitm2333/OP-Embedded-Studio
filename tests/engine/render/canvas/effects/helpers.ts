@@ -18,7 +18,9 @@ export function createMockRenderer(overrides: Partial<SkiaRenderer> = {}): SkiaR
         addOval = mock(() => undefined)
         addRect = mock(() => undefined)
         addRRect = mock(() => undefined)
-        op = mock(() => undefined)
+        addPath = mock(() => undefined)
+        op = mock(() => true)
+        transform = mock(() => undefined)
         delete = mock(() => undefined)
         copy = mock(() => this)
         stroke = mock(() => this)
@@ -27,7 +29,9 @@ export function createMockRenderer(overrides: Partial<SkiaRenderer> = {}): SkiaR
         cubicTo = mock(() => undefined)
         close = mock(() => undefined)
       },
-      PathOp: { Difference: 0 },
+      PathOp: { Difference: 0, Union: 1 },
+      StrokeJoin: { Round: 0 },
+      Matrix: { translated: mock(() => new Float32Array(9)) },
       BlendMode: { SrcOver: 0, SrcIn: 1, DstOut: 2 },
       ColorType: { RGBA_8888: 0 },
       AlphaType: { Premul: 0, Unpremul: 1 },
@@ -108,6 +112,9 @@ export function createMockRenderer(overrides: Partial<SkiaRenderer> = {}): SkiaR
     makeRRect: mock(() => new Float32Array(12)),
     makeRRectWithSpread: mock(() => new Float32Array(12)),
     makeRRectWithOffset: mock(() => new Float32Array(12)),
+    makePolygonPath: mock(function (this: SkiaRenderer) {
+      return new this.ck.Path()
+    }),
     renderText: mock(() => undefined),
     applyClippedBlur: mock(() => undefined),
     applyFill: mock(() => true),

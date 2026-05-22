@@ -3,7 +3,7 @@ import type { Canvas, Path } from 'canvaskit-wasm'
 import type { SceneNode } from '#core/scene-graph'
 
 import type { SkiaRenderer } from './renderer'
-import { nodeHasRadius } from './shapes'
+import { makeNodeShapePath, nodeHasRadius } from './shapes'
 
 function drawChildTransform(canvas: Canvas, child: SceneNode, offset = { x: 0, y: 0 }): void {
   canvas.translate(child.x + offset.x, child.y + offset.y)
@@ -33,6 +33,89 @@ function localEffectOffset(effect: SceneNode['effects'][number], child?: SceneNo
   if (child.flipX) x = -x
   if (child.flipY) y = -y
   return { x, y }
+}
+
+function isPathShape(node: SceneNode): boolean {
+  return node.type === 'POLYGON' || node.type === 'STAR' || node.type === 'VECTOR'
+}
+
+function applySpreadToPath(r: SkiaRenderer, path: Path, spread: number): boolean {
+  if (spread === 0) return true
+  const ring = path.copy()
+  try {
+    if (!ring.stroke({ width: Math.abs(spread) * 2, join: r.ck.StrokeJoin.Round })) return false
+    return path.op(ring, spread > 0 ? r.ck.PathOp.Union : r.ck.PathOp.Difference)
+  } finally {
+    ring.delete()
+  }
+}
+
+function drawPathShape(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  node: SceneNode,
+  hasRadius: boolean,
+  spread = 0
+): void {
+  const path = makeNodeShapePath(r, node, r.ltrb(0, 0, node.width, node.height), hasRadius)
+  try {
+    applySpreadToPath(r, path, spread)
+    canvas.drawPath(path, r.auxFill)
+  } finally {
+    path.delete()
+  }
+}
+
+function drawShadowGeometryPath(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  path: Path,
+  spread: number
+): void {
+  if (spread === 0) {
+    canvas.drawPath(path, r.auxFill)
+    return
+  }
+  const copy = path.copy()
+  try {
+    applySpreadToPath(r, copy, spread)
+    canvas.drawPath(copy, r.auxFill)
+  } finally {
+    copy.delete()
+  }
+}
+
+function drawShadowCutout(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  node: SceneNode,
+  effect: SceneNode['effects'][number],
+  shapeNode: SceneNode,
+  shapeHasRadius: boolean,
+  geometryShadow: Path[] | null
+): void {
+  r.auxFill.setMaskFilter(null)
+  r.auxFill.setColor(r.ck.BLACK)
+  r.auxFill.setBlendMode(r.ck.BlendMode.DstOut)
+  canvas.save()
+  try {
+    canvas.translate(-effect.offset.x, -effect.offset.y)
+    if (geometryShadow) {
+      const fillGeometry = r.getFillGeometry(node)
+      if (fillGeometry) for (const path of fillGeometry) canvas.drawPath(path, r.auxFill)
+    } else if (shapeNode.type === 'ELLIPSE') {
+      canvas.drawOval(r.ltrb(0, 0, shapeNode.width, shapeNode.height), r.auxFill)
+    } else if (isPathShape(shapeNode)) {
+      drawPathShape(r, canvas, shapeNode, shapeHasRadius)
+    } else if (shapeHasRadius) {
+      canvas.drawRRect(r.makeRRect(shapeNode), r.auxFill)
+    } else {
+      canvas.drawRect(r.ltrb(0, 0, shapeNode.width, shapeNode.height), r.auxFill)
+    }
+  } finally {
+    canvas.restore()
+    r.auxFill.setBlendMode(r.ck.BlendMode.SrcOver)
+  }
 }
 
 function drawShapeDropShadow(
@@ -74,28 +157,18 @@ function drawShapeDropShadow(
   }
 
   if (geometryShadow) {
-    for (const path of geometryShadow) canvas.drawPath(path, r.auxFill)
-    if (shouldHideShadowBehindUnfilledNode) {
-      const fillGeometry = r.getFillGeometry(node)
-      if (fillGeometry) {
-        r.auxFill.setMaskFilter(null)
-        r.auxFill.setColor(r.ck.BLACK)
-        r.auxFill.setBlendMode(r.ck.BlendMode.DstOut)
-        canvas.save()
-        canvas.translate(-effect.offset.x, -effect.offset.y)
-        for (const path of fillGeometry) canvas.drawPath(path, r.auxFill)
-        canvas.restore()
-        r.auxFill.setBlendMode(r.ck.BlendMode.SrcOver)
-      }
-    }
+    for (const path of geometryShadow) drawShadowGeometryPath(r, canvas, path, sp)
   } else if (shapeNode.type === 'ELLIPSE') {
     canvas.drawOval(r.ltrb(-sp, -sp, shapeNode.width + sp, shapeNode.height + sp), r.auxFill)
+  } else if (isPathShape(shapeNode)) {
+    drawPathShape(r, canvas, shapeNode, shapeHasRadius, sp)
   } else if (shapeHasRadius) {
     canvas.drawRRect(r.makeRRectWithSpread(shapeNode, sp), r.auxFill)
   } else {
     canvas.drawRect(r.ltrb(-sp, -sp, shapeNode.width + sp, shapeNode.height + sp), r.auxFill)
   }
   if (shouldHideShadowBehindUnfilledNode) {
+    drawShadowCutout(r, canvas, node, effect, shapeNode, shapeHasRadius, geometryShadow)
     canvas.restore()
     r.effectLayerPaint.setImageFilter(null)
     r.effectLayerPaint.setColorFilter(null)
@@ -264,6 +337,13 @@ function drawShapeInnerShadow(
     path.addOval(shapeRect)
     canvas.clipPath(path, r.ck.ClipOp.Intersect, true)
     path.delete()
+  } else if (isPathShape(shapeNode)) {
+    const path = makeNodeShapePath(r, shapeNode, shapeRect, shapeHasRadius)
+    try {
+      canvas.clipPath(path, r.ck.ClipOp.Intersect, true)
+    } finally {
+      path.delete()
+    }
   } else if (shapeHasRadius) {
     canvas.clipRRect(r.makeRRect(shapeNode), r.ck.ClipOp.Intersect, true)
   } else {
@@ -293,6 +373,15 @@ function drawShapeInnerShadow(
     innerPath.addOval(offsetRect)
     bigPath.op(innerPath, r.ck.PathOp.Difference)
     innerPath.delete()
+  } else if (isPathShape(shapeNode)) {
+    const innerPath = makeNodeShapePath(r, shapeNode, shapeRect, shapeHasRadius)
+    try {
+      innerPath.transform(r.ck.Matrix.translated(localOffsetX, localOffsetY))
+      applySpreadToPath(r, innerPath, -sp)
+      bigPath.op(innerPath, r.ck.PathOp.Difference)
+    } finally {
+      innerPath.delete()
+    }
   } else if (shapeHasRadius) {
     const innerPath = new r.ck.Path()
     innerPath.addRRect(r.makeRRectWithOffset(shapeNode, localOffsetX, localOffsetY, sp))
