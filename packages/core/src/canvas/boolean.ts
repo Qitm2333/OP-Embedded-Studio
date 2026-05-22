@@ -278,22 +278,27 @@ export function renderBooleanOperation(
   const path = makeBooleanOperationPath(r, node, graph)
   if (!path) return
 
-  for (let fillIndex = 0; fillIndex < node.fills.length; fillIndex++) {
-    const fill = node.fills[fillIndex]
-    if (!fill.visible || !r.applyFill(fill, node, graph, fillIndex)) continue
-    r.fillPaint.setAlphaf(fill.opacity)
-    canvas.drawPath(path, r.fillPaint)
-    r.fillPaint.setShader(null)
-  }
+  try {
+    for (let fillIndex = 0; fillIndex < node.fills.length; fillIndex++) {
+      const fill = node.fills[fillIndex]
+      if (!fill.visible || !r.applyFill(fill, node, graph, fillIndex)) continue
+      r.fillPaint.setAlphaf(fill.opacity)
+      try {
+        canvas.drawPath(path, r.fillPaint)
+      } finally {
+        r.fillPaint.setShader(null)
+      }
+    }
 
-  for (const stroke of node.strokes) {
-    if (!stroke.visible) continue
-    const color = r.resolveStrokeColor(stroke, 0, node, graph)
-    r.strokePaint.setColor(r.ck.Color4f(color.r, color.g, color.b, color.a))
-    r.strokePaint.setStrokeWidth(stroke.weight)
-    r.strokePaint.setAlphaf(stroke.opacity)
-    canvas.drawPath(path, r.strokePaint)
+    for (const stroke of node.strokes) {
+      if (!stroke.visible) continue
+      const color = r.resolveStrokeColor(stroke, 0, node, graph)
+      r.strokePaint.setColor(r.ck.Color4f(color.r, color.g, color.b, color.a))
+      r.strokePaint.setStrokeWidth(stroke.weight)
+      r.strokePaint.setAlphaf(stroke.opacity)
+      canvas.drawPath(path, r.strokePaint)
+    }
+  } finally {
+    path.delete()
   }
-
-  path.delete()
 }
