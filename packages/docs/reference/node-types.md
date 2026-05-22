@@ -5,11 +5,11 @@ description: Reference for OpenPencil scene graph node types, Figma Kiwi schema 
 
 # Node Types
 
-The scene graph supports 28 node types from Figma's Kiwi schema. Each node is identified by a GUID (`sessionID:localID`) and has a parent reference via `parentIndex`. The OpenPencil engine's `NodeType` union currently uses 17 of these types.
+The scene graph supports 28 node types from Figma's Kiwi schema. Each node is identified by a GUID (`sessionID:localID`) and has a parent reference via `parentIndex`. The OpenPencil engine's `NodeType` union currently uses 18 of these types.
 
 ## Type Table
 
-28 Figma schema types + 1 synthetic engine type. Types marked ✅ are in the engine's `NodeType` union (17 total).
+28 Figma schema types + 1 synthetic engine type. Types marked ✅ are in the engine's `NodeType` union (18 total).
 
 | Type | ID | Description | Engine |
 |------|----|-------------|--------|
@@ -17,7 +17,7 @@ The scene graph supports 28 node types from Figma's Kiwi schema. Each node is id
 | `CANVAS` | 2 | Page | ✅ |
 | `GROUP` | 3 | Group container | ✅ |
 | `FRAME` | 4 | Primary container (artboard), supports auto-layout | ✅ |
-| `BOOLEAN_OPERATION` | 5 | Union/subtract/intersect/exclude result | |
+| `BOOLEAN_OPERATION` | 5 | Union/subtract/intersect/exclude result | ✅ |
 | `VECTOR` | 6 | Freeform vector path | ✅ |
 | `STAR` | 7 | Star shape | ✅ |
 | `LINE` | 8 | Line | ✅ |
@@ -43,7 +43,7 @@ The scene graph supports 28 node types from Figma's Kiwi schema. Each node is id
 | `VARIABLE` | 28 | Variable definition node | |
 | `COMPONENT_SET` | — | Variant group container (synthetic, mapped from `SYMBOL`) | ✅ |
 
-### Engine NodeType Union (17 types)
+### Engine NodeType Union (18 types)
 
 The engine's `NodeType` uses simplified names. Some differ from the Kiwi schema:
 - `COMPONENT` → Kiwi `SYMBOL` (ID 15)
@@ -54,7 +54,7 @@ The engine's `NodeType` uses simplified names. Some differ from the Kiwi schema:
 type NodeType =
   | 'CANVAS' | 'FRAME' | 'RECTANGLE' | 'ROUNDED_RECTANGLE'
   | 'ELLIPSE' | 'TEXT' | 'LINE' | 'STAR' | 'POLYGON'
-  | 'VECTOR' | 'GROUP' | 'SECTION'
+  | 'VECTOR' | 'BOOLEAN_OPERATION' | 'GROUP' | 'SECTION'
   | 'COMPONENT' | 'COMPONENT_SET' | 'INSTANCE'
   | 'CONNECTOR' | 'SHAPE_WITH_TEXT'
 ```
