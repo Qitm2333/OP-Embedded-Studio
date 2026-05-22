@@ -157,7 +157,7 @@ Figma's design documentation groups features into these areas:
 | Text case | ✅ | ◐ | — | ✅ | ✅ | Model/export/JSX support; UI missing. |
 | Vertical text alignment | ✅ | ◐ | — | ✅ | ✅ | Modeled; UI/render parity needs more coverage. |
 | Justified text | ✅ | ◐ | — | ✅ | ✅ | Modeled; UI does not expose it. |
-| Font variations / OpenType features | ✅ | ✅ | — | ✅ | — | Imported `fontVariations` are applied to CanvasKit text styles and exported; OpenType feature controls are not exposed. |
+| Font variations / OpenType features | ✅ | ✅ | — | ✅ | — | Imported `fontVariations` and common ligature toggles are applied to CanvasKit text styles and exported; broader OpenType controls are not exposed. |
 | Variables: collections/modes/aliases | ✅ | ◐ | ◐ | ✅ | ✅ | Color/number/string/boolean model exists; inspector coverage is still incomplete. |
 | Variables bound to fills/strokes | ✅ | ✅ | ✅ | ✅ | ✅ | Common color bindings render and edit. |
 | Variables bound to text/layout/visibility/effects | ◐ | ◐ | ◐ | ◐ | ✅ | Some bindings exist; not full Figma property coverage. |
@@ -206,7 +206,7 @@ These are parsed or visible in Figma docs and most likely to cause visible diffe
 1. **Masks** — tune remaining exact Figma stack semantics beyond common alpha/vector/luminance and consecutive-mask paths.
 2. **Corner smoothing** — expand Figma fixture comparisons and tune remaining stroke/effect edge cases.
 3. **Pattern fills/strokes** — support Figma pattern paint objects and transforms beyond image tile fills.
-4. **Variable-font fixtures** — broaden real-file coverage for variable axes and OpenType feature metadata.
+4. **Variable-font fixtures** — broaden real-file coverage for variable axes and additional OpenType feature metadata beyond common ligature toggles.
 5. **Boolean operation editing** — improve inspector/tooling workflows for imported boolean-operation nodes.
 6. **Layout grids and guides** — render/edit page guides and Figma layout grids, or clearly keep them round-trip-only.
 7. **Full component property and slot workflows** — support authoring, not just preserving imported payloads.

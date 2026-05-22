@@ -10,11 +10,15 @@ describe('Figma font variation export', () => {
     const text = graph.createNode('TEXT', page.id, {
       text: 'Axis',
       fontVariations: [{ axis: 'wght', value: 650 }],
+      fontFeatures: [{ tag: 'LIGA', enabled: false }],
       styleRuns: [
         {
           start: 0,
           length: 2,
-          style: { fontVariations: [{ axis: 'wdth', value: 88 }] }
+          style: {
+            fontVariations: [{ axis: 'wdth', value: 88 }],
+            fontFeatures: [{ tag: 'CALT', enabled: false }]
+          }
         }
       ]
     })
@@ -25,8 +29,11 @@ describe('Figma font variation export', () => {
     expect(nodeChange.fontVariations).toEqual([
       { axisTag: 0x77676874, axisName: 'wght', value: 650 }
     ])
+    expect(nodeChange.fontVariantCommonLigatures).toBe(false)
+    expect(nodeChange.fontVariantContextualLigatures).toBe(true)
     expect(nodeChange.textData?.styleOverrideTable?.[0]?.fontVariations).toEqual([
       { axisTag: 0x77647468, axisName: 'wdth', value: 88 }
     ])
+    expect(nodeChange.textData?.styleOverrideTable?.[0]?.fontVariantContextualLigatures).toBe(false)
   })
 })

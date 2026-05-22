@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { textFontVariations } from '#core/canvas/text'
+import { textFontFeatures, textFontVariations } from '#core/canvas/text'
 
 describe('canvas text font variations', () => {
   test('passes imported variable font axes to CanvasKit text styles', () => {
@@ -18,5 +18,22 @@ describe('canvas text font variations', () => {
   test('omits font variations when no axes are set', () => {
     expect(textFontVariations([])).toBeUndefined()
     expect(textFontVariations(undefined)).toBeUndefined()
+  })
+
+  test('passes imported OpenType feature toggles to CanvasKit text styles', () => {
+    expect(
+      textFontFeatures([
+        { tag: 'LIGA', enabled: false },
+        { tag: 'CALT', enabled: true }
+      ])
+    ).toEqual([
+      { name: 'liga', value: 0 },
+      { name: 'calt', value: 1 }
+    ])
+  })
+
+  test('omits font features when no toggles are set', () => {
+    expect(textFontFeatures([])).toBeUndefined()
+    expect(textFontFeatures(undefined)).toBeUndefined()
   })
 })

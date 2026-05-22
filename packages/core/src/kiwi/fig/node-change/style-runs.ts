@@ -2,6 +2,7 @@ import type { NodeChange } from '#core/kiwi/fig/codec'
 import type { CharacterStyleOverride, StyleRun } from '#core/scene-graph'
 import { styleToWeight } from '#core/text/fonts'
 
+import { convertFontFeatures } from './font-features'
 import { convertFontVariations } from './font-variations'
 import { convertFills } from './paint'
 import { convertLetterSpacing, convertLineHeight, mapTextDecoration } from './text-values'
@@ -19,6 +20,8 @@ function convertStyleOverride(
   if (override.fontSize !== undefined) style.fontSize = override.fontSize
   const fontVariations = convertFontVariations(override)
   if (fontVariations.length > 0) style.fontVariations = fontVariations
+  const fontFeatures = convertFontFeatures(override)
+  if (fontFeatures.length > 0) style.fontFeatures = fontFeatures
   if (override.letterSpacing) {
     style.letterSpacing = convertLetterSpacing(
       override.letterSpacing,

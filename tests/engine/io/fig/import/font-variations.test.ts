@@ -23,7 +23,24 @@ describe('Figma font variation import', () => {
     ])
   })
 
-  test('imports styled-run variable font axes', () => {
+  test('imports base text OpenType feature toggles', () => {
+    const props = nodeChangeToProps(
+      {
+        type: 'TEXT',
+        textData: { characters: 'Ligatures' },
+        fontVariantCommonLigatures: false,
+        fontVariantContextualLigatures: true
+      } as NodeChange,
+      []
+    )
+
+    expect(props.fontFeatures).toEqual([
+      { tag: 'LIGA', enabled: false },
+      { tag: 'CALT', enabled: true }
+    ])
+  })
+
+  test('imports styled-run variable font axes and OpenType feature toggles', () => {
     const runs = importStyleRuns({
       type: 'TEXT',
       fontSize: 16,
@@ -33,14 +50,22 @@ describe('Figma font variation import', () => {
         styleOverrideTable: [
           {
             styleID: 1,
-            fontVariations: [{ axisName: 'GRAD', value: -50 }]
+            fontVariations: [{ axisName: 'GRAD', value: -50 }],
+            fontVariantCommonLigatures: false
           } as NodeChange
         ]
       }
     } as NodeChange)
 
     expect(runs).toEqual([
-      { start: 0, length: 2, style: { fontVariations: [{ axis: 'GRAD', value: -50 }] } }
+      {
+        start: 0,
+        length: 2,
+        style: {
+          fontVariations: [{ axis: 'GRAD', value: -50 }],
+          fontFeatures: [{ tag: 'LIGA', enabled: false }]
+        }
+      }
     ])
   })
 })

@@ -87,6 +87,7 @@ export function createDefaultNode(
     maxLines: null,
     styleRuns: [],
     fontVariations: [],
+    fontFeatures: [],
     horizontalConstraint: 'MIN',
     verticalConstraint: 'MIN',
     strokeCap: 'NONE',

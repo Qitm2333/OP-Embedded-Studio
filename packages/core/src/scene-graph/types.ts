@@ -178,6 +178,11 @@ export interface FontVariation {
   value: number
 }
 
+export interface FontFeature {
+  tag: string
+  enabled: boolean
+}
+
 export interface CharacterStyleOverride {
   fontWeight?: number
   italic?: boolean
@@ -188,6 +193,7 @@ export interface CharacterStyleOverride {
   lineHeight?: number | null
   fills?: Fill[]
   fontVariations?: FontVariation[]
+  fontFeatures?: FontFeature[]
 }
 
 export interface StyleRun {
@@ -333,6 +339,7 @@ export interface SceneNode {
 
   styleRuns: StyleRun[]
   fontVariations: FontVariation[]
+  fontFeatures: FontFeature[]
 
   horizontalConstraint: ConstraintType
   verticalConstraint: ConstraintType

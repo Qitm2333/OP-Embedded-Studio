@@ -8,6 +8,7 @@ import { convertEffects, convertFills, convertStrokes } from './paint'
 import { importStyleRuns } from './style-runs'
 export { importStyleRuns } from './style-runs'
 import { convertFigmaDerivedTextGlyphs } from './derived-text-glyphs'
+import { convertFontFeatures } from './font-features'
 import { convertFontVariations } from './font-variations'
 import { convertLetterSpacing, convertLineHeight, mapTextDecoration } from './text-values'
 export { convertEffects, convertFills, convertStrokes, setVariableColorResolver } from './paint'
@@ -294,6 +295,7 @@ function convertTextProps(
   | 'maxLines'
   | 'styleRuns'
   | 'fontVariations'
+  | 'fontFeatures'
   | 'textTruncation'
   | 'textDirection'
   | 'figmaDerivedLayout'
@@ -319,6 +321,7 @@ function convertTextProps(
     maxLines: (nc.maxLines ?? null) as number | null,
     styleRuns: importStyleRuns(nc),
     fontVariations: convertFontVariations(nc),
+    fontFeatures: convertFontFeatures(nc),
     textTruncation: (nc.textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED',
     textDirection:
       (getOpenPencilPluginValue(nc, TEXT_DIRECTION_PLUGIN_KEY) as
@@ -775,6 +778,8 @@ export const FIGMA_RAW_NODE_FIELD_KEYS = [
   'textUserLayoutVersion',
   'textExplicitLayoutVersion',
   'fontVariations',
+  'fontVariantCommonLigatures',
+  'fontVariantContextualLigatures',
   'derivedTextData',
   'fillPaints',
   'strokePaints',

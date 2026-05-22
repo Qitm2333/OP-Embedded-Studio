@@ -2,6 +2,7 @@ import type {
   CanvasKit,
   FontWeight,
   Paragraph,
+  TextFontFeatures,
   TextFontVariations,
   TypefaceFontProvider
 } from 'canvaskit-wasm'
@@ -173,6 +174,16 @@ export function textFontVariations(
   return variations.map((variation) => ({ axis: variation.axis, value: variation.value }))
 }
 
+export function textFontFeatures(
+  features: SceneNode['fontFeatures'] | undefined
+): TextFontFeatures[] | undefined {
+  if (!features || features.length === 0) return undefined
+  return features.map((feature) => ({
+    name: feature.tag.toLowerCase(),
+    value: feature.enabled ? 1 : 0
+  }))
+}
+
 function textDecorationValue(ck: CanvasKit, decoration: string): number {
   switch (decoration) {
     case 'UNDERLINE':
@@ -228,6 +239,7 @@ function addStyledRuns(
           slant: (s.italic ?? node.italic) ? ck.FontSlant.Italic : ck.FontSlant.Upright
         },
         fontVariations: textFontVariations(s.fontVariations ?? node.fontVariations),
+        fontFeatures: textFontFeatures(s.fontFeatures ?? node.fontFeatures),
         letterSpacing: s.letterSpacing ?? (node.letterSpacing || 0),
         decoration: textDecorationValue(ck, s.textDecoration ?? node.textDecoration),
         heightMultiplier: runLineHeight ? runLineHeight / runFontSize : undefined,
@@ -284,6 +296,7 @@ export function buildParagraph(
         slant: node.italic ? ck.FontSlant.Italic : ck.FontSlant.Upright
       },
       fontVariations: textFontVariations(node.fontVariations),
+      fontFeatures: textFontFeatures(node.fontFeatures),
       letterSpacing: node.letterSpacing || 0,
       decoration: textDecorationValue(ck, node.textDecoration),
       heightMultiplier: node.lineHeight ? node.lineHeight / baseFontSize : undefined,

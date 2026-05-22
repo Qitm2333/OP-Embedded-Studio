@@ -19,6 +19,7 @@ import type { Color, GUID, Matrix } from '#core/types'
 
 import { guidToString, stringToGuid, VARIABLE_BINDING_FIELDS } from './convert'
 import { sceneNodeToKiwiWithContext, type KiwiNodeChange } from './export-node'
+import { applyFontFeaturesToKiwi } from './font-features'
 import { stringToFigmaAxisTag } from './font-variations'
 import {
   BOUND_VARIABLES_PLUGIN_KEY,
@@ -220,6 +221,9 @@ function exportTextData(node: SceneNode): NodeChange['textData'] {
     if (style.fontVariations && style.fontVariations.length > 0) {
       override.fontVariations = style.fontVariations.map(fontVariationToKiwi)
     }
+    if (style.fontFeatures && style.fontFeatures.length > 0) {
+      applyFontFeaturesToKiwi(override as NodeChange, style.fontFeatures)
+    }
     if (style.letterSpacing !== undefined) {
       override.letterSpacing = { value: style.letterSpacing, units: 'PIXELS' }
     }
@@ -327,6 +331,7 @@ function serializeTextProps(
   nc.textDecorationSkipInk = true
   nc.fontVariantCommonLigatures = true
   nc.fontVariantContextualLigatures = true
+  applyFontFeaturesToKiwi(nc, node.fontFeatures)
   nc.fontVersion = ''
   nc.emojiImageSet = 'APPLE'
   if (fontDigestMap) {
