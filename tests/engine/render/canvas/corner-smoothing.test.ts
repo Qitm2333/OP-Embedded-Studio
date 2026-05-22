@@ -15,6 +15,8 @@ function createRenderer() {
     addRect: ReturnType<typeof mock>
     moveTo: ReturnType<typeof mock>
     lineTo: ReturnType<typeof mock>
+    cubicTo: ReturnType<typeof mock>
+    arcToRotated: ReturnType<typeof mock>
     close: ReturnType<typeof mock>
     delete: ReturnType<typeof mock>
   }> = []
@@ -23,6 +25,8 @@ function createRenderer() {
     addRect = mock(() => undefined)
     moveTo = mock(() => undefined)
     lineTo = mock(() => undefined)
+    cubicTo = mock(() => undefined)
+    arcToRotated = mock(() => undefined)
     close = mock(() => undefined)
     delete = mock(() => undefined)
 
@@ -51,7 +55,7 @@ function createCanvas() {
 }
 
 describe('canvas corner smoothing', () => {
-  test('builds a superellipse-style path for smoothed rectangular corners', () => {
+  test('builds cubic paths for smoothed rectangular corners', () => {
     const graph = new SceneGraph()
     const node = graph.createNode('RECTANGLE', pageId(graph), {
       width: 120,
@@ -64,10 +68,35 @@ describe('canvas corner smoothing', () => {
     makeSmoothRRectPath(renderer, node).delete()
 
     expect(paths).toHaveLength(1)
-    expect(paths[0].moveTo).toHaveBeenCalledWith(24, 0)
-    expect(paths[0].lineTo).toHaveBeenCalledWith(96, 0)
-    expect(paths[0].lineTo).toHaveBeenCalledTimes(52)
+    expect(paths[0].moveTo).toHaveBeenCalledWith(80, 0)
+    expect(paths[0].lineTo).toHaveBeenCalledWith(120, 40)
+    expect(paths[0].arcToRotated).toHaveBeenCalledTimes(4)
+    expect(paths[0].cubicTo).toHaveBeenCalledTimes(8)
+    expect(paths[0].lineTo).toHaveBeenCalledTimes(3)
     expect(paths[0].close).toHaveBeenCalled()
+  })
+
+  test('supports independent smoothed corner radii', () => {
+    const graph = new SceneGraph()
+    const node = graph.createNode('RECTANGLE', pageId(graph), {
+      width: 120,
+      height: 80,
+      independentCorners: true,
+      topLeftRadius: 28,
+      topRightRadius: 12,
+      bottomRightRadius: 32,
+      bottomLeftRadius: 0,
+      cornerSmoothing: 1
+    })
+    const { renderer, paths } = createRenderer()
+
+    makeSmoothRRectPath(renderer, node).delete()
+
+    expect(paths).toHaveLength(1)
+    expect(paths[0].moveTo).toHaveBeenCalledWith(98.18181818181819, 0)
+    expect(paths[0].arcToRotated).toHaveBeenCalledTimes(3)
+    expect(paths[0].cubicTo).toHaveBeenCalledTimes(6)
+    expect(paths[0].lineTo).toHaveBeenCalledWith(0, 80)
   })
 
   test('draws smoothed rectangle fills as paths instead of regular rrects', () => {

@@ -111,7 +111,7 @@ Figma's design documentation groups features into these areas:
 | Frames | ✅ | ✅ | ✅ | ✅ | ✅ | Includes clipping and auto-layout container behavior. |
 | Groups | ✅ | ✅ | ✅ | ✅ | ✅ | Grouping preserves visual positions. |
 | Sections | ✅ | ✅ | ✅ | ✅ | ✅ | Section rendering and title pills are OpenPencil-specific approximations. |
-| Rectangles / rounded rectangles | ✅ | ✅ | ✅ | ✅ | ✅ | Per-corner radii and smoothed uniform corners render; independent-corner smoothing remains approximate. |
+| Rectangles / rounded rectangles | ✅ | ✅ | ✅ | ✅ | ✅ | Per-corner radii and smoothed corners render for fills, strokes, clips, masks, and effects. |
 | Ellipses / arcs | ✅ | ✅ | ◐ | ✅ | ✅ | `arcData` renders/exports; no full inspector controls. |
 | Lines | ✅ | ✅ | ✅ | ✅ | ✅ | Stroke caps/joins render but are not fully exposed in UI. |
 | Polygons / stars | ✅ | ✅ | ◐ | ✅ | ✅ | `pointCount` and `starInnerRadius` modeled. |
@@ -204,7 +204,7 @@ OpenPencil deliberately preserves many Figma/Kiwi fields even when they are not 
 These are parsed or visible in Figma docs and most likely to cause visible differences in real design files:
 
 1. **Masks** — extend common sibling mask stacks with luminance masks and more exact `maskType` behavior.
-2. **Corner smoothing** — improve the current smoothed uniform-corner approximation for independent corners and stroke edge cases.
+2. **Corner smoothing** — compare smoothed-corner output against Figma fixtures and tune remaining edge cases.
 3. **Pattern fills** — render imported Figma pattern/image tiling semantics beyond current image scale modes.
 4. **Pattern fills/strokes** — support Figma pattern fills and their transforms.
 5. **Font variations** — apply variable-font axes from imported Figma metadata.
