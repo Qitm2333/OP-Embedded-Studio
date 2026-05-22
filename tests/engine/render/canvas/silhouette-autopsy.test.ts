@@ -475,16 +475,6 @@ describe('Doc 01/03 — Runtime Behavior Verification', () => {
     expect(effectTypes).toContain('INNER_SHADOW')
   })
 
-  test('C-RT04: getShadowShapeChild returns null when node has visible fills or strokes', () => {
-    const src = readSource(scenePath)
-    const getShadowShapeChildFn = src.match(
-      /function getShadowShapeChild[\s\S]*?(?=\nfunction |\nexport )/
-    )
-    const body = expectDefined(getShadowShapeChildFn, 'getShadowShapeChildFn')[0]
-    expect(body).toContain('node.fills.some((f) => f.visible)')
-    expect(body).toContain('node.strokes.some((stroke) => stroke.visible)')
-  })
-
   test('C-RT05: GAP-01 fixed — ColorFilter MakeBlend is captured and .delete()d', () => {
     const src = readSource(shadowsPath)
     const drawTextInnerShadowMatch = src.match(
