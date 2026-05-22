@@ -1,4 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test'
+
 import type { Canvas } from 'canvaskit-wasm'
 
 import { figmaBlendModeToSkia } from '#core/canvas/blend'
@@ -123,7 +124,8 @@ describe('canvas blend modes', () => {
 
     expect(renderer.opacityPaint.setAlphaf).toHaveBeenCalledWith(1)
     expect(renderer.opacityPaint.setBlendMode).toHaveBeenCalledWith('Multiply')
-    expect(canvas.saveLayer).toHaveBeenCalledWith(renderer.opacityPaint)
+    expect(canvas.saveLayer).toHaveBeenCalledWith(renderer.opacityPaint, expect.any(Float32Array))
+    expect(renderer.ck.LTRBRect).toHaveBeenCalledWith(0, 0, 100, 100)
     expect(renderer.renderShape).toHaveBeenCalled()
     expect(renderer.opacityPaint.setBlendMode).toHaveBeenLastCalledWith('SrcOver')
   })

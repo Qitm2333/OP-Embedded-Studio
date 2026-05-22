@@ -2,6 +2,7 @@
 import type { Canvas, Path } from 'canvaskit-wasm'
 
 import { DROP_HIGHLIGHT_ALPHA, DROP_HIGHLIGHT_STROKE, SECTION_CORNER_RADIUS } from '#core/constants'
+import { computeDescendantVisualBounds } from '#core/geometry'
 import type { SceneNode, SceneGraph, Fill } from '#core/scene-graph'
 import type { Color } from '#core/types'
 import { vectorNetworkToCenterlinePath } from '#core/vector'
@@ -212,9 +213,22 @@ export function renderNode(
 
   const needsNodeLayer = node.opacity < 1 || needsIsolatedBlendLayer(node.blendMode)
   if (needsNodeLayer) {
+    const bounds = computeDescendantVisualBounds(
+      [nodeId],
+      (id) => graph.getNode(id) ?? undefined,
+      (id) => graph.getAbsolutePosition(id)
+    )
+    const layerBounds = bounds
+      ? r.ck.LTRBRect(
+          bounds.minX - absX,
+          bounds.minY - absY,
+          bounds.maxX - absX,
+          bounds.maxY - absY
+        )
+      : r.ck.LTRBRect(0, 0, node.width, node.height)
     r.opacityPaint.setAlphaf(node.opacity)
     r.opacityPaint.setBlendMode(figmaBlendModeToSkia(r.ck, node.blendMode))
-    canvas.saveLayer(r.opacityPaint)
+    canvas.saveLayer(r.opacityPaint, layerBounds)
   }
 
   const layerBlur = node.effects.find(
@@ -589,11 +603,12 @@ function drawGradientText(
     r.effectLayerPaint.setImageFilter(null)
     r.effectLayerPaint.setColorFilter(null)
     r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
-    canvas.saveLayer(r.effectLayerPaint)
+    const bounds = r.ck.LTRBRect(0, paragraphY, node.width, paragraphY + node.height)
+    canvas.saveLayer(r.effectLayerPaint, bounds)
     canvas.drawParagraph(paragraph, 0, paragraphY)
 
     r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcIn)
-    canvas.saveLayer(r.effectLayerPaint)
+    canvas.saveLayer(r.effectLayerPaint, bounds)
     canvas.drawRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.fillPaint)
     canvas.restore()
     canvas.restore()
