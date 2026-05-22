@@ -10,7 +10,7 @@ describe('Figma font variation import', () => {
         type: 'TEXT',
         textData: { characters: 'Axis' },
         fontVariations: [
-          { axisTag: 0x77676874, value: 650 },
+          { axisTag: 0x77676874, axisName: 'Weight', value: 650 },
           { axisName: 'wdth', value: 88 }
         ]
       } as NodeChange,

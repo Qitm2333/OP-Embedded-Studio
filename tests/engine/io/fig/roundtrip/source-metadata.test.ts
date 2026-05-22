@@ -1,9 +1,8 @@
 import { beforeAll, describe, expect, test } from 'bun:test'
 
 import { exportFigFile, initCodec, parseFigFile, SceneGraph } from '@open-pencil/core'
-
-import { parseFigBuffer } from '@open-pencil/core/kiwi/fig/parse/core'
 import { guidToString } from '@open-pencil/core/kiwi/fig/node-change/convert'
+import { parseFigBuffer } from '@open-pencil/core/kiwi/fig/parse/core'
 
 function decodeExport(bytes: Uint8Array) {
   return parseFigBuffer(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength))
@@ -124,6 +123,31 @@ describe('fig roundtrip source metadata', () => {
     if (exportedRect?.fills[0]?.type === 'SOLID') {
       expect(exportedRect.fills[0].color).toEqual({ r: 0, g: 1, b: 0, a: 1 })
     }
+  })
+
+  test('clears raw font variation payloads when normalized axes are edited', async () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const text = graph.createNode('TEXT', page.id, {
+      name: 'Variable font text',
+      text: 'Axis',
+      fontVariations: [{ axis: 'wght', value: 400 }]
+    })
+    text.source.format = 'fig'
+    text.source.id = '4:501'
+    text.source.fig.rawNodeFields.fontVariations = [{ axisName: 'wght', value: 900 }]
+
+    graph.updateNode(text.id, { fontVariations: [{ axis: 'wght', value: 650 }] })
+
+    const decoded = decodeExport(await exportFigFile(graph))
+    const exported = decoded.nodeChanges.find(
+      (nodeChange) => nodeChange.guid && guidToString(nodeChange.guid) === '4:501'
+    )
+
+    expect(text.source.fig.rawNodeFields.fontVariations).toBeUndefined()
+    expect(exported?.fontVariations).toEqual([
+      { axisTag: 0x77676874, axisName: 'wght', value: 650 }
+    ])
   })
 
   test('exports imported raw vector payloads without regenerating vector data', async () => {

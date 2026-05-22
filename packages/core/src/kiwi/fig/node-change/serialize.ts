@@ -19,6 +19,7 @@ import type { Color, GUID, Matrix } from '#core/types'
 
 import { guidToString, stringToGuid, VARIABLE_BINDING_FIELDS } from './convert'
 import { sceneNodeToKiwiWithContext, type KiwiNodeChange } from './export-node'
+import { stringToFigmaAxisTag } from './font-variations'
 import {
   BOUND_VARIABLES_PLUGIN_KEY,
   LAYOUT_DIRECTION_PLUGIN_KEY,
@@ -177,7 +178,10 @@ function buildDerivedTextData(
 }
 
 function fontVariationToKiwi(variation: SceneNode['fontVariations'][number]) {
-  return { axisName: variation.axis, value: variation.value }
+  const axisTag = stringToFigmaAxisTag(variation.axis)
+  return axisTag === undefined
+    ? { axisName: variation.axis, value: variation.value }
+    : { axisTag, axisName: variation.axis, value: variation.value }
 }
 
 function exportTextData(node: SceneNode): NodeChange['textData'] {

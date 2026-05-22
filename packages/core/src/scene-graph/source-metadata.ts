@@ -32,6 +32,7 @@ const RAW_NODE_FIELD_KEYS = new Set([
   'letterSpacing',
   'maxLines',
   'styleRuns',
+  'fontVariations',
   'textTruncation',
   'layoutMode',
   'itemSpacing',

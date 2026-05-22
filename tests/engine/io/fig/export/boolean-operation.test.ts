@@ -16,4 +16,23 @@ describe('Figma boolean operation export', () => {
     expect(changes[0].type).toBe('BOOLEAN_OPERATION')
     expect(changes[0].booleanOperation).toBe('INTERSECT')
   })
+
+  test('exports boolean operation children in order', () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const node = graph.createNode('BOOLEAN_OPERATION', page.id, {
+      booleanOperation: 'SUBTRACT'
+    })
+    graph.createNode('RECTANGLE', node.id, { name: 'Left operand' })
+    graph.createNode('ELLIPSE', node.id, { name: 'Right operand' })
+
+    const changes = sceneNodeToKiwi(node, { sessionID: 1, localID: 1 }, 0, { value: 2 }, graph, [])
+
+    expect(changes.map((change) => change.type)).toEqual([
+      'BOOLEAN_OPERATION',
+      'RECTANGLE',
+      'ELLIPSE'
+    ])
+    expect(changes.map((change) => change.parentIndex?.position)).toEqual(['!', '!', '"'])
+  })
 })

@@ -22,9 +22,11 @@ describe('Figma font variation export', () => {
     const changes = sceneNodeToKiwi(text, { sessionID: 1, localID: 1 }, 0, { value: 2 }, graph, [])
     const nodeChange = changes[0]
 
-    expect(nodeChange.fontVariations).toEqual([{ axisName: 'wght', value: 650 }])
+    expect(nodeChange.fontVariations).toEqual([
+      { axisTag: 0x77676874, axisName: 'wght', value: 650 }
+    ])
     expect(nodeChange.textData?.styleOverrideTable?.[0]?.fontVariations).toEqual([
-      { axisName: 'wdth', value: 88 }
+      { axisTag: 0x77647468, axisName: 'wdth', value: 88 }
     ])
   })
 })
