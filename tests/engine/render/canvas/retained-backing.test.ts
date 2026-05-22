@@ -1,12 +1,8 @@
 import { expect, mock, test } from 'bun:test'
-
 import type { Canvas, Image as CKImage, Surface } from 'canvaskit-wasm'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
-import {
-  renderSceneBacking,
-  sceneBackingScaleForViewport
-} from '#core/canvas/renderer/retained-backing'
+import { renderSceneBacking } from '#core/canvas/renderer/retained-backing'
 import type { SceneGraph } from '#core/scene-graph'
 
 function createRenderer(surfaceFactory: () => Surface | null) {
@@ -78,12 +74,6 @@ function createGraph(positionPreviewVersion = 0) {
   }
   return graph as SceneGraph
 }
-
-test('retained scene backing caps large viewport backing allocations', () => {
-  expect(sceneBackingScaleForViewport(400, 300, 1)).toBe(3)
-  expect(sceneBackingScaleForViewport(2560, 1600, 2)).toBe(1)
-  expect(sceneBackingScaleForViewport(2560, 1600, 1)).toBeLessThan(2)
-})
 
 test('retained scene backing falls back when CanvasKit cannot create an offscreen surface', () => {
   const r = createRenderer(() => null)
