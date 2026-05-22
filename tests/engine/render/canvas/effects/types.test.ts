@@ -193,7 +193,8 @@ describe('Renderer handles all effect types (Behavioral)', () => {
     }
     renderNode(r, canvas as Canvas, graph as SceneGraph, 'n1', {})
     expect(r.getCachedBlur).toHaveBeenCalledWith(5)
-    expect(canvas.saveLayer).toHaveBeenCalled()
+    expect(canvas.saveLayer).toHaveBeenCalledWith(r.effectLayerPaint, expect.any(Float32Array))
+    expect(r.ck.LTRBRect).toHaveBeenCalledWith(-20, -20, 120, 120)
   })
 
   test('handles FOREGROUND_BLUR in renderNode', () => {
@@ -216,6 +217,7 @@ describe('Renderer handles all effect types (Behavioral)', () => {
     }
     renderNode(r, canvas as Canvas, graph as SceneGraph, 'n1', {})
     expect(r.getCachedBlur).toHaveBeenCalledWith(10)
-    expect(canvas.saveLayer).toHaveBeenCalled()
+    expect(canvas.saveLayer).toHaveBeenCalledWith(r.effectLayerPaint, expect.any(Float32Array))
+    expect(r.ck.LTRBRect).toHaveBeenCalledWith(-40, -40, 140, 140)
   })
 })

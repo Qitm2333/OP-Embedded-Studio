@@ -4,7 +4,12 @@ import type { SceneNode } from '#core/scene-graph'
 
 import { figmaBlendModeToSkia } from './blend'
 import type { SkiaRenderer } from './renderer'
-import { makeNodeShapePath, makeSmoothRRectPath, nodeHasRadius, nodeHasSmoothCorners } from './shapes'
+import {
+  makeNodeShapePath,
+  makeSmoothRRectPath,
+  nodeHasRadius,
+  nodeHasSmoothCorners
+} from './shapes'
 
 function resetEffectLayerPaint(r: SkiaRenderer): void {
   r.effectLayerPaint.setImageFilter(null)
@@ -28,8 +33,9 @@ function localEffectOffset(effect: SceneNode['effects'][number], child?: SceneNo
   let y = effect.offset.y
   if (!child) return { x, y }
 
-  if (child.rotation !== 0) {
-    const rad = (-child.rotation * Math.PI) / 180
+  const rotation = child.rotation ?? 0
+  if (rotation !== 0) {
+    const rad = (-rotation * Math.PI) / 180
     const cos = Math.cos(rad)
     const sin = Math.sin(rad)
     const nx = x * cos - y * sin
@@ -44,6 +50,22 @@ function localEffectOffset(effect: SceneNode['effects'][number], child?: SceneNo
 
 function isPathShape(node: SceneNode): boolean {
   return node.type === 'POLYGON' || node.type === 'STAR' || node.type === 'VECTOR'
+}
+
+function effectLayerBounds(
+  r: SkiaRenderer,
+  node: SceneNode,
+  effect: SceneNode['effects'][number],
+  extraPadding = 0
+): Float32Array {
+  const offset = effect.offset
+  const padding = Math.max((effect.radius ?? 0) * 2, Math.abs(effect.spread ?? 0)) + extraPadding
+  return r.ck.LTRBRect(
+    Math.min(0, offset.x) - padding,
+    Math.min(0, offset.y) - padding,
+    Math.max(node.width, node.width + offset.x) + padding,
+    Math.max(node.height, node.height + offset.y) + padding
+  )
 }
 
 function applySpreadToPath(r: SkiaRenderer, path: Path, spread: number): boolean {
@@ -159,7 +181,7 @@ function drawShapeDropShadow(
       effect.showShadowBehindNode === false && !hasVisibleFill && !shadowShapeChild
     if (shouldHideShadowBehindUnfilledNode) {
       resetEffectLayerPaint(r)
-      canvas.saveLayer(r.effectLayerPaint)
+      canvas.saveLayer(r.effectLayerPaint, effectLayerBounds(r, shapeNode, effect))
       savedLayer = true
     }
 
@@ -218,7 +240,7 @@ function renderDropShadow(
 
     r.effectLayerPaint.setBlendMode(figmaBlendModeToSkia(r.ck, effect.blendMode))
     r.effectLayerPaint.setImageFilter(dropFilter)
-    canvas.saveLayer(r.effectLayerPaint)
+    canvas.saveLayer(r.effectLayerPaint, effectLayerBounds(r, shapeNode, effect))
     savedLayer = true
     r.renderText(canvas, shapeNode)
   } finally {
@@ -248,7 +270,8 @@ function drawTextInnerShadow(
     restoreCount++
     if (shadowShapeChild) drawChildTransform(canvas, shadowShapeChild)
 
-    canvas.saveLayer(r.effectLayerPaint)
+    const bounds = effectLayerBounds(r, shapeNode, effect)
+    canvas.saveLayer(r.effectLayerPaint, bounds)
     restoreCount++
     r.renderText(canvas, shapeNode)
 
@@ -258,7 +281,7 @@ function drawTextInnerShadow(
       ck.BlendMode.SrcIn
     )
     r.effectLayerPaint.setColorFilter(tintFilter)
-    canvas.saveLayer(r.effectLayerPaint)
+    canvas.saveLayer(r.effectLayerPaint, bounds)
     restoreCount++
 
     const { x: localOffsetX, y: localOffsetY } = localEffectOffset(effect, shadowShapeChild)
@@ -269,7 +292,7 @@ function drawTextInnerShadow(
     r.effectLayerPaint.setBlendMode(ck.BlendMode.SrcOver)
     r.effectLayerPaint.setColorFilter(null)
     r.effectLayerPaint.setImageFilter(r.getCachedDecalBlur(effect.radius / 2))
-    canvas.saveLayer(r.effectLayerPaint)
+    canvas.saveLayer(r.effectLayerPaint, bounds)
     restoreCount++
 
     const expand = effect.radius * 2 + Math.max(Math.abs(localOffsetX), Math.abs(localOffsetY))
@@ -286,7 +309,7 @@ function drawTextInnerShadow(
     r.effectLayerPaint.setBlendMode(ck.BlendMode.DstOut)
     solidBlackFilter = ck.ColorFilter.MakeBlend(ck.Color4f(0, 0, 0, 1), ck.BlendMode.SrcIn)
     r.effectLayerPaint.setColorFilter(solidBlackFilter)
-    canvas.saveLayer(r.effectLayerPaint)
+    canvas.saveLayer(r.effectLayerPaint, bounds)
     restoreCount++
     r.renderText(canvas, shapeNode)
   } finally {

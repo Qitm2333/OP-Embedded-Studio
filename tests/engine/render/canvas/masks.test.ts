@@ -83,6 +83,10 @@ describe('canvas masks', () => {
     expect(renderer.effectLayerPaint.setBlendMode).toHaveBeenCalledWith('DstIn')
     expect(renderer.effectLayerPaint.setBlendMode).toHaveBeenLastCalledWith('SrcOver')
     expect(canvas.saveLayer).toHaveBeenCalledTimes(2)
+    expect(renderer.ck.LTRBRect).toHaveBeenCalledWith(0, 0, 200, 200)
+    for (const call of canvas.saveLayer.mock.calls) {
+      expect(call[1]).toBeInstanceOf(Float32Array)
+    }
   })
 
   test('combines consecutive mask nodes before clipping following siblings', () => {

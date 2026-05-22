@@ -144,6 +144,11 @@ function renderChildIds(
     (childId) => {
       const child = graph.getNode(childId)
       if (child) renderMaskNodeContent(r, canvas, graph, child, childId, overlays)
+    },
+    (childId) => {
+      const child = graph.getNode(childId)
+      if (!child) return null
+      return { x: child.x, y: child.y, width: child.width, height: child.height }
     }
   )
 }
@@ -222,7 +227,11 @@ export function renderNode(
     r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
 
     r.effectLayerPaint.setImageFilter(r.getCachedBlur(layerBlur.radius / 2))
-    canvas.saveLayer(r.effectLayerPaint)
+    const blurPadding = layerBlur.radius * 2
+    canvas.saveLayer(
+      r.effectLayerPaint,
+      r.ck.LTRBRect(-blurPadding, -blurPadding, node.width + blurPadding, node.height + blurPadding)
+    )
   }
 
   applyNodeTransforms(r, canvas, node, nodeId, overlays)
