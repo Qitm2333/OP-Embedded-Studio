@@ -34,7 +34,7 @@ export const rootThemeConfig = (): DefaultTheme.Config => ({
         items: [
           { text: 'Contributing', link: '/development/contributing' },
           { text: 'Testing', link: '/development/testing' },
-          { text: 'Roadmap', link: '/development/roadmap' },
+          { text: 'Figma Compatibility', link: '/development/figma-compatibility' },
         ],
       },
     ],

@@ -95,8 +95,6 @@ export const developmentSidebar = (prefix: string, label: string): DefaultTheme.
       { text: 'Renderer Profiler', link: `${prefix}/development/renderer-profiler` },
       { text: 'Figma Compatibility', link: `${prefix}/development/figma-compatibility` },
       { text: 'Vector Conversion', link: `${prefix}/development/vector-conversion` },
-      { text: 'Variables UI Roadmap', link: `${prefix}/development/variables-ui-roadmap` },
-      { text: 'Roadmap', link: `${prefix}/development/roadmap` },
     ],
   },
 ]

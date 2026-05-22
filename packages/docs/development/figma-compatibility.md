@@ -82,7 +82,7 @@ Figma's design documentation groups features into these areas:
 | Vertical text alignment | ✅ | ◐ | — | ✅ | ✅ | Modeled; UI/render parity needs more coverage. |
 | Justified text | ✅ | ◐ | — | ✅ | ✅ | Modeled; UI does not expose it. |
 | Font variations / OpenType features | ↩ | — | — | ↩ | — | `fontVariations` are preserved only. |
-| Variables: collections/modes/aliases | ✅ | ◐ | ◐ | ✅ | ✅ | Color/number/string/boolean model exists; UI remains a roadmap area. |
+| Variables: collections/modes/aliases | ✅ | ◐ | ◐ | ✅ | ✅ | Color/number/string/boolean model exists; inspector coverage is still incomplete. |
 | Variables bound to fills/strokes | ✅ | ✅ | ✅ | ✅ | ✅ | Common color bindings render and edit. |
 | Variables bound to text/layout/visibility/effects | ◐ | ◐ | ◐ | ◐ | ✅ | Some bindings exist; not full Figma property coverage. |
 | Variables in prototypes / expressions / conditionals | — | — | — | — | — | Depends on prototype system, which is not implemented. |
