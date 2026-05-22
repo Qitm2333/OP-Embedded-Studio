@@ -251,10 +251,12 @@ describe('Doc 02 — Formula Deconstruction: Static Code Claims', () => {
     // 6 restore: one per save/saveLayer
     const saveLayers = (body.match(/canvas\.saveLayer/g) || []).length
     const saves = (body.match(/canvas\.save\(\)/g) || []).length
-    const restores = (body.match(/canvas\.restore\(\)/g) || []).length
+    const restoreInLoop = body.includes('while (restoreCount > 0)')
+    const restoreCountIncrements = (body.match(/restoreCount\+\+/g) || []).length
     expect(saveLayers).toBe(4)
     expect(saves).toBe(2)
-    expect(restores).toBe(6) // 4 saveLayer + 2 save = 6 restores
+    expect(restoreInLoop).toBe(true)
+    expect(restoreCountIncrements).toBe(6) // 4 saveLayer + 2 save = 6 restores
   })
 
   test('C02-03: DecalBlur is used (not Clamp) for inner shadow (shadows.ts:184)', () => {
@@ -471,44 +473,6 @@ describe('Doc 01/03 — Runtime Behavior Verification', () => {
     // The actual rendering is verified by the behavioral test
     const effectTypes = textNode.effects.map((e) => e.type)
     expect(effectTypes).toContain('INNER_SHADOW')
-  })
-
-  test('C-RT04: getShadowShapeChild returns null when node has visible fills', () => {
-    // This function is private in scene.ts, so we test indirectly
-    // by creating a node with fills and checking that its shadow
-    // uses its own rect, not a child's shape
-    const parentWithFill = graph.createNode('FRAME', pageId, {
-      x: 0,
-      y: 0,
-      width: 100,
-      height: 100,
-      fills: [{ type: 'SOLID', color: { r: 1, g: 0, b: 0, a: 0.5 }, visible: true, opacity: 1 }],
-      effects: [
-        {
-          type: 'DROP_SHADOW',
-          visible: true,
-          color: { r: 0, g: 0, b: 0, a: 1 },
-          offset: { x: 5, y: 5 },
-          radius: 10,
-          spread: 0
-        }
-      ]
-    })
-
-    graph.createNode('RECTANGLE', parentWithFill.id, {
-      x: 25,
-      y: 25,
-      width: 50,
-      height: 50,
-      fills: [{ type: 'SOLID', color: { r: 0, g: 0, b: 1, a: 1 }, visible: true, opacity: 1 }]
-    })
-
-    // renderEffects should use the parent, not the child
-    // We verify this by checking that the canvas translation matches
-    // the node's own coordinates (shadowShapeChild would be null)
-    expect(parentWithFill.fills.some((f) => f.visible)).toBe(true)
-    // renderShapeUncached passes getShadowShapeChild result to renderEffects
-    // which returns null when fills are visible → confirms claim
   })
 
   test('C-RT05: GAP-01 fixed — ColorFilter MakeBlend is captured and .delete()d', () => {

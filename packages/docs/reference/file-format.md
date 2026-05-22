@@ -1,3 +1,8 @@
+---
+title: File Format
+description: Technical reference for OpenPencil .fig and .pen document formats, Kiwi binary structure, import pipeline, and export behavior.
+---
+
 # File Format
 
 ## .fig File Structure

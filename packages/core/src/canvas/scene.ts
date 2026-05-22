@@ -297,13 +297,9 @@ export function renderShape(
   }
 }
 
-/**
- * When a container has no visible fills, Figma renders drop shadows
- * using the shape of its children rather than its own rectangle.
- * Returns the child to use for shadow shape, or null to use the node itself.
- */
 function getShadowShapeChild(node: SceneNode, graph: SceneGraph): SceneNode | null {
   if (node.fills.some((f) => f.visible)) return null
+  if (node.strokes.some((stroke) => stroke.visible)) return null
   if (node.childIds.length === 0) return null
   const child = graph.getNode(node.childIds[0])
   if (!child?.visible) return null
@@ -534,22 +530,25 @@ function drawGradientText(
   if (!r.fontsLoaded || !r.fontProvider) return false
 
   const paragraph = r.buildParagraph(node, r.ck.Color4f(0, 0, 0, 1))
-  r.effectLayerPaint.setImageFilter(null)
-  r.effectLayerPaint.setColorFilter(null)
-  r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
-  canvas.saveLayer(r.effectLayerPaint)
-  canvas.drawParagraph(paragraph, 0, paragraphY)
-  paragraph.delete()
+  try {
+    r.effectLayerPaint.setImageFilter(null)
+    r.effectLayerPaint.setColorFilter(null)
+    r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
+    canvas.saveLayer(r.effectLayerPaint)
+    canvas.drawParagraph(paragraph, 0, paragraphY)
 
-  r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcIn)
-  canvas.saveLayer(r.effectLayerPaint)
-  canvas.drawRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.fillPaint)
-  canvas.restore()
-  canvas.restore()
-  r.effectLayerPaint.setImageFilter(null)
-  r.effectLayerPaint.setColorFilter(null)
-  r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
-  return true
+    r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcIn)
+    canvas.saveLayer(r.effectLayerPaint)
+    canvas.drawRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.fillPaint)
+    canvas.restore()
+    canvas.restore()
+    return true
+  } finally {
+    paragraph.delete()
+    r.effectLayerPaint.setImageFilter(null)
+    r.effectLayerPaint.setColorFilter(null)
+    r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
+  }
 }
 
 export function renderText(r: SkiaRenderer, canvas: Canvas, node: SceneNode, fill?: Fill): void {

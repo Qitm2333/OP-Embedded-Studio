@@ -27,7 +27,8 @@ describe('Edge cases and bug fixes', () => {
         }
       ],
       strokes: [{ visible: true, weight: 2, opacity: 1 }],
-      strokeGeometry: [{} as Path]
+      strokeGeometry: [{} as Path],
+      childIds: []
     }
     r.getStrokeGeometry = mock(() => [{} as Path])
 
@@ -35,6 +36,37 @@ describe('Edge cases and bug fixes', () => {
 
     expect(r.getStrokeGeometry).toHaveBeenCalledWith(node)
     expect(canvas.drawPath).toHaveBeenCalled()
+  })
+
+  test('drop shadow on stroked containers uses the container bounds', () => {
+    const r = createMockRenderer()
+    const canvas = createMockCanvas()
+    const node: Partial<SceneNode> = {
+      type: 'FRAME',
+      width: 224,
+      height: 424,
+      fills: [],
+      effects: [
+        {
+          type: 'DROP_SHADOW',
+          visible: true,
+          color: { r: 0, g: 0, b: 0, a: 1 },
+          offset: { x: 0, y: 2 },
+          radius: 4,
+          spread: 0,
+          showShadowBehindNode: false
+        }
+      ],
+      strokes: [{ visible: true, weight: 1, opacity: 1 }],
+      strokeGeometry: [{} as Path],
+      childIds: ['header']
+    }
+    r.getStrokeGeometry = mock(() => [{} as Path])
+
+    renderEffects(r, canvas as Canvas, node as SceneNode, new Float32Array(4), true, 'behind')
+
+    expect(r.getStrokeGeometry).not.toHaveBeenCalled()
+    expect(canvas.drawRRect).toHaveBeenCalled()
   })
 
   test('drop shadow from child applies child transforms (geometric parity)', () => {
@@ -310,5 +342,72 @@ describe('Edge cases and bug fixes', () => {
     // makeRRectWithOffset should receive (node, localOffsetX, localOffsetY, spread)
     // localOffsetX = 5, localOffsetY = 5, spread = 4
     expect(r.makeRRectWithOffset).toHaveBeenCalledWith(node, 5, 5, 4)
+  })
+
+  test('drop shadow restores canvas and paint state when drawing throws', () => {
+    const r = createMockRenderer()
+    const canvas = createMockCanvas()
+    canvas.drawRect = mock(() => {
+      throw new Error('draw failed')
+    })
+    const node: Partial<SceneNode> = {
+      type: 'RECTANGLE',
+      width: 100,
+      height: 100,
+      fills: [],
+      effects: [
+        {
+          type: 'DROP_SHADOW',
+          visible: true,
+          color: { r: 0, g: 0, b: 0, a: 1 },
+          offset: { x: 0, y: 0 },
+          radius: 10,
+          spread: 0
+        }
+      ],
+      strokeGeometry: [],
+      childIds: []
+    }
+
+    expect(() =>
+      renderEffects(r, canvas as Canvas, node as SceneNode, new Float32Array(4), false, 'behind')
+    ).toThrow('draw failed')
+
+    expect(canvas.restore).toHaveBeenCalled()
+    expect(r.auxFill.setMaskFilter).toHaveBeenCalledWith(null)
+    expect(r.auxFill.setBlendMode).toHaveBeenCalledWith(r.ck.BlendMode.SrcOver)
+    expect(r.effectLayerPaint.setImageFilter).toHaveBeenCalledWith(null)
+  })
+
+  test('text inner shadow restores canvas when glyph rendering throws', () => {
+    const r = createMockRenderer()
+    const canvas = createMockCanvas()
+    r.renderText = mock(() => {
+      throw new Error('text failed')
+    })
+    const node: Partial<SceneNode> = {
+      type: 'TEXT',
+      width: 100,
+      height: 100,
+      fills: [],
+      effects: [
+        {
+          type: 'INNER_SHADOW',
+          visible: true,
+          color: { r: 0, g: 0, b: 0, a: 1 },
+          offset: { x: 0, y: 0 },
+          radius: 10,
+          spread: 0
+        }
+      ]
+    }
+
+    expect(() =>
+      renderEffects(r, canvas as Canvas, node as SceneNode, new Float32Array(4), false, 'front')
+    ).toThrow('text failed')
+
+    expect(mockCalls(canvas.restore).length).toBe(2)
+    expect(r.effectLayerPaint.setColorFilter).toHaveBeenCalledWith(null)
+    expect(r.effectLayerPaint.setImageFilter).toHaveBeenCalledWith(null)
   })
 })

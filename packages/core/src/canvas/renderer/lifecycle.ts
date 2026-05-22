@@ -31,6 +31,7 @@ export function destroyRenderer(r: SkiaRenderer): void {
   r.fillPaint.delete()
   r.strokePaint.delete()
   r.selectionPaint.delete()
+  r.parentOutlinePaint.delete()
   r.snapPaint.delete()
   r.auxFill.delete()
   r.auxStroke.delete()
@@ -38,6 +39,8 @@ export function destroyRenderer(r: SkiaRenderer): void {
   r.textFont?.delete()
   r.labelFont?.delete()
   r.sizeFont?.delete()
+  r.sectionTitleFont?.delete()
+  r.componentLabelFont?.delete()
   r.fontMgr?.delete()
   const fontProvider = r.fontProvider
   fontProvider?.delete()
