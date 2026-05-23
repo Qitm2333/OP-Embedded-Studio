@@ -33,7 +33,7 @@ function localEffectOffset(effect: SceneNode['effects'][number], child?: SceneNo
   let y = effect.offset.y
   if (!child) return { x, y }
 
-  const rotation = child.rotation ?? 0
+  const rotation = child.rotation
   if (rotation !== 0) {
     const rad = (-rotation * Math.PI) / 180
     const cos = Math.cos(rad)
@@ -59,7 +59,7 @@ function effectLayerBounds(
   extraPadding = 0
 ): Float32Array {
   const offset = effect.offset
-  const padding = Math.max((effect.radius ?? 0) * 2, Math.abs(effect.spread ?? 0)) + extraPadding
+  const padding = Math.max(effect.radius * 2, Math.abs(effect.spread)) + extraPadding
   return r.ck.LTRBRect(
     Math.min(0, offset.x) - padding,
     Math.min(0, offset.y) - padding,

@@ -71,7 +71,7 @@ function collectTextStyleOverrides(node: SceneNode): {
 
 export function exportTextData(
   node: SceneNode,
-  textLines: (text: string) => Array<{ characters: string; styleID: number }>,
+  textLines: (text: string) => NonNullable<NodeChange['textData']>['lines'],
   fillToKiwiPaint: (fill: SceneNode['fills'][number]) => Paint
 ): NodeChange['textData'] {
   if (node.styleRuns.length === 0) {
