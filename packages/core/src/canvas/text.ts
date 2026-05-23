@@ -195,6 +195,55 @@ function textDecorationValue(ck: CanvasKit, decoration: string): number {
   }
 }
 
+function styleRunColor(
+  ck: CanvasKit,
+  style: SceneNode['styleRuns'][number]['style'],
+  baseColor: Float32Array
+): Float32Array {
+  const visibleFill = style.fills?.find((fill) => fill.visible && fill.type === 'SOLID')
+  if (!visibleFill) return baseColor
+  const color = resolveRGBAForPreview(visibleFill.color).color
+  return ck.Color4f(color.r, color.g, color.b, color.a * visibleFill.opacity)
+}
+
+function pushStyleRun(
+  r: TextRenderer,
+  builder: ReturnType<CanvasKit['ParagraphBuilder']['MakeFromFontProvider']>,
+  node: SceneNode,
+  run: SceneNode['styleRuns'][number],
+  baseColor: Float32Array,
+  baseFontSize: number,
+  fontFamilies: (primary: string, weight: number, italic?: boolean) => string[],
+  halfLeading: boolean
+): void {
+  const ck = r.ck
+  const style = run.style
+  const runLineHeight = style.lineHeight !== undefined ? style.lineHeight : node.lineHeight
+  const runFontSize = style.fontSize ?? baseFontSize
+
+  builder.pushStyle(
+    new ck.TextStyle({
+      color: styleRunColor(ck, style, baseColor),
+      fontFamilies: fontFamilies(
+        style.fontFamily ?? (node.fontFamily || DEFAULT_FONT_FAMILY),
+        style.fontWeight ?? node.fontWeight,
+        style.italic ?? node.italic
+      ),
+      fontSize: runFontSize,
+      fontStyle: {
+        weight: { value: style.fontWeight ?? node.fontWeight } as FontWeight,
+        slant: (style.italic ?? node.italic) ? ck.FontSlant.Italic : ck.FontSlant.Upright
+      },
+      fontVariations: textFontVariations(style.fontVariations ?? node.fontVariations),
+      fontFeatures: textFontFeatures(style.fontFeatures ?? node.fontFeatures),
+      letterSpacing: style.letterSpacing ?? (node.letterSpacing || 0),
+      decoration: textDecorationValue(ck, style.textDecoration ?? node.textDecoration),
+      heightMultiplier: runLineHeight ? runLineHeight / runFontSize : undefined,
+      halfLeading
+    })
+  )
+}
+
 function addStyledRuns(
   r: TextRenderer,
   builder: ReturnType<CanvasKit['ParagraphBuilder']['MakeFromFontProvider']>,
@@ -204,56 +253,18 @@ function addStyledRuns(
   fontFamilies: (primary: string, weight: number, italic?: boolean) => string[],
   halfLeading: boolean
 ): void {
-  const ck = r.ck
   const text = node.text
   let pos = 0
 
   for (const run of node.styleRuns) {
-    if (pos < run.start) {
-      builder.addText(text.slice(pos, run.start))
-    }
-    const s = run.style
-    const runLineHeight = s.lineHeight !== undefined ? s.lineHeight : node.lineHeight
-    const runFontSize = s.fontSize ?? baseFontSize
-
-    let runColor = baseColor
-    if (s.fills) {
-      const visibleFill = s.fills.find((f) => f.visible && f.type === 'SOLID')
-      if (visibleFill) {
-        const c = resolveRGBAForPreview(visibleFill.color).color
-        runColor = ck.Color4f(c.r, c.g, c.b, c.a * visibleFill.opacity)
-      }
-    }
-
-    builder.pushStyle(
-      new ck.TextStyle({
-        color: runColor,
-        fontFamilies: fontFamilies(
-          s.fontFamily ?? (node.fontFamily || DEFAULT_FONT_FAMILY),
-          s.fontWeight ?? node.fontWeight,
-          s.italic ?? node.italic
-        ),
-        fontSize: runFontSize,
-        fontStyle: {
-          weight: { value: s.fontWeight ?? node.fontWeight } as FontWeight,
-          slant: (s.italic ?? node.italic) ? ck.FontSlant.Italic : ck.FontSlant.Upright
-        },
-        fontVariations: textFontVariations(s.fontVariations ?? node.fontVariations),
-        fontFeatures: textFontFeatures(s.fontFeatures ?? node.fontFeatures),
-        letterSpacing: s.letterSpacing ?? (node.letterSpacing || 0),
-        decoration: textDecorationValue(ck, s.textDecoration ?? node.textDecoration),
-        heightMultiplier: runLineHeight ? runLineHeight / runFontSize : undefined,
-        halfLeading
-      })
-    )
+    if (pos < run.start) builder.addText(text.slice(pos, run.start))
+    pushStyleRun(r, builder, node, run, baseColor, baseFontSize, fontFamilies, halfLeading)
     builder.addText(text.slice(run.start, run.start + run.length))
     builder.pop()
     pos = run.start + run.length
   }
 
-  if (pos < text.length) {
-    builder.addText(text.slice(pos))
-  }
+  if (pos < text.length) builder.addText(text.slice(pos))
 }
 
 export function buildParagraph(
