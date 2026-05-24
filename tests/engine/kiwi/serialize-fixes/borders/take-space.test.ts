@@ -18,7 +18,7 @@ describe('Fix 3: bordersTakeSpace serialization', () => {
       strokesIncludedInLayout: true
     })
 
-    const changes = toKiwi(node, graph) as Record<string, unknown>[]
+    const changes = toKiwi(node, graph)
     expect(changes[0].bordersTakeSpace).toBe(true)
   })
 
@@ -35,7 +35,7 @@ describe('Fix 3: bordersTakeSpace serialization', () => {
       strokesIncludedInLayout: false
     })
 
-    const changes = toKiwi(node, graph) as Record<string, unknown>[]
+    const changes = toKiwi(node, graph)
     expect(changes[0].bordersTakeSpace).toBe(false)
   })
 
@@ -50,7 +50,7 @@ describe('Fix 3: bordersTakeSpace serialization', () => {
       strokesIncludedInLayout: true
     })
 
-    const changes = toKiwi(node, graph) as Record<string, unknown>[]
+    const changes = toKiwi(node, graph)
     expect(changes[0].bordersTakeSpace).toBeUndefined()
   })
 })

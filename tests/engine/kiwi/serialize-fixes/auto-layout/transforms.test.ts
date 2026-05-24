@@ -40,7 +40,7 @@ describe('Fix 1: auto-layout child transforms', () => {
       { value: 100 },
       graph,
       blobs
-    ) as Record<string, unknown>[]
+    )
 
     // changes[0] = parent, changes[1] = child
     const childNc = expectDefined(
@@ -81,7 +81,7 @@ describe('Fix 1: auto-layout child transforms', () => {
       { value: 100 },
       graph,
       blobs
-    ) as Record<string, unknown>[]
+    )
 
     const absNc = expectDefined(
       changes.find((nc) => nc.name === 'AbsChild'),
@@ -119,7 +119,7 @@ describe('Fix 1: auto-layout child transforms', () => {
       { value: 100 },
       graph,
       blobs
-    ) as Record<string, unknown>[]
+    )
 
     const childNc = expectDefined(
       changes.find((nc) => nc.name === 'Child'),
@@ -167,7 +167,7 @@ describe('Fix 1: auto-layout child transforms', () => {
       { value: 100 },
       graph,
       blobs
-    ) as Record<string, unknown>[]
+    )
 
     const parentNc = expectDefined(
       changes.find((nc) => nc.name === 'Checked List'),
@@ -215,7 +215,7 @@ describe('Fix 1: auto-layout child transforms', () => {
       { value: 100 },
       graph,
       blobs
-    ) as Record<string, unknown>[]
+    )
 
     const itemNc = expectDefined(
       changes.find((nc) => nc.name === 'Item'),

@@ -93,7 +93,7 @@ describe('Fix 5: font family normalization in derivedTextData', () => {
       fontSize: 14
     })
 
-    const changes = toKiwi(node, graph) as Record<string, unknown>[]
+    const changes = toKiwi(node, graph)
     expect(changes[0].fontName.family).toBe('DM Sans')
   })
 })

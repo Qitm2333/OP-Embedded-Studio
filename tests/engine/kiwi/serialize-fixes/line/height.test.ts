@@ -22,7 +22,7 @@ describe('Fix 4: text lineHeight serialization', () => {
       lineHeight: 24
     })
 
-    const changes = toKiwi(node, graph) as Record<string, unknown>[]
+    const changes = toKiwi(node, graph)
     expect(changes[0].lineHeight).toEqual({ value: 24, units: 'PIXELS' })
   })
 
@@ -40,7 +40,7 @@ describe('Fix 4: text lineHeight serialization', () => {
       fontSize: 16
     })
 
-    const changes = toKiwi(node, graph) as Record<string, unknown>[]
+    const changes = toKiwi(node, graph)
     expect(changes[0].lineHeight).toBeUndefined()
   })
 

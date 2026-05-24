@@ -4,6 +4,16 @@ import { ALL_TOOLS, FigmaAPI, SceneGraph, computeAllLayouts, parseFigFile } from
 
 import { expectDefined } from '#tests/helpers/assert'
 
+interface PageTreeResult {
+  page: string
+  children: PageTreeNode[]
+}
+
+interface PageTreeNode {
+  id: string
+  children?: PageTreeNode[]
+}
+
 describe('MCP tool execution', () => {
   function setup() {
     const graph = new SceneGraph()
@@ -40,10 +50,7 @@ describe('MCP tool execution', () => {
 
   test('get_page_tree returns page hierarchy', () => {
     const { api } = setup()
-    const result = findTool('get_page_tree').execute(api, {}) as {
-      page: string
-      children: unknown[]
-    }
+    const result = findTool('get_page_tree').execute(api, {}) as PageTreeResult
     expect(result.page).toBe('Page 1')
     expect(result.children).toBeArray()
   })
@@ -131,9 +138,7 @@ describe('MCP tool execution', () => {
       parent_id: parent.id
     })
 
-    const tree = findTool('get_page_tree').execute(api, {}) as {
-      children: { id: string; children?: unknown[] }[]
-    }
+    const tree = findTool('get_page_tree').execute(api, {}) as PageTreeResult
     const parentNode = expectDefined(
       tree.children.find((c: { id: string }) => c.id === parent.id),
       'parent tree node'

@@ -2,6 +2,7 @@ import type { Paragraph } from 'canvaskit-wasm'
 
 import type { SceneNode, StyleRun } from '#core/scene-graph'
 import { copyStyleRuns } from '#core/scene-graph/copy'
+import type { JsonObject } from '#core/types'
 
 export type TextEditSizeSnapshot = Partial<Pick<SceneNode, 'width' | 'height'>>
 
@@ -103,8 +104,8 @@ function deepEqual(a: unknown, b: unknown): boolean {
     if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false
     return a.every((item, index) => deepEqual(item, b[index]))
   }
-  const aRecord = a as Record<string, unknown>
-  const bRecord = b as Record<string, unknown>
+  const aRecord = a as JsonObject
+  const bRecord = b as JsonObject
   const aKeys = Object.keys(aRecord)
   const bKeys = Object.keys(bRecord)
   if (aKeys.length !== bKeys.length) return false

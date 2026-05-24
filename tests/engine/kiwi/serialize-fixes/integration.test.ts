@@ -67,7 +67,7 @@ describe('Integration: auto-layout component with all fixes', () => {
       { value: 100 },
       graph,
       blobs
-    ) as Record<string, unknown>[]
+    )
 
     const cardNc = changes[0]
     const titleNc = expectDefined(

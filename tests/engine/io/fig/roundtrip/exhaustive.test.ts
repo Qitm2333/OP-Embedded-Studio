@@ -11,6 +11,7 @@ import {
   type SceneGraph,
   type SceneNode
 } from '@open-pencil/core'
+import type { JsonObject } from '@open-pencil/core/types'
 
 import {
   type Mismatch,
@@ -169,8 +170,8 @@ function deepCompare(
   for (const k of allKeys) {
     if (depth === 0 && SKIP_KEYS.has(k)) continue
     deepCompare(
-      (a as Record<string, unknown>)[k],
-      (b as Record<string, unknown>)[k],
+      (a as JsonObject)[k],
+      (b as JsonObject)[k],
       key ? `${key}.${k}` : k,
       path,
       opts,
@@ -240,13 +241,7 @@ function compareSceneProps(
     for (const k of new Set([...Object.keys(aNode as object), ...Object.keys(bNode as object)])) {
       if (SKIP_KEYS.has(k)) continue
       if (k === 'source') continue
-      deepCompare(
-        (aNode as Record<string, unknown>)[k],
-        (bNode as Record<string, unknown>)[k],
-        k,
-        p,
-        opts
-      )
+      deepCompare((aNode as JsonObject)[k], (bNode as JsonObject)[k], k, p, opts)
     }
   }
   if (errors.length > 0) throw new Error(`${label} scene props:\n${summarize(errors)}`)
@@ -278,12 +273,12 @@ function compareRawNodeFields(
   for (const [p, aNode] of aNodes) {
     const bNode = bNodes.get(p)
     if (!bNode) continue
-    const aRaw = (aNode as Record<string, unknown>).source as Record<string, unknown> | undefined
-    const bRaw = (bNode as Record<string, unknown>).source as Record<string, unknown> | undefined
-    const aFig = aRaw?.fig as Record<string, unknown> | undefined
-    const bFig = bRaw?.fig as Record<string, unknown> | undefined
-    const aFields = aFig?.rawNodeFields as Record<string, unknown> | undefined
-    const bFields = bFig?.rawNodeFields as Record<string, unknown> | undefined
+    const aRaw = (aNode as JsonObject).source as JsonObject | undefined
+    const bRaw = (bNode as JsonObject).source as JsonObject | undefined
+    const aFig = aRaw?.fig as JsonObject | undefined
+    const bFig = bRaw?.fig as JsonObject | undefined
+    const aFields = aFig?.rawNodeFields as JsonObject | undefined
+    const bFields = bFig?.rawNodeFields as JsonObject | undefined
     if (!aFields && !bFields) continue
     deepCompareRaw(aFields, bFields, '', p, opts)
   }
@@ -319,8 +314,8 @@ function deepCompareRaw(
     b !== null &&
     !Array.isArray(a)
   ) {
-    const aObj = a as Record<string, unknown>
-    const bObj = b as Record<string, unknown>
+    const aObj = a as JsonObject
+    const bObj = b as JsonObject
     const allKeys = new Set([...Object.keys(aObj), ...Object.keys(bObj)])
     for (const k of allKeys) {
       const vfn2 = opts.verifiers.get(k)
@@ -386,8 +381,8 @@ function deepCompareRaw(
     return
   }
 
-  const aObj = a as Record<string, unknown>
-  const bObj = b as Record<string, unknown>
+  const aObj = a as JsonObject
+  const bObj = b as JsonObject
   const allKeys = new Set([...Object.keys(aObj), ...Object.keys(bObj)])
   for (const k of allKeys) {
     const fullKey = key ? `${key}.${k}` : k

@@ -5,6 +5,8 @@ import { resolveCommand } from 'package-manager-detector/commands'
 import { detect, getUserAgent } from 'package-manager-detector/detect'
 import { WebSocketServer } from 'ws'
 
+import type { RpcJsonObject } from '#mcp/json'
+
 import packageJson from '../package.json' with { type: 'json' }
 import { bearerToken, isAuthorized, mcpRequestToken } from './auth'
 import { createBrowserRpcBridge } from './browser-rpc'
@@ -130,8 +132,8 @@ export function startServer(options: ServerOptions = {}) {
       return c.json({ error: 'Invalid request body' }, 400)
     }
     try {
-      body = preprocessRpc(body as Record<string, unknown>)
-      const result = await sendToBrowser(body as Record<string, unknown>)
+      body = preprocessRpc(body as RpcJsonObject)
+      const result = await sendToBrowser(body as RpcJsonObject)
       return c.json(result)
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)

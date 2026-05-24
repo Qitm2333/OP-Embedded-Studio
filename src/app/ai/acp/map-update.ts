@@ -1,6 +1,8 @@
 import type { SessionUpdate } from '@agentclientprotocol/sdk'
 import type { UIMessageChunk } from 'ai'
 
+import type { JsonObject } from '@open-pencil/core/types'
+
 export interface MapResult {
   chunks: UIMessageChunk[]
   textStarted: boolean
@@ -86,14 +88,12 @@ export function mapUpdate(update: SessionUpdate, textId: string, textStarted: bo
   return { chunks, textStarted }
 }
 
-export function textFromContent(
-  content: Record<string, unknown>[] | undefined
-): string | undefined {
+export function textFromContent(content: JsonObject[] | undefined): string | undefined {
   if (!content) return undefined
   const parts: string[] = []
   for (const c of content) {
     if (c.type !== 'content') continue
-    const inner = c.content as Record<string, unknown> | undefined
+    const inner = c.content as JsonObject | undefined
     if (inner?.type === 'text' && typeof inner.text === 'string') {
       parts.push(inner.text)
     }

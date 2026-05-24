@@ -242,7 +242,7 @@ describe('Kiwi serialization', () => {
       { value: 100 },
       graph,
       blobs
-    ) as Record<string, unknown>[]
+    )
 
     expect(changes[0].borderStrokeWeightsIndependent).toBe(true)
     expect(changes[0].borderTopWeight).toBe(1)
@@ -263,7 +263,7 @@ describe('Kiwi serialization', () => {
       { value: 100 },
       graph,
       blobs
-    ) as Record<string, unknown>[]
+    )
 
     expect(changes[0].borderStrokeWeightsIndependent).toBeUndefined()
     expect(changes[0].borderTopWeight).toBeUndefined()

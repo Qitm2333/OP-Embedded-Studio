@@ -1609,7 +1609,111 @@ const noSiblingDomainPrefixedFiles = createProgramFilenameRule({
   }
 })
 
+function typeParameterNodes(node) {
+  return node?.typeParameters?.params ?? node?.typeArguments?.params ?? []
+}
+
+function isRecordStringUnknownType(node) {
+  if (node?.type !== 'TSTypeReference') return false
+  if (node.typeName?.type !== 'Identifier' || node.typeName.name !== 'Record') return false
+  const params = typeParameterNodes(node)
+  return params[0]?.type === 'TSStringKeyword' && params[1]?.type === 'TSUnknownKeyword'
+}
+
+function hasAstChild(node, predicate, seen = new WeakSet()) {
+  if (!node || typeof node !== 'object') return false
+  if (seen.has(node)) return false
+  seen.add(node)
+  if (predicate(node)) return true
+
+  for (const [key, value] of Object.entries(node)) {
+    if (key === 'parent' || key === 'range' || key === 'loc') continue
+    if (Array.isArray(value)) {
+      if (value.some((child) => hasAstChild(child, predicate, seen))) return true
+    } else if (value && typeof value === 'object' && hasAstChild(value, predicate, seen)) {
+      return true
+    }
+  }
+  return false
+}
+
+function containsRecordStringUnknownType(node) {
+  if (isRecordStringUnknownType(node)) return true
+  if (node?.type === 'TSArrayType') return isRecordStringUnknownType(node.elementType)
+  if (node?.type === 'TSUnionType') return node.types?.some(containsRecordStringUnknownType) ?? false
+  return false
+}
+
+function isUnknownArrayType(node) {
+  return node?.type === 'TSArrayType' && node.elementType?.type === 'TSUnknownKeyword'
+}
+
+function hasInlineUnknownArrayProperty(node) {
+  if (node?.type !== 'TSTypeLiteral') return false
+  return (node.members ?? []).some((member) => {
+    const typeNode = member.typeAnnotation?.typeAnnotation
+    return isUnknownArrayType(typeNode)
+  })
+}
+
+function containsInlineUnknownObjectType(node) {
+  return hasAstChild(node, hasInlineUnknownArrayProperty)
+}
+
+const noBroadUnknownTypeAssertions = {
+  meta: {
+    docs: {
+      description:
+        'Disallow broad unknown object type assertions. Add a named domain type or a type guard instead.'
+    }
+  },
+  create(context) {
+    function check(node) {
+      if (containsRecordStringUnknownType(node.typeAnnotation)) {
+        context.report({
+          node,
+          message:
+            'Do not cast to Record<string, unknown>. Add a named domain type or a type guard.'
+        })
+        return
+      }
+      if (containsInlineUnknownObjectType(node.typeAnnotation)) {
+        context.report({
+          node,
+          message: 'Do not cast to an inline unknown object shape. Add a named domain type.'
+        })
+      }
+    }
+
+    return {
+      TSAsExpression: check,
+      TSTypeAssertion: check
+    }
+  }
+}
+
+const noLocalJsonObjectAliases = {
+  meta: {
+    docs: {
+      description: 'Disallow local JsonObject aliases — import the shared type instead'
+    }
+  },
+  create(context) {
+    return {
+      TSTypeAliasDeclaration(node) {
+        if (node.id?.name !== 'JsonObject') return
+        if (!isRecordStringUnknownType(node.typeAnnotation)) return
+        context.report({
+          node,
+          message: 'Import JsonObject from @open-pencil/core/types instead of declaring a local alias.'
+        })
+      }
+    }
+  }
+}
+
 const noFlatKiwiModules = createProgramFilenameRule({
+
   description: 'Disallow flat top-level Kiwi modules — group code under Kiwi subdomains',
   check(file) {
     const marker = '/packages/core/src/kiwi/'
@@ -1664,6 +1768,8 @@ const plugin = {
     'no-direct-storage-access': noDirectStorageAccess,
     'no-broad-double-cast': noBroadDoubleCast,
     'no-unknown-record-double-cast': noUnknownRecordDoubleCast,
+    'no-broad-unknown-type-assertions': noBroadUnknownTypeAssertions,
+    'no-local-json-object-aliases': noLocalJsonObjectAliases,
     'no-ts-suppression-comments': noTsSuppressionComments,
     'no-function-type': noFunctionType,
     'no-reflect-delete-global-this-outside-tests': noReflectDeleteGlobalThisOutsideTests,

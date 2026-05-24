@@ -1,6 +1,7 @@
 import { colorToFill, parseColor } from '#core/color'
 import { TRANSPARENT } from '#core/constants'
 import type { GridTrack, LayoutMode, SceneNode, Stroke } from '#core/scene-graph'
+import type { JsonObject } from '#core/types'
 
 const WEIGHT_MAP: Record<string, number> = {
   normal: 400,
@@ -83,7 +84,7 @@ function normalizeStyleProps(props: Record<string, unknown>): Record<string, unk
   const style = props.style
   if (style === null || typeof style !== 'object' || Array.isArray(style)) return props
 
-  const source = style as Record<string, unknown>
+  const source = style as JsonObject
   const normalized = { ...props }
   const copyIfUnset = (from: string, to: string, convert?: (value: unknown) => unknown): void => {
     if (normalized[to] !== undefined || source[from] === undefined) return

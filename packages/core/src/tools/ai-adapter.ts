@@ -10,6 +10,7 @@ import type { ToolSet, tool as createTool } from 'ai'
 import type * as valibot from 'valibot'
 
 import type { FigmaAPI } from '#core/figma-api'
+import type { JsonObject } from '#core/types'
 
 import type { ToolDef, ParamDef, ParamType } from './schema'
 
@@ -194,7 +195,7 @@ export function toolsToAI(
             value: [{ type: 'media' as const, mediaType: r.mimeType, data: r.base64 }]
           }
         }
-        return { type: 'json' as const, value: output as Record<string, unknown> }
+        return { type: 'json' as const, value: output as JsonObject }
       }
     }
 

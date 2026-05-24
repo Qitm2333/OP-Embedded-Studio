@@ -543,10 +543,20 @@ function componentPropValueToString(value: unknown): string {
   return propValue.guidValue ? guidToString(propValue.guidValue) : ''
 }
 
+interface RawComponentPropDef {
+  id?: GUID
+  name?: string
+  type?: string
+  initialValue?: unknown
+}
+
+interface RawSymbolData {
+  symbolOverrides?: unknown[]
+  uniformScaleFactor?: number
+}
+
 function extractComponentPropertyDefs(nc: NodeChange): ComponentPropertyDefinition[] {
-  const defs = nc.componentPropDefs as
-    | Array<{ id?: GUID; name?: string; type?: string; initialValue?: unknown }>
-    | undefined
+  const defs = nc.componentPropDefs as RawComponentPropDef[] | undefined
   if (!defs?.length) return []
   const result: ComponentPropertyDefinition[] = []
   for (const def of defs) {
@@ -852,9 +862,7 @@ function extractFigmaSymbolMetadata(
   | 'derivedSymbolDataLayoutVersion'
   | 'uniformScaleFactor'
 > {
-  const sd = nc.symbolData as
-    | { symbolOverrides?: unknown[]; uniformScaleFactor?: number }
-    | undefined
+  const sd = nc.symbolData as RawSymbolData | undefined
   return {
     symbolOverrides: preserveFigmaPayloadBlobs(sd?.symbolOverrides ?? [], blobs) as unknown[],
     componentPropAssignments: preserveFigmaPayloadBlobs(

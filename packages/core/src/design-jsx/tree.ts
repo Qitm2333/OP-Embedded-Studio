@@ -15,6 +15,8 @@ export function isTreeNode(x: unknown): x is TreeNode {
   )
 }
 
+type FunctionComponent = (props: Record<string, unknown>) => unknown
+
 interface ReactElement {
   type: unknown
   props: Record<string, unknown>
@@ -35,10 +37,8 @@ export function resolveToTree(element: unknown, depth = 0): TreeNode | null {
   if (!isReactElement(element)) return null
 
   if (typeof element.type === 'function') {
-    return resolveToTree(
-      (element.type as (p: Record<string, unknown>) => unknown)(element.props),
-      depth + 1
-    )
+    const component = element.type as FunctionComponent
+    return resolveToTree(component(element.props), depth + 1)
   }
 
   if (typeof element.type === 'string') {

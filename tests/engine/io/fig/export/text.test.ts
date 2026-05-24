@@ -1,6 +1,7 @@
 import { describe, expect, setDefaultTimeout, test } from 'bun:test'
 
 import { exportFigFile, initCodec, parseFigFile, SceneGraph } from '@open-pencil/core'
+import type { JsonObject } from '@open-pencil/core/types'
 
 import { expectDefined } from '#tests/helpers/assert'
 import { parseFixture } from '#tests/helpers/fig-fixtures'
@@ -95,7 +96,7 @@ describe('text node export', () => {
     const dataRaw = inflateSync(chunks?.[1] ?? new Uint8Array())
     const message = compiled.decodeMessage(dataRaw)
 
-    const nodeChanges = message.nodeChanges as Array<Record<string, unknown>>
+    const nodeChanges = message.nodeChanges as JsonObject[]
     const textNc = nodeChanges.find((nc) => nc.type === 'TEXT')
     expect(textNc).toBeDefined()
 
@@ -149,19 +150,19 @@ describe('text node export', () => {
       decodeMessage(data: Uint8Array): Record<string, unknown>
     }
     const message = compiled.decodeMessage(inflateSync(chunks?.[1] ?? new Uint8Array()))
-    const nodeChanges = message.nodeChanges as Array<Record<string, unknown>>
+    const nodeChanges = message.nodeChanges as JsonObject[]
     const textNc = expectDefined(
       nodeChanges.find((nc) => nc.type === 'TEXT'),
       'text node change'
     )
-    const derivedTextData = textNc.derivedTextData as Record<string, unknown>
+    const derivedTextData = textNc.derivedTextData as JsonObject
     const fontMetaData = expectDefined(
-      derivedTextData.fontMetaData as Array<Record<string, unknown>> | undefined,
+      derivedTextData.fontMetaData as JsonObject[] | undefined,
       'font metadata'
     )
 
-    expect((textNc.fontName as Record<string, unknown>).style).toBe('Semi Bold')
-    expect((fontMetaData[0].key as Record<string, unknown>).style).toBe('Semi Bold')
+    expect((textNc.fontName as JsonObject).style).toBe('Semi Bold')
+    expect((fontMetaData[0].key as JsonObject).style).toBe('Semi Bold')
   })
 
   test('auto-layout text children export height auto-resize for Figma rendering', async () => {
@@ -200,7 +201,7 @@ describe('text node export', () => {
       decodeMessage(data: Uint8Array): Record<string, unknown>
     }
     const message = compiled.decodeMessage(inflateSync(chunks?.[1] ?? new Uint8Array()))
-    const nodeChanges = message.nodeChanges as Array<Record<string, unknown>>
+    const nodeChanges = message.nodeChanges as JsonObject[]
     const textNc = expectDefined(
       nodeChanges.find((nc) => nc.type === 'TEXT'),
       'text node change'
@@ -249,16 +250,14 @@ describe('text node export', () => {
     const dataRaw = inflateSync(chunks?.[1] ?? new Uint8Array())
     const message = compiled.decodeMessage(dataRaw)
 
-    const nodeChanges = message.nodeChanges as Array<Record<string, unknown>>
+    const nodeChanges = message.nodeChanges as JsonObject[]
     const textNc = nodeChanges.find((nc) => nc.type === 'TEXT')
 
-    const derivedTextData = textNc?.derivedTextData as Record<string, unknown> | undefined
-    const fontMetaData = derivedTextData?.fontMetaData as Array<Record<string, unknown>> | undefined
+    const derivedTextData = textNc?.derivedTextData as JsonObject | undefined
+    const fontMetaData = derivedTextData?.fontMetaData as JsonObject[] | undefined
     expect(fontMetaData?.length).toBe(2)
 
-    const families = (fontMetaData ?? []).map(
-      (m) => (m.key as Record<string, unknown>)?.style as string
-    )
+    const families = (fontMetaData ?? []).map((m) => (m.key as JsonObject)?.style as string)
     expect(families).toContain('Bold')
     expect(families).toContain('Regular')
   })

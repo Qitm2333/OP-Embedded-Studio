@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto'
 
 import type { WebSocket } from 'ws'
 
+import type { RpcJsonObject } from '#mcp/json'
+
 const RPC_TIMEOUT = 30_000
 
 const APP_NOT_CONNECTED_MESSAGE =
@@ -34,7 +36,7 @@ function stripEnvelope(msg: BrowserMessage): Record<string, unknown> {
 
 function responsePayload(result: unknown): Record<string, unknown> {
   if (result && typeof result === 'object' && !Array.isArray(result)) {
-    return result as Record<string, unknown>
+    return result as RpcJsonObject
   }
   return { result }
 }

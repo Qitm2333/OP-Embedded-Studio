@@ -1,4 +1,5 @@
 import type { SceneGraph, SceneNode } from '@open-pencil/core'
+import type { JsonObject } from '@open-pencil/core/types'
 
 import { verifyComponentPropDefs, verifyDerivedTextData } from './raw-verifiers/helpers'
 
@@ -193,17 +194,20 @@ function verifyVariableConsumption(
   verifyBEntries(aEntries, bEntries, ctx)
 }
 
+interface VariableConsumptionMapShape {
+  entries?: Array<{
+    variableData?: { value?: { alias?: { guid?: unknown; assetRef?: unknown } } }
+    variableField?: string
+  }>
+}
+
 function verifyVarAlias(a: unknown, b: unknown): boolean {
-  const aVal = a as Record<string, unknown> | undefined
-  const bVal = b as Record<string, unknown> | undefined
+  const aVal = a as JsonObject | undefined
+  const bVal = b as JsonObject | undefined
   if (!aVal && !bVal) return true
   if (!aVal || !bVal) return false
-  const aAlias = (aVal.value as Record<string, unknown>)?.alias as
-    | Record<string, unknown>
-    | undefined
-  const bAlias = (bVal.value as Record<string, unknown>)?.alias as
-    | Record<string, unknown>
-    | undefined
+  const aAlias = (aVal.value as JsonObject)?.alias as JsonObject | undefined
+  const bAlias = (bVal.value as JsonObject)?.alias as JsonObject | undefined
   const aGuid = aAlias?.guid
   const bGuid = bAlias?.guid
   const aRef = aAlias?.assetRef
@@ -229,7 +233,7 @@ export const RAW_VERIFIERS = new Map<string, Verifier>([
     'letterSpacing',
     (ctx) => {
       if (isIdempotent(ctx)) return JSON.stringify(ctx.a) === JSON.stringify(ctx.b)
-      const g1raw = ctx.b as Record<string, unknown> | undefined
+      const g1raw = ctx.b as JsonObject | undefined
       const node = ctx.aNodes.get(ctx.path)
       if (!node || node.fontSize == null) return true
       const expected = node.letterSpacing
@@ -248,7 +252,7 @@ export const RAW_VERIFIERS = new Map<string, Verifier>([
     'lineHeight',
     (ctx) => {
       if (isIdempotent(ctx)) return JSON.stringify(ctx.a) === JSON.stringify(ctx.b)
-      const g1raw = ctx.b as Record<string, unknown> | undefined
+      const g1raw = ctx.b as JsonObject | undefined
       const node = ctx.aNodes.get(ctx.path)
       if (!node || node.lineHeight == null) return true
       const expected = node.lineHeight
@@ -260,22 +264,8 @@ export const RAW_VERIFIERS = new Map<string, Verifier>([
     'variableConsumptionMap',
     (ctx) => {
       if (isIdempotent(ctx)) return JSON.stringify(ctx.a) === JSON.stringify(ctx.b)
-      const ga = ctx.a as
-        | {
-            entries?: Array<{
-              variableData?: { value?: { alias?: { guid?: unknown; assetRef?: unknown } } }
-              variableField?: string
-            }>
-          }
-        | undefined
-      const gb = ctx.b as
-        | {
-            entries?: Array<{
-              variableData?: { value?: { alias?: { guid?: unknown; assetRef?: unknown } } }
-              variableField?: string
-            }>
-          }
-        | undefined
+      const ga = ctx.a as VariableConsumptionMapShape | undefined
+      const gb = ctx.b as VariableConsumptionMapShape | undefined
       verifyVariableConsumption(ga, gb, ctx)
       return true
     }

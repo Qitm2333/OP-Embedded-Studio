@@ -10,6 +10,11 @@ import { expectDefined } from '#tests/helpers/assert'
 
 type AdapterTool = { execute(args: Record<string, unknown>): Promise<unknown>; description: string }
 
+interface PageTreeToolResult {
+  page: unknown
+  children: unknown[]
+}
+
 function adapterTool(tools: Record<string, unknown>, name: string): AdapterTool {
   return tools[name] as AdapterTool
 }
@@ -93,7 +98,7 @@ describe('AI adapter', () => {
     frame.appendChild(rect)
 
     const getTree = adapterTool(tools, 'get_page_tree')
-    const result = (await getTree.execute({})) as { page: unknown; children: unknown[] }
+    const result = (await getTree.execute({})) as PageTreeToolResult
     expect(result.page).toBeTruthy()
     expect(result.children.length).toBeGreaterThan(0)
   })

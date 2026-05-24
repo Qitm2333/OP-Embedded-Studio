@@ -17,7 +17,7 @@ describe('Fix 2: frameMaskDisabled is inverse of clipsContent', () => {
       height: 100
     })
 
-    const changes = toKiwi(node, graph) as Record<string, unknown>[]
+    const changes = toKiwi(node, graph)
     expect(changes[0].frameMaskDisabled).toBe(true)
   })
 
@@ -32,7 +32,7 @@ describe('Fix 2: frameMaskDisabled is inverse of clipsContent', () => {
       clipsContent: true
     })
 
-    const changes = toKiwi(node, graph) as Record<string, unknown>[]
+    const changes = toKiwi(node, graph)
     expect(changes[0].frameMaskDisabled).toBe(false)
   })
 
@@ -47,7 +47,7 @@ describe('Fix 2: frameMaskDisabled is inverse of clipsContent', () => {
       clipsContent: false
     })
 
-    const changes = toKiwi(node, graph) as Record<string, unknown>[]
+    const changes = toKiwi(node, graph)
     expect(changes[0].frameMaskDisabled).toBe(true)
   })
 

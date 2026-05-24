@@ -13,6 +13,7 @@ export type {
 import { guidToString } from '#core/kiwi/fig/node-change/convert'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import { copyFills, copyStyleRuns } from '#core/scene-graph/copy'
+import type { JsonObject } from '#core/types'
 
 import { applyComponentProperties } from './component-props'
 import { applyConstraintScaling } from './constraints'
@@ -44,7 +45,7 @@ function buildKiwiPropertyNodes(
 ): Set<string> {
   const result = new Set<string>()
   for (const [nodeId, change] of changedNodeEntries(changeMap, guidToNodeId)) {
-    const nc = change as Record<string, unknown>
+    const nc = change as JsonObject
     const node = graph.getNode(nodeId)
     if (!node?.componentId) continue
     const comp = graph.getNode(node.componentId)

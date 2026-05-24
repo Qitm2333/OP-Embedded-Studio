@@ -1,4 +1,4 @@
-import type { GUID, NodeChange } from '#core/kiwi/fig/codec'
+import type { GUID, NodeChange, VariableConsumptionEntry } from '#core/kiwi/fig/codec'
 import type { SceneGraph } from '#core/scene-graph'
 import type { Matrix, Vector } from '#core/types'
 
@@ -8,6 +8,12 @@ export interface SymbolOverride {
   guidPath?: { guids?: GUID[] }
   overriddenSymbolID?: GUID
   componentPropAssignments?: ComponentPropAssignment[]
+  variableConsumptionMap?: { entries?: VariableConsumptionEntry[] }
+  [key: string]: unknown
+}
+
+export interface SymbolOverrideFields {
+  variableConsumptionMap?: { entries?: VariableConsumptionEntry[] }
   [key: string]: unknown
 }
 

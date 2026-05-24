@@ -2,6 +2,8 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
+import type { JsonObject } from '@open-pencil/core/types'
+
 const MESSAGES_PATH = 'packages/vue/src/i18n/messages.ts'
 const LOCALES_DIR = 'packages/vue/src/locales'
 
@@ -23,7 +25,7 @@ for (const file of localeFiles) {
   const extra: string[] = []
 
   for (const [ns, keys] of enKeys) {
-    const localeNs = (data[ns] ?? {}) as Record<string, unknown>
+    const localeNs = (data[ns] ?? {}) as JsonObject
     for (const key of keys) {
       if (!(key in localeNs)) missing.push(`${ns}.${key}`)
     }

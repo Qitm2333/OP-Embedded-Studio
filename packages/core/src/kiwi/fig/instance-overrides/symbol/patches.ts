@@ -1,6 +1,10 @@
 import type { GUID } from '#core/kiwi/fig/codec'
 import type { OverridePatch } from '#core/kiwi/fig/instance-overrides/patches'
-import type { OverrideContext, SymbolOverride } from '#core/kiwi/fig/instance-overrides/types'
+import type {
+  OverrideContext,
+  SymbolOverride,
+  SymbolOverrideFields
+} from '#core/kiwi/fig/instance-overrides/types'
 import { guidToString, VARIABLE_BINDING_FIELDS_INVERSE } from '#core/kiwi/fig/node-change/convert'
 import { applyStyleRefsToFields } from '#core/kiwi/fig/node-change/style-refs'
 
@@ -61,21 +65,16 @@ function resolveFloatVariable(
 
 function applyVariableRadiusOverrides(
   ctx: OverrideContext,
-  fields: Record<string, unknown>,
+  fields: SymbolOverrideFields,
   props: ReturnType<typeof convertOverrideToProps>
 ): void {
-  const entries = (fields.variableConsumptionMap as { entries?: unknown[] } | undefined)?.entries
+  const entries = fields.variableConsumptionMap?.entries
   if (!entries?.length) return
   const assetRefs = buildAssetRefMap(ctx)
   for (const entry of entries) {
-    if (!entry || typeof entry !== 'object') continue
-    const variableEntry = entry as {
-      variableField?: string
-      variableData?: { value?: { alias?: AliasRef } }
-    }
-    const variableField = variableEntry.variableField
+    const variableField = entry.variableField
     if (!variableField || !VARIABLE_RADIUS_FIELDS.has(variableField)) continue
-    const alias = variableEntry.variableData?.value?.alias
+    const alias = entry.variableData?.value?.alias
     const id = alias ? resolveAliasId(alias, assetRefs) : undefined
     const value = id ? resolveFloatVariable(ctx, id, assetRefs) : undefined
     if (typeof value !== 'number') continue
@@ -98,11 +97,14 @@ export function patchFromSymbolOverride(
     patch.swapComponentId = ctx.guidToNodeId.get(swapGuid)
   }
 
-  const { guidPath: _, overriddenSymbolID: _s, componentPropAssignments: _c, ...fields } = ov
+  const fields: SymbolOverrideFields = { ...ov }
+  delete fields.guidPath
+  delete fields.overriddenSymbolID
+  delete fields.componentPropAssignments
   if (Object.keys(fields).length > 0) {
     applyStyleRefsToFields(ctx.changeMap, fields)
-    const props = convertOverrideToProps(fields as Record<string, unknown>)
-    applyVariableRadiusOverrides(ctx, fields as Record<string, unknown>, props)
+    const props = convertOverrideToProps(fields)
+    applyVariableRadiusOverrides(ctx, fields, props)
     if (Object.keys(props).length > 0) patch.props = props
   }
 

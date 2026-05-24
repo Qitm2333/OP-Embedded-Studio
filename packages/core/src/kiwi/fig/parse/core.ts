@@ -40,6 +40,10 @@ interface FigKiwiPayload {
   version: number
 }
 
+interface CompiledKiwiSchema {
+  decodeMessage(data: Uint8Array): unknown
+}
+
 export function parseFigKiwiContainer(data: Uint8Array): FigKiwiPayload | null {
   const header = new TextDecoder().decode(data.slice(0, 8))
   if (header !== 'fig-kiwi') return null
@@ -124,7 +128,7 @@ export function parseFigBuffer(buffer: ArrayBuffer): FigParseResult {
 
   const schemaBytes = inflateSync(payload.schemaDeflated)
   const schema = decodeBinarySchema(new ByteBuffer(schemaBytes))
-  const compiled = compileSchema(schema) as { decodeMessage(data: Uint8Array): unknown }
+  const compiled = compileSchema(schema) as CompiledKiwiSchema
   const message = compiled.decodeMessage(payload.dataRaw) as FigmaMessage
 
   const nodeChanges = message.nodeChanges

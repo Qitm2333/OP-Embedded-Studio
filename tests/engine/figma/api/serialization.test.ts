@@ -2,6 +2,10 @@ import { describe, expect, test } from 'bun:test'
 
 import { createAPI } from './helpers'
 
+interface SerializedNodeWithChildren {
+  children?: unknown[]
+}
+
 describe('serialization', () => {
   test('toJSON returns clean object', () => {
     const api = createAPI()
@@ -20,7 +24,7 @@ describe('serialization', () => {
     const frame = api.createFrame()
     const rect = api.createRectangle()
     frame.appendChild(rect)
-    const json = frame.toJSON() as { children?: unknown[] }
+    const json = frame.toJSON() as SerializedNodeWithChildren
     expect(json.children).toBeDefined()
     expect(json.children?.length).toBe(1)
   })

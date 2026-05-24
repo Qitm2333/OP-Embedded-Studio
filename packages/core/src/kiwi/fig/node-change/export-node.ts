@@ -141,11 +141,36 @@ const SUPPORTED_VARIABLE_DATA_TYPES = new Set([
   'PROP_REF'
 ])
 
-function isSupportedVariableMapEntry(value: unknown): boolean {
-  if (!value || typeof value !== 'object') return false
-  const entry = value as {
-    variableData?: { dataType?: string; value?: { propRefValue?: unknown } }
+interface FigmaPayloadVariableMap {
+  entries?: unknown[]
+}
+
+interface FigmaPayloadVariableMapEntry {
+  variableData?: { dataType?: string; value?: { propRefValue?: unknown } }
+}
+
+interface ColorVarCarrier {
+  colorVar?: {
+    value?: {
+      alias?: {
+        guid?: GUID
+        assetRef?: { key: string; version?: string }
+      }
+    }
   }
+}
+
+function isFigmaPayloadVariableMap(value: unknown): value is FigmaPayloadVariableMap {
+  return !!value && typeof value === 'object' && !Array.isArray(value) && 'entries' in value
+}
+
+function isFigmaPayloadVariableMapEntry(value: unknown): value is FigmaPayloadVariableMapEntry {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+function isSupportedVariableMapEntry(value: unknown): boolean {
+  if (!isFigmaPayloadVariableMapEntry(value)) return false
+  const entry = value
   const dataType = entry.variableData?.dataType
   return (
     (typeof dataType === 'string' && SUPPORTED_VARIABLE_DATA_TYPES.has(dataType)) ||
@@ -154,10 +179,8 @@ function isSupportedVariableMapEntry(value: unknown): boolean {
 }
 
 function isPropRefVariableMapEntry(value: unknown): boolean {
-  if (!value || typeof value !== 'object') return false
-  const entry = value as {
-    variableData?: { dataType?: string; value?: { propRefValue?: unknown } }
-  }
+  if (!isFigmaPayloadVariableMapEntry(value)) return false
+  const entry = value
   return entry.variableData?.dataType === 'PROP_REF' || !!entry.variableData?.value?.propRefValue
 }
 
@@ -167,8 +190,8 @@ function materializeSafeVariableMap(
   options: MaterializeFigmaPayloadOptions,
   predicate: (value: unknown) => boolean
 ): unknown {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
-  const entries = (value as { entries?: unknown[] }).entries?.filter(predicate) ?? []
+  if (!isFigmaPayloadVariableMap(value)) return undefined
+  const entries = value.entries?.filter(predicate) ?? []
   if (entries.length === 0) return undefined
   return { entries: entries.map((entry) => materializeFigmaPayload(entry, blobs, options)) }
 }
@@ -362,16 +385,13 @@ function applyRawFigmaNodeFields(
  */
 function convertColorVarAssetRefs<T>(paints: T, assetRefToVarGuid: Map<string, GUID>): T {
   if (!Array.isArray(paints)) return paints
-  const result = paints.map((paint: Record<string, unknown>) => {
-    const colorVar = paint.colorVar as Record<string, unknown> | undefined
-    if (!colorVar) return paint
-    const value = colorVar.value as Record<string, unknown> | undefined
-    if (!value) return paint
-    const alias = value.alias as Record<string, unknown> | undefined
-    if (!alias) return paint
-    // If alias already has guid, nothing to convert
+  const result = paints.map((paint: ColorVarCarrier) => {
+    const colorVar = paint.colorVar
+    const value = colorVar?.value
+    const alias = value?.alias
+    if (!colorVar || !value || !alias) return paint
     if (alias.guid) return paint
-    const assetRef = alias.assetRef as { key: string; version?: string } | undefined
+    const assetRef = alias.assetRef
     if (!assetRef?.key) return paint
     // Look up by key@version first, then by key alone
     const lookupKey = assetRef.version ? `${assetRef.key}@${assetRef.version}` : assetRef.key

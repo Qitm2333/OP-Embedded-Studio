@@ -30,3 +30,8 @@ export interface Rect {
   width: number
   height: number
 }
+
+export type JsonPrimitive = string | number | boolean | null
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray
+export type JsonObject = { [key: string]: unknown }
+export type JsonArray = unknown[]

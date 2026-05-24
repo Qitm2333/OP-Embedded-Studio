@@ -5,6 +5,7 @@ import { z } from 'zod'
 
 import { ALL_TOOLS, CODEGEN_PROMPT } from '@open-pencil/core/tools'
 
+import type { RpcJsonObject } from '#mcp/json'
 import { fail, ok } from '#mcp/result'
 
 import { resolveSafePath, writeToolOutput } from './output'
@@ -37,7 +38,7 @@ export function registerTools(mcpServer: McpServer, options: RegisterToolsOption
           const result = await sendRpc({ command: 'tool', args: { name: def.name, args } })
           const res = result as { ok?: boolean; result?: unknown; error?: string }
           if (res.ok === false) return fail(new Error(res.error))
-          const r = res.result as Record<string, unknown> | undefined
+          const r = res.result as RpcJsonObject | undefined
           const filePath = typeof args.path === 'string' ? args.path : null
           if (r && filePath && resolvedRoot) {
             const written = await writeToolOutput(def.name, r, filePath, resolvedRoot)

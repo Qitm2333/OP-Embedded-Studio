@@ -18,6 +18,7 @@ import { useI18n } from '@open-pencil/vue'
 
 import type { Chat } from '@ai-sdk/vue'
 import type { UIMessage } from 'ai'
+import type { JsonObject } from '@open-pencil/core/types'
 
 const IS_DEV = import.meta.env.DEV
 
@@ -43,7 +44,7 @@ const isThinking = computed(() => {
   if (last.role !== 'assistant') return true
   const parts = last.parts
   if (parts.length === 0) return true
-  const lastPart = parts[parts.length - 1] as Record<string, unknown>
+  const lastPart = parts[parts.length - 1] as JsonObject
   if (lastPart.type === 'step-start') return true
   if ('toolCallId' in lastPart && lastPart.state === 'output-available') return true
   if ('toolCallId' in lastPart && lastPart.state === 'output-error') return true

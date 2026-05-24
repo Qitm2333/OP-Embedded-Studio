@@ -4,6 +4,7 @@ import { buildDerivedTextData as buildSharedDerivedTextData } from '#core/text/d
 import { normalizeFontFamily, weightToFigmaStyle, weightToStyle } from '#core/text/fonts'
 import { getGlyphOutlineMetricsSync } from '#core/text/opentype'
 import { encodeVectorNetworkBlob, buildStyleOverrideTable } from '#core/vector'
+
 export {
   buildFigKiwi,
   decompressFigKiwiData,
@@ -15,7 +16,7 @@ export { buildFontDigestMap } from './font/digests'
 
 import type { NodeChange, Paint, VariableConsumptionEntry } from '#core/kiwi/fig/codec'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
-import type { Color, GUID, Matrix } from '#core/types'
+import type { Color, GUID, JsonObject, Matrix } from '#core/types'
 
 import { guidToString, stringToGuid, VARIABLE_BINDING_FIELDS } from './convert'
 import {
@@ -234,8 +235,7 @@ function serializeCornerRadii(node: SceneNode, nc: KiwiNodeChange): void {
     // the raw Figma data. Figma may emit per-corner radii without setting the
     // independent flag (preserve rectangleCornerRadiiIndependent).
     const rawIndependent = node.source.id
-      ? (node.source.fig.rawNodeFields as Record<string, unknown> | undefined)
-          ?.rectangleCornerRadiiIndependent
+      ? (node.source.fig.rawNodeFields as JsonObject | undefined)?.rectangleCornerRadiiIndependent
       : undefined
     nc.rectangleCornerRadiiIndependent =
       typeof rawIndependent === 'boolean' ? rawIndependent : node.independentCorners

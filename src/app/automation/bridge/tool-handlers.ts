@@ -2,6 +2,7 @@ import { renderTreeNode } from '@open-pencil/core/design-jsx'
 import type { FigmaAPI } from '@open-pencil/core/figma-api'
 import { computeAllLayouts } from '@open-pencil/core/layout'
 import { ALL_TOOLS } from '@open-pencil/core/tools'
+import type { JsonObject } from '@open-pencil/core/types'
 
 import type { EditorStore } from '@/app/editor/active-store'
 import { ensureGraphFonts } from '@/app/editor/fonts'
@@ -60,18 +61,14 @@ export function createAutomationToolHandler(makeFigma: FigmaFactory) {
 
 function extractNodeIds(result: unknown): string[] {
   if (!result || typeof result !== 'object') return []
-  const obj = result as Record<string, unknown>
+  const obj = result as JsonObject
   if (typeof obj.deleted === 'string') return []
   const ids: string[] = []
   if (typeof obj.id === 'string') ids.push(obj.id)
   if (Array.isArray(obj.results)) {
     for (const item of obj.results) {
-      if (
-        item &&
-        typeof item === 'object' &&
-        typeof (item as Record<string, unknown>).id === 'string'
-      )
-        ids.push((item as Record<string, unknown>).id as string)
+      if (item && typeof item === 'object' && typeof (item as JsonObject).id === 'string')
+        ids.push((item as JsonObject).id as string)
     }
   }
   return ids
