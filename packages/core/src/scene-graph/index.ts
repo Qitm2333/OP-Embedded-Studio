@@ -325,8 +325,6 @@ export class SceneGraph {
     'maxHeight'
   ])
 
-
-
   runPreviewUpdates(fn: () => void): void {
     this.previewMutationDepth++
     try {

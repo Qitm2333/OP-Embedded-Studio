@@ -1,12 +1,12 @@
 import type { ImageFilter, MaskFilter, Canvas, Paint, Path } from 'canvaskit-wasm'
 
-import * as AiOverlays from '#core/canvas/overlays/ai'
 import * as Effects from '#core/canvas/effects'
 import * as Fills from '#core/canvas/fills'
 import * as Labels from '#core/canvas/labels/draw'
 import * as NodeEditOverlay from '#core/canvas/node-edit-overlay'
 import type { NodeEditOverlayState } from '#core/canvas/node-edit-overlay'
 import * as Overlays from '#core/canvas/overlays'
+import * as AiOverlays from '#core/canvas/overlays/ai'
 import * as PenOverlay from '#core/canvas/pen-overlay'
 import type { SkiaRenderer } from '#core/canvas/renderer'
 import type { RenderOverlays } from '#core/canvas/renderer/types'
@@ -95,7 +95,11 @@ const rendererMethods: ThisType<SkiaRenderer> = {
     Overlays.drawLayoutInsertIndicator(this, canvas, indicator)
   },
 
-  drawAutoLayoutHover(canvas: Canvas, graph: SceneGraph, hover?: RenderOverlays['autoLayoutHover']) {
+  drawAutoLayoutHover(
+    canvas: Canvas,
+    graph: SceneGraph,
+    hover?: RenderOverlays['autoLayoutHover']
+  ) {
     Overlays.drawAutoLayoutHover(this, canvas, graph, hover)
   },
 

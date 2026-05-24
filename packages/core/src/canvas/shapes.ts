@@ -47,7 +47,12 @@ type SmoothCornerPathParams = {
   arcSectionLength: number
 }
 
-function smoothCornerRadii(node: SceneNode, width: number, height: number, spread: number): Record<SmoothCornerKey, SmoothCorner> {
+function smoothCornerRadii(
+  node: SceneNode,
+  width: number,
+  height: number,
+  spread: number
+): Record<SmoothCornerKey, SmoothCorner> {
   const radius = (value: number) => Math.max(0, value + spread)
   const radii: Record<SmoothCornerKey, number> = node.independentCorners
     ? {
@@ -63,7 +68,11 @@ function smoothCornerRadii(node: SceneNode, width: number, height: number, sprea
         bottomLeft: radius(node.cornerRadius)
       }
 
-  if (radii.topLeft === radii.topRight && radii.topRight === radii.bottomRight && radii.bottomRight === radii.bottomLeft) {
+  if (
+    radii.topLeft === radii.topRight &&
+    radii.topRight === radii.bottomRight &&
+    radii.bottomRight === radii.bottomLeft
+  ) {
     const budget = Math.min(width, height) / 2
     const clampedRadius = Math.min(radii.topLeft, budget)
     return {
@@ -80,7 +89,10 @@ function smoothCornerRadii(node: SceneNode, width: number, height: number, sprea
     bottomRight: -1,
     bottomLeft: -1
   }
-  const adjacentByCorner: Record<SmoothCornerKey, Array<{ corner: SmoothCornerKey; sideLength: number }>> = {
+  const adjacentByCorner: Record<
+    SmoothCornerKey,
+    Array<{ corner: SmoothCornerKey; sideLength: number }>
+  > = {
     topLeft: [
       { corner: 'topRight', sideLength: width },
       { corner: 'bottomLeft', sideLength: height }
@@ -99,7 +111,9 @@ function smoothCornerRadii(node: SceneNode, width: number, height: number, sprea
     ]
   }
 
-  for (const corner of (Object.keys(radii) as SmoothCornerKey[]).sort((a, b) => radii[b] - radii[a])) {
+  for (const corner of (Object.keys(radii) as SmoothCornerKey[]).sort(
+    (a, b) => radii[b] - radii[a]
+  )) {
     const cornerRadius = radii[corner]
     const budget = Math.min(
       ...adjacentByCorner[corner].map((adjacent) => {
@@ -154,34 +168,115 @@ function smoothCornerPathParams(corner: SmoothCorner, smoothing: number): Smooth
   }
 }
 
-function drawTopRightSmoothCorner(path: Path, corner: SmoothCornerPathParams, x: number, y: number) {
+function drawTopRightSmoothCorner(
+  path: Path,
+  corner: SmoothCornerPathParams,
+  x: number,
+  y: number
+) {
   if (corner.radius === 0) {
     path.lineTo(x + corner.p, y)
     return
   }
-  path.cubicTo(x + corner.a, y, x + corner.a + corner.b, y, x + corner.a + corner.b + corner.c, y + corner.d)
-  path.arcToRotated(corner.radius, corner.radius, 0, true, false, x + corner.p - corner.d, y + corner.p - corner.a - corner.b - corner.c)
-  path.cubicTo(x + corner.p, y + corner.p - corner.a - corner.b, x + corner.p, y + corner.p - corner.a, x + corner.p, y + corner.p)
+  path.cubicTo(
+    x + corner.a,
+    y,
+    x + corner.a + corner.b,
+    y,
+    x + corner.a + corner.b + corner.c,
+    y + corner.d
+  )
+  path.arcToRotated(
+    corner.radius,
+    corner.radius,
+    0,
+    true,
+    false,
+    x + corner.p - corner.d,
+    y + corner.p - corner.a - corner.b - corner.c
+  )
+  path.cubicTo(
+    x + corner.p,
+    y + corner.p - corner.a - corner.b,
+    x + corner.p,
+    y + corner.p - corner.a,
+    x + corner.p,
+    y + corner.p
+  )
 }
 
-function drawBottomRightSmoothCorner(path: Path, corner: SmoothCornerPathParams, x: number, y: number) {
+function drawBottomRightSmoothCorner(
+  path: Path,
+  corner: SmoothCornerPathParams,
+  x: number,
+  y: number
+) {
   if (corner.radius === 0) {
     path.lineTo(x, y + corner.p)
     return
   }
-  path.cubicTo(x, y + corner.a, x, y + corner.a + corner.b, x - corner.d, y + corner.a + corner.b + corner.c)
-  path.arcToRotated(corner.radius, corner.radius, 0, true, false, x - corner.p + corner.a + corner.b + corner.c, y + corner.p - corner.d)
-  path.cubicTo(x - corner.p + corner.a + corner.b, y + corner.p, x - corner.p + corner.a, y + corner.p, x - corner.p, y + corner.p)
+  path.cubicTo(
+    x,
+    y + corner.a,
+    x,
+    y + corner.a + corner.b,
+    x - corner.d,
+    y + corner.a + corner.b + corner.c
+  )
+  path.arcToRotated(
+    corner.radius,
+    corner.radius,
+    0,
+    true,
+    false,
+    x - corner.p + corner.a + corner.b + corner.c,
+    y + corner.p - corner.d
+  )
+  path.cubicTo(
+    x - corner.p + corner.a + corner.b,
+    y + corner.p,
+    x - corner.p + corner.a,
+    y + corner.p,
+    x - corner.p,
+    y + corner.p
+  )
 }
 
-function drawBottomLeftSmoothCorner(path: Path, corner: SmoothCornerPathParams, x: number, y: number) {
+function drawBottomLeftSmoothCorner(
+  path: Path,
+  corner: SmoothCornerPathParams,
+  x: number,
+  y: number
+) {
   if (corner.radius === 0) {
     path.lineTo(x - corner.p, y)
     return
   }
-  path.cubicTo(x - corner.a, y, x - corner.a - corner.b, y, x - corner.a - corner.b - corner.c, y - corner.d)
-  path.arcToRotated(corner.radius, corner.radius, 0, true, false, x - corner.p + corner.d, y - corner.p + corner.a + corner.b + corner.c)
-  path.cubicTo(x - corner.p, y - corner.p + corner.a + corner.b, x - corner.p, y - corner.p + corner.a, x - corner.p, y - corner.p)
+  path.cubicTo(
+    x - corner.a,
+    y,
+    x - corner.a - corner.b,
+    y,
+    x - corner.a - corner.b - corner.c,
+    y - corner.d
+  )
+  path.arcToRotated(
+    corner.radius,
+    corner.radius,
+    0,
+    true,
+    false,
+    x - corner.p + corner.d,
+    y - corner.p + corner.a + corner.b + corner.c
+  )
+  path.cubicTo(
+    x - corner.p,
+    y - corner.p + corner.a + corner.b,
+    x - corner.p,
+    y - corner.p + corner.a,
+    x - corner.p,
+    y - corner.p
+  )
 }
 
 function drawTopLeftSmoothCorner(path: Path, corner: SmoothCornerPathParams, x: number, y: number) {
@@ -189,9 +284,31 @@ function drawTopLeftSmoothCorner(path: Path, corner: SmoothCornerPathParams, x: 
     path.lineTo(x, y - corner.p)
     return
   }
-  path.cubicTo(x, y - corner.a, x, y - corner.a - corner.b, x + corner.d, y - corner.a - corner.b - corner.c)
-  path.arcToRotated(corner.radius, corner.radius, 0, true, false, x + corner.p - corner.a - corner.b - corner.c, y - corner.p + corner.d)
-  path.cubicTo(x + corner.p - corner.a - corner.b, y - corner.p, x + corner.p - corner.a, y - corner.p, x + corner.p, y - corner.p)
+  path.cubicTo(
+    x,
+    y - corner.a,
+    x,
+    y - corner.a - corner.b,
+    x + corner.d,
+    y - corner.a - corner.b - corner.c
+  )
+  path.arcToRotated(
+    corner.radius,
+    corner.radius,
+    0,
+    true,
+    false,
+    x + corner.p - corner.a - corner.b - corner.c,
+    y - corner.p + corner.d
+  )
+  path.cubicTo(
+    x + corner.p - corner.a - corner.b,
+    y - corner.p,
+    x + corner.p - corner.a,
+    y - corner.p,
+    x + corner.p,
+    y - corner.p
+  )
 }
 
 export function makeSmoothRRectPath(

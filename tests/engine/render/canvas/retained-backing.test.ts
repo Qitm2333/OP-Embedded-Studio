@@ -1,4 +1,5 @@
 import { expect, mock, test } from 'bun:test'
+
 import type { Canvas, Image as CKImage, Surface } from 'canvaskit-wasm'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'

@@ -10,8 +10,8 @@ import {
 import { initCanvasKit } from '#cli/headless'
 import type { SkiaRenderer } from '#core/canvas/renderer'
 import { renderText } from '#core/canvas/scene'
-import type { SceneNode } from '#core/scene-graph'
 import { buildParagraph } from '#core/canvas/text'
+import type { SceneNode } from '#core/scene-graph'
 import { fontManager } from '#core/text/fonts'
 
 import { expectDefined } from '#tests/helpers/assert'

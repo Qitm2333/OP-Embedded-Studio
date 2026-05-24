@@ -59,4 +59,3 @@ describe('computeAbsoluteBounds', () => {
     expect(result).toEqual({ x: 10, y: 20, width: 60, height: 60 })
   })
 })
-
