@@ -21,7 +21,22 @@ const TYPE_MAP: Partial<Record<string, NodeType>> = {
   vector: 'VECTOR',
   group: 'GROUP',
   section: 'SECTION',
-  component: 'COMPONENT'
+  component: 'COMPONENT',
+  div: 'FRAME',
+  main: 'FRAME',
+  header: 'FRAME',
+  footer: 'FRAME',
+  nav: 'FRAME',
+  article: 'FRAME',
+  aside: 'FRAME',
+  span: 'TEXT',
+  p: 'TEXT',
+  h1: 'TEXT',
+  h2: 'TEXT',
+  h3: 'TEXT',
+  h4: 'TEXT',
+  h5: 'TEXT',
+  h6: 'TEXT'
 }
 
 interface RenderOptions {
@@ -104,7 +119,13 @@ async function renderNode(graph: SceneGraph, tree: TreeNode, parentId: string): 
 
   if (isText) {
     const childText = tree.children.filter((c): c is string => typeof c === 'string').join('')
-    const propText = tree.props.text ?? tree.props.characters
+    const propText =
+      tree.props.text ??
+      tree.props.characters ??
+      tree.props.content ??
+      tree.props.label ??
+      tree.props.value ??
+      tree.props.title
     if (childText) overrides.text = childText
     else if (typeof propText === 'string') overrides.text = propText
   }

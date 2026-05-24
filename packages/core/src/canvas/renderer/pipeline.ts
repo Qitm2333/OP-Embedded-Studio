@@ -176,7 +176,11 @@ export function render(
     canvas.scale(r.dpr, r.dpr)
 
     p.beginPhase('render:scene')
-    if (layer === 'scene' && !hasVolatileOverlays && renderSceneBacking(r, canvas, graph, sceneVersion)) {
+    if (
+      layer === 'scene' &&
+      !hasVolatileOverlays &&
+      renderSceneBacking(r, canvas, graph, sceneVersion)
+    ) {
       p.setScenePictureMode('hit', 'backing')
     } else {
       canvas.translate(r.panX, r.panY)

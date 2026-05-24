@@ -70,6 +70,40 @@ function parseStroke(value: string, width: number): Stroke {
   }
 }
 
+function numberFromPx(value: unknown): number | undefined {
+  if (typeof value === 'number') return value
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  if (!trimmed.endsWith('px')) return undefined
+  const parsed = Number.parseFloat(trimmed.slice(0, -2))
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+function normalizeStyleProps(props: Record<string, unknown>): Record<string, unknown> {
+  const style = props.style
+  if (style === null || typeof style !== 'object' || Array.isArray(style)) return props
+
+  const source = style as Record<string, unknown>
+  const normalized = { ...props }
+  const copyIfUnset = (from: string, to: string, convert?: (value: unknown) => unknown): void => {
+    if (normalized[to] !== undefined || source[from] === undefined) return
+    normalized[to] = convert ? convert(source[from]) : source[from]
+  }
+
+  copyIfUnset('background', 'bg')
+  copyIfUnset('backgroundColor', 'bg')
+  copyIfUnset('color', 'color')
+  copyIfUnset('borderColor', 'stroke')
+  copyIfUnset('borderWidth', 'strokeWidth', numberFromPx)
+  copyIfUnset('borderRadius', 'rounded', numberFromPx)
+  copyIfUnset('fontSize', 'fontSize', numberFromPx)
+  copyIfUnset('fontWeight', 'fontWeight')
+  copyIfUnset('width', 'width', numberFromPx)
+  copyIfUnset('height', 'height', numberFromPx)
+  copyIfUnset('opacity', 'opacity')
+  return normalized
+}
+
 export function applySizeOverrides(
   props: Record<string, unknown>,
   o: Partial<SceneNode>,
@@ -124,21 +158,23 @@ function applyFillSizing(
   }
 }
 
-function applyVisualOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
-  const bg = props.bg ?? props.fill
-  if (typeof bg === 'string') {
-    o.fills = [colorToFill(bg)]
-  }
+function applyFillOverride(props: Record<string, unknown>, o: Partial<SceneNode>): void {
+  const bg = props.bg ?? props.fill ?? props.background ?? props.backgroundColor
+  if (typeof bg === 'string') o.fills = [colorToFill(bg)]
+}
 
-  if (typeof props.stroke === 'string') {
-    const strokeWidth = (props.strokeWidth as number | undefined) ?? 1
-    o.strokes = [parseStroke(props.stroke, strokeWidth)]
-  }
+function applyStrokeOverride(props: Record<string, unknown>, o: Partial<SceneNode>): void {
+  const stroke = props.stroke ?? props.border ?? props.borderColor
+  if (typeof stroke !== 'string') return
+  const strokeWidth =
+    (props.strokeWidth as number | undefined) ?? (props.borderWidth as number | undefined) ?? 1
+  o.strokes = [parseStroke(stroke, strokeWidth)]
+}
 
-  const rounded = props.rounded ?? props.cornerRadius
-  if (typeof rounded === 'number') {
-    o.cornerRadius = rounded
-  }
+function applyCornerOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
+  const rounded = props.rounded ?? props.cornerRadius ?? props.borderRadius
+  if (typeof rounded === 'number') o.cornerRadius = rounded
+
   if (
     props.roundedTL !== undefined ||
     props.roundedTR !== undefined ||
@@ -151,7 +187,14 @@ function applyVisualOverrides(props: Record<string, unknown>, o: Partial<SceneNo
     if (props.roundedBL !== undefined) o.bottomLeftRadius = props.roundedBL as number
     if (props.roundedBR !== undefined) o.bottomRightRadius = props.roundedBR as number
   }
+
   if (props.cornerSmoothing !== undefined) o.cornerSmoothing = props.cornerSmoothing as number
+}
+
+function applyVisualOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
+  applyFillOverride(props, o)
+  applyStrokeOverride(props, o)
+  applyCornerOverrides(props, o)
 
   if (props.opacity !== undefined) o.opacity = props.opacity as number
   applyTransformOverrides(props, o)
@@ -395,10 +438,7 @@ function applyTextStyleOverrides(props: Record<string, unknown>, o: Partial<Scen
   applyTextAlignmentOverrides(props, o)
 }
 
-function applyTextAlignmentOverrides(
-  props: Record<string, unknown>,
-  o: Partial<SceneNode>
-): void {
+function applyTextAlignmentOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
   const textAlign = props.textAlign ?? props.textAlignHorizontal ?? props.textHorizontalAlignment
   if (typeof textAlign === 'string') {
     o.textAlignHorizontal = TEXT_ALIGN_ALIAS_MAP[textAlign.toLowerCase()] ?? 'LEFT'
@@ -486,6 +526,7 @@ export function propsToOverrides(
   isText: boolean,
   parentLayout: SceneNode['layoutMode']
 ): Partial<SceneNode> {
+  props = normalizeStyleProps(props)
   const o: Partial<SceneNode> = {}
 
   if (props.name) o.name = props.name as string

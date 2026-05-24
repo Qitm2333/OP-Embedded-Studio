@@ -21,7 +21,10 @@ describe('editor scoped hit testing', () => {
     })
 
     editor.state.enteredContainerId = frame.id
-    editor.setCanvasKit({} as Parameters<typeof editor.setCanvasKit>[0], {} as Parameters<typeof editor.setCanvasKit>[1])
+    editor.setCanvasKit(
+      {} as Parameters<typeof editor.setCanvasKit>[0],
+      {} as Parameters<typeof editor.setCanvasKit>[1]
+    )
 
     expect(editor.hitTestAtPoint(130, 130)?.id).toBe(child.id)
   })

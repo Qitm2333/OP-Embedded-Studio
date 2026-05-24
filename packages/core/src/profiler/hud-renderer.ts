@@ -155,8 +155,16 @@ export class HudRenderer {
 
     const pictureLabel = stats.scenePictureMode === 'record' ? 'record' : 'picture'
     const pictureTime =
-      stats.scenePictureMode === 'record' ? stats.scenePictureRecordTime : stats.scenePictureDrawTime
-    canvas.drawText(`${pictureLabel}: ${pictureTime.toFixed(1)}ms`, col1, y, this.textPaint, this.hudFont)
+      stats.scenePictureMode === 'record'
+        ? stats.scenePictureRecordTime
+        : stats.scenePictureDrawTime
+    canvas.drawText(
+      `${pictureLabel}: ${pictureTime.toFixed(1)}ms`,
+      col1,
+      y,
+      this.textPaint,
+      this.hudFont
+    )
     canvas.drawText(`flush: ${stats.flushTime.toFixed(1)}ms`, col2, y, this.textPaint, this.hudFont)
 
     if (visiblePhases.length > 0) {

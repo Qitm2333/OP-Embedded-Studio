@@ -52,6 +52,30 @@ describe('renderTree', () => {
     expect(node.fills.length).toBe(1)
   })
 
+  it('renders common React aliases that models often produce', async () => {
+    const g = makeSceneGraph()
+    const result = await renderJSX(
+      g,
+      `<div name="Card" style={{ width: 320, height: 120, backgroundColor: '#2563EB', borderRadius: 16 }}>
+        <Text name="Heading" content="Visible content" style={{ color: '#FFFFFF', fontSize: 20, fontWeight: 700 }} />
+      </div>`
+    )
+
+    const card = getNodeOrThrow(g, result[0].id)
+    expect(card.type).toBe('FRAME')
+    expect(card.width).toBe(320)
+    expect(card.height).toBe(120)
+    expect(card.cornerRadius).toBe(16)
+    expect(card.fills.length).toBe(1)
+
+    const heading = getNodeOrThrow(g, childIdAt(card, 0))
+    expect(heading.type).toBe('TEXT')
+    expect(heading.text).toBe('Visible content')
+    expect(heading.fontSize).toBe(20)
+    expect(heading.fontWeight).toBe(700)
+    expect(heading.fills.length).toBe(1)
+  })
+
   it('renders nested structure', async () => {
     const g = makeSceneGraph()
     const tree = Frame({

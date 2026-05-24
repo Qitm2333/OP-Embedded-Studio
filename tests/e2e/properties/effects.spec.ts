@@ -148,7 +148,9 @@ test('blend modes', async () => {
       width: 324,
       height: 180,
       cornerRadius: 20,
-      fills: [{ type: 'SOLID', color: { r: 0.95, g: 0.95, b: 0.97, a: 1 }, visible: true, opacity: 1 }]
+      fills: [
+        { type: 'SOLID', color: { r: 0.95, g: 0.95, b: 0.97, a: 1 }, visible: true, opacity: 1 }
+      ]
     })
     store.graph.createNode('RECTANGLE', pageId, {
       name: 'Multiply Base',
@@ -157,7 +159,9 @@ test('blend modes', async () => {
       width: 96,
       height: 96,
       cornerRadius: 20,
-      fills: [{ type: 'SOLID', color: { r: 1, g: 0.23, b: 0.2, a: 0.95 }, visible: true, opacity: 1 }]
+      fills: [
+        { type: 'SOLID', color: { r: 1, g: 0.23, b: 0.2, a: 0.95 }, visible: true, opacity: 1 }
+      ]
     })
     store.graph.createNode('RECTANGLE', pageId, {
       name: 'Multiply Layer',
@@ -167,7 +171,9 @@ test('blend modes', async () => {
       height: 96,
       cornerRadius: 20,
       blendMode: 'MULTIPLY',
-      fills: [{ type: 'SOLID', color: { r: 0.12, g: 0.45, b: 1, a: 0.92 }, visible: true, opacity: 1 }]
+      fills: [
+        { type: 'SOLID', color: { r: 0.12, g: 0.45, b: 1, a: 0.92 }, visible: true, opacity: 1 }
+      ]
     })
     store.graph.createNode('ELLIPSE', pageId, {
       name: 'Screen Layer',
@@ -176,7 +182,9 @@ test('blend modes', async () => {
       width: 104,
       height: 104,
       blendMode: 'SCREEN',
-      fills: [{ type: 'SOLID', color: { r: 0.05, g: 0.75, b: 0.45, a: 0.8 }, visible: true, opacity: 1 }]
+      fills: [
+        { type: 'SOLID', color: { r: 0.05, g: 0.75, b: 0.45, a: 0.8 }, visible: true, opacity: 1 }
+      ]
     })
     store.graph.createNode('RECTANGLE', pageId, {
       name: 'Overlay Multi Fill',
@@ -215,7 +223,9 @@ test('alpha mask stack', async () => {
       width: 324,
       height: 180,
       cornerRadius: 20,
-      fills: [{ type: 'SOLID', color: { r: 0.08, g: 0.1, b: 0.18, a: 1 }, visible: true, opacity: 1 }]
+      fills: [
+        { type: 'SOLID', color: { r: 0.08, g: 0.1, b: 0.18, a: 1 }, visible: true, opacity: 1 }
+      ]
     })
     store.graph.createNode('RECTANGLE', frame.id, {
       name: 'Unmasked Baseline',
@@ -224,7 +234,9 @@ test('alpha mask stack', async () => {
       width: 58,
       height: 132,
       cornerRadius: 12,
-      fills: [{ type: 'SOLID', color: { r: 0.98, g: 0.75, b: 0.18, a: 1 }, visible: true, opacity: 1 }]
+      fills: [
+        { type: 'SOLID', color: { r: 0.98, g: 0.75, b: 0.18, a: 1 }, visible: true, opacity: 1 }
+      ]
     })
     store.graph.createNode('ELLIPSE', frame.id, {
       name: 'Alpha Mask',
@@ -243,7 +255,9 @@ test('alpha mask stack', async () => {
       width: 220,
       height: 38,
       rotation: -12,
-      fills: [{ type: 'SOLID', color: { r: 0.08, g: 0.73, b: 0.73, a: 1 }, visible: true, opacity: 1 }]
+      fills: [
+        { type: 'SOLID', color: { r: 0.08, g: 0.73, b: 0.73, a: 1 }, visible: true, opacity: 1 }
+      ]
     })
     store.graph.createNode('RECTANGLE', frame.id, {
       name: 'Masked Purple Stripe',
@@ -252,7 +266,9 @@ test('alpha mask stack', async () => {
       width: 222,
       height: 42,
       rotation: -12,
-      fills: [{ type: 'SOLID', color: { r: 0.58, g: 0.27, b: 0.95, a: 1 }, visible: true, opacity: 1 }]
+      fills: [
+        { type: 'SOLID', color: { r: 0.58, g: 0.27, b: 0.95, a: 1 }, visible: true, opacity: 1 }
+      ]
     })
     store.graph.createNode('RECTANGLE', frame.id, {
       name: 'Masked Pink Stripe',
@@ -282,7 +298,9 @@ test('smoothed corners with blended shadow', async () => {
       width: 272,
       height: 168,
       cornerRadius: 20,
-      fills: [{ type: 'SOLID', color: { r: 0.08, g: 0.1, b: 0.18, a: 1 }, visible: true, opacity: 1 }]
+      fills: [
+        { type: 'SOLID', color: { r: 0.08, g: 0.1, b: 0.18, a: 1 }, visible: true, opacity: 1 }
+      ]
     })
     store.graph.createNode('RECTANGLE', pageId, {
       name: 'Uniform Smooth Radius',
@@ -292,7 +310,9 @@ test('smoothed corners with blended shadow', async () => {
       height: 88,
       cornerRadius: 28,
       cornerSmoothing: 0.75,
-      fills: [{ type: 'SOLID', color: { r: 0.58, g: 0.27, b: 0.95, a: 1 }, visible: true, opacity: 1 }],
+      fills: [
+        { type: 'SOLID', color: { r: 0.58, g: 0.27, b: 0.95, a: 1 }, visible: true, opacity: 1 }
+      ],
       effects: [
         {
           type: 'DROP_SHADOW',
@@ -317,7 +337,9 @@ test('smoothed corners with blended shadow', async () => {
       bottomRightRadius: 34,
       bottomLeftRadius: 10,
       cornerSmoothing: 1,
-      fills: [{ type: 'SOLID', color: { r: 0.08, g: 0.73, b: 0.73, a: 1 }, visible: true, opacity: 1 }],
+      fills: [
+        { type: 'SOLID', color: { r: 0.08, g: 0.73, b: 0.73, a: 1 }, visible: true, opacity: 1 }
+      ],
       strokes: [
         {
           color: { r: 1, g: 1, b: 1, a: 0.8 },

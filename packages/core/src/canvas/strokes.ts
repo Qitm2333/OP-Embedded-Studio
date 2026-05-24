@@ -205,7 +205,14 @@ export function drawRRectStrokeWithAlign(
   stroke: Stroke
 ): void {
   if (nodeHasSmoothCorners(node)) {
-    drawStrokeWithAlign(r, canvas, node, r.ck.LTRBRect(0, 0, node.width, node.height), true, stroke.align)
+    drawStrokeWithAlign(
+      r,
+      canvas,
+      node,
+      r.ck.LTRBRect(0, 0, node.width, node.height),
+      true,
+      stroke.align
+    )
     return
   }
 

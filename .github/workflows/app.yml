@@ -18,9 +18,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: ./.github/actions/setup-bun
 
-      - run: bun install --frozen-lockfile
+      - name: Format check
+        run: bun run format:check
 
       - run: bun run build
 

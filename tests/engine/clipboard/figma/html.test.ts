@@ -10,7 +10,9 @@ import {
 
 import { expectDefined } from '#tests/helpers/assert'
 
-function expectFigmaEditableTextDefaults(textNode: NonNullable<Awaited<ReturnType<typeof parseFigmaClipboard>>>['nodes'][number]) {
+function expectFigmaEditableTextDefaults(
+  textNode: NonNullable<Awaited<ReturnType<typeof parseFigmaClipboard>>>['nodes'][number]
+) {
   expect(textNode.textUserLayoutVersion).toBe(5)
   expect(textNode.textExplicitLayoutVersion).toBe(1)
   expect(textNode.textBidiVersion).toBe(1)
@@ -73,7 +75,9 @@ describe('buildFigmaClipboardHTML', () => {
     expectFigmaEditableTextDefaults(textNode)
     expect(textNode.derivedTextData?.glyphs).toBeDefined()
     expect(textNode.derivedTextData?.baselines?.length).toBeGreaterThan(0)
-    expect(textNode.derivedTextData?.logicalIndexToCharacterOffsetMap?.length).toBe(text.text.length + 1)
+    expect(textNode.derivedTextData?.logicalIndexToCharacterOffsetMap?.length).toBe(
+      text.text.length + 1
+    )
     expect(textNode.derivedTextData?.derivedLines).toEqual([{ directionality: 'LTR' }])
   })
 

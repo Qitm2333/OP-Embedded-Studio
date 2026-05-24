@@ -49,11 +49,17 @@ const SUPPORTED_PROPS = new Set([
   'pl',
   'bg',
   'fill',
+  'background',
+  'backgroundColor',
   'stroke',
+  'border',
+  'borderColor',
   'strokeWidth',
+  'borderWidth',
   'strokeAlign',
   'strokeDash',
   'rounded',
+  'borderRadius',
   'roundedTL',
   'roundedTR',
   'roundedBL',
@@ -76,6 +82,9 @@ const SUPPORTED_PROPS = new Set([
   'color',
   'text',
   'characters',
+  'content',
+  'value',
+  'title',
   'textAlign',
   'textAlignHorizontal',
   'textHorizontalAlignment',
@@ -100,7 +109,8 @@ const SUPPORTED_PROPS = new Set([
   'points',
   'pointCount',
   'innerRadius',
-  'label'
+  'label',
+  'style'
 ])
 
 function stripHtmlComments(jsxString: string): string {

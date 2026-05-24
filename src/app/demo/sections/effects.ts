@@ -413,7 +413,9 @@ export function createEffectsSection(store: EditorStore) {
     cornerRadius: 22,
     cornerSmoothing: 0.85,
     fills: [solid({ r: 0.58, g: 0.27, b: 0.95, a: 0.7 })],
-    effects: [{ ...dropShadow(0, 0, 28, 0, { r: 0.56, g: 0.33, b: 1, a: 0.72 }), blendMode: 'SCREEN' }]
+    effects: [
+      { ...dropShadow(0, 0, 28, 0, { r: 0.56, g: 0.33, b: 1, a: 0.72 }), blendMode: 'SCREEN' }
+    ]
   })
   const effectBlendText = store.createShape('TEXT', 184, 34, 88, 34, effectBlendCard)
   graph.updateNode(effectBlendText, {

@@ -16,9 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
-
-      - run: bun install --frozen-lockfile
+      - uses: ./.github/actions/setup-bun
 
       - run: bun run --filter @open-pencil/docs build
 
