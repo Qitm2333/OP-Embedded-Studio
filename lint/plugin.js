@@ -1692,6 +1692,108 @@ const noBroadUnknownTypeAssertions = {
   }
 }
 
+function typeNameText(node) {
+  if (!node) return 'unknown'
+  if (node.type === 'Identifier') return node.name
+  if (node.type === 'TSQualifiedName') return `${typeNameText(node.left)}.${typeNameText(node.right)}`
+  return node.type
+}
+
+function canonicalType(node) {
+  if (!node) return 'unknown'
+  switch (node.type) {
+    case 'TSStringKeyword':
+      return 'string'
+    case 'TSNumberKeyword':
+      return 'number'
+    case 'TSBooleanKeyword':
+      return 'boolean'
+    case 'TSUnknownKeyword':
+      return 'unknown'
+    case 'TSNullKeyword':
+      return 'null'
+    case 'TSUndefinedKeyword':
+      return 'undefined'
+    case 'TSLiteralType':
+      return `literal:${node.literal?.value ?? node.literal?.type}`
+    case 'TSArrayType':
+      return `array<${canonicalType(node.elementType)}>`
+    case 'TSTypeReference': {
+      const params = typeParameterNodes(node).map(canonicalType).join(',')
+      return `ref:${typeNameText(node.typeName)}<${params}>`
+    }
+    case 'TSUnionType':
+      return `union<${node.types.map(canonicalType).sort().join('|')}>`
+    case 'TSTypeLiteral':
+      return `object{${canonicalMembers(node.members)}}`
+    case 'TSParenthesizedType':
+      return canonicalType(node.typeAnnotation)
+    case 'TSFunctionType':
+      return 'function'
+    default:
+      return node.type
+  }
+}
+
+function propertyKeyName(key) {
+  if (key?.type === 'Identifier') return key.name
+  if (key?.type === 'Literal') return String(key.value)
+  return null
+}
+
+function canonicalMember(member) {
+  if (member.type === 'TSIndexSignature') {
+    const param = member.parameters?.[0]
+    const keyType = param?.typeAnnotation?.typeAnnotation
+    return `index:${canonicalType(keyType)}:${canonicalType(member.typeAnnotation?.typeAnnotation)}`
+  }
+  if (member.type !== 'TSPropertySignature') return null
+  const name = propertyKeyName(member.key)
+  if (!name) return null
+  const optional = member.optional ? '?' : ''
+  return `prop:${name}${optional}:${canonicalType(member.typeAnnotation?.typeAnnotation)}`
+}
+
+function canonicalMembers(members) {
+  return (members ?? []).map(canonicalMember).filter(Boolean).sort().join(';')
+}
+
+function namedTypeShape(node) {
+  if (node.type === 'TSInterfaceDeclaration') return canonicalMembers(node.body?.body)
+  if (node.type === 'TSTypeAliasDeclaration' && node.typeAnnotation?.type === 'TSTypeLiteral') {
+    return canonicalMembers(node.typeAnnotation.members)
+  }
+  return null
+}
+
+const noDuplicateTypeShapes = {
+  meta: {
+    docs: {
+      description: 'Disallow duplicate local object type/interface shapes in one file'
+    }
+  },
+  create(context) {
+    const seen = new Map()
+    return {
+      'TSInterfaceDeclaration, TSTypeAliasDeclaration'(node) {
+        const shape = namedTypeShape(node)
+        if (!shape) return
+        const memberCount = shape ? shape.split(';').filter(Boolean).length : 0
+        if (memberCount < 2) return
+        const first = seen.get(shape)
+        if (!first) {
+          seen.set(shape, node)
+          return
+        }
+        context.report({
+          node,
+          message: 'Duplicate object type shape. Reuse the existing named type instead of redeclaring the same members.'
+        })
+      }
+    }
+  }
+}
+
 const noLocalJsonObjectAliases = {
   meta: {
     docs: {
@@ -1770,6 +1872,7 @@ const plugin = {
     'no-unknown-record-double-cast': noUnknownRecordDoubleCast,
     'no-broad-unknown-type-assertions': noBroadUnknownTypeAssertions,
     'no-local-json-object-aliases': noLocalJsonObjectAliases,
+    'no-duplicate-type-shapes': noDuplicateTypeShapes,
     'no-ts-suppression-comments': noTsSuppressionComments,
     'no-function-type': noFunctionType,
     'no-reflect-delete-global-this-outside-tests': noReflectDeleteGlobalThisOutsideTests,

@@ -4,18 +4,18 @@ import type { Matrix, Vector } from '#core/types'
 
 import type { ProtectionMap } from './patches'
 
-export interface SymbolOverride {
-  guidPath?: { guids?: GUID[] }
-  overriddenSymbolID?: GUID
-  componentPropAssignments?: ComponentPropAssignment[]
+export interface VariableConsumptionMapFields {
   variableConsumptionMap?: { entries?: VariableConsumptionEntry[] }
   [key: string]: unknown
 }
 
-export interface SymbolOverrideFields {
-  variableConsumptionMap?: { entries?: VariableConsumptionEntry[] }
-  [key: string]: unknown
+export interface SymbolOverride extends VariableConsumptionMapFields {
+  guidPath?: { guids?: GUID[] }
+  overriddenSymbolID?: GUID
+  componentPropAssignments?: ComponentPropAssignment[]
 }
+
+export type SymbolOverrideFields = VariableConsumptionMapFields
 
 export interface SymbolData {
   symbolID?: GUID

@@ -67,12 +67,14 @@ export function rotatedBBox(
   return { left, right, top, bottom, centerX: (left + right) / 2, centerY: (top + bottom) / 2 }
 }
 
-interface BoundsAccumulator {
+export interface VisualBounds {
   minX: number
   minY: number
   maxX: number
   maxY: number
 }
+
+type BoundsAccumulator = VisualBounds
 
 function createBoundsAccumulator(): BoundsAccumulator {
   return { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
@@ -207,13 +209,6 @@ export function computeVisualBounds(
   }
 
   return boundsToRect(bounds)
-}
-
-export interface VisualBounds {
-  minX: number
-  minY: number
-  maxX: number
-  maxY: number
 }
 
 export interface VisualBoundsNode {
