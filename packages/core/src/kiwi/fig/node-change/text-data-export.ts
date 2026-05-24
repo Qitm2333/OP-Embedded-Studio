@@ -2,8 +2,8 @@ import type { NodeChange, Paint } from '#core/kiwi/fig/codec'
 import type { CharacterStyleOverride, SceneNode } from '#core/scene-graph'
 import { normalizeFontFamily, weightToFigmaStyle } from '#core/text/fonts'
 
-import { applyFontFeaturesToKiwi } from './font-features'
-import { stringToFigmaAxisTag } from './font-variations'
+import { applyFontFeaturesToKiwi } from './font/features'
+import { stringToFigmaAxisTag } from './font/variations'
 
 export function fontVariationToKiwi(variation: SceneNode['fontVariations'][number]) {
   const axisTag = stringToFigmaAxisTag(variation.axis)

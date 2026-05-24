@@ -285,7 +285,7 @@ export type FigmaLayoutMetadata = Partial<
       | 'stackCounterSpacing',
       number
     > &
-    Record<'bordersTakeSpace', boolean>
+    Record<'bordersTakeSpace' | 'stackReverseZIndex', boolean>
 >
 
 export interface SceneNode {
@@ -457,6 +457,10 @@ export interface Variable {
   valuesByMode: Record<string, VariableValue>
   description: string
   hiddenFromPublishing: boolean
+  /** Published library key (from NodeChange.key). Used for assetRef resolution in colorVar. */
+  key?: string
+  /** Published library version (from NodeChange.version). Used for assetRef resolution in colorVar. */
+  version?: string
 }
 
 export interface VariableCollectionMode {
