@@ -222,7 +222,17 @@ function compareSceneProps(
 ): void {
   const errors: Mismatch[] = []
   const generation = label.startsWith('G1') ? 1 : 0
-  const opts: CompareOptions = { aNodes, bNodes, aGraph, bGraph, errors, fixture, verifiers, label, generation }
+  const opts: CompareOptions = {
+    aNodes,
+    bNodes,
+    aGraph,
+    bGraph,
+    errors,
+    fixture,
+    verifiers,
+    label,
+    generation
+  }
 
   for (const [p, aNode] of aNodes) {
     const bNode = bNodes.get(p)
@@ -564,9 +574,13 @@ function verifyFixture(spec: FixtureSpec): void {
       compareRawNodeFields(spec, g1Graph, g2Graph, g1, g2, 'G1->G2')
     })
 
-    test.todo('BUG: corner radius 999 sentinel lost for non-pill nodes on scene import (40 nodes, raw data preserved)')
+    test.todo(
+      'BUG: corner radius 999 sentinel lost for non-pill nodes on scene import (40 nodes, raw data preserved)'
+    )
     test.todo('BUG: componentPropDefs verifier rejects 9 instances (verifier logic gap)')
-    test.todo('BUG: derivedTextData baseline precision differs from raw (14 instances, font metrics)')
+    test.todo(
+      'BUG: derivedTextData baseline precision differs from raw (14 instances, font metrics)'
+    )
   })
 }
 

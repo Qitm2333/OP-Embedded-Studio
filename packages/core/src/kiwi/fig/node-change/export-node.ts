@@ -332,7 +332,12 @@ function applyRawFigmaNodeFields(
       continue
     }
     // Also convert colorVar.assetRef in raw effects (e.g. shadow color variables)
-    if (key === 'effects' && node.source.id && context.assetRefToVarGuid && context.assetRefToVarGuid.size > 0) {
+    if (
+      key === 'effects' &&
+      node.source.id &&
+      context.assetRefToVarGuid &&
+      context.assetRefToVarGuid.size > 0
+    ) {
       const converted = convertColorVarAssetRefs(materialized[key], context.assetRefToVarGuid)
       ;(nc as Record<string, unknown>)[key] = converted
       continue
@@ -351,10 +356,7 @@ function applyRawFigmaNodeFields(
  * reference resolvable regardless of whether key/version is present on the
  * VARIABLE NodeChange.
  */
-function convertColorVarAssetRefs(
-  paints: unknown,
-  assetRefToVarGuid: Map<string, GUID>
-): unknown {
+function convertColorVarAssetRefs(paints: unknown, assetRefToVarGuid: Map<string, GUID>): unknown {
   if (!Array.isArray(paints)) return paints
   const result = paints.map((paint: Record<string, unknown>) => {
     const colorVar = paint.colorVar as Record<string, unknown> | undefined
@@ -368,9 +370,7 @@ function convertColorVarAssetRefs(
     const assetRef = alias.assetRef as { key: string; version?: string } | undefined
     if (!assetRef?.key) return paint
     // Look up by key@version first, then by key alone
-    const lookupKey = assetRef.version
-      ? `${assetRef.key}@${assetRef.version}`
-      : assetRef.key
+    const lookupKey = assetRef.version ? `${assetRef.key}@${assetRef.version}` : assetRef.key
     const guid = assetRefToVarGuid.get(lookupKey) ?? assetRefToVarGuid.get(assetRef.key)
     if (!guid) return paint
     return {

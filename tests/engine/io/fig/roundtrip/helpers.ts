@@ -65,13 +65,9 @@ function verifyFontDigest(
 ): void {
   if (amDigest && bmDigest) {
     const amHex =
-      typeof amDigest === 'string'
-        ? amDigest
-        : Buffer.from(amDigest as Uint8Array).toString('hex')
+      typeof amDigest === 'string' ? amDigest : Buffer.from(amDigest as Uint8Array).toString('hex')
     const bmHex =
-      typeof bmDigest === 'string'
-        ? bmDigest
-        : Buffer.from(bmDigest as Uint8Array).toString('hex')
+      typeof bmDigest === 'string' ? bmDigest : Buffer.from(bmDigest as Uint8Array).toString('hex')
     if (amHex !== bmHex) {
       ctx.errors.push({
         path: ctx.path,
@@ -82,12 +78,7 @@ function verifyFontDigest(
   }
 }
 
-function verifyFontLineHeight(
-  amLH: unknown,
-  bmLH: unknown,
-  i: number,
-  ctx: VerifierContext
-): void {
+function verifyFontLineHeight(amLH: unknown, bmLH: unknown, i: number, ctx: VerifierContext): void {
   const amLineHeight = typeof amLH === 'number' ? amLH : 1.2
   const bmLineHeight = typeof bmLH === 'number' ? bmLH : 1.2
   if (bmLineHeight !== 1.2 && Math.abs(amLineHeight - bmLineHeight) > 0.05) {
@@ -277,8 +268,7 @@ function verifyAEntries(
       const found = bEntries.find((entryB) => {
         const aliasB = entryB.variableData?.value?.alias
         return (
-          aliasB?.assetRef &&
-          JSON.stringify(aliasB.assetRef) === JSON.stringify(aliasA.assetRef)
+          aliasB?.assetRef && JSON.stringify(aliasB.assetRef) === JSON.stringify(aliasA.assetRef)
         )
       })
       if (found && found.variableField !== entryA.variableField) {
@@ -351,8 +341,12 @@ function verifyVarAlias(a: unknown, b: unknown): boolean {
   const bVal = b as Record<string, unknown> | undefined
   if (!aVal && !bVal) return true
   if (!aVal || !bVal) return false
-  const aAlias = (aVal.value as Record<string, unknown>)?.alias as Record<string, unknown> | undefined
-  const bAlias = (bVal.value as Record<string, unknown>)?.alias as Record<string, unknown> | undefined
+  const aAlias = (aVal.value as Record<string, unknown>)?.alias as
+    | Record<string, unknown>
+    | undefined
+  const bAlias = (bVal.value as Record<string, unknown>)?.alias as
+    | Record<string, unknown>
+    | undefined
   const aGuid = aAlias?.guid
   const bGuid = bAlias?.guid
   const aRef = aAlias?.assetRef
@@ -555,10 +549,13 @@ export const RAW_VERIFIERS = new Map<string, Verifier>([
       return ctx.b === '' || ctx.a === ctx.b
     }
   ],
-  ['postscript', (ctx) => {
-    if (isIdempotent(ctx)) return JSON.stringify(ctx.a) === JSON.stringify(ctx.b)
-    return ctx.b === '' || ctx.a === ctx.b
-  }],
+  [
+    'postscript',
+    (ctx) => {
+      if (isIdempotent(ctx)) return JSON.stringify(ctx.a) === JSON.stringify(ctx.b)
+      return ctx.b === '' || ctx.a === ctx.b
+    }
+  ],
   ['textExplicitLayoutVersion', defaultEqual(1)],
   [
     'textUserLayoutVersion',
@@ -586,8 +583,11 @@ export const RAW_VERIFIERS = new Map<string, Verifier>([
       return verifyVarAlias(ctx.a, ctx.b)
     }
   ],
-  ['opacityVar', (ctx) => {
-    if (isIdempotent(ctx)) return JSON.stringify(ctx.a) === JSON.stringify(ctx.b)
-    return verifyVarAlias(ctx.a, ctx.b)
-  }]
+  [
+    'opacityVar',
+    (ctx) => {
+      if (isIdempotent(ctx)) return JSON.stringify(ctx.a) === JSON.stringify(ctx.b)
+      return verifyVarAlias(ctx.a, ctx.b)
+    }
+  ]
 ])
