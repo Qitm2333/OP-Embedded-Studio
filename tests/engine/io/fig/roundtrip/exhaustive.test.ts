@@ -61,8 +61,8 @@ const SPECS: FixtureSpec[] = [
     thumbnailHeight: 239,
     imageCount: 3,
     figKiwiVersion: 101,
-    g1ExportSize: 595922,
-    g2ExportSize: 595922
+    g1ExportSize: 594522,
+    g2ExportSize: 594522
   }
 ]
 
@@ -587,9 +587,6 @@ function verifyFixture(spec: FixtureSpec): void {
 
     test.todo(
       'BUG: corner radius 999 sentinel lost for non-pill nodes on scene import (40 nodes, raw data preserved)'
-    )
-    test.todo(
-      'BUG: derivedTextData baseline precision differs from raw (14 instances, font metrics)'
     )
   })
 }

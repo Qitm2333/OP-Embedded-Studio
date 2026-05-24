@@ -342,6 +342,10 @@ function applyRawFigmaNodeFields(
       ;(nc as Record<string, unknown>)[key] = converted
       continue
     }
+    if (key === 'derivedTextData' && node.source.id) {
+      ;(nc as Record<string, unknown>)[key] = materialized[key]
+      continue
+    }
     // Skip any key already set on nc — explicit serialization takes priority
     if (key in (nc as Record<string, unknown>)) continue
     ;(nc as Record<string, unknown>)[key] = materialized[key]
