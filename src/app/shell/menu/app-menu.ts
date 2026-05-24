@@ -27,8 +27,24 @@ function isSeparator(entry: AppMenuEntry): entry is Extract<AppMenuEntry, { type
 export function useAppMenu() {
   const store = useEditorStore()
   const { menuItem: commandMenuItem } = useEditorCommands()
-  const { locale, availableLocales, localeLabels, setLocale } = useI18n()
+  const { menu, locale, availableLocales, localeLabels, setLocale } = useI18n()
   const { theme, setTheme } = useAppTheme()
+
+  const translatedMenuItemLabels: Partial<Record<string, keyof typeof menu.value>> = {
+    new: 'new',
+    open: 'open',
+    save: 'save',
+    'save-as': 'saveAs',
+    'export-selection': 'exportSelection',
+    autosave: 'autosave',
+    close: 'closeTab',
+    copy: 'copy',
+    cut: 'cut',
+    paste: 'paste',
+    'paste-to-replace': 'pasteToReplace',
+    language: 'language',
+    profiler: 'profiler'
+  }
 
   const languageMenu = computed<MenuEntry[]>(() =>
     availableLocales.map((code) => ({
@@ -99,12 +115,17 @@ export function useAppMenu() {
     }
   }
 
+  function menuLabel(entry: AppMenuActionItem): string {
+    const key = translatedMenuItemLabels[entry.id]
+    return key ? menu.value[key] : entry.label
+  }
+
   function buildEntry(entry: AppMenuEntry): MenuEntry | null {
     if (!isVisible(entry)) return null
     if (isSeparator(entry)) return { separator: true }
 
     if (entry.id === 'language') {
-      return { label: entry.label, sub: languageMenu.value }
+      return { label: menuLabel(entry), sub: languageMenu.value }
     }
 
     if (entry.command) {
@@ -112,7 +133,7 @@ export function useAppMenu() {
     }
 
     return {
-      label: entry.label,
+      label: menuLabel(entry),
       shortcut: appMenuShortcutLabel(entry.id),
       action: itemAction(entry),
       checked: checked(entry),
@@ -121,10 +142,15 @@ export function useAppMenu() {
     }
   }
 
+  function groupLabel(group: AppMenuGroupSchema): string {
+    const key = group.label.toLowerCase() as keyof typeof menu.value
+    return menu.value[key] ?? group.label
+  }
+
   function buildGroup(group: AppMenuGroupSchema): AppMenuGroup | null {
     if (!isVisible(group)) return null
     return {
-      label: group.label,
+      label: groupLabel(group),
       items: group.items.map(buildEntry).filter((item): item is MenuEntry => item !== null)
     }
   }

@@ -170,167 +170,171 @@ function handleSizeSelect(axis: 'width' | 'height', value: SizeSelectValue) {
 <template>
   <div class="flex gap-1.5">
     <div ref="widthFieldRef" class="min-w-0 flex-1">
-      <ScrubInput
-        data-test-id="layout-width-input"
-        icon="W"
-        :model-value="Math.round(resolvedBoundNumber('width') ?? ctx.node.width)"
-        :min="0"
-        @update:model-value="updateSizeProp('width', $event)"
-        @commit="(v: number, p: number) => commitSizeProp('width', v, p)"
-      >
-        <template #suffix>
-          <BoundVariableButton
-            v-if="widthVariableBinding.getBoundVariable(ctx.node.id)"
-            test-id="layout-width-unbind-variable"
-            :label="panels.detachVariable"
-            @detach="widthVariableBinding.unbindVariable(ctx.node.id)"
-          />
-          <VariablePickerPopover
-            v-else
-            v-model:search-term="widthVariableBinding.searchTerm.value"
-            :variables="widthVariableBinding.filteredVariables.value"
-            :trigger-label="panels.applyVariable"
-            :search-placeholder="dialogs.search"
-            :empty-label="panels.noVariablesFound"
-            :trigger-test-id="'layout-width-apply-variable'"
-            :create-label="panels.createNumberVariable({ value: Math.round(ctx.node.width) })"
-            :create-name-placeholder="panels.variableName"
-            :create-submit-label="panels.create"
-            :create-test-id="'layout-width-apply-variable-create'"
-            @select="bindSizeVariable('width', $event.id)"
-            @create="createAndBindSizeVariable('width', $event)"
-          />
-          <SelectRoot
-            :model-value="ctx.widthSizing"
-            @update:model-value="handleSizeSelect('width', $event as SizeSelectValue)"
-          >
-            <SelectTrigger
-              data-test-id="layout-width-sizing-menu"
-              :reference="anchorRef(widthFieldRef)"
-              class="flex shrink-0 cursor-pointer items-center justify-center self-stretch border-none bg-transparent px-1.5 text-[11px] text-muted outline-none"
-              @pointerdown.stop
+      <Tip :label="panels.width">
+        <ScrubInput
+          data-test-id="layout-width-input"
+          icon="W"
+          :model-value="Math.round(resolvedBoundNumber('width') ?? ctx.node.width)"
+          :min="0"
+          @update:model-value="updateSizeProp('width', $event)"
+          @commit="(v: number, p: number) => commitSizeProp('width', v, p)"
+        >
+          <template #suffix>
+            <BoundVariableButton
+              v-if="widthVariableBinding.getBoundVariable(ctx.node.id)"
+              test-id="layout-width-unbind-variable"
+              :label="panels.detachVariable"
+              @detach="widthVariableBinding.unbindVariable(ctx.node.id)"
+            />
+            <VariablePickerPopover
+              v-else
+              v-model:search-term="widthVariableBinding.searchTerm.value"
+              :variables="widthVariableBinding.filteredVariables.value"
+              :trigger-label="panels.applyVariable"
+              :search-placeholder="dialogs.search"
+              :empty-label="panels.noVariablesFound"
+              :trigger-test-id="'layout-width-apply-variable'"
+              :create-label="panels.createNumberVariable({ value: Math.round(ctx.node.width) })"
+              :create-name-placeholder="panels.variableName"
+              :create-submit-label="panels.create"
+              :create-test-id="'layout-width-apply-variable-create'"
+              @select="bindSizeVariable('width', $event.id)"
+              @create="createAndBindSizeVariable('width', $event)"
+            />
+            <SelectRoot
+              :model-value="ctx.widthSizing"
+              @update:model-value="handleSizeSelect('width', $event as SizeSelectValue)"
             >
-              <icon-lucide-chevron-down class="size-3" />
-            </SelectTrigger>
-            <SelectPortal>
-              <SelectContent
-                position="popper"
-                align="start"
-                :side-offset="4"
-                :class="sizingSelect.content"
+              <SelectTrigger
+                data-test-id="layout-width-sizing-menu"
+                :reference="anchorRef(widthFieldRef)"
+                class="flex shrink-0 cursor-pointer items-center justify-center self-stretch border-none bg-transparent px-1.5 text-[11px] text-muted outline-none"
+                @pointerdown.stop
               >
-                <SelectViewport class="p-0.5">
-                  <SelectItem
-                    v-for="opt in ctx.widthSizingOptions"
-                    :key="opt.value"
-                    :value="opt.value"
-                    :class="sizingSelect.item"
-                  >
-                    <SelectItemIndicator
-                      class="absolute left-1.5 inline-flex items-center justify-center"
+                <icon-lucide-chevron-down class="size-3" />
+              </SelectTrigger>
+              <SelectPortal>
+                <SelectContent
+                  position="popper"
+                  align="start"
+                  :side-offset="4"
+                  :class="sizingSelect.content"
+                >
+                  <SelectViewport class="p-0.5">
+                    <SelectItem
+                      v-for="opt in ctx.widthSizingOptions"
+                      :key="opt.value"
+                      :value="opt.value"
+                      :class="sizingSelect.item"
                     >
-                      <icon-lucide-check class="size-3 text-accent" />
-                    </SelectItemIndicator>
-                    <SelectItemText>{{ opt.label }}</SelectItemText>
-                  </SelectItem>
-                  <SelectItem
-                    v-for="item in widthLimitItems"
-                    :key="item.prop"
-                    :value="`${ctx.node[item.prop] == null ? 'add' : 'remove'}-${item.prop}`"
-                    :class="sizingSelect.item"
-                  >
-                    <SelectItemText>
-                      {{ ctx.node[item.prop] == null ? item.addLabel() : item.removeLabel() }}
-                    </SelectItemText>
-                  </SelectItem>
-                </SelectViewport>
-              </SelectContent>
-            </SelectPortal>
-          </SelectRoot>
-        </template>
-      </ScrubInput>
+                      <SelectItemIndicator
+                        class="absolute left-1.5 inline-flex items-center justify-center"
+                      >
+                        <icon-lucide-check class="size-3 text-accent" />
+                      </SelectItemIndicator>
+                      <SelectItemText>{{ opt.label }}</SelectItemText>
+                    </SelectItem>
+                    <SelectItem
+                      v-for="item in widthLimitItems"
+                      :key="item.prop"
+                      :value="`${ctx.node[item.prop] == null ? 'add' : 'remove'}-${item.prop}`"
+                      :class="sizingSelect.item"
+                    >
+                      <SelectItemText>
+                        {{ ctx.node[item.prop] == null ? item.addLabel() : item.removeLabel() }}
+                      </SelectItemText>
+                    </SelectItem>
+                  </SelectViewport>
+                </SelectContent>
+              </SelectPortal>
+            </SelectRoot>
+          </template>
+        </ScrubInput>
+      </Tip>
     </div>
 
     <div ref="heightFieldRef" class="min-w-0 flex-1">
-      <ScrubInput
-        data-test-id="layout-height-input"
-        icon="H"
-        :model-value="Math.round(resolvedBoundNumber('height') ?? ctx.node.height)"
-        :min="0"
-        @update:model-value="updateSizeProp('height', $event)"
-        @commit="(v: number, p: number) => commitSizeProp('height', v, p)"
-      >
-        <template #suffix>
-          <BoundVariableButton
-            v-if="heightVariableBinding.getBoundVariable(ctx.node.id)"
-            test-id="layout-height-unbind-variable"
-            :label="panels.detachVariable"
-            @detach="heightVariableBinding.unbindVariable(ctx.node.id)"
-          />
-          <VariablePickerPopover
-            v-else
-            v-model:search-term="heightVariableBinding.searchTerm.value"
-            :variables="heightVariableBinding.filteredVariables.value"
-            :trigger-label="panels.applyVariable"
-            :search-placeholder="dialogs.search"
-            :empty-label="panels.noVariablesFound"
-            :trigger-test-id="'layout-height-apply-variable'"
-            :create-label="panels.createNumberVariable({ value: Math.round(ctx.node.height) })"
-            :create-name-placeholder="panels.variableName"
-            :create-submit-label="panels.create"
-            :create-test-id="'layout-height-apply-variable-create'"
-            @select="bindSizeVariable('height', $event.id)"
-            @create="createAndBindSizeVariable('height', $event)"
-          />
-          <SelectRoot
-            :model-value="ctx.heightSizing"
-            @update:model-value="handleSizeSelect('height', $event as SizeSelectValue)"
-          >
-            <SelectTrigger
-              data-test-id="layout-height-sizing-menu"
-              :reference="anchorRef(heightFieldRef)"
-              class="flex shrink-0 cursor-pointer items-center justify-center self-stretch border-none bg-transparent px-1.5 text-[11px] text-muted outline-none"
-              @pointerdown.stop
+      <Tip :label="panels.height">
+        <ScrubInput
+          data-test-id="layout-height-input"
+          icon="H"
+          :model-value="Math.round(resolvedBoundNumber('height') ?? ctx.node.height)"
+          :min="0"
+          @update:model-value="updateSizeProp('height', $event)"
+          @commit="(v: number, p: number) => commitSizeProp('height', v, p)"
+        >
+          <template #suffix>
+            <BoundVariableButton
+              v-if="heightVariableBinding.getBoundVariable(ctx.node.id)"
+              test-id="layout-height-unbind-variable"
+              :label="panels.detachVariable"
+              @detach="heightVariableBinding.unbindVariable(ctx.node.id)"
+            />
+            <VariablePickerPopover
+              v-else
+              v-model:search-term="heightVariableBinding.searchTerm.value"
+              :variables="heightVariableBinding.filteredVariables.value"
+              :trigger-label="panels.applyVariable"
+              :search-placeholder="dialogs.search"
+              :empty-label="panels.noVariablesFound"
+              :trigger-test-id="'layout-height-apply-variable'"
+              :create-label="panels.createNumberVariable({ value: Math.round(ctx.node.height) })"
+              :create-name-placeholder="panels.variableName"
+              :create-submit-label="panels.create"
+              :create-test-id="'layout-height-apply-variable-create'"
+              @select="bindSizeVariable('height', $event.id)"
+              @create="createAndBindSizeVariable('height', $event)"
+            />
+            <SelectRoot
+              :model-value="ctx.heightSizing"
+              @update:model-value="handleSizeSelect('height', $event as SizeSelectValue)"
             >
-              <icon-lucide-chevron-down class="size-3" />
-            </SelectTrigger>
-            <SelectPortal>
-              <SelectContent
-                position="popper"
-                align="start"
-                :side-offset="4"
-                :class="sizingSelect.content"
+              <SelectTrigger
+                data-test-id="layout-height-sizing-menu"
+                :reference="anchorRef(heightFieldRef)"
+                class="flex shrink-0 cursor-pointer items-center justify-center self-stretch border-none bg-transparent px-1.5 text-[11px] text-muted outline-none"
+                @pointerdown.stop
               >
-                <SelectViewport class="p-0.5">
-                  <SelectItem
-                    v-for="opt in ctx.heightSizingOptions"
-                    :key="opt.value"
-                    :value="opt.value"
-                    :class="sizingSelect.item"
-                  >
-                    <SelectItemIndicator
-                      class="absolute left-1.5 inline-flex items-center justify-center"
+                <icon-lucide-chevron-down class="size-3" />
+              </SelectTrigger>
+              <SelectPortal>
+                <SelectContent
+                  position="popper"
+                  align="start"
+                  :side-offset="4"
+                  :class="sizingSelect.content"
+                >
+                  <SelectViewport class="p-0.5">
+                    <SelectItem
+                      v-for="opt in ctx.heightSizingOptions"
+                      :key="opt.value"
+                      :value="opt.value"
+                      :class="sizingSelect.item"
                     >
-                      <icon-lucide-check class="size-3 text-accent" />
-                    </SelectItemIndicator>
-                    <SelectItemText>{{ opt.label }}</SelectItemText>
-                  </SelectItem>
-                  <SelectItem
-                    v-for="item in heightLimitItems"
-                    :key="item.prop"
-                    :value="`${ctx.node[item.prop] == null ? 'add' : 'remove'}-${item.prop}`"
-                    :class="sizingSelect.item"
-                  >
-                    <SelectItemText>
-                      {{ ctx.node[item.prop] == null ? item.addLabel() : item.removeLabel() }}
-                    </SelectItemText>
-                  </SelectItem>
-                </SelectViewport>
-              </SelectContent>
-            </SelectPortal>
-          </SelectRoot>
-        </template>
-      </ScrubInput>
+                      <SelectItemIndicator
+                        class="absolute left-1.5 inline-flex items-center justify-center"
+                      >
+                        <icon-lucide-check class="size-3 text-accent" />
+                      </SelectItemIndicator>
+                      <SelectItemText>{{ opt.label }}</SelectItemText>
+                    </SelectItem>
+                    <SelectItem
+                      v-for="item in heightLimitItems"
+                      :key="item.prop"
+                      :value="`${ctx.node[item.prop] == null ? 'add' : 'remove'}-${item.prop}`"
+                      :class="sizingSelect.item"
+                    >
+                      <SelectItemText>
+                        {{ ctx.node[item.prop] == null ? item.addLabel() : item.removeLabel() }}
+                      </SelectItemText>
+                    </SelectItem>
+                  </SelectViewport>
+                </SelectContent>
+              </SelectPortal>
+            </SelectRoot>
+          </template>
+        </ScrubInput>
+      </Tip>
     </div>
   </div>
 

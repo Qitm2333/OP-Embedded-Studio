@@ -54,14 +54,16 @@ const { panels, dialogs } = useI18n()
       <slot />
     </div>
 
-    <ScrubInput
-      class="w-12 shrink-0"
-      suffix="%"
-      :model-value="opacityPercent(item.opacity)"
-      :min="0"
-      :max="100"
-      @update:model-value="emit('patch', { opacity: opacityFromPercent($event) })"
-    />
+    <Tip :label="panels.opacity">
+      <ScrubInput
+        class="w-12 shrink-0"
+        suffix="%"
+        :model-value="opacityPercent(item.opacity)"
+        :min="0"
+        :max="100"
+        @update:model-value="emit('patch', { opacity: opacityFromPercent($event) })"
+      />
+    </Tip>
 
     <VariablePickerPopover
       v-if="

@@ -4,18 +4,25 @@ import type { Editor } from '@open-pencil/core/editor'
 import type { Effect, SceneNode } from '@open-pencil/core/scene-graph'
 import type { Color } from '@open-pencil/core/types'
 
+import { useI18n } from '#vue/i18n/useI18n.js'
+
 type EffectType = Effect['type']
 
+const { panels } = useI18n()
+
 const EFFECT_LABELS: Record<string, string> = {
-  DROP_SHADOW: 'Drop shadow',
-  INNER_SHADOW: 'Inner shadow',
-  LAYER_BLUR: 'Layer blur',
-  BACKGROUND_BLUR: 'Background blur',
-  FOREGROUND_BLUR: 'Foreground blur'
+  DROP_SHADOW: panels.value.dropShadow || 'Drop shadow',
+  INNER_SHADOW: panels.value.innerShadow || 'Inner shadow',
+  LAYER_BLUR: panels.value.layerBlur || 'Layer blur',
+  BACKGROUND_BLUR: panels.value.backgroundBlur || 'Background blur',
+  FOREGROUND_BLUR: panels.value.foregroundBlur || 'Foreground blur'
 }
 
 export const EFFECT_TYPES = Object.keys(EFFECT_LABELS) as EffectType[]
-export const EFFECT_OPTIONS = EFFECT_TYPES.map((t) => ({ value: t, label: EFFECT_LABELS[t] }))
+export const EFFECT_OPTIONS = EFFECT_TYPES.map((t) => ({
+  value: t,
+  label: EFFECT_LABELS[t]
+}))
 
 export function isShadow(type: string) {
   return type === 'DROP_SHADOW' || type === 'INNER_SHADOW'

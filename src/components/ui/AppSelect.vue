@@ -22,12 +22,19 @@ interface AppSelectUi extends SelectUi {
 }
 
 interface AppSelectProps<TValue extends string | number> extends TestIdProps {
+  label?: string
   options: { value: TValue; label: string }[]
   placeholder?: string
   ui?: AppSelectUi
 }
 
-const { options, placeholder, ui, testId = 'app-select-trigger' } = defineProps<AppSelectProps<T>>()
+const {
+  options,
+  label,
+  placeholder,
+  ui,
+  testId = 'app-select-trigger'
+} = defineProps<AppSelectProps<T>>()
 
 const modelValue = defineModel<T>({ required: true })
 
@@ -42,10 +49,12 @@ const indicator = ui?.indicator ?? 'absolute left-1.5 inline-flex items-center j
 
 <template>
   <SelectRoot v-model="modelValue">
-    <SelectTrigger v-test-id="testId" :class="select.trigger">
-      <SelectValue :placeholder="placeholder" />
-      <icon-lucide-chevron-down class="ml-1 size-3 shrink-0 text-muted" />
-    </SelectTrigger>
+    <Tip :label="label" :disabled="!label">
+      <SelectTrigger v-test-id="testId" :class="select.trigger">
+        <SelectValue :placeholder="placeholder" />
+        <icon-lucide-chevron-down class="ml-1 size-3 shrink-0 text-muted" />
+      </SelectTrigger>
+    </Tip>
     <SelectPortal>
       <SelectContent position="popper" :side-offset="2" :class="select.content">
         <SelectViewport :class="viewport">

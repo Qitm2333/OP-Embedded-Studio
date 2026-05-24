@@ -6,7 +6,7 @@ import { useTooltipUI } from '@/components/ui/tooltip'
 const cls = useTooltipUI({ content: 'animate-in zoom-in-95 fade-in' })
 
 const { side = 'top', disabled = false } = defineProps<{
-  label: string
+  label?: string
   side?: 'top' | 'bottom' | 'left' | 'right'
   disabled?: boolean
 }>()
@@ -18,7 +18,7 @@ const { side = 'top', disabled = false } = defineProps<{
       <slot />
     </TooltipTrigger>
     <TooltipPortal>
-      <TooltipContent :side="side" :side-offset="4" :class="cls.content">
+      <TooltipContent v-if="label" :side="side" :side-offset="4" :class="cls.content">
         {{ label }}
       </TooltipContent>
     </TooltipPortal>

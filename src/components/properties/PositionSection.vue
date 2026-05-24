@@ -93,51 +93,61 @@ function handleAlign(
       </div>
 
       <div class="flex gap-1.5">
-        <ScrubInput
-          icon="X"
-          :model-value="xValue"
-          @update:model-value="actions.updateProp('x', $event)"
-          @commit="(v: number, p: number) => actions.commitProp('x', v, p)"
-        />
-        <ScrubInput
-          icon="Y"
-          :model-value="yValue"
-          @update:model-value="actions.updateProp('y', $event)"
-          @commit="(v: number, p: number) => actions.commitProp('y', v, p)"
-        />
+        <Tip :label="panels.xAxis">
+          <ScrubInput
+            icon="X"
+            :model-value="xValue"
+            @update:model-value="actions.updateProp('x', $event)"
+            @commit="(v: number, p: number) => actions.commitProp('x', v, p)"
+          />
+        </Tip>
+        <Tip :label="panels.yAxis">
+          <ScrubInput
+            icon="Y"
+            :model-value="yValue"
+            @update:model-value="actions.updateProp('y', $event)"
+            @commit="(v: number, p: number) => actions.commitProp('y', v, p)"
+          />
+        </Tip>
       </div>
 
       <div v-if="isMulti" class="mt-1.5 flex gap-1.5">
-        <ScrubInput
-          icon="W"
-          :model-value="wValue"
-          :min="1"
-          @update:model-value="actions.updateProp('width', $event)"
-          @commit="(v: number, p: number) => actions.commitProp('width', v, p)"
-        />
-        <ScrubInput
-          icon="H"
-          :model-value="hValue"
-          :min="1"
-          @update:model-value="actions.updateProp('height', $event)"
-          @commit="(v: number, p: number) => actions.commitProp('height', v, p)"
-        />
+        <Tip :label="panels.width">
+          <ScrubInput
+            icon="W"
+            :model-value="wValue"
+            :min="1"
+            @update:model-value="actions.updateProp('width', $event)"
+            @commit="(v: number, p: number) => actions.commitProp('width', v, p)"
+          />
+        </Tip>
+        <Tip :label="panels.height">
+          <ScrubInput
+            icon="H"
+            :model-value="hValue"
+            :min="1"
+            @update:model-value="actions.updateProp('height', $event)"
+            @commit="(v: number, p: number) => actions.commitProp('height', v, p)"
+          />
+        </Tip>
       </div>
 
       <div class="mt-1.5 flex items-center gap-1.5">
-        <ScrubInput
-          class="flex-1"
-          suffix="°"
-          :model-value="rotationValue"
-          :min="-360"
-          :max="360"
-          @update:model-value="actions.updateProp('rotation', $event)"
-          @commit="(v: number, p: number) => actions.commitProp('rotation', v, p)"
-        >
-          <template #icon>
-            <icon-lucide-rotate-cw class="size-3" />
-          </template>
-        </ScrubInput>
+        <Tip :label="panels.rotation">
+          <ScrubInput
+            class="flex-1"
+            suffix="°"
+            :model-value="rotationValue"
+            :min="-360"
+            :max="360"
+            @update:model-value="actions.updateProp('rotation', $event)"
+            @commit="(v: number, p: number) => actions.commitProp('rotation', v, p)"
+          >
+            <template #icon>
+              <icon-lucide-rotate-cw class="size-3" />
+            </template>
+          </ScrubInput>
+        </Tip>
         <Tip :label="panels.flipHorizontal">
           <button
             :class="useIconButtonUI({ size: 'md', ui: { base: 'shrink-0' } }).base"

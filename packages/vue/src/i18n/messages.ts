@@ -37,6 +37,7 @@ export const menuMessages = i18n('menu', {
   saveAs: 'Save as…',
   exportSelection: 'Export selection…',
   autosave: 'Auto-save to local file',
+  closeTab: 'Close tab',
 
   copy: 'Copy',
   paste: 'Paste',
@@ -126,6 +127,8 @@ export const toolMessages = i18n('tools', {
 })
 
 export const panelMessages = i18n('panels', {
+  untitled: 'Untitled',
+  nodeCopyString: ' copy',
   layers: 'Layers',
   pages: 'Pages',
   design: 'Design',
@@ -145,6 +148,15 @@ export const panelMessages = i18n('panels', {
   documentation: 'Documentation',
   openDocs: 'Open docs',
   properties: 'Properties',
+
+  xAxis: 'X Axis',
+  yAxis: 'Y Axis',
+  rotation: 'Rotation',
+  width: 'Width',
+  height: 'Height',
+  opacity: 'Opacity',
+  radius: 'Radius',
+  spread: 'Spread',
 
   page: 'Page',
   position: 'Position',
@@ -178,6 +190,10 @@ export const panelMessages = i18n('panels', {
   innerShadow: 'Inner shadow',
   layerBlur: 'Layer blur',
   backgroundBlur: 'Background blur',
+  foregroundBlur: 'Foreground blur',
+
+  strokeType: 'Stroke type',
+  strokeWeight: 'Stroke weight',
 
   noSelection: 'No selection',
   noLocalVariables: 'No local variables',
@@ -207,6 +223,8 @@ export const panelMessages = i18n('panels', {
   strokeAlignInside: 'Inside',
   strokeAlignCenter: 'Center',
   strokeAlignOutside: 'Outside',
+  exportScale: 'Export scale',
+  exportFormat: 'Export format',
   exportPreview: 'Preview',
   exportRenderingPreview: 'Rendering preview…',
   create: 'Create',
@@ -219,6 +237,8 @@ export const panelMessages = i18n('panels', {
   layersCount: params('{count} layers'),
   goToMainComponent: 'Go to Main Component',
   detachInstance: 'Detach Instance',
+
+  gap: 'Gap',
 
   solid: 'Solid',
   linearGradient: 'Linear',
@@ -268,7 +288,8 @@ export const panelMessages = i18n('panels', {
   setToCurrentWidth: 'Set to current width',
   setToCurrentHeight: 'Set to current height',
   sizingFillFr: 'Fill (fr)',
-  sizingFixedPx: 'Fixed (px)'
+  sizingFixedPx: 'Fixed (px)',
+  searchFonts: 'Search fonts...'
 })
 
 export const variableTypeMessages = i18n('variableTypes', {
