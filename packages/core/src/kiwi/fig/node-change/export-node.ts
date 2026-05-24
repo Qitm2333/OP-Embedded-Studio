@@ -554,6 +554,7 @@ export function sceneNodeToKiwiWithContext(
   applyInstancePayload(context, node, nc, localIdCounter)
   if (node.type === 'COMPONENT_SET') upsertPluginData(node, NODE_TYPE_PLUGIN_KEY, node.type)
   if (nc.type === 'CANVAS') nc.pageType = 'DESIGN'
+  if (node.type === 'BOOLEAN_OPERATION') nc.booleanOperation = node.booleanOperation ?? 'UNION'
   if (strokePaints.length > 0) nc.strokePaints = strokePaints
 
   context.serializeLayoutProps(node, nc)

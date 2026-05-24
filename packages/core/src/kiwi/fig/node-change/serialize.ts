@@ -14,17 +14,19 @@ export {
 export { buildFontDigestMap } from './font-digests'
 
 import type { NodeChange, Paint, VariableConsumptionEntry } from '#core/kiwi/fig/codec'
-import type { SceneGraph, SceneNode, CharacterStyleOverride } from '#core/scene-graph'
+import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import type { Color, GUID, Matrix } from '#core/types'
 
 import { guidToString, stringToGuid, VARIABLE_BINDING_FIELDS } from './convert'
 import { sceneNodeToKiwiWithContext, type KiwiNodeChange } from './export-node'
+import { applyFontFeaturesToKiwi } from './font-features'
 import {
   BOUND_VARIABLES_PLUGIN_KEY,
   LAYOUT_DIRECTION_PLUGIN_KEY,
   TEXT_DIRECTION_PLUGIN_KEY,
   upsertPluginData
 } from './plugin-data'
+import { exportTextData, fontVariationToKiwi } from './text-data-export'
 
 export function mapToFigmaType(type: SceneNode['type']): string {
   switch (type) {
@@ -46,6 +48,8 @@ export function mapToFigmaType(type: SceneNode['type']): string {
       return 'REGULAR_POLYGON'
     case 'VECTOR':
       return 'VECTOR'
+    case 'BOOLEAN_OPERATION':
+      return 'BOOLEAN_OPERATION'
     case 'GROUP':
       return 'FRAME'
     case 'SECTION':
@@ -174,60 +178,6 @@ function buildDerivedTextData(
   })
 }
 
-function exportTextData(node: SceneNode): NodeChange['textData'] {
-  const runs = node.styleRuns
-  if (runs.length === 0) {
-    return { characters: node.text, lines: textLines(node.text) }
-  }
-
-  const charIds = Array.from<number>({ length: node.text.length }).fill(0)
-  const styleMap = new Map<string, { id: number; style: CharacterStyleOverride }>()
-  let nextId = 1
-
-  for (const run of runs) {
-    const key = JSON.stringify(run.style)
-    let entry = styleMap.get(key)
-    if (!entry) {
-      entry = { id: nextId++, style: run.style }
-      styleMap.set(key, entry)
-    }
-    for (let i = run.start; i < run.start + run.length && i < charIds.length; i++) {
-      charIds[i] = entry.id
-    }
-  }
-
-  const overrideTable: NodeChange[] = []
-  for (const { id, style } of styleMap.values()) {
-    const override: Record<string, unknown> = { styleID: id }
-    const weight = style.fontWeight ?? node.fontWeight
-    const italic = style.italic ?? node.italic
-    override.fontName = {
-      family: normalizeFontFamily(style.fontFamily ?? node.fontFamily),
-      style: weightToFigmaStyle(weight, italic),
-      postscript: ''
-    }
-    if (style.fontSize !== undefined) override.fontSize = style.fontSize
-    if (style.letterSpacing !== undefined) {
-      override.letterSpacing = { value: style.letterSpacing, units: 'PIXELS' }
-    }
-    if (style.lineHeight !== undefined && style.lineHeight !== null) {
-      override.lineHeight = { value: style.lineHeight, units: 'PIXELS' }
-    }
-    if (style.textDecoration) override.textDecoration = style.textDecoration
-    if (style.fills && style.fills.length > 0) {
-      override.fillPaints = style.fills.map(fillToKiwiPaint)
-    }
-    overrideTable.push(override as NodeChange)
-  }
-
-  return {
-    characters: node.text,
-    lines: textLines(node.text),
-    characterStyleIDs: charIds,
-    styleOverrideTable: overrideTable
-  }
-}
-
 export function safeColor(c: Color | Omit<Color, 'a'>): Color {
   return { r: c.r, g: c.g, b: c.b, a: 'a' in c ? c.a : 1 }
 }
@@ -300,7 +250,10 @@ function serializeTextProps(
     style: weightToFigmaStyle(node.fontWeight, node.italic),
     postscript: ''
   }
-  nc.textData = exportTextData(node)
+  nc.textData = exportTextData(node, textLines, fillToKiwiPaint)
+  if (node.fontVariations.length > 0) {
+    nc.fontVariations = node.fontVariations.map(fontVariationToKiwi)
+  }
   const autoResize = resolveTextAutoResize(node, graph)
   nc.textAutoResize = autoResize
   nc.textAlignHorizontal = node.textAlignHorizontal
@@ -311,6 +264,7 @@ function serializeTextProps(
   nc.textDecorationSkipInk = true
   nc.fontVariantCommonLigatures = true
   nc.fontVariantContextualLigatures = true
+  applyFontFeaturesToKiwi(nc, node.fontFeatures)
   nc.fontVersion = ''
   nc.emojiImageSet = 'APPLE'
   if (fontDigestMap) {

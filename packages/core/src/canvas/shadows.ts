@@ -2,8 +2,14 @@ import type { Canvas, Path } from 'canvaskit-wasm'
 
 import type { SceneNode } from '#core/scene-graph'
 
+import { figmaBlendModeToSkia } from './blend'
 import type { SkiaRenderer } from './renderer'
-import { makeNodeShapePath, nodeHasRadius } from './shapes'
+import {
+  makeNodeShapePath,
+  makeSmoothRRectPath,
+  nodeHasRadius,
+  nodeHasSmoothCorners
+} from './shapes'
 
 function resetEffectLayerPaint(r: SkiaRenderer): void {
   r.effectLayerPaint.setImageFilter(null)
@@ -27,8 +33,9 @@ function localEffectOffset(effect: SceneNode['effects'][number], child?: SceneNo
   let y = effect.offset.y
   if (!child) return { x, y }
 
-  if (child.rotation !== 0) {
-    const rad = (-child.rotation * Math.PI) / 180
+  const rotation = child.rotation
+  if (rotation !== 0) {
+    const rad = (-rotation * Math.PI) / 180
     const cos = Math.cos(rad)
     const sin = Math.sin(rad)
     const nx = x * cos - y * sin
@@ -43,6 +50,22 @@ function localEffectOffset(effect: SceneNode['effects'][number], child?: SceneNo
 
 function isPathShape(node: SceneNode): boolean {
   return node.type === 'POLYGON' || node.type === 'STAR' || node.type === 'VECTOR'
+}
+
+function effectLayerBounds(
+  r: SkiaRenderer,
+  node: SceneNode,
+  effect: SceneNode['effects'][number],
+  extraPadding = 0
+): Float32Array {
+  const offset = effect.offset
+  const padding = Math.max(effect.radius * 2, Math.abs(effect.spread)) + extraPadding
+  return r.ck.LTRBRect(
+    Math.min(0, offset.x) - padding,
+    Math.min(0, offset.y) - padding,
+    Math.max(node.width, node.width + offset.x) + padding,
+    Math.max(node.height, node.height + offset.y) + padding
+  )
 }
 
 function applySpreadToPath(r: SkiaRenderer, path: Path, spread: number): boolean {
@@ -108,6 +131,10 @@ function drawShadowCutout(
       canvas.drawOval(r.ltrb(0, 0, shapeNode.width, shapeNode.height), r.auxFill)
     } else if (isPathShape(shapeNode)) {
       drawPathShape(r, canvas, shapeNode, shapeHasRadius)
+    } else if (nodeHasSmoothCorners(shapeNode)) {
+      const path = makeSmoothRRectPath(r, shapeNode)
+      canvas.drawPath(path, r.auxFill)
+      path.delete()
     } else if (shapeHasRadius) {
       canvas.drawRRect(r.makeRRect(shapeNode), r.auxFill)
     } else {
@@ -143,6 +170,7 @@ function drawShapeDropShadow(
   r.auxFill.setColor(r.color4f(effect.color.r, effect.color.g, effect.color.b, effect.color.a))
   r.auxFill.setMaskFilter(r.getCachedMaskBlur(effect.radius / 2))
   r.auxFill.setImageFilter(null)
+  r.auxFill.setBlendMode(figmaBlendModeToSkia(r.ck, effect.blendMode))
   canvas.save()
   let savedLayer = false
   try {
@@ -153,7 +181,7 @@ function drawShapeDropShadow(
       effect.showShadowBehindNode === false && !hasVisibleFill && !shadowShapeChild
     if (shouldHideShadowBehindUnfilledNode) {
       resetEffectLayerPaint(r)
-      canvas.saveLayer(r.effectLayerPaint)
+      canvas.saveLayer(r.effectLayerPaint, effectLayerBounds(r, shapeNode, effect))
       savedLayer = true
     }
 
@@ -163,6 +191,10 @@ function drawShapeDropShadow(
       canvas.drawOval(r.ltrb(-sp, -sp, shapeNode.width + sp, shapeNode.height + sp), r.auxFill)
     } else if (isPathShape(shapeNode)) {
       drawPathShape(r, canvas, shapeNode, shapeHasRadius, sp)
+    } else if (nodeHasSmoothCorners(shapeNode)) {
+      const path = makeSmoothRRectPath(r, shapeNode, sp)
+      canvas.drawPath(path, r.auxFill)
+      path.delete()
     } else if (shapeHasRadius) {
       canvas.drawRRect(r.makeRRectWithSpread(shapeNode, sp), r.auxFill)
     } else {
@@ -206,8 +238,9 @@ function renderDropShadow(
     if (shadowShapeChild) drawChildTransform(canvas, shadowShapeChild, effect.offset)
     else canvas.translate(effect.offset.x, effect.offset.y)
 
+    r.effectLayerPaint.setBlendMode(figmaBlendModeToSkia(r.ck, effect.blendMode))
     r.effectLayerPaint.setImageFilter(dropFilter)
-    canvas.saveLayer(r.effectLayerPaint)
+    canvas.saveLayer(r.effectLayerPaint, effectLayerBounds(r, shapeNode, effect))
     savedLayer = true
     r.renderText(canvas, shapeNode)
   } finally {
@@ -237,7 +270,8 @@ function drawTextInnerShadow(
     restoreCount++
     if (shadowShapeChild) drawChildTransform(canvas, shadowShapeChild)
 
-    canvas.saveLayer(r.effectLayerPaint)
+    const bounds = effectLayerBounds(r, shapeNode, effect)
+    canvas.saveLayer(r.effectLayerPaint, bounds)
     restoreCount++
     r.renderText(canvas, shapeNode)
 
@@ -247,7 +281,7 @@ function drawTextInnerShadow(
       ck.BlendMode.SrcIn
     )
     r.effectLayerPaint.setColorFilter(tintFilter)
-    canvas.saveLayer(r.effectLayerPaint)
+    canvas.saveLayer(r.effectLayerPaint, bounds)
     restoreCount++
 
     const { x: localOffsetX, y: localOffsetY } = localEffectOffset(effect, shadowShapeChild)
@@ -258,7 +292,7 @@ function drawTextInnerShadow(
     r.effectLayerPaint.setBlendMode(ck.BlendMode.SrcOver)
     r.effectLayerPaint.setColorFilter(null)
     r.effectLayerPaint.setImageFilter(r.getCachedDecalBlur(effect.radius / 2))
-    canvas.saveLayer(r.effectLayerPaint)
+    canvas.saveLayer(r.effectLayerPaint, bounds)
     restoreCount++
 
     const expand = effect.radius * 2 + Math.max(Math.abs(localOffsetX), Math.abs(localOffsetY))
@@ -275,7 +309,7 @@ function drawTextInnerShadow(
     r.effectLayerPaint.setBlendMode(ck.BlendMode.DstOut)
     solidBlackFilter = ck.ColorFilter.MakeBlend(ck.Color4f(0, 0, 0, 1), ck.BlendMode.SrcIn)
     r.effectLayerPaint.setColorFilter(solidBlackFilter)
-    canvas.saveLayer(r.effectLayerPaint)
+    canvas.saveLayer(r.effectLayerPaint, bounds)
     restoreCount++
     r.renderText(canvas, shapeNode)
   } finally {
@@ -303,6 +337,7 @@ function drawShapeInnerShadow(
   const shapeNode = shadowShapeChild ?? node
   r.auxFill.setColor(r.ck.Color4f(effect.color.r, effect.color.g, effect.color.b, effect.color.a))
   r.auxFill.setImageFilter(r.getCachedDecalBlur(effect.radius / 2))
+  r.auxFill.setBlendMode(figmaBlendModeToSkia(r.ck, effect.blendMode))
 
   const shapeRect = shadowShapeChild ? r.ck.LTRBRect(0, 0, shapeNode.width, shapeNode.height) : rect
   const shapeHasRadius = shadowShapeChild ? nodeHasRadius(shadowShapeChild) : hasRadius
@@ -326,6 +361,10 @@ function drawShapeInnerShadow(
       } finally {
         path.delete()
       }
+    } else if (nodeHasSmoothCorners(shapeNode)) {
+      const path = makeSmoothRRectPath(r, shapeNode)
+      canvas.clipPath(path, r.ck.ClipOp.Intersect, true)
+      path.delete()
     } else if (shapeHasRadius) {
       canvas.clipRRect(r.makeRRect(shapeNode), r.ck.ClipOp.Intersect, true)
     } else {
@@ -368,6 +407,13 @@ function drawShapeInnerShadow(
         } finally {
           innerPath.delete()
         }
+      } else if (nodeHasSmoothCorners(shapeNode)) {
+        const innerPath = makeSmoothRRectPath(r, shapeNode, -sp, localOffsetX, localOffsetY)
+        try {
+          bigPath.op(innerPath, r.ck.PathOp.Difference)
+        } finally {
+          innerPath.delete()
+        }
       } else if (shapeHasRadius) {
         const innerPath = new r.ck.Path()
         try {
@@ -399,6 +445,7 @@ function drawShapeInnerShadow(
   } finally {
     canvas.restore()
     r.auxFill.setImageFilter(null)
+    r.auxFill.setBlendMode(r.ck.BlendMode.SrcOver)
   }
 }
 

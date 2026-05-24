@@ -41,7 +41,11 @@ export function copyStyleRun(r: StyleRun): StyleRun {
     ...r,
     style: {
       ...r.style,
-      fills: r.style.fills ? r.style.fills.map(copyFill) : undefined
+      fills: r.style.fills ? r.style.fills.map(copyFill) : undefined,
+      fontVariations: r.style.fontVariations
+        ? r.style.fontVariations.map((v) => ({ ...v }))
+        : undefined,
+      fontFeatures: r.style.fontFeatures ? r.style.fontFeatures.map((v) => ({ ...v })) : undefined
     }
   }
 }

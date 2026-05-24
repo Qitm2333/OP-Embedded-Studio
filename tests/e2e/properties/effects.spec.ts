@@ -136,6 +136,237 @@ test('inner shadow with spread', async () => {
   await expectCanvas('inner-shadow-with-spread')
 })
 
+test('blend modes', async () => {
+  await editor.page.evaluate(() => {
+    const store = window.openPencil?.getStore?.()
+    if (!store) throw new Error('OpenPencil store not initialized')
+    const pageId = store.state.currentPageId
+    store.graph.createNode('FRAME', pageId, {
+      name: 'Blend Backdrop',
+      x: 64,
+      y: 64,
+      width: 324,
+      height: 180,
+      cornerRadius: 20,
+      fills: [
+        { type: 'SOLID', color: { r: 0.95, g: 0.95, b: 0.97, a: 1 }, visible: true, opacity: 1 }
+      ]
+    })
+    store.graph.createNode('RECTANGLE', pageId, {
+      name: 'Multiply Base',
+      x: 96,
+      y: 96,
+      width: 96,
+      height: 96,
+      cornerRadius: 20,
+      fills: [
+        { type: 'SOLID', color: { r: 1, g: 0.23, b: 0.2, a: 0.95 }, visible: true, opacity: 1 }
+      ]
+    })
+    store.graph.createNode('RECTANGLE', pageId, {
+      name: 'Multiply Layer',
+      x: 144,
+      y: 96,
+      width: 96,
+      height: 96,
+      cornerRadius: 20,
+      blendMode: 'MULTIPLY',
+      fills: [
+        { type: 'SOLID', color: { r: 0.12, g: 0.45, b: 1, a: 0.92 }, visible: true, opacity: 1 }
+      ]
+    })
+    store.graph.createNode('ELLIPSE', pageId, {
+      name: 'Screen Layer',
+      x: 212,
+      y: 92,
+      width: 104,
+      height: 104,
+      blendMode: 'SCREEN',
+      fills: [
+        { type: 'SOLID', color: { r: 0.05, g: 0.75, b: 0.45, a: 0.8 }, visible: true, opacity: 1 }
+      ]
+    })
+    store.graph.createNode('RECTANGLE', pageId, {
+      name: 'Overlay Multi Fill',
+      x: 280,
+      y: 112,
+      width: 56,
+      height: 56,
+      cornerRadius: 14,
+      fills: [
+        { type: 'SOLID', color: { r: 0.98, g: 0.75, b: 0.18, a: 1 }, visible: true, opacity: 1 },
+        {
+          type: 'SOLID',
+          color: { r: 0.58, g: 0.27, b: 0.95, a: 0.86 },
+          visible: true,
+          opacity: 1,
+          blendMode: 'OVERLAY'
+        }
+      ]
+    })
+    store.clearSelection()
+    store.requestRender()
+  })
+  await editor.canvas.waitForRender()
+  await expectCanvas('blend-modes')
+})
+
+test('alpha mask stack', async () => {
+  await editor.page.evaluate(() => {
+    const store = window.openPencil?.getStore?.()
+    if (!store) throw new Error('OpenPencil store not initialized')
+    const pageId = store.state.currentPageId
+    const frame = store.graph.createNode('FRAME', pageId, {
+      name: 'Mask Backdrop',
+      x: 64,
+      y: 64,
+      width: 324,
+      height: 180,
+      cornerRadius: 20,
+      fills: [
+        { type: 'SOLID', color: { r: 0.08, g: 0.1, b: 0.18, a: 1 }, visible: true, opacity: 1 }
+      ]
+    })
+    store.graph.createNode('RECTANGLE', frame.id, {
+      name: 'Unmasked Baseline',
+      x: 24,
+      y: 24,
+      width: 58,
+      height: 132,
+      cornerRadius: 12,
+      fills: [
+        { type: 'SOLID', color: { r: 0.98, g: 0.75, b: 0.18, a: 1 }, visible: true, opacity: 1 }
+      ]
+    })
+    store.graph.createNode('ELLIPSE', frame.id, {
+      name: 'Alpha Mask',
+      x: 104,
+      y: 28,
+      width: 152,
+      height: 112,
+      isMask: true,
+      maskType: 'ALPHA',
+      fills: [{ type: 'SOLID', color: { r: 1, g: 1, b: 1, a: 1 }, visible: true, opacity: 1 }]
+    })
+    store.graph.createNode('RECTANGLE', frame.id, {
+      name: 'Masked Cyan Stripe',
+      x: 78,
+      y: 34,
+      width: 220,
+      height: 38,
+      rotation: -12,
+      fills: [
+        { type: 'SOLID', color: { r: 0.08, g: 0.73, b: 0.73, a: 1 }, visible: true, opacity: 1 }
+      ]
+    })
+    store.graph.createNode('RECTANGLE', frame.id, {
+      name: 'Masked Purple Stripe',
+      x: 88,
+      y: 86,
+      width: 222,
+      height: 42,
+      rotation: -12,
+      fills: [
+        { type: 'SOLID', color: { r: 0.58, g: 0.27, b: 0.95, a: 1 }, visible: true, opacity: 1 }
+      ]
+    })
+    store.graph.createNode('RECTANGLE', frame.id, {
+      name: 'Masked Pink Stripe',
+      x: 98,
+      y: 136,
+      width: 222,
+      height: 42,
+      rotation: -12,
+      fills: [{ type: 'SOLID', color: { r: 1, g: 0.23, b: 0.43, a: 1 }, visible: true, opacity: 1 }]
+    })
+    store.clearSelection()
+    store.requestRender()
+  })
+  await editor.canvas.waitForRender()
+  await expectCanvas('alpha-mask-stack')
+})
+
+test('smoothed corners with blended shadow', async () => {
+  await editor.page.evaluate(() => {
+    const store = window.openPencil?.getStore?.()
+    if (!store) throw new Error('OpenPencil store not initialized')
+    const pageId = store.state.currentPageId
+    store.graph.createNode('FRAME', pageId, {
+      name: 'Smooth Rectangle Backdrop',
+      x: 64,
+      y: 64,
+      width: 272,
+      height: 168,
+      cornerRadius: 20,
+      fills: [
+        { type: 'SOLID', color: { r: 0.08, g: 0.1, b: 0.18, a: 1 }, visible: true, opacity: 1 }
+      ]
+    })
+    store.graph.createNode('RECTANGLE', pageId, {
+      name: 'Uniform Smooth Radius',
+      x: 92,
+      y: 92,
+      width: 112,
+      height: 88,
+      cornerRadius: 28,
+      cornerSmoothing: 0.75,
+      fills: [
+        { type: 'SOLID', color: { r: 0.58, g: 0.27, b: 0.95, a: 1 }, visible: true, opacity: 1 }
+      ],
+      effects: [
+        {
+          type: 'DROP_SHADOW',
+          color: { r: 0.56, g: 0.33, b: 1, a: 0.72 },
+          offset: { x: 0, y: 0 },
+          radius: 28,
+          spread: 0,
+          blendMode: 'SCREEN',
+          visible: true
+        }
+      ]
+    })
+    store.graph.createNode('RECTANGLE', pageId, {
+      name: 'Independent Smooth Radius',
+      x: 212,
+      y: 92,
+      width: 92,
+      height: 88,
+      independentCorners: true,
+      topLeftRadius: 34,
+      topRightRadius: 10,
+      bottomRightRadius: 34,
+      bottomLeftRadius: 10,
+      cornerSmoothing: 1,
+      fills: [
+        { type: 'SOLID', color: { r: 0.08, g: 0.73, b: 0.73, a: 1 }, visible: true, opacity: 1 }
+      ],
+      strokes: [
+        {
+          color: { r: 1, g: 1, b: 1, a: 0.8 },
+          weight: 2,
+          visible: true,
+          opacity: 1,
+          align: 'INSIDE'
+        }
+      ],
+      effects: [
+        {
+          type: 'INNER_SHADOW',
+          color: { r: 0, g: 0, b: 0, a: 0.28 },
+          offset: { x: 0, y: 3 },
+          radius: 8,
+          spread: 0,
+          visible: true
+        }
+      ]
+    })
+    store.clearSelection()
+    store.requestRender()
+  })
+  await editor.canvas.waitForRender()
+  await expectCanvas('smoothed-corners-with-blended-shadow')
+})
+
 test('drop shadow on ellipse', async () => {
   await editor.page.evaluate(() => {
     const store = window.openPencil?.getStore?.()

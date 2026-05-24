@@ -1,13 +1,17 @@
+/* eslint-disable max-lines -- scene dispatch stays together while shape domains live in sibling modules */
 import type { Canvas, Path } from 'canvaskit-wasm'
 
 import { DROP_HIGHLIGHT_ALPHA, DROP_HIGHLIGHT_STROKE, SECTION_CORNER_RADIUS } from '#core/constants'
+import { computeDescendantVisualBounds } from '#core/geometry'
 import type { SceneNode, SceneGraph, Fill } from '#core/scene-graph'
 import type { Color } from '#core/types'
 import { vectorNetworkToCenterlinePath } from '#core/vector'
 
+import { figmaBlendModeToSkia, needsIsolatedBlendLayer } from './blend'
 import { renderBooleanOperation } from './boolean'
+import { renderMaskedChildIds } from './masks'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
-import { nodeHasRadius } from './shapes'
+import { makeSmoothRRectPath, nodeHasRadius, nodeHasSmoothCorners } from './shapes'
 import {
   drawDashedRRectWithSolidCorners,
   drawStyledRRectStroke,
@@ -27,11 +31,12 @@ function drawVisibleFills(
     if (!fill.visible) continue
     if (!r.applyFill(fill, node, graph, fi)) continue
     r.fillPaint.setAlphaf(fill.opacity)
+    r.fillPaint.setBlendMode(figmaBlendModeToSkia(r.ck, fill.blendMode))
     draw(fill)
     r.fillPaint.setShader(null)
+    r.fillPaint.setBlendMode(r.ck.BlendMode.SrcOver)
   }
 }
-
 function isCulled(r: SkiaRenderer, node: SceneNode, absX: number, absY: number): boolean {
   const canCull =
     node.childIds.length === 0 ||
@@ -75,7 +80,6 @@ function applyNodeTransforms(
     canvas.scale(node.flipX ? -1 : 1, node.flipY ? -1 : 1)
   }
 }
-
 function renderNodeContent(
   r: SkiaRenderer,
   canvas: Canvas,
@@ -105,6 +109,51 @@ function renderNodeContent(
   }
 }
 
+function renderMaskNodeContent(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  graph: SceneGraph,
+  node: SceneNode,
+  nodeId: string,
+  overlays: RenderOverlays
+): void {
+  canvas.save()
+  canvas.translate(node.x, node.y)
+  applyNodeTransforms(r, canvas, node, nodeId, overlays)
+  renderNodeContent(r, canvas, graph, node, nodeId, {})
+  canvas.restore()
+}
+
+function renderChildIds(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  graph: SceneGraph,
+  childIds: string[],
+  overlays: RenderOverlays,
+  absX: number,
+  absY: number
+): void {
+  renderMaskedChildIds(
+    r,
+    canvas,
+    childIds,
+    (childId) => {
+      const child = graph.getNode(childId)
+      return child?.visible && child.isMask ? child.maskType : null
+    },
+    (childId) => r.renderNode(canvas, graph, childId, overlays, absX, absY),
+    (childId) => {
+      const child = graph.getNode(childId)
+      if (child) renderMaskNodeContent(r, canvas, graph, child, childId, overlays)
+    },
+    (childId) => {
+      const child = graph.getNode(childId)
+      if (!child) return null
+      return { x: child.x, y: child.y, width: child.width, height: child.height }
+    }
+  )
+}
+
 function renderChildren(
   r: SkiaRenderer,
   canvas: Canvas,
@@ -119,22 +168,21 @@ function renderChildren(
     node.type === 'FRAME' || node.type === 'COMPONENT' || node.type === 'INSTANCE'
   if (isClippableContainer && node.clipsContent && node.childIds.length > 0) {
     canvas.save()
-    if (nodeHasRadius(node)) {
+    if (nodeHasSmoothCorners(node)) {
+      const clipPath = makeSmoothRRectPath(r, node)
+      canvas.clipPath(clipPath, r.ck.ClipOp.Intersect, true)
+      clipPath.delete()
+    } else if (nodeHasRadius(node)) {
       canvas.clipRRect(r.makeRRect(node), r.ck.ClipOp.Intersect, true)
     } else {
       canvas.clipRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.ck.ClipOp.Intersect, true)
     }
-    for (const childId of node.childIds) {
-      r.renderNode(canvas, graph, childId, overlays, absX, absY)
-    }
+    renderChildIds(r, canvas, graph, node.childIds, overlays, absX, absY)
     canvas.restore()
   } else {
-    for (const childId of node.childIds) {
-      r.renderNode(canvas, graph, childId, overlays, absX, absY)
-    }
+    renderChildIds(r, canvas, graph, node.childIds, overlays, absX, absY)
   }
 }
-
 export function renderNode(
   r: SkiaRenderer,
   canvas: Canvas,
@@ -145,7 +193,7 @@ export function renderNode(
   parentAbsY = 0
 ): void {
   const node = graph.getNode(nodeId)
-  if (!node || !node.visible) return
+  if (!node || !node.visible || node.isMask) return
 
   // Hide the node being edited in node-edit mode (overlay draws it live)
   if (overlays.nodeEditState?.nodeId === nodeId) return
@@ -163,9 +211,24 @@ export function renderNode(
   canvas.save()
   canvas.translate(node.x, node.y)
 
-  if (node.opacity < 1) {
+  const needsNodeLayer = node.opacity < 1 || needsIsolatedBlendLayer(node.blendMode)
+  if (needsNodeLayer) {
+    const bounds = computeDescendantVisualBounds(
+      [nodeId],
+      (id) => graph.getNode(id) ?? undefined,
+      (id) => graph.getAbsolutePosition(id)
+    )
+    const layerBounds = bounds
+      ? r.ck.LTRBRect(
+          bounds.minX - absX,
+          bounds.minY - absY,
+          bounds.maxX - absX,
+          bounds.maxY - absY
+        )
+      : r.ck.LTRBRect(0, 0, node.width, node.height)
     r.opacityPaint.setAlphaf(node.opacity)
-    canvas.saveLayer(r.opacityPaint)
+    r.opacityPaint.setBlendMode(figmaBlendModeToSkia(r.ck, node.blendMode))
+    canvas.saveLayer(r.opacityPaint, layerBounds)
   }
 
   const layerBlur = node.effects.find(
@@ -178,7 +241,11 @@ export function renderNode(
     r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
 
     r.effectLayerPaint.setImageFilter(r.getCachedBlur(layerBlur.radius / 2))
-    canvas.saveLayer(r.effectLayerPaint)
+    const blurPadding = layerBlur.radius * 2
+    canvas.saveLayer(
+      r.effectLayerPaint,
+      r.ck.LTRBRect(-blurPadding, -blurPadding, node.width + blurPadding, node.height + blurPadding)
+    )
   }
 
   applyNodeTransforms(r, canvas, node, nodeId, overlays)
@@ -192,8 +259,10 @@ export function renderNode(
     r.effectLayerPaint.setColorFilter(null)
     r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
   }
-  if (node.opacity < 1) {
+  if (needsNodeLayer) {
     canvas.restore()
+    r.opacityPaint.setAlphaf(1)
+    r.opacityPaint.setBlendMode(r.ck.BlendMode.SrcOver)
   }
   canvas.restore()
 }
@@ -534,11 +603,12 @@ function drawGradientText(
     r.effectLayerPaint.setImageFilter(null)
     r.effectLayerPaint.setColorFilter(null)
     r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
-    canvas.saveLayer(r.effectLayerPaint)
+    const bounds = r.ck.LTRBRect(0, paragraphY, node.width, paragraphY + node.height)
+    canvas.saveLayer(r.effectLayerPaint, bounds)
     canvas.drawParagraph(paragraph, 0, paragraphY)
 
     r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcIn)
-    canvas.saveLayer(r.effectLayerPaint)
+    canvas.saveLayer(r.effectLayerPaint, bounds)
     canvas.drawRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.fillPaint)
     canvas.restore()
     canvas.restore()

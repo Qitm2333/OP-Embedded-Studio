@@ -33,7 +33,8 @@ describe('Text shadow renders on glyphs, not bounding box (Behavioral)', () => {
     renderEffects(r, canvas as Canvas, node as SceneNode, rect, false, 'behind')
 
     expect(r.getCachedDropShadow).toHaveBeenCalled()
-    expect(canvas.saveLayer).toHaveBeenCalled()
+    expect(canvas.saveLayer).toHaveBeenCalledWith(r.effectLayerPaint, expect.any(Float32Array))
+    expect(r.ck.LTRBRect).toHaveBeenCalledWith(-20, -20, 125, 125)
     expect(r.renderText).toHaveBeenCalled()
   })
 
@@ -63,6 +64,9 @@ describe('Text shadow renders on glyphs, not bounding box (Behavioral)', () => {
 
     // 4-layer saveLayer stack: Master, SrcIn/Tint, Blur, DstOut/Punch
     expect(canvas.saveLayer).toHaveBeenCalledTimes(4)
+    for (const call of canvas.saveLayer.mock.calls) {
+      expect(call[1]).toBeInstanceOf(Float32Array)
+    }
     // renderText called twice: once for mask (step 2), once for punch-out (step 8)
     expect(r.renderText).toHaveBeenCalledTimes(2)
     // Blend modes for the SrcIn and DstOut layers

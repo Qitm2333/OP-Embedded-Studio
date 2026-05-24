@@ -14,21 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Pull LFS files
-        run: |
-          git lfs install --force
-          git lfs pull
-          head -c 4 tests/fixtures/material3.fig | xxd
-
-      - uses: oven-sh/setup-bun@v2
-
-      - uses: actions/cache@v4
+      - uses: ./.github/actions/setup-bun
         with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-${{ runner.os }}-
-
-      - run: bun install --frozen-lockfile
+          lfs: 'true'
 
       - name: Heavy fig roundtrip tests
         run: bun test --timeout 180000 tests/engine/fig-roundtrip.test.ts

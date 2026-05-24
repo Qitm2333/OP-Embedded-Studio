@@ -5,7 +5,6 @@ import {
   setNodeStrokeOkHCL
 } from '#core/color/okhcl'
 import type { OkHCLColor, OkHCLPayload } from '#core/color/okhcl'
-/* eslint-disable max-lines -- Figma Plugin API proxy; FigmaAPI already in separate file */
 import type {
   SceneGraph,
   SceneNode,

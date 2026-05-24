@@ -3,6 +3,7 @@ import type { Canvas, Paint } from 'canvaskit-wasm'
 import type { SceneNode, SceneGraph, Fill } from '#core/scene-graph'
 
 import type { SkiaRenderer } from './renderer'
+import { makeSmoothRRectPath, nodeHasSmoothCorners } from './shapes'
 
 export function drawNodeFill(
   r: SkiaRenderer,
@@ -50,7 +51,11 @@ export function drawNodeFill(
       break
     }
     default:
-      if (hasRadius) {
+      if (nodeHasSmoothCorners(node)) {
+        const path = makeSmoothRRectPath(r, node)
+        canvas.drawPath(path, r.fillPaint)
+        path.delete()
+      } else if (hasRadius) {
         canvas.drawRRect(r.makeRRect(node), r.fillPaint)
       } else {
         canvas.drawRect(rect, r.fillPaint)
@@ -190,6 +195,50 @@ export function applyGradientFill(
   }
 }
 
+export function makeImageFillLocalMatrix(
+  r: SkiaRenderer,
+  fill: Fill,
+  node: SceneNode,
+  imgW: number,
+  imgH: number
+) {
+  const scaleMode = fill.imageScaleMode ?? 'FILL'
+  if (scaleMode === 'TILE' && !fill.imageTransform) return r.ck.Matrix.identity()
+
+  if ((scaleMode === 'CROP' || scaleMode === 'TILE') && fill.imageTransform) {
+    const t = fill.imageTransform
+    const transform = [t.m00, t.m01, t.m02, t.m10, t.m11, t.m12, 0, 0, 1]
+    const inverse = r.ck.Matrix.invert(transform)
+    if (inverse) {
+      return r.ck.Matrix.multiply(
+        r.ck.Matrix.scaled(node.width, node.height),
+        inverse,
+        r.ck.Matrix.scaled(1 / imgW, 1 / imgH)
+      )
+    }
+  }
+
+  let sx: number, sy: number, sw: number, sh: number
+  if (scaleMode === 'FIT') {
+    const scale = Math.min(node.width / imgW, node.height / imgH)
+    sw = imgW
+    sh = imgH
+    sx = -(node.width / scale - imgW) / 2
+    sy = -(node.height / scale - imgH) / 2
+  } else {
+    const scale = Math.max(node.width / imgW, node.height / imgH)
+    sw = node.width / scale
+    sh = node.height / scale
+    sx = (imgW - sw) / 2
+    sy = (imgH - sh) / 2
+  }
+
+  return r.ck.Matrix.multiply(
+    r.ck.Matrix.scaled(node.width / sw, node.height / sh),
+    r.ck.Matrix.translated(-sx, -sy)
+  )
+}
+
 export function applyImageFill(
   r: SkiaRenderer,
   fill: Fill,
@@ -213,31 +262,18 @@ export function applyImageFill(
   const imgH = img.height()
   const scaleMode = fill.imageScaleMode ?? 'FILL'
 
+  const localMatrix = makeImageFillLocalMatrix(r, fill, node, imgW, imgH)
+
   if (scaleMode === 'TILE') {
-    const shader = img.makeShaderCubic(r.ck.TileMode.Repeat, r.ck.TileMode.Repeat, 1 / 3, 1 / 3)
+    const shader = img.makeShaderCubic(
+      r.ck.TileMode.Repeat,
+      r.ck.TileMode.Repeat,
+      1 / 3,
+      1 / 3,
+      localMatrix
+    )
     r.fillPaint.setShader(shader)
     return true
-  }
-
-  let sx: number, sy: number, sw: number, sh: number
-  if (scaleMode === 'CROP' && fill.imageTransform) {
-    const t = fill.imageTransform
-    sx = t.m02 * imgW
-    sy = t.m12 * imgH
-    sw = t.m00 * imgW
-    sh = t.m11 * imgH
-  } else if (scaleMode === 'FIT') {
-    const scale = Math.min(node.width / imgW, node.height / imgH)
-    sw = imgW
-    sh = imgH
-    sx = -(node.width / scale - imgW) / 2
-    sy = -(node.height / scale - imgH) / 2
-  } else {
-    const scale = Math.max(node.width / imgW, node.height / imgH)
-    sw = node.width / scale
-    sh = node.height / scale
-    sx = (imgW - sw) / 2
-    sy = (imgH - sh) / 2
   }
 
   const shader = img.makeShaderOptions(
@@ -245,10 +281,7 @@ export function applyImageFill(
     r.ck.TileMode.Clamp,
     r.ck.FilterMode.Linear,
     r.ck.MipmapMode.Linear,
-    r.ck.Matrix.multiply(
-      r.ck.Matrix.scaled(node.width / sw, node.height / sh),
-      r.ck.Matrix.translated(-sx, -sy)
-    )
+    localMatrix
   )
   r.fillPaint.setShader(shader)
   return true

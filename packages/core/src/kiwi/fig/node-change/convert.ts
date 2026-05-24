@@ -8,6 +8,8 @@ import { convertEffects, convertFills, convertStrokes } from './paint'
 import { importStyleRuns } from './style-runs'
 export { importStyleRuns } from './style-runs'
 import { convertFigmaDerivedTextGlyphs } from './derived-text-glyphs'
+import { convertFontFeatures } from './font-features'
+import { convertFontVariations } from './font-variations'
 import { convertLetterSpacing, convertLineHeight, mapTextDecoration } from './text-values'
 export { convertEffects, convertFills, convertStrokes, setVariableColorResolver } from './paint'
 export { convertLetterSpacing, convertLineHeight, mapTextDecoration } from './text-values'
@@ -89,7 +91,7 @@ const NODE_TYPE_MAP: Record<string, NodeType | 'DOCUMENT' | 'VARIABLE'> = {
   STAR: 'STAR',
   REGULAR_POLYGON: 'POLYGON',
   VECTOR: 'VECTOR',
-  BOOLEAN_OPERATION: 'VECTOR',
+  BOOLEAN_OPERATION: 'BOOLEAN_OPERATION',
   GROUP: 'GROUP',
   SECTION: 'SECTION',
   COMPONENT: 'COMPONENT',
@@ -103,6 +105,18 @@ const NODE_TYPE_MAP: Record<string, NodeType | 'DOCUMENT' | 'VARIABLE'> = {
 function mapNodeType(type?: string): NodeType | 'DOCUMENT' | 'VARIABLE' {
   if (type) return NODE_TYPE_MAP[type] ?? 'RECTANGLE'
   return 'RECTANGLE'
+}
+
+function mapBooleanOperation(nc: NodeChange): SceneNode['booleanOperation'] {
+  if (nc.type !== 'BOOLEAN_OPERATION') return undefined
+  switch (nc.booleanOperation) {
+    case 'SUBTRACT':
+    case 'INTERSECT':
+    case 'EXCLUDE':
+      return nc.booleanOperation
+    default:
+      return 'UNION'
+  }
 }
 
 function mapStackMode(mode?: string): LayoutMode {
@@ -280,6 +294,8 @@ function convertTextProps(
   | 'letterSpacing'
   | 'maxLines'
   | 'styleRuns'
+  | 'fontVariations'
+  | 'fontFeatures'
   | 'textTruncation'
   | 'textDirection'
   | 'figmaDerivedLayout'
@@ -304,6 +320,8 @@ function convertTextProps(
     letterSpacing: convertLetterSpacing(nc.letterSpacing, nc.fontSize),
     maxLines: (nc.maxLines ?? null) as number | null,
     styleRuns: importStyleRuns(nc),
+    fontVariations: convertFontVariations(nc),
+    fontFeatures: convertFontFeatures(nc),
     textTruncation: (nc.textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED',
     textDirection:
       (getOpenPencilPluginValue(nc, TEXT_DIRECTION_PLUGIN_KEY) as
@@ -466,6 +484,7 @@ export function nodeChangeToProps(
     visible: nc.visible ?? true,
     locked: nc.locked ?? false,
     blendMode: (nc.blendMode as Fill['blendMode']) ?? 'PASS_THROUGH',
+    booleanOperation: mapBooleanOperation(nc),
     fills: convertFills(nc.fillPaints),
     strokes: convertStrokes(
       nc.strokePaints,
@@ -719,7 +738,7 @@ function preserveFigmaPayloadBlobs(value: unknown, blobs: Uint8Array[]): unknown
   return result
 }
 
-const FIGMA_RAW_NODE_FIELD_KEYS = [
+export const FIGMA_RAW_NODE_FIELD_KEYS = [
   'styleIdForFill',
   'styleIdForStrokeFill',
   'styleIdForText',
@@ -759,6 +778,8 @@ const FIGMA_RAW_NODE_FIELD_KEYS = [
   'textUserLayoutVersion',
   'textExplicitLayoutVersion',
   'fontVariations',
+  'fontVariantCommonLigatures',
+  'fontVariantContextualLigatures',
   'derivedTextData',
   'fillPaints',
   'strokePaints',

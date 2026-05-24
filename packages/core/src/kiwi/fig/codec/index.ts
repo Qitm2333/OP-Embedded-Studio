@@ -1,4 +1,3 @@
-/* eslint-disable max-lines -- codec types and encode/decode logic are tightly coupled */
 /**
  * Message Encoding/Decoding for Figma Multiplayer
  *
@@ -308,6 +307,7 @@ export interface NodeChange {
   frameMaskDisabled?: boolean
   resizeToFit?: boolean
   // Vector
+  booleanOperation?: 'UNION' | 'SUBTRACT' | 'INTERSECT' | 'EXCLUDE'
   vectorData?: unknown
   fillGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
   strokeGeometry?: Array<{ windingRule?: string; commandsBlob?: number }>
@@ -364,6 +364,7 @@ export interface NodeChange {
   textBidiVersion?: number
   textDecoration?: string
   textDecorationSkipInk?: boolean
+  fontVariations?: Array<{ axisTag?: number; axisName?: string; value?: number }>
   fontVariantCommonLigatures?: boolean
   fontVariantContextualLigatures?: boolean
   fontVersion?: string
