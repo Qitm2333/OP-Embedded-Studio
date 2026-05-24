@@ -42,7 +42,8 @@
     "copyXPath": "Копировать XPath",
     "checkUpdates": "Проверить обновления…",
     "booleanOperations": "Boolean operations",
-    "strikethrough": "Зачёркивание"
+    "strikethrough": "Зачёркивание",
+    "closeTab": "Закрыть вкладку"
   },
   "commands": {
     "undo": "Отменить",
@@ -229,7 +230,24 @@
     "effectSettings": "Настройки эффекта",
     "expandEffectSettings": "Развернуть настройки эффекта",
     "collapseEffectSettings": "Свернуть настройки эффекта",
-    "toggleExportPreview": "Показать/скрыть предпросмотр экспорта"
+    "toggleExportPreview": "Показать/скрыть предпросмотр экспорта",
+    "untitled": "Без названия",
+    "nodeCopyString": " копия",
+    "xAxis": "Ось X",
+    "yAxis": "Ось Y",
+    "rotation": "Поворот",
+    "width": "Ширина",
+    "height": "Высота",
+    "opacity": "Непрозрачность",
+    "radius": "Радиус",
+    "spread": "Размах",
+    "foregroundBlur": "Размытие переднего плана",
+    "strokeType": "Тип обводки",
+    "strokeWeight": "Толщина обводки",
+    "exportScale": "Масштаб экспорта",
+    "exportFormat": "Формат экспорта",
+    "gap": "Интервал",
+    "searchFonts": "Поиск шрифтов..."
   },
   "pages": {
     "newPage": "Новая страница",

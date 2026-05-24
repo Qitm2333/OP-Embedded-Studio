@@ -42,7 +42,8 @@
     "copyXPath": "Kopiuj XPath",
     "checkUpdates": "Sprawdź aktualizacje…",
     "booleanOperations": "Boolean operations",
-    "strikethrough": "Przekreślenie"
+    "strikethrough": "Przekreślenie",
+    "closeTab": "Zamknij kartę"
   },
   "commands": {
     "undo": "Cofnij",
@@ -229,7 +230,24 @@
     "effectSettings": "Ustawienia efektu",
     "expandEffectSettings": "Rozwiń ustawienia efektu",
     "collapseEffectSettings": "Zwiń ustawienia efektu",
-    "toggleExportPreview": "Przełącz podgląd eksportu"
+    "toggleExportPreview": "Przełącz podgląd eksportu",
+    "untitled": "Bez tytułu",
+    "nodeCopyString": " kopia",
+    "xAxis": "Oś X",
+    "yAxis": "Oś Y",
+    "rotation": "Obrót",
+    "width": "Szerokość",
+    "height": "Wysokość",
+    "opacity": "Krycie",
+    "radius": "Promień",
+    "spread": "Rozproszenie",
+    "foregroundBlur": "Rozmycie pierwszego planu",
+    "strokeType": "Typ obrysu",
+    "strokeWeight": "Grubość obrysu",
+    "exportScale": "Skala eksportu",
+    "exportFormat": "Format eksportu",
+    "gap": "Odstęp",
+    "searchFonts": "Szukaj fontów..."
   },
   "pages": {
     "newPage": "Nowa strona",

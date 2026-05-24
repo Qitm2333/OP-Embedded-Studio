@@ -42,7 +42,8 @@
     "copyXPath": "复制 XPath",
     "checkUpdates": "检查更新…",
     "booleanOperations": "Boolean operations",
-    "strikethrough": "删除线"
+    "strikethrough": "删除线",
+    "closeTab": "关闭标签页"
   },
   "commands": {
     "undo": "撤销",
@@ -229,7 +230,24 @@
     "effectSettings": "效果设置",
     "expandEffectSettings": "展开效果设置",
     "collapseEffectSettings": "收起效果设置",
-    "toggleExportPreview": "切换导出预览"
+    "toggleExportPreview": "切换导出预览",
+    "untitled": "未命名",
+    "nodeCopyString": " 副本",
+    "xAxis": "X 轴",
+    "yAxis": "Y 轴",
+    "rotation": "旋转",
+    "width": "宽度",
+    "height": "高度",
+    "opacity": "不透明度",
+    "radius": "圆角",
+    "spread": "扩展",
+    "foregroundBlur": "前景模糊",
+    "strokeType": "描边类型",
+    "strokeWeight": "描边粗细",
+    "exportScale": "导出缩放",
+    "exportFormat": "导出格式",
+    "gap": "间距",
+    "searchFonts": "搜索字体..."
   },
   "pages": {
     "newPage": "新建页面",

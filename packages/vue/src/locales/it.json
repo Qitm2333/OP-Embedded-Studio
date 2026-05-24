@@ -42,7 +42,8 @@
     "copyXPath": "Copia XPath",
     "checkUpdates": "Controlla aggiornamenti…",
     "booleanOperations": "Boolean operations",
-    "strikethrough": "Barrato"
+    "strikethrough": "Barrato",
+    "closeTab": "Chiudi scheda"
   },
   "commands": {
     "undo": "Annulla",
@@ -229,7 +230,24 @@
     "effectSettings": "Impostazioni effetto",
     "expandEffectSettings": "Espandi impostazioni effetto",
     "collapseEffectSettings": "Comprimi impostazioni effetto",
-    "toggleExportPreview": "Mostra/nascondi anteprima esportazione"
+    "toggleExportPreview": "Mostra/nascondi anteprima esportazione",
+    "untitled": "Senza titolo",
+    "nodeCopyString": " copia",
+    "xAxis": "Asse X",
+    "yAxis": "Asse Y",
+    "rotation": "Rotazione",
+    "width": "Larghezza",
+    "height": "Altezza",
+    "opacity": "Opacità",
+    "radius": "Raggio",
+    "spread": "Diffusione",
+    "foregroundBlur": "Sfocatura primo piano",
+    "strokeType": "Tipo tratto",
+    "strokeWeight": "Spessore tratto",
+    "exportScale": "Scala esportazione",
+    "exportFormat": "Formato esportazione",
+    "gap": "Spazio",
+    "searchFonts": "Cerca font..."
   },
   "pages": {
     "newPage": "Nuova pagina",

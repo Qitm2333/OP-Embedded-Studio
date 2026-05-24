@@ -42,7 +42,8 @@
     "copyXPath": "Copiar XPath",
     "checkUpdates": "Buscar actualizaciones…",
     "booleanOperations": "Operaciones booleanas",
-    "strikethrough": "Tachado"
+    "strikethrough": "Tachado",
+    "closeTab": "Cerrar pestaña"
   },
   "commands": {
     "undo": "Deshacer",

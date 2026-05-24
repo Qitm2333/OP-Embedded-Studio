@@ -42,7 +42,8 @@
     "copyXPath": "XPath kopieren",
     "checkUpdates": "Nach Updates suchen…",
     "booleanOperations": "Boolean operations",
-    "strikethrough": "Durchstreichen"
+    "strikethrough": "Durchstreichen",
+    "closeTab": "Tab schließen"
   },
   "commands": {
     "undo": "Rückgängig",
@@ -229,7 +230,24 @@
     "effectSettings": "Effekteinstellungen",
     "expandEffectSettings": "Effekteinstellungen erweitern",
     "collapseEffectSettings": "Effekteinstellungen einklappen",
-    "toggleExportPreview": "Exportvorschau umschalten"
+    "toggleExportPreview": "Exportvorschau umschalten",
+    "untitled": "Unbenannt",
+    "nodeCopyString": " Kopie",
+    "xAxis": "X-Achse",
+    "yAxis": "Y-Achse",
+    "rotation": "Drehung",
+    "width": "Breite",
+    "height": "Höhe",
+    "opacity": "Deckkraft",
+    "radius": "Radius",
+    "spread": "Ausbreitung",
+    "foregroundBlur": "Vordergrund-Weichzeichnung",
+    "strokeType": "Linientyp",
+    "strokeWeight": "Linienstärke",
+    "exportScale": "Exportmaßstab",
+    "exportFormat": "Exportformat",
+    "gap": "Abstand",
+    "searchFonts": "Schriftarten suchen..."
   },
   "pages": {
     "newPage": "Neue Seite",
