@@ -588,7 +588,6 @@ function verifyFixture(spec: FixtureSpec): void {
     test.todo(
       'BUG: corner radius 999 sentinel lost for non-pill nodes on scene import (40 nodes, raw data preserved)'
     )
-    test.todo('BUG: componentPropDefs verifier rejects 9 instances (verifier logic gap)')
     test.todo(
       'BUG: derivedTextData baseline precision differs from raw (14 instances, font metrics)'
     )

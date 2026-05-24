@@ -1,5 +1,7 @@
 import type { SceneGraph, SceneNode } from '@open-pencil/core'
 
+import { verifyComponentPropDefs, verifyDerivedTextData } from './raw-verifiers/helpers'
+
 export interface Mismatch {
   path: string
   key: string
@@ -55,89 +57,6 @@ export function isColorObj(v: unknown): v is Record<string, number> {
     typeof c.b === 'number' &&
     typeof c.a === 'number'
   )
-}
-
-function verifyFontDigest(
-  amDigest: unknown,
-  bmDigest: unknown,
-  i: number,
-  ctx: VerifierContext
-): void {
-  if (amDigest && bmDigest) {
-    const amHex =
-      typeof amDigest === 'string' ? amDigest : Buffer.from(amDigest as Uint8Array).toString('hex')
-    const bmHex =
-      typeof bmDigest === 'string' ? bmDigest : Buffer.from(bmDigest as Uint8Array).toString('hex')
-    if (amHex !== bmHex) {
-      ctx.errors.push({
-        path: ctx.path,
-        key: `${ctx.key}.fontMetaData[${i}].fontDigest`,
-        message: `mismatch`
-      })
-    }
-  }
-}
-
-function verifyFontLineHeight(amLH: unknown, bmLH: unknown, i: number, ctx: VerifierContext): void {
-  const amLineHeight = typeof amLH === 'number' ? amLH : 1.2
-  const bmLineHeight = typeof bmLH === 'number' ? bmLH : 1.2
-  if (bmLineHeight !== 1.2 && Math.abs(amLineHeight - bmLineHeight) > 0.05) {
-    ctx.errors.push({
-      path: ctx.path,
-      key: `${ctx.key}.fontMetaData[${i}].fontLineHeight`,
-      message: `${amLineHeight} vs ${bmLineHeight}`
-    })
-  }
-}
-
-function verifySingleFontMetadata(
-  am: Record<string, unknown>,
-  bm: Record<string, unknown>,
-  i: number,
-  ctx: VerifierContext
-): void {
-  const amKey = am.key as Record<string, unknown> | undefined
-  const bmKey = bm.key as Record<string, unknown> | undefined
-  if (amKey?.family !== bmKey?.family) {
-    ctx.errors.push({
-      path: ctx.path,
-      key: `${ctx.key}.fontMetaData[${i}].key.family`,
-      message: `${String(amKey?.family)} vs ${String(bmKey?.family)}`
-    })
-  }
-  if (amKey?.style !== bmKey?.style) {
-    ctx.errors.push({
-      path: ctx.path,
-      key: `${ctx.key}.fontMetaData[${i}].key.style`,
-      message: `${String(amKey?.style)} vs ${String(bmKey?.style)}`
-    })
-  }
-  if (am.fontWeight !== bm.fontWeight) {
-    ctx.errors.push({
-      path: ctx.path,
-      key: `${ctx.key}.fontMetaData[${i}].fontWeight`,
-      message: `${String(am.fontWeight)} vs ${String(bm.fontWeight)}`
-    })
-  }
-  if (am.fontStyle !== bm.fontStyle) {
-    ctx.errors.push({
-      path: ctx.path,
-      key: `${ctx.key}.fontMetaData[${i}].fontStyle`,
-      message: `${String(am.fontStyle)} vs ${String(bm.fontStyle)}`
-    })
-  }
-  verifyFontLineHeight(am.fontLineHeight, bm.fontLineHeight, i, ctx)
-  verifyFontDigest(am.fontDigest, bm.fontDigest, i, ctx)
-}
-
-function verifyFontMetadata(
-  aMeta: Record<string, unknown>[],
-  bMeta: Record<string, unknown>[],
-  ctx: VerifierContext
-): void {
-  for (let i = 0; i < aMeta.length; i++) {
-    verifySingleFontMetadata(aMeta[i], bMeta[i], i, ctx)
-  }
 }
 
 export const SCENE_VERIFIERS = new Map<string, Verifier>([
@@ -380,36 +299,14 @@ export const RAW_VERIFIERS = new Map<string, Verifier>([
     'componentPropDefs',
     (ctx) => {
       if (isIdempotent(ctx)) return JSON.stringify(ctx.a) === JSON.stringify(ctx.b)
-      const aVal = ctx.a as Record<string, unknown>[] | undefined
-      const bVal = ctx.b as Record<string, unknown>[] | undefined
-      if (!aVal && !bVal) return true
-      if (!aVal || !bVal) return false
-      if (aVal.length !== bVal.length) return false
-      return true
+      return verifyComponentPropDefs(ctx.a, ctx.b)
     }
   ],
   [
     'derivedTextData',
     (ctx) => {
       if (isIdempotent(ctx)) return JSON.stringify(ctx.a) === JSON.stringify(ctx.b)
-      const aVal = ctx.a as Record<string, unknown> | undefined
-      const bVal = ctx.b as Record<string, unknown> | undefined
-      if (!aVal && !bVal) return true
-      if (!aVal || !bVal) return true
-
-      const aMeta = (aVal.fontMetaData as Record<string, unknown>[]) ?? []
-      const bMeta = (bVal.fontMetaData as Record<string, unknown>[]) ?? []
-      if (aMeta.length !== bMeta.length) {
-        ctx.errors.push({
-          path: ctx.path,
-          key: `${ctx.key}.fontMetaData`,
-          message: `length mismatch: ${aMeta.length} vs ${bMeta.length}`
-        })
-      } else {
-        verifyFontMetadata(aMeta, bMeta, ctx)
-      }
-
-      return true
+      return verifyDerivedTextData(ctx)
     }
   ],
   ['styleId', defaultEqual(0)],
