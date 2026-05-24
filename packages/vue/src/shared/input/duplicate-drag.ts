@@ -1,9 +1,8 @@
 import type { Editor } from '@open-pencil/core/editor'
 
 import { useI18n } from '#vue/i18n/useI18n.js'
+import type { DragOriginal } from '#vue/shared/input/drag-original'
 import type { DragState } from '#vue/shared/input/types'
-
-type DragOriginal = { x: number; y: number; parentId: string }
 
 export function duplicateAndDrag(
   cx: number,

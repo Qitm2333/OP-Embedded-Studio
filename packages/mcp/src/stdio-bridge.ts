@@ -1,10 +1,6 @@
 import { WebSocket } from 'ws'
 
-type PendingRequest = {
-  resolve: (value: unknown) => void
-  reject: (error: Error) => void
-  timer: ReturnType<typeof setTimeout>
-}
+import type { PendingRequest } from '#mcp/rpc-types'
 
 type StdioRpcBridgeOptions = {
   wsUrl: string

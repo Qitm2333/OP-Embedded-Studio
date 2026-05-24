@@ -1,4 +1,5 @@
 import { parseColor } from '#core/color'
+import type { RenderOptions } from '#core/design-jsx/types'
 import { fetchIcons } from '#core/icons'
 import { createIconFromPaths } from '#core/icons/render'
 import { computeAllLayouts } from '#core/layout'
@@ -37,12 +38,6 @@ const TYPE_MAP: Partial<Record<string, NodeType>> = {
   h4: 'TEXT',
   h5: 'TEXT',
   h6: 'TEXT'
-}
-
-interface RenderOptions {
-  x?: number
-  y?: number
-  parentId?: string
 }
 
 export interface RenderResult {

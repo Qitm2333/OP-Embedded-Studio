@@ -1,5 +1,6 @@
 import { transform } from 'sucrase'
 
+import type { RenderOptions as RenderJSXOptions } from '#core/design-jsx/types'
 import type { SceneGraph } from '#core/scene-graph'
 
 import * as React from './mini-react'
@@ -162,12 +163,6 @@ export function buildComponent(jsxString: string): React.ComponentType {
 
   // eslint-disable-next-line typescript-eslint/no-implied-eval -- sucrase output must be evaluated at runtime
   return new Function('React', code)(React) as React.ComponentType
-}
-
-interface RenderJSXOptions {
-  x?: number
-  y?: number
-  parentId?: string
 }
 
 /**

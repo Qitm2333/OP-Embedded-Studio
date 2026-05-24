@@ -3,17 +3,12 @@ import { randomUUID } from 'node:crypto'
 import type { WebSocket } from 'ws'
 
 import type { RpcJsonObject } from '#mcp/json'
+import type { PendingRequest } from '#mcp/rpc-types'
 
 const RPC_TIMEOUT = 30_000
 
 const APP_NOT_CONNECTED_MESSAGE =
   'OpenPencil app is not connected. STOP and tell the user: "The OpenPencil desktop app is not running, no document is open, or the desktop app is connected to a different MCP server. Please start OpenPencil, open a document, and try again." Do NOT attempt to start the app yourself or retry automatically.'
-
-type PendingRequest = {
-  resolve: (value: unknown) => void
-  reject: (error: Error) => void
-  timer: ReturnType<typeof setTimeout>
-}
 
 type BrowserRpcBridgeOptions = {
   authToken: string | null

@@ -1,6 +1,7 @@
 import { orderBy, sortBy } from 'es-toolkit/array'
 
 import { colorToHex, colorDistance as colorDist } from '#core/color'
+import type { ColorUsageEntry } from '#core/color/analysis'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import type { Color } from '#core/types'
 
@@ -13,12 +14,7 @@ export interface AnalyzeColorsArgs {
   similar?: boolean
 }
 
-interface ColorInfo {
-  hex: string
-  color: Color
-  count: number
-  variableName: string | null
-}
+type ColorInfo = ColorUsageEntry
 
 interface ColorCluster {
   colors: ColorInfo[]

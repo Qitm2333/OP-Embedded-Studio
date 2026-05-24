@@ -1,10 +1,10 @@
+import type { ViewportSize } from '@/app/document/io/types'
+
 export function yieldToUI(): Promise<void> {
   return new Promise((resolve) => {
     requestAnimationFrame(() => resolve())
   })
 }
-
-type ViewportSize = { width: number; height: number }
 
 type ViewportEditor = {
   zoomToFit: () => void

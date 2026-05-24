@@ -9,12 +9,7 @@ import {
   getExportOptions,
   saveExportedFile
 } from '@/app/document/export/files'
-
-type ExportOptions = {
-  scale?: number
-  quality?: number
-  jsxFormat?: 'openpencil' | 'tailwind'
-}
+import type { ExportOptions } from '@/app/document/export/types'
 
 type DownloadBlob = (data: Uint8Array, filename: string, mime: string) => void
 

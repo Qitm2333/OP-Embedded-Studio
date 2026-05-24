@@ -10,12 +10,9 @@ import {
   predownloadFallbackFonts,
   requestLocalFontAccess
 } from '@/app/editor/fonts'
+import type { DownloadedFontCacheSummary } from '@/app/editor/fonts/cache'
 
-export interface FontCacheSummary {
-  count: number
-  byteLength: number
-  updatedAt: number | null
-}
+type FontCacheSummary = DownloadedFontCacheSummary
 
 export interface FontSettingsActions {
   clearDownloadedFontCache: () => Promise<void>

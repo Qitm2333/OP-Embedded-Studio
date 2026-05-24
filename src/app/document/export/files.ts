@@ -8,13 +8,8 @@ import type {
 import { renderNodesToImage } from '@open-pencil/core/io/formats/raster'
 import type { SceneGraph } from '@open-pencil/core/scene-graph'
 
+import type { ExportOptions } from '@/app/document/export/types'
 import { isTauri } from '@/app/tauri/env'
-
-type ExportOptions = {
-  scale?: number
-  quality?: number
-  jsxFormat?: 'openpencil' | 'tailwind'
-}
 
 type ExportData = string | ArrayBuffer | Uint8Array
 

@@ -1,6 +1,6 @@
 import { useClipboard } from '@vueuse/core'
 import { computed, inject, provide, proxyRefs } from 'vue'
-import type { Component, InjectionKey, ShallowUnwrapRef } from 'vue'
+import type { InjectionKey, ShallowUnwrapRef } from 'vue'
 import { useRouter } from 'vue-router'
 import IconFilePlus from '~icons/lucide/file-plus'
 import IconFolderOpen from '~icons/lucide/folder-open'
@@ -15,12 +15,9 @@ import { useEditorStore } from '@/app/editor/active-store'
 import { toolIcons } from '@/app/editor/icons'
 import { openFileDialog } from '@/app/shell/menu/use'
 import { toast } from '@/app/shell/ui'
+import type { ToolbarActionItem } from '@/components/Toolbar/types'
 
-interface MenuAction {
-  icon: Component
-  label: string
-  action: () => void
-}
+type MenuAction = ToolbarActionItem
 
 function createMobileHudContext() {
   const router = useRouter()

@@ -4,17 +4,13 @@ import { prefetchFigmaSchema } from '@open-pencil/core/kiwi'
 import { createDocumentViewportActions, downloadBlob } from '@/app/document/io/browser'
 import { createOpenActions, createReloadActions } from '@/app/document/io/read'
 import { createDocumentSourceActions, createDocumentSourceState } from '@/app/document/io/source'
+import type { ViewportSize } from '@/app/document/io/types'
 import { createFileWatcher } from '@/app/document/io/watch'
 
 type DocumentIOState = EditorState & {
   documentName: string
   loading: boolean
   autosaveEnabled: boolean
-}
-
-type ViewportSize = {
-  width: number
-  height: number
 }
 
 export function createDocumentIOActions(

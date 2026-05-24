@@ -1,15 +1,11 @@
 import { orderBy } from 'es-toolkit/array'
 
 import { colorDistance, colorToHex } from '#core/color'
+import type { ColorUsageEntry } from '#core/color/analysis'
 import { defineTool } from '#core/tools/schema'
 import type { Color } from '#core/types'
 
-interface ColorEntry {
-  hex: string
-  color: Color
-  count: number
-  variableName: string | null
-}
+type ColorEntry = ColorUsageEntry
 
 function trackColor(colorMap: Map<string, ColorEntry>, color: Color, variableName: string | null) {
   const hex = colorToHex(color)
