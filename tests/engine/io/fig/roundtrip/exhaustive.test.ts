@@ -61,8 +61,8 @@ const SPECS: FixtureSpec[] = [
     thumbnailHeight: 239,
     imageCount: 3,
     figKiwiVersion: 101,
-    g1ExportSize: 595224,
-    g2ExportSize: 595224
+    g1ExportSize: 595922,
+    g2ExportSize: 595922
   }
 ]
 
@@ -262,7 +262,18 @@ function compareRawNodeFields(
   verifiers: Map<string, Verifier> = RAW_VERIFIERS
 ): void {
   const errors: Mismatch[] = []
-  const opts: CompareOptions = { aNodes, bNodes, aGraph, bGraph, errors, fixture, verifiers, label }
+  const generation = label.startsWith('G1') ? 1 : 0
+  const opts: CompareOptions = {
+    aNodes,
+    bNodes,
+    aGraph,
+    bGraph,
+    errors,
+    fixture,
+    verifiers,
+    label,
+    generation
+  }
 
   for (const [p, aNode] of aNodes) {
     const bNode = bNodes.get(p)

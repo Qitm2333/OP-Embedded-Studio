@@ -343,11 +343,11 @@ function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
     nc.stackCounterAlignItems = normalizeStackCounterAlign(figLayout.stackCounterAlignItems)
     nc.stackPrimaryAlignItems = normalizeStackJustify(figLayout.stackPrimaryAlignItems)
     // For imported nodes, figLayout captures the original kiwi NC values.
-    // When stackPrimarySizing is absent (undefined), the kiwi schema default
-    // is FIXED (enum value 0). node.primaryAxisSizing may differ due to
-    // import-side override sync, so we prefer figLayout as source of truth.
-    nc.stackPrimarySizing = normalizeStackSizing(figLayout.stackPrimarySizing) ?? 'FIXED'
-    nc.stackCounterSizing = normalizeStackSizing(figLayout.stackCounterSizing) ?? 'FIXED'
+    // Preserve omitted sizing fields instead of materializing schema defaults.
+    const stackPrimarySizing = normalizeStackSizing(figLayout.stackPrimarySizing)
+    if (stackPrimarySizing) nc.stackPrimarySizing = stackPrimarySizing
+    const stackCounterSizing = normalizeStackSizing(figLayout.stackCounterSizing)
+    if (stackCounterSizing) nc.stackCounterSizing = stackCounterSizing
     nc.stackVerticalPadding = figLayout.stackVerticalPadding
     nc.stackHorizontalPadding = figLayout.stackHorizontalPadding
     nc.stackWrap = figLayout.stackWrap

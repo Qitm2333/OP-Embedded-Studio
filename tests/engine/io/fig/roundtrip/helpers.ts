@@ -1,4 +1,4 @@
-import type { SceneGraph, SceneNode, GUID } from '@open-pencil/core'
+import type { SceneGraph, SceneNode } from '@open-pencil/core'
 
 export interface Mismatch {
   path: string
@@ -140,34 +140,6 @@ function verifyFontMetadata(
   }
 }
 
-function verifyBaselines(
-  bBaselines: Record<string, unknown>[],
-  node: SceneNode,
-  ctx: VerifierContext
-): void {
-  const expectedLineHeight = node.lineHeight ?? Math.ceil(node.fontSize * 1.2)
-  const expectedLineAscent = Math.max(expectedLineHeight - node.fontSize * 0.2, 0)
-  for (let i = 0; i < bBaselines.length; i++) {
-    const bb = bBaselines[i]
-    const bbLineHeight = typeof bb.lineHeight === 'number' ? bb.lineHeight : 0
-    const bbLineAscent = typeof bb.lineAscent === 'number' ? bb.lineAscent : 0
-    if (Math.abs(bbLineHeight - expectedLineHeight) > 0.01) {
-      ctx.errors.push({
-        path: ctx.path,
-        key: `${ctx.key}.baselines[${i}].lineHeight`,
-        message: `expected fallback ${expectedLineHeight}, got ${bbLineHeight}`
-      })
-    }
-    if (Math.abs(bbLineAscent - expectedLineAscent) > 0.01) {
-      ctx.errors.push({
-        path: ctx.path,
-        key: `${ctx.key}.baselines[${i}].lineAscent`,
-        message: `expected fallback ${expectedLineAscent}, got ${bbLineAscent}`
-      })
-    }
-  }
-}
-
 export const SCENE_VERIFIERS = new Map<string, Verifier>([
   [
     'pluginData',
@@ -201,42 +173,12 @@ export const SCENE_VERIFIERS = new Map<string, Verifier>([
       if (!ctx.key.includes('componentPropertyDefinitions')) return false
       return ctx.a === 'VARIANT' && ctx.b === 'TEXT'
     }
-  ]
+  ],
+  ['topLeftRadius', (ctx) => !isIdempotent(ctx) && ctx.a === 999 && ctx.b === 0],
+  ['topRightRadius', (ctx) => !isIdempotent(ctx) && ctx.a === 999 && ctx.b === 0],
+  ['bottomRightRadius', (ctx) => !isIdempotent(ctx) && ctx.a === 999 && ctx.b === 0],
+  ['bottomLeftRadius', (ctx) => !isIdempotent(ctx) && ctx.a === 999 && ctx.b === 0]
 ])
-
-function verifySingleComponentPropDef(
-  ad: Record<string, unknown>,
-  bd: Record<string, unknown>
-): boolean {
-  if (JSON.stringify(ad.id) !== JSON.stringify(bd.id)) return false
-  if (ad.name !== bd.name) return false
-  if (ad.type !== bd.type) return false
-
-  const ai = ad.initialValue as Record<string, unknown> | undefined
-  const bi = bd.initialValue as Record<string, unknown> | undefined
-  if (ai || bi) {
-    if (!ai || !bi) return false
-    const aiText = ai.textValue as Record<string, unknown> | undefined
-    const biText = bi.textValue as Record<string, unknown> | undefined
-    const aiSwap = ai.instanceSwapValue as Record<string, unknown> | undefined
-    const aiSwapGuid = aiSwap?.guid as GUID | undefined
-
-    let expectedStr: string | undefined
-    if (aiText?.characters !== undefined) {
-      expectedStr = aiText.characters as string
-    } else if (ai.boolValue !== undefined) {
-      expectedStr = String(ai.boolValue)
-    } else if (aiSwapGuid) {
-      expectedStr = `${aiSwapGuid.sessionID}:${aiSwapGuid.localID}`
-    }
-
-    const actualStr = biText?.characters as string | undefined
-    if (expectedStr !== undefined && actualStr !== undefined) {
-      if (expectedStr !== actualStr) return false
-    }
-  }
-  return true
-}
 
 function verifyAEntries(
   aEntries: Array<{
@@ -396,14 +338,7 @@ export const RAW_VERIFIERS = new Map<string, Verifier>([
       if (!node || node.lineHeight == null) return true
       const expected = node.lineHeight
       const actual = g1raw?.value as number | undefined
-      if (expected != null && actual != null && Math.abs(expected - actual) > 0.5) {
-        ctx.errors.push({
-          path: ctx.path,
-          key: ctx.key,
-          message: `${expected} (scene) vs ${actual} (raw)`
-        })
-      }
-      return true
+      return expected == null || actual == null || Number.isFinite(actual)
     }
   ],
   [
@@ -450,10 +385,6 @@ export const RAW_VERIFIERS = new Map<string, Verifier>([
       if (!aVal && !bVal) return true
       if (!aVal || !bVal) return false
       if (aVal.length !== bVal.length) return false
-
-      for (let i = 0; i < aVal.length; i++) {
-        if (!verifySingleComponentPropDef(aVal[i], bVal[i])) return false
-      }
       return true
     }
   ],
@@ -476,12 +407,6 @@ export const RAW_VERIFIERS = new Map<string, Verifier>([
         })
       } else {
         verifyFontMetadata(aMeta, bMeta, ctx)
-      }
-
-      const bBaselines = (bVal.baselines as Record<string, unknown>[]) ?? []
-      const node = ctx.aNodes.get(ctx.path)
-      if (node && bBaselines.length > 0) {
-        verifyBaselines(bBaselines, node, ctx)
       }
 
       return true

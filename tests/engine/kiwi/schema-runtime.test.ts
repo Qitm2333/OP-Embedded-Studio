@@ -1,4 +1,4 @@
-import { describe, test } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 
 import figSchema from '#core/kiwi/fig/codec/schema'
 import { expectEnumValue, expectFieldNumber, validateSchema } from '#core/kiwi/schema-runtime'
@@ -6,6 +6,14 @@ import { expectEnumValue, expectFieldNumber, validateSchema } from '#core/kiwi/s
 describe('Kiwi schema runtime', () => {
   test('validates the static Figma schema', () => {
     validateSchema(figSchema)
+  })
+
+  test('keeps the bundled schema aligned with a modern embedded Figma schema', () => {
+    expect(figSchema.definitions).toHaveLength(605)
+    expect(figSchema.definitions.some((def) => def.name === 'NodeChange')).toBe(true)
+    expect(figSchema.definitions.some((def) => def.name === 'InteractiveSlideElementChange')).toBe(
+      true
+    )
   })
 
   test('keeps Figma clipboard-derived field numbers for emitted roundtrip fields', () => {
@@ -21,9 +29,12 @@ describe('Kiwi schema runtime', () => {
     expectEnumValue(figSchema, 'EditorType', 'SLIDES', 2)
   })
 
-  test('keeps export-stable legacy field numbers for unused layout and glyph fields', () => {
-    expectFieldNumber(figSchema, 'NodeChange', 'stackWrap', 476)
-    expectFieldNumber(figSchema, 'NodeChange', 'stackCounterSpacing', 477)
-    expectFieldNumber(figSchema, 'Glyph', 'rotation', 7)
+  test('keeps Figma-derived field numbers for layout and glyph fields', () => {
+    expectFieldNumber(figSchema, 'NodeChange', 'stackWrap', 323)
+    expectFieldNumber(figSchema, 'NodeChange', 'stackCounterSpacing', 324)
+    expectFieldNumber(figSchema, 'NodeChange', 'gridChildVerticalAlign', 476)
+    expectFieldNumber(figSchema, 'NodeChange', 'gridChildHorizontalAlign', 477)
+    expectFieldNumber(figSchema, 'Glyph', 'emojiCodePoints', 7)
+    expectFieldNumber(figSchema, 'Glyph', 'rotation', 9)
   })
 })
