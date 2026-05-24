@@ -279,7 +279,9 @@ function importVariableEntries(
       collectionId,
       valuesByMode,
       description: '',
-      hiddenFromPublishing: false
+      hiddenFromPublishing: false,
+      key: typeof nc.key === 'string' ? nc.key : undefined,
+      version: typeof nc.version === 'string' ? nc.version : undefined
     })
   }
 }

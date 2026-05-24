@@ -2,8 +2,8 @@ import type { NodeChange } from '#core/kiwi/fig/codec'
 import type { CharacterStyleOverride, StyleRun } from '#core/scene-graph'
 import { styleToWeight } from '#core/text/fonts'
 
-import { convertFontFeatures } from './font-features'
-import { convertFontVariations } from './font-variations'
+import { convertFontFeatures } from './font/features'
+import { convertFontVariations } from './font/variations'
 import { convertFills } from './paint'
 import { convertLetterSpacing, convertLineHeight, mapTextDecoration } from './text-values'
 

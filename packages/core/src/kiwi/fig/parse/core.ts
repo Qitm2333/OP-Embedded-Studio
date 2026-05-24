@@ -83,6 +83,8 @@ export interface FigParseResult {
   blobs: Uint8Array[]
   images: Array<[string, Uint8Array]>
   figKiwiVersion: number
+  /** Deflated kiwi schema bytes from the original file (for roundtrip fidelity). */
+  figSchemaDeflated: Uint8Array
 }
 
 export function parseFigBuffer(buffer: ArrayBuffer): FigParseResult {
@@ -145,5 +147,11 @@ export function parseFigBuffer(buffer: ArrayBuffer): FigParseResult {
     }
   }
 
-  return { nodeChanges, blobs, images, figKiwiVersion: payload.version }
+  return {
+    nodeChanges,
+    blobs,
+    images,
+    figKiwiVersion: payload.version,
+    figSchemaDeflated: payload.schemaDeflated
+  }
 }

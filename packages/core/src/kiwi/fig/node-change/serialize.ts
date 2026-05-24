@@ -11,15 +11,19 @@ export {
   FIG_KIWI_DEFAULT_VERSION,
   parseFigKiwiChunks
 } from '#core/kiwi/fig/container/kiwi'
-export { buildFontDigestMap } from './font-digests'
+export { buildFontDigestMap } from './font/digests'
 
 import type { NodeChange, Paint, VariableConsumptionEntry } from '#core/kiwi/fig/codec'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import type { Color, GUID, Matrix } from '#core/types'
 
 import { guidToString, stringToGuid, VARIABLE_BINDING_FIELDS } from './convert'
-import { sceneNodeToKiwiWithContext, type KiwiNodeChange } from './export-node'
-import { applyFontFeaturesToKiwi } from './font-features'
+import {
+  buildAssetRefToVarGuidMap,
+  sceneNodeToKiwiWithContext,
+  type KiwiNodeChange
+} from './export-node'
+import { applyFontFeaturesToKiwi } from './font/features'
 import {
   BOUND_VARIABLES_PLUGIN_KEY,
   LAYOUT_DIRECTION_PLUGIN_KEY,
@@ -69,8 +73,23 @@ export function mapToFigmaType(type: SceneNode['type']): string {
   }
 }
 
+/**
+ * Generate a position string for parentIndex.position.
+ *
+ * Positions must be printable ASCII characters (space through tilde),
+ * with the last character at least '!' (code 33), and must sort
+ * lexicographically so sibling nodes order correctly.
+ * The encoding uses a telescoping scheme where each `~` prefix
+ * adds 94 more positions, like:
+ *   0:"!",1:"\"", ... 93:"~",94:"~!", ... 187:"~~",188:"~~!", ...
+ */
 export function fractionalPosition(index: number): string {
-  return String.fromCharCode('!'.charCodeAt(0) + index)
+  const BASE = 94
+  const FIRST = 33 // '!'.charCodeAt(0)
+  const TILDE = 126 // '~'.charCodeAt(0)
+  const numTildes = Math.floor(index / BASE)
+  const lastChar = String.fromCharCode(FIRST + (index % BASE))
+  return String.fromCharCode(TILDE).repeat(numTildes) + lastChar
 }
 
 function textLines(text: string): NonNullable<NodeChange['textData']>['lines'] {
@@ -201,21 +220,29 @@ function fillToKiwiPaint(f: SceneNode['fills'][number]): Paint {
 }
 
 function serializeCornerRadii(node: SceneNode, nc: KiwiNodeChange): void {
-  const hasCornerRadius = node.independentCorners
-    ? node.topLeftRadius > 0 ||
-      node.topRightRadius > 0 ||
-      node.bottomLeftRadius > 0 ||
-      node.bottomRightRadius > 0
-    : node.cornerRadius > 0
-  if (hasCornerRadius) {
-    nc.cornerRadius = node.cornerRadius
-    if (node.independentCorners) {
-      nc.rectangleCornerRadiiIndependent = true
-      nc.rectangleTopLeftCornerRadius = node.topLeftRadius
-      nc.rectangleTopRightCornerRadius = node.topRightRadius
-      nc.rectangleBottomLeftCornerRadius = node.bottomLeftRadius
-      nc.rectangleBottomRightCornerRadius = node.bottomRightRadius
-    }
+  const anyIndividual =
+    node.topLeftRadius > 0 ||
+    node.topRightRadius > 0 ||
+    node.bottomLeftRadius > 0 ||
+    node.bottomRightRadius > 0
+  if (node.cornerRadius > 0) nc.cornerRadius = node.cornerRadius
+  // Always emit individual radii when present.  A node may have
+  // independentCorners=false with non-zero individual values (e.g. imported
+  // from Figma where the flag wasn't set but per-corner values exist).
+  if (anyIndividual || node.independentCorners) {
+    // For imported nodes, preserve the original independentCorners flag from
+    // the raw Figma data. Figma may emit per-corner radii without setting the
+    // independent flag (preserve rectangleCornerRadiiIndependent).
+    const rawIndependent = node.source.id
+      ? (node.source.fig.rawNodeFields as Record<string, unknown> | undefined)
+          ?.rectangleCornerRadiiIndependent
+      : undefined
+    nc.rectangleCornerRadiiIndependent =
+      typeof rawIndependent === 'boolean' ? rawIndependent : node.independentCorners
+    nc.rectangleTopLeftCornerRadius = node.topLeftRadius
+    nc.rectangleTopRightCornerRadius = node.topRightRadius
+    nc.rectangleBottomLeftCornerRadius = node.bottomLeftRadius
+    nc.rectangleBottomRightCornerRadius = node.bottomRightRadius
   }
   if (node.cornerSmoothing > 0) {
     nc.cornerSmoothing = node.cornerSmoothing
@@ -223,6 +250,10 @@ function serializeCornerRadii(node: SceneNode, nc: KiwiNodeChange): void {
 }
 
 function resolveTextAutoResize(node: SceneNode, graph: SceneGraph): SceneNode['textAutoResize'] {
+  // For nodes imported from .fig files, preserve the original textAutoResize
+  // value. Forcing 'HEIGHT' for fixed-height text inside auto-layout causes
+  // layout drift on roundtrip.
+  if (node.source.id) return node.textAutoResize
   const parent = node.parentId ? graph.getNode(node.parentId) : undefined
   if (
     parent &&
@@ -257,7 +288,7 @@ function serializeTextProps(
   const autoResize = resolveTextAutoResize(node, graph)
   nc.textAutoResize = autoResize
   nc.textAlignHorizontal = node.textAlignHorizontal
-  nc.textAlignVertical = 'TOP'
+  nc.textAlignVertical = node.textAlignVertical
   nc.textUserLayoutVersion = 4
   nc.textExplicitLayoutVersion = 1
   nc.textBidiVersion = 1
@@ -267,6 +298,7 @@ function serializeTextProps(
   applyFontFeaturesToKiwi(nc, node.fontFeatures)
   nc.fontVersion = ''
   nc.emojiImageSet = 'APPLE'
+  if (node.textCase !== 'ORIGINAL') nc.textCase = node.textCase
   if (fontDigestMap) {
     nc.derivedTextData = buildDerivedTextData(node, fontDigestMap, blobs, glyphBlobMap ?? new Map())
   }
@@ -310,8 +342,12 @@ function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
     nc.stackJustify = normalizeStackJustify(figLayout.stackJustify)
     nc.stackCounterAlignItems = normalizeStackCounterAlign(figLayout.stackCounterAlignItems)
     nc.stackPrimaryAlignItems = normalizeStackJustify(figLayout.stackPrimaryAlignItems)
-    nc.stackPrimarySizing = normalizeStackSizing(figLayout.stackPrimarySizing)
-    nc.stackCounterSizing = normalizeStackSizing(figLayout.stackCounterSizing)
+    // For imported nodes, figLayout captures the original kiwi NC values.
+    // Preserve omitted sizing fields instead of materializing schema defaults.
+    const stackPrimarySizing = normalizeStackSizing(figLayout.stackPrimarySizing)
+    if (stackPrimarySizing) nc.stackPrimarySizing = stackPrimarySizing
+    const stackCounterSizing = normalizeStackSizing(figLayout.stackCounterSizing)
+    if (stackCounterSizing) nc.stackCounterSizing = stackCounterSizing
     nc.stackVerticalPadding = figLayout.stackVerticalPadding
     nc.stackHorizontalPadding = figLayout.stackHorizontalPadding
     nc.stackWrap = figLayout.stackWrap
@@ -320,6 +356,7 @@ function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
     nc.stackChildAlignSelf = figLayout.stackChildAlignSelf
     nc.stackCounterSpacing = figLayout.stackCounterSpacing
     nc.bordersTakeSpace = figLayout.bordersTakeSpace
+    if (figLayout.stackReverseZIndex) nc.stackReverseZIndex = true
     return
   }
   if (node.layoutMode !== 'NONE' && node.layoutMode !== 'GRID') {
@@ -337,6 +374,7 @@ function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
     if (node.counterAxisSpacing > 0) nc.stackCounterSpacing = node.counterAxisSpacing
     nc.bordersTakeSpace = node.strokesIncludedInLayout
   }
+  if (node.itemReverseZIndex) nc.stackReverseZIndex = true
   if (node.layoutPositioning === 'ABSOLUTE') nc.stackPositioning = 'ABSOLUTE'
   if (node.layoutGrow > 0) nc.stackChildPrimaryGrow = node.layoutGrow
   if (node.layoutAlignSelf !== 'AUTO') {
@@ -450,9 +488,10 @@ export function sceneNodeToKiwi(
   fontDigestMap?: Map<string, Uint8Array>,
   varIdToGuid?: Map<string, GUID>,
   glyphBlobMap = new Map<string, number>(),
-  paintVariableColorMap?: Map<string, Color>,
   blobIndexByHex?: Map<string, number>
 ): KiwiNodeChange[] {
+  // Build assetRef to guid mapping for converting colorVar references in raw paints
+  const assetRefToVarGuid = varIdToGuid ? buildAssetRefToVarGuidMap(graph, varIdToGuid) : undefined
   return sceneNodeToKiwiWithContext(node, parentGuid, childIndex, localIdCounter, {
     graph,
     blobs,
@@ -461,7 +500,7 @@ export function sceneNodeToKiwi(
     fontDigestMap,
     glyphBlobMap,
     varIdToGuid,
-    paintVariableColorMap,
+    assetRefToVarGuid,
     fractionalPosition,
     mapToFigmaType,
     fillToKiwiPaint,

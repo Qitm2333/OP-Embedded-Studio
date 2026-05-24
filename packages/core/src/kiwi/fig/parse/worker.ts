@@ -18,9 +18,12 @@ type WorkerScope = typeof self & {
 self.onmessage = (e: MessageEvent<ArrayBuffer | WorkerParseRequest>) => {
   try {
     const request = e.data instanceof ArrayBuffer ? { buffer: e.data } : e.data
-    const { nodeChanges, blobs, images, figKiwiVersion } = parseFigBuffer(request.buffer)
+    const { nodeChanges, blobs, images, figKiwiVersion, figSchemaDeflated } = parseFigBuffer(
+      request.buffer
+    )
     const graph = importNodeChanges(nodeChanges, blobs, new Map(images), request.options)
     graph.figKiwiVersion = figKiwiVersion
+    graph.figSchemaDeflated = figSchemaDeflated
     const serialized = serializeSceneGraph(graph)
     ;(self as WorkerScope).postMessage(
       { graph: serialized },

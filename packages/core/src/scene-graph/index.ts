@@ -48,6 +48,8 @@ export class SceneGraph {
   activeMode = new Map<string, string>()
   rootId: string
   figKiwiVersion: number | null = null
+  /** Deflated kiwi schema bytes from the original .fig file, preserved for roundtrip fidelity. */
+  figSchemaDeflated: Uint8Array | null = null
   documentColorSpace: DocumentColorSpace = 'display-p3'
   readonly emitter: Emitter<SceneGraphEvents> = createNanoEvents()
   private absPosCache = new Map<string, Vector>()

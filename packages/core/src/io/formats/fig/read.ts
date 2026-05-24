@@ -10,9 +10,16 @@ export interface ParseFigFileOptions {
 }
 
 function parseFigFileSync(buffer: ArrayBuffer, options: ParseFigFileOptions = {}): SceneGraph {
-  const { nodeChanges, blobs, images: imageEntries, figKiwiVersion } = parseFigBuffer(buffer)
+  const {
+    nodeChanges,
+    blobs,
+    images: imageEntries,
+    figKiwiVersion,
+    figSchemaDeflated
+  } = parseFigBuffer(buffer)
   const graph = importNodeChanges(nodeChanges, blobs, new Map(imageEntries), options)
   graph.figKiwiVersion = figKiwiVersion
+  graph.figSchemaDeflated = figSchemaDeflated
   return graph
 }
 

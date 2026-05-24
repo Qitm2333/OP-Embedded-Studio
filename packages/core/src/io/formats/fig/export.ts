@@ -1,5 +1,5 @@
 import type { CanvasKit } from 'canvaskit-wasm'
-import { deflateSync } from 'fflate'
+import { deflateSync, inflateSync } from 'fflate'
 
 import type { SkiaRenderer } from '#core/canvas'
 import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from '#core/constants'
@@ -8,7 +8,6 @@ import { initCodec, getCompiledSchema, getSchemaBytes } from '#core/kiwi/fig/cod
 import type { NodeChange } from '#core/kiwi/fig/codec'
 import { populateAllLazyFigImportRoots } from '#core/kiwi/fig/lazy-import'
 import { stringToGuid } from '#core/kiwi/fig/node-change/convert'
-import { buildFigmaPaintVariableColorMap } from '#core/kiwi/fig/node-change/export-node'
 import {
   sceneNodeToKiwi,
   fractionalPosition,
@@ -17,6 +16,7 @@ import {
   makeDocumentNodeChange,
   makeCanvasNodeChange
 } from '#core/kiwi/fig/node-change/serialize'
+import { decodeBinarySchema, compileSchema, ByteBuffer } from '#core/kiwi/schema-runtime'
 import type { SceneGraph, VariableValue } from '#core/scene-graph'
 import type { GUID } from '#core/types'
 
@@ -184,7 +184,7 @@ function appendVariablesForCollection(
       variableData: variableValueToKiwi(value, variable.type, varIdToGuid)
     }))
 
-    nodeChanges.push({
+    const nc: KiwiNodeChange = {
       guid: varGuid,
       parentIndex: { guid: parentGuid, position: fractionalPosition(varIdx++) },
       type: 'VARIABLE',
@@ -196,7 +196,12 @@ function appendVariablesForCollection(
       variableResolvedType: resolvedType,
       variableDataValues: { entries },
       variableScopes: ['ALL_SCOPES']
-    })
+    }
+    // Preserve library key/version on VARIABLE NodeChanges so that
+    // buildAssetRefMap can resolve assetRef to guid on reimport.
+    if (variable.key) nc.key = variable.key
+    if (variable.version) nc.version = variable.version
+    nodeChanges.push(nc)
   }
 }
 
@@ -226,6 +231,11 @@ function buildCanvasEntries(
     const canvasGuid = page.source.id
       ? stringToGuid(page.source.id)
       : { sessionID: 0, localID: localIdCounter.value++ }
+    // Advance counter past any source.id-derived GUID to prevent collisions
+    // with subsequently generated variable/collection GUIDs.
+    if (page.source.id && canvasGuid.sessionID === 0) {
+      localIdCounter.value = Math.max(localIdCounter.value, canvasGuid.localID + 1)
+    }
     nodeIdToGuid.set(page.id, canvasGuid)
     if (page.internalOnly) internalCanvasGuid = canvasGuid
 
@@ -272,8 +282,24 @@ export async function exportFigFile(
 ): Promise<Uint8Array> {
   populateAllLazyFigImportRoots(graph)
   await initCodec()
-  const compiled = getCompiledSchema()
-  const schemaDeflated = deflateSync(getSchemaBytes())
+
+  // When the document was imported from a .fig file, preserve the original
+  // kiwi schema for both encoding and embedding. For the current version of
+  // Figma, likely for quite some time, schema has more types/fields than our
+  // subset, and using our schema to encode would produce field IDs that don't
+  // align with the embedded schema. By compiling and using the original
+  // schema, we improve the roundtrip-ability... This requires further work.
+  let compiled: ReturnType<typeof getCompiledSchema>
+  let schemaDeflated: Uint8Array
+  if (graph.figSchemaDeflated) {
+    const schemaBytes = inflateSync(graph.figSchemaDeflated)
+    const figSchema = decodeBinarySchema(new ByteBuffer(schemaBytes))
+    compiled = compileSchema(figSchema) as ReturnType<typeof getCompiledSchema>
+    schemaDeflated = graph.figSchemaDeflated
+  } else {
+    compiled = getCompiledSchema()
+    schemaDeflated = deflateSync(getSchemaBytes())
+  }
 
   const docGuid = { sessionID: 0, localID: 0 }
   const localIdCounter = { value: 2 }
@@ -291,9 +317,6 @@ export async function exportFigFile(
   const fontDigestMap = await buildFontDigestMap(graph)
   const glyphBlobMap = new Map<string, number>()
   const blobIndexByHex = new Map<string, number>()
-  const paintVariableColorMap = buildFigmaPaintVariableColorMap(graph)
-
-  assignVariableGuids(graph, localIdCounter, varIdToGuid, modeIdToGuid)
 
   const { canvasEntries, internalCanvasGuid } = buildCanvasEntries(
     graph,
@@ -302,6 +325,23 @@ export async function exportFigFile(
     localIdCounter,
     nodeIdToGuid
   )
+
+  // Scan ALL imported source.ids to find max sessionID:0 localID,
+  // preventing collisions between variable GUIDs and any imported node GUID.
+  let maxLocalId0 = localIdCounter.value - 1
+  for (const node of graph.nodes.values()) {
+    if (node.source.id) {
+      const guid = stringToGuid(node.source.id)
+      if (guid.sessionID === 0 && guid.localID > maxLocalId0) {
+        maxLocalId0 = guid.localID
+      }
+    }
+  }
+  localIdCounter.value = Math.max(localIdCounter.value, maxLocalId0 + 1)
+
+  // Assign variable GUIDs AFTER canvas entries so that source.id-derived
+  // canvas GUIDs don't collide with generated variable GUIDs.
+  assignVariableGuids(graph, localIdCounter, varIdToGuid, modeIdToGuid)
 
   for (const entry of canvasEntries) nodeChanges.push(entry.canvasNc)
 
@@ -324,7 +364,6 @@ export async function exportFigFile(
           fontDigestMap,
           varIdToGuid,
           glyphBlobMap,
-          paintVariableColorMap,
           blobIndexByHex
         )
       )

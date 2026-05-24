@@ -19,6 +19,7 @@ export interface SerializedSceneGraph {
   activeMode: Array<[string, string]>
   instanceIndex: Array<[string, string[]]>
   figKiwiVersion: number | null
+  figSchemaDeflated: Uint8Array | null
   documentColorSpace: DocumentColorSpace
   lazyFigImport?: SerializedLazyFigImportContext
 }
@@ -34,6 +35,7 @@ export function serializeSceneGraph(graph: SceneGraph): SerializedSceneGraph {
     activeMode: [...graph.activeMode],
     instanceIndex: [...graph.instanceIndex].map(([id, nodeIds]) => [id, [...nodeIds]]),
     figKiwiVersion: graph.figKiwiVersion,
+    figSchemaDeflated: graph.figSchemaDeflated,
     documentColorSpace: graph.documentColorSpace,
     lazyFigImport: lazyFigImport
       ? {
@@ -66,6 +68,15 @@ export function serializedSceneGraphTransferList(data: SerializedSceneGraph): Tr
       buffers.add(blob.buffer)
     }
   }
+  if (data.figSchemaDeflated) {
+    if (
+      data.figSchemaDeflated.buffer instanceof ArrayBuffer &&
+      data.figSchemaDeflated.byteOffset === 0 &&
+      data.figSchemaDeflated.byteLength === data.figSchemaDeflated.buffer.byteLength
+    ) {
+      buffers.add(data.figSchemaDeflated.buffer)
+    }
+  }
   return [...buffers]
 }
 
@@ -79,6 +90,7 @@ export function deserializeSceneGraph(data: SerializedSceneGraph): SceneGraph {
   graph.activeMode = new Map(data.activeMode)
   graph.instanceIndex = new Map(data.instanceIndex.map(([id, nodeIds]) => [id, new Set(nodeIds)]))
   graph.figKiwiVersion = data.figKiwiVersion
+  graph.figSchemaDeflated = data.figSchemaDeflated
   graph.documentColorSpace = data.documentColorSpace
   if (data.lazyFigImport) {
     setLazyFigImportContext(graph, {

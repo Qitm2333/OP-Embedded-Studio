@@ -8,8 +8,8 @@ import { convertEffects, convertFills, convertStrokes } from './paint'
 import { importStyleRuns } from './style-runs'
 export { importStyleRuns } from './style-runs'
 import { convertFigmaDerivedTextGlyphs } from './derived-text-glyphs'
-import { convertFontFeatures } from './font-features'
-import { convertFontVariations } from './font-variations'
+import { convertFontFeatures } from './font/features'
+import { convertFontVariations } from './font/variations'
 import { convertLetterSpacing, convertLineHeight, mapTextDecoration } from './text-values'
 export { convertEffects, convertFills, convertStrokes, setVariableColorResolver } from './paint'
 export { convertLetterSpacing, convertLineHeight, mapTextDecoration } from './text-values'
@@ -668,7 +668,8 @@ function extractFigmaLayoutMetadata(nc: NodeChange): SceneNode['source']['fig'][
     stackChildPrimaryGrow: nc.stackChildPrimaryGrow,
     stackChildAlignSelf: nc.stackChildAlignSelf,
     stackCounterSpacing: nc.stackCounterSpacing,
-    bordersTakeSpace: nc.bordersTakeSpace as boolean | undefined
+    bordersTakeSpace: nc.bordersTakeSpace as boolean | undefined,
+    stackReverseZIndex: nc.stackReverseZIndex as boolean | undefined
   }
 }
 
@@ -690,23 +691,28 @@ export function sortChildren(
   parentNc: NodeChange,
   nodeMap: Map<string, NodeChange>
 ): void {
+  // Always sort by parentIndex.position first (canonical tree order)
   const stackMode = parentNc.stackMode as string | undefined
-  if (stackMode === 'HORIZONTAL' || stackMode === 'VERTICAL') {
-    const axis = stackMode === 'HORIZONTAL' ? 'm02' : 'm12'
-    children.sort((a, b) => {
+  const isHorizontal = stackMode === 'HORIZONTAL'
+  const isVertical = stackMode === 'VERTICAL'
+
+  children.sort((a, b) => {
+    const aPos = nodeMap.get(a)?.parentIndex?.position ?? ''
+    const bPos = nodeMap.get(b)?.parentIndex?.position ?? ''
+    // Primary sort: parentIndex.position (exact tree order)
+    if (aPos < bPos) return -1
+    if (aPos > bPos) return 1
+
+    // Tiebreaker for auto-layout: sort by transform position
+    if (isHorizontal || isVertical) {
+      const axis = isHorizontal ? 'm02' : 'm12'
       const aT = nodeMap.get(a)?.transform?.[axis] ?? 0
       const bT = nodeMap.get(b)?.transform?.[axis] ?? 0
-      return aT - bT
-    })
-  } else {
-    children.sort((a, b) => {
-      const aPos = nodeMap.get(a)?.parentIndex?.position ?? ''
-      const bPos = nodeMap.get(b)?.parentIndex?.position ?? ''
-      if (aPos < bPos) return -1
-      if (aPos > bPos) return 1
-      return 0
-    })
-  }
+      if (aT !== bT) return aT - bT
+    }
+
+    return 0
+  })
 }
 
 interface PreservedFigmaBlob {
@@ -752,13 +758,21 @@ export const FIGMA_RAW_NODE_FIELD_KEYS = [
   'version',
   'sourceLibraryKey',
   'userFacingVersion',
+  'description',
+  'key',
   'sortPosition',
+  'detachedSymbolId',
+  'documentColorProfile',
   'variableConsumptionMap',
+  'variableModeBySetMap',
   'parameterConsumptionMap',
   'editInfo',
   'backgroundColor',
   'pageType',
+  'isPageDivider',
   'guides',
+  'handoffStatusMap',
+  'annotationCategories',
   'miterLimit',
   'strokeWeight',
   'strokeJoin',
@@ -767,6 +781,17 @@ export const FIGMA_RAW_NODE_FIELD_KEYS = [
   'borderRightWeight',
   'borderBottomWeight',
   'borderLeftWeight',
+  'minSize',
+  'maxSize',
+  'targetAspectRatio',
+  'gridRows',
+  'gridColumns',
+  'gridRowAnchor',
+  'gridColumnAnchor',
+  'gridColumnsSizing',
+  'gridRowsSizing',
+  'gridChildVerticalAlign',
+  'gridChildHorizontalAlign',
   'textAutoResize',
   'textData',
   'lineHeight',
@@ -780,10 +805,21 @@ export const FIGMA_RAW_NODE_FIELD_KEYS = [
   'fontVariations',
   'fontVariantCommonLigatures',
   'fontVariantContextualLigatures',
+  'leadingTrim',
+  'maxLines',
+  'textPathStart',
   'derivedTextData',
   'fillPaints',
   'strokePaints',
   'effects',
+  'sectionStatusInfo',
+  'codeSyntax',
+  'lockMode',
+  'slideThemeMap',
+  'isSoftDeleted',
+  'brushType',
+  'scatterStrokeSettings',
+  'vectorOperationVersion',
   'vectorData',
   'fillGeometry',
   'strokeGeometry'

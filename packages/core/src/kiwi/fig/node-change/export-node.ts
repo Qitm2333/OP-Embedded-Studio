@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { bytesToHex } from '#core/bytes/hex'
 import type { NodeChange, Paint } from '#core/kiwi/fig/codec'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
@@ -13,6 +14,27 @@ import {
 
 export type KiwiNodeChange = NodeChange & Record<string, unknown>
 
+/**
+ * Build a mapping from assetRef key strings ("key@version" or "key") to
+ * variable GUIDs. This is used to convert colorVar.assetRef references in raw
+ * paint data to guid references that resolveAliasId can resolve on reimport.
+ */
+export function buildAssetRefToVarGuidMap(
+  graph: SceneGraph,
+  varIdToGuid: Map<string, GUID>
+): Map<string, GUID> {
+  const map = new Map<string, GUID>()
+  for (const [varId, variable] of graph.variables) {
+    if (!variable.key) continue
+    const guid = varIdToGuid.get(varId) ?? stringToGuid(varId)
+    map.set(variable.key, guid)
+    if (variable.version) {
+      map.set(`${variable.key}@${variable.version}`, guid)
+    }
+  }
+  return map
+}
+
 interface SceneNodeToKiwiContext {
   graph: SceneGraph
   blobs: Uint8Array[]
@@ -21,7 +43,9 @@ interface SceneNodeToKiwiContext {
   fontDigestMap?: Map<string, Uint8Array>
   glyphBlobMap?: Map<string, number>
   varIdToGuid?: Map<string, GUID>
-  paintVariableColorMap?: Map<string, Color>
+  /** Maps "key@version" or "key" (from variable.key/version) → variable GUID.
+   * Used to convert colorVar.assetRef references in raw paints to guid references. */
+  assetRefToVarGuid?: Map<string, GUID>
   fractionalPosition: (index: number) => string
   mapToFigmaType: (type: SceneNode['type']) => string
   fillToKiwiPaint: (fill: SceneNode['fills'][number]) => Paint
@@ -52,8 +76,6 @@ interface SceneNodeToKiwiContext {
     context: SceneNodeToKiwiContext
   ) => KiwiNodeChange[]
 }
-
-const DEFAULT_STROKE_WEIGHT = 1
 
 function applyColorVariableBinding(
   context: SceneNodeToKiwiContext,
@@ -151,21 +173,10 @@ function materializeSafeVariableMap(
   return { entries: entries.map((entry) => materializeFigmaPayload(entry, blobs, options)) }
 }
 
-function paintVariableKey(value: unknown): string | null {
-  if (!value || typeof value !== 'object') return null
-  const assetRef = (
-    value as { value?: { alias?: { assetRef?: { key?: unknown; version?: unknown } } } }
-  ).value?.alias?.assetRef
-  return typeof assetRef?.key === 'string'
-    ? `${assetRef.key}:${typeof assetRef.version === 'string' ? assetRef.version : ''}`
-    : null
-}
-
 interface MaterializeFigmaPayloadOptions {
   blobIndexByHex?: Map<string, number>
   includePaintVariables?: boolean
   includeVariableMaps?: boolean
-  paintVariableColorMap?: Map<string, Color>
 }
 
 function materializeFigmaBlob(
@@ -215,9 +226,6 @@ function materializeFigmaPayload(
   }
 
   const materialized: Record<string, unknown> = {}
-  const paintVariableColor = options.paintVariableColorMap?.get(
-    paintVariableKey((value as { colorVar?: unknown }).colorVar) ?? ''
-  )
   for (const [key, child] of Object.entries(value)) {
     if (FIGMA_PAYLOAD_PAINT_VARIABLE_FIELDS.has(key) && !options.includePaintVariables) continue
     if (FIGMA_PAYLOAD_VARIABLE_MAP_FIELDS.has(key)) {
@@ -235,52 +243,7 @@ function materializeFigmaPayload(
       materializeFigmaPayload(child, blobs, options)
     )
   }
-  if (paintVariableColor) materialized.color = paintVariableColor
   return materialized
-}
-
-function collectPaintVariableColorCounts(
-  value: unknown,
-  counts: Map<string, Map<string, { color: Color; count: number }>>
-): void {
-  if (!value || typeof value !== 'object' || ArrayBuffer.isView(value)) return
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      if (item && typeof item === 'object') collectPaintVariableColorCounts(item, counts)
-    }
-    return
-  }
-
-  const paint = value as { color?: Color; colorVar?: unknown }
-  const key = paintVariableKey(paint.colorVar)
-  if (key && paint.color) {
-    const colorKey = [paint.color.r, paint.color.g, paint.color.b, paint.color.a]
-      .map((component) => Math.round(component * 255))
-      .join(',')
-    const colorCounts = counts.get(key) ?? new Map<string, { color: Color; count: number }>()
-    const current = colorCounts.get(colorKey)
-    colorCounts.set(colorKey, { color: paint.color, count: (current?.count ?? 0) + 1 })
-    counts.set(key, colorCounts)
-  }
-
-  for (const child of Object.values(value)) collectPaintVariableColorCounts(child, counts)
-}
-
-export function buildFigmaPaintVariableColorMap(graph: SceneGraph): Map<string, Color> {
-  const counts = new Map<string, Map<string, { color: Color; count: number }>>()
-  for (const node of graph.nodes.values()) {
-    collectPaintVariableColorCounts(node.source.fig.rawNodeFields, counts)
-    collectPaintVariableColorCounts(node.source.fig.symbolOverrides, counts)
-    collectPaintVariableColorCounts(node.source.fig.componentPropAssignments, counts)
-    collectPaintVariableColorCounts(node.source.fig.derivedSymbolData, counts)
-  }
-
-  const colors = new Map<string, Color>()
-  for (const [key, colorCounts] of counts) {
-    const [mostCommon] = [...colorCounts.values()].sort((a, b) => b.count - a.count)
-    colors.set(key, mostCommon.color)
-  }
-  return colors
 }
 
 function resolveInstanceComponentId(context: SceneNodeToKiwiContext, componentId: string): string {
@@ -310,17 +273,122 @@ function getOrCreateNodeGuid(
   return guid
 }
 
+/**
+ * Fields that are ALWAYS set by explicit serialization and must NOT be
+ * overwritten by rawNodeFields (which may contain stale Figma defaults).
+ * rawNodeFields is a fallback for fields NOT covered by the explicit path.
+ *
+ * Additionally, applyRawFigmaNodeFields skips any key already present on `nc`,
+ * so conditionally-set fields (fontVariations, derivedTextData, strokeJoin,
+ * strokeWeight, miterLimit, etc.) are automatically protected when set.
+ *
+ * NOTE: fillGeometry, strokeGeometry, and vectorData are deliberately NOT
+ * listed here. When nodeForGeometryExport suppresses explicit serialization
+ * (because raw geometry exists), rawNodeFields must supply these fields.
+ */
+const RAW_FIELDS_OVERRIDE_BLOCKLIST = new Set([
+  // Fields that are structurally dangerous if overwritten by stale raw data:
+  'pageType',
+  'derivedSymbolData',
+  'derivedSymbolDataLayoutVersion',
+  'componentPropAssignments',
+  'sourceLibraryKey',
+  // Variable consumption maps: explicit serialization always sets these when
+  // bindings exist, and our VARIABLE_BINDING_FIELDS mapping may produce different
+  // kiwi field names than the original raw data for library variable references.
+  'variableConsumptionMap',
+  'parameterConsumptionMap'
+])
+
 function applyRawFigmaNodeFields(
   context: SceneNodeToKiwiContext,
   node: SceneNode,
   nc: KiwiNodeChange
 ): void {
-  Object.assign(
-    nc,
-    materializeFigmaPayload(node.source.fig.rawNodeFields, context.blobs, {
-      blobIndexByHex: context.blobIndexByHex
-    })
-  )
+  const materialized = materializeFigmaPayload(node.source.fig.rawNodeFields, context.blobs, {
+    blobIndexByHex: context.blobIndexByHex,
+    includePaintVariables: true,
+    includeVariableMaps: true
+  }) as Record<string, unknown>
+  for (const key of Object.keys(materialized)) {
+    if (RAW_FIELDS_OVERRIDE_BLOCKLIST.has(key)) continue
+    // For paint arrays on imported nodes, the raw NC data preserves the
+    // original opacity/color.a split (e.g. opacity=0 for invisible strokes).
+    // The scene model may lose this distinction for instance children whose
+    // strokes are resolved from component overrides. Prefer the raw data.
+    if ((key === 'fillPaints' || key === 'strokePaints') && node.source.id) {
+      let paints = materialized[key]
+      // Convert colorVar.assetRef references to guid references so that
+      // resolveAliasId can resolve them on reimport. Raw paints from the
+      // original .fig file use assetRef (library key/version) to refer to
+      // variables, but on reimport buildAssetRefMap won't find the key unless
+      // our VARIABLE NodeChanges also have key/version set. Even with that,
+      // converting to guid is more robust — it works even for local variables
+      // that don't have library keys.
+      if (context.assetRefToVarGuid && context.assetRefToVarGuid.size > 0) {
+        paints = convertColorVarAssetRefs(paints, context.assetRefToVarGuid)
+      }
+      ;(nc as Record<string, unknown>)[key] = paints
+      continue
+    }
+    // Also convert colorVar.assetRef in raw effects (e.g. shadow color variables)
+    if (
+      key === 'effects' &&
+      node.source.id &&
+      context.assetRefToVarGuid &&
+      context.assetRefToVarGuid.size > 0
+    ) {
+      const converted = convertColorVarAssetRefs(materialized[key], context.assetRefToVarGuid)
+      ;(nc as Record<string, unknown>)[key] = converted
+      continue
+    }
+    // Skip any key already set on nc — explicit serialization takes priority
+    if (key in (nc as Record<string, unknown>)) continue
+    ;(nc as Record<string, unknown>)[key] = materialized[key]
+  }
+}
+
+/**
+ * Convert colorVar.assetRef references in paints to guid references.
+ * Raw paint data from imported .fig files uses assetRef (library key) for
+ * variable references. On reimport, buildAssetRefMap needs nc.key on VARIABLE
+ * NodeChanges to resolve assetRefs. Converting from assetRef to guid makes the
+ * reference resolvable regardless of whether key/version is present on the
+ * VARIABLE NodeChange.
+ */
+function convertColorVarAssetRefs(paints: unknown, assetRefToVarGuid: Map<string, GUID>): unknown {
+  if (!Array.isArray(paints)) return paints
+  const result = paints.map((paint: Record<string, unknown>) => {
+    const colorVar = paint.colorVar as Record<string, unknown> | undefined
+    if (!colorVar) return paint
+    const value = colorVar.value as Record<string, unknown> | undefined
+    if (!value) return paint
+    const alias = value.alias as Record<string, unknown> | undefined
+    if (!alias) return paint
+    // If alias already has guid, nothing to convert
+    if (alias.guid) return paint
+    const assetRef = alias.assetRef as { key: string; version?: string } | undefined
+    if (!assetRef?.key) return paint
+    // Look up by key@version first, then by key alone
+    const lookupKey = assetRef.version ? `${assetRef.key}@${assetRef.version}` : assetRef.key
+    const guid = assetRefToVarGuid.get(lookupKey) ?? assetRefToVarGuid.get(assetRef.key)
+    if (!guid) return paint
+    return {
+      ...paint,
+      colorVar: {
+        ...colorVar,
+        value: {
+          ...value,
+          alias: { guid }
+        }
+      }
+    }
+  })
+  // Check if any paint was actually changed (skip expensive JSON comparison)
+  for (let i = 0; i < paints.length; i++) {
+    if (result[i] !== paints[i]) return result
+  }
+  return paints
 }
 
 function applyInstancePayload(
@@ -343,8 +411,8 @@ function applyInstancePayload(
         context.blobs,
         {
           blobIndexByHex: context.blobIndexByHex,
-          includeVariableMaps: true,
-          paintVariableColorMap: context.paintVariableColorMap
+          includePaintVariables: true,
+          includeVariableMaps: true
         }
       )
     }
@@ -359,8 +427,8 @@ function applyInstancePayload(
       context.blobs,
       {
         blobIndexByHex: context.blobIndexByHex,
-        includeVariableMaps: true,
-        paintVariableColorMap: context.paintVariableColorMap
+        includePaintVariables: true,
+        includeVariableMaps: true
       }
     )
   }
@@ -370,8 +438,8 @@ function applyInstancePayload(
       context.blobs,
       {
         blobIndexByHex: context.blobIndexByHex,
-        includeVariableMaps: true,
-        paintVariableColorMap: context.paintVariableColorMap
+        includePaintVariables: true,
+        includeVariableMaps: true
       }
     )
   }
@@ -486,6 +554,7 @@ function applyNodeVisualProps(
       radius: effect.radius,
       spread: effect.spread,
       visible: effect.visible,
+      blendMode: effect.blendMode ?? 'NORMAL',
       showShadowBehindNode: effect.showShadowBehindNode
     }))
   }
@@ -544,10 +613,17 @@ export function sceneNodeToKiwiWithContext(
     opacity: node.opacity,
     phase: 'CREATED',
     size: exportNodeSize(node),
-    transform: exportNodeTransform(context, node),
-    strokeWeight: node.strokes[0]?.weight ?? DEFAULT_STROKE_WEIGHT,
-    strokeAlign: node.strokes[0]?.align ?? 'INSIDE'
+    transform: exportNodeTransform(context, node)
   }
+  // Only set strokeWeight/strokeAlign when the node has strokes in the scene
+  // model. For imported nodes without strokes but with raw strokeWeight data
+  // (e.g. text nodes, instance children with scaled strokes), the raw value
+  // must be allowed to flow through via applyRawFigmaNodeFields.
+  if (node.strokes.length > 0) {
+    nc.strokeWeight = node.strokes[0].weight
+    nc.strokeAlign = node.strokes[0].align
+  }
+  if (node.locked) nc.locked = true
 
   applyNodeVisualProps(context, node, nc)
   applyComponentMetadata(node, nc)
