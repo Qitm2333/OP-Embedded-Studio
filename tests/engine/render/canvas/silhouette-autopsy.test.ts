@@ -504,15 +504,14 @@ describe('Doc 01 — LAYER_BLUR Round-Trip Loss Verification', () => {
     expect(src).toMatch(/type:\s*e\.type/)
   })
 
-  test('C-RT-LOSS-02: Kiwi EffectType enum has exactly 4 values', () => {
+  test('C-RT-LOSS-02: Kiwi EffectType enum preserves modern Figma values without LAYER_BLUR', () => {
     const src = readSource(schemaPath)
     const effectTypeBlock = src.match(/enum EffectType\s*\{([^}]*)\}/)
     expect(effectTypeBlock).toBeTruthy()
     const body = expectDefined(effectTypeBlock, 'effectTypeBlock')[1]
-    // Count the values (each is "NAME = N;")
     const valueCount = (body.match(/=\s*\d+\s*;/g) || []).length
-    expect(valueCount).toBe(4)
-    // Verify LAYER_BLUR is not present
+    expect(valueCount).toBe(10)
+    expect(body).toContain('FOREGROUND_BLUR = 2')
     expect(body).not.toContain('LAYER_BLUR')
   })
 })

@@ -28,9 +28,13 @@ async function loadInterBold() {
 }
 
 async function loadNotoSansSC() {
-  const data = await Bun.file('tests/fixtures/fonts/NotoSansSC-Regular.ttf').arrayBuffer()
+  const file = Bun.file('tests/fixtures/fonts/NotoSansSC-Regular.ttf')
+  const text = await file.slice(0, 32).text()
+  if (text.startsWith('version ')) return false
+  const data = await file.arrayBuffer()
   fontManager.markLoaded('Noto Sans SC', 'Regular', data)
   fontManager.setCJKFallbackFamily('Noto Sans SC')
+  return true
 }
 
 describe('flattenSelected', () => {
@@ -234,7 +238,8 @@ describe('flattenSelected', () => {
 
   test('flattens mixed Latin and CJK text with loaded fallback outlines', async () => {
     await loadInterRegular()
-    await loadNotoSansSC()
+    const hasCjkFallback = await loadNotoSansSC()
+    if (!hasCjkFallback) return
     const { editor, surface } = await createEditorWithRenderer()
     const pageId = editor.state.currentPageId
     const text = editor.graph.createNode('TEXT', pageId, {

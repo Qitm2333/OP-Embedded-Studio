@@ -44,17 +44,21 @@ interface OpenTypeModule {
   parse(buffer: ArrayBuffer): OutlineFont
 }
 
-const parsedFontCache = new Map<string, OutlineFont>()
+const parsedFontCache = new Map<string, OutlineFont | null>()
 
 function getParsedFont(family: string, style: string): OutlineFont | null {
   const key = `${family}|${style}`
-  const cached = parsedFontCache.get(key)
-  if (cached) return cached
+  if (parsedFontCache.has(key)) return parsedFontCache.get(key) ?? null
   const bytes = fontManager.loadedData(family, style)
   if (!bytes) return null
-  const font = (OpenTypeSync as OpenTypeModule).parse(bytes.slice(0))
-  parsedFontCache.set(key, font)
-  return font
+  try {
+    const font = (OpenTypeSync as OpenTypeModule).parse(bytes.slice(0))
+    parsedFontCache.set(key, font)
+    return font
+  } catch {
+    parsedFontCache.set(key, null)
+    return null
+  }
 }
 
 export function measureTextWithOpenType(
