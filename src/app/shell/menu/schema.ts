@@ -1,5 +1,4 @@
-import { type EditorCommandId, useI18n } from '@open-pencil/vue'
-const { menu } = useI18n()
+import type { EditorCommandId } from '@open-pencil/vue'
 
 export type AppMenuTarget = 'all' | 'browser' | 'native'
 
@@ -32,19 +31,15 @@ export const APP_MENU_SCHEMA = [
   {
     label: 'File',
     items: [
-      { id: 'new', label: menu.value.new || 'New', shortcut: 'MOD+N' },
-      { id: 'open', label: menu.value.open || 'Open…', shortcut: 'MOD+O' },
+      { id: 'new', label: 'New', shortcut: 'MOD+N' },
+      { id: 'open', label: 'Open…', shortcut: 'MOD+O' },
       { type: 'separator' },
-      { id: 'save', label: menu.value.save || 'Save', shortcut: 'MOD+S' },
-      {
-        id: 'save-as',
-        label: menu.value.saveAs || 'Save As…',
-        shortcut: 'MOD+SHIFT+S'
-      },
+      { id: 'save', label: 'Save', shortcut: 'MOD+S' },
+      { id: 'save-as', label: 'Save As…', shortcut: 'MOD+SHIFT+S' },
       { type: 'separator' },
       {
         id: 'export-selection',
-        label: menu.value.exportSelection || 'Export Selection',
+        label: 'Export Selection',
         shortcut: 'MOD+SHIFT+E',
         sub: [
           { id: 'export-png', label: 'PNG' },
@@ -53,16 +48,8 @@ export const APP_MENU_SCHEMA = [
         ]
       },
       { type: 'separator' },
-      {
-        id: 'autosave',
-        label: menu.value.autosave || 'Autosave',
-        checkbox: true
-      },
-      {
-        id: 'close',
-        label: menu.value.closeTab || 'Close Tab',
-        shortcut: 'MOD+W'
-      }
+      { id: 'autosave', label: 'Autosave', checkbox: true },
+      { id: 'close', label: 'Close Tab', shortcut: 'MOD+W' }
     ]
   },
   {
