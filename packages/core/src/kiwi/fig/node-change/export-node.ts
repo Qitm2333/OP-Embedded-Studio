@@ -309,9 +309,9 @@ function applyRawFigmaNodeFields(
     blobIndexByHex: context.blobIndexByHex,
     includePaintVariables: true,
     includeVariableMaps: true
-  }) as Record<string, unknown>
-  for (const key of Object.keys(materialized)) {
-    if (RAW_FIELDS_OVERRIDE_BLOCKLIST.has(key)) continue
+  }) as Partial<KiwiNodeChange>
+  for (const key of Object.keys(materialized) as (keyof KiwiNodeChange)[]) {
+    if (RAW_FIELDS_OVERRIDE_BLOCKLIST.has(String(key))) continue
     // For paint arrays on imported nodes, the raw NC data preserves the
     // original opacity/color.a split (e.g. opacity=0 for invisible strokes).
     // The scene model may lose this distinction for instance children whose
@@ -328,7 +328,7 @@ function applyRawFigmaNodeFields(
       if (context.assetRefToVarGuid && context.assetRefToVarGuid.size > 0) {
         paints = convertColorVarAssetRefs(paints, context.assetRefToVarGuid)
       }
-      ;(nc as Record<string, unknown>)[key] = paints
+      nc[key] = paints
       continue
     }
     // Also convert colorVar.assetRef in raw effects (e.g. shadow color variables)
@@ -339,16 +339,16 @@ function applyRawFigmaNodeFields(
       context.assetRefToVarGuid.size > 0
     ) {
       const converted = convertColorVarAssetRefs(materialized[key], context.assetRefToVarGuid)
-      ;(nc as Record<string, unknown>)[key] = converted
+      nc[key] = converted
       continue
     }
     if (key === 'derivedTextData' && node.source.id) {
-      ;(nc as Record<string, unknown>)[key] = materialized[key]
+      nc[key] = materialized[key]
       continue
     }
     // Skip any key already set on nc — explicit serialization takes priority
-    if (key in (nc as Record<string, unknown>)) continue
-    ;(nc as Record<string, unknown>)[key] = materialized[key]
+    if (key in nc) continue
+    nc[key] = materialized[key]
   }
 }
 
@@ -360,7 +360,7 @@ function applyRawFigmaNodeFields(
  * reference resolvable regardless of whether key/version is present on the
  * VARIABLE NodeChange.
  */
-function convertColorVarAssetRefs(paints: unknown, assetRefToVarGuid: Map<string, GUID>): unknown {
+function convertColorVarAssetRefs<T>(paints: T, assetRefToVarGuid: Map<string, GUID>): T {
   if (!Array.isArray(paints)) return paints
   const result = paints.map((paint: Record<string, unknown>) => {
     const colorVar = paint.colorVar as Record<string, unknown> | undefined
@@ -390,7 +390,7 @@ function convertColorVarAssetRefs(paints: unknown, assetRefToVarGuid: Map<string
   })
   // Check if any paint was actually changed (skip expensive JSON comparison)
   for (let i = 0; i < paints.length; i++) {
-    if (result[i] !== paints[i]) return result
+    if (result[i] !== paints[i]) return result as T
   }
   return paints
 }

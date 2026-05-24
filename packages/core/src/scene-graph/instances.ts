@@ -1,4 +1,4 @@
-import type { SceneGraph, SceneNode, Fill, Stroke, Effect, StyleRun } from './'
+import type { SceneGraph, SceneNode } from './'
 import { copyEffects, copyFills, copyStrokes, copyStyleRuns } from './copy'
 
 const INSTANCE_SYNC_PROPS: (keyof SceneNode)[] = [
@@ -40,22 +40,30 @@ const INSTANCE_SYNC_PROPS: (keyof SceneNode)[] = [
   'borderLeftWeight'
 ]
 
+function setSceneProp<K extends keyof SceneNode>(
+  target: Partial<SceneNode>,
+  key: K,
+  value: SceneNode[K]
+): void {
+  target[key] = value
+}
+
 function copyProp(
   target: Partial<SceneNode> | SceneNode,
   source: SceneNode,
   key: keyof SceneNode
 ): void {
-  const val = source[key]
   if (key === 'fills') {
-    ;(target as Record<string, unknown>)[key] = copyFills(val as Fill[])
+    setSceneProp(target, key, copyFills(source.fills))
   } else if (key === 'strokes') {
-    ;(target as Record<string, unknown>)[key] = copyStrokes(val as Stroke[])
+    setSceneProp(target, key, copyStrokes(source.strokes))
   } else if (key === 'effects') {
-    ;(target as Record<string, unknown>)[key] = copyEffects(val as Effect[])
+    setSceneProp(target, key, copyEffects(source.effects))
   } else if (key === 'styleRuns') {
-    ;(target as Record<string, unknown>)[key] = copyStyleRuns(val as StyleRun[])
+    setSceneProp(target, key, copyStyleRuns(source.styleRuns))
   } else {
-    ;(target as Record<string, unknown>)[key] = Array.isArray(val) ? structuredClone(val) : val
+    const value = source[key]
+    setSceneProp(target, key, Array.isArray(value) ? structuredClone(value) : value)
   }
 }
 

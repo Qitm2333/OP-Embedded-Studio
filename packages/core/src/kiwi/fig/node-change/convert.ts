@@ -823,7 +823,7 @@ export const FIGMA_RAW_NODE_FIELD_KEYS = [
   'vectorData',
   'fillGeometry',
   'strokeGeometry'
-]
+] as const satisfies readonly (keyof NodeChange)[]
 
 function extractFigmaRawGeometry(
   nc: NodeChange,
@@ -831,7 +831,7 @@ function extractFigmaRawGeometry(
 ): Pick<SceneNode['source']['fig'], 'rawSize' | 'rawTransform' | 'rawNodeFields'> {
   const rawNodeFields: Record<string, unknown> = {}
   for (const key of FIGMA_RAW_NODE_FIELD_KEYS) {
-    const value = (nc as Record<string, unknown>)[key]
+    const value = nc[key]
     if (value !== undefined) rawNodeFields[key] = preserveFigmaPayloadBlobs(value, blobs)
   }
   return {
