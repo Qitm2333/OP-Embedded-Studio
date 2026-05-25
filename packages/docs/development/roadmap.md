@@ -129,7 +129,7 @@ Figma's design documentation groups features into these areas:
 | Solid fills | ✅ | ✅ | ✅ | ✅ | ✅ | Color variables supported for common fill cases. |
 | Gradients | ✅ | ✅ | ✅ | ✅ | ✅ | Linear/radial/angular/diamond support; Figma edge cases may differ. |
 | Image fills | ✅ | ✅ | ◐ | ✅ | ✅ | Fill/fit/crop/tile support exists; imported crop/tile affine transforms are applied, but exact Figma parity is still partial. |
-| Pattern / noise / custom fills | ↩ | ◐ | — | ↩ | — | Kiwi schema includes Figma `PATTERN`, `NOISE`, and `CUSTOM` paint data; OpenPencil does not model these as first-class fills yet. Transformed image tile fills cover only a subset of pattern-like imported fills. |
+| Pattern / noise / custom fills | ✅ | ◐ | — | ✅ | — | Schema metadata imports/exports and paints render with a solid fallback color; first-class pattern/noise/custom rendering is still missing. Transformed image tile fills cover only a subset of pattern-like imported fills. |
 | Video/GIF/media fills | ↩ | — | — | ↩ | — | Kiwi schema includes media paint/export enums, but OpenPencil has no video/GIF playback or media layer support. |
 | Layer/fill/effect blend modes | ✅ | ◐ | — | ✅ | ✅ | Canvas applies node, fill, and common shadow effect blend modes; Figma isolation edge cases remain partial. |
 | Opacity | ✅ | ✅ | ✅ | ✅ | ✅ | Node opacity uses save layers in the renderer. |
@@ -150,7 +150,7 @@ Figma's design documentation groups features into these areas:
 | Reverse z-index / align-content | ✅ | ◐ | — | ✅ | ✅ | Modeled and exported; UI is limited. |
 | Constraints | ✅ | ◐ | — | ✅ | ✅ | Tools/API expose constraints; main UI is limited. |
 | Layout grids / guides | ↩ | — | — | ↩ | — | `styleIdForGrid` and `guides` are preserved only. |
-| Text styles | ↩ | ◐ | — | ↩ | — | Style IDs round-trip; no style management UI. Schema now exposes more text internals such as derived text data, leading trim, decoration style, and semantic font style/weight. |
+| Text styles | ↩ | ◐ | — | ↩ | — | Style IDs round-trip; no style management UI. Rich schema metadata such as derived text data, leading trim, decoration style, and semantic font style/weight is preserved for round-trip. |
 | Rich style runs | ✅ | ✅ | ◐ | ✅ | ✅ | Import/render/export support; editing mixed runs is partial. |
 | Text auto resize | ✅ | ✅ | ◐ | ✅ | ✅ | Used by renderer/layout; UI does not expose every mode. |
 | Text truncation / max lines | ✅ | ✅ | — | ✅ | ✅ | Renderer supports ending truncation; no inspector control. |
@@ -195,7 +195,7 @@ OpenPencil deliberately preserves many Figma/Kiwi fields even when they are not 
 | Version/sort/publish/library metadata | ↩ | — | ◐ | Assets UI shows a subset; publish/update workflow is missing. |
 | Variable and parameter consumption maps | ✅ | ◐ | ◐ | Filtered/preserved for safe round-trip; normalized bindings cover common cases. |
 | Page fields: background, page type, guides | ↩ | ◐ | — | Background/page type/guides mostly round-trip. Guides are not rendered/editable. |
-| Text internals: `textData`, layout versions, font version, derived data | ✅ | ✅ | — | Important for text fidelity; most internals are not editable. Imported derived text data is preserved for round-trip when safe. |
+| Text internals: `textData`, layout versions, font version, derived data | ✅ | ✅ | — | Important for text fidelity; most internals are not editable. Imported derived text data, leading trim, decoration style, and semantic font metadata are preserved for round-trip when safe. |
 | `fontVariations` | ✅ | ✅ | — | Variable font axes are imported, rendered, and exported for text nodes and style runs. |
 | Raw paint/effect/vector/geometry payloads | ✅ | ✅ | ◐ | Converted fields render; raw payloads preserve Figma import/export details. |
 
@@ -205,8 +205,8 @@ These are parsed or visible in Figma docs and most likely to cause visible diffe
 
 1. **Masks** — tune remaining exact Figma stack semantics beyond common alpha/vector/luminance and consecutive-mask paths.
 2. **Corner smoothing** — expand Figma fixture comparisons and tune remaining stroke/effect edge cases.
-3. **Pattern/noise/custom fills** — support schema-level Figma paint objects and transforms beyond image tile fills.
-4. **Variable-font and rich text fixtures** — broaden real-file coverage for variable axes, derived text data, leading trim, decoration style, and additional OpenType feature metadata beyond common ligature toggles.
+3. **Pattern/noise/custom fills** — replace the current solid-color fallback with Figma-oracle rendering for schema-level paint objects and transforms beyond image tile fills.
+4. **Variable-font and rich text fixtures** — broaden real-file coverage for variable axes, derived text data, leading trim, decoration style, semantic font metadata, and additional OpenType feature metadata beyond common ligature toggles.
 5. **Boolean operation editing** — improve inspector/tooling workflows for imported boolean-operation nodes.
 6. **Layout grids and guides** — render/edit page guides and Figma layout grids, or clearly keep them round-trip-only.
 7. **Full component property and slot workflows** — support authoring, not just preserving imported payloads.
