@@ -217,6 +217,15 @@ function fillToKiwiPaint(f: SceneNode['fills'][number]): Paint {
   if (f.imageHash) paint.image = { hash: hexToBytes(f.imageHash) }
   if (f.imageScaleMode) paint.imageScaleMode = f.imageScaleMode
   if (f.imageTransform) paint.transform = f.imageTransform
+  if (f.sourceNodeId) paint.sourceNodeId = stringToGuid(f.sourceNodeId)
+  if (f.patternSpacing) paint.patternSpacing = f.patternSpacing
+  if (f.patternTileType) paint.patternTileType = f.patternTileType
+  if (f.verticalAlignment) paint.verticalAlignment = f.verticalAlignment
+  if (f.horizontalAlignment) paint.horizontalAlignment = f.horizontalAlignment
+  if (f.noiseType) paint.noiseType = f.noiseType
+  if (f.density !== undefined) paint.density = f.density
+  if (f.noiseSize) paint.noiseSize = f.noiseSize
+  if (f.customEffectId) paint.customEffectId = { guid: stringToGuid(f.customEffectId) }
   return paint
 }
 

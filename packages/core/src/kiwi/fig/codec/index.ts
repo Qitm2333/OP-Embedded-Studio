@@ -190,6 +190,10 @@ export interface Paint {
     | 'GRADIENT_ANGULAR'
     | 'GRADIENT_DIAMOND'
     | 'IMAGE'
+    | 'VIDEO'
+    | 'PATTERN'
+    | 'NOISE'
+    | 'CUSTOM'
   color?: Color
   opacity?: number
   visible?: boolean
@@ -198,6 +202,18 @@ export interface Paint {
   transform?: Matrix
   image?: { hash: string | Uint8Array }
   imageScaleMode?: string
+  sourceNodeId?: GUID
+  spacing?: number
+  patternSpacing?: Vector
+  patternTileType?: string
+  verticalAlignment?: string
+  horizontalAlignment?: string
+  id?: GUID
+  altText?: string
+  noiseType?: string
+  density?: number
+  noiseSize?: Vector
+  customEffectId?: { guid?: GUID }
   colorVariableBinding?: VariableBinding
   colorVar?: {
     value?: {

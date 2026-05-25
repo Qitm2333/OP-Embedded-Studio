@@ -87,6 +87,12 @@ export function applyFill(
     return r.applyImageFill(fill, node, graph)
   }
 
+  if (fill.type === 'PATTERN' || fill.type === 'NOISE' || fill.type === 'CUSTOM') {
+    const c = r.resolveFillColor(fill, fillIndex, node, graph)
+    r.fillPaint.setColor(r.ck.Color4f(c.r, c.g, c.b, c.a))
+    return true
+  }
+
   return false
 }
 

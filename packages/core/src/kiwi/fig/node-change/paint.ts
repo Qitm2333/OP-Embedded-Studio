@@ -1,5 +1,6 @@
 import { normalizeColor } from '#core/color'
 import type { Paint, Effect as KiwiEffect } from '#core/kiwi/fig/codec'
+import { guidToString } from '#core/kiwi/fig/node-change/guid'
 import type {
   Fill,
   FillType,
@@ -43,43 +44,60 @@ function resolveColorVar(paint: Paint): Color | undefined {
   return variableColorResolver(alias) ?? undefined
 }
 
+function convertBaseFill(p: Paint): Fill {
+  return {
+    type: p.type as FillType,
+    color: convertColor(resolveColorVar(p) ?? p.color),
+    opacity: p.opacity ?? 1,
+    visible: p.visible ?? true,
+    blendMode: (p.blendMode ?? 'NORMAL') as BlendMode
+  }
+}
+
+function applyGradientPaintFields(fill: Fill, p: Paint): void {
+  if (!p.type.startsWith('GRADIENT') || !p.stops) return
+  fill.gradientStops = p.stops.map((s) => ({
+    color: convertColor(s.color),
+    position: s.position
+  }))
+  if (p.transform) fill.gradientTransform = convertGradientTransform(p.transform)
+}
+
+function applyImagePaintFields(fill: Fill, p: Paint): void {
+  if (p.type !== 'IMAGE') return
+  if (p.image && typeof p.image === 'object') {
+    const img = p.image as { hash: string | Record<string, number> }
+    if (typeof img.hash === 'object') {
+      fill.imageHash = imageHashToString(img.hash)
+    } else if (typeof img.hash === 'string') {
+      fill.imageHash = img.hash
+    }
+  }
+  fill.imageScaleMode = (p.imageScaleMode ?? 'FILL') as ImageScaleMode
+  if (p.transform) fill.imageTransform = convertGradientTransform(p.transform)
+}
+
+function applySchemaPaintFields(fill: Fill, p: Paint): void {
+  if (p.sourceNodeId) fill.sourceNodeId = guidToString(p.sourceNodeId)
+  if (p.patternSpacing) fill.patternSpacing = p.patternSpacing
+  if (p.patternTileType) fill.patternTileType = p.patternTileType as Fill['patternTileType']
+  if (p.verticalAlignment) fill.verticalAlignment = p.verticalAlignment as Fill['verticalAlignment']
+  if (p.horizontalAlignment)
+    fill.horizontalAlignment = p.horizontalAlignment as Fill['horizontalAlignment']
+  if (p.noiseType) fill.noiseType = p.noiseType as Fill['noiseType']
+  if (p.density !== undefined) fill.density = p.density
+  if (p.noiseSize) fill.noiseSize = p.noiseSize
+  if (p.customEffectId?.guid) fill.customEffectId = guidToString(p.customEffectId.guid)
+}
+
 export function convertFills(paints?: Paint[]): Fill[] {
   if (!paints) return []
   return paints.map((p) => {
-    const base: Fill = {
-      type: p.type as FillType,
-      color: convertColor(resolveColorVar(p) ?? p.color),
-      opacity: p.opacity ?? 1,
-      visible: p.visible ?? true,
-      blendMode: (p.blendMode ?? 'NORMAL') as BlendMode
-    }
-
-    if (p.type.startsWith('GRADIENT') && p.stops) {
-      base.gradientStops = p.stops.map((s) => ({
-        color: convertColor(s.color),
-        position: s.position
-      }))
-      if (p.transform) {
-        base.gradientTransform = convertGradientTransform(p.transform)
-      }
-    }
-
-    if (p.type === 'IMAGE') {
-      if (p.image && typeof p.image === 'object') {
-        const img = p.image as { hash: string | Record<string, number> }
-        if (typeof img.hash === 'object') {
-          base.imageHash = imageHashToString(img.hash)
-        } else if (typeof img.hash === 'string') {
-          base.imageHash = img.hash
-        }
-      }
-      base.imageScaleMode = (p.imageScaleMode ?? 'FILL') as ImageScaleMode
-      if (p.transform) {
-        base.imageTransform = convertGradientTransform(p.transform)
-      }
-    }
-
-    return base
+    const fill = convertBaseFill(p)
+    applyGradientPaintFields(fill, p)
+    applyImagePaintFields(fill, p)
+    applySchemaPaintFields(fill, p)
+    return fill
   })
 }
 

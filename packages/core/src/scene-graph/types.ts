@@ -99,6 +99,10 @@ export type FillType =
   | 'GRADIENT_ANGULAR'
   | 'GRADIENT_DIAMOND'
   | 'IMAGE'
+  | 'VIDEO'
+  | 'PATTERN'
+  | 'NOISE'
+  | 'CUSTOM'
 export type BlendMode =
   | 'NORMAL'
   | 'DARKEN'
@@ -118,6 +122,9 @@ export type BlendMode =
   | 'LUMINOSITY'
   | 'PASS_THROUGH'
 export type ImageScaleMode = 'FILL' | 'FIT' | 'CROP' | 'TILE'
+export type NoiseType = 'MULTITONE' | 'MONOTONE' | 'DUOTONE'
+export type PatternTileType = 'RECTANGULAR' | 'HORIZONTAL_HEXAGONAL' | 'VERTICAL_HEXAGONAL'
+export type PatternAlignment = 'START' | 'CENTER' | 'END'
 
 export interface GradientStop {
   color: Color
@@ -137,6 +144,15 @@ export interface Fill {
   imageHash?: string
   imageScaleMode?: ImageScaleMode
   imageTransform?: GradientTransform
+  sourceNodeId?: string
+  patternSpacing?: Vector
+  patternTileType?: PatternTileType
+  verticalAlignment?: PatternAlignment
+  horizontalAlignment?: PatternAlignment
+  noiseType?: NoiseType
+  density?: number
+  noiseSize?: Vector
+  customEffectId?: string
 }
 
 export type StrokeCap = 'NONE' | 'ROUND' | 'SQUARE' | 'ARROW_LINES' | 'ARROW_EQUILATERAL'
