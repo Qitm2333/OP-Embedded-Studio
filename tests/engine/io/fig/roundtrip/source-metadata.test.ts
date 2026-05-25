@@ -125,6 +125,37 @@ describe('fig roundtrip source metadata', () => {
     }
   })
 
+  test('preserves imported rich text schema metadata for round-trip', async () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const text = graph.createNode('TEXT', page.id, {
+      name: 'Rich text metadata',
+      text: 'Decorated',
+      textDecoration: 'UNDERLINE'
+    })
+    text.source.format = 'fig'
+    text.source.id = '4:502'
+    text.source.fig.rawNodeFields.leadingTrim = 'CAP_HEIGHT'
+    text.source.fig.rawNodeFields.textDecorationStyle = 'WAVY'
+    text.source.fig.rawNodeFields.semanticWeight = 'BOLD'
+    text.source.fig.rawNodeFields.semanticItalic = 'ITALIC'
+    text.source.fig.rawNodeFields.derivedTextData = {
+      layoutSize: { x: 80, y: 20 },
+      derivedLines: [{ directionality: 'LTR' }]
+    }
+
+    const decoded = decodeExport(await exportFigFile(graph))
+    const exported = decoded.nodeChanges.find(
+      (nodeChange) => nodeChange.guid && guidToString(nodeChange.guid) === '4:502'
+    )
+
+    expect(exported?.leadingTrim).toBe('CAP_HEIGHT')
+    expect(exported?.textDecorationStyle).toBe('WAVY')
+    expect(exported?.semanticWeight).toBe('BOLD')
+    expect(exported?.semanticItalic).toBe('ITALIC')
+    expect(exported?.derivedTextData?.layoutSize).toEqual({ x: 80, y: 20 })
+  })
+
   test('clears raw font variation payloads when normalized axes are edited', async () => {
     const graph = new SceneGraph()
     const page = graph.getPages()[0]
