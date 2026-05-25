@@ -79,6 +79,7 @@ function applyImagePaintFields(fill: Fill, p: Paint): void {
 
 function applySchemaPaintFields(fill: Fill, p: Paint): void {
   if (p.sourceNodeId) fill.sourceNodeId = guidToString(p.sourceNodeId)
+  if (p.spacing) fill.spacing = p.spacing
   if (p.patternSpacing) fill.patternSpacing = p.patternSpacing
   if (p.patternTileType) fill.patternTileType = p.patternTileType as Fill['patternTileType']
   if (p.verticalAlignment) fill.verticalAlignment = p.verticalAlignment as Fill['verticalAlignment']

@@ -145,6 +145,7 @@ export interface Fill {
   imageScaleMode?: ImageScaleMode
   imageTransform?: GradientTransform
   sourceNodeId?: string
+  spacing?: number
   patternSpacing?: Vector
   patternTileType?: PatternTileType
   verticalAlignment?: PatternAlignment
