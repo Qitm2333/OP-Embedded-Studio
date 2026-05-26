@@ -108,6 +108,7 @@ export function createDefaultNode(
     maxHeight: null,
     isMask: false,
     maskType: 'ALPHA',
+    maskIsOutline: false,
     gridTemplateColumns: [],
     gridTemplateRows: [],
     gridColumnGap: 0,

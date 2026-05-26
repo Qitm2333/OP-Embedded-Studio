@@ -9,12 +9,14 @@ describe('Figma mask import', () => {
       {
         type: 'RECTANGLE',
         mask: true,
-        maskType: 'LUMINANCE'
+        maskType: 'LUMINANCE',
+        maskIsOutline: true
       } as NodeChange,
       []
     )
 
     expect(props.isMask).toBe(true)
     expect(props.maskType).toBe('LUMINANCE')
+    expect(props.maskIsOutline).toBe(true)
   })
 })

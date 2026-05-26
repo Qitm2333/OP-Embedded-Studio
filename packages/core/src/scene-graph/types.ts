@@ -412,6 +412,7 @@ export interface SceneNode {
 
   isMask: boolean
   maskType: MaskType
+  maskIsOutline: boolean
 
   gridTemplateColumns: GridTrack[]
   gridTemplateRows: GridTrack[]

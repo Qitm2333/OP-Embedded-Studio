@@ -403,6 +403,7 @@ function serializeGeometry(node: SceneNode, nc: KiwiNodeChange, blobs: Uint8Arra
   if (node.isMask) {
     nc.mask = true
     nc.maskType = node.maskType
+    if (node.maskIsOutline) nc.maskIsOutline = true
   }
   if (node.vectorNetwork && node.type === 'VECTOR') {
     const { table, mirroringToId } = buildStyleOverrideTable(node.vectorNetwork)

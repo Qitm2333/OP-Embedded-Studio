@@ -523,6 +523,7 @@ export function nodeChangeToProps(
     maxHeight: (nc.maxHeight ?? null) as number | null,
     isMask: nc.mask ?? false,
     maskType: (nc.maskType ?? 'ALPHA') as 'ALPHA' | 'VECTOR' | 'LUMINANCE',
+    maskIsOutline: nc.maskIsOutline ?? false,
     expanded: true,
     autoRename: (nc.autoRename ?? true) as boolean,
     boundVariables: extractBoundVariables(nc),

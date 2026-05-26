@@ -69,6 +69,7 @@ const RAW_NODE_FIELD_KEYS = new Set([
   'strokeGeometry',
   'isMask',
   'maskType',
+  'maskIsOutline',
   'clipsContent'
 ])
 
