@@ -1,0 +1,13 @@
+{
+  "source": {
+    "tool": "figma-use eval",
+    "fileKey": "jSxlQDCrjsvqEQq17IWEcC",
+    "page": "OpenPencil mask oracle 2026-05-22",
+    "captured": "2026-05-22"
+  },
+  "masks": [
+    { "id": "296500:2240", "name": "Mask ALPHA", "isMask": true, "maskType": "ALPHA" },
+    { "id": "296500:2241", "name": "Mask VECTOR", "isMask": true, "maskType": "VECTOR" },
+    { "id": "296500:2242", "name": "Mask LUMINANCE", "isMask": true, "maskType": "LUMINANCE" }
+  ]
+}

@@ -203,7 +203,7 @@ OpenPencil deliberately preserves many Figma/Kiwi fields even when they are not 
 
 These are parsed or visible in Figma docs and most likely to cause visible differences in real design files:
 
-1. **Masks** — tune remaining exact Figma stack semantics beyond common alpha/vector/luminance and consecutive-mask paths.
+1. **Masks** — tune remaining exact Figma stack semantics beyond common alpha/vector/luminance and consecutive-mask paths. `tests/fixtures/figma-oracles/masks.json` records live Figma API values for alpha, vector, and luminance masks.
 2. **Corner smoothing** — expand Figma fixture comparisons and tune remaining stroke/effect edge cases.
 3. **Pattern/noise/custom fills** — replace the current solid-color fallback with Figma-oracle rendering for schema-level paint objects and transforms beyond image tile fills. `tests/fixtures/figma-oracles/pattern-noise-custom-paints.json` records that the plugin runtime rejects authoring these paint types and current fixtures do not contain them, so this remains blocked on a Figma-authored sample.
 4. **Variable-font and rich text fixtures** — broaden real-file coverage for variable axes, derived text data, leading trim, decoration style, semantic font metadata, and raw OpenType feature metadata; `tests/fixtures/figma-oracles/rich-text-decoration.json` captures the first live Figma rich-text oracle.
