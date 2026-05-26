@@ -312,6 +312,7 @@ function serializeTextProps(
   if (fontDigestMap) {
     nc.derivedTextData = buildDerivedTextData(node, fontDigestMap, blobs, glyphBlobMap ?? new Map())
   }
+  if (node.leadingTrim !== 'NONE') nc.leadingTrim = node.leadingTrim
   if (node.lineHeight != null) nc.lineHeight = { value: node.lineHeight, units: 'PIXELS' }
   nc.letterSpacing = { value: node.letterSpacing, units: 'PIXELS' }
   if (node.textDecoration !== 'NONE') {

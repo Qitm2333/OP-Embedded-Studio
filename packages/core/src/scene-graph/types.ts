@@ -188,6 +188,7 @@ export type TextAlignVertical = 'TOP' | 'CENTER' | 'BOTTOM'
 export type TextCase = 'ORIGINAL' | 'UPPER' | 'LOWER' | 'TITLE'
 export type TextDecoration = 'NONE' | 'UNDERLINE' | 'STRIKETHROUGH'
 export type TextDecorationStyle = 'SOLID' | 'DOTTED' | 'WAVY'
+export type LeadingTrim = 'NONE' | 'CAP_HEIGHT'
 export type TextDirection = 'AUTO' | 'LTR' | 'RTL'
 export type LayoutDirection = 'AUTO' | 'LTR' | 'RTL'
 
@@ -357,6 +358,7 @@ export interface SceneNode {
   textDecorationStyle: TextDecorationStyle
   textDecorationThickness: number | null
   textDecorationFills: Fill[]
+  leadingTrim: LeadingTrim
   lineHeight: number | null
   letterSpacing: number
   maxLines: number | null

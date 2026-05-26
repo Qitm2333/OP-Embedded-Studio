@@ -13,6 +13,7 @@ describe('Figma font variation export', () => {
       textDecoration: 'UNDERLINE',
       textDecorationStyle: 'WAVY',
       textDecorationThickness: 1.5,
+      leadingTrim: 'CAP_HEIGHT',
       textDecorationFills: [
         {
           type: 'SOLID',
@@ -60,6 +61,7 @@ describe('Figma font variation export', () => {
     ])
     expect(nodeChange.textDecorationStyle).toBe('WAVY')
     expect(nodeChange.textDecorationThickness).toEqual({ value: 1.5, units: 'PIXELS' })
+    expect(nodeChange.leadingTrim).toBe('CAP_HEIGHT')
     expect(nodeChange.textDecorationFillPaints?.[0]?.type).toBe('SOLID')
     expect(nodeChange.fontVariantCommonLigatures).toBe(false)
     expect(nodeChange.fontVariantContextualLigatures).toBe(true)

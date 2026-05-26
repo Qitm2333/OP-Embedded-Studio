@@ -209,6 +209,13 @@ export function textDecorationStyleValue<T>(
   }
 }
 
+export function textHeightBehaviorValue<T>(
+  ck: { TextHeightBehavior: { DisableAll: T } },
+  leadingTrim: SceneNode['leadingTrim']
+): T | undefined {
+  return leadingTrim === 'CAP_HEIGHT' ? ck.TextHeightBehavior.DisableAll : undefined
+}
+
 function textDecorationColor(
   ck: CanvasKit,
   fills: SceneNode['textDecorationFills'] | undefined,
@@ -329,6 +336,7 @@ export function buildParagraph(
   const paraStyle = new ck.ParagraphStyle({
     textAlign: getParagraphTextAlign(ck, node),
     textDirection: textDirection === 'RTL' ? ck.TextDirection.RTL : ck.TextDirection.LTR,
+    textHeightBehavior: textHeightBehaviorValue(ck, node.leadingTrim),
     ...truncateOpts,
     textStyle: {
       color: baseColor,

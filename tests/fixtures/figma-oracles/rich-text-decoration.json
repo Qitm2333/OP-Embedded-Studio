@@ -1,0 +1,49 @@
+{
+  "source": {
+    "tool": "figma-use eval",
+    "fileKey": "jSxlQDCrjsvqEQq17IWEcC",
+    "page": "OpenPencil rich text oracle 2026-05-22",
+    "nodeId": "296488:2238",
+    "captured": "2026-05-22"
+  },
+  "characters": "wavy red | dotted blue | cap trim",
+  "leadingTrim": "CAP_HEIGHT",
+  "ranges": [
+    {
+      "start": 0,
+      "end": 9,
+      "text": "wavy red ",
+      "textDecoration": "UNDERLINE",
+      "textDecorationStyle": "WAVY",
+      "textDecorationThickness": { "unit": "PIXELS", "value": 2 },
+      "textDecorationColor": {
+        "value": {
+          "type": "SOLID",
+          "visible": true,
+          "opacity": 1,
+          "blendMode": "NORMAL",
+          "color": { "r": 1, "g": 0, "b": 0 },
+          "boundVariables": {}
+        }
+      }
+    },
+    {
+      "start": 11,
+      "end": 22,
+      "text": "dotted blue",
+      "textDecoration": "UNDERLINE",
+      "textDecorationStyle": "DOTTED",
+      "textDecorationThickness": { "unit": "PIXELS", "value": 3 },
+      "textDecorationColor": {
+        "value": {
+          "type": "SOLID",
+          "visible": true,
+          "opacity": 1,
+          "blendMode": "NORMAL",
+          "color": { "r": 0, "g": 0.25, "b": 1 },
+          "boundVariables": {}
+        }
+      }
+    }
+  ]
+}

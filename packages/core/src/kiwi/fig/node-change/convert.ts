@@ -290,6 +290,7 @@ type TextProps = Pick<
   | 'textDecorationStyle'
   | 'textDecorationThickness'
   | 'textDecorationFills'
+  | 'leadingTrim'
   | 'lineHeight'
   | 'letterSpacing'
   | 'maxLines'
@@ -332,6 +333,7 @@ function convertTextProps(nc: NodeChange, blobs: Uint8Array[]): TextProps {
     textAutoResize: (nc.textAutoResize ?? 'NONE') as TextAutoResize,
     textCase: (nc.textCase ?? 'ORIGINAL') as TextCase,
     ...convertTextDecorationProps(nc),
+    leadingTrim: (nc.leadingTrim ?? 'NONE') as SceneNode['leadingTrim'],
     lineHeight: importedTextLineHeight(nc),
     letterSpacing: convertLetterSpacing(nc.letterSpacing, nc.fontSize),
     maxLines: (nc.maxLines ?? null) as number | null,
