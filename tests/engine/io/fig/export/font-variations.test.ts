@@ -10,14 +10,21 @@ describe('Figma font variation export', () => {
     const text = graph.createNode('TEXT', page.id, {
       text: 'Axis',
       fontVariations: [{ axis: 'wght', value: 650 }],
-      fontFeatures: [{ tag: 'LIGA', enabled: false }],
+      fontFeatures: [
+        { tag: 'LIGA', enabled: false },
+        { tag: 'DLIG', enabled: true },
+        { tag: 'KERN', enabled: false }
+      ],
       styleRuns: [
         {
           start: 0,
           length: 2,
           style: {
             fontVariations: [{ axis: 'wdth', value: 88 }],
-            fontFeatures: [{ tag: 'CALT', enabled: false }]
+            fontFeatures: [
+              { tag: 'CALT', enabled: false },
+              { tag: 'SS01', enabled: true }
+            ]
           }
         }
       ]
@@ -31,9 +38,12 @@ describe('Figma font variation export', () => {
     ])
     expect(nodeChange.fontVariantCommonLigatures).toBe(false)
     expect(nodeChange.fontVariantContextualLigatures).toBe(true)
+    expect(nodeChange.toggledOnOTFeatures).toEqual(['DLIG'])
+    expect(nodeChange.toggledOffOTFeatures).toEqual(['KERN'])
     expect(nodeChange.textData?.styleOverrideTable?.[0]?.fontVariations).toEqual([
       { axisTag: 0x77647468, axisName: 'wdth', value: 88 }
     ])
     expect(nodeChange.textData?.styleOverrideTable?.[0]?.fontVariantContextualLigatures).toBe(false)
+    expect(nodeChange.textData?.styleOverrideTable?.[0]?.toggledOnOTFeatures).toEqual(['SS01'])
   })
 })

@@ -29,14 +29,18 @@ describe('Figma font variation import', () => {
         type: 'TEXT',
         textData: { characters: 'Ligatures' },
         fontVariantCommonLigatures: false,
-        fontVariantContextualLigatures: true
+        fontVariantContextualLigatures: true,
+        toggledOnOTFeatures: ['DLIG'],
+        toggledOffOTFeatures: ['KERN']
       } as NodeChange,
       []
     )
 
     expect(props.fontFeatures).toEqual([
       { tag: 'LIGA', enabled: false },
-      { tag: 'CALT', enabled: true }
+      { tag: 'CALT', enabled: true },
+      { tag: 'DLIG', enabled: true },
+      { tag: 'KERN', enabled: false }
     ])
   })
 
@@ -51,7 +55,8 @@ describe('Figma font variation import', () => {
           {
             styleID: 1,
             fontVariations: [{ axisName: 'GRAD', value: -50 }],
-            fontVariantCommonLigatures: false
+            fontVariantCommonLigatures: false,
+            toggledOnOTFeatures: ['SS01']
           } as NodeChange
         ]
       }
@@ -63,7 +68,10 @@ describe('Figma font variation import', () => {
         length: 2,
         style: {
           fontVariations: [{ axis: 'GRAD', value: -50 }],
-          fontFeatures: [{ tag: 'LIGA', enabled: false }]
+          fontFeatures: [
+            { tag: 'LIGA', enabled: false },
+            { tag: 'SS01', enabled: true }
+          ]
         }
       }
     ])
