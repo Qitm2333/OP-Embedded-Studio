@@ -400,6 +400,10 @@ function serializeLayoutProps(node: SceneNode, nc: KiwiNodeChange): void {
 }
 
 function serializeGeometry(node: SceneNode, nc: KiwiNodeChange, blobs: Uint8Array[]): void {
+  if (node.isMask) {
+    nc.mask = true
+    nc.maskType = node.maskType
+  }
   if (node.vectorNetwork && node.type === 'VECTOR') {
     const { table, mirroringToId } = buildStyleOverrideTable(node.vectorNetwork)
     const blobIdx = blobs.length

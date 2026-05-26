@@ -521,7 +521,7 @@ export function nodeChangeToProps(
     maxWidth: (nc.maxWidth ?? null) as number | null,
     minHeight: (nc.minHeight ?? null) as number | null,
     maxHeight: (nc.maxHeight ?? null) as number | null,
-    isMask: (nc.isMask ?? false) as boolean,
+    isMask: nc.mask ?? false,
     maskType: (nc.maskType ?? 'ALPHA') as 'ALPHA' | 'VECTOR' | 'LUMINANCE',
     expanded: true,
     autoRename: (nc.autoRename ?? true) as boolean,
