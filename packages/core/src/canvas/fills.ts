@@ -105,9 +105,14 @@ interface PatternTileLayout {
   positions: Vector[]
 }
 
-function patternAlignmentOffset(alignment: Fill['horizontalAlignment'], gap: number): number {
-  if (alignment === 'CENTER') return gap / 2
-  if (alignment === 'END') return gap
+function patternAlignmentOffset(
+  alignment: Fill['horizontalAlignment'],
+  gap: number,
+  sourceSize: number,
+  axis: 'x' | 'y'
+): number {
+  if (alignment === 'CENTER') return axis === 'x' ? -gap / 2 : -sourceSize / 2
+  if (alignment === 'END') return -gap
   return 0
 }
 
@@ -120,8 +125,8 @@ export function patternTileLayout(source: SceneNode, fill: Fill): PatternTileLay
   const gapY = scaledHeight * spacing.y
   const width = scaledWidth + gapX
   const height = scaledHeight + gapY
-  const x = patternAlignmentOffset(fill.horizontalAlignment, gapX)
-  const y = patternAlignmentOffset(fill.verticalAlignment, gapY)
+  const x = patternAlignmentOffset(fill.horizontalAlignment, gapX, scaledWidth, 'x')
+  const y = patternAlignmentOffset(fill.verticalAlignment, gapY, scaledHeight, 'y')
   const positions = [{ x, y }]
 
   if (fill.patternTileType === 'HORIZONTAL_HEXAGONAL') {

@@ -42,7 +42,7 @@ describe('canvas pattern fills', () => {
     expect(layout).toEqual({
       rect: { x: 0, y: 0, width: 50, height: 30 },
       scale: 2,
-      positions: [{ x: 5, y: 10 }]
+      positions: [{ x: -5, y: -10 }]
     })
   })
 

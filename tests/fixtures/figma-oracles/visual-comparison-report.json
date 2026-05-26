@@ -8,13 +8,15 @@
     {
       "name": "pattern-visible-source-frame",
       "nodeId": "296784:2258",
-      "output": "/tmp/open-pencil-oracles/pattern-visible-source-norm",
+      "output": "/tmp/open-pencil-oracles/pattern-visible-source-tuned",
       "figmaSize": "190x110",
       "openPencilSize": "190x110",
-      "differentPixels": 13026,
-      "differentPercent": 62.33,
-      "rmseNormalized": 0.361297,
-      "finding": "This is the reliable pattern oracle: source and target are copied together and Figma renders the pattern. OpenPencil now resolves the source, but tile origin/spacing still differs from Figma."
+      "differentPixels": 7180,
+      "differentPercent": 34.35,
+      "rmseNormalized": 0.235698,
+      "previousDifferentPixels": 13026,
+      "previousDifferentPercent": 62.33,
+      "finding": "This is the reliable pattern oracle: source and target are copied together and Figma renders the pattern. OpenPencil resolves the source and now uses a closer Figma-like pattern origin, but exact row spacing/tile origin still differs."
     },
     {
       "name": "rich-text-decorations",
@@ -61,7 +63,7 @@
     }
   ],
   "nextActions": [
-    "Tune pattern tile origin and spacing against pattern-visible-source-frame.",
+    "Continue tuning pattern row spacing and tile origin against pattern-visible-source-frame.",
     "Use perceptual/color-tolerant image diff for mask comparisons instead of raw absolute-error counts.",
     "Tune rich text line metrics before treating underline placement diffs as actionable."
   ]
