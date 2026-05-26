@@ -25,6 +25,13 @@ describe('Figma font variation export', () => {
       fontFeatures: [
         { tag: 'LIGA', enabled: false },
         { tag: 'DLIG', enabled: true },
+        { tag: 'HLIG', enabled: false },
+        { tag: 'ORDN', enabled: true },
+        { tag: 'ZERO', enabled: true },
+        { tag: 'ONUM', enabled: true },
+        { tag: 'TNUM', enabled: true },
+        { tag: 'FRAC', enabled: true },
+        { tag: 'SMCP', enabled: true },
         { tag: 'KERN', enabled: false }
       ],
       styleRuns: [
@@ -56,7 +63,14 @@ describe('Figma font variation export', () => {
     expect(nodeChange.textDecorationFillPaints?.[0]?.type).toBe('SOLID')
     expect(nodeChange.fontVariantCommonLigatures).toBe(false)
     expect(nodeChange.fontVariantContextualLigatures).toBe(true)
-    expect(nodeChange.toggledOnOTFeatures).toEqual(['DLIG'])
+    expect(nodeChange.fontVariantDiscretionaryLigatures).toBe(true)
+    expect(nodeChange.fontVariantHistoricalLigatures).toBe(false)
+    expect(nodeChange.fontVariantOrdinal).toBe(true)
+    expect(nodeChange.fontVariantSlashedZero).toBe(true)
+    expect(nodeChange.fontVariantNumericFigure).toBe('OLDSTYLE')
+    expect(nodeChange.fontVariantNumericSpacing).toBe('TABULAR')
+    expect(nodeChange.fontVariantNumericFraction).toBe('DIAGONAL')
+    expect(nodeChange.fontVariantCaps).toBe('SMALL')
     expect(nodeChange.toggledOffOTFeatures).toEqual(['KERN'])
     expect(nodeChange.textData?.styleOverrideTable?.[0]?.fontVariations).toEqual([
       { axisTag: 0x77647468, axisName: 'wdth', value: 88 }

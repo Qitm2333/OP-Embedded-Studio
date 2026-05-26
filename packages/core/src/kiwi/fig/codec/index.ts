@@ -395,6 +395,14 @@ export interface NodeChange {
   fontVariations?: Array<{ axisTag?: number; axisName?: string; value?: number }>
   fontVariantCommonLigatures?: boolean
   fontVariantContextualLigatures?: boolean
+  fontVariantDiscretionaryLigatures?: boolean
+  fontVariantHistoricalLigatures?: boolean
+  fontVariantOrdinal?: boolean
+  fontVariantSlashedZero?: boolean
+  fontVariantNumericFigure?: string
+  fontVariantNumericSpacing?: string
+  fontVariantNumericFraction?: string
+  fontVariantCaps?: string
   fontVersion?: string
   emojiImageSet?: string
   lineHeight?: { value: number; units: string }

@@ -30,7 +30,15 @@ describe('Figma font variation import', () => {
         textData: { characters: 'Ligatures' },
         fontVariantCommonLigatures: false,
         fontVariantContextualLigatures: true,
-        toggledOnOTFeatures: ['DLIG'],
+        fontVariantDiscretionaryLigatures: true,
+        fontVariantHistoricalLigatures: false,
+        fontVariantOrdinal: true,
+        fontVariantSlashedZero: true,
+        fontVariantNumericFigure: 'OLDSTYLE',
+        fontVariantNumericSpacing: 'TABULAR',
+        fontVariantNumericFraction: 'DIAGONAL',
+        fontVariantCaps: 'SMALL',
+        toggledOnOTFeatures: ['SS01'],
         toggledOffOTFeatures: ['KERN']
       } as NodeChange,
       []
@@ -40,6 +48,14 @@ describe('Figma font variation import', () => {
       { tag: 'LIGA', enabled: false },
       { tag: 'CALT', enabled: true },
       { tag: 'DLIG', enabled: true },
+      { tag: 'HLIG', enabled: false },
+      { tag: 'ORDN', enabled: true },
+      { tag: 'ZERO', enabled: true },
+      { tag: 'ONUM', enabled: true },
+      { tag: 'TNUM', enabled: true },
+      { tag: 'FRAC', enabled: true },
+      { tag: 'SMCP', enabled: true },
+      { tag: 'SS01', enabled: true },
       { tag: 'KERN', enabled: false }
     ])
   })

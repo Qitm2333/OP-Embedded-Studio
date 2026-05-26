@@ -39,11 +39,13 @@ describe('canvas text font variations', () => {
     expect(
       textFontFeatures([
         { tag: 'LIGA', enabled: false },
-        { tag: 'CALT', enabled: true }
+        { tag: 'CALT', enabled: true },
+        { tag: 'SS01', enabled: true }
       ])
     ).toEqual([
       { name: 'liga', value: 0 },
-      { name: 'calt', value: 1 }
+      { name: 'calt', value: 1 },
+      { name: 'ss01', value: 1 }
     ])
   })
 
