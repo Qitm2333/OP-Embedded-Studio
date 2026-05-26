@@ -19,7 +19,7 @@ OpenPencil is moving toward production-grade Figma compatibility while keeping d
 ### Figma fidelity
 
 - Preserve and round-trip more Figma metadata safely.
-- Add visual regression coverage for full multi-page `.fig` documents.
+- Add visual regression coverage for full multi-page `.fig` documents. `scripts/export-fixture-visuals.ts` exports current smoke fixture pages to `/tmp` for manual comparison without committing large images.
 - Close high-impact renderer gaps: remaining mask edge cases, blend isolation, pattern fills, and broader variable-font fixtures.
 - Improve boolean operation editing/export now that imported Figma `BOOLEAN_OPERATION` nodes remain boolean operations.
 
