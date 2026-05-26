@@ -266,6 +266,62 @@ test('text decoration styles and OpenType features', async () => {
   await expectCanvas('text-decoration-styles-and-opentype-features')
 })
 
+test('pattern fills from source nodes', async () => {
+  await editor.page.evaluate(() => {
+    const store = window.openPencil?.getStore?.()
+    if (!store) throw new Error('OpenPencil store not initialized')
+    const pageId = store.state.currentPageId
+
+    const source = store.graph.createNode('ELLIPSE', pageId, {
+      name: 'Pattern source dot',
+      x: -1000,
+      y: -1000,
+      width: 18,
+      height: 18,
+      visible: false,
+      fills: [
+        { type: 'SOLID', color: { r: 0.96, g: 0.35, b: 0.12, a: 1 }, visible: true, opacity: 1 }
+      ]
+    })
+
+    store.graph.createNode('RECTANGLE', pageId, {
+      name: 'Pattern fill visual',
+      x: 84,
+      y: 80,
+      width: 240,
+      height: 150,
+      cornerRadius: 18,
+      fills: [
+        {
+          type: 'PATTERN',
+          sourceNodeId: source.id,
+          patternTileType: 'RECTANGULAR',
+          patternSpacing: { x: 0.45, y: 0.35 },
+          horizontalAlignment: 'CENTER',
+          verticalAlignment: 'CENTER',
+          color: { r: 0.96, g: 0.35, b: 0.12, a: 1 },
+          visible: true,
+          opacity: 1
+        }
+      ],
+      strokes: [
+        {
+          color: { r: 0.08, g: 0.1, b: 0.18, a: 0.18 },
+          weight: 2,
+          visible: true,
+          opacity: 1,
+          align: 'INSIDE'
+        }
+      ]
+    })
+
+    store.clearSelection()
+    store.requestRender()
+  })
+  await editor.canvas.waitForRender()
+  await expectCanvas('pattern-fills-from-source-nodes')
+})
+
 test('luminance masks and transformed tile fills', async () => {
   await editor.page.evaluate(async () => {
     const store = window.openPencil?.getStore?.()
