@@ -1,6 +1,7 @@
 import type { Canvas, Paint } from 'canvaskit-wasm'
 
 import type { SceneNode, SceneGraph, Fill } from '#core/scene-graph'
+import type { Rect } from '#core/types'
 
 import type { SkiaRenderer } from './renderer'
 import { makeSmoothRRectPath, nodeHasSmoothCorners } from './shapes'
@@ -87,6 +88,8 @@ export function applyFill(
     return r.applyImageFill(fill, node, graph)
   }
 
+  if (fill.type === 'PATTERN' && applyPatternFill(r, fill, node, graph)) return true
+
   if (fill.type === 'PATTERN' || fill.type === 'NOISE' || fill.type === 'CUSTOM') {
     const c = r.resolveFillColor(fill, fillIndex, node, graph)
     r.fillPaint.setColor(r.ck.Color4f(c.r, c.g, c.b, c.a))
@@ -94,6 +97,60 @@ export function applyFill(
   }
 
   return false
+}
+
+function patternTileRect(source: SceneNode, fill: Fill): Rect {
+  const spacing = fill.patternSpacing ?? { x: fill.spacing ?? 0, y: fill.spacing ?? 0 }
+  return {
+    x: 0,
+    y: 0,
+    width: source.width * (1 + spacing.x),
+    height: source.height * (1 + spacing.y)
+  }
+}
+
+function recordPatternSource(r: SkiaRenderer, source: SceneNode, graph: SceneGraph) {
+  const bounds = r.ck.LTRBRect(0, 0, source.width, source.height)
+  const recorder = new r.ck.PictureRecorder()
+  const canvas = recorder.beginRecording(bounds)
+  const rect = r.ck.LTRBRect(0, 0, source.width, source.height)
+  const hasRadius = nodeHasSmoothCorners(source) || source.cornerRadius > 0
+
+  for (const sourceFill of source.fills.filter((item) => item.visible)) {
+    if (sourceFill.type === 'PATTERN' && sourceFill.sourceNodeId === source.id) continue
+    if (!applyFill(r, sourceFill, source, graph)) continue
+    drawNodeFill(r, canvas, source, rect, hasRadius, sourceFill)
+  }
+
+  const picture = recorder.finishRecordingAsPicture()
+  recorder.delete()
+  return picture
+}
+
+function applyPatternFill(
+  r: SkiaRenderer,
+  fill: Fill,
+  node: SceneNode,
+  graph: SceneGraph
+): boolean {
+  const sourceId = fill.sourceNodeId
+  if (!sourceId || sourceId === node.id) return false
+  const source = graph.getNode(sourceId)
+  if (!source || source.width <= 0 || source.height <= 0) return false
+
+  const picture = recordPatternSource(r, source, graph)
+  const tile = patternTileRect(source, fill)
+  const tileRect = r.ck.LTRBRect(tile.x, tile.y, tile.x + tile.width, tile.y + tile.height)
+  const shader = picture.makeShader(
+    r.ck.TileMode.Repeat,
+    r.ck.TileMode.Repeat,
+    r.ck.FilterMode.Linear,
+    undefined,
+    tileRect
+  )
+  r.fillPaint.setShader(shader)
+  picture.delete()
+  return true
 }
 
 function makeGradientLocalMatrix(
