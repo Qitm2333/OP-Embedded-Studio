@@ -176,6 +176,96 @@ test('gradients and image fill modes', async () => {
   await expectCanvas('gradients-and-image-fill-modes')
 })
 
+test('text decoration styles and OpenType features', async () => {
+  await editor.page.evaluate(async () => {
+    const store = window.openPencil?.getStore?.()
+    if (!store) throw new Error('OpenPencil store not initialized')
+    const pageId = store.state.currentPageId
+
+    store.graph.createNode('FRAME', pageId, {
+      name: 'Text decoration visual backdrop',
+      x: 64,
+      y: 56,
+      width: 660,
+      height: 220,
+      cornerRadius: 22,
+      fills: [
+        { type: 'SOLID', color: { r: 0.96, g: 0.97, b: 0.99, a: 1 }, visible: true, opacity: 1 }
+      ]
+    })
+
+    const rows = [
+      {
+        text: 'Wavy underline in red',
+        y: 92,
+        textDecoration: 'UNDERLINE' as const,
+        textDecorationStyle: 'WAVY' as const,
+        textDecorationThickness: 2,
+        textDecorationFills: [
+          {
+            type: 'SOLID' as const,
+            color: { r: 0.96, g: 0.26, b: 0.21, a: 1 },
+            visible: true,
+            opacity: 1
+          }
+        ]
+      },
+      {
+        text: 'Dotted underline in blue',
+        y: 142,
+        textDecoration: 'UNDERLINE' as const,
+        textDecorationStyle: 'DOTTED' as const,
+        textDecorationThickness: 2.5,
+        textDecorationFills: [
+          {
+            type: 'SOLID' as const,
+            color: { r: 0.23, g: 0.51, b: 0.96, a: 1 },
+            visible: true,
+            opacity: 1
+          }
+        ]
+      },
+      {
+        text: 'OpenType tags: oldstyle 0123456789 + ss01',
+        y: 192,
+        fontFeatures: [
+          { tag: 'ONUM', enabled: true },
+          { tag: 'SS01', enabled: true },
+          { tag: 'KERN', enabled: false }
+        ]
+      }
+    ]
+
+    for (const row of rows) {
+      store.graph.createNode('TEXT', pageId, {
+        name: row.text,
+        x: 100,
+        y: row.y,
+        width: 520,
+        height: 34,
+        text: row.text,
+        fontSize: 24,
+        fontWeight: 600,
+        textAutoResize: 'HEIGHT',
+        textDecoration: row.textDecoration ?? 'NONE',
+        textDecorationStyle: row.textDecorationStyle ?? 'SOLID',
+        textDecorationThickness: row.textDecorationThickness ?? null,
+        textDecorationFills: row.textDecorationFills ?? [],
+        fontFeatures: row.fontFeatures ?? [],
+        fills: [
+          { type: 'SOLID', color: { r: 0.08, g: 0.1, b: 0.18, a: 1 }, visible: true, opacity: 1 }
+        ]
+      })
+    }
+
+    store.clearSelection()
+    await store.loadFontsForNodes(store.graph.getPages().flatMap((page) => page.childIds))
+    store.requestRender()
+  })
+  await editor.canvas.waitForRender()
+  await expectCanvas('text-decoration-styles-and-opentype-features')
+})
+
 test('luminance masks and transformed tile fills', async () => {
   await editor.page.evaluate(async () => {
     const store = window.openPencil?.getStore?.()
