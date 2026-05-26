@@ -14,7 +14,8 @@ interface PatternOracleFill {
 
 interface PaintOracle {
   pattern: {
-    source: { id: string }
+    frame: { id: string }
+    source: { id: string; visible: boolean }
     target: { fills: PatternOracleFill[] }
   }
   pluginRuntimeCreation: Record<string, { ok: boolean; message: string }>
@@ -33,6 +34,7 @@ describe('Figma pattern/noise/custom paint oracle availability', () => {
   test('records the live Figma pattern paint payload', () => {
     const patternFill = readOracle().pattern.target.fills[0]
 
+    expect(readOracle().pattern.source.visible).toBe(true)
     expect(patternFill?.type).toBe('PATTERN')
     expect(patternFill?.sourceNodeId).toBe(readOracle().pattern.source.id)
     expect(patternFill?.tileType).toBe('RECTANGULAR')
@@ -47,7 +49,7 @@ describe('Figma pattern/noise/custom paint oracle availability', () => {
     expect(oracle.pluginRuntimeCreation.PATTERN_DIRECT_FILLS_ASSIGNMENT?.ok).toBe(false)
 
     for (const type of ['NOISE', 'CUSTOM']) {
-      expect(oracle.pluginRuntimeCreation[type]?.ok).toBe(false)
+      expect(oracle.pluginRuntimeCreation[`${type}_ASYNC_FILLS`]?.ok).toBe(false)
       expect(oracle.currentFileFillTypes[type]).toBeUndefined()
       for (const counts of Object.values(oracle.localFigFixtureFillTypes)) {
         expect(counts[type]).toBeUndefined()

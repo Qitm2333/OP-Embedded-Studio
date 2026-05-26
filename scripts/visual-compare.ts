@@ -31,7 +31,8 @@ const { values: opts } = parseArgs({
   options: {
     scale: { type: 'string', default: '2' },
     output: { type: 'string', short: 'o', default: '/tmp/visual-compare' },
-    node: { type: 'string', short: 'n' }
+    node: { type: 'string', short: 'n' },
+    resize: { type: 'boolean', default: false }
   }
 })
 
@@ -39,6 +40,7 @@ const scale = Number(opts.scale)
 const outputDir = opts.output ?? '/tmp/visual-compare'
 const figmaPath = `${outputDir}/figma.png`
 const oursPath = `${outputDir}/ours.png`
+const normalizedOursPath = `${outputDir}/ours-normalized.png`
 const diffPath = `${outputDir}/diff.png`
 
 if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true })
@@ -177,16 +179,26 @@ async function diff() {
   const figmaSize = (await $`identify -format '%wx%h' ${figmaPath}`.quiet()).text().trim()
   const oursSize = (await $`identify -format '%wx%h' ${oursPath}`.quiet()).text().trim()
 
+  const compareOursPath = figmaSize === oursSize ? oursPath : normalizedOursPath
   if (figmaSize !== oursSize) {
-    console.log(`   ⚠ Size mismatch: Figma ${figmaSize}, Ours ${oursSize} → resizing`)
-    await $`magick ${oursPath} -resize ${figmaSize}! ${oursPath}`.quiet()
+    const mode = opts.resize ? 'resizing' : 'padding/cropping without scaling'
+    console.log(`   ⚠ Size mismatch: Figma ${figmaSize}, Ours ${oursSize} → ${mode}`)
+    if (opts.resize) {
+      await $`magick ${oursPath} -resize ${figmaSize}! ${normalizedOursPath}`.quiet()
+    } else {
+      await $`magick ${oursPath} -background none -gravity northwest -extent ${figmaSize} ${normalizedOursPath}`.quiet()
+    }
   }
 
   const result =
-    await $`magick compare -metric AE -highlight-color red -lowlight-color '#FFFFFF33' -compose src ${figmaPath} ${oursPath} ${diffPath}`
+    await $`magick compare -metric AE -highlight-color red -lowlight-color '#FFFFFF33' -compose src ${figmaPath} ${compareOursPath} ${diffPath}`
       .quiet()
       .nothrow()
 
+  const rmseResult = await $`magick compare -metric RMSE ${figmaPath} ${compareOursPath} null:`
+    .quiet()
+    .nothrow()
+  const rmse = rmseResult.stderr.toString().trim()
   const diffPixels = Number.parseInt(result.stderr.toString().trim(), 10) || 0
   const [w, h] = figmaSize.split('x').map(Number)
   const total = w * h
@@ -196,6 +208,7 @@ async function diff() {
   console.log(
     `   ${diffPixels.toLocaleString()} different pixels (${pct}% of ${total.toLocaleString()})`
   )
+  console.log(`   RMSE ${rmse}`)
   console.log(`\n✅ Done! Images in ${outputDir}/`)
 }
 
