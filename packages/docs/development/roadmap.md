@@ -176,13 +176,13 @@ Figma's design documentation groups features into these areas:
 
 ## Raw Kiwi metadata coverage
 
-OpenPencil deliberately preserves many Figma/Kiwi fields even when they are not rendered or editable. These live under `SceneNode.source.fig` and are applied late during `.fig` export.
+OpenPencil deliberately preserves many Figma/Kiwi fields even when they are not rendered or editable. These live under `SceneNode.source.fig` and are applied late during `.fig` export. A schema coverage test compares the current `fig.kiwi` `NodeChange` fields against modeled codec fields, raw-preserved fields, and intentionally schema-only metadata buckets so drift stays visible.
 
 | Field group | Import/export | Render | UI | Fidelity impact |
 |---|---:|---:|---:|---|
 | `source.fig.rawSize` | ✅ | Indirect | — | Preserves original Figma size for round-trip. Cleared when size is edited. |
 | `source.fig.rawTransform` | ✅ | Indirect | — | Preserves exact Figma transform. Cleared when transform is edited. |
-| `source.fig.rawNodeFields` | ✅ | Mixed | — | Late-applied to exported NodeChange for round-trip fidelity; exhaustive raw-field round-trip tests guard schema drift. |
+| `source.fig.rawNodeFields` | ✅ | Mixed | — | Late-applied to exported NodeChange for round-trip fidelity; raw-field and schema coverage tests guard preservation drift. |
 | `source.fig.layout` | ✅ | ✅ | ◐ | Preserves original Figma stack metadata while using normalized layout fields. |
 | `source.fig.symbolOverrides` | ✅ | Indirect | — | Important for instance override fidelity. |
 | `source.fig.componentPropAssignments` | ✅ | Indirect | ◐ | Used for component property fidelity; not raw-editable. |
@@ -220,7 +220,7 @@ These are parsed or visible in Figma docs and most likely to cause visible diffe
 | Source metadata invalidation | `packages/core/src/scene-graph/source-metadata.ts` |
 | Kiwi import mapping | `packages/core/src/kiwi/fig/node-change/convert.ts` |
 | Kiwi export mapping | `packages/core/src/kiwi/fig/node-change/export-node.ts`, `packages/core/src/kiwi/fig/node-change/serialize.ts` |
-| Kiwi schema | `packages/core/src/kiwi/fig/codec/schema/fig.kiwi` |
+| Kiwi schema | `packages/core/src/kiwi/fig/codec/schema/fig.kiwi`, `tests/engine/io/fig/import/schema-coverage.test.ts` |
 | Renderer dispatch | `packages/core/src/canvas/scene.ts` |
 | Fills / images / gradients | `packages/core/src/canvas/fills.ts` |
 | Strokes | `packages/core/src/canvas/strokes.ts` |
