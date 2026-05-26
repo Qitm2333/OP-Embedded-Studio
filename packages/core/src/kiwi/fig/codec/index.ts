@@ -293,12 +293,18 @@ export interface NodeChange {
   cornerRadius?: number
   fillPaints?: Paint[]
   strokePaints?: Paint[]
+  backgroundPaints?: Paint[]
   strokeWeight?: number
   strokeAlign?: string
   strokeCap?: string
   strokeJoin?: string
   dashPattern?: number[]
   effects?: Effect[]
+  mask?: boolean
+  maskType?: string
+  maskIsOutline?: boolean
+  exportSettings?: unknown[]
+  layoutGrids?: unknown[]
   // Layout
   stackMode?: 'NONE' | 'HORIZONTAL' | 'VERTICAL'
   stackSpacing?: number
@@ -380,6 +386,12 @@ export interface NodeChange {
   textBidiVersion?: number
   textDecoration?: string
   textDecorationSkipInk?: boolean
+  textDecorationFillPaints?: Paint[]
+  textUnderlineOffset?: { value?: number; units?: string }
+  textDecorationThickness?: { value?: number; units?: string }
+  textDecorationStyle?: string
+  toggledOnOTFeatures?: string[]
+  toggledOffOTFeatures?: string[]
   fontVariations?: Array<{ axisTag?: number; axisName?: string; value?: number }>
   fontVariantCommonLigatures?: boolean
   fontVariantContextualLigatures?: boolean
@@ -404,6 +416,10 @@ export interface NodeChange {
   // Constraints
   horizontalConstraint?: string
   verticalConstraint?: string
+  // Prototype
+  prototypeStartNodeID?: GUID
+  prototypeInteractions?: unknown[]
+  transitionInfo?: unknown
   // Variables
   variableData?: VariableDataEntry
   variableConsumptionMap?: { entries?: VariableConsumptionEntry[] }

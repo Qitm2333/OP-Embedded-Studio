@@ -64,6 +64,8 @@ const RAW_NODE_FIELD_KEYS = new Set([
   'vectorNetwork',
   'fillGeometry',
   'strokeGeometry',
+  'isMask',
+  'maskType',
   'clipsContent'
 ])
 

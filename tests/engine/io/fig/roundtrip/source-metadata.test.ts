@@ -137,6 +137,13 @@ describe('fig roundtrip source metadata', () => {
     text.source.id = '4:502'
     text.source.fig.rawNodeFields.leadingTrim = 'CAP_HEIGHT'
     text.source.fig.rawNodeFields.textDecorationStyle = 'WAVY'
+    text.source.fig.rawNodeFields.textDecorationFillPaints = [
+      { type: 'SOLID', color: { r: 1, g: 0, b: 0, a: 1 }, opacity: 1 }
+    ]
+    text.source.fig.rawNodeFields.textUnderlineOffset = { value: 2, units: 'PIXELS' }
+    text.source.fig.rawNodeFields.textDecorationThickness = { value: 1.5, units: 'PIXELS' }
+    text.source.fig.rawNodeFields.toggledOnOTFeatures = ['DLIG']
+    text.source.fig.rawNodeFields.toggledOffOTFeatures = ['LIGA']
     text.source.fig.rawNodeFields.semanticWeight = 'BOLD'
     text.source.fig.rawNodeFields.semanticItalic = 'ITALIC'
     text.source.fig.rawNodeFields.derivedTextData = {
@@ -151,6 +158,11 @@ describe('fig roundtrip source metadata', () => {
 
     expect(exported?.leadingTrim).toBe('CAP_HEIGHT')
     expect(exported?.textDecorationStyle).toBe('WAVY')
+    expect(exported?.textDecorationFillPaints?.[0]?.type).toBe('SOLID')
+    expect(exported?.textUnderlineOffset).toEqual({ value: 2, units: 'PIXELS' })
+    expect(exported?.textDecorationThickness).toEqual({ value: 1.5, units: 'PIXELS' })
+    expect(exported?.toggledOnOTFeatures).toEqual(['DLIG'])
+    expect(exported?.toggledOffOTFeatures).toEqual(['LIGA'])
     expect(exported?.semanticWeight).toBe('BOLD')
     expect(exported?.semanticItalic).toBe('ITALIC')
     expect(exported?.derivedTextData?.layoutSize).toEqual({ x: 80, y: 20 })

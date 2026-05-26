@@ -373,17 +373,17 @@ describe('Figma Kiwi schema coverage', () => {
     expect(
       Object.fromEntries([...buckets].map(([bucket, items]) => [bucket, items.length]))
     ).toEqual({
-      modeled: 89,
+      modeled: 104,
       schemaTag: 60,
-      internalBookkeeping: 18,
-      rawPreserved: 53,
+      internalBookkeeping: 17,
+      rawPreserved: 52,
       styleLibraryMetadata: 39,
       componentInstanceMetadata: 42,
-      textMetadata: 28,
+      textMetadata: 23,
       slideFigjamMetadata: 39,
-      visualGeometryMetadata: 42,
-      layoutMetadata: 30,
-      prototypeConnectorMetadata: 35,
+      visualGeometryMetadata: 38,
+      layoutMetadata: 29,
+      prototypeConnectorMetadata: 32,
       variableDevMetadata: 14,
       widgetMetadata: 11,
       codeCmsAiMetadata: 67,
@@ -405,6 +405,15 @@ describe('Figma Kiwi schema coverage', () => {
     expect(covered('textDecorationStyle')).toBe(true)
     expect(covered('semanticWeight')).toBe(true)
     expect(covered('semanticItalic')).toBe(true)
+    expect(covered('toggledOnOTFeatures')).toBe(true)
+    expect(covered('toggledOffOTFeatures')).toBe(true)
+    expect(covered('textDecorationFillPaints')).toBe(true)
+    expect(covered('textUnderlineOffset')).toBe(true)
+    expect(covered('textDecorationThickness')).toBe(true)
+    expect(covered('mask')).toBe(true)
+    expect(covered('maskType')).toBe(true)
+    expect(covered('maskIsOutline')).toBe(true)
+    expect(covered('layoutGrids')).toBe(true)
     expect(covered('gridChildVerticalAlign')).toBe(true)
     expect(covered('gridChildHorizontalAlign')).toBe(true)
     expect(covered('slideThemeMap')).toBe(true)
