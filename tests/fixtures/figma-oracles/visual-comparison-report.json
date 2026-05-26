@@ -21,14 +21,15 @@
     {
       "name": "rich-text-decorations",
       "nodeId": "296488:2238",
-      "output": "/tmp/open-pencil-oracles/rich-text/decorations-norm",
+      "output": "/tmp/open-pencil-oracles/rich-text/decorations-bounds-derived",
       "figmaSize": "493x41",
-      "openPencilSize": "493x23",
+      "openPencilSize": "493x42",
       "normalization": "Padded/cropped without scaling before diff",
-      "differentPixels": 6881,
-      "differentPercent": 34.04,
-      "rmseNormalized": 0.243701,
-      "finding": "OpenPencil imports style-run decoration metadata, but exact Figma text height/line metrics still differ substantially."
+      "differentPixels": 7568,
+      "differentPercent": 37.44,
+      "rmseNormalized": 0.22616,
+      "previousOpenPencilSize": "493x23",
+      "finding": "Text export bounds now include decoration overflow so underlines are not clipped, but derived glyph rendering still approximates rich decoration style/color poorly."
     },
     {
       "name": "nested-luminance-mask",
@@ -65,6 +66,6 @@
   "nextActions": [
     "Continue tuning pattern row spacing and tile origin against pattern-visible-source-frame.",
     "Use perceptual/color-tolerant image diff for mask comparisons instead of raw absolute-error counts.",
-    "Tune rich text line metrics before treating underline placement diffs as actionable."
+    "Render rich decoration styles/colors for Figma-derived glyph paths or reliably fall back to paragraph text when fonts are available."
   ]
 }
