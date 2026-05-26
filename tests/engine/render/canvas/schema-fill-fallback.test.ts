@@ -13,7 +13,11 @@ function createRenderer() {
   const recorder = {
     beginRecording: mock(() => ({
       drawRect: mock(() => undefined),
-      drawRRect: mock(() => undefined)
+      drawRRect: mock(() => undefined),
+      restore: mock(() => undefined),
+      save: mock(() => undefined),
+      scale: mock(() => undefined),
+      translate: mock(() => undefined)
     })),
     finishRecordingAsPicture: mock(() => picture),
     delete: mock(() => undefined)

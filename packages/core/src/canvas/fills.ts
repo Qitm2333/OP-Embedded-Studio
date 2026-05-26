@@ -1,7 +1,7 @@
 import type { Canvas, Paint } from 'canvaskit-wasm'
 
 import type { SceneNode, SceneGraph, Fill } from '#core/scene-graph'
-import type { Rect } from '#core/types'
+import type { Rect, Vector } from '#core/types'
 
 import type { SkiaRenderer } from './renderer'
 import { makeSmoothRRectPath, nodeHasSmoothCorners } from './shapes'
@@ -99,27 +99,62 @@ export function applyFill(
   return false
 }
 
-function patternTileRect(source: SceneNode, fill: Fill): Rect {
-  const spacing = fill.patternSpacing ?? { x: fill.spacing ?? 0, y: fill.spacing ?? 0 }
-  return {
-    x: 0,
-    y: 0,
-    width: source.width * (1 + spacing.x),
-    height: source.height * (1 + spacing.y)
-  }
+interface PatternTileLayout {
+  rect: Rect
+  scale: number
+  positions: Vector[]
 }
 
-function recordPatternSource(r: SkiaRenderer, source: SceneNode, graph: SceneGraph) {
-  const bounds = r.ck.LTRBRect(0, 0, source.width, source.height)
+function patternAlignmentOffset(alignment: Fill['horizontalAlignment'], gap: number): number {
+  if (alignment === 'CENTER') return gap / 2
+  if (alignment === 'END') return gap
+  return 0
+}
+
+export function patternTileLayout(source: SceneNode, fill: Fill): PatternTileLayout {
+  const scale = fill.scale && fill.scale > 0 ? fill.scale : 1
+  const spacing = fill.patternSpacing ?? { x: 0, y: 0 }
+  const scaledWidth = source.width * scale
+  const scaledHeight = source.height * scale
+  const gapX = scaledWidth * spacing.x
+  const gapY = scaledHeight * spacing.y
+  const width = scaledWidth + gapX
+  const height = scaledHeight + gapY
+  const x = patternAlignmentOffset(fill.horizontalAlignment, gapX)
+  const y = patternAlignmentOffset(fill.verticalAlignment, gapY)
+  const positions = [{ x, y }]
+
+  if (fill.patternTileType === 'HORIZONTAL_HEXAGONAL') {
+    positions.push({ x: x + width / 2, y: y + height / 2 })
+  } else if (fill.patternTileType === 'VERTICAL_HEXAGONAL') {
+    positions.push({ x: x + width / 2, y: y - height / 2 })
+  }
+
+  return { rect: { x: 0, y: 0, width, height }, scale, positions }
+}
+
+function recordPatternSource(
+  r: SkiaRenderer,
+  source: SceneNode,
+  graph: SceneGraph,
+  layout: PatternTileLayout
+) {
+  const bounds = r.ck.LTRBRect(0, 0, layout.rect.width, layout.rect.height)
   const recorder = new r.ck.PictureRecorder()
   const canvas = recorder.beginRecording(bounds)
   const rect = r.ck.LTRBRect(0, 0, source.width, source.height)
   const hasRadius = nodeHasSmoothCorners(source) || source.cornerRadius > 0
 
-  for (const sourceFill of source.fills.filter((item) => item.visible)) {
-    if (sourceFill.type === 'PATTERN' && sourceFill.sourceNodeId === source.id) continue
-    if (!applyFill(r, sourceFill, source, graph)) continue
-    drawNodeFill(r, canvas, source, rect, hasRadius, sourceFill)
+  for (const position of layout.positions) {
+    canvas.save()
+    canvas.translate(position.x, position.y)
+    canvas.scale(layout.scale, layout.scale)
+    for (const sourceFill of source.fills.filter((item) => item.visible)) {
+      if (sourceFill.type === 'PATTERN' && sourceFill.sourceNodeId === source.id) continue
+      if (!applyFill(r, sourceFill, source, graph)) continue
+      drawNodeFill(r, canvas, source, rect, hasRadius, sourceFill)
+    }
+    canvas.restore()
   }
 
   const picture = recorder.finishRecordingAsPicture()
@@ -138,8 +173,9 @@ function applyPatternFill(
   const source = graph.getNode(sourceId)
   if (!source || source.width <= 0 || source.height <= 0) return false
 
-  const picture = recordPatternSource(r, source, graph)
-  const tile = patternTileRect(source, fill)
+  const layout = patternTileLayout(source, fill)
+  const picture = recordPatternSource(r, source, graph, layout)
+  const tile = layout.rect
   const tileRect = r.ck.LTRBRect(tile.x, tile.y, tile.x + tile.width, tile.y + tile.height)
   const shader = picture.makeShader(
     r.ck.TileMode.Repeat,

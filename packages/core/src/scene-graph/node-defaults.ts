@@ -88,6 +88,8 @@ export function createDefaultNode(
     textDecorationStyle: 'SOLID',
     textDecorationThickness: null,
     textDecorationFills: [],
+    textDecorationSkipInk: true,
+    textUnderlineOffset: null,
     maxLines: null,
     styleRuns: [],
     fontVariations: [],

@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs'
 
 import type { NodeChange, Paint } from '#core/kiwi/fig/codec'
 import { nodeChangeToProps } from '#core/kiwi/fig/node-change/convert'
+import { sceneNodeToKiwi } from '#core/kiwi/fig/node-change/serialize'
+import { SceneGraph } from '#core/scene-graph'
 
 interface OracleColor {
   r: number
@@ -29,6 +31,8 @@ interface OracleRange {
 interface RichTextOracle {
   characters: string
   leadingTrim: string
+  textDecorationOffset: { unit: string; value: number }
+  textDecorationSkipInk: boolean
   ranges: OracleRange[]
 }
 
@@ -79,6 +83,8 @@ describe('Figma rich text oracle', () => {
               value: secondRange.textDecorationThickness.value,
               units: 'PIXELS'
             },
+            textUnderlineOffset: { value: oracle.textDecorationOffset.value, units: 'PIXELS' },
+            textDecorationSkipInk: oracle.textDecorationSkipInk,
             textDecorationFillPaints: [oracleColorToPaint(secondRange.textDecorationColor)]
           }
         ]
@@ -90,6 +96,8 @@ describe('Figma rich text oracle', () => {
         value: firstRange.textDecorationThickness.value,
         units: 'PIXELS'
       },
+      textUnderlineOffset: { value: oracle.textDecorationOffset.value, units: 'PIXELS' },
+      textDecorationSkipInk: oracle.textDecorationSkipInk,
       textDecorationFillPaints: [oracleColorToPaint(firstRange.textDecorationColor)],
       leadingTrim: oracle.leadingTrim
     }
@@ -101,6 +109,8 @@ describe('Figma rich text oracle', () => {
     expect(props.textDecorationStyle).toBe('WAVY')
     expect(props.textDecorationThickness).toBe(2)
     expect(props.textDecorationFills[0]?.color).toEqual({ r: 1, g: 0, b: 0, a: 1 })
+    expect(props.textUnderlineOffset).toBe(5)
+    expect(props.textDecorationSkipInk).toBe(false)
     expect(props.leadingTrim).toBe('CAP_HEIGHT')
     expect(props.styleRuns).toEqual([
       {
@@ -110,6 +120,8 @@ describe('Figma rich text oracle', () => {
           textDecoration: 'UNDERLINE',
           textDecorationStyle: 'DOTTED',
           textDecorationThickness: 3,
+          textDecorationSkipInk: false,
+          textUnderlineOffset: 5,
           textDecorationFills: [
             {
               type: 'SOLID',
@@ -122,5 +134,22 @@ describe('Figma rich text oracle', () => {
         }
       }
     ])
+  })
+
+  test('exports captured Figma text decoration offset and skip-ink fields', () => {
+    const oracle = readOracle()
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const text = graph.createNode('TEXT', page.id, {
+      text: oracle.characters,
+      textDecoration: 'UNDERLINE',
+      textUnderlineOffset: oracle.textDecorationOffset.value,
+      textDecorationSkipInk: oracle.textDecorationSkipInk
+    })
+
+    const changes = sceneNodeToKiwi(text, { sessionID: 1, localID: 1 }, 0, { value: 2 }, graph, [])
+
+    expect(changes[0].textUnderlineOffset).toEqual({ value: 5, units: 'PIXELS' })
+    expect(changes[0].textDecorationSkipInk).toBe(false)
   })
 })

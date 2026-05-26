@@ -31,6 +31,8 @@ const RAW_NODE_FIELD_KEYS = new Set([
   'textDecorationStyle',
   'textDecorationThickness',
   'textDecorationFills',
+  'textDecorationSkipInk',
+  'textUnderlineOffset',
   'lineHeight',
   'leadingTrim',
   'letterSpacing',

@@ -295,7 +295,8 @@ test('pattern fills from source nodes', async () => {
         {
           type: 'PATTERN',
           sourceNodeId: source.id,
-          patternTileType: 'RECTANGULAR',
+          patternTileType: 'HORIZONTAL_HEXAGONAL',
+          scale: 1.25,
           patternSpacing: { x: 0.45, y: 0.35 },
           horizontalAlignment: 'CENTER',
           verticalAlignment: 'CENTER',

@@ -13,6 +13,8 @@ interface MaskOracleEntry {
 
 interface MaskOracle {
   masks: MaskOracleEntry[]
+  nested: { children: MaskOracleEntry[] }
+  maskIsOutline: { pluginApiReadable: boolean; note: string }
 }
 
 function readOracle(): MaskOracle {
@@ -56,5 +58,15 @@ describe('Figma mask oracle', () => {
       expect(changes[0].mask).toBe(true)
       expect(changes[0].maskType).toBe(mask.maskType)
     }
+  })
+
+  test('records nested live Figma mask stack order and maskIsOutline API gap', () => {
+    const oracle = readOracle()
+
+    expect(oracle.nested.children.map(({ isMask, maskType }) => ({ isMask, maskType }))).toEqual([
+      { isMask: true, maskType: 'LUMINANCE' },
+      { isMask: false, maskType: 'ALPHA' }
+    ])
+    expect(oracle.maskIsOutline.pluginApiReadable).toBe(false)
   })
 })

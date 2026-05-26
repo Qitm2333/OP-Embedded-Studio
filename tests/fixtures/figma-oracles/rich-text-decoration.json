@@ -8,6 +8,9 @@
   },
   "characters": "wavy red | dotted blue | cap trim",
   "leadingTrim": "CAP_HEIGHT",
+  "textDecorationOffset": { "unit": "PIXELS", "value": 5 },
+  "textDecorationSkipInk": false,
+  "textDecorationOffsetOracleNodeId": "296619:2252",
   "ranges": [
     {
       "start": 0,

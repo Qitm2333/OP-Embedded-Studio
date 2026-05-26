@@ -218,6 +218,7 @@ function fillToKiwiPaint(f: SceneNode['fills'][number]): Paint {
   if (f.imageScaleMode) paint.imageScaleMode = f.imageScaleMode
   if (f.imageTransform) paint.transform = f.imageTransform
   if (f.sourceNodeId) paint.sourceNodeId = stringToGuid(f.sourceNodeId)
+  if (f.scale) paint.scale = f.scale
   if (f.spacing) paint.spacing = f.spacing
   if (f.patternSpacing) paint.patternSpacing = f.patternSpacing
   if (f.patternTileType) paint.patternTileType = f.patternTileType
@@ -302,7 +303,7 @@ function serializeTextProps(
   nc.textUserLayoutVersion = 4
   nc.textExplicitLayoutVersion = 1
   nc.textBidiVersion = 1
-  nc.textDecorationSkipInk = true
+  nc.textDecorationSkipInk = node.textDecorationSkipInk
   nc.fontVariantCommonLigatures = true
   nc.fontVariantContextualLigatures = true
   applyFontFeaturesToKiwi(nc, node.fontFeatures)
@@ -321,6 +322,9 @@ function serializeTextProps(
   if (node.textDecorationStyle !== 'SOLID') nc.textDecorationStyle = node.textDecorationStyle
   if (node.textDecorationThickness != null) {
     nc.textDecorationThickness = { value: node.textDecorationThickness, units: 'PIXELS' }
+  }
+  if (node.textUnderlineOffset != null) {
+    nc.textUnderlineOffset = { value: node.textUnderlineOffset, units: 'PIXELS' }
   }
   if (node.textDecorationFills.length > 0) {
     nc.textDecorationFillPaints = node.textDecorationFills.map(fillToKiwiPaint)

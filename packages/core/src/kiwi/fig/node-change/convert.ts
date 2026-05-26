@@ -307,13 +307,20 @@ function convertTextDecorationProps(
   nc: NodeChange
 ): Pick<
   SceneNode,
-  'textDecoration' | 'textDecorationStyle' | 'textDecorationThickness' | 'textDecorationFills'
+  | 'textDecoration'
+  | 'textDecorationStyle'
+  | 'textDecorationThickness'
+  | 'textDecorationFills'
+  | 'textDecorationSkipInk'
+  | 'textUnderlineOffset'
 > {
   return {
     textDecoration: mapTextDecoration(nc.textDecoration as string),
     textDecorationStyle: (nc.textDecorationStyle ?? 'SOLID') as SceneNode['textDecorationStyle'],
     textDecorationThickness: nc.textDecorationThickness?.value ?? null,
-    textDecorationFills: convertFills(nc.textDecorationFillPaints)
+    textDecorationFills: convertFills(nc.textDecorationFillPaints),
+    textDecorationSkipInk: nc.textDecorationSkipInk ?? true,
+    textUnderlineOffset: nc.textUnderlineOffset?.value ?? null
   }
 }
 

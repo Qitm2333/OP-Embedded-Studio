@@ -203,6 +203,7 @@ export interface Paint {
   image?: { hash: string | Uint8Array }
   imageScaleMode?: string
   sourceNodeId?: GUID
+  scale?: number
   spacing?: number
   patternSpacing?: Vector
   patternTileType?: string

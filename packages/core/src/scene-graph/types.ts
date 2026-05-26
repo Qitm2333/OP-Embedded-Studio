@@ -145,6 +145,7 @@ export interface Fill {
   imageScaleMode?: ImageScaleMode
   imageTransform?: GradientTransform
   sourceNodeId?: string
+  scale?: number
   spacing?: number
   patternSpacing?: Vector
   patternTileType?: PatternTileType
@@ -209,6 +210,8 @@ export interface CharacterStyleOverride {
   textDecorationStyle?: TextDecorationStyle
   textDecorationThickness?: number | null
   textDecorationFills?: Fill[]
+  textDecorationSkipInk?: boolean
+  textUnderlineOffset?: number | null
   fontSize?: number
   fontFamily?: string
   letterSpacing?: number
@@ -358,6 +361,8 @@ export interface SceneNode {
   textDecorationStyle: TextDecorationStyle
   textDecorationThickness: number | null
   textDecorationFills: Fill[]
+  textDecorationSkipInk: boolean
+  textUnderlineOffset: number | null
   leadingTrim: LeadingTrim
   lineHeight: number | null
   letterSpacing: number
