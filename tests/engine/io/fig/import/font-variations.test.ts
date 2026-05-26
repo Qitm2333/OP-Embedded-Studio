@@ -44,6 +44,29 @@ describe('Figma font variation import', () => {
     ])
   })
 
+  test('imports text decoration style metadata', () => {
+    const props = nodeChangeToProps(
+      {
+        type: 'TEXT',
+        textData: { characters: 'Decorated' },
+        textDecoration: 'UNDERLINE',
+        textDecorationStyle: 'WAVY',
+        textDecorationThickness: { value: 1.5, units: 'PIXELS' },
+        textDecorationFillPaints: [
+          { type: 'SOLID', color: { r: 1, g: 0, b: 0, a: 1 }, opacity: 0.75 }
+        ]
+      } as NodeChange,
+      []
+    )
+
+    expect(props).toMatchObject({
+      textDecoration: 'UNDERLINE',
+      textDecorationStyle: 'WAVY',
+      textDecorationThickness: 1.5,
+      textDecorationFills: [{ type: 'SOLID', color: { r: 1, g: 0, b: 0, a: 1 }, opacity: 0.75 }]
+    })
+  })
+
   test('imports styled-run variable font axes and OpenType feature toggles', () => {
     const runs = importStyleRuns({
       type: 'TEXT',
@@ -56,7 +79,10 @@ describe('Figma font variation import', () => {
             styleID: 1,
             fontVariations: [{ axisName: 'GRAD', value: -50 }],
             fontVariantCommonLigatures: false,
-            toggledOnOTFeatures: ['SS01']
+            toggledOnOTFeatures: ['SS01'],
+            textDecoration: 'UNDERLINE',
+            textDecorationStyle: 'DOTTED',
+            textDecorationThickness: { value: 2, units: 'PIXELS' }
           } as NodeChange
         ]
       }
@@ -71,7 +97,10 @@ describe('Figma font variation import', () => {
           fontFeatures: [
             { tag: 'LIGA', enabled: false },
             { tag: 'SS01', enabled: true }
-          ]
+          ],
+          textDecoration: 'UNDERLINE',
+          textDecorationStyle: 'DOTTED',
+          textDecorationThickness: 2
         }
       }
     ])

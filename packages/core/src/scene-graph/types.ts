@@ -187,6 +187,7 @@ export type TextAutoResize = 'NONE' | 'HEIGHT' | 'WIDTH_AND_HEIGHT' | 'TRUNCATE'
 export type TextAlignVertical = 'TOP' | 'CENTER' | 'BOTTOM'
 export type TextCase = 'ORIGINAL' | 'UPPER' | 'LOWER' | 'TITLE'
 export type TextDecoration = 'NONE' | 'UNDERLINE' | 'STRIKETHROUGH'
+export type TextDecorationStyle = 'SOLID' | 'DOTTED' | 'WAVY'
 export type TextDirection = 'AUTO' | 'LTR' | 'RTL'
 export type LayoutDirection = 'AUTO' | 'LTR' | 'RTL'
 
@@ -204,6 +205,9 @@ export interface CharacterStyleOverride {
   fontWeight?: number
   italic?: boolean
   textDecoration?: TextDecoration
+  textDecorationStyle?: TextDecorationStyle
+  textDecorationThickness?: number | null
+  textDecorationFills?: Fill[]
   fontSize?: number
   fontFamily?: string
   letterSpacing?: number
@@ -350,6 +354,9 @@ export interface SceneNode {
   textAutoResize: TextAutoResize
   textCase: TextCase
   textDecoration: TextDecoration
+  textDecorationStyle: TextDecorationStyle
+  textDecorationThickness: number | null
+  textDecorationFills: Fill[]
   lineHeight: number | null
   letterSpacing: number
   maxLines: number | null

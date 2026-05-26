@@ -1,8 +1,23 @@
 import { describe, expect, test } from 'bun:test'
 
-import { textFontFeatures, textFontVariations } from '#core/canvas/text'
+import { textDecorationStyleValue, textFontFeatures, textFontVariations } from '#core/canvas/text'
 
 describe('canvas text font variations', () => {
+  test('maps imported text decoration styles to CanvasKit', () => {
+    const ck = {
+      DecorationStyle: {
+        Solid: 'solid',
+        Dotted: 'dotted',
+        Wavy: 'wavy'
+      }
+    }
+
+    expect(textDecorationStyleValue(ck, 'SOLID')).toBe('solid')
+    expect(textDecorationStyleValue(ck, 'DOTTED')).toBe('dotted')
+    expect(textDecorationStyleValue(ck, 'WAVY')).toBe('wavy')
+    expect(textDecorationStyleValue(ck, undefined)).toBe('solid')
+  })
+
   test('passes imported variable font axes to CanvasKit text styles', () => {
     expect(
       textFontVariations([

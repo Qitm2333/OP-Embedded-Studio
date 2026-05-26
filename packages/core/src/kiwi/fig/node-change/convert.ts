@@ -275,10 +275,7 @@ function importedTextLineHeight(nc: NodeChange): number | null {
   return convertLineHeight(nc.lineHeight, nc.fontSize)
 }
 
-function convertTextProps(
-  nc: NodeChange,
-  blobs: Uint8Array[]
-): Pick<
+type TextProps = Pick<
   SceneNode,
   | 'text'
   | 'fontSize'
@@ -290,6 +287,9 @@ function convertTextProps(
   | 'textAutoResize'
   | 'textCase'
   | 'textDecoration'
+  | 'textDecorationStyle'
+  | 'textDecorationThickness'
+  | 'textDecorationFills'
   | 'lineHeight'
   | 'letterSpacing'
   | 'maxLines'
@@ -300,7 +300,23 @@ function convertTextProps(
   | 'textDirection'
   | 'figmaDerivedLayout'
   | 'figmaDerivedTextGlyphs'
+>
+
+function convertTextDecorationProps(
+  nc: NodeChange
+): Pick<
+  SceneNode,
+  'textDecoration' | 'textDecorationStyle' | 'textDecorationThickness' | 'textDecorationFills'
 > {
+  return {
+    textDecoration: mapTextDecoration(nc.textDecoration as string),
+    textDecorationStyle: (nc.textDecorationStyle ?? 'SOLID') as SceneNode['textDecorationStyle'],
+    textDecorationThickness: nc.textDecorationThickness?.value ?? null,
+    textDecorationFills: convertFills(nc.textDecorationFillPaints)
+  }
+}
+
+function convertTextProps(nc: NodeChange, blobs: Uint8Array[]): TextProps {
   return {
     text: nc.textData?.characters ?? '',
     fontSize: nc.fontSize ?? 14,
@@ -315,7 +331,7 @@ function convertTextProps(
     textAlignVertical: (nc.textAlignVertical ?? 'TOP') as TextAlignVertical,
     textAutoResize: (nc.textAutoResize ?? 'NONE') as TextAutoResize,
     textCase: (nc.textCase ?? 'ORIGINAL') as TextCase,
-    textDecoration: mapTextDecoration(nc.textDecoration as string),
+    ...convertTextDecorationProps(nc),
     lineHeight: importedTextLineHeight(nc),
     letterSpacing: convertLetterSpacing(nc.letterSpacing, nc.fontSize),
     maxLines: (nc.maxLines ?? null) as number | null,

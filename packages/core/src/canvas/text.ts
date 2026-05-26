@@ -195,6 +195,31 @@ function textDecorationValue(ck: CanvasKit, decoration: string): number {
   }
 }
 
+export function textDecorationStyleValue<T>(
+  ck: { DecorationStyle: { Solid: T; Dotted: T; Wavy: T } },
+  style: SceneNode['textDecorationStyle'] | undefined
+): T {
+  switch (style) {
+    case 'DOTTED':
+      return ck.DecorationStyle.Dotted
+    case 'WAVY':
+      return ck.DecorationStyle.Wavy
+    default:
+      return ck.DecorationStyle.Solid
+  }
+}
+
+function textDecorationColor(
+  ck: CanvasKit,
+  fills: SceneNode['textDecorationFills'] | undefined,
+  fallback: Float32Array
+): Float32Array {
+  const fill = fills?.find((item) => item.visible && item.type === 'SOLID')
+  if (!fill) return fallback
+  const color = resolveRGBAForPreview(fill.color).color
+  return ck.Color4f(color.r, color.g, color.b, color.a * fill.opacity)
+}
+
 function styleRunColor(
   ck: CanvasKit,
   style: SceneNode['styleRuns'][number]['style'],
@@ -238,6 +263,17 @@ function pushStyleRun(
       fontFeatures: textFontFeatures(style.fontFeatures ?? node.fontFeatures),
       letterSpacing: style.letterSpacing ?? (node.letterSpacing || 0),
       decoration: textDecorationValue(ck, style.textDecoration ?? node.textDecoration),
+      decorationStyle: textDecorationStyleValue(
+        ck,
+        style.textDecorationStyle ?? node.textDecorationStyle
+      ),
+      decorationThickness:
+        style.textDecorationThickness ?? node.textDecorationThickness ?? undefined,
+      decorationColor: textDecorationColor(
+        ck,
+        style.textDecorationFills ?? node.textDecorationFills,
+        baseColor
+      ),
       heightMultiplier: runLineHeight ? runLineHeight / runFontSize : undefined,
       halfLeading
     })
@@ -310,6 +346,9 @@ export function buildParagraph(
       fontFeatures: textFontFeatures(node.fontFeatures),
       letterSpacing: node.letterSpacing || 0,
       decoration: textDecorationValue(ck, node.textDecoration),
+      decorationStyle: textDecorationStyleValue(ck, node.textDecorationStyle),
+      decorationThickness: node.textDecorationThickness ?? undefined,
+      decorationColor: textDecorationColor(ck, node.textDecorationFills, baseColor),
       heightMultiplier: node.lineHeight ? node.lineHeight / baseFontSize : undefined,
       halfLeading
     }

@@ -34,6 +34,15 @@ function convertStyleOverride(
   }
   const deco = override.textDecoration
   if (deco) style.textDecoration = mapTextDecoration(deco)
+  if (override.textDecorationStyle)
+    style.textDecorationStyle =
+      override.textDecorationStyle as CharacterStyleOverride['textDecorationStyle']
+  if (override.textDecorationThickness)
+    style.textDecorationThickness = override.textDecorationThickness.value ?? null
+  if (override.textDecorationFillPaints) {
+    const decorationFills = convertFills(override.textDecorationFillPaints)
+    if (decorationFills.length > 0) style.textDecorationFills = decorationFills
+  }
   if (override.fillPaints) {
     const fills = convertFills(override.fillPaints)
     if (fills.length > 0) style.fills = fills

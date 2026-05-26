@@ -317,6 +317,13 @@ function serializeTextProps(
   if (node.textDecoration !== 'NONE') {
     nc.textDecoration = node.textDecoration === 'UNDERLINE' ? 'UNDERLINE' : 'STRIKETHROUGH'
   }
+  if (node.textDecorationStyle !== 'SOLID') nc.textDecorationStyle = node.textDecorationStyle
+  if (node.textDecorationThickness != null) {
+    nc.textDecorationThickness = { value: node.textDecorationThickness, units: 'PIXELS' }
+  }
+  if (node.textDecorationFills.length > 0) {
+    nc.textDecorationFillPaints = node.textDecorationFills.map(fillToKiwiPaint)
+  }
 }
 
 function normalizeStackMode(value: string | undefined): KiwiNodeChange['stackMode'] {

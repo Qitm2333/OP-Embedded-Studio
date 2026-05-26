@@ -40,6 +40,13 @@ function textStyleOverrideToKiwi(
     override.lineHeight = { value: style.lineHeight, units: 'PIXELS' }
   }
   if (style.textDecoration) override.textDecoration = style.textDecoration
+  if (style.textDecorationStyle) override.textDecorationStyle = style.textDecorationStyle
+  if (style.textDecorationThickness != null) {
+    override.textDecorationThickness = { value: style.textDecorationThickness, units: 'PIXELS' }
+  }
+  if (style.textDecorationFills && style.textDecorationFills.length > 0) {
+    override.textDecorationFillPaints = style.textDecorationFills.map(fillToKiwiPaint)
+  }
   if (style.fills && style.fills.length > 0) {
     override.fillPaints = style.fills.map(fillToKiwiPaint)
   }

@@ -150,7 +150,7 @@ Figma's design documentation groups features into these areas:
 | Reverse z-index / align-content | ✅ | ◐ | — | ✅ | ✅ | Modeled and exported; UI is limited. |
 | Constraints | ✅ | ◐ | — | ✅ | ✅ | Tools/API expose constraints; main UI is limited. |
 | Layout grids / guides | ↩ | — | — | ↩ | — | `styleIdForGrid` and `guides` are preserved only. |
-| Text styles | ↩ | ◐ | — | ↩ | — | Style IDs round-trip; no style management UI. Rich schema metadata such as derived text data, leading trim, decoration style, and semantic font style/weight is preserved for round-trip. |
+| Text styles | ↩ | ◐ | — | ↩ | — | Style IDs round-trip; no style management UI. Rich schema metadata such as derived text data, leading trim, decoration style/thickness/fill, and semantic font style/weight is preserved for round-trip. |
 | Rich style runs | ✅ | ✅ | ◐ | ✅ | ✅ | Import/render/export support; editing mixed runs is partial. |
 | Text auto resize | ✅ | ✅ | ◐ | ✅ | ✅ | Used by renderer/layout; UI does not expose every mode. |
 | Text truncation / max lines | ✅ | ✅ | — | ✅ | ✅ | Renderer supports ending truncation; no inspector control. |
@@ -195,7 +195,7 @@ OpenPencil deliberately preserves many Figma/Kiwi fields even when they are not 
 | Version/sort/publish/library metadata | ↩ | — | ◐ | Assets UI shows a subset; publish/update workflow is missing. |
 | Variable and parameter consumption maps | ✅ | ◐ | ◐ | Filtered/preserved for safe round-trip; normalized bindings cover common cases. |
 | Page fields: background, page type, guides | ↩ | ◐ | — | Background/page type/guides mostly round-trip. Guides are not rendered/editable. |
-| Text internals: `textData`, layout versions, font version, derived data | ✅ | ✅ | — | Important for text fidelity; most internals are not editable. Imported derived text data, leading trim, decoration style, underline decoration paint/offset/thickness, semantic font metadata, and raw OpenType feature toggles are preserved for round-trip when safe. |
+| Text internals: `textData`, layout versions, font version, derived data | ✅ | ✅ | — | Important for text fidelity; most internals are not editable. Imported derived text data, leading trim, decoration style, underline decoration paint/offset/thickness, semantic font metadata, and raw OpenType feature toggles are preserved for round-trip when safe; decoration style/thickness/color now render through CanvasKit.
 | `fontVariations` | ✅ | ✅ | — | Variable font axes are imported, rendered, and exported for text nodes and style runs. |
 | Raw paint/effect/vector/geometry payloads | ✅ | ✅ | ◐ | Converted fields render; raw payloads preserve Figma import/export details, including mask, background paint, layout grid, export setting, and prototype interaction metadata where safe. |
 
