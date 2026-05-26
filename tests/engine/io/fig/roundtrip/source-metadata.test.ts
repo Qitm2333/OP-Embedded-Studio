@@ -34,6 +34,15 @@ describe('fig roundtrip source metadata', () => {
       b: 0.9750000238418579,
       a: 1
     }
+    page.source.fig.rawNodeFields.backgroundPaints = [
+      {
+        type: 'SOLID',
+        color: { r: 0.5, g: 0.75, b: 1, a: 1 },
+        opacity: 1,
+        visible: true,
+        blendMode: 'NORMAL'
+      }
+    ]
     page.source.fig.rawNodeFields.strokeJoin = 'BEVEL'
     page.source.fig.rawNodeFields.strokeWeight = 0
 
@@ -62,6 +71,7 @@ describe('fig roundtrip source metadata', () => {
     expect(canvas?.strokeJoin).toBe('BEVEL')
     expect(canvas?.strokeWeight).toBe(0)
     expect(canvas?.backgroundColor).toEqual(page.source.fig.rawNodeFields.backgroundColor)
+    expect(canvas?.backgroundPaints).toEqual(page.source.fig.rawNodeFields.backgroundPaints)
 
     expect(changes.get('4:4812')?.parentIndex?.position).toBe('~~~~~~~~~~1')
     expect(changes.get('4:4813')?.parentIndex?.position).toBe('~~~~~~~~~~3')

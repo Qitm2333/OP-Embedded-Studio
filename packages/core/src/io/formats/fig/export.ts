@@ -211,6 +211,11 @@ function applyImportedCanvasFields(page: FigExportPage, canvasNc: KiwiNodeChange
   if ('backgroundColor' in page.source.fig.rawNodeFields) {
     canvasNc.backgroundColor = structuredClone(page.source.fig.rawNodeFields.backgroundColor)
   }
+  if ('backgroundPaints' in page.source.fig.rawNodeFields) {
+    canvasNc.backgroundPaints = structuredClone(
+      page.source.fig.rawNodeFields.backgroundPaints
+    ) as NodeChange['backgroundPaints']
+  }
   const strokeJoin = page.source.fig.rawNodeFields.strokeJoin
   if (typeof strokeJoin === 'string') canvasNc.strokeJoin = strokeJoin
   const strokeWeight = page.source.fig.rawNodeFields.strokeWeight
