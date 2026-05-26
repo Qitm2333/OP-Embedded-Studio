@@ -162,6 +162,15 @@ function recordPatternSource(
   return picture
 }
 
+function resolvePatternSource(graph: SceneGraph, sourceId: string): SceneNode | null {
+  const direct = graph.getNode(sourceId)
+  if (direct) return direct
+  for (const node of graph.getAllNodes()) {
+    if (node.source.id === sourceId) return node
+  }
+  return null
+}
+
 function applyPatternFill(
   r: SkiaRenderer,
   fill: Fill,
@@ -169,8 +178,8 @@ function applyPatternFill(
   graph: SceneGraph
 ): boolean {
   const sourceId = fill.sourceNodeId
-  if (!sourceId || sourceId === node.id) return false
-  const source = graph.getNode(sourceId)
+  if (!sourceId || sourceId === node.id || sourceId === node.source.id) return false
+  const source = resolvePatternSource(graph, sourceId)
   if (!source || source.width <= 0 || source.height <= 0) return false
 
   const layout = patternTileLayout(source, fill)

@@ -23,7 +23,7 @@ import { SkiaRenderer } from '@open-pencil/core/canvas'
 import { renderNodesToImage, initCanvasKit } from '@open-pencil/core/io'
 import { computeAllLayouts } from '@open-pencil/core/layout'
 import { SceneGraph } from '@open-pencil/core/scene-graph'
-import { loadFont } from '@open-pencil/core/text'
+import { fontManager } from '@open-pencil/core/text'
 
 import { parseFigmaClipboard, importClipboardNodes } from '#core/clipboard'
 
@@ -81,7 +81,7 @@ async function runWithNodeId(nodeId: string) {
 
   console.log('📋 Exporting clipboard data from Figma…')
   // Select the node, copy, read clipboard, render with our engine
-  await $`figma-use eval ${`(() => { const n = figma.getNodeById('${nodeId}'); if (n) { figma.currentPage.selection = [n]; } })()`}`.quiet()
+  await $`figma-use eval ${`(() => { const n = figma.getNodeById('${nodeId}'); if (!n) return; let page = n.parent; while (page && page.type !== 'PAGE') page = page.parent; if (page) { figma.currentPage = page; page.selection = [n]; } })()`}`.quiet()
   await Bun.sleep(200)
   await $`osascript -e 'tell application "Figma" to activate'`.quiet()
   await Bun.sleep(300)
@@ -118,7 +118,7 @@ async function renderOurs(html: string) {
     if (node.fontFamily) families.add(node.fontFamily)
   }
   for (const family of families) {
-    await loadFont(family)
+    await fontManager.loadFont(family)
   }
 
   const ck = await initCanvasKit()

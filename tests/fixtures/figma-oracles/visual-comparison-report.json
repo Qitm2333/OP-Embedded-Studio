@@ -1,0 +1,64 @@
+{
+  "source": {
+    "tool": "scripts/visual-compare.ts",
+    "captured": "2026-05-22",
+    "outputRoot": "/tmp/open-pencil-oracles"
+  },
+  "comparisons": [
+    {
+      "name": "rich-text-decorations",
+      "nodeId": "296488:2238",
+      "output": "/tmp/open-pencil-oracles/rich-text/decorations-scale1",
+      "figmaSize": "493x41",
+      "openPencilSizeBeforeResize": "493x23",
+      "differentPixels": 10611,
+      "differentPercent": 52.5,
+      "finding": "OpenPencil imports style-run decoration metadata, but exact Figma line metrics/leading trim still differ substantially."
+    },
+    {
+      "name": "rich-text-offset-skip-ink",
+      "nodeId": "296619:2252",
+      "output": "/tmp/open-pencil-oracles/rich-text/offset-skipink-scale1",
+      "figmaSize": "212x32",
+      "openPencilSizeBeforeResize": "212x39",
+      "differentPixels": 4154,
+      "differentPercent": 61.23,
+      "finding": "Underline offset and skip-ink now round-trip, but CanvasKit rendering does not expose matching underline offset/skip-ink controls."
+    },
+    {
+      "name": "nested-luminance-mask",
+      "nodeId": "296616:2249",
+      "output": "/tmp/open-pencil-oracles/masks/nested-scale1",
+      "figmaSize": "240x120",
+      "openPencilSizeBeforeResize": "240x120",
+      "differentPixels": 12944,
+      "differentPercent": 44.94,
+      "finding": "Visual output is structurally close, but colors/antialiasing differ enough for a high raw AE score."
+    },
+    {
+      "name": "pattern-target-without-source",
+      "nodeId": "296519:2245",
+      "output": "/tmp/open-pencil-oracles/pattern-scale1",
+      "figmaSize": "160x100",
+      "openPencilSizeBeforeResize": "160x100",
+      "differentPixels": 16000,
+      "differentPercent": 100,
+      "finding": "Copying/exporting only a pattern-filled target does not include its source node in clipboard data; OpenPencil must fall back without whole-document context."
+    },
+    {
+      "name": "pattern-frame-with-hidden-source",
+      "nodeId": "296731:2254",
+      "output": "/tmp/open-pencil-oracles/pattern-frame-scale1-after-sourceid",
+      "figmaSize": "180x100",
+      "openPencilSizeBeforeResize": "180x100",
+      "differentPixels": 9102,
+      "differentPercent": 50.57,
+      "finding": "Resolving pattern sources by imported Figma source id works in OpenPencil, but this hidden-source frame oracle renders blank in Figma and is not a parity baseline."
+    }
+  ],
+  "nextActions": [
+    "Create a Figma pattern oracle where the source is included in the copied subtree and Figma still renders the pattern target.",
+    "Use perceptual/color-tolerant image diff for mask comparisons instead of raw absolute-error counts.",
+    "Tune rich text line metrics before treating underline placement diffs as actionable."
+  ]
+}

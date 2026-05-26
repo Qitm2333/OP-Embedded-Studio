@@ -40,7 +40,7 @@ function createRenderer() {
   } as SkiaRenderer
 }
 
-const node = { id: '1:2', width: 100, height: 100 } as SceneNode
+const node = { id: '1:2', source: { id: '' }, width: 100, height: 100 } as SceneNode
 
 describe('schema fill fallback rendering', () => {
   test('renders pattern fills from referenced source nodes', () => {
@@ -58,10 +58,11 @@ describe('schema fill fallback rendering', () => {
         }
       ]
     })
+    source.source.id = '12:34'
     const renderer = createRenderer()
     const fill: Fill = {
       type: 'PATTERN',
-      sourceNodeId: source.id,
+      sourceNodeId: '12:34',
       patternSpacing: { x: 0.25, y: 0.4 },
       color: { r: 0.2, g: 0.3, b: 0.4, a: 0.8 },
       opacity: 1,
