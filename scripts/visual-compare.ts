@@ -14,7 +14,7 @@
  *   diff.png   — visual diff (red = changed pixels)
  */
 
-import { existsSync, mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 
 import { $ } from 'bun'
@@ -32,7 +32,10 @@ const { values: opts } = parseArgs({
     scale: { type: 'string', default: '2' },
     output: { type: 'string', short: 'o', default: '/tmp/visual-compare' },
     node: { type: 'string', short: 'n' },
-    resize: { type: 'boolean', default: false }
+    resize: { type: 'boolean', default: false },
+    fuzz: { type: 'string', default: '1%' },
+    'alpha-diff': { type: 'boolean', default: false },
+    'metrics-json': { type: 'string' }
   }
 })
 
@@ -42,6 +45,10 @@ const figmaPath = `${outputDir}/figma.png`
 const oursPath = `${outputDir}/ours.png`
 const normalizedOursPath = `${outputDir}/ours-normalized.png`
 const diffPath = `${outputDir}/diff.png`
+const metricsPath = opts['metrics-json'] ?? `${outputDir}/metrics.json`
+const alphaFigmaPath = `${outputDir}/figma-alpha.png`
+const alphaOursPath = `${outputDir}/ours-alpha.png`
+const alphaDiffPath = `${outputDir}/diff-alpha.png`
 
 if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true })
 
@@ -195,21 +202,67 @@ async function diff() {
       .quiet()
       .nothrow()
 
+  const fuzzResult =
+    await $`magick compare -metric AE -fuzz ${opts.fuzz} ${figmaPath} ${compareOursPath} null:`
+      .quiet()
+      .nothrow()
   const rmseResult = await $`magick compare -metric RMSE ${figmaPath} ${compareOursPath} null:`
     .quiet()
     .nothrow()
   const rmse = rmseResult.stderr.toString().trim()
   const diffPixels = Number.parseInt(result.stderr.toString().trim(), 10) || 0
+  const fuzzPixels = Number.parseInt(fuzzResult.stderr.toString().trim(), 10) || 0
   const [w, h] = figmaSize.split('x').map(Number)
   const total = w * h
-  const pct = ((diffPixels / total) * 100).toFixed(2)
+  const pct = (diffPixels / total) * 100
+  const fuzzPct = (fuzzPixels / total) * 100
+  const alphaMetrics = opts['alpha-diff'] ? await diffAlpha(compareOursPath, total) : null
+  const metrics = {
+    figmaSize,
+    openPencilSize: oursSize,
+    comparedOpenPencilPath: compareOursPath,
+    resized: Boolean(opts.resize && figmaSize !== oursSize),
+    normalized: figmaSize !== oursSize,
+    differentPixels: diffPixels,
+    differentPercent: Number(pct.toFixed(2)),
+    fuzz: opts.fuzz,
+    fuzzDifferentPixels: fuzzPixels,
+    fuzzDifferentPercent: Number(fuzzPct.toFixed(2)),
+    rmse,
+    alpha: alphaMetrics
+  }
+  writeFileSync(metricsPath, `${JSON.stringify(metrics, null, 2)}\n`)
 
   console.log(`   → ${diffPath}`)
   console.log(
-    `   ${diffPixels.toLocaleString()} different pixels (${pct}% of ${total.toLocaleString()})`
+    `   ${diffPixels.toLocaleString()} different pixels (${pct.toFixed(2)}% of ${total.toLocaleString()})`
+  )
+  console.log(
+    `   ${fuzzPixels.toLocaleString()} different pixels with ${opts.fuzz} fuzz (${fuzzPct.toFixed(2)}%)`
   )
   console.log(`   RMSE ${rmse}`)
+  if (alphaMetrics) {
+    console.log(
+      `   Alpha AE ${alphaMetrics.differentPixels.toLocaleString()} pixels (${alphaMetrics.differentPercent.toFixed(2)}%)`
+    )
+  }
+  console.log(`   Metrics → ${metricsPath}`)
   console.log(`\n✅ Done! Images in ${outputDir}/`)
+}
+
+async function diffAlpha(compareOursPath: string, total: number) {
+  await $`magick ${figmaPath} -alpha extract ${alphaFigmaPath}`.quiet()
+  await $`magick ${compareOursPath} -alpha extract ${alphaOursPath}`.quiet()
+  const result =
+    await $`magick compare -metric AE -highlight-color red -lowlight-color '#FFFFFF33' -compose src ${alphaFigmaPath} ${alphaOursPath} ${alphaDiffPath}`
+      .quiet()
+      .nothrow()
+  const differentPixels = Number.parseInt(result.stderr.toString().trim(), 10) || 0
+  return {
+    path: alphaDiffPath,
+    differentPixels,
+    differentPercent: (differentPixels / total) * 100
+  }
 }
 
 // --- Helpers ---
