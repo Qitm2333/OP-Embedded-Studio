@@ -16,7 +16,11 @@
       "rmseNormalized": 0.235698,
       "previousDifferentPixels": 13026,
       "previousDifferentPercent": 62.33,
-      "finding": "This is the reliable pattern oracle: source and target are copied together and Figma renders the pattern. OpenPencil resolves the source and now uses a closer Figma-like pattern origin, but exact row spacing/tile origin still differs."
+      "finding": "This is the reliable pattern oracle: source and target are copied together and Figma renders the pattern. OpenPencil resolves the source and now uses a closer Figma-like pattern origin, but exact row spacing/tile origin still differs.",
+      "fuzz": "2%",
+      "fuzzDifferentPixels": 6337,
+      "fuzzDifferentPercent": 30.32,
+      "rmse": "15446.4 (0.235698)"
     },
     {
       "name": "rich-text-decorations",

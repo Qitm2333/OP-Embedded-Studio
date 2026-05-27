@@ -72,7 +72,10 @@ function renderNoiseEffect(
         if (value > density) continue
         const alpha = Math.max(0, Math.min(1, opacity * (0.35 + value * 0.65)))
         paint.setColor(r.ck.Color4f(color.r, color.g, color.b, alpha))
-        canvas.drawRect(r.ck.LTRBRect(x, y, Math.min(node.width, x + 1), Math.min(node.height, y + 1)), paint)
+        canvas.drawRect(
+          r.ck.LTRBRect(x, y, Math.min(node.width, x + 1), Math.min(node.height, y + 1)),
+          paint
+        )
       }
     }
     canvas.restore()
