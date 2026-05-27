@@ -2,13 +2,17 @@
   "source": {
     "tool": "figma-use eval",
     "fileKey": "jSxlQDCrjsvqEQq17IWEcC",
-    "page": "OpenPencil rich text oracle 2026-05-22",
-    "nodeId": "296488:2238",
-    "captured": "2026-05-22"
+    "page": "OpenPencil rich text oracle 2026-05-27",
+    "nodeId": "297274:2265",
+    "captured": "2026-05-27",
+    "note": "Original node 296488:2238 was later overwritten in the live Figma file; this fixture was recreated from the same styling recipe."
   },
   "characters": "wavy red | dotted blue | cap trim",
   "leadingTrim": "CAP_HEIGHT",
-  "textDecorationOffset": { "unit": "PIXELS", "value": 5 },
+  "textDecorationOffset": {
+    "unit": "PIXELS",
+    "value": 5
+  },
   "textDecorationSkipInk": false,
   "textDecorationOffsetOracleNodeId": "296619:2252",
   "ranges": [
@@ -18,14 +22,21 @@
       "text": "wavy red ",
       "textDecoration": "UNDERLINE",
       "textDecorationStyle": "WAVY",
-      "textDecorationThickness": { "unit": "PIXELS", "value": 2 },
+      "textDecorationThickness": {
+        "unit": "PIXELS",
+        "value": 2
+      },
       "textDecorationColor": {
         "value": {
           "type": "SOLID",
           "visible": true,
           "opacity": 1,
           "blendMode": "NORMAL",
-          "color": { "r": 1, "g": 0, "b": 0 },
+          "color": {
+            "r": 1,
+            "g": 0,
+            "b": 0
+          },
           "boundVariables": {}
         }
       }
@@ -36,17 +47,27 @@
       "text": "dotted blue",
       "textDecoration": "UNDERLINE",
       "textDecorationStyle": "DOTTED",
-      "textDecorationThickness": { "unit": "PIXELS", "value": 3 },
+      "textDecorationThickness": {
+        "unit": "PIXELS",
+        "value": 3
+      },
       "textDecorationColor": {
         "value": {
           "type": "SOLID",
           "visible": true,
           "opacity": 1,
           "blendMode": "NORMAL",
-          "color": { "r": 0, "g": 0.25, "b": 1 },
+          "color": {
+            "r": 0,
+            "g": 0.25,
+            "b": 1
+          },
           "boundVariables": {}
         }
       }
     }
-  ]
+  ],
+  "mainTextDecorationOffset": {
+    "unit": "AUTO"
+  }
 }

@@ -34,6 +34,9 @@ export function derivedUnderlineRect(node: Pick<SceneNode, 'width'>, baselineY: 
 }
 
 function styleRunX(node: SceneNode, index: number): number {
+  const glyph = node.figmaDerivedTextGlyphs?.[index]
+  if (glyph) return glyph.x
+  if (index >= node.text.length) return node.width
   if (node.text.length === 0) return 0
   return (node.width * index) / node.text.length
 }
@@ -122,11 +125,19 @@ function drawSolidDecoration(
   canvas.drawRect(r.ltrb(span.x1, y, span.x2, y + span.thickness), paint)
 }
 
-function drawDottedDecoration(canvas: Canvas, paint: Paint, span: DecorationSpan, y: number): void {
-  const radius = Math.max(0.5, span.thickness / 2)
-  const step = Math.max(radius * 3, 3)
-  for (let x = span.x1 + radius; x <= span.x2 - radius; x += step) {
-    canvas.drawCircle(x, y + radius, radius, paint)
+function drawDottedDecoration(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  paint: Paint,
+  span: DecorationSpan,
+  y: number
+): void {
+  paint.setStyle(r.ck.PaintStyle.Fill)
+  const dotSize = 1
+  const step = dotSize * 2
+  const dotY = y - span.thickness / 3
+  for (let x = span.x1; x <= span.x2; x += step) {
+    canvas.drawRect(r.ck.LTRBRect(x, dotY, x + dotSize, dotY + span.thickness), paint)
   }
 }
 
@@ -137,7 +148,7 @@ function drawWavyDecoration(
   span: DecorationSpan,
   y: number
 ): void {
-  const amplitude = Math.max(0.75, span.thickness * 0.75)
+  const amplitude = Math.max(0.5, span.thickness * 0.5)
   const wavelength = Math.max(6, span.thickness * 5)
   const path = new r.ck.Path()
   path.moveTo(span.x1, y)
@@ -147,6 +158,12 @@ function drawWavyDecoration(
   path.lineTo(span.x2, y)
   canvas.drawPath(path, paint)
   path.delete()
+}
+
+function derivedDecorationY(node: SceneNode, span: DecorationSpan, baselineY: number): number {
+  const hasRichDecoration = span.style !== 'SOLID' || span.fills.length > 0
+  if (!hasRichDecoration) return derivedUnderlineRect(node, baselineY).y1 + span.offset
+  return baselineY + node.fontSize / 2 - span.thickness / 4 + span.offset
 }
 
 function drawDerivedDecorations(
@@ -160,10 +177,9 @@ function drawDerivedDecorations(
   const paint = new r.ck.Paint()
   try {
     for (const span of spans) {
-      const hasRichDecoration = span.style !== 'SOLID' || span.fills.length > 0
-      const y = baselineY + (hasRichDecoration ? 13.5 : 2.75) + span.offset
+      const y = derivedDecorationY(node, span, baselineY)
       configureDecorationPaint(r, span, paint)
-      if (span.style === 'DOTTED') drawDottedDecoration(canvas, paint, span, y)
+      if (span.style === 'DOTTED') drawDottedDecoration(r, canvas, paint, span, y)
       else if (span.style === 'WAVY') drawWavyDecoration(r, canvas, paint, span, y)
       else drawSolidDecoration(r, canvas, paint, span, y)
     }

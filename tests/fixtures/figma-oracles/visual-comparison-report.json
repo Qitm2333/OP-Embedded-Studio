@@ -24,16 +24,19 @@
     },
     {
       "name": "rich-text-decorations",
-      "nodeId": "296488:2238",
-      "output": "/tmp/open-pencil-oracles/rich-text/decorations-bounds-derived",
+      "nodeId": "297274:2265",
+      "output": "/tmp/open-pencil-oracles/rich-text/recreated-decoration-metric-derived",
       "figmaSize": "493x41",
       "openPencilSize": "493x42",
       "normalization": "Padded/cropped without scaling before diff",
-      "differentPixels": 7568,
-      "differentPercent": 37.44,
-      "rmseNormalized": 0.22616,
-      "previousOpenPencilSize": "493x23",
-      "finding": "Text export bounds now include decoration overflow so underlines are not clipped, but derived glyph rendering still approximates rich decoration style/color poorly."
+      "differentPixels": 7734,
+      "differentPercent": 38.26,
+      "rmseNormalized": 0.217758,
+      "finding": "Recreated rich text decoration oracle. Derived-glyph decorations now use glyph positions and font metrics instead of inline pixel offsets; colored decoration row bounds are close, but glyph/text rendering differences still dominate the raster diff.",
+      "fuzz": "2%",
+      "fuzzDifferentPixels": 7361,
+      "fuzzDifferentPercent": 36.42,
+      "rmse": "14270.7 (0.217758)"
     },
     {
       "name": "nested-luminance-mask",
