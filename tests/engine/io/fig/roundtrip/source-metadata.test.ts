@@ -221,6 +221,42 @@ describe('fig roundtrip source metadata', () => {
     expect(exported?.effects?.[0]?.density).toBeCloseTo(0.4)
   })
 
+  test('clears raw unsupported effects when normalized effects are edited', () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const rect = graph.createNode('RECTANGLE', page.id, { name: 'Edited effect metadata' })
+    rect.source.format = 'fig'
+    rect.source.id = '4:504'
+    rect.source.fig.rawNodeFields.effects = [
+      {
+        type: 'NOISE',
+        visible: true,
+        offset: { x: 0, y: 0 },
+        radius: 0,
+        spread: 0,
+        noiseSize: { x: 0.5, y: 0.5 },
+        noiseType: 'MONOTONE',
+        color: { r: 0, g: 0, b: 0, a: 1 },
+        density: 0.4
+      }
+    ]
+
+    graph.updateNode(rect.id, {
+      effects: [
+        {
+          type: 'DROP_SHADOW',
+          color: { r: 0, g: 0, b: 0, a: 0.2 },
+          offset: { x: 0, y: 4 },
+          radius: 8,
+          spread: 0,
+          visible: true
+        }
+      ]
+    })
+
+    expect(rect.source.fig.rawNodeFields.effects).toBeUndefined()
+  })
+
   test('clears raw font variation payloads when normalized axes are edited', async () => {
     const graph = new SceneGraph()
     const page = graph.getPages()[0]
