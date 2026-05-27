@@ -66,16 +66,13 @@ const analysis =
         regions.map((region) => {
           const figmaRows = summarizeRows(findPatternComponents(figma, minComponentPixels, region))
           const oursRows = summarizeRows(findPatternComponents(ours, minComponentPixels, region))
-          return [
-            region.name,
-            { figma: figmaRows, ours: oursRows, rowDeltas: rowDeltas(figmaRows, oursRows) }
-          ]
+          return [region.name, analyzeRows(figmaRows, oursRows)]
         })
       )
     : (() => {
         const figmaRows = summarizeRows(findPatternComponents(figma, minComponentPixels))
         const oursRows = summarizeRows(findPatternComponents(ours, minComponentPixels))
-        return { figma: figmaRows, ours: oursRows, rowDeltas: rowDeltas(figmaRows, oursRows) }
+        return analyzeRows(figmaRows, oursRows)
       })()
 
 console.log(JSON.stringify(analysis, null, 2))
@@ -236,7 +233,36 @@ function summarizeRows(components: Component[]): RowSummary[] {
     .toSorted((a, b) => a.y - b.y)
 }
 
-function rowDeltas(figmaRows: RowSummary[], oursRows: RowSummary[]) {
+function analyzeRows(figmaRows: RowSummary[], oursRows: RowSummary[]) {
+  const pairedRows = pairedRowDeltas(figmaRows, oursRows)
+  return {
+    figma: figmaRows,
+    ours: oursRows,
+    pairedRows,
+    nearestRows: nearestRowDeltas(figmaRows, oursRows),
+    summary: rowDeltaSummary(pairedRows, figmaRows.length, oursRows.length)
+  }
+}
+
+function pairedRowDeltas(figmaRows: RowSummary[], oursRows: RowSummary[]) {
+  const count = Math.min(figmaRows.length, oursRows.length)
+  return Array.from({ length: count }, (_, index) => {
+    const figmaRow = figmaRows[index]
+    const oursRow = oursRows[index]
+    return {
+      index,
+      figmaY: figmaRow?.y ?? null,
+      oursY: oursRow?.y ?? null,
+      deltaY: figmaRow && oursRow ? Number((oursRow.y - figmaRow.y).toFixed(2)) : null,
+      figmaFirstX: figmaRow?.firstX ?? null,
+      oursFirstX: oursRow?.firstX ?? null,
+      deltaFirstX:
+        figmaRow && oursRow ? Number((oursRow.firstX - figmaRow.firstX).toFixed(2)) : null
+    }
+  })
+}
+
+function nearestRowDeltas(figmaRows: RowSummary[], oursRows: RowSummary[]) {
   return figmaRows.map((figmaRow) => {
     const nearest = oursRows.toSorted(
       (a, b) => Math.abs(a.y - figmaRow.y) - Math.abs(b.y - figmaRow.y)
@@ -250,4 +276,22 @@ function rowDeltas(figmaRows: RowSummary[], oursRows: RowSummary[]) {
       deltaFirstX: nearest ? Number((nearest.firstX - figmaRow.firstX).toFixed(2)) : null
     }
   })
+}
+
+function rowDeltaSummary(
+  rows: ReturnType<typeof pairedRowDeltas>,
+  figmaRowCount: number,
+  openPencilRowCount: number
+) {
+  const valid = rows.filter((row) => row.deltaY !== null && row.deltaFirstX !== null)
+  if (valid.length === 0) return null
+  const avgDeltaY = valid.reduce((sum, row) => sum + (row.deltaY ?? 0), 0) / valid.length
+  const avgDeltaFirstX = valid.reduce((sum, row) => sum + (row.deltaFirstX ?? 0), 0) / valid.length
+  return {
+    pairedRowCount: valid.length,
+    avgDeltaY: Number(avgDeltaY.toFixed(2)),
+    avgDeltaFirstX: Number(avgDeltaFirstX.toFixed(2)),
+    missingOpenPencilRows: Math.max(0, figmaRowCount - openPencilRowCount),
+    extraOpenPencilRows: Math.max(0, openPencilRowCount - figmaRowCount)
+  }
 }

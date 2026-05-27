@@ -36,6 +36,16 @@ interface PaintOracle {
     source: { id: string; visible: boolean }
     targets: Array<{ alignment: string; fills: PatternOracleFill[] }>
     metrics: { rmseNormalized: number; fuzzDifferentPixels: number }
+    analysis: Record<
+      string,
+      {
+        pairedRowCount: number
+        avgDeltaY: number
+        avgDeltaFirstX: number
+        missingOpenPencilRows: number
+        extraOpenPencilRows: number
+      }
+    >
   }
   effects: {
     noise: { results: Record<string, EffectOracleResult> }
@@ -83,6 +93,9 @@ describe('Figma pattern/noise/custom paint oracle availability', () => {
     }
     expect(alignment.metrics.rmseNormalized).toBeCloseTo(0.246422)
     expect(alignment.metrics.fuzzDifferentPixels).toBe(22209)
+    expect(alignment.analysis.START).toMatchObject({ avgDeltaY: 0, avgDeltaFirstX: 0 })
+    expect(alignment.analysis.CENTER).toMatchObject({ avgDeltaY: 3, avgDeltaFirstX: -0.5 })
+    expect(alignment.analysis.END).toMatchObject({ avgDeltaY: -6.67, avgDeltaFirstX: -0.5 })
   })
 
   test('records that noise and custom paint payloads are still blocked on Figma-authored samples', () => {

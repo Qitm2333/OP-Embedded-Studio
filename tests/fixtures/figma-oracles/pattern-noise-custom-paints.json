@@ -287,6 +287,29 @@
       "fuzzDifferentPercent": 30.51,
       "rmseNormalized": 0.246422
     },
-    "note": "Captures START/CENTER/END pattern alignment in one frame with a visible source node. START matches current OpenPencil row origin closely; CENTER and END show remaining Figma origin differences."
+    "note": "Captures START/CENTER/END pattern alignment in one frame with a visible source node. START matches current OpenPencil row origin closely; CENTER and END show remaining Figma origin differences.",
+    "analysis": {
+      "START": {
+        "pairedRowCount": 6,
+        "avgDeltaY": 0,
+        "avgDeltaFirstX": 0,
+        "missingOpenPencilRows": 0,
+        "extraOpenPencilRows": 0
+      },
+      "CENTER": {
+        "pairedRowCount": 6,
+        "avgDeltaY": 3,
+        "avgDeltaFirstX": -0.5,
+        "missingOpenPencilRows": 1,
+        "extraOpenPencilRows": 0
+      },
+      "END": {
+        "pairedRowCount": 6,
+        "avgDeltaY": -6.67,
+        "avgDeltaFirstX": -0.5,
+        "missingOpenPencilRows": 0,
+        "extraOpenPencilRows": 0
+      }
+    }
   }
 }
