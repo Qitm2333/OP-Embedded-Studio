@@ -178,6 +178,74 @@ describe('fig roundtrip source metadata', () => {
     expect(exported?.derivedTextData?.layoutSize).toEqual({ x: 80, y: 20 })
   })
 
+  test('preserves imported grid, export, and prototype metadata for round-trip', async () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const frame = graph.createNode('FRAME', page.id, { name: 'Imported metadata frame' })
+    frame.source.format = 'fig'
+    frame.source.id = '4:505'
+    frame.source.fig.rawNodeFields.layoutGrids = [
+      {
+        type: 'MIN',
+        axis: 'X',
+        visible: true,
+        numSections: 12,
+        offset: 16,
+        sectionSize: 64,
+        gutterSize: 24,
+        color: { r: 1, g: 0, b: 0, a: 0.1 },
+        pattern: 'STRIPES'
+      }
+    ]
+    frame.source.fig.rawNodeFields.exportSettings = [
+      {
+        suffix: '@2x',
+        imageType: 'PNG',
+        constraint: { type: 'CONTENT_SCALE', value: 2 },
+        contentsOnly: true,
+        useAbsoluteBounds: false
+      }
+    ]
+    frame.source.fig.rawNodeFields.prototypeStartNodeID = { sessionID: 4, localID: 900 }
+    frame.source.fig.rawNodeFields.transitionInfo = { type: 'DISSOLVE', duration: 0.2 }
+
+    const decoded = decodeExport(await exportFigFile(graph))
+    const exported = decoded.nodeChanges.find(
+      (nodeChange) => nodeChange.guid && guidToString(nodeChange.guid) === '4:505'
+    )
+
+    expect(exported?.layoutGrids?.[0]?.type).toBe('MIN')
+    expect(exported?.layoutGrids?.[0]?.axis).toBe('X')
+    expect(exported?.layoutGrids?.[0]?.color?.a).toBeCloseTo(0.1)
+    expect(exported?.exportSettings).toEqual(frame.source.fig.rawNodeFields.exportSettings)
+    expect(exported?.prototypeStartNodeID).toEqual({ sessionID: 4, localID: 900 })
+    expect(exported?.transitionInfo?.type).toBe('DISSOLVE')
+  })
+
+  test('clears imported raw metadata when visual fields are edited', () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const frame = graph.createNode('FRAME', page.id, { name: 'Edited metadata frame' })
+    frame.source.format = 'fig'
+    frame.source.id = '4:506'
+    frame.source.fig.rawNodeFields.layoutGrids = [{ type: 'MIN', axis: 'X', visible: true }]
+    frame.source.fig.rawNodeFields.exportSettings = [{ suffix: '@2x' }]
+    frame.source.fig.rawNodeFields.prototypeInteractions = [{ trigger: 'ON_CLICK' }]
+
+    graph.updateNode(frame.id, {
+      fills: [
+        {
+          type: 'SOLID',
+          color: { r: 0.2, g: 0.4, b: 0.8, a: 1 },
+          opacity: 1,
+          visible: true
+        }
+      ]
+    })
+
+    expect(frame.source.fig.rawNodeFields).toEqual({})
+  })
+
   test('preserves imported unsupported effect payloads for round-trip', async () => {
     const graph = new SceneGraph()
     const page = graph.getPages()[0]
