@@ -534,6 +534,28 @@ function hasRawVectorPayload(node: SceneNode): boolean {
   return 'vectorData' in node.source.fig.rawNodeFields
 }
 
+const SUPPORTED_NORMALIZED_EFFECT_TYPES = new Set([
+  'DROP_SHADOW',
+  'INNER_SHADOW',
+  'LAYER_BLUR',
+  'BACKGROUND_BLUR',
+  'FOREGROUND_BLUR'
+])
+
+function hasRawUnsupportedEffects(node: SceneNode): boolean {
+  const effects = node.source.fig.rawNodeFields.effects
+  return (
+    Array.isArray(effects) &&
+    effects.some(
+      (effect) =>
+        effect &&
+        typeof effect === 'object' &&
+        'type' in effect &&
+        !SUPPORTED_NORMALIZED_EFFECT_TYPES.has(String(effect.type))
+    )
+  )
+}
+
 function nodeForGeometryExport(node: SceneNode): SceneNode {
   if (!hasRawGeometryPayload(node) && !hasRawVectorPayload(node)) return node
   return {
@@ -570,7 +592,7 @@ function applyNodeVisualProps(
 
   context.serializeCornerRadii(node, nc)
 
-  if (node.effects.length > 0) {
+  if (node.effects.length > 0 && !hasRawUnsupportedEffects(node)) {
     nc.effects = node.effects.map((effect) => ({
       type: effect.type === 'LAYER_BLUR' ? 'FOREGROUND_BLUR' : effect.type,
       color: context.safeColor(effect.color),

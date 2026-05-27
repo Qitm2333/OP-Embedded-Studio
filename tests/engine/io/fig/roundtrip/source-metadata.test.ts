@@ -178,6 +178,49 @@ describe('fig roundtrip source metadata', () => {
     expect(exported?.derivedTextData?.layoutSize).toEqual({ x: 80, y: 20 })
   })
 
+  test('preserves imported unsupported effect payloads for round-trip', async () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const rect = graph.createNode('RECTANGLE', page.id, {
+      name: 'Noise effect metadata',
+      effects: [
+        {
+          type: 'DROP_SHADOW',
+          color: { r: 0, g: 0, b: 0, a: 0.25 },
+          offset: { x: 0, y: 2 },
+          radius: 4,
+          spread: 0,
+          visible: true
+        }
+      ]
+    })
+    rect.source.format = 'fig'
+    rect.source.id = '4:503'
+    rect.source.fig.rawNodeFields.effects = [
+      {
+        type: 'NOISE',
+        visible: true,
+        offset: { x: 0, y: 0 },
+        radius: 0,
+        spread: 0,
+        noiseSize: { x: 0.5, y: 0.5 },
+        noiseType: 'MONOTONE',
+        color: { r: 0, g: 0, b: 0, a: 1 },
+        density: 0.4
+      }
+    ]
+
+    const decoded = decodeExport(await exportFigFile(graph))
+    const exported = decoded.nodeChanges.find(
+      (nodeChange) => nodeChange.guid && guidToString(nodeChange.guid) === '4:503'
+    )
+
+    expect(exported?.effects?.[0]?.type).toBe('NOISE')
+    expect(exported?.effects?.[0]?.noiseType).toBe('MONOTONE')
+    expect(exported?.effects?.[0]?.noiseSize).toEqual({ x: 0.5, y: 0.5 })
+    expect(exported?.effects?.[0]?.density).toBeCloseTo(0.4)
+  })
+
   test('clears raw font variation payloads when normalized axes are edited', async () => {
     const graph = new SceneGraph()
     const page = graph.getPages()[0]
