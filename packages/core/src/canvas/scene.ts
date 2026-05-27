@@ -9,6 +9,7 @@ import { vectorNetworkToCenterlinePath } from '#core/vector'
 
 import { figmaBlendModeToSkia, needsIsolatedBlendLayer } from './blend'
 import { renderBooleanOperation } from './boolean'
+import { drawLayoutGrids } from './layout-grids'
 import { renderMaskedChildIds } from './masks'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
 import { makeSmoothRRectPath, nodeHasRadius, nodeHasSmoothCorners } from './shapes'
@@ -250,6 +251,7 @@ export function renderNode(
 
   applyNodeTransforms(r, canvas, node, nodeId, overlays)
   renderNodeContent(r, canvas, graph, node, nodeId, overlays)
+  drawLayoutGrids(r, canvas, node)
   renderChildren(r, canvas, graph, node, overlays, absX, absY)
 
   if (layerBlur) {
