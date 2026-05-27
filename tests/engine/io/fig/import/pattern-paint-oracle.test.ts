@@ -31,6 +31,12 @@ interface PaintOracle {
     source: { id: string; visible: boolean }
     target: { fills: PatternOracleFill[] }
   }
+  patternAlignment: {
+    frame: { id: string }
+    source: { id: string; visible: boolean }
+    targets: Array<{ alignment: string; fills: PatternOracleFill[] }>
+    metrics: { rmseNormalized: number; fuzzDifferentPixels: number }
+  }
   effects: {
     noise: { results: Record<string, EffectOracleResult> }
     textureAndGlass: { results: Record<string, EffectOracleResult> }
@@ -60,6 +66,23 @@ describe('Figma pattern/noise/custom paint oracle availability', () => {
     expect(patternFill?.spacing.y).toBeCloseTo(0.4)
     expect(patternFill?.horizontalAlignment).toBe('CENTER')
     expect(patternFill?.verticalAlignment).toBe('CENTER')
+  })
+
+  test('records Figma pattern alignment payloads and current visual metrics', () => {
+    const alignment = readOracle().patternAlignment
+
+    expect(alignment.source.visible).toBe(true)
+    expect(alignment.targets.map((target) => target.alignment)).toEqual(['START', 'CENTER', 'END'])
+    for (const target of alignment.targets) {
+      const fill = target.fills[0]
+      expect(fill?.type).toBe('PATTERN')
+      expect(fill?.sourceNodeId).toBe(alignment.source.id)
+      expect(fill?.horizontalAlignment).toBe(target.alignment)
+      expect(fill?.verticalAlignment).toBe(target.alignment)
+      expect(fill?.spacing.y).toBeCloseTo(0.4)
+    }
+    expect(alignment.metrics.rmseNormalized).toBeCloseTo(0.246422)
+    expect(alignment.metrics.fuzzDifferentPixels).toBe(22209)
   })
 
   test('records that noise and custom paint payloads are still blocked on Figma-authored samples', () => {
