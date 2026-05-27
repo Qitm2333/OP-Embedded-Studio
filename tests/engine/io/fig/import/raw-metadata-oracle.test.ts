@@ -4,6 +4,9 @@ import { readFileSync } from 'node:fs'
 import type { Color } from '#core/types'
 
 interface RawMetadataOracle {
+  page: {
+    guides: Array<{ axis: string; offset: number }>
+  }
   frame: {
     id: string
     layoutGrids: Array<{
@@ -42,6 +45,15 @@ function readOracle(): RawMetadataOracle {
 }
 
 describe('Figma raw metadata oracle', () => {
+  test('records live page guides from Figma Plugin API', () => {
+    const oracle = readOracle()
+
+    expect(oracle.page.guides).toEqual([
+      { axis: 'X', offset: 42 },
+      { axis: 'Y', offset: 84 }
+    ])
+  })
+
   test('records live layout grid payloads from Figma Plugin API', () => {
     const oracle = readOracle()
     const grid = oracle.frame.layoutGrids[0]

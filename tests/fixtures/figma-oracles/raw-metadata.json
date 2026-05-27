@@ -5,6 +5,12 @@
     "page": "OpenPencil raw metadata oracle 2026-05-27",
     "captured": "2026-05-27"
   },
+  "page": {
+    "guides": [
+      { "axis": "X", "offset": 42 },
+      { "axis": "Y", "offset": 84 }
+    ]
+  },
   "frame": {
     "id": "297470:2274",
     "name": "Raw metadata grid export oracle",
