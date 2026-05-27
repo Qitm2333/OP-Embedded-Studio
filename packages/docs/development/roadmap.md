@@ -90,6 +90,13 @@ Legend:
 - **↩ Round-trip only** — imported/preserved/exported for `.fig` fidelity, but not rendered or editable as a first-class OpenPencil feature.
 - **— Not supported** — not currently modeled or intentionally out of scope.
 
+Support tiers used for prioritization:
+
+1. **Visual fidelity** — fields that change pixels in normal design exports. These get real Figma oracle fixtures, renderer tests, and visual metrics first.
+2. **Round-trip fidelity** — fields that should survive read → write → Figma import but do not need OpenPencil UI/rendering yet. These need raw-preservation and invalidation tests.
+3. **Product/runtime systems** — prototypes, libraries, FigJam, Slides, Dev Mode, CMS/AI, and media timelines. These stay schema-only or raw-preserved until OpenPencil has matching product concepts.
+4. **Unsafe/internal metadata** — fields that can corrupt Figma import or overwrite user edits when stale. These are filtered or preserved only with fixture evidence.
+
 ## Official Figma feature areas
 
 Figma's design documentation groups features into these areas:
