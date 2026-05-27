@@ -27,6 +27,14 @@ interface RowSummary {
   lastX: number
 }
 
+interface AnalysisRegion {
+  name: string
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 const { values: opts } = parseArgs({
   options: {
     figma: {
@@ -37,24 +45,66 @@ const { values: opts } = parseArgs({
       type: 'string',
       default: '/tmp/open-pencil-oracles/pattern-visible-source-tuned/ours.png'
     },
-    threshold: { type: 'string', default: '10' }
+    threshold: { type: 'string', default: '10' },
+    regions: { type: 'string' }
   }
 })
 
 const figmaPath = opts.figma ?? ''
 const oursPath = opts.ours ?? ''
 const minComponentPixels = Number(opts.threshold)
+const regions = parseRegions(opts.regions)
 
 if (!existsSync(figmaPath)) throw new Error(`Missing Figma image: ${figmaPath}`)
 if (!existsSync(oursPath)) throw new Error(`Missing OpenPencil image: ${oursPath}`)
 
 const figma = await loadImage(figmaPath)
 const ours = await loadImage(oursPath)
-const figmaRows = summarizeRows(findPatternComponents(figma, minComponentPixels))
-const oursRows = summarizeRows(findPatternComponents(ours, minComponentPixels))
-const rowDeltas = nearestRowDeltas(figmaRows, oursRows)
+const analysis =
+  regions.length > 0
+    ? Object.fromEntries(
+        regions.map((region) => {
+          const figmaRows = summarizeRows(findPatternComponents(figma, minComponentPixels, region))
+          const oursRows = summarizeRows(findPatternComponents(ours, minComponentPixels, region))
+          return [
+            region.name,
+            { figma: figmaRows, ours: oursRows, rowDeltas: rowDeltas(figmaRows, oursRows) }
+          ]
+        })
+      )
+    : (() => {
+        const figmaRows = summarizeRows(findPatternComponents(figma, minComponentPixels))
+        const oursRows = summarizeRows(findPatternComponents(ours, minComponentPixels))
+        return { figma: figmaRows, ours: oursRows, rowDeltas: rowDeltas(figmaRows, oursRows) }
+      })()
 
-console.log(JSON.stringify({ figma: figmaRows, ours: oursRows, rowDeltas }, null, 2))
+console.log(JSON.stringify(analysis, null, 2))
+
+function parseRegions(value: string | undefined): AnalysisRegion[] {
+  if (!value) return []
+  const parsed = JSON.parse(value) as unknown
+  if (!Array.isArray(parsed)) throw new TypeError('--regions must be a JSON array')
+  return parsed.map((region) => {
+    if (!region || typeof region !== 'object') throw new TypeError('Region must be an object')
+    const candidate = region as Partial<AnalysisRegion>
+    if (
+      typeof candidate.name !== 'string' ||
+      typeof candidate.x !== 'number' ||
+      typeof candidate.y !== 'number' ||
+      typeof candidate.width !== 'number' ||
+      typeof candidate.height !== 'number'
+    ) {
+      throw new TypeError('Region must include name, x, y, width, and height')
+    }
+    return {
+      name: candidate.name,
+      x: candidate.x,
+      y: candidate.y,
+      width: candidate.width,
+      height: candidate.height
+    }
+  })
+}
 
 async function loadImage(path: string): Promise<PixelImage> {
   const ck = await initCanvasKit()
@@ -84,16 +134,40 @@ function isPatternPixel(image: PixelImage, x: number, y: number): boolean {
   return alpha > 128 && red > 200 && green > 40 && green < 140 && blue < 100
 }
 
-function findPatternComponents(image: PixelImage, minPixels: number): Component[] {
+function isInsideRegion(x: number, y: number, region?: AnalysisRegion): boolean {
+  if (!region) return true
+  return (
+    x >= region.x && y >= region.y && x < region.x + region.width && y < region.y + region.height
+  )
+}
+
+function toRegionComponent(component: Component, region?: AnalysisRegion): Component {
+  if (!region) return component
+  return {
+    ...component,
+    cx: component.cx - region.x,
+    cy: component.cy - region.y,
+    minX: component.minX - region.x,
+    minY: component.minY - region.y,
+    maxX: component.maxX - region.x,
+    maxY: component.maxY - region.y
+  }
+}
+
+function findPatternComponents(
+  image: PixelImage,
+  minPixels: number,
+  region?: AnalysisRegion
+): Component[] {
   const visited = new Uint8Array(image.width * image.height)
   const components: Component[] = []
 
   for (let y = 0; y < image.height; y++) {
     for (let x = 0; x < image.width; x++) {
       const index = y * image.width + x
-      if (visited[index] || !isPatternPixel(image, x, y)) continue
-      const component = collectComponent(image, x, y, visited)
-      if (component.count >= minPixels) components.push(component)
+      if (visited[index] || !isInsideRegion(x, y, region) || !isPatternPixel(image, x, y)) continue
+      const component = collectComponent(image, x, y, visited, region)
+      if (component.count >= minPixels) components.push(toRegionComponent(component, region))
     }
   }
   return components
@@ -103,7 +177,8 @@ function collectComponent(
   image: PixelImage,
   startX: number,
   startY: number,
-  visited: Uint8Array
+  visited: Uint8Array,
+  region?: AnalysisRegion
 ): Component {
   const stack = [{ x: startX, y: startY }]
   visited[startY * image.width + startX] = 1
@@ -128,6 +203,7 @@ function collectComponent(
     for (let ny = point.y - 1; ny <= point.y + 1; ny++) {
       for (let nx = point.x - 1; nx <= point.x + 1; nx++) {
         if (nx < 0 || ny < 0 || nx >= image.width || ny >= image.height) continue
+        if (!isInsideRegion(nx, ny, region)) continue
         const index = ny * image.width + nx
         if (visited[index] || !isPatternPixel(image, nx, ny)) continue
         visited[index] = 1
@@ -160,7 +236,7 @@ function summarizeRows(components: Component[]): RowSummary[] {
     .toSorted((a, b) => a.y - b.y)
 }
 
-function nearestRowDeltas(figmaRows: RowSummary[], oursRows: RowSummary[]) {
+function rowDeltas(figmaRows: RowSummary[], oursRows: RowSummary[]) {
   return figmaRows.map((figmaRow) => {
     const nearest = oursRows.toSorted(
       (a, b) => Math.abs(a.y - figmaRow.y) - Math.abs(b.y - figmaRow.y)
