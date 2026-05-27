@@ -137,8 +137,8 @@ function drawWavyDecoration(
   span: DecorationSpan,
   y: number
 ): void {
-  const amplitude = Math.max(1, span.thickness * 1.5)
-  const wavelength = Math.max(6, span.thickness * 6)
+  const amplitude = Math.max(0.75, span.thickness * 0.75)
+  const wavelength = Math.max(6, span.thickness * 5)
   const path = new r.ck.Path()
   path.moveTo(span.x1, y)
   for (let x = span.x1; x <= span.x2; x += 2) {
@@ -160,7 +160,8 @@ function drawDerivedDecorations(
   const paint = new r.ck.Paint()
   try {
     for (const span of spans) {
-      const y = baselineY + 2.75 + span.offset
+      const hasRichDecoration = span.style !== 'SOLID' || span.fills.length > 0
+      const y = baselineY + (hasRichDecoration ? 13.5 : 2.75) + span.offset
       configureDecorationPaint(r, span, paint)
       if (span.style === 'DOTTED') drawDottedDecoration(canvas, paint, span, y)
       else if (span.style === 'WAVY') drawWavyDecoration(r, canvas, paint, span, y)
