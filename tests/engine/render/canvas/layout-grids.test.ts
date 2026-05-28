@@ -44,6 +44,31 @@ describe('layout grid rendering', () => {
     expect(mockCalls(r.ck.LTRBRect)[3]).toEqual([208, 0, 256, 160])
   })
 
+  test('renders stretched column grids', () => {
+    const r = createMockRenderer()
+    const canvas = createMockCanvas()
+    const node = nodeWithLayoutGrids([
+      {
+        pattern: 'COLUMNS',
+        visible: true,
+        color: { r: 1, g: 0, b: 0, a: 0.1 },
+        gutterSize: 10,
+        alignment: 'STRETCH',
+        count: 3,
+        offset: 15
+      }
+    ])
+
+    drawLayoutGrids(r, canvas as Canvas, node)
+
+    expect(mockCalls(canvas.drawRect)).toHaveLength(3)
+    expect(mockCalls(r.ck.LTRBRect)).toEqual([
+      [15, 0, 78.33333333333334, 160],
+      [88.33333333333334, 0, 151.66666666666669, 160],
+      [161.66666666666669, 0, 225.00000000000003, 160]
+    ])
+  })
+
   test('renders Kiwi row grids', () => {
     const r = createMockRenderer()
     const canvas = createMockCanvas()

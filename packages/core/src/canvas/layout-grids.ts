@@ -54,10 +54,12 @@ function gridGeometry(grid: RawLayoutGrid): GridGeometry | null {
   if (grid.visible === false) return null
   const count = grid.count ?? grid.numSections ?? 1
   const sectionSize = grid.sectionSize ?? 0
-  if (count <= 0 || sectionSize <= 0) return null
+  const alignment = rawGridAlignment(grid)
+  if (!Number.isFinite(count) || count <= 0) return null
+  if (alignment !== 'STRETCH' && sectionSize <= 0) return null
   return {
     pattern: rawGridPattern(grid),
-    alignment: rawGridAlignment(grid),
+    alignment,
     count,
     offset: grid.offset ?? 0,
     sectionSize,
@@ -66,8 +68,14 @@ function gridGeometry(grid: RawLayoutGrid): GridGeometry | null {
   }
 }
 
+function gridSectionSize(nodeSize: number, grid: GridGeometry): number {
+  if (grid.alignment !== 'STRETCH') return grid.sectionSize
+  return (nodeSize - grid.offset * 2 - Math.max(0, grid.count - 1) * grid.gutterSize) / grid.count
+}
+
 function gridStart(nodeSize: number, grid: GridGeometry): number {
-  const span = grid.count * grid.sectionSize + Math.max(0, grid.count - 1) * grid.gutterSize
+  const sectionSize = gridSectionSize(nodeSize, grid)
+  const span = grid.count * sectionSize + Math.max(0, grid.count - 1) * grid.gutterSize
   if (grid.alignment === 'CENTER') return (nodeSize - span) / 2 + grid.offset
   if (grid.alignment === 'MAX') return nodeSize - span - grid.offset
   return grid.offset
@@ -79,18 +87,22 @@ function drawColumnGrid(
   node: SceneNode,
   grid: GridGeometry
 ): void {
+  const sectionSize = gridSectionSize(node.width, grid)
+  if (sectionSize <= 0) return
   const x0 = gridStart(node.width, grid)
   for (let index = 0; index < grid.count; index++) {
-    const x = x0 + index * (grid.sectionSize + grid.gutterSize)
-    canvas.drawRect(r.ck.LTRBRect(x, 0, x + grid.sectionSize, node.height), r.auxFill)
+    const x = x0 + index * (sectionSize + grid.gutterSize)
+    canvas.drawRect(r.ck.LTRBRect(x, 0, x + sectionSize, node.height), r.auxFill)
   }
 }
 
 function drawRowGrid(r: SkiaRenderer, canvas: Canvas, node: SceneNode, grid: GridGeometry): void {
+  const sectionSize = gridSectionSize(node.height, grid)
+  if (sectionSize <= 0) return
   const y0 = gridStart(node.height, grid)
   for (let index = 0; index < grid.count; index++) {
-    const y = y0 + index * (grid.sectionSize + grid.gutterSize)
-    canvas.drawRect(r.ck.LTRBRect(0, y, node.width, y + grid.sectionSize), r.auxFill)
+    const y = y0 + index * (sectionSize + grid.gutterSize)
+    canvas.drawRect(r.ck.LTRBRect(0, y, node.width, y + sectionSize), r.auxFill)
   }
 }
 
