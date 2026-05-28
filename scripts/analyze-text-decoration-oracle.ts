@@ -4,11 +4,7 @@ import { parseArgs } from 'node:util'
 
 import { initCanvasKit } from '@open-pencil/core/io'
 
-interface PixelImage {
-  width: number
-  height: number
-  pixels: Uint8Array
-}
+import type { PixelImage } from './pixel-image'
 
 interface ChannelSummary {
   rows: Array<{ y: number; count: number; minX: number; maxX: number }>
