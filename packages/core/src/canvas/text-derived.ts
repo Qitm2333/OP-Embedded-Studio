@@ -5,9 +5,12 @@ import { geometryBlobToPath } from '#core/vector'
 
 import type { SkiaRenderer } from './renderer'
 
-interface DecorationSpan {
+interface DecorationRange {
   x1: number
   x2: number
+}
+
+interface DecorationSpan extends DecorationRange {
   style: TextDecorationStyle
   thickness: number
   offset: number
@@ -41,6 +44,20 @@ function styleRunX(node: SceneNode, index: number): number {
   return (node.width * index) / node.text.length
 }
 
+function styleRunDecorationRange(node: SceneNode, run: StyleRun): DecorationRange | null {
+  const hasDecorationOverride =
+    run.style.textDecoration !== undefined ||
+    run.style.textDecorationStyle !== undefined ||
+    run.style.textDecorationThickness !== undefined ||
+    run.style.textDecorationFills !== undefined ||
+    run.style.textUnderlineOffset !== undefined
+  if (!hasDecorationOverride) return null
+  return {
+    x1: styleRunX(node, run.start),
+    x2: styleRunX(node, run.start + run.length)
+  }
+}
+
 function styleRunDecorationSpan(node: SceneNode, run: StyleRun): DecorationSpan | null {
   const decoration = run.style.textDecoration ?? node.textDecoration
   const hasDecorationOverride =
@@ -58,6 +75,10 @@ function styleRunDecorationSpan(node: SceneNode, run: StyleRun): DecorationSpan 
     offset: run.style.textUnderlineOffset ?? node.textUnderlineOffset ?? 0,
     fills: run.style.textDecorationFills ?? node.textDecorationFills
   }
+}
+
+function isDecorationRange(span: DecorationRange | null): span is DecorationRange {
+  return span !== null
 }
 
 function isDecorationSpan(span: DecorationSpan | null): span is DecorationSpan {
@@ -79,7 +100,7 @@ function baseDecorationSpan(node: SceneNode): DecorationSpan | null {
 
 function splitBaseDecorationSpan(
   base: DecorationSpan,
-  overrides: DecorationSpan[]
+  overrides: DecorationRange[]
 ): DecorationSpan[] {
   const spans: DecorationSpan[] = []
   let cursor = base.x1
@@ -92,11 +113,14 @@ function splitBaseDecorationSpan(
 }
 
 function derivedDecorationSpans(node: SceneNode): DecorationSpan[] {
+  const overrideRanges = node.styleRuns
+    .map((run) => styleRunDecorationRange(node, run))
+    .filter(isDecorationRange)
   const overrides = node.styleRuns
     .map((run) => styleRunDecorationSpan(node, run))
     .filter(isDecorationSpan)
   const base = baseDecorationSpan(node)
-  return base ? [...splitBaseDecorationSpan(base, overrides), ...overrides] : overrides
+  return base ? [...splitBaseDecorationSpan(base, overrideRanges), ...overrides] : overrides
 }
 
 function firstVisibleFillColor(fills: Fill[]) {

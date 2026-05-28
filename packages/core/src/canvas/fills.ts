@@ -69,7 +69,8 @@ export function applyFill(
   fill: Fill,
   node: SceneNode,
   graph: SceneGraph,
-  fillIndex = 0
+  fillIndex = 0,
+  patternStack = new Set<string>()
 ): boolean {
   r.fillPaint.setShader(null)
 
@@ -88,7 +89,7 @@ export function applyFill(
     return r.applyImageFill(fill, node, graph)
   }
 
-  if (fill.type === 'PATTERN' && applyPatternFill(r, fill, node, graph)) return true
+  if (fill.type === 'PATTERN' && applyPatternFill(r, fill, node, graph, patternStack)) return true
 
   if (fill.type === 'PATTERN' || fill.type === 'NOISE' || fill.type === 'CUSTOM') {
     const c = r.resolveFillColor(fill, fillIndex, node, graph)
@@ -142,7 +143,8 @@ function recordPatternSource(
   r: SkiaRenderer,
   source: SceneNode,
   graph: SceneGraph,
-  layout: PatternTileLayout
+  layout: PatternTileLayout,
+  patternStack: Set<string>
 ) {
   const bounds = r.ck.LTRBRect(0, 0, layout.rect.width, layout.rect.height)
   const recorder = new r.ck.PictureRecorder()
@@ -156,7 +158,7 @@ function recordPatternSource(
     canvas.scale(layout.scale, layout.scale)
     for (const sourceFill of source.fills.filter((item) => item.visible)) {
       if (sourceFill.type === 'PATTERN' && sourceFill.sourceNodeId === source.id) continue
-      if (!applyFill(r, sourceFill, source, graph)) continue
+      if (!applyFill(r, sourceFill, source, graph, 0, patternStack)) continue
       drawNodeFill(r, canvas, source, rect, hasRadius, sourceFill)
     }
     canvas.restore()
@@ -180,15 +182,23 @@ function applyPatternFill(
   r: SkiaRenderer,
   fill: Fill,
   node: SceneNode,
-  graph: SceneGraph
+  graph: SceneGraph,
+  patternStack: Set<string>
 ): boolean {
   const sourceId = fill.sourceNodeId
   if (!sourceId || sourceId === node.id || sourceId === node.source.id) return false
   const source = resolvePatternSource(graph, sourceId)
   if (!source || source.width <= 0 || source.height <= 0) return false
+  if (patternStack.has(source.id)) return false
 
+  patternStack.add(source.id)
   const layout = patternTileLayout(source, fill)
-  const picture = recordPatternSource(r, source, graph, layout)
+  let picture
+  try {
+    picture = recordPatternSource(r, source, graph, layout, patternStack)
+  } finally {
+    patternStack.delete(source.id)
+  }
   const tile = layout.rect
   const tileRect = r.ck.LTRBRect(tile.x, tile.y, tile.x + tile.width, tile.y + tile.height)
   const shader = picture.makeShader(

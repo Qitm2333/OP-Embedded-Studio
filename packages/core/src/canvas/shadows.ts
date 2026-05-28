@@ -13,6 +13,8 @@ import {
   nodeHasSmoothCorners
 } from './shapes'
 
+const MAX_RAW_NOISE_CELLS = 12_000
+
 interface RawNoiseEffect {
   type: 'NOISE'
   visible?: boolean
@@ -58,7 +60,9 @@ function renderNoiseEffect(
   effect: RawNoiseEffect
 ): void {
   const density = Math.max(0, Math.min(1, effect.density ?? 0.3))
-  const step = Math.max(2, Math.round((effect.noiseSize?.x ?? 0.5) * 8))
+  const requestedStep = Math.max(2, Math.round((effect.noiseSize?.x ?? 0.5) * 8))
+  const boundedStep = Math.ceil(Math.sqrt((node.width * node.height) / MAX_RAW_NOISE_CELLS))
+  const step = Math.max(requestedStep, boundedStep)
   const color = effect.color ?? BLACK
   const opacity = effect.opacity ?? color.a
   const paint = new r.ck.Paint()

@@ -85,4 +85,43 @@ describe('Figma font variation export', () => {
       units: 'PIXELS'
     })
   })
+
+  test('exports all-caps OpenType variant fields', () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const allSmall = graph.createNode('TEXT', page.id, {
+      text: 'Small',
+      fontFeatures: [
+        { tag: 'SMCP', enabled: true },
+        { tag: 'C2SC', enabled: true }
+      ]
+    })
+    const allPetite = graph.createNode('TEXT', page.id, {
+      text: 'Petite',
+      fontFeatures: [
+        { tag: 'PCAP', enabled: true },
+        { tag: 'C2PC', enabled: true }
+      ]
+    })
+
+    const smallChange = sceneNodeToKiwi(
+      allSmall,
+      { sessionID: 1, localID: 1 },
+      0,
+      { value: 2 },
+      graph,
+      []
+    )[0]
+    const petiteChange = sceneNodeToKiwi(
+      allPetite,
+      { sessionID: 1, localID: 1 },
+      0,
+      { value: 2 },
+      graph,
+      []
+    )[0]
+
+    expect(smallChange.fontVariantCaps).toBe('ALL_SMALL')
+    expect(petiteChange.fontVariantCaps).toBe('ALL_PETITE')
+  })
 })

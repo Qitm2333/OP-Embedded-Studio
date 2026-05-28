@@ -153,7 +153,12 @@ describe('fig roundtrip source metadata', () => {
     text.source.fig.rawNodeFields.leadingTrim = 'CAP_HEIGHT'
     text.source.fig.rawNodeFields.textDecorationStyle = 'WAVY'
     text.source.fig.rawNodeFields.textDecorationFillPaints = [
-      { type: 'SOLID', color: { r: 1, g: 0, b: 0, a: 1 }, opacity: 1 }
+      {
+        type: 'PATTERN',
+        color: { r: 1, g: 0, b: 0, a: 1 },
+        opacity: 1,
+        sourceNodeId: { sessionID: 4, localID: 900 }
+      }
     ]
     text.source.fig.rawNodeFields.textUnderlineOffset = { value: 2, units: 'PIXELS' }
     text.source.fig.rawNodeFields.textDecorationThickness = { value: 1.5, units: 'PIXELS' }
@@ -173,7 +178,9 @@ describe('fig roundtrip source metadata', () => {
 
     expect(exported?.leadingTrim).toBe('CAP_HEIGHT')
     expect(exported?.textDecorationStyle).toBe('WAVY')
-    expect(exported?.textDecorationFillPaints?.[0]?.type).toBe('SOLID')
+    expect(exported?.textDecorationFillPaints).toEqual(
+      text.source.fig.rawNodeFields.textDecorationFillPaints
+    )
     expect(exported?.textUnderlineOffset).toEqual({ value: 2, units: 'PIXELS' })
     expect(exported?.textDecorationThickness).toEqual({ value: 1.5, units: 'PIXELS' })
     expect(exported?.toggledOnOTFeatures).toEqual(['DLIG'])

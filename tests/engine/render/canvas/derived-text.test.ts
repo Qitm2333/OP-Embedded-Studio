@@ -173,6 +173,79 @@ describe('derived text rendering', () => {
     }
   })
 
+  test('does not draw base derived underlines through NONE style runs', async () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const text = graph.createNode('TEXT', page.id, {
+      width: 60,
+      height: 28,
+      text: 'on off',
+      fontFamily: '__MissingFont__',
+      textDecoration: 'UNDERLINE',
+      styleRuns: [
+        {
+          start: 3,
+          length: 3,
+          style: { textDecoration: 'NONE' }
+        }
+      ],
+      fills: [
+        {
+          type: 'SOLID',
+          color: { r: 0, g: 0, b: 0, a: 1 },
+          opacity: 1,
+          visible: true
+        }
+      ],
+      figmaDerivedTextGlyphs: [
+        {
+          commandsBlob: squareCommandsBlob(),
+          x: 2,
+          y: 12,
+          fontSize: 10
+        }
+      ]
+    })
+
+    const surface = expectDefined(ck.MakeSurface(1, 1), 'surface')
+    const renderer = new SkiaRenderer(ck, surface)
+
+    try {
+      const png = expectDefined(
+        renderNodesToImage(ck, renderer, graph, page.id, [text.id], {
+          scale: 1,
+          format: 'PNG'
+        }),
+        'png'
+      )
+      const image = expectDefined(ck.MakeImageFromEncoded(png), 'image')
+      const pixels = expectDefined(
+        image.readPixels(0, 0, {
+          alphaType: ck.AlphaType.Unpremul,
+          colorType: ck.ColorType.RGBA_8888,
+          colorSpace: ck.ColorSpace.SRGB,
+          width: image.width(),
+          height: image.height()
+        }),
+        'pixels'
+      )
+
+      const leftUnderlineAlpha = Math.max(
+        pixels[(15 * image.width() + 12) * 4 + 3] ?? 0,
+        pixels[(16 * image.width() + 12) * 4 + 3] ?? 0
+      )
+      const disabledUnderlineAlpha = Math.max(
+        pixels[(15 * image.width() + 45) * 4 + 3] ?? 0,
+        pixels[(16 * image.width() + 45) * 4 + 3] ?? 0
+      )
+      expect(leftUnderlineAlpha).toBeGreaterThan(0)
+      expect(disabledUnderlineAlpha).toBe(0)
+      image.delete()
+    } finally {
+      surface.delete()
+    }
+  })
+
   test('draws styled decoration runs for Figma-derived text', async () => {
     const graph = new SceneGraph()
     const page = graph.getPages()[0]

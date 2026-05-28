@@ -14,7 +14,17 @@ const ENUM_FEATURES = [
   ['fontVariantNumericFigure', { LINING: 'LNUM', OLDSTYLE: 'ONUM' }],
   ['fontVariantNumericSpacing', { PROPORTIONAL: 'PNUM', TABULAR: 'TNUM' }],
   ['fontVariantNumericFraction', { DIAGONAL: 'FRAC', STACKED: 'AFRC' }],
-  ['fontVariantCaps', { SMALL: 'SMCP', PETITE: 'PCAP', UNICASE: 'UNIC', TITLING: 'TITL' }]
+  [
+    'fontVariantCaps',
+    {
+      SMALL: 'SMCP',
+      PETITE: 'PCAP',
+      ALL_SMALL: ['SMCP', 'C2SC'],
+      ALL_PETITE: ['PCAP', 'C2PC'],
+      UNICASE: 'UNIC',
+      TITLING: 'TITL'
+    }
+  ]
 ] as const
 
 const BOOLEAN_FEATURE_EXPORT = Object.fromEntries(
@@ -32,6 +42,8 @@ const ENUM_FEATURE_EXPORT: Partial<
   AFRC: { field: 'fontVariantNumericFraction', value: 'STACKED' },
   SMCP: { field: 'fontVariantCaps', value: 'SMALL' },
   PCAP: { field: 'fontVariantCaps', value: 'PETITE' },
+  C2SC: { field: 'fontVariantCaps', value: 'ALL_SMALL' },
+  C2PC: { field: 'fontVariantCaps', value: 'ALL_PETITE' },
   UNIC: { field: 'fontVariantCaps', value: 'UNICASE' },
   TITL: { field: 'fontVariantCaps', value: 'TITLING' }
 }
@@ -49,8 +61,10 @@ export function convertFontFeatures(nc: NodeChange): FontFeature[] {
     if (enabled !== undefined) addFeature(features, tag, enabled)
   }
   for (const [field, values] of ENUM_FEATURES) {
-    const tag = (values as Partial<Record<string, string>>)[String(nc[field])]
-    if (tag) addFeature(features, tag, true)
+    const tag = (values as Partial<Record<string, string | string[]>>)[String(nc[field])]
+    if (Array.isArray(tag)) {
+      for (const item of tag) addFeature(features, item, true)
+    } else if (tag) addFeature(features, tag, true)
   }
   for (const tag of nc.toggledOnOTFeatures ?? []) addFeature(features, tag, true)
   for (const tag of nc.toggledOffOTFeatures ?? []) addFeature(features, tag, false)

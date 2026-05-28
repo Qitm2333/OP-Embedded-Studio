@@ -366,7 +366,11 @@ function applyRawFigmaNodeFields(
       continue
     }
     if (key === 'derivedTextData' && node.source.id) {
-      nc[key] = materialized[key]
+      nc.derivedTextData = materialized.derivedTextData
+      continue
+    }
+    if (key === 'textDecorationFillPaints' && node.source.id) {
+      nc.textDecorationFillPaints = materialized.textDecorationFillPaints
       continue
     }
     // Skip any key already set on nc — explicit serialization takes priority

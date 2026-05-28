@@ -95,6 +95,16 @@ describe('layout grid rendering', () => {
     ])
   })
 
+  test('skips malformed square grids', () => {
+    const r = createMockRenderer()
+    const canvas = createMockCanvas()
+    const node = nodeWithLayoutGrids([{ pattern: 'GRID', alignment: 'STRETCH', sectionSize: 0 }])
+
+    drawLayoutGrids(r, canvas as Canvas, node)
+
+    expect(canvas.drawRect).not.toHaveBeenCalled()
+  })
+
   test('skips hidden grids', () => {
     const r = createMockRenderer()
     const canvas = createMockCanvas()

@@ -31,7 +31,8 @@ interface GridGeometry {
 }
 
 function rawLayoutGrids(node: SceneNode): RawLayoutGrid[] {
-  const grids = node.source.fig.rawNodeFields.layoutGrids
+  const source = (node as Partial<SceneNode>).source
+  const grids = source?.fig.rawNodeFields.layoutGrids
   if (!Array.isArray(grids)) return []
   return grids.filter((grid): grid is RawLayoutGrid => grid !== null && typeof grid === 'object')
 }
@@ -56,6 +57,7 @@ function gridGeometry(grid: RawLayoutGrid): GridGeometry | null {
   const sectionSize = grid.sectionSize ?? 0
   const alignment = rawGridAlignment(grid)
   if (!Number.isFinite(count) || count <= 0) return null
+  if (rawGridPattern(grid) === 'GRID' && sectionSize <= 0) return null
   if (alignment !== 'STRETCH' && sectionSize <= 0) return null
   return {
     pattern: rawGridPattern(grid),

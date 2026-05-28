@@ -90,7 +90,8 @@ async function runWithNodeId(nodeId: string) {
 
   console.log('📋 Exporting clipboard data from Figma…')
   // Select the node, copy, read clipboard, render with our engine
-  await $`figma-use eval ${`const n = figma.getNodeById('${nodeId}'); if (!n) return; let page = n.parent; while (page && page.type !== 'PAGE') page = page.parent; if (page) { await figma.setCurrentPageAsync(page); page.selection = [n]; }`}`.quiet()
+  const nodeIdLiteral = JSON.stringify(nodeId)
+  await $`figma-use eval ${`const n = figma.getNodeById(${nodeIdLiteral}); if (!n) return; let page = n.parent; while (page && page.type !== 'PAGE') page = page.parent; if (page) { await figma.setCurrentPageAsync(page); page.selection = [n]; }`}`.quiet()
   await Bun.sleep(200)
   await $`osascript -e 'tell application "Figma" to activate'`.quiet()
   await Bun.sleep(300)

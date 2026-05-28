@@ -60,6 +60,34 @@ describe('Figma font variation import', () => {
     ])
   })
 
+  test('imports all-caps OpenType variant fields', () => {
+    const allSmall = nodeChangeToProps(
+      {
+        type: 'TEXT',
+        textData: { characters: 'Caps' },
+        fontVariantCaps: 'ALL_SMALL'
+      } as NodeChange,
+      []
+    )
+    const allPetite = nodeChangeToProps(
+      {
+        type: 'TEXT',
+        textData: { characters: 'Caps' },
+        fontVariantCaps: 'ALL_PETITE'
+      } as NodeChange,
+      []
+    )
+
+    expect(allSmall.fontFeatures).toEqual([
+      { tag: 'SMCP', enabled: true },
+      { tag: 'C2SC', enabled: true }
+    ])
+    expect(allPetite.fontFeatures).toEqual([
+      { tag: 'PCAP', enabled: true },
+      { tag: 'C2PC', enabled: true }
+    ])
+  })
+
   test('imports text decoration style metadata', () => {
     const props = nodeChangeToProps(
       {
