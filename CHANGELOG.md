@@ -2,7 +2,11 @@
 
 ## Unreleased
 
+## 0.13.0 — 2026-05-29
+
 ### Fixes
+
+- Fix the published CLI package so Bun global installs run the built `openpencil` binary instead of raw TypeScript sources.
 
 - Greatly improve importing Figma `.fig` files with complex component systems: badges, avatars, icons, links, input fields, lists, date pickers, nested instances, component swaps, and variant properties now open much closer to their original Figma appearance.
 - Fix missing or white content in imported `.fig` files caused by unresolved Figma variable bindings, including image/avatar badges, icon colors, text colors, and variable-backed component overrides.
