@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.13.1 — 2026-05-29
+
+### Fixes
+
+- Fix the npm package contents for the CLI so Bun installs include the built `openpencil` binary and runtime bundle.
+
 ## 0.13.0 — 2026-05-29
 
 ### Fixes
