@@ -2,7 +2,25 @@
 
 ## Unreleased
 
+### Changed
+
+- Update the Homebrew install command to use the published `openpencil` cask.
+
 ### Fixes
+
+- Render complex text fills through vector glyph outlines so imported Figma text can use the normal fill pipeline for gradients, images, patterns, and other non-solid paints.
+
+## 0.13.1 — 2026-05-29
+
+### Fixes
+
+- Fix the npm package contents for the CLI so Bun installs include the built `openpencil` binary and runtime bundle.
+
+## 0.13.0 — 2026-05-29
+
+### Fixes
+
+- Fix the published CLI package so Bun global installs run the built `openpencil` binary instead of raw TypeScript sources.
 
 - Greatly improve importing Figma `.fig` files with complex component systems: badges, avatars, icons, links, input fields, lists, date pickers, nested instances, component swaps, and variant properties now open much closer to their original Figma appearance.
 - Fix missing or white content in imported `.fig` files caused by unresolved Figma variable bindings, including image/avatar badges, icon colors, text colors, and variable-backed component overrides.
@@ -19,7 +37,7 @@
 - Improve imported tiled image fills by applying Figma image transforms when repeating image patterns.
 - Keep imported Figma boolean operations editable as boolean-operation nodes instead of flattening them to vectors.
 - Apply imported variable font axes from Figma `fontVariations` when rendering text.
-- Render more imported Figma visual metadata, including text decoration styles, leading trim, pattern fills, layout grids, page guides, vector-outline text fills, and deterministic fallbacks for raw noise effects.
+- Render more imported Figma visual metadata, including text decoration styles, leading trim, pattern fills, layout grids, page guides, and deterministic fallbacks for raw noise effects.
 
 ### Performance
 
