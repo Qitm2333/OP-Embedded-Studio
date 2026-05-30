@@ -2,7 +2,15 @@
 
 ## Unreleased
 
+## 0.13.2 — 2026-05-30
+
+### Changed
+
 - Update the Homebrew install command to use the published `openpencil` cask.
+
+### Fixes
+
+- Fix the published MCP package so global installs include the `openpencil-mcp` and `openpencil-mcp-http` launchers required by desktop app integrations.
 
 ## 0.13.1 — 2026-05-29
 
