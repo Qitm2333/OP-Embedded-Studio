@@ -6,6 +6,7 @@
 
 - Improve Figma boolean imports by preserving XOR operations as editable exclude nodes and falling back to imported fill geometry when boolean path reconstruction cannot produce a path.
 - Preserve rotated Figma transform origins for imported vector nodes.
+- Render complex text fills through vector glyph outlines so imported Figma text can use the normal fill pipeline for gradients, images, patterns, and other non-solid paints.
 
 ## 0.13.2 — 2026-05-30
 
@@ -44,6 +45,7 @@
 - Improve imported tiled image fills by applying Figma image transforms when repeating image patterns.
 - Keep imported Figma boolean operations editable as boolean-operation nodes instead of flattening them to vectors.
 - Apply imported variable font axes from Figma `fontVariations` when rendering text.
+- Render more imported Figma visual metadata, including text decoration styles, leading trim, pattern fills, layout grids, page guides, and deterministic fallbacks for raw noise effects.
 
 ### Performance
 

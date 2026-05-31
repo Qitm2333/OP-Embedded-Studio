@@ -285,10 +285,7 @@ function importedTextLineHeight(nc: NodeChange): number | null {
   return convertLineHeight(nc.lineHeight, nc.fontSize)
 }
 
-function convertTextProps(
-  nc: NodeChange,
-  blobs: Uint8Array[]
-): Pick<
+type TextProps = Pick<
   SceneNode,
   | 'text'
   | 'fontSize'
@@ -300,6 +297,10 @@ function convertTextProps(
   | 'textAutoResize'
   | 'textCase'
   | 'textDecoration'
+  | 'textDecorationStyle'
+  | 'textDecorationThickness'
+  | 'textDecorationFills'
+  | 'leadingTrim'
   | 'lineHeight'
   | 'letterSpacing'
   | 'maxLines'
@@ -310,7 +311,30 @@ function convertTextProps(
   | 'textDirection'
   | 'figmaDerivedLayout'
   | 'figmaDerivedTextGlyphs'
+>
+
+function convertTextDecorationProps(
+  nc: NodeChange
+): Pick<
+  SceneNode,
+  | 'textDecoration'
+  | 'textDecorationStyle'
+  | 'textDecorationThickness'
+  | 'textDecorationFills'
+  | 'textDecorationSkipInk'
+  | 'textUnderlineOffset'
 > {
+  return {
+    textDecoration: mapTextDecoration(nc.textDecoration as string),
+    textDecorationStyle: (nc.textDecorationStyle ?? 'SOLID') as SceneNode['textDecorationStyle'],
+    textDecorationThickness: nc.textDecorationThickness?.value ?? null,
+    textDecorationFills: convertFills(nc.textDecorationFillPaints),
+    textDecorationSkipInk: nc.textDecorationSkipInk ?? true,
+    textUnderlineOffset: nc.textUnderlineOffset?.value ?? null
+  }
+}
+
+function convertTextProps(nc: NodeChange, blobs: Uint8Array[]): TextProps {
   return {
     text: nc.textData?.characters ?? '',
     fontSize: nc.fontSize ?? 14,
@@ -325,7 +349,8 @@ function convertTextProps(
     textAlignVertical: (nc.textAlignVertical ?? 'TOP') as TextAlignVertical,
     textAutoResize: (nc.textAutoResize ?? 'NONE') as TextAutoResize,
     textCase: (nc.textCase ?? 'ORIGINAL') as TextCase,
-    textDecoration: mapTextDecoration(nc.textDecoration as string),
+    ...convertTextDecorationProps(nc),
+    leadingTrim: (nc.leadingTrim ?? 'NONE') as SceneNode['leadingTrim'],
     lineHeight: importedTextLineHeight(nc),
     letterSpacing: convertLetterSpacing(nc.letterSpacing, nc.fontSize),
     maxLines: (nc.maxLines ?? null) as number | null,
@@ -515,8 +540,9 @@ export function nodeChangeToProps(
     maxWidth: (nc.maxWidth ?? null) as number | null,
     minHeight: (nc.minHeight ?? null) as number | null,
     maxHeight: (nc.maxHeight ?? null) as number | null,
-    isMask: (nc.isMask ?? false) as boolean,
+    isMask: nc.mask ?? false,
     maskType: (nc.maskType ?? 'ALPHA') as 'ALPHA' | 'VECTOR' | 'LUMINANCE',
+    maskIsOutline: nc.maskIsOutline ?? false,
     expanded: true,
     autoRename: (nc.autoRename ?? true) as boolean,
     boundVariables: extractBoundVariables(nc),
