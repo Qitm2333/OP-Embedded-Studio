@@ -239,6 +239,20 @@ jobs:
           tar -tf .npm-packages/open-pencil-cli-*.tgz | sed -n '1,40p' || true
           tar -tf .npm-packages/open-pencil-mcp-*.tgz | sed -n '1,40p' || true
           tar -tf .npm-packages/open-pencil-vue-*.tgz | sed -n '1,60p' || true
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          import { execFileSync } from 'node:child_process'
+          for (const tarball of fs.readdirSync('.npm-packages').filter((name) => name.endsWith('.tgz'))) {
+            const entries = new Set(execFileSync('tar', ['-tf', `.npm-packages/${tarball}`], { encoding: 'utf8' }).trim().split('\n'))
+            const packageJson = JSON.parse(execFileSync('tar', ['-xOf', `.npm-packages/${tarball}`, 'package/package.json'], { encoding: 'utf8' }))
+            const bin = packageJson.bin
+            const targets = typeof bin === 'string' ? { [packageJson.name]: bin } : bin || {}
+            for (const [name, target] of Object.entries(targets)) {
+              const entry = `package/${String(target).replace(/^\.\//, '')}`
+              if (!entries.has(entry)) throw new Error(`${tarball}: bin ${name} target missing from tarball: ${entry}`)
+            }
+          }
+          NODE
 
       - name: Publish packages to npm
         run: |

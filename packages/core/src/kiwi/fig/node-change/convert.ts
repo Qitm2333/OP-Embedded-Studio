@@ -112,8 +112,10 @@ function mapBooleanOperation(nc: NodeChange): SceneNode['booleanOperation'] {
   switch (nc.booleanOperation) {
     case 'SUBTRACT':
     case 'INTERSECT':
-    case 'EXCLUDE':
       return nc.booleanOperation
+    case 'EXCLUDE':
+    case 'XOR':
+      return 'EXCLUDE'
     default:
       return 'UNION'
   }
@@ -229,17 +231,25 @@ function convertTransformProps(
     const sx = flipX ? -1 : 1
     rotation = Math.atan2(t.m10 * sx, t.m00 * sx) * (180 / Math.PI)
 
-    const corners = [
-      { x: 0, y: 0 },
-      { x: width, y: 0 },
-      { x: 0, y: height },
-      { x: width, y: height }
-    ].map((point) => ({
-      x: t.m00 * point.x + t.m01 * point.y + t.m02,
-      y: t.m10 * point.x + t.m11 * point.y + t.m12
-    }))
-    x = Math.min(...corners.map((point) => point.x))
-    y = Math.min(...corners.map((point) => point.y))
+    if (rotation !== 0 && !flipX) {
+      const radians = (rotation * Math.PI) / 180
+      const cos = Math.cos(radians)
+      const sin = Math.sin(radians)
+      x = t.m02 - (width / 2) * (1 - cos) - sin * (height / 2)
+      y = t.m12 - (height / 2) * (1 - cos) + sin * (width / 2)
+    } else {
+      const corners = [
+        { x: 0, y: 0 },
+        { x: width, y: 0 },
+        { x: 0, y: height },
+        { x: width, y: height }
+      ].map((point) => ({
+        x: t.m00 * point.x + t.m01 * point.y + t.m02,
+        y: t.m10 * point.x + t.m11 * point.y + t.m12
+      }))
+      x = Math.min(...corners.map((point) => point.x))
+      y = Math.min(...corners.map((point) => point.y))
+    }
   }
 
   return { x, y, width, height, rotation, flipX, flipY: false }
