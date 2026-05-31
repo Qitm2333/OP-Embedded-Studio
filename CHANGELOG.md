@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Fixes
+
+- Improve Figma boolean imports by preserving XOR operations as editable exclude nodes and falling back to imported fill geometry when boolean path reconstruction cannot produce a path.
+- Preserve rotated Figma transform origins for imported vector nodes.
+
 ## 0.13.2 — 2026-05-30
 
 ### Changed
