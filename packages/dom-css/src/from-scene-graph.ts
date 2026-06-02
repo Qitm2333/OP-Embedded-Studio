@@ -31,16 +31,53 @@ function alignItemsToCSS(value: SceneNode['counterAxisAlign']): string | undefin
   return undefined
 }
 
+function addSizeConstraints(style: DesignStyleDeclaration, node: SceneNode): void {
+  if (node.minWidth !== null) style['min-width'] = `${node.minWidth}px`
+  if (node.maxWidth !== null) style['max-width'] = `${node.maxWidth}px`
+  if (node.minHeight !== null) style['min-height'] = `${node.minHeight}px`
+  if (node.maxHeight !== null) style['max-height'] = `${node.maxHeight}px`
+}
+
+function addCornerRadii(style: DesignStyleDeclaration, node: SceneNode): void {
+  if (node.independentCorners) {
+    if (node.topLeftRadius > 0) style['border-top-left-radius'] = `${node.topLeftRadius}px`
+    if (node.topRightRadius > 0) style['border-top-right-radius'] = `${node.topRightRadius}px`
+    if (node.bottomRightRadius > 0)
+      style['border-bottom-right-radius'] = `${node.bottomRightRadius}px`
+    if (node.bottomLeftRadius > 0) style['border-bottom-left-radius'] = `${node.bottomLeftRadius}px`
+    return
+  }
+
+  if (node.cornerRadius > 0) style['border-radius'] = `${node.cornerRadius}px`
+}
+
+function addStroke(style: DesignStyleDeclaration, node: SceneNode): void {
+  const stroke = strokeToCSS(node.strokes[0])
+  if (!stroke) return
+  if (!node.independentStrokeWeights) {
+    style.border = stroke
+    return
+  }
+
+  style['border-style'] = 'solid'
+  style['border-color'] = stroke.split(' solid ').at(1) ?? 'currentColor'
+  if (node.borderTopWeight > 0) style['border-top-width'] = `${node.borderTopWeight}px`
+  if (node.borderRightWeight > 0) style['border-right-width'] = `${node.borderRightWeight}px`
+  if (node.borderBottomWeight > 0) style['border-bottom-width'] = `${node.borderBottomWeight}px`
+  if (node.borderLeftWeight > 0) style['border-left-width'] = `${node.borderLeftWeight}px`
+}
+
 function styleFromSceneNode(node: SceneNode): DesignStyleDeclaration {
   const style = sceneNodeSizeStyle(node)
+  addSizeConstraints(style, node)
   const fill = fillToCSS(node.fills[0])
   if (fill) style['background-color'] = fill
-  const stroke = strokeToCSS(node.strokes[0])
-  if (stroke) style.border = stroke
+  addStroke(style, node)
   const shadow = dropShadowToCSS(node.effects[0])
   if (shadow) style['box-shadow'] = shadow
   if (node.opacity < 1) style.opacity = String(node.opacity)
-  if (node.cornerRadius > 0) style['border-radius'] = `${node.cornerRadius}px`
+  addCornerRadii(style, node)
+  if (node.clipsContent) style.overflow = 'hidden'
 
   if (node.layoutMode !== 'NONE') {
     style.display = 'flex'

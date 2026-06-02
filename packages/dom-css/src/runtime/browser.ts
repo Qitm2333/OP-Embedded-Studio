@@ -7,6 +7,11 @@ import type {
   DesignNode
 } from '../types'
 
+export interface BrowserCSSRuntimeOptions {
+  document?: Document
+  sandbox?: 'shadow-root' | 'iframe'
+}
+
 const DEFAULT_COMPUTED_PROPERTIES = [
   'align-items',
   'background-color',
@@ -37,7 +42,12 @@ const DEFAULT_COMPUTED_PROPERTIES = [
   'justify-content',
   'letter-spacing',
   'line-height',
+  'max-height',
+  'max-width',
+  'min-height',
+  'min-width',
   'opacity',
+  'overflow',
   'padding-bottom',
   'padding-left',
   'padding-right',
@@ -47,7 +57,8 @@ const DEFAULT_COMPUTED_PROPERTIES = [
   'width'
 ] as const
 
-function requireBrowserDocument(): Document {
+function resolveBrowserDocument(documentOverride: Document | undefined): Document {
+  if (documentOverride) return documentOverride
   if (typeof document === 'undefined') {
     throw new TypeError('Browser CSS runtime requires a DOM document')
   }
@@ -72,12 +83,15 @@ function styleToRecord(style: CSSStyleDeclaration): Record<string, string> | und
 }
 
 function domNodeToDesignNode(node: Node): DesignNode | null {
-  if (node.nodeType === Node.TEXT_NODE) {
+  const view = node.ownerDocument?.defaultView
+  if (!view) return null
+
+  if (node.nodeType === view.Node.TEXT_NODE) {
     const text = node.textContent ?? ''
     return text.length > 0 ? { type: 'text', text } : null
   }
 
-  if (node.nodeType !== Node.ELEMENT_NODE || !(node instanceof Element)) return null
+  if (node.nodeType !== view.Node.ELEMENT_NODE || !(node instanceof view.Element)) return null
 
   const children = Array.from(node.childNodes)
     .map(domNodeToDesignNode)
@@ -88,13 +102,15 @@ function domNodeToDesignNode(node: Node): DesignNode | null {
     tagName: node.tagName.toLowerCase(),
     attrs: attributesToRecord(node),
     children,
-    inlineStyle: node instanceof HTMLElement ? styleToRecord(node.style) : undefined
+    inlineStyle: node instanceof view.HTMLElement ? styleToRecord(node.style) : undefined
   }
 }
 
-function parseHTML(html: string): DesignDocument {
-  requireBrowserDocument()
-  const parsed = new DOMParser().parseFromString(html, 'text/html')
+function parseHTMLWithDocument(browserDocument: Document, html: string): DesignDocument {
+  const Parser = browserDocument.defaultView?.DOMParser
+  if (!Parser) throw new TypeError('Browser CSS runtime requires DOMParser')
+  const parser = new Parser()
+  const parsed = parser.parseFromString(html, 'text/html')
   return {
     type: 'document',
     children: Array.from(parsed.body.childNodes)
@@ -109,7 +125,8 @@ function collectElementPairs(
   pairs: [DesignElement, Element][]
 ): void {
   if (designNode.type === 'text') return
-  if (!(domNode instanceof Element)) return
+  const view = domNode.ownerDocument?.defaultView
+  if (!view || !(domNode instanceof view.Element)) return
 
   pairs.push([designNode, domNode])
 
@@ -140,14 +157,16 @@ function computedStyleToRecord(
   return entries
 }
 
-async function computeStyles(
-  designDocument: DesignDocument,
-  cssText = '',
-  options: CSSComputeOptions = {}
-): Promise<DesignDocument> {
-  const browserDocument = requireBrowserDocument()
-  const host = browserDocument.createElement('div')
-  host.style.cssText = [
+function requestFrame(browserDocument: Document): Promise<void> {
+  const requestAnimationFrame = browserDocument.defaultView?.requestAnimationFrame
+  if (!requestAnimationFrame) return Promise.resolve()
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => resolve())
+  })
+}
+
+function applySandboxHostStyle(element: HTMLElement): void {
+  element.style.cssText = [
     'position: fixed',
     'left: -100000px',
     'top: 0',
@@ -157,6 +176,16 @@ async function computeStyles(
     'pointer-events: none',
     'contain: layout style paint'
   ].join(';')
+}
+
+async function computeStylesInShadowRoot(
+  browserDocument: Document,
+  designDocument: DesignDocument,
+  cssText: string,
+  options: CSSComputeOptions
+): Promise<DesignDocument> {
+  const host = browserDocument.createElement('div')
+  applySandboxHostStyle(host)
 
   const shadow = host.attachShadow({ mode: 'open' })
   const style = browserDocument.createElement('style')
@@ -169,33 +198,79 @@ async function computeStyles(
   browserDocument.body.append(host)
 
   try {
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => resolve())
-    })
-
-    const nextDocument = structuredClone(designDocument)
-    const pairs: [DesignElement, Element][] = []
-    const domChildren = Array.from(content.childNodes)
-    for (const [index, child] of nextDocument.children.entries()) {
-      const domChild = domChildren.at(index)
-      if (domChild) collectElementPairs(child, domChild, pairs)
-    }
-
-    for (const [designElement, domElement] of pairs) {
-      designElement.computedStyle = computedStyleToRecord(getComputedStyle(domElement), options)
-    }
-
-    return nextDocument
+    await requestFrame(browserDocument)
+    return copyComputedStyles(designDocument, content, options)
   } finally {
     host.remove()
   }
 }
 
-export function createBrowserCSSRuntime(): CSSRuntime {
+async function computeStylesInIframe(
+  browserDocument: Document,
+  designDocument: DesignDocument,
+  cssText: string,
+  options: CSSComputeOptions
+): Promise<DesignDocument> {
+  const iframe = browserDocument.createElement('iframe')
+  applySandboxHostStyle(iframe)
+  browserDocument.body.append(iframe)
+
+  try {
+    const iframeDocument = iframe.contentDocument
+    if (!iframeDocument) throw new TypeError('Browser CSS runtime could not create iframe document')
+    iframeDocument.open()
+    iframeDocument.write(`<!doctype html><html><head></head><body></body></html>`)
+    iframeDocument.close()
+
+    const style = iframeDocument.createElement('style')
+    style.textContent = cssText
+    iframeDocument.head.append(style)
+
+    const content = iframeDocument.createElement('div')
+    content.innerHTML = serializeHTML(designDocument)
+    iframeDocument.body.append(content)
+
+    await requestFrame(iframeDocument)
+    return copyComputedStyles(designDocument, content, options)
+  } finally {
+    iframe.remove()
+  }
+}
+
+function copyComputedStyles(
+  designDocument: DesignDocument,
+  content: Element,
+  options: CSSComputeOptions
+): DesignDocument {
+  const view = content.ownerDocument.defaultView
+  if (!view) throw new TypeError('Browser CSS runtime requires getComputedStyle')
+
+  const nextDocument = structuredClone(designDocument)
+  const pairs: [DesignElement, Element][] = []
+  const domChildren = Array.from(content.childNodes)
+  for (const [index, child] of nextDocument.children.entries()) {
+    const domChild = domChildren.at(index)
+    if (domChild) collectElementPairs(child, domChild, pairs)
+  }
+
+  for (const [designElement, domElement] of pairs) {
+    designElement.computedStyle = computedStyleToRecord(view.getComputedStyle(domElement), options)
+  }
+
+  return nextDocument
+}
+
+export function createBrowserCSSRuntime(options: BrowserCSSRuntimeOptions = {}): CSSRuntime {
+  const browserDocument = resolveBrowserDocument(options.document)
+  const sandbox = options.sandbox ?? 'shadow-root'
+
   return {
     kind: 'browser',
-    parseHTML,
+    parseHTML: (html) => parseHTMLWithDocument(browserDocument, html),
     serializeHTML,
-    computeStyles
+    computeStyles: (designDocument, cssText = '', computeOptions = {}) =>
+      sandbox === 'iframe'
+        ? computeStylesInIframe(browserDocument, designDocument, cssText, computeOptions)
+        : computeStylesInShadowRoot(browserDocument, designDocument, cssText, computeOptions)
   }
 }

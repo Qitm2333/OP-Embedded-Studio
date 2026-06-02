@@ -1,4 +1,4 @@
-import { SceneGraph, type Fill, type SceneNode } from '@open-pencil/core/scene-graph'
+import { SceneGraph, type Fill, type SceneNode, type Stroke } from '@open-pencil/core/scene-graph'
 
 import {
   colorToFillFromCSS,
@@ -52,8 +52,74 @@ function fillsFromStyle(style: DesignStyleDeclaration, property: string): Fill[]
 function setNodeBox(node: SceneNode, style: DesignStyleDeclaration): void {
   const width = firstCSSNumber(style, 'width')
   const height = firstCSSNumber(style, 'height')
+  const minWidth = firstCSSNumber(style, 'min-width')
+  const maxWidth = firstCSSNumber(style, 'max-width')
+  const minHeight = firstCSSNumber(style, 'min-height')
+  const maxHeight = firstCSSNumber(style, 'max-height')
   if (width !== null) node.width = width
   if (height !== null) node.height = height
+  if (minWidth !== null) node.minWidth = minWidth
+  if (maxWidth !== null) node.maxWidth = maxWidth
+  if (minHeight !== null) node.minHeight = minHeight
+  if (maxHeight !== null) node.maxHeight = maxHeight
+}
+
+function firstStrokeColor(style: DesignStyleDeclaration) {
+  return (
+    pickStyle(style, 'border-color') ??
+    pickStyle(style, 'border-top-color') ??
+    pickStyle(style, 'border-right-color') ??
+    pickStyle(style, 'border-bottom-color') ??
+    pickStyle(style, 'border-left-color')
+  )
+}
+
+function firstStrokeWeight(style: DesignStyleDeclaration) {
+  return firstCSSNumber(
+    style,
+    'border-width',
+    'border-top-width',
+    'border-right-width',
+    'border-bottom-width',
+    'border-left-width'
+  )
+}
+
+function setBorderWeights(node: SceneNode, style: DesignStyleDeclaration, stroke: Stroke): void {
+  const top = firstCSSNumber(style, 'border-top-width') ?? stroke.weight
+  const right = firstCSSNumber(style, 'border-right-width') ?? stroke.weight
+  const bottom = firstCSSNumber(style, 'border-bottom-width') ?? stroke.weight
+  const left = firstCSSNumber(style, 'border-left-width') ?? stroke.weight
+  node.borderTopWeight = top
+  node.borderRightWeight = right
+  node.borderBottomWeight = bottom
+  node.borderLeftWeight = left
+  node.independentStrokeWeights = [top, right, bottom, left].some(
+    (weight) => weight !== stroke.weight
+  )
+}
+
+function applyCornerRadii(node: SceneNode, style: DesignStyleDeclaration): void {
+  const cornerRadius = firstCSSNumber(style, 'border-radius')
+  const topLeft = firstCSSNumber(style, 'border-top-left-radius')
+  const topRight = firstCSSNumber(style, 'border-top-right-radius')
+  const bottomRight = firstCSSNumber(style, 'border-bottom-right-radius')
+  const bottomLeft = firstCSSNumber(style, 'border-bottom-left-radius')
+
+  if (cornerRadius !== null) node.cornerRadius = cornerRadius
+  if (topLeft === null && topRight === null && bottomRight === null && bottomLeft === null) return
+
+  const fallback = cornerRadius ?? 0
+  node.topLeftRadius = topLeft ?? fallback
+  node.topRightRadius = topRight ?? fallback
+  node.bottomRightRadius = bottomRight ?? fallback
+  node.bottomLeftRadius = bottomLeft ?? fallback
+  node.independentCorners = [
+    node.topLeftRadius,
+    node.topRightRadius,
+    node.bottomRightRadius,
+    node.bottomLeftRadius
+  ].some((radius) => radius !== fallback)
 }
 
 function primaryAxisAlignFromCSS(value: string | undefined): SceneNode['primaryAxisAlign'] {
@@ -78,10 +144,13 @@ function applyElementStyle(node: SceneNode, style: DesignStyleDeclaration): void
   if (fills.length > 0) node.fills = fills
 
   const strokes = colorToStrokeFromCSS(
-    pickStyle(style, 'border-color'),
-    pickStyle(style, 'border-width')
+    firstStrokeColor(style),
+    firstStrokeWeight(style)?.toString()
   )
-  if (strokes.length > 0) node.strokes = strokes
+  if (strokes.length > 0) {
+    node.strokes = strokes
+    setBorderWeights(node, style, strokes[0])
+  }
 
   const effects = dropShadowFromCSS(pickStyle(style, 'box-shadow'))
   if (effects.length > 0) node.effects = effects
@@ -89,8 +158,9 @@ function applyElementStyle(node: SceneNode, style: DesignStyleDeclaration): void
   const opacity = parseCSSNumber(pickStyle(style, 'opacity'))
   if (opacity !== null) node.opacity = opacity
 
-  const cornerRadius = firstCSSNumber(style, 'border-radius')
-  if (cornerRadius !== null) node.cornerRadius = cornerRadius
+  applyCornerRadii(node, style)
+
+  if (pickStyle(style, 'overflow') === 'hidden') node.clipsContent = true
 
   const display = pickStyle(style, 'display')
   if (display === 'flex' || display === 'inline-flex') {
