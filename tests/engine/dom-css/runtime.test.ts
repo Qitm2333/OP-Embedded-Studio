@@ -1,31 +1,12 @@
 import { describe, expect, it } from 'bun:test'
 
-import { colorToCSS } from '@open-pencil/core/color'
-import {
-  createCSSRuntime,
-  createHeadlessCSSRuntime,
-  serializeHTML,
-  type DesignDocument
-} from '@open-pencil/dom-css'
+import { createCSSRuntime, createHeadlessCSSRuntime, serializeHTML } from '@open-pencil/dom-css'
 
-const slate900 = colorToCSS({ r: 17 / 255, g: 24 / 255, b: 39 / 255, a: 1 })
-const slate700 = colorToCSS({ r: 31 / 255, g: 41 / 255, b: 55 / 255, a: 1 })
-
-const documentFixture: DesignDocument = {
-  type: 'document',
-  children: [
-    {
-      type: 'element',
-      tagName: 'div',
-      attrs: { class: 'card', 'data-id': 'node-1' },
-      children: [{ type: 'text', text: 'OpenPencil' }]
-    }
-  ]
-}
+import { DOM_CSS_COLORS, simpleCardDocument } from '#tests/helpers/dom-css'
 
 describe('@open-pencil/dom-css', () => {
   it('serializes DesignDOM as HTML', () => {
-    expect(serializeHTML(documentFixture)).toBe(
+    expect(serializeHTML(simpleCardDocument)).toBe(
       '<div class="card" data-id="node-1">OpenPencil</div>'
     )
   })
@@ -34,7 +15,7 @@ describe('@open-pencil/dom-css', () => {
     const runtime = createCSSRuntime()
 
     expect(runtime.kind).toBe('headless')
-    expect(runtime.serializeHTML(documentFixture)).toBe(
+    expect(runtime.serializeHTML(simpleCardDocument)).toBe(
       '<div class="card" data-id="node-1">OpenPencil</div>'
     )
   })
@@ -58,15 +39,15 @@ describe('@open-pencil/dom-css', () => {
   it('computes simple headless styles from CSSOM rules', async () => {
     const runtime = createHeadlessCSSRuntime()
     const document = await runtime.computeStyles(
-      documentFixture,
-      `.card { width: 320px; color: ${slate900}; } #missing { color: red; }`
+      simpleCardDocument,
+      `.card { width: 320px; color: ${DOM_CSS_COLORS.slate900}; } #missing { color: red; }`
     )
     const card = document.children[0]
 
     expect(card?.type).toBe('element')
     if (card?.type !== 'element') return
     expect(card.computedStyle?.width).toBe('320px')
-    expect(card.computedStyle?.color).toBe(slate900)
+    expect(card.computedStyle?.color).toBe(DOM_CSS_COLORS.slate900)
   })
 
   it('applies specificity, descendant selectors, child selectors, inheritance, and shorthands', async () => {
@@ -79,8 +60,8 @@ describe('@open-pencil/dom-css', () => {
     const document = await runtime.computeStyles(
       parsed,
       `
-        article { color: ${slate900}; padding: 8px 16px; }
-        .card { width: 300px; color: ${slate700}; }
+        article { color: ${DOM_CSS_COLORS.slate900}; padding: 8px 16px; }
+        .card { width: 300px; color: ${DOM_CSS_COLORS.slate700}; }
         article.card > header { gap: 12px; }
         .card .title { font-size: 24px; }
         #hero { width: 320px; background: white; }
@@ -91,7 +72,7 @@ describe('@open-pencil/dom-css', () => {
     expect(card?.type).toBe('element')
     if (card?.type !== 'element') return
     expect(card.computedStyle?.width).toBe('320px')
-    expect(card.computedStyle?.color).toBe(slate700)
+    expect(card.computedStyle?.color).toBe(DOM_CSS_COLORS.slate700)
     expect(card.computedStyle?.['padding-top']).toBe('8px')
     expect(card.computedStyle?.['padding-right']).toBe('16px')
     expect(card.computedStyle?.['background-color']).toBe('white')
@@ -100,12 +81,12 @@ describe('@open-pencil/dom-css', () => {
     expect(header?.type).toBe('element')
     if (header?.type !== 'element') return
     expect(header.computedStyle?.gap).toBe('12px')
-    expect(header.computedStyle?.color).toBe(slate700)
+    expect(header.computedStyle?.color).toBe(DOM_CSS_COLORS.slate700)
 
     const title = header.children[0]
     expect(title?.type).toBe('element')
     if (title?.type !== 'element') return
     expect(title.computedStyle?.['font-size']).toBe('24px')
-    expect(title.computedStyle?.color).toBe(slate700)
+    expect(title.computedStyle?.color).toBe(DOM_CSS_COLORS.slate700)
   })
 })

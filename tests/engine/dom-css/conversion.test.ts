@@ -1,89 +1,23 @@
 import { describe, expect, it } from 'bun:test'
 
-import { colorToCSS } from '@open-pencil/core/color'
 import {
   compileTailwindCSS,
   createHeadlessCSSRuntime,
   designDocumentToSceneGraph,
   sceneGraphToDesignDocument,
-  serializeHTML,
-  type DesignDocument
+  serializeHTML
 } from '@open-pencil/dom-css'
 
-const slate900 = colorToCSS({ r: 17 / 255, g: 24 / 255, b: 39 / 255, a: 1 })
-const slateShadow = colorToCSS({ r: 15 / 255, g: 23 / 255, b: 42 / 255, a: 0.12 })
-const slate200 = colorToCSS({ r: 229 / 255, g: 231 / 255, b: 235 / 255, a: 1 })
-
-const cardHTML = `
-  <article class="card">
-    <h1 class="title">OpenPencil</h1>
-    <p class="description">Design with code-shaped CSS.</p>
-  </article>
-`
-
-const cardCSS = `
-  .card {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 24px;
-    width: 320px;
-    height: 180px;
-    border: 1px solid ${slate200};
-    border-radius: 16px;
-    background: white;
-    box-shadow: 0px 8px 24px 0px ${slateShadow};
-    color: ${slate900};
-  }
-  .card .title {
-    font-size: 24px;
-    font-weight: 700;
-    line-height: 32px;
-  }
-  .description {
-    font-size: 14px;
-    line-height: 20px;
-  }
-`
-
-const cardDocument: DesignDocument = {
-  type: 'document',
-  children: [
-    {
-      type: 'element',
-      tagName: 'div',
-      attrs: { class: 'card' },
-      computedStyle: {
-        width: '320px',
-        height: '160px',
-        display: 'flex',
-        'flex-direction': 'column',
-        gap: '12px',
-        padding: '24px',
-        'border-radius': '16px',
-        'background-color': 'rgb(255, 255, 255)'
-      },
-      children: [
-        {
-          type: 'element',
-          tagName: 'h1',
-          attrs: {},
-          computedStyle: {
-            color: 'rgb(17, 24, 39)',
-            'font-size': '24px',
-            'font-weight': '700',
-            'line-height': '32px'
-          },
-          children: [{ type: 'text', text: 'OpenPencil' }]
-        }
-      ]
-    }
-  ]
-}
+import {
+  computedCardDocument,
+  cssCardCSS,
+  cssCardHTML,
+  tailwindCardClasses
+} from '#tests/helpers/dom-css'
 
 describe('@open-pencil/dom-css conversion', () => {
   it('projects a DesignDOM card into a scene graph', () => {
-    const graph = designDocumentToSceneGraph(cardDocument)
+    const graph = designDocumentToSceneGraph(computedCardDocument)
     const page = graph.getPages()[0]
     expect(page?.name).toBe('DesignDOM')
 
@@ -106,7 +40,7 @@ describe('@open-pencil/dom-css conversion', () => {
 
   it('projects a parsed and styled HTML/CSS card into a scene graph', async () => {
     const runtime = createHeadlessCSSRuntime()
-    const document = await runtime.computeStyles(runtime.parseHTML(cardHTML), cardCSS)
+    const document = await runtime.computeStyles(runtime.parseHTML(cssCardHTML), cssCardCSS)
     const graph = designDocumentToSceneGraph(document)
     const page = graph.getPages()[0]
     const card = page ? graph.getChildren(page.id)[0] : undefined
@@ -139,17 +73,7 @@ describe('@open-pencil/dom-css conversion', () => {
 
   it('projects a Tailwind card through generated CSS into a scene graph', async () => {
     const runtime = createHeadlessCSSRuntime()
-    const classes = [
-      'flex',
-      'flex-col',
-      'gap-3',
-      'w-80',
-      'h-44',
-      'p-6',
-      'rounded-xl',
-      'bg-white',
-      'text-slate-900'
-    ]
+    const classes = [...tailwindCardClasses]
     const document = await runtime.computeStyles(
       runtime.parseHTML(`<article class="${classes.join(' ')}"><h1>OpenPencil</h1></article>`),
       await compileTailwindCSS(classes)
@@ -170,7 +94,7 @@ describe('@open-pencil/dom-css conversion', () => {
   })
 
   it('projects a scene graph back into DesignDOM', () => {
-    const graph = designDocumentToSceneGraph(cardDocument)
+    const graph = designDocumentToSceneGraph(computedCardDocument)
     const document = sceneGraphToDesignDocument(graph)
     const page = document.children[0]
     expect(page?.type).toBe('element')

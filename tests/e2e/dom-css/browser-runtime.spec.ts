@@ -1,42 +1,94 @@
+import type { Page } from '@playwright/test'
+
 import { compileTailwindCSS } from '@open-pencil/dom-css'
+
+import { tailwindButtonClasses, tailwindCardClasses } from '#tests/helpers/dom-css'
 
 import { expect, test } from '../fixtures'
 
-const STYLE_PROPERTIES = [
-  'background-color',
-  'border-radius',
-  'color',
-  'display',
-  'gap',
-  'padding-top',
-  'width'
-] as const
+async function setStyledContent(page: Page, css: string, body: string) {
+  await page.setContent(`
+    <style>${css}</style>
+    ${body}
+  `)
+}
+
+async function computedStyleProperties(
+  page: Page,
+  selector: string,
+  properties: readonly string[]
+) {
+  return page.locator(selector).evaluate((element, styleProperties) => {
+    const computed = getComputedStyle(element)
+    return Object.fromEntries(
+      styleProperties.map((property) => [property, computed.getPropertyValue(property)])
+    )
+  }, properties)
+}
 
 test.describe('@open-pencil/dom-css browser CSS runtime oracle', () => {
-  test('resolves Tailwind variables and calc values in a real browser', async ({ page }) => {
-    const classes = ['flex', 'gap-3', 'w-80', 'p-6', 'rounded-xl', 'bg-white', 'text-slate-900']
-    const css = await compileTailwindCSS(classes)
-    await page.setContent(`
-      <style>${css}</style>
-      <article class="${classes.join(' ')}">
-        <h1>OpenPencil</h1>
-      </article>
-    `)
+  test('resolves Tailwind card variables and calc values in a real browser', async ({ page }) => {
+    const css = await compileTailwindCSS(tailwindCardClasses)
+    await setStyledContent(
+      page,
+      css,
+      `<article class="${tailwindCardClasses.join(' ')}"><h1>OpenPencil</h1></article>`
+    )
 
-    const styles = await page.locator('article').evaluate((element, properties) => {
-      const computed = getComputedStyle(element)
-      return Object.fromEntries(
-        properties.map((property) => [property, computed.getPropertyValue(property)])
-      )
-    }, STYLE_PROPERTIES)
+    const styles = await computedStyleProperties(page, 'article', [
+      'background-color',
+      'border-radius',
+      'color',
+      'display',
+      'flex-direction',
+      'gap',
+      'height',
+      'padding-top',
+      'width'
+    ])
 
     expect(styles.display).toBe('flex')
+    expect(styles['flex-direction']).toBe('column')
     expect(styles.gap).toBe('12px')
     expect(styles.width).toBe('320px')
+    expect(styles.height).toBe('176px')
     expect(styles['padding-top']).toBe('24px')
     expect(styles['border-radius']).toBe('12px')
     expect(styles['background-color']).toBe('rgb(255, 255, 255)')
     expect(styles.color).toMatch(/^(oklch|rgb)\(/)
+  })
+
+  test('resolves Tailwind button alignment, spacing, and typography', async ({ page }) => {
+    const css = await compileTailwindCSS(tailwindButtonClasses)
+    await setStyledContent(
+      page,
+      css,
+      `<button class="${tailwindButtonClasses.join(' ')}">Create design</button>`
+    )
+
+    const styles = await computedStyleProperties(page, 'button', [
+      'align-items',
+      'border-radius',
+      'color',
+      'display',
+      'font-size',
+      'font-weight',
+      'gap',
+      'justify-content',
+      'padding-left',
+      'padding-top'
+    ])
+
+    expect(styles.display).toBe('inline-flex')
+    expect(styles['align-items']).toBe('center')
+    expect(styles['justify-content']).toBe('center')
+    expect(styles.gap).toBe('8px')
+    expect(styles['padding-left']).toBe('16px')
+    expect(styles['padding-top']).toBe('8px')
+    expect(styles['font-size']).toBe('14px')
+    expect(styles['font-weight']).toBe('500')
+    expect(styles['border-radius']).toBe('6px')
+    expect(styles.color).toBe('rgb(255, 255, 255)')
   })
 
   test('resolves custom properties when assigned to real CSS properties', async ({ page }) => {

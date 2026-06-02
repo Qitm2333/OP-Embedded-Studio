@@ -2,9 +2,11 @@ import { describe, expect, it } from 'bun:test'
 
 import { compileTailwindCSS, createHeadlessCSSRuntime } from '@open-pencil/dom-css'
 
+import { tailwindCardClasses } from '#tests/helpers/dom-css'
+
 describe('@open-pencil/dom-css Tailwind', () => {
   it('compiles utility candidates through Tailwind', async () => {
-    const css = await compileTailwindCSS('flex w-80 p-6 rounded-xl bg-white')
+    const css = await compileTailwindCSS(tailwindCardClasses)
 
     expect(css).toContain('.flex')
     expect(css).toContain('.w-80')
@@ -14,9 +16,9 @@ describe('@open-pencil/dom-css Tailwind', () => {
 
   it('feeds Tailwind CSS variables through headless style computation', async () => {
     const runtime = createHeadlessCSSRuntime()
-    const css = await compileTailwindCSS(['w-80', 'p-6'])
+    const css = await compileTailwindCSS(tailwindCardClasses)
     const document = await runtime.computeStyles(
-      runtime.parseHTML('<section class="w-80 p-6"></section>'),
+      runtime.parseHTML(`<section class="${tailwindCardClasses.join(' ')}"></section>`),
       css
     )
     const element = document.children[0]
