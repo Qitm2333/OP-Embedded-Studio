@@ -1,6 +1,13 @@
 import { SceneGraph, type Fill, type SceneNode } from '@open-pencil/core/scene-graph'
 
-import { colorToFillFromCSS, mergedStyle, parseCSSNumber, pickStyle } from './css-values'
+import {
+  colorToFillFromCSS,
+  colorToStrokeFromCSS,
+  dropShadowFromCSS,
+  mergedStyle,
+  parseCSSNumber,
+  pickStyle
+} from './css-values'
 import type { DesignDocument, DesignElement, DesignNode, DesignStyleDeclaration } from './types'
 
 export interface DesignDocumentToSceneGraphOptions {
@@ -54,6 +61,15 @@ function applyElementStyle(node: SceneNode, style: DesignStyleDeclaration): void
 
   const fills = fillsFromStyle(style, 'background-color')
   if (fills.length > 0) node.fills = fills
+
+  const strokes = colorToStrokeFromCSS(
+    pickStyle(style, 'border-color'),
+    pickStyle(style, 'border-width')
+  )
+  if (strokes.length > 0) node.strokes = strokes
+
+  const effects = dropShadowFromCSS(pickStyle(style, 'box-shadow'))
+  if (effects.length > 0) node.effects = effects
 
   const opacity = parseCSSNumber(pickStyle(style, 'opacity'))
   if (opacity !== null) node.opacity = opacity

@@ -19,7 +19,7 @@ function isTextNode(
 
 function childToDesignNode(node: DefaultTreeAdapterTypes.ChildNode): DesignNode | null {
   if (isTextNode(node)) {
-    return node.value.length > 0 ? { type: 'text', text: node.value } : null
+    return node.value.trim().length > 0 ? { type: 'text', text: node.value } : null
   }
 
   if (!('tagName' in node)) return null

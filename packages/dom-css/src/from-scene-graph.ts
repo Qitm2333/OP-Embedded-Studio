@@ -2,7 +2,7 @@ import { colorToCSS } from '@open-pencil/core/color'
 import { BLACK } from '@open-pencil/core/constants'
 import type { SceneGraph, SceneNode } from '@open-pencil/core/scene-graph'
 
-import { fillToCSS, sceneNodeSizeStyle } from './css-values'
+import { dropShadowToCSS, fillToCSS, sceneNodeSizeStyle, strokeToCSS } from './css-values'
 import type { DesignDocument, DesignNode, DesignStyleDeclaration } from './types'
 
 export interface SceneGraphToDesignOptions {
@@ -20,6 +20,10 @@ function styleFromSceneNode(node: SceneNode): DesignStyleDeclaration {
   const style = sceneNodeSizeStyle(node)
   const fill = fillToCSS(node.fills[0])
   if (fill) style['background-color'] = fill
+  const stroke = strokeToCSS(node.strokes[0])
+  if (stroke) style.border = stroke
+  const shadow = dropShadowToCSS(node.effects[0])
+  if (shadow) style['box-shadow'] = shadow
   if (node.opacity < 1) style.opacity = String(node.opacity)
   if (node.cornerRadius > 0) style['border-radius'] = `${node.cornerRadius}px`
 

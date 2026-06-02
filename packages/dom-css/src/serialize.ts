@@ -29,8 +29,17 @@ function serializeText(node: DesignText): string {
   return escapeText(node.text)
 }
 
+function serializeStyle(node: DesignElement): string | undefined {
+  if (!node.inlineStyle || Object.keys(node.inlineStyle).length === 0) return undefined
+  return Object.entries(node.inlineStyle)
+    .filter(([, value]) => value !== '')
+    .map(([property, value]) => `${property}: ${value}`)
+    .join('; ')
+}
+
 function serializeAttrs(node: DesignElement): string {
-  const attrs = Object.entries(node.attrs)
+  const style = serializeStyle(node)
+  const attrs = Object.entries({ ...node.attrs, ...(style ? { style } : {}) })
     .filter(([, value]) => value !== '')
     .map(([name, value]) => `${name}="${escapeAttr(value)}"`)
 
