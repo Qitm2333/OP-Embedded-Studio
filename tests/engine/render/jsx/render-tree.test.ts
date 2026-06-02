@@ -14,7 +14,9 @@ import {
   Section,
   Component,
   ComponentSet,
-  Instance
+  Instance,
+  defineVars,
+  designVar
 } from '@open-pencil/core'
 
 import { expectDefined, getNodeOrThrow, childIdAt } from '#tests/helpers/assert'
@@ -77,6 +79,63 @@ describe('renderTree', () => {
     expect(heading.fontSize).toBe(20)
     expect(heading.fontWeight).toBe(700)
     expect(heading.fills.length).toBe(1)
+  })
+
+  it('binds variable refs used as style values', async () => {
+    const g = makeSceneGraph()
+    g.addCollection({
+      id: 'colors',
+      name: 'Colors',
+      modes: [{ modeId: 'light', name: 'Light' }],
+      defaultModeId: 'light',
+      variableIds: []
+    })
+    g.addVariable({
+      id: 'var-bg',
+      name: 'Background',
+      type: 'COLOR',
+      collectionId: 'colors',
+      valuesByMode: { light: { r: 1, g: 0, b: 0, a: 1 } },
+      description: '',
+      hiddenFromPublishing: false
+    })
+
+    const vars = defineVars({ bg: { id: 'var-bg', name: 'Background' } })
+    const result = await renderTree(g, Frame({ name: 'Bound', w: 100, h: 100, fill: vars.bg }))
+    const node = getNodeOrThrow(g, result.id)
+
+    expect(node.boundVariables['fills/0/color']).toBe('var-bg')
+    expect(node.fills[0]?.type).toBe('SOLID')
+  })
+
+  it('supports explicit variable bindings for arbitrary paths', async () => {
+    const g = makeSceneGraph()
+    const variable = designVar('var-shadow', '#000000')
+    const result = await renderTree(
+      g,
+      Frame({
+        name: 'Bound explicit',
+        w: 100,
+        h: 100,
+        bind: { 'effects/0/color': variable, 'fills/0/color': 'var-bg' }
+      })
+    )
+    const node = getNodeOrThrow(g, result.id)
+
+    expect(node.boundVariables['effects/0/color']).toBe('var-shadow')
+    expect(node.boundVariables['fills/0/color']).toBe('var-bg')
+  })
+
+  it('binds variables from JSX strings', async () => {
+    const g = makeSceneGraph()
+    const [result] = await renderJSX(
+      g,
+      `<Frame name="Bound JSX" w={100} h={100} fill={designVar('var-bg', '#ffffff')} />`
+    )
+    const node = getNodeOrThrow(g, result.id)
+
+    expect(node.boundVariables['fills/0/color']).toBe('var-bg')
+    expect(node.fills[0]?.type).toBe('SOLID')
   })
 
   it('renders components and instances', async () => {

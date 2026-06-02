@@ -1,3 +1,7 @@
+import type { Color } from '#core/types'
+
+import type { DesignVariable } from './vars'
+
 export interface TreeNode {
   type: string
   props: Record<string, unknown>
@@ -81,6 +85,8 @@ export function node(
   return { type, props: rest, children: processed }
 }
 
+export type PaintProp = string | Color | DesignVariable
+
 export type StyleProps = {
   flex?: 'row' | 'col' | 'column'
   flow?: 'auto' | 'ltr' | 'rtl'
@@ -113,9 +119,9 @@ export type StyleProps = {
   pb?: number
   pl?: number
 
-  bg?: string
-  fill?: string
-  stroke?: string
+  bg?: PaintProp
+  fill?: PaintProp
+  stroke?: PaintProp
   strokeWidth?: number
   strokeAlign?: 'inside' | 'outside' | 'center'
   strokeDash?: number[] | boolean
@@ -139,7 +145,7 @@ export type StyleProps = {
   fontFamily?: string
   weight?: number | 'bold' | 'medium' | 'normal'
   fontWeight?: number | 'bold' | 'medium' | 'normal'
-  color?: string
+  color?: PaintProp
   text?: string
   characters?: string
   textAlign?: 'left' | 'center' | 'right' | 'justified'
@@ -154,6 +160,7 @@ export type BaseProps = StyleProps & {
   name?: string
   key?: string | number
   children?: unknown
+  bind?: Record<string, unknown>
   [key: string]: unknown
 }
 

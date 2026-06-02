@@ -112,6 +112,7 @@ const SUPPORTED_PROPS = new Set([
   'innerRadius',
   'label',
   'style',
+  'bind',
   'component',
   'componentId',
   'of'
@@ -149,6 +150,13 @@ export function buildComponent(jsxString: string): React.ComponentType {
     const Group = 'group', Section = 'section', View = 'frame', Rect = 'rectangle'
     const Component = 'component', ComponentSet = 'component-set', Instance = 'instance'
     const Icon = 'icon'
+    const __varSymbol = Symbol.for('open-pencil.variable')
+    const designVar = (def, value) => typeof def === 'string'
+      ? ({ [__varSymbol]: true, id: def, name: def, value })
+      : ({ [__varSymbol]: true, id: def.id, name: def.name ?? def.id ?? '', value: def.value })
+    const defineVars = (vars) => Object.fromEntries(
+      Object.entries(vars).map(([key, def]) => [key, designVar(def)])
+    )
   `
   const opts = {
     transforms: ['typescript', 'jsx'] as Array<'typescript' | 'jsx'>,

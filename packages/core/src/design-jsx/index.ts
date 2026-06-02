@@ -23,12 +23,15 @@ export {
   type BaseProps,
   type TextProps,
   type StyleProps,
+  type PaintProp,
   isTreeNode,
   node,
   resolveToTree
 } from './tree'
 
 export { renderTree, type RenderResult } from './renderer'
+
+export { defineVars, designVar, isVariable, type DesignVariable, type VarDef } from './vars'
 
 export { createElement } from './mini-react'
 

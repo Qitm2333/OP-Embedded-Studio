@@ -1,7 +1,7 @@
 import { colorToFill, parseColor } from '#core/color'
 import { TRANSPARENT } from '#core/constants'
 import type { GridTrack, LayoutMode, SceneNode, Stroke } from '#core/scene-graph'
-import type { JsonObject } from '#core/types'
+import type { Color, JsonObject } from '#core/types'
 
 const WEIGHT_MAP: Record<string, number> = {
   normal: 400,
@@ -60,8 +60,8 @@ function parseDirection(value: unknown): SceneNode['textDirection'] | undefined 
   return DIRECTION_MAP[value.toLowerCase()] ?? 'AUTO'
 }
 
-function parseStroke(value: string, width: number): Stroke {
-  const color = parseColor(value)
+function parseStroke(value: string | Color, width: number): Stroke {
+  const color = typeof value === 'string' ? parseColor(value) : value
   return {
     color,
     opacity: color.a,
@@ -159,14 +159,25 @@ function applyFillSizing(
   }
 }
 
+function isColor(value: unknown): value is Color {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    'r' in value &&
+    'g' in value &&
+    'b' in value &&
+    'a' in value
+  )
+}
+
 function applyFillOverride(props: Record<string, unknown>, o: Partial<SceneNode>): void {
   const bg = props.bg ?? props.fill ?? props.background ?? props.backgroundColor
-  if (typeof bg === 'string') o.fills = [colorToFill(bg)]
+  if (typeof bg === 'string' || isColor(bg)) o.fills = [colorToFill(bg)]
 }
 
 function applyStrokeOverride(props: Record<string, unknown>, o: Partial<SceneNode>): void {
   const stroke = props.stroke ?? props.border ?? props.borderColor
-  if (typeof stroke !== 'string') return
+  if (typeof stroke !== 'string' && !isColor(stroke)) return
   const strokeWidth =
     (props.strokeWidth as number | undefined) ?? (props.borderWidth as number | undefined) ?? 1
   o.strokes = [parseStroke(stroke, strokeWidth)]
@@ -418,7 +429,7 @@ function applyTextStyleOverrides(props: Record<string, unknown>, o: Partial<Scen
     o.fontWeight = WEIGHT_MAP[weight] ?? 400
   }
 
-  if (typeof props.color === 'string') {
+  if (typeof props.color === 'string' || isColor(props.color)) {
     o.fills = [colorToFill(props.color)]
   }
 
