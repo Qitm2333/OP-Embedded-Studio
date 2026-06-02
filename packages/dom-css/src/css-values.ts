@@ -6,7 +6,7 @@ import type { DesignStyleDeclaration } from './types'
 
 const TRANSPARENT_KEYWORDS = new Set(['transparent', 'rgba(0, 0, 0, 0)', 'rgb(0 0 0 / 0)'])
 
-export function parseCssNumber(value: string | undefined): number | null {
+export function parseCSSNumber(value: string | undefined): number | null {
   if (!value) return null
   const trimmed = value.trim()
   if (trimmed.length === 0 || trimmed === 'auto') return null
@@ -14,20 +14,20 @@ export function parseCssNumber(value: string | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-export function parseCssColor(value: string | undefined): Color | null {
+export function parseCSSColor(value: string | undefined): Color | null {
   if (!value) return null
   const trimmed = value.trim()
   if (trimmed.length === 0 || TRANSPARENT_KEYWORDS.has(trimmed.toLowerCase())) return null
   return parseColor(trimmed)
 }
 
-export function fillToCss(fill: Fill | undefined): string | undefined {
+export function fillToCSS(fill: Fill | undefined): string | undefined {
   if (fill?.type !== 'SOLID' || !fill.visible) return undefined
   return colorToCSS({ ...fill.color, a: fill.opacity })
 }
 
-export function cssColorToFill(value: string | undefined): Fill[] {
-  const color = parseCssColor(value)
+export function colorToFillFromCSS(value: string | undefined): Fill[] {
+  const color = parseCSSColor(value)
   if (!color) return []
   return [{ type: 'SOLID', color, opacity: color.a, visible: true }]
 }

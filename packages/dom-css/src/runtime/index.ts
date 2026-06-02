@@ -1,10 +1,10 @@
-import type { CssRuntime } from '../types'
-import { createBrowserCssRuntime } from './browser'
-import { createHeadlessCssRuntime } from './headless'
+import type { CSSRuntime } from '../types'
+import { createBrowserCSSRuntime } from './browser'
+import { createHeadlessCSSRuntime } from './headless'
 
-export { createBrowserCssRuntime } from './browser'
-export { createHeadlessCssRuntime } from './headless'
+export { createBrowserCSSRuntime } from './browser'
+export { createHeadlessCSSRuntime } from './headless'
 
-export function createCssRuntime(): CssRuntime {
-  return typeof document !== 'undefined' ? createBrowserCssRuntime() : createHeadlessCssRuntime()
+export function createCSSRuntime(): CSSRuntime {
+  return typeof document !== 'undefined' ? createBrowserCSSRuntime() : createHeadlessCSSRuntime()
 }

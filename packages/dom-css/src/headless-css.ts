@@ -2,7 +2,7 @@ import { parse, type CSSStyleDeclarationLike, type CSSStyleRuleLike } from '@ace
 
 import type { DesignDocument, DesignElement, DesignNode, DesignStyleDeclaration } from './types'
 
-interface CssRule {
+interface HeadlessCSSRule {
   selectors: string[]
   style: DesignStyleDeclaration
 }
@@ -26,7 +26,7 @@ function isStyleRule(rule: unknown): rule is CSSStyleRuleLike {
   )
 }
 
-function parseRules(cssText: string): CssRule[] {
+function parseRules(cssText: string): HeadlessCSSRule[] {
   const sheet = parse(cssText)
   return sheet.cssRules.filter(isStyleRule).map((rule) => ({
     selectors: rule.selectorText
@@ -49,11 +49,11 @@ function matchesSimpleSelector(element: DesignElement, selector: string): boolea
   return element.tagName.toLowerCase() === selector.toLowerCase()
 }
 
-function matchesRule(element: DesignElement, rule: CssRule): boolean {
+function matchesRule(element: DesignElement, rule: HeadlessCSSRule): boolean {
   return rule.selectors.some((selector) => matchesSimpleSelector(element, selector))
 }
 
-function applyComputedStyles(node: DesignNode, rules: CssRule[]): DesignNode {
+function applyComputedStyles(node: DesignNode, rules: HeadlessCSSRule[]): DesignNode {
   if (node.type === 'text') return node
 
   const computedStyle: DesignStyleDeclaration = {}

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 
 import {
-  createCssRuntime,
-  createHeadlessCssRuntime,
+  createCSSRuntime,
+  createHeadlessCSSRuntime,
   serializeHTML,
   type DesignDocument
 } from '@open-pencil/dom-css'
@@ -27,7 +27,7 @@ describe('@open-pencil/dom-css', () => {
   })
 
   it('uses the headless runtime outside browser contexts', () => {
-    const runtime = createCssRuntime()
+    const runtime = createCSSRuntime()
 
     expect(runtime.kind).toBe('headless')
     expect(runtime.serializeHTML(documentFixture)).toBe(
@@ -36,7 +36,7 @@ describe('@open-pencil/dom-css', () => {
   })
 
   it('parses HTML with the headless runtime', () => {
-    const runtime = createHeadlessCssRuntime()
+    const runtime = createHeadlessCSSRuntime()
     const document = runtime.parseHTML(
       '<section class="card" style="width: 320px; color: rgb(17, 24, 39)">OpenPencil</section>'
     )
@@ -52,7 +52,7 @@ describe('@open-pencil/dom-css', () => {
   })
 
   it('computes simple headless styles from CSSOM rules', async () => {
-    const runtime = createHeadlessCssRuntime()
+    const runtime = createHeadlessCSSRuntime()
     const document = await runtime.computeStyles(
       documentFixture,
       '.card { width: 320px; color: rgb(17, 24, 39); } #missing { color: red; }'

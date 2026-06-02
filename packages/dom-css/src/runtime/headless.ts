@@ -3,7 +3,7 @@ import { parseFragment, type DefaultTreeAdapterTypes } from 'parse5'
 import { computeHeadlessStyles } from '../headless-css'
 import { serializeHTML } from '../serialize'
 import { parseStyleAttribute } from '../style-attribute'
-import type { CssRuntime, DesignDocument, DesignElement, DesignNode } from '../types'
+import type { CSSRuntime, DesignDocument, DesignElement, DesignNode } from '../types'
 
 function attrsToRecord(attrs: DefaultTreeAdapterTypes.Element['attrs']): Record<string, string> {
   const result: Record<string, string> = {}
@@ -50,7 +50,7 @@ function parseHTML(html: string): DesignDocument {
   }
 }
 
-export function createHeadlessCssRuntime(): CssRuntime {
+export function createHeadlessCSSRuntime(): CSSRuntime {
   return {
     kind: 'headless',
     parseHTML,

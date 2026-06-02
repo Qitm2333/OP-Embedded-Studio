@@ -1,6 +1,6 @@
 import { SceneGraph, type Fill, type SceneNode } from '@open-pencil/core/scene-graph'
 
-import { cssColorToFill, mergedStyle, parseCssNumber, pickStyle } from './css-values'
+import { colorToFillFromCSS, mergedStyle, parseCSSNumber, pickStyle } from './css-values'
 import type { DesignDocument, DesignElement, DesignNode, DesignStyleDeclaration } from './types'
 
 export interface DesignDocumentToSceneGraphOptions {
@@ -30,21 +30,21 @@ function isTextLikeElement(node: DesignElement): boolean {
   ].includes(node.tagName.toLowerCase())
 }
 
-function firstCssNumber(style: DesignStyleDeclaration, ...properties: string[]): number | null {
+function firstCSSNumber(style: DesignStyleDeclaration, ...properties: string[]): number | null {
   for (const property of properties) {
-    const parsed = parseCssNumber(pickStyle(style, property))
+    const parsed = parseCSSNumber(pickStyle(style, property))
     if (parsed !== null) return parsed
   }
   return null
 }
 
 function fillsFromStyle(style: DesignStyleDeclaration, property: string): Fill[] {
-  return cssColorToFill(pickStyle(style, property))
+  return colorToFillFromCSS(pickStyle(style, property))
 }
 
 function setNodeBox(node: SceneNode, style: DesignStyleDeclaration): void {
-  const width = firstCssNumber(style, 'width')
-  const height = firstCssNumber(style, 'height')
+  const width = firstCSSNumber(style, 'width')
+  const height = firstCSSNumber(style, 'height')
   if (width !== null) node.width = width
   if (height !== null) node.height = height
 }
@@ -55,19 +55,19 @@ function applyElementStyle(node: SceneNode, style: DesignStyleDeclaration): void
   const fills = fillsFromStyle(style, 'background-color')
   if (fills.length > 0) node.fills = fills
 
-  const opacity = parseCssNumber(pickStyle(style, 'opacity'))
+  const opacity = parseCSSNumber(pickStyle(style, 'opacity'))
   if (opacity !== null) node.opacity = opacity
 
-  const cornerRadius = firstCssNumber(style, 'border-radius')
+  const cornerRadius = firstCSSNumber(style, 'border-radius')
   if (cornerRadius !== null) node.cornerRadius = cornerRadius
 
   if (pickStyle(style, 'display') === 'flex') {
     node.layoutMode = pickStyle(style, 'flex-direction') === 'column' ? 'VERTICAL' : 'HORIZONTAL'
-    node.itemSpacing = firstCssNumber(style, 'gap', 'column-gap', 'row-gap') ?? 0
-    node.paddingTop = firstCssNumber(style, 'padding-top', 'padding') ?? 0
-    node.paddingRight = firstCssNumber(style, 'padding-right', 'padding') ?? 0
-    node.paddingBottom = firstCssNumber(style, 'padding-bottom', 'padding') ?? 0
-    node.paddingLeft = firstCssNumber(style, 'padding-left', 'padding') ?? 0
+    node.itemSpacing = firstCSSNumber(style, 'gap', 'column-gap', 'row-gap') ?? 0
+    node.paddingTop = firstCSSNumber(style, 'padding-top', 'padding') ?? 0
+    node.paddingRight = firstCSSNumber(style, 'padding-right', 'padding') ?? 0
+    node.paddingBottom = firstCSSNumber(style, 'padding-bottom', 'padding') ?? 0
+    node.paddingLeft = firstCSSNumber(style, 'padding-left', 'padding') ?? 0
   }
 }
 
@@ -77,16 +77,16 @@ function applyTextStyle(node: SceneNode, style: DesignStyleDeclaration): void {
   const fills = fillsFromStyle(style, 'color')
   if (fills.length > 0) node.fills = fills
 
-  const fontSize = parseCssNumber(pickStyle(style, 'font-size'))
+  const fontSize = parseCSSNumber(pickStyle(style, 'font-size'))
   if (fontSize !== null) node.fontSize = fontSize
 
-  const fontWeight = parseCssNumber(pickStyle(style, 'font-weight'))
+  const fontWeight = parseCSSNumber(pickStyle(style, 'font-weight'))
   if (fontWeight !== null) node.fontWeight = fontWeight
 
-  const lineHeight = parseCssNumber(pickStyle(style, 'line-height'))
+  const lineHeight = parseCSSNumber(pickStyle(style, 'line-height'))
   if (lineHeight !== null) node.lineHeight = lineHeight
 
-  const letterSpacing = parseCssNumber(pickStyle(style, 'letter-spacing'))
+  const letterSpacing = parseCSSNumber(pickStyle(style, 'letter-spacing'))
   if (letterSpacing !== null) node.letterSpacing = letterSpacing
 
   const fontFamily = pickStyle(style, 'font-family')

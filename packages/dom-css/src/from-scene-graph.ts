@@ -2,7 +2,7 @@ import { colorToCSS } from '@open-pencil/core/color'
 import { BLACK } from '@open-pencil/core/constants'
 import type { SceneGraph, SceneNode } from '@open-pencil/core/scene-graph'
 
-import { fillToCss, sceneNodeSizeStyle } from './css-values'
+import { fillToCSS, sceneNodeSizeStyle } from './css-values'
 import type { DesignDocument, DesignNode, DesignStyleDeclaration } from './types'
 
 export interface SceneGraphToDesignOptions {
@@ -18,7 +18,7 @@ function nodeChildren(graph: SceneGraph, node: SceneNode): SceneNode[] {
 
 function styleFromSceneNode(node: SceneNode): DesignStyleDeclaration {
   const style = sceneNodeSizeStyle(node)
-  const fill = fillToCss(node.fills[0])
+  const fill = fillToCSS(node.fills[0])
   if (fill) style['background-color'] = fill
   if (node.opacity < 1) style.opacity = String(node.opacity)
   if (node.cornerRadius > 0) style['border-radius'] = `${node.cornerRadius}px`
@@ -38,7 +38,7 @@ function styleFromSceneNode(node: SceneNode): DesignStyleDeclaration {
 
 function styleFromTextNode(node: SceneNode): DesignStyleDeclaration {
   const style = sceneNodeSizeStyle(node)
-  style.color = fillToCss(node.fills[0]) ?? colorToCSS(BLACK)
+  style.color = fillToCSS(node.fills[0]) ?? colorToCSS(BLACK)
   style['font-family'] = node.fontFamily
   style['font-size'] = `${node.fontSize}px`
   style['font-weight'] = String(node.fontWeight)

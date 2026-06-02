@@ -33,17 +33,17 @@ export interface DesignStyleSheet {
 
 export type DesignStyleDeclaration = Record<string, string>
 
-export interface CssComputeOptions {
+export interface CSSComputeOptions {
   includeBrowserDefaults?: boolean
 }
 
-export interface CssRuntime {
+export interface CSSRuntime {
   readonly kind: 'browser' | 'headless'
   parseHTML(html: string): DesignDocument
   serializeHTML(document: DesignDocument): string
   computeStyles(
     document: DesignDocument,
     cssText?: string,
-    options?: CssComputeOptions
+    options?: CSSComputeOptions
   ): Promise<DesignDocument>
 }

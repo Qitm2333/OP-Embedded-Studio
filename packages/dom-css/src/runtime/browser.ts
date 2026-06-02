@@ -1,7 +1,7 @@
 import { serializeHTML } from '../serialize'
 import type {
-  CssComputeOptions,
-  CssRuntime,
+  CSSComputeOptions,
+  CSSRuntime,
   DesignDocument,
   DesignElement,
   DesignNode
@@ -125,7 +125,7 @@ function collectElementPairs(
 
 function computedStyleToRecord(
   style: CSSStyleDeclaration,
-  options: CssComputeOptions
+  options: CSSComputeOptions
 ): Record<string, string> {
   const entries: Record<string, string> = {}
   const properties = options.includeBrowserDefaults
@@ -143,7 +143,7 @@ function computedStyleToRecord(
 async function computeStyles(
   designDocument: DesignDocument,
   cssText = '',
-  options: CssComputeOptions = {}
+  options: CSSComputeOptions = {}
 ): Promise<DesignDocument> {
   const browserDocument = requireBrowserDocument()
   const host = browserDocument.createElement('div')
@@ -191,7 +191,7 @@ async function computeStyles(
   }
 }
 
-export function createBrowserCssRuntime(): CssRuntime {
+export function createBrowserCSSRuntime(): CSSRuntime {
   return {
     kind: 'browser',
     parseHTML,
