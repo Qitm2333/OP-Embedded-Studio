@@ -1,0 +1,181 @@
+import { SceneGraph, type Fill, type SceneNode } from '@open-pencil/core/scene-graph'
+
+import { cssColorToFill, mergedStyle, parseCssNumber, pickStyle } from './css-values'
+import type { DesignDocument, DesignElement, DesignNode, DesignStyleDeclaration } from './types'
+
+export interface DesignDocumentToSceneGraphOptions {
+  pageName?: string
+}
+
+function textContent(node: DesignNode): string {
+  if (node.type === 'text') return node.text
+  return node.children.map(textContent).join('')
+}
+
+function isTextLikeElement(node: DesignElement): boolean {
+  return [
+    'span',
+    'p',
+    'label',
+    'strong',
+    'em',
+    'button',
+    'a',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6'
+  ].includes(node.tagName.toLowerCase())
+}
+
+function firstCssNumber(style: DesignStyleDeclaration, ...properties: string[]): number | null {
+  for (const property of properties) {
+    const parsed = parseCssNumber(pickStyle(style, property))
+    if (parsed !== null) return parsed
+  }
+  return null
+}
+
+function fillsFromStyle(style: DesignStyleDeclaration, property: string): Fill[] {
+  return cssColorToFill(pickStyle(style, property))
+}
+
+function setNodeBox(node: SceneNode, style: DesignStyleDeclaration): void {
+  const width = firstCssNumber(style, 'width')
+  const height = firstCssNumber(style, 'height')
+  if (width !== null) node.width = width
+  if (height !== null) node.height = height
+}
+
+function applyElementStyle(node: SceneNode, style: DesignStyleDeclaration): void {
+  setNodeBox(node, style)
+
+  const fills = fillsFromStyle(style, 'background-color')
+  if (fills.length > 0) node.fills = fills
+
+  const opacity = parseCssNumber(pickStyle(style, 'opacity'))
+  if (opacity !== null) node.opacity = opacity
+
+  const cornerRadius = firstCssNumber(style, 'border-radius')
+  if (cornerRadius !== null) node.cornerRadius = cornerRadius
+
+  if (pickStyle(style, 'display') === 'flex') {
+    node.layoutMode = pickStyle(style, 'flex-direction') === 'column' ? 'VERTICAL' : 'HORIZONTAL'
+    node.itemSpacing = firstCssNumber(style, 'gap', 'column-gap', 'row-gap') ?? 0
+    node.paddingTop = firstCssNumber(style, 'padding-top', 'padding') ?? 0
+    node.paddingRight = firstCssNumber(style, 'padding-right', 'padding') ?? 0
+    node.paddingBottom = firstCssNumber(style, 'padding-bottom', 'padding') ?? 0
+    node.paddingLeft = firstCssNumber(style, 'padding-left', 'padding') ?? 0
+  }
+}
+
+function applyTextStyle(node: SceneNode, style: DesignStyleDeclaration): void {
+  setNodeBox(node, style)
+
+  const fills = fillsFromStyle(style, 'color')
+  if (fills.length > 0) node.fills = fills
+
+  const fontSize = parseCssNumber(pickStyle(style, 'font-size'))
+  if (fontSize !== null) node.fontSize = fontSize
+
+  const fontWeight = parseCssNumber(pickStyle(style, 'font-weight'))
+  if (fontWeight !== null) node.fontWeight = fontWeight
+
+  const lineHeight = parseCssNumber(pickStyle(style, 'line-height'))
+  if (lineHeight !== null) node.lineHeight = lineHeight
+
+  const letterSpacing = parseCssNumber(pickStyle(style, 'letter-spacing'))
+  if (letterSpacing !== null) node.letterSpacing = letterSpacing
+
+  const fontFamily = pickStyle(style, 'font-family')
+  if (fontFamily)
+    node.fontFamily = fontFamily.split(',')[0]?.replaceAll('"', '').trim() || node.fontFamily
+
+  node.italic = pickStyle(style, 'font-style') === 'italic'
+
+  const textAlign = pickStyle(style, 'text-align')?.toUpperCase()
+  if (textAlign === 'CENTER' || textAlign === 'RIGHT' || textAlign === 'JUSTIFIED') {
+    node.textAlignHorizontal = textAlign
+  }
+
+  const textDecoration = pickStyle(style, 'text-decoration-line')
+  if (textDecoration === 'underline') node.textDecoration = 'UNDERLINE'
+  if (textDecoration === 'line-through') node.textDecoration = 'STRIKETHROUGH'
+}
+
+function createTextNode(
+  graph: SceneGraph,
+  parentId: string,
+  text: string,
+  style: DesignStyleDeclaration
+) {
+  const node = graph.createNode('TEXT', parentId, {
+    name: text.slice(0, 32) || 'Text',
+    text,
+    width: Math.max(text.length * 8, 1),
+    height: 20
+  })
+  applyTextStyle(node, style)
+  return node
+}
+
+function createElementNode(graph: SceneGraph, parentId: string, element: DesignElement): SceneNode {
+  const style = mergedStyle(element)
+  if (isTextLikeElement(element) && element.children.every((child) => child.type === 'text')) {
+    return createTextNode(graph, parentId, textContent(element), style)
+  }
+
+  const node = graph.createNode('FRAME', parentId, {
+    name: element.attrs.id || element.attrs.class || element.tagName,
+    clipsContent: false
+  })
+  applyElementStyle(node, style)
+
+  for (const child of element.children) {
+    createDesignNode(graph, node.id, child, style)
+  }
+
+  return node
+}
+
+function createDesignNode(
+  graph: SceneGraph,
+  parentId: string,
+  node: DesignNode,
+  inheritedStyle: DesignStyleDeclaration = {}
+): SceneNode | null {
+  if (node.type === 'text') {
+    if (node.text.trim().length === 0) return null
+    return createTextNode(graph, parentId, node.text, inheritedStyle)
+  }
+
+  return createElementNode(graph, parentId, node)
+}
+
+function fitPageToChildren(page: SceneNode, graph: SceneGraph): void {
+  const children = graph.getChildren(page.id)
+  if (children.length === 0) return
+  page.width = Math.max(...children.map((child) => child.x + child.width))
+  page.height = Math.max(...children.map((child) => child.y + child.height))
+}
+
+export function designDocumentToSceneGraph(
+  document: DesignDocument,
+  options: DesignDocumentToSceneGraphOptions = {}
+): SceneGraph {
+  const graph = new SceneGraph()
+  const page = graph.getPages().find((node) => node.type === 'CANVAS') ?? graph.addPage('DesignDOM')
+
+  page.name = options.pageName ?? 'DesignDOM'
+
+  for (const child of document.children) {
+    createDesignNode(graph, page.id, child)
+  }
+
+  fitPageToChildren(page, graph)
+  return graph
+}
+
+export type { DesignDocumentToSceneGraphOptions as ToSceneGraphOptions }
