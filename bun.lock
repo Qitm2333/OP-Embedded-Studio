@@ -16,6 +16,7 @@
         "@chenglou/pretext": "^0.0.7",
         "@open-pencil/cli": "workspace:*",
         "@open-pencil/core": "workspace:*",
+        "@open-pencil/dom-css": "workspace:*",
         "@open-pencil/vue": "workspace:*",
         "@openrouter/ai-sdk-provider": "^2.9.0",
         "@tailwindcss/vite": "^4.2.1",
@@ -153,6 +154,17 @@
       "devDependencies": {
         "vitepress": "^1.6.4",
         "vitepress-plugin-llms": "1.12.2",
+      },
+    },
+    "packages/dom-css": {
+      "name": "@open-pencil/dom-css",
+      "version": "0.13.2",
+      "devDependencies": {
+        "tsdown": "^0.21.7",
+        "typescript": "~5.8.3",
+      },
+      "peerDependencies": {
+        "@open-pencil/core": "workspace:*",
       },
     },
     "packages/mcp": {
@@ -759,6 +771,8 @@
     "@open-pencil/core": ["@open-pencil/core@workspace:packages/core"],
 
     "@open-pencil/docs": ["@open-pencil/docs@workspace:packages/docs"],
+
+    "@open-pencil/dom-css": ["@open-pencil/dom-css@workspace:packages/dom-css"],
 
     "@open-pencil/mcp": ["@open-pencil/mcp@workspace:packages/mcp"],
 

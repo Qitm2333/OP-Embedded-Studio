@@ -4,7 +4,13 @@ import { basename, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const rootDir = fileURLToPath(new URL('../../..', import.meta.url))
-const packageDirs = ['packages/core', 'packages/vue', 'packages/mcp', 'packages/cli']
+const packageDirs = [
+  'packages/core',
+  'packages/dom-css',
+  'packages/vue',
+  'packages/mcp',
+  'packages/cli'
+]
 
 function run(command: string[], cwd = rootDir): string {
   const proc = Bun.spawnSync(command, { cwd, stdout: 'pipe', stderr: 'pipe' })
@@ -57,6 +63,7 @@ try {
 
   nodeEval("await import('@open-pencil/core')", tempDir)
   nodeEval("await import('@open-pencil/core/scene-graph')", tempDir)
+  nodeEval("await import('@open-pencil/dom-css')", tempDir)
   nodeEval("await import('@open-pencil/vue')", tempDir)
   nodeEval("await import('@open-pencil/mcp')", tempDir)
 

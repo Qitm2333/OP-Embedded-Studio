@@ -8,6 +8,7 @@
 - Add design JSX variable helpers so color props can use `designVar()` / `defineVars()` references and emit graph variable bindings.
 - Add structured design JSX paint helpers for solid fills, multiple fills, and gradients.
 - Add structured design JSX effect helpers for shadows and blur effects.
+- Add the `@open-pencil/dom-css` package skeleton for DOM/CSS projection and browser/headless CSS runtime adapters.
 - Add type-validated `bindVariable`/`unbindVariable` with event emission and indexed binding format (`fills/N/color` instead of `fills[N]`).
 - Add `unbind_variable` MCP tool for removing variable bindings.
 - Add `openpencil analyze overlaps`, the `analyze_overlaps` RPC command, and the `analyze_overlaps` ToolDef for heuristic overlap detection. The command reports sibling overlaps, children overflowing non-clipping parents, and overlay/backdrop patterns, with filters for page/page ID, scope, category, severity, min area/ratio, node type, hidden/locked/absolute nodes, result limit, and `--json` output.

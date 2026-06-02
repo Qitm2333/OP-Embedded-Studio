@@ -1,0 +1,48 @@
+{
+  "name": "@open-pencil/dom-css",
+  "version": "0.13.2",
+  "license": "MIT",
+  "type": "module",
+  "imports": {
+    "#dom-css/*": {
+      "types": "./src/*",
+      "bun": "./src/*",
+      "default": "./dist/*"
+    }
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "bunx tsdown --config tsdown.config.ts",
+    "prepack": "bun run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/open-pencil/open-pencil.git",
+    "directory": "packages/dom-css"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "peerDependencies": {
+    "@open-pencil/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsdown": "^0.21.7",
+    "typescript": "~5.8.3"
+  }
+}

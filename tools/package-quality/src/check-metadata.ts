@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const publicPackages = ['packages/core', 'packages/cli', 'packages/mcp', 'packages/vue']
+const publicPackages = [
+  'packages/core',
+  'packages/dom-css',
+  'packages/cli',
+  'packages/mcp',
+  'packages/vue'
+]
 
 interface PackageJson {
   name: string
