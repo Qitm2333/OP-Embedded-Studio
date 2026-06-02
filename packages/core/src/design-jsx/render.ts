@@ -4,6 +4,14 @@ import type { RenderOptions as RenderJSXOptions } from '#core/design-jsx/types'
 import type { SceneGraph } from '#core/scene-graph'
 
 import * as React from './mini-react'
+import {
+  angularGradient,
+  diamondGradient,
+  gradient,
+  linearGradient,
+  radialGradient,
+  solid
+} from './paints'
 import { renderTree, type RenderResult } from './renderer'
 import { isTreeNode, resolveToTree, type TreeNode } from './tree'
 
@@ -50,6 +58,7 @@ const SUPPORTED_PROPS = new Set([
   'pl',
   'bg',
   'fill',
+  'fills',
   'background',
   'backgroundColor',
   'stroke',
@@ -150,6 +159,12 @@ export function buildComponent(jsxString: string): React.ComponentType {
     const Group = 'group', Section = 'section', View = 'frame', Rect = 'rectangle'
     const Component = 'component', ComponentSet = 'component-set', Instance = 'instance'
     const Icon = 'icon'
+    const solid = __helpers.solid
+    const gradient = __helpers.gradient
+    const linearGradient = __helpers.linearGradient
+    const radialGradient = __helpers.radialGradient
+    const angularGradient = __helpers.angularGradient
+    const diamondGradient = __helpers.diamondGradient
     const __varSymbol = Symbol.for('open-pencil.variable')
     const designVar = (def, value) => typeof def === 'string'
       ? ({ [__varSymbol]: true, id: def, name: def, value })
@@ -173,7 +188,14 @@ export function buildComponent(jsxString: string): React.ComponentType {
   }
 
   // eslint-disable-next-line typescript-eslint/no-implied-eval -- sucrase output must be evaluated at runtime
-  return new Function('React', code)(React) as React.ComponentType
+  return new Function('React', '__helpers', code)(React, {
+    angularGradient,
+    diamondGradient,
+    gradient,
+    linearGradient,
+    radialGradient,
+    solid
+  }) as React.ComponentType
 }
 
 /**

@@ -1,6 +1,6 @@
 import { colorToFill, parseColor } from '#core/color'
 import { TRANSPARENT } from '#core/constants'
-import type { GridTrack, LayoutMode, SceneNode, Stroke } from '#core/scene-graph'
+import type { Fill, GridTrack, LayoutMode, SceneNode, Stroke } from '#core/scene-graph'
 import type { Color, JsonObject } from '#core/types'
 
 const WEIGHT_MAP: Record<string, number> = {
@@ -159,6 +159,24 @@ function applyFillSizing(
   }
 }
 
+function isFill(value: unknown): value is Fill {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    'type' in value &&
+    'color' in value &&
+    'visible' in value
+  )
+}
+
+function isFillValue(value: unknown): value is string | Color | Fill {
+  return typeof value === 'string' || isColor(value) || isFill(value)
+}
+
+function fillFromValue(value: string | Color | Fill): Fill {
+  return isFill(value) ? structuredClone(value) : colorToFill(value)
+}
+
 function isColor(value: unknown): value is Color {
   return (
     value !== null &&
@@ -171,8 +189,14 @@ function isColor(value: unknown): value is Color {
 }
 
 function applyFillOverride(props: Record<string, unknown>, o: Partial<SceneNode>): void {
+  if (Array.isArray(props.fills)) {
+    const fills = props.fills.filter(isFillValue).map(fillFromValue)
+    if (fills.length > 0) o.fills = fills
+    return
+  }
+
   const bg = props.bg ?? props.fill ?? props.background ?? props.backgroundColor
-  if (typeof bg === 'string' || isColor(bg)) o.fills = [colorToFill(bg)]
+  if (isFillValue(bg)) o.fills = [fillFromValue(bg)]
 }
 
 function applyStrokeOverride(props: Record<string, unknown>, o: Partial<SceneNode>): void {

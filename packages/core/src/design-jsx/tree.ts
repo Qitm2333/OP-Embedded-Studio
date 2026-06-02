@@ -1,3 +1,4 @@
+import type { Fill } from '#core/scene-graph'
 import type { Color } from '#core/types'
 
 import type { DesignVariable } from './vars'
@@ -85,7 +86,7 @@ export function node(
   return { type, props: rest, children: processed }
 }
 
-export type PaintProp = string | Color | DesignVariable
+export type PaintProp = string | Color | Fill | DesignVariable
 
 export type StyleProps = {
   flex?: 'row' | 'col' | 'column'
@@ -121,6 +122,7 @@ export type StyleProps = {
 
   bg?: PaintProp
   fill?: PaintProp
+  fills?: PaintProp[]
   stroke?: PaintProp
   strokeWidth?: number
   strokeAlign?: 'inside' | 'outside' | 'center'

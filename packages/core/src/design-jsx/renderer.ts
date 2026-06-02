@@ -142,6 +142,15 @@ function preparePropsForRender(
   const props = { ...source }
   const bindings: Record<string, string> = {}
 
+  if (Array.isArray(props.fills)) {
+    props.fills = props.fills.map((value, index) => {
+      if (!isVariable(value)) return value
+      const variableId = resolveVariableId(graph, value)
+      if (variableId) bindings[`fills/${index}/color`] = variableId
+      return variableFallback(graph, value) ?? value
+    })
+  }
+
   for (const key of ['bg', 'fill', 'background', 'backgroundColor']) {
     bindVariableProp(graph, props, bindings, key, 'fills/0/color')
   }

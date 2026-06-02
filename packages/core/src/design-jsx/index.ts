@@ -31,6 +31,19 @@ export {
 
 export { renderTree, type RenderResult } from './renderer'
 
+export {
+  angularGradient,
+  diamondGradient,
+  gradient,
+  linearGradient,
+  radialGradient,
+  solid,
+  type GradientPaintOptions,
+  type PaintColor,
+  type PaintStop,
+  type SolidPaintOptions
+} from './paints'
+
 export { defineVars, designVar, isVariable, type DesignVariable, type VarDef } from './vars'
 
 export { createElement } from './mini-react'

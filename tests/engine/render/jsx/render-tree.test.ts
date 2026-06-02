@@ -16,7 +16,9 @@ import {
   ComponentSet,
   Instance,
   defineVars,
-  designVar
+  designVar,
+  linearGradient,
+  solid
 } from '@open-pencil/core'
 
 import { expectDefined, getNodeOrThrow, childIdAt } from '#tests/helpers/assert'
@@ -36,6 +38,43 @@ describe('renderTree', () => {
     expect(node.height).toBe(100)
     expect(node.fills.length).toBe(1)
     expect(expectDefined(node.fills[0], 'first fill').type).toBe('SOLID')
+  })
+
+  it('renders structured fill helpers', async () => {
+    const g = makeSceneGraph()
+    const result = await renderTree(
+      g,
+      Frame({
+        name: 'Paints',
+        w: 200,
+        h: 100,
+        fills: [
+          solid('#112233'),
+          linearGradient([
+            ['#ffffff', 0],
+            ['rgba(0, 0, 0, 0)', 1]
+          ])
+        ]
+      })
+    )
+    const node = getNodeOrThrow(g, result.id)
+
+    expect(node.fills).toHaveLength(2)
+    expect(node.fills[0]?.type).toBe('SOLID')
+    expect(node.fills[1]?.type).toBe('GRADIENT_LINEAR')
+    expect(node.fills[1]?.gradientStops).toHaveLength(2)
+  })
+
+  it('renders structured fill helpers from JSX strings', async () => {
+    const g = makeSceneGraph()
+    const [result] = await renderJSX(
+      g,
+      `<Frame name="Paints" w={200} h={100} fills={[solid('#112233'), linearGradient([['#fff', 0], ['#0000', 1]])]} />`
+    )
+    const node = getNodeOrThrow(g, result.id)
+
+    expect(node.fills).toHaveLength(2)
+    expect(node.fills[1]?.type).toBe('GRADIENT_LINEAR')
   })
 
   it('renders text node with content', async () => {
