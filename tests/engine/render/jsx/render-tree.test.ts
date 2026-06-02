@@ -17,6 +17,9 @@ import {
   Instance,
   defineVars,
   designVar,
+  dropShadow,
+  innerShadow,
+  layerBlur,
   linearGradient,
   solid
 } from '@open-pencil/core'
@@ -75,6 +78,43 @@ describe('renderTree', () => {
 
     expect(node.fills).toHaveLength(2)
     expect(node.fills[1]?.type).toBe('GRADIENT_LINEAR')
+  })
+
+  it('renders structured effect helpers', async () => {
+    const g = makeSceneGraph()
+    const result = await renderTree(
+      g,
+      Frame({
+        name: 'Effects',
+        w: 200,
+        h: 100,
+        effects: [
+          dropShadow({ x: 0, y: 8, radius: 16 }),
+          innerShadow({ color: '#ff000080' }),
+          layerBlur(4)
+        ]
+      })
+    )
+    const node = getNodeOrThrow(g, result.id)
+
+    expect(node.effects).toHaveLength(3)
+    expect(node.effects[0]?.type).toBe('DROP_SHADOW')
+    expect(node.effects[0]?.offset.y).toBe(8)
+    expect(node.effects[1]?.type).toBe('INNER_SHADOW')
+    expect(node.effects[2]?.type).toBe('LAYER_BLUR')
+  })
+
+  it('renders structured effect helpers from JSX strings', async () => {
+    const g = makeSceneGraph()
+    const [result] = await renderJSX(
+      g,
+      `<Frame name="Effects" w={200} h={100} effects={[dropShadow({ x: 0, y: 8, radius: 16 }), backgroundBlur(12)]} />`
+    )
+    const node = getNodeOrThrow(g, result.id)
+
+    expect(node.effects).toHaveLength(2)
+    expect(node.effects[0]?.type).toBe('DROP_SHADOW')
+    expect(node.effects[1]?.type).toBe('BACKGROUND_BLUR')
   })
 
   it('renders text node with content', async () => {

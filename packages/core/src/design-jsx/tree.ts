@@ -1,4 +1,4 @@
-import type { Fill } from '#core/scene-graph'
+import type { Effect, Fill } from '#core/scene-graph'
 import type { Color } from '#core/types'
 
 import type { DesignVariable } from './vars'
@@ -140,6 +140,7 @@ export type StyleProps = {
   overflow?: 'hidden' | 'visible'
   shadow?: string
   blur?: number
+  effects?: Effect[]
 
   size?: number
   fontSize?: number

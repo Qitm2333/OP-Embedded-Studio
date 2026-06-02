@@ -3,6 +3,7 @@ import { transform } from 'sucrase'
 import type { RenderOptions as RenderJSXOptions } from '#core/design-jsx/types'
 import type { SceneGraph } from '#core/scene-graph'
 
+import { backgroundBlur, dropShadow, foregroundBlur, innerShadow, layerBlur } from './effects'
 import * as React from './mini-react'
 import {
   angularGradient,
@@ -83,6 +84,7 @@ const SUPPORTED_PROPS = new Set([
   'overflow',
   'shadow',
   'blur',
+  'effects',
   'size',
   'fontSize',
   'font',
@@ -159,6 +161,11 @@ export function buildComponent(jsxString: string): React.ComponentType {
     const Group = 'group', Section = 'section', View = 'frame', Rect = 'rectangle'
     const Component = 'component', ComponentSet = 'component-set', Instance = 'instance'
     const Icon = 'icon'
+    const dropShadow = __helpers.dropShadow
+    const innerShadow = __helpers.innerShadow
+    const layerBlur = __helpers.layerBlur
+    const backgroundBlur = __helpers.backgroundBlur
+    const foregroundBlur = __helpers.foregroundBlur
     const solid = __helpers.solid
     const gradient = __helpers.gradient
     const linearGradient = __helpers.linearGradient
@@ -189,6 +196,11 @@ export function buildComponent(jsxString: string): React.ComponentType {
 
   // eslint-disable-next-line typescript-eslint/no-implied-eval -- sucrase output must be evaluated at runtime
   return new Function('React', '__helpers', code)(React, {
+    backgroundBlur,
+    dropShadow,
+    foregroundBlur,
+    innerShadow,
+    layerBlur,
     angularGradient,
     diamondGradient,
     gradient,

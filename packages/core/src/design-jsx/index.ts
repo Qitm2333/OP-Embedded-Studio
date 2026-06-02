@@ -32,6 +32,17 @@ export {
 export { renderTree, type RenderResult } from './renderer'
 
 export {
+  backgroundBlur,
+  dropShadow,
+  foregroundBlur,
+  innerShadow,
+  layerBlur,
+  type BlurEffectOptions,
+  type EffectColor,
+  type ShadowEffectOptions
+} from './effects'
+
+export {
   angularGradient,
   diamondGradient,
   gradient,

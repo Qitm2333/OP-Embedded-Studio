@@ -1,6 +1,6 @@
 import { colorToFill, parseColor } from '#core/color'
 import { TRANSPARENT } from '#core/constants'
-import type { Fill, GridTrack, LayoutMode, SceneNode, Stroke } from '#core/scene-graph'
+import type { Effect, Fill, GridTrack, LayoutMode, SceneNode, Stroke } from '#core/scene-graph'
 import type { Color, JsonObject } from '#core/types'
 
 const WEIGHT_MAP: Record<string, number> = {
@@ -519,7 +519,22 @@ function applyTextOverrides(
   applyTextAutoResize(props, o, parentLayout)
 }
 
+function isEffect(value: unknown): value is Effect {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    'type' in value &&
+    'radius' in value &&
+    'visible' in value
+  )
+}
+
 function applyShapeAndEffectOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
+  if (Array.isArray(props.effects)) {
+    const effects = props.effects.filter(isEffect).map((effect) => structuredClone(effect))
+    if (effects.length > 0) o.effects = effects
+  }
+
   if (props.points !== undefined) o.pointCount = props.points as number
   if (props.innerRadius !== undefined) o.starInnerRadius = props.innerRadius as number
   if (props.pointCount !== undefined) o.pointCount = props.pointCount as number
