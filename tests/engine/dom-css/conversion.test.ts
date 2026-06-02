@@ -4,8 +4,11 @@ import {
   compileTailwindCSS,
   createHeadlessCSSRuntime,
   designDocumentToSceneGraph,
+  htmlToDesignDocument,
+  htmlToSceneGraph,
   sceneGraphToDesignDocument,
-  serializeHTML
+  serializeHTML,
+  tailwindHTMLToSceneGraph
 } from '@open-pencil/dom-css'
 
 import {
@@ -16,6 +19,48 @@ import {
 } from '#tests/helpers/dom-css'
 
 describe('@open-pencil/dom-css conversion', () => {
+  it('converts HTML and CSS to DesignDOM with one API call', async () => {
+    const document = await htmlToDesignDocument(cssCardHTML, {
+      cssText: cssCardCSS,
+      runtime: createHeadlessCSSRuntime()
+    })
+    const card = document.children[0]
+
+    expect(card?.type).toBe('element')
+    if (card?.type !== 'element') return
+    expect(card.computedStyle?.width).toBe('320px')
+    expect(card.computedStyle?.['border-radius']).toBe('16px')
+  })
+
+  it('converts HTML and CSS to a scene graph with one API call', async () => {
+    const graph = await htmlToSceneGraph(cssCardHTML, {
+      cssText: cssCardCSS,
+      runtime: createHeadlessCSSRuntime()
+    })
+    const page = graph.getPages()[0]
+    const card = page ? graph.getChildren(page.id)[0] : undefined
+
+    expect(card?.type).toBe('FRAME')
+    expect(card?.width).toBe(320)
+    expect(card?.layoutMode).toBe('VERTICAL')
+  })
+
+  it('converts Tailwind HTML through generated CSS to a scene graph', async () => {
+    const classes = [...tailwindCardClasses]
+    const graph = await tailwindHTMLToSceneGraph(
+      `<article class="${classes.join(' ')}"><h1>OpenPencil</h1></article>`,
+      classes,
+      { runtime: createHeadlessCSSRuntime() }
+    )
+    const page = graph.getPages()[0]
+    const card = page ? graph.getChildren(page.id)[0] : undefined
+
+    expect(card?.type).toBe('FRAME')
+    expect(card?.width).toBe(320)
+    expect(card?.height).toBe(176)
+    expect(card?.itemSpacing).toBe(12)
+  })
+
   it('projects a DesignDOM card into a scene graph', () => {
     const graph = designDocumentToSceneGraph(computedCardDocument)
     const page = graph.getPages()[0]
