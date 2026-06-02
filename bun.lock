@@ -162,6 +162,7 @@
       "dependencies": {
         "@acemir/cssom": "^0.9.31",
         "parse5": "^8.0.1",
+        "tailwindcss": "^4.2.1",
       },
       "devDependencies": {
         "tsdown": "^0.21.7",

@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'bun:test'
-import { readFile } from 'node:fs/promises'
-
-import { compile } from 'tailwindcss'
 
 import { colorToCSS } from '@open-pencil/core/color'
 import {
+  compileTailwindCSS,
   createHeadlessCSSRuntime,
   designDocumentToSceneGraph,
   sceneGraphToDesignDocument,
@@ -22,8 +20,6 @@ const cardHTML = `
     <p class="description">Design with code-shaped CSS.</p>
   </article>
 `
-
-const tailwindRoot = new URL('../../../node_modules/tailwindcss/', import.meta.url)
 
 const cardCSS = `
   .card {
@@ -49,19 +45,6 @@ const cardCSS = `
     line-height: 20px;
   }
 `
-
-async function compileTailwindClasses(classes: string[]) {
-  const compiler = await compile('@import "tailwindcss";', {
-    async loadStylesheet(id, base) {
-      const file = id === 'tailwindcss' ? 'index.css' : id.replace('tailwindcss/', '')
-      return {
-        base: base || tailwindRoot.pathname,
-        content: await readFile(new URL(file, tailwindRoot), 'utf8')
-      }
-    }
-  })
-  return compiler.build(classes)
-}
 
 const cardDocument: DesignDocument = {
   type: 'document',
@@ -169,7 +152,7 @@ describe('@open-pencil/dom-css conversion', () => {
     ]
     const document = await runtime.computeStyles(
       runtime.parseHTML(`<article class="${classes.join(' ')}"><h1>OpenPencil</h1></article>`),
-      await compileTailwindClasses(classes)
+      await compileTailwindCSS(classes)
     )
     const graph = designDocumentToSceneGraph(document)
     const page = graph.getPages()[0]
