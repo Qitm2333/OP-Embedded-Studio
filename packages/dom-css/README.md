@@ -8,7 +8,7 @@ Current scope:
 
 - DOM-shaped `DesignDocument` / `DesignElement` types
 - Browser-backed runtime adapter for native HTML parsing, serialization, and computed-style extraction
-- Headless runtime adapter with `parse5` HTML parsing and explicit CSSOM fallback errors
+- Headless runtime adapter with `parse5` HTML parsing and CSSOM-backed style computation for basic selectors
 - Initial SceneGraph ⇄ DesignDOM conversion helpers for simple HTML/CSS-shaped layouts
 
 Planned scope:

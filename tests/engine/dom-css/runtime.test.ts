@@ -51,9 +51,17 @@ describe('@open-pencil/dom-css', () => {
     expect(section.children[0]).toEqual({ type: 'text', text: 'OpenPencil' })
   })
 
-  it('keeps headless style computation explicit until the CSSOM adapter is added', async () => {
+  it('computes simple headless styles from CSSOM rules', async () => {
     const runtime = createHeadlessCssRuntime()
+    const document = await runtime.computeStyles(
+      documentFixture,
+      '.card { width: 320px; color: rgb(17, 24, 39); } #missing { color: red; }'
+    )
+    const card = document.children[0]
 
-    await expect(runtime.computeStyles(documentFixture)).rejects.toThrow('headless CSSOM adapter')
+    expect(card?.type).toBe('element')
+    if (card?.type !== 'element') return
+    expect(card.computedStyle?.width).toBe('320px')
+    expect(card.computedStyle?.color).toBe('rgb(17, 24, 39)')
   })
 })

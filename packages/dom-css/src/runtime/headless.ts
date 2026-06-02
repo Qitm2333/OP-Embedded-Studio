@@ -1,5 +1,6 @@
 import { parseFragment, type DefaultTreeAdapterTypes } from 'parse5'
 
+import { computeHeadlessStyles } from '../headless-css'
 import { serializeHTML } from '../serialize'
 import { parseStyleAttribute } from '../style-attribute'
 import type { CssRuntime, DesignDocument, DesignElement, DesignNode } from '../types'
@@ -49,10 +50,6 @@ function parseHTML(html: string): DesignDocument {
   }
 }
 
-function unavailableError(feature: string): Error {
-  return new Error(`${feature} requires a headless CSSOM adapter.`)
-}
-
 export function createHeadlessCssRuntime(): CssRuntime {
   return {
     kind: 'headless',
@@ -60,8 +57,8 @@ export function createHeadlessCssRuntime(): CssRuntime {
     serializeHTML(document: DesignDocument) {
       return serializeHTML(document)
     },
-    computeStyles() {
-      return Promise.reject(unavailableError('computeStyles'))
+    async computeStyles(document: DesignDocument, cssText = '') {
+      return computeHeadlessStyles(document, cssText)
     }
   }
 }
