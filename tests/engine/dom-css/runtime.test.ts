@@ -35,9 +35,25 @@ describe('@open-pencil/dom-css', () => {
     )
   })
 
-  it('keeps headless HTML parsing explicit until the parser adapter is added', () => {
+  it('parses HTML with the headless runtime', () => {
+    const runtime = createHeadlessCssRuntime()
+    const document = runtime.parseHTML(
+      '<section class="card" style="width: 320px; color: rgb(17, 24, 39)">OpenPencil</section>'
+    )
+    const section = document.children[0]
+
+    expect(section?.type).toBe('element')
+    if (section?.type !== 'element') return
+    expect(section.tagName).toBe('section')
+    expect(section.attrs.class).toBe('card')
+    expect(section.inlineStyle?.width).toBe('320px')
+    expect(section.inlineStyle?.color).toBe('rgb(17, 24, 39)')
+    expect(section.children[0]).toEqual({ type: 'text', text: 'OpenPencil' })
+  })
+
+  it('keeps headless style computation explicit until the CSSOM adapter is added', async () => {
     const runtime = createHeadlessCssRuntime()
 
-    expect(() => runtime.parseHTML('<div />')).toThrow('headless DOM/CSS adapter')
+    await expect(runtime.computeStyles(documentFixture)).rejects.toThrow('headless CSSOM adapter')
   })
 })

@@ -1,23 +1,67 @@
-import { serializeHTML } from '../serialize'
-import type { CssRuntime, DesignDocument } from '../types'
+import { parseFragment, type DefaultTreeAdapterTypes } from 'parse5'
 
-function unavailable(feature: string): never {
-  throw new Error(
-    `${feature} requires a headless DOM/CSS adapter. Planned dependencies: parse5 + CSSOM.`
-  )
+import { serializeHTML } from '../serialize'
+import { parseStyleAttribute } from '../style-attribute'
+import type { CssRuntime, DesignDocument, DesignElement, DesignNode } from '../types'
+
+function attrsToRecord(attrs: DefaultTreeAdapterTypes.Element['attrs']): Record<string, string> {
+  const result: Record<string, string> = {}
+  for (const attr of attrs) result[attr.name] = attr.value
+  return result
+}
+
+function isTextNode(
+  node: DefaultTreeAdapterTypes.ChildNode
+): node is DefaultTreeAdapterTypes.TextNode {
+  return node.nodeName === '#text'
+}
+
+function childToDesignNode(node: DefaultTreeAdapterTypes.ChildNode): DesignNode | null {
+  if (isTextNode(node)) {
+    return node.value.length > 0 ? { type: 'text', text: node.value } : null
+  }
+
+  if (!('tagName' in node)) return null
+
+  const attrs = attrsToRecord(node.attrs)
+  const element: DesignElement = {
+    type: 'element',
+    tagName: node.tagName.toLowerCase(),
+    attrs,
+    children: node.childNodes
+      .map(childToDesignNode)
+      .filter((child): child is DesignNode => child !== null)
+  }
+
+  const inlineStyle = parseStyleAttribute(attrs.style)
+  if (inlineStyle) element.inlineStyle = inlineStyle
+
+  return element
+}
+
+function parseHTML(html: string): DesignDocument {
+  const fragment = parseFragment(html)
+  return {
+    type: 'document',
+    children: fragment.childNodes
+      .map(childToDesignNode)
+      .filter((node): node is DesignNode => node !== null)
+  }
+}
+
+function unavailableError(feature: string): Error {
+  return new Error(`${feature} requires a headless CSSOM adapter.`)
 }
 
 export function createHeadlessCssRuntime(): CssRuntime {
   return {
     kind: 'headless',
-    parseHTML() {
-      return unavailable('parseHTML')
-    },
+    parseHTML,
     serializeHTML(document: DesignDocument) {
       return serializeHTML(document)
     },
     computeStyles() {
-      return unavailable('computeStyles')
+      return Promise.reject(unavailableError('computeStyles'))
     }
   }
 }
