@@ -11,7 +11,8 @@ export function parseCSSNumber(value: string | undefined): number | null {
   const trimmed = value.trim()
   if (trimmed.length === 0 || trimmed === 'auto') return null
   const parsed = Number.parseFloat(trimmed)
-  return Number.isFinite(parsed) ? parsed : null
+  if (!Number.isFinite(parsed)) return null
+  return trimmed.endsWith('rem') ? parsed * 16 : parsed
 }
 
 export function parseCSSColor(value: string | undefined): Color | null {

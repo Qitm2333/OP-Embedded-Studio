@@ -10,6 +10,10 @@ declare module '@acemir/cssom' {
     style: CSSStyleDeclarationLike
   }
 
+  export interface CSSGroupingRuleLike {
+    cssRules: unknown[]
+  }
+
   export interface CSSStyleSheetLike {
     cssRules: unknown[]
   }

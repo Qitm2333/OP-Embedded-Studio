@@ -1,4 +1,9 @@
-import { parse, type CSSStyleDeclarationLike, type CSSStyleRuleLike } from '@acemir/cssom'
+import {
+  parse,
+  type CSSGroupingRuleLike,
+  type CSSStyleDeclarationLike,
+  type CSSStyleRuleLike
+} from '@acemir/cssom'
 
 import type { DesignDocument, DesignElement, DesignNode, DesignStyleDeclaration } from './types'
 
@@ -7,6 +12,11 @@ interface HeadlessCSSRule {
   specificity: number
   order: number
   style: DesignStyleDeclaration
+}
+
+interface ParsedHeadlessCSS {
+  rules: HeadlessCSSRule[]
+  customProperties: DesignStyleDeclaration
 }
 
 interface AncestorContext {
@@ -22,10 +32,13 @@ const INHERITED_PROPERTIES = new Set([
   'line-height'
 ])
 
-function styleToRecord(style: CSSStyleDeclarationLike): DesignStyleDeclaration {
+function styleToRecord(
+  style: CSSStyleDeclarationLike,
+  customProperties: DesignStyleDeclaration = {}
+): DesignStyleDeclaration {
   const result: DesignStyleDeclaration = {}
   for (const property of Array.from({ length: style.length }, (_, index) => style[index])) {
-    const value = style.getPropertyValue(property)
+    const value = resolveCSSValue(style.getPropertyValue(property), customProperties)
     if (property && value) result[property] = value
   }
   return expandStyleShorthands(result)
@@ -41,11 +54,27 @@ function isStyleRule(rule: unknown): rule is CSSStyleRuleLike {
   )
 }
 
-function parseRules(cssText: string): HeadlessCSSRule[] {
+function isGroupingRule(rule: unknown): rule is CSSGroupingRuleLike {
+  return (
+    typeof rule === 'object' && rule !== null && 'cssRules' in rule && Array.isArray(rule.cssRules)
+  )
+}
+
+function collectStyleRules(rules: unknown[]): CSSStyleRuleLike[] {
+  return rules.flatMap((rule) => {
+    if (isStyleRule(rule)) return [rule]
+    if (isGroupingRule(rule)) return collectStyleRules(rule.cssRules)
+    return []
+  })
+}
+
+function parseRules(cssText: string): ParsedHeadlessCSS {
   let order = 0
   const sheet = parse(cssText)
-  return sheet.cssRules.filter(isStyleRule).flatMap((rule) => {
-    const style = styleToRecord(rule.style)
+  const styleRules = collectStyleRules(sheet.cssRules)
+  const customProperties = collectCustomProperties(styleRules)
+  const rules = styleRules.flatMap((rule) => {
+    const style = styleToRecord(rule.style, customProperties)
     return rule.selectorText
       .split(',')
       .map((selector) => selector.trim())
@@ -57,6 +86,34 @@ function parseRules(cssText: string): HeadlessCSSRule[] {
         style
       }))
   })
+  return { rules, customProperties }
+}
+
+function collectCustomProperties(rules: CSSStyleRuleLike[]): DesignStyleDeclaration {
+  const customProperties: DesignStyleDeclaration = {}
+  for (const rule of rules) {
+    if (!rule.selectorText.split(',').some((selector) => selector.trim() === ':root')) continue
+    Object.assign(customProperties, styleToRecord(rule.style))
+  }
+  return customProperties
+}
+
+function resolveCSSValue(value: string, customProperties: DesignStyleDeclaration): string {
+  const withVariables = value.replaceAll(/var\((--[\w-]+)(?:,[^)]+)?\)/g, (_, name: string) => {
+    return customProperties[name] ?? ''
+  })
+  return resolveSimpleCalc(withVariables)
+}
+
+function resolveSimpleCalc(value: string): string {
+  const calc = value.match(/^calc\(([-\d.]+)(rem|px)?\s*\*\s*([-\d.]+)\)$/)
+  if (!calc?.[1] || !calc[3]) return value
+
+  const base = Number.parseFloat(calc[1])
+  const multiplier = Number.parseFloat(calc[3])
+  const unit = calc[2] ?? 'px'
+  if (!Number.isFinite(base) || !Number.isFinite(multiplier)) return value
+  return `${unit === 'rem' ? base * multiplier * 16 : base * multiplier}px`
 }
 
 function expandStyleShorthands(style: DesignStyleDeclaration): DesignStyleDeclaration {
@@ -240,7 +297,7 @@ export function computeHeadlessStyles(document: DesignDocument, cssText = ''): D
   const stylesheetText = [document.stylesheets?.map((sheet) => sheet.cssText).join('\n'), cssText]
     .filter((text): text is string => !!text)
     .join('\n')
-  const rules = parseRules(stylesheetText)
+  const { rules } = parseRules(stylesheetText)
 
   return {
     ...document,

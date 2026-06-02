@@ -8,11 +8,12 @@ Current scope:
 
 - DOM-shaped `DesignDocument` / `DesignElement` types
 - Browser-backed runtime adapter for native HTML parsing, serialization, and computed-style extraction
-- Headless runtime adapter with `parse5` HTML parsing and CSSOM-backed style computation for basic selectors, cascade order, inheritance, and common shorthands
+- Headless runtime adapter with `parse5` HTML parsing and CSSOM-backed style computation for basic selectors, nested CSSOM rules, cascade order, inheritance, common shorthands, and simple custom-property/calc values
 - Initial SceneGraph ⇄ DesignDOM conversion helpers for simple HTML/CSS-shaped layouts
+- Tailwind-generated CSS ingestion through CSSOM for utility-class card fixtures
 
 Planned scope:
 
-- SceneGraph ⇄ DesignDOM conversion
-- CSSOM and cascade support in headless contexts
-- Tailwind-generated CSS ingestion
+- Broader SceneGraph ⇄ DesignDOM conversion
+- Browser runtime parity fixtures
+- First-class Tailwind compiler helpers

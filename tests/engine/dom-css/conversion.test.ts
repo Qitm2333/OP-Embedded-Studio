@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'bun:test'
+import { readFile } from 'node:fs/promises'
+
+import { compile } from 'tailwindcss'
 
 import { colorToCSS } from '@open-pencil/core/color'
 import {
@@ -19,6 +22,8 @@ const cardHTML = `
     <p class="description">Design with code-shaped CSS.</p>
   </article>
 `
+
+const tailwindRoot = new URL('../../../node_modules/tailwindcss/', import.meta.url)
 
 const cardCSS = `
   .card {
@@ -44,6 +49,19 @@ const cardCSS = `
     line-height: 20px;
   }
 `
+
+async function compileTailwindClasses(classes: string[]) {
+  const compiler = await compile('@import "tailwindcss";', {
+    async loadStylesheet(id, base) {
+      const file = id === 'tailwindcss' ? 'index.css' : id.replace('tailwindcss/', '')
+      return {
+        base: base || tailwindRoot.pathname,
+        content: await readFile(new URL(file, tailwindRoot), 'utf8')
+      }
+    }
+  })
+  return compiler.build(classes)
+}
 
 const cardDocument: DesignDocument = {
   type: 'document',
@@ -134,6 +152,38 @@ describe('@open-pencil/dom-css conversion', () => {
     expect(html).toContain('OpenPencil')
     expect(html).toContain('Design with code-shaped CSS.')
     expect(html).toContain('box-shadow')
+  })
+
+  it('projects a Tailwind card through generated CSS into a scene graph', async () => {
+    const runtime = createHeadlessCSSRuntime()
+    const classes = [
+      'flex',
+      'flex-col',
+      'gap-3',
+      'w-80',
+      'h-44',
+      'p-6',
+      'rounded-xl',
+      'bg-white',
+      'text-slate-900'
+    ]
+    const document = await runtime.computeStyles(
+      runtime.parseHTML(`<article class="${classes.join(' ')}"><h1>OpenPencil</h1></article>`),
+      await compileTailwindClasses(classes)
+    )
+    const graph = designDocumentToSceneGraph(document)
+    const page = graph.getPages()[0]
+    const card = page ? graph.getChildren(page.id)[0] : undefined
+
+    expect(card?.type).toBe('FRAME')
+    if (card?.type !== 'FRAME') return
+    expect(card.width).toBe(320)
+    expect(card.height).toBe(176)
+    expect(card.layoutMode).toBe('VERTICAL')
+    expect(card.itemSpacing).toBe(12)
+    expect(card.paddingTop).toBe(24)
+    expect(card.cornerRadius).toBe(12)
+    expect(card.fills[0]?.type).toBe('SOLID')
   })
 
   it('projects a scene graph back into DesignDOM', () => {
