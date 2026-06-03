@@ -27,7 +27,8 @@
   ],
   "scripts": {
     "build": "bunx tsdown --config tsdown.config.ts",
-    "prepack": "bun run build"
+    "prepack": "bun run build",
+    "test": "bun test tests"
   },
   "repository": {
     "type": "git",

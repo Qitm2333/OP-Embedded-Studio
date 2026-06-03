@@ -4,6 +4,17 @@ DOM and CSS projection utilities for OpenPencil.
 
 This package is the compatibility layer between OpenPencil's scene graph and DOM-shaped design documents. It is intentionally separate from `@open-pencil/core` so browser/CSS parser integrations can evolve without adding DOM dependencies to the renderer and editor core.
 
+## Testing
+
+This package has a package-local test suite so it can be validated independently from the app shell:
+
+```sh
+cd packages/dom-css
+bun run test
+```
+
+The repository also keeps integration/oracle coverage under `tests/engine/dom-css` and `tests/e2e/dom-css`. The package-local suite focuses on the library's public API, while the repo-level E2E suite verifies browser `getComputedStyle()` parity through Playwright.
+
 ## Runtime model
 
 Use the browser runtime as the high-fidelity source of truth whenever a DOM is available. It uses native parsing and `getComputedStyle()` inside an isolated sandbox:
