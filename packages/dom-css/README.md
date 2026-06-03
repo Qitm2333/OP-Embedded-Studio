@@ -4,14 +4,32 @@ DOM and CSS projection utilities for OpenPencil.
 
 This package is the compatibility layer between OpenPencil's scene graph and DOM-shaped design documents. It is intentionally separate from `@open-pencil/core` so browser/CSS parser integrations can evolve without adding DOM dependencies to the renderer and editor core.
 
-## Testing
+## Installation
 
-This package has a package-local test suite so it can be validated independently from the app shell:
+```sh
+bun add @open-pencil/dom-css @open-pencil/core
+```
+
+`@open-pencil/core` is a peer dependency because `@open-pencil/dom-css` projects to and from OpenPencil scene graphs. Consumers that only parse/serialize DesignDOM still need the peer installed for the package entrypoint.
+
+## Package-local checks
+
+This package can be validated independently from the app shell:
 
 ```sh
 cd packages/dom-css
 bun run test
+bun run typecheck
+bun run check
 ```
+
+Package scripts:
+
+- `bun run test` — package-local Bun tests for runtime, conversion, and Tailwind APIs
+- `bun run typecheck` — type-checks `src`, tests, and package scripts
+- `bun run build` — builds the distributable `dist` entrypoint
+- `bun run smoke:dist` — imports the built `dist` bundle and exercises the public API
+- `bun run check` — runs typecheck, tests, build, and dist smoke in sequence
 
 The repository also keeps integration/oracle coverage under `tests/engine/dom-css` and `tests/e2e/dom-css`. The package-local suite focuses on the library's public API, while the repo-level E2E suite verifies browser `getComputedStyle()` parity through Playwright.
 

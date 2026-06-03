@@ -12,11 +12,9 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
+    "types": ["bun"],
     "paths": {
-      "#dom-css/*": ["./src/*"],
-      "#core/*": ["../core/src/*"],
-      "@open-pencil/core": ["../core/src/index.ts"],
-      "@open-pencil/core/*": ["../core/src/*"]
+      "#dom-css/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
