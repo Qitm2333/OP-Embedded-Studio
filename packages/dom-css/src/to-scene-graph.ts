@@ -74,15 +74,18 @@ function firstStrokeColor(style: DesignStyleDeclaration) {
   )
 }
 
-function firstStrokeWeight(style: DesignStyleDeclaration) {
-  return firstCSSNumber(
-    style,
-    'border-width',
-    'border-top-width',
-    'border-right-width',
-    'border-bottom-width',
-    'border-left-width'
-  )
+function strokeWeightFromStyle(style: DesignStyleDeclaration) {
+  const borderWidth = firstCSSNumber(style, 'border-width')
+  if (borderWidth !== null) return borderWidth
+
+  const sideWeights = [
+    firstCSSNumber(style, 'border-top-width'),
+    firstCSSNumber(style, 'border-right-width'),
+    firstCSSNumber(style, 'border-bottom-width'),
+    firstCSSNumber(style, 'border-left-width')
+  ].filter((weight): weight is number => weight !== null)
+  if (sideWeights.length === 0) return null
+  return Math.max(...sideWeights)
 }
 
 function setBorderWeights(node: SceneNode, style: DesignStyleDeclaration, stroke: Stroke): void {
@@ -153,7 +156,7 @@ function applyElementStyle(node: SceneNode, style: DesignStyleDeclaration): void
 
   const strokes = colorToStrokeFromCSS(
     firstStrokeColor(style),
-    firstStrokeWeight(style)?.toString()
+    strokeWeightFromStyle(style)?.toString()
   )
   if (strokes.length > 0) {
     node.strokes = strokes
@@ -196,6 +199,12 @@ function applyTextStyle(node: SceneNode, style: DesignStyleDeclaration): void {
 
   const letterSpacing = parseCSSNumber(pickStyle(style, 'letter-spacing'))
   if (letterSpacing !== null) node.letterSpacing = letterSpacing
+
+  const opacity = parseCSSNumber(pickStyle(style, 'opacity'))
+  if (opacity !== null) node.opacity = opacity
+
+  const effects = dropShadowFromCSS(pickStyle(style, 'text-shadow'))
+  if (effects.length > 0) node.effects = effects
 
   const fontFamily = pickStyle(style, 'font-family')
   if (fontFamily)
@@ -247,7 +256,14 @@ function hasBoxStyle(style: DesignStyleDeclaration): boolean {
     'padding-right',
     'padding-bottom',
     'padding-left',
-    'width'
+    'padding-block',
+    'padding-inline',
+    'width',
+    'min-width',
+    'max-width',
+    'min-height',
+    'max-height',
+    'overflow'
   ].some((property) => pickStyle(style, property) !== undefined)
 }
 

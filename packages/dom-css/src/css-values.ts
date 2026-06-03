@@ -33,9 +33,15 @@ export function colorToFillFromCSS(value: string | undefined): Fill[] {
   return [{ type: 'SOLID', color, opacity: color.a, visible: true }]
 }
 
-export function strokeToCSS(stroke: Stroke | undefined): string | undefined {
+export function strokeColorToCSS(stroke: Stroke | undefined): string | undefined {
   if (!stroke?.visible) return undefined
-  return `${stroke.weight}px solid ${colorToCSS({ ...stroke.color, a: stroke.opacity })}`
+  return colorToCSS({ ...stroke.color, a: stroke.opacity })
+}
+
+export function strokeToCSS(stroke: Stroke | undefined): string | undefined {
+  const color = strokeColorToCSS(stroke)
+  if (!color || !stroke) return undefined
+  return `${stroke.weight}px solid ${color}`
 }
 
 export function colorToStrokeFromCSS(

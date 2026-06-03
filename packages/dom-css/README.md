@@ -72,15 +72,16 @@ For DesignDOM output without creating a scene graph, use `htmlToDesignDocument()
 
 ## Tailwind pipeline
 
-Tailwind classes flow through Tailwind's own compiler, then through the CSS runtime:
+Tailwind classes flow through Tailwind's own compiler, then through the CSS runtime. Prefer the browser runtime when a document is available so custom properties, `calc()`, modern colors, and browser-default behavior come from native `getComputedStyle()`:
 
 ```ts
-import { tailwindHTMLToSceneGraph } from '@open-pencil/dom-css'
+import { createBrowserCSSRuntime, tailwindHTMLToSceneGraph } from '@open-pencil/dom-css'
 
 const classes = ['flex', 'w-80', 'p-6', 'rounded-xl', 'bg-white']
 const graph = await tailwindHTMLToSceneGraph(
   `<article class="${classes.join(' ')}">OpenPencil</article>`,
-  classes
+  classes,
+  { runtime: createBrowserCSSRuntime({ sandbox: 'iframe' }) }
 )
 ```
 
@@ -91,7 +92,7 @@ const graph = await tailwindHTMLToSceneGraph(
 - DOM-shaped `DesignDocument` / `DesignElement` types
 - Browser-backed runtime adapter for native HTML parsing, serialization, and computed-style extraction
 - Headless runtime adapter with `parse5` HTML parsing and CSSOM-backed style computation for basic selectors, nested CSSOM rules, cascade order, inheritance, common shorthands, and simple custom-property/calc values
-- SceneGraph ⇄ DesignDOM conversion for simple HTML/CSS-shaped layouts
+- SceneGraph ⇄ DesignDOM conversion for simple HTML/CSS-shaped layouts, including flex alignment, logical padding, independent side borders, constraints, clipping, opacity, typography, and shadows
 - Tailwind v4 compiler adapter
 - Browser oracle fixtures for CSS variables, `calc()`, modern color output, and Tailwind utility output
 

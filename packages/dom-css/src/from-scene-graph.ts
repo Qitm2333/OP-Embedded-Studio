@@ -2,7 +2,13 @@ import { colorToCSS } from '@open-pencil/core/color'
 import { BLACK } from '@open-pencil/core/constants'
 import type { SceneGraph, SceneNode } from '@open-pencil/core/scene-graph'
 
-import { dropShadowToCSS, fillToCSS, sceneNodeSizeStyle, strokeToCSS } from './css-values'
+import {
+  dropShadowToCSS,
+  fillToCSS,
+  sceneNodeSizeStyle,
+  strokeColorToCSS,
+  strokeToCSS
+} from './css-values'
 import type { DesignDocument, DesignNode, DesignStyleDeclaration } from './types'
 
 export interface SceneGraphToDesignOptions {
@@ -52,19 +58,46 @@ function addCornerRadii(style: DesignStyleDeclaration, node: SceneNode): void {
 }
 
 function addStroke(style: DesignStyleDeclaration, node: SceneNode): void {
-  const stroke = strokeToCSS(node.strokes[0])
-  if (!stroke) return
+  const stroke = node.strokes[0]
+  const border = strokeToCSS(stroke)
+  if (!border) return
   if (!node.independentStrokeWeights) {
-    style.border = stroke
+    style.border = border
     return
   }
 
+  const color = strokeColorToCSS(stroke) ?? 'currentColor'
   style['border-style'] = 'solid'
-  style['border-color'] = stroke.split(' solid ').at(1) ?? 'currentColor'
-  if (node.borderTopWeight > 0) style['border-top-width'] = `${node.borderTopWeight}px`
-  if (node.borderRightWeight > 0) style['border-right-width'] = `${node.borderRightWeight}px`
-  if (node.borderBottomWeight > 0) style['border-bottom-width'] = `${node.borderBottomWeight}px`
-  if (node.borderLeftWeight > 0) style['border-left-width'] = `${node.borderLeftWeight}px`
+  style['border-color'] = color
+  style['border-top-width'] = `${node.borderTopWeight}px`
+  style['border-right-width'] = `${node.borderRightWeight}px`
+  style['border-bottom-width'] = `${node.borderBottomWeight}px`
+  style['border-left-width'] = `${node.borderLeftWeight}px`
+}
+
+function addPadding(style: DesignStyleDeclaration, node: SceneNode): void {
+  const { paddingTop, paddingRight, paddingBottom, paddingLeft } = node
+  if (paddingTop === 0 && paddingRight === 0 && paddingBottom === 0 && paddingLeft === 0) return
+
+  if (
+    paddingTop === paddingRight &&
+    paddingRight === paddingBottom &&
+    paddingBottom === paddingLeft
+  ) {
+    style.padding = `${paddingTop}px`
+    return
+  }
+
+  if (paddingTop === paddingBottom && paddingRight === paddingLeft) {
+    if (paddingTop > 0) style['padding-block'] = `${paddingTop}px`
+    if (paddingRight > 0) style['padding-inline'] = `${paddingRight}px`
+    return
+  }
+
+  if (paddingTop > 0) style['padding-top'] = `${paddingTop}px`
+  if (paddingRight > 0) style['padding-right'] = `${paddingRight}px`
+  if (paddingBottom > 0) style['padding-bottom'] = `${paddingBottom}px`
+  if (paddingLeft > 0) style['padding-left'] = `${paddingLeft}px`
 }
 
 function styleFromSceneNode(node: SceneNode): DesignStyleDeclaration {
@@ -87,10 +120,7 @@ function styleFromSceneNode(node: SceneNode): DesignStyleDeclaration {
     if (justifyContent) style['justify-content'] = justifyContent
     if (alignItems) style['align-items'] = alignItems
     if (node.itemSpacing > 0) style.gap = `${node.itemSpacing}px`
-    if (node.paddingTop > 0) style['padding-top'] = `${node.paddingTop}px`
-    if (node.paddingRight > 0) style['padding-right'] = `${node.paddingRight}px`
-    if (node.paddingBottom > 0) style['padding-bottom'] = `${node.paddingBottom}px`
-    if (node.paddingLeft > 0) style['padding-left'] = `${node.paddingLeft}px`
+    addPadding(style, node)
   }
 
   return style
@@ -107,6 +137,9 @@ function styleFromTextNode(node: SceneNode): DesignStyleDeclaration {
   if (node.letterSpacing !== 0) style['letter-spacing'] = `${node.letterSpacing}px`
   if (node.textAlignHorizontal !== 'LEFT')
     style['text-align'] = node.textAlignHorizontal.toLowerCase()
+  if (node.opacity < 1) style.opacity = String(node.opacity)
+  const shadow = dropShadowToCSS(node.effects[0])
+  if (shadow) style['text-shadow'] = shadow
   if (node.textDecoration !== 'NONE') {
     style['text-decoration-line'] =
       node.textDecoration === 'UNDERLINE' ? 'underline' : 'line-through'
