@@ -1,8 +1,17 @@
+import process from 'node:process'
+
 import type { Page } from '@playwright/test'
 
-import { compileTailwindCSS } from '@open-pencil/dom-css'
+import {
+  compileTailwindCSS,
+  designDocumentToSceneGraph,
+  jsx,
+  jsxToDesignDocument,
+  type DesignDocument
+} from '@open-pencil/dom-css'
 
 import {
+  DOM_CSS_COLORS,
   fixtureMatrixCSS,
   fixtureMatrixHTML,
   tailwindBadgeClasses,
@@ -19,6 +28,33 @@ async function setStyledContent(page: Page, css: string, body: string) {
     <style>${css}</style>
     ${body}
   `)
+}
+
+const BROWSER_RUNTIME_MODULE = `http://localhost:1420/@fs${process.cwd()}/packages/dom-css/src/runtime/browser.ts`
+
+async function browserRuntimeComputeStyles(
+  page: Page,
+  document: DesignDocument,
+  cssText: string,
+  sandbox: 'shadow-root' | 'iframe' = 'iframe'
+) {
+  if (!page.url().startsWith('http://localhost:1420')) {
+    await page.goto('/')
+  }
+
+  return page.evaluate(
+    async ({ designDocument, css, modulePath, sandboxMode }) => {
+      const { createBrowserCSSRuntime } = await import(modulePath)
+      const runtime = createBrowserCSSRuntime({ document: window.document, sandbox: sandboxMode })
+      return runtime.computeStyles(designDocument, css)
+    },
+    {
+      designDocument: document,
+      css: cssText,
+      modulePath: BROWSER_RUNTIME_MODULE,
+      sandboxMode: sandbox
+    }
+  )
 }
 
 async function computedStyleProperties(
@@ -279,5 +315,84 @@ test.describe('@open-pencil/dom-css browser CSS runtime oracle', () => {
     expect(styles.gap).toBe('12px')
     expect(styles.paddingTop).toBe('24px')
     expect(styles.width).toBe('176px')
+  })
+
+  test('computes styles through the browser runtime sandbox', async ({ page }) => {
+    await page.goto('/')
+    await setStyledContent(page, '.card { width: 20px; }', '<article class="card">Host</article>')
+    const document: DesignDocument = {
+      type: 'document',
+      children: [
+        {
+          type: 'element',
+          tagName: 'article',
+          attrs: { class: 'card' },
+          children: [{ type: 'text', text: 'OpenPencil' }]
+        }
+      ]
+    }
+    const css = `
+      :root { --spacing: 0.25rem; }
+      .card {
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--spacing) * 3);
+        width: calc(10rem + 16px);
+        padding: calc(var(--spacing) * 6);
+        box-shadow: 0px 8px 24px 0px ${DOM_CSS_COLORS.dialogShadow};
+      }
+    `
+
+    const iframeDocument = await browserRuntimeComputeStyles(page, document, css, 'iframe')
+    const shadowDocument = await browserRuntimeComputeStyles(page, document, css, 'shadow-root')
+    const iframeCard = iframeDocument.children[0]
+    const shadowCard = shadowDocument.children[0]
+
+    expect(iframeCard?.type).toBe('element')
+    expect(shadowCard?.type).toBe('element')
+    if (iframeCard?.type !== 'element' || shadowCard?.type !== 'element') return
+    expect(iframeCard.computedStyle?.width).toBe('176px')
+    expect(shadowCard.computedStyle?.width).toBe('176px')
+    expect(iframeCard.computedStyle?.gap).toBe('12px')
+    expect(iframeCard.computedStyle?.['padding-top']).toBe('24px')
+    expect(iframeCard.computedStyle?.['box-shadow']).toContain('rgba(15, 23, 42, 0.16)')
+
+    const hostWidth = await page
+      .locator('article.card')
+      .evaluate((element) => getComputedStyle(element).width)
+    expect(hostWidth).toBe('20px')
+  })
+
+  test('projects JSX and Tailwind through browser computed styles into scene graph', async ({
+    page
+  }) => {
+    const classes = [...tailwindCardClasses]
+    const document = await jsxToDesignDocument(
+      jsx('article', {
+        class: classes.join(' '),
+        children: jsx('h1', { children: 'OpenPencil' })
+      })
+    )
+    const css = await compileTailwindCSS(classes)
+    const computedDocument = await browserRuntimeComputeStyles(page, document, css, 'iframe')
+    const graph = designDocumentToSceneGraph(computedDocument)
+    const designCard = computedDocument.children[0]
+    const pageNode = graph.getPages()[0]
+    const card = pageNode ? graph.getChildren(pageNode.id)[0] : undefined
+
+    expect(designCard?.type).toBe('element')
+    if (designCard?.type !== 'element') return
+    expect(designCard.computedStyle?.display).toBe('flex')
+    expect(designCard.computedStyle?.width).toBe('320px')
+    expect(designCard.computedStyle?.height).toBe('176px')
+    expect(designCard.computedStyle?.['padding-top']).toBe('24px')
+
+    expect(card?.type).toBe('FRAME')
+    if (card?.type !== 'FRAME') return
+    expect(card.width).toBe(320)
+    expect(card.height).toBe(176)
+    expect(card.layoutMode).toBe('VERTICAL')
+    expect(card.itemSpacing).toBe(12)
+    expect(card.paddingLeft).toBe(24)
   })
 })
