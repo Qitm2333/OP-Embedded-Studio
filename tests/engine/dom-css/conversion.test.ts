@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 
+import type { SceneNode } from '@open-pencil/core/scene-graph'
 import {
   compileTailwindCSS,
   createHeadlessCSSRuntime,
@@ -15,8 +16,19 @@ import {
   computedCardDocument,
   cssCardCSS,
   cssCardHTML,
-  tailwindCardClasses
+  fixtureMatrixCSS,
+  fixtureMatrixHTML,
+  tailwindBadgeClasses,
+  tailwindCardClasses,
+  tailwindInputClasses,
+  tailwindNavClasses
 } from '#tests/helpers/dom-css'
+
+function expectFrame(node: SceneNode | undefined) {
+  expect(node?.type).toBe('FRAME')
+  if (node?.type !== 'FRAME') throw new Error('Expected frame node')
+  return node
+}
 
 describe('@open-pencil/dom-css conversion', () => {
   it('converts HTML and CSS to DesignDOM with one API call', async () => {
@@ -231,6 +243,98 @@ describe('@open-pencil/dom-css conversion', () => {
     if (roundTripToolbar?.type !== 'element') return
     expect(roundTripToolbar.inlineStyle?.['justify-content']).toBe('space-between')
     expect(roundTripToolbar.inlineStyle?.['align-items']).toBe('center')
+  })
+
+  it('projects the shared fixture matrix into editable scene graph layers', async () => {
+    const graph = await htmlToSceneGraph(fixtureMatrixHTML, {
+      cssText: fixtureMatrixCSS,
+      runtime: createHeadlessCSSRuntime()
+    })
+    const page = graph.getPages()[0]
+    const shell = expectFrame(page ? graph.getChildren(page.id)[0] : undefined)
+    expect(shell.width).toBe(480)
+    expect(shell.layoutMode).toBe('VERTICAL')
+    expect(shell.itemSpacing).toBe(24)
+    expect(shell.paddingLeft).toBe(32)
+
+    const [navbarNode, dialogNode] = graph.getChildren(shell.id)
+    const navbar = expectFrame(navbarNode)
+    const dialog = expectFrame(dialogNode)
+
+    expect(navbar.layoutMode).toBe('HORIZONTAL')
+    expect(navbar.primaryAxisAlign).toBe('SPACE_BETWEEN')
+    expect(navbar.counterAxisAlign).toBe('CENTER')
+    expect(navbar.cornerRadius).toBe(12)
+
+    const navActions = expectFrame(graph.getChildren(navbar.id)[1])
+    const badge = expectFrame(graph.getChildren(navActions.id)[1])
+    expect(badge.layoutMode).toBe('HORIZONTAL')
+    expect(badge.counterAxisAlign).toBe('CENTER')
+    expect(badge.cornerRadius).toBe(9999)
+    expect(graph.getChildren(badge.id)[0]?.type).toBe('TEXT')
+
+    expect(dialog.width).toBe(360)
+    expect(dialog.minWidth).toBe(320)
+    expect(dialog.maxWidth).toBe(420)
+    expect(dialog.itemSpacing).toBe(16)
+    expect(dialog.effects[0]?.type).toBe('DROP_SHADOW')
+    expect(dialog.effects[0]?.radius).toBe(40)
+
+    const [, , inputNode, buttonNode] = graph.getChildren(dialog.id)
+    const input = expectFrame(inputNode)
+    const button = expectFrame(buttonNode)
+    expect(input.width).toBe(312)
+    expect(input.height).toBe(40)
+    expect(input.cornerRadius).toBe(8)
+    expect(button.layoutMode).toBe('HORIZONTAL')
+    expect(button.primaryAxisAlign).toBe('CENTER')
+    expect(button.counterAxisAlign).toBe('CENTER')
+    expect(graph.getChildren(button.id)[0]?.type).toBe('TEXT')
+  })
+
+  it('projects Tailwind input, badge, and nav fixtures through generated CSS', async () => {
+    const runtime = createHeadlessCSSRuntime()
+    const inputClasses = [...tailwindInputClasses]
+    const badgeClasses = [...tailwindBadgeClasses]
+    const navClasses = [...tailwindNavClasses]
+    const classes = [...inputClasses, ...badgeClasses, ...navClasses]
+    const document = await runtime.computeStyles(
+      runtime.parseHTML(`
+        <nav class="${navClasses.join(' ')}">
+          <span>OpenPencil</span>
+          <span class="${badgeClasses.join(' ')}">Beta</span>
+        </nav>
+        <input class="${inputClasses.join(' ')}" value="https://openpencil.dev" />
+      `),
+      await compileTailwindCSS(classes)
+    )
+    const graph = designDocumentToSceneGraph(document)
+    const page = graph.getPages()[0]
+    const [nav, input] = page ? graph.getChildren(page.id) : []
+
+    expect(nav?.type).toBe('FRAME')
+    expect(input?.type).toBe('FRAME')
+    if (nav?.type !== 'FRAME' || input?.type !== 'FRAME') return
+    expect(nav.width).toBe(384)
+    expect(nav.height).toBe(48)
+    expect(nav.layoutMode).toBe('HORIZONTAL')
+    expect(nav.primaryAxisAlign).toBe('SPACE_BETWEEN')
+    expect(nav.counterAxisAlign).toBe('CENTER')
+    expect(nav.cornerRadius).toBe(12)
+
+    const badge = graph.getChildren(nav.id)[1]
+    expect(badge?.type).toBe('FRAME')
+    if (badge?.type !== 'FRAME') return
+    expect(badge.height).toBe(24)
+    expect(badge.layoutMode).toBe('HORIZONTAL')
+    expect(badge.primaryAxisAlign).toBe('CENTER')
+    expect(badge.counterAxisAlign).toBe('CENTER')
+
+    expect(input.width).toBe(320)
+    expect(input.height).toBe(40)
+    expect(input.paddingLeft).toBe(12)
+    expect(input.cornerRadius).toBe(6)
+    expect(input.strokes[0]?.weight).toBe(1)
   })
 
   it('projects a Tailwind card through generated CSS into a scene graph', async () => {

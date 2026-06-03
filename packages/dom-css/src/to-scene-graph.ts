@@ -137,8 +137,16 @@ function counterAxisAlignFromCSS(value: string | undefined): SceneNode['counterA
   return 'MIN'
 }
 
+function applyPadding(node: SceneNode, style: DesignStyleDeclaration): void {
+  node.paddingTop = firstCSSNumber(style, 'padding-top', 'padding-block', 'padding') ?? 0
+  node.paddingRight = firstCSSNumber(style, 'padding-right', 'padding-inline', 'padding') ?? 0
+  node.paddingBottom = firstCSSNumber(style, 'padding-bottom', 'padding-block', 'padding') ?? 0
+  node.paddingLeft = firstCSSNumber(style, 'padding-left', 'padding-inline', 'padding') ?? 0
+}
+
 function applyElementStyle(node: SceneNode, style: DesignStyleDeclaration): void {
   setNodeBox(node, style)
+  applyPadding(node, style)
 
   const fills = fillsFromStyle(style, 'background-color')
   if (fills.length > 0) node.fills = fills
@@ -168,10 +176,6 @@ function applyElementStyle(node: SceneNode, style: DesignStyleDeclaration): void
     node.primaryAxisAlign = primaryAxisAlignFromCSS(pickStyle(style, 'justify-content'))
     node.counterAxisAlign = counterAxisAlignFromCSS(pickStyle(style, 'align-items'))
     node.itemSpacing = firstCSSNumber(style, 'gap', 'column-gap', 'row-gap') ?? 0
-    node.paddingTop = firstCSSNumber(style, 'padding-top', 'padding') ?? 0
-    node.paddingRight = firstCSSNumber(style, 'padding-right', 'padding') ?? 0
-    node.paddingBottom = firstCSSNumber(style, 'padding-bottom', 'padding') ?? 0
-    node.paddingLeft = firstCSSNumber(style, 'padding-left', 'padding') ?? 0
   }
 }
 
@@ -225,9 +229,35 @@ function createTextNode(
   return node
 }
 
+function hasBoxStyle(style: DesignStyleDeclaration): boolean {
+  return [
+    'background-color',
+    'border-color',
+    'border-width',
+    'border-top-width',
+    'border-right-width',
+    'border-bottom-width',
+    'border-left-width',
+    'border-radius',
+    'box-shadow',
+    'display',
+    'height',
+    'padding',
+    'padding-top',
+    'padding-right',
+    'padding-bottom',
+    'padding-left',
+    'width'
+  ].some((property) => pickStyle(style, property) !== undefined)
+}
+
 function createElementNode(graph: SceneGraph, parentId: string, element: DesignElement): SceneNode {
   const style = mergedStyle(element)
-  if (isTextLikeElement(element) && element.children.every((child) => child.type === 'text')) {
+  if (
+    isTextLikeElement(element) &&
+    !hasBoxStyle(style) &&
+    element.children.every((child) => child.type === 'text')
+  ) {
     return createTextNode(graph, parentId, textContent(element), style)
   }
 
