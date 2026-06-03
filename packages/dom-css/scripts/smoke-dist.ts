@@ -1,10 +1,17 @@
-import {
-  compileTailwindCSS,
-  createHeadlessCSSRuntime,
-  htmlToSceneGraph,
-  serializeHTML,
-  type DesignDocument
-} from '../dist/index.js'
+import type * as DomCSS from '../src/index'
+
+const distPath = '../dist/index.js'
+const dist = await import(distPath)
+
+const compileTailwindCSS: typeof DomCSS.compileTailwindCSS = dist.compileTailwindCSS
+const createHeadlessCSSRuntime: typeof DomCSS.createHeadlessCSSRuntime =
+  dist.createHeadlessCSSRuntime
+const htmlToSceneGraph: typeof DomCSS.htmlToSceneGraph = dist.htmlToSceneGraph
+const jsx: typeof DomCSS.jsx = dist.jsx
+const jsxToDesignDocument: typeof DomCSS.jsxToDesignDocument = dist.jsxToDesignDocument
+const serializeHTML: typeof DomCSS.serializeHTML = dist.serializeHTML
+
+type DesignDocument = DomCSS.DesignDocument
 
 const document: DesignDocument = {
   type: 'document',
@@ -36,4 +43,11 @@ const page = graph.getPages()[0]
 const card = page ? graph.getChildren(page.id)[0] : undefined
 if (card?.type !== 'FRAME' || card.width !== 320) {
   throw new Error('Expected built htmlToSceneGraph() to produce a sized frame')
+}
+
+const jsxDocument = await jsxToDesignDocument(
+  jsx('article', { class: 'card', children: 'OpenPencil' })
+)
+if (jsxDocument.children[0]?.type !== 'element') {
+  throw new Error('Expected built JSX helpers to produce DesignDOM elements')
 }

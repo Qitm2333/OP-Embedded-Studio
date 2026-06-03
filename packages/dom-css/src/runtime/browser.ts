@@ -54,6 +54,7 @@ const DEFAULT_COMPUTED_PROPERTIES = [
   'padding-top',
   'text-align',
   'text-decoration-line',
+  'text-shadow',
   'width'
 ] as const
 

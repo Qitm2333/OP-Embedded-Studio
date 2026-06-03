@@ -70,6 +70,27 @@ const graph = await htmlToSceneGraph(
 
 For DesignDOM output without creating a scene graph, use `htmlToDesignDocument()`.
 
+## JSX/DOM authoring
+
+Use the package as a JSX import source when you want DOM-shaped authoring that still flows through DesignDOM, CSSOM, and SceneGraph conversion:
+
+```tsx
+/** @jsxImportSource @open-pencil/dom-css */
+import { createBrowserCSSRuntime, jsxToSceneGraph } from '@open-pencil/dom-css'
+
+const graph = await jsxToSceneGraph(
+  <article class="card">
+    <h1>OpenPencil</h1>
+  </article>,
+  {
+    cssText: '.card { display: flex; width: 320px; padding: 24px; }',
+    runtime: createBrowserCSSRuntime({ sandbox: 'iframe' })
+  }
+)
+```
+
+The JSX runtime preserves `class`, attributes, inline `style`, text, fragments, and simple function components as DesignDOM. Class semantics still come from generated or authored CSS passed to a CSS runtime; the JSX layer does not interpret Tailwind or CSS utility names directly.
+
 ## Tailwind pipeline
 
 Tailwind classes flow through Tailwind's own compiler, then through the CSS runtime. Prefer the browser runtime when a document is available so custom properties, `calc()`, modern colors, and browser-default behavior come from native `getComputedStyle()`:
@@ -93,6 +114,7 @@ const graph = await tailwindHTMLToSceneGraph(
 - Browser-backed runtime adapter for native HTML parsing, serialization, and computed-style extraction
 - Headless runtime adapter with `parse5` HTML parsing and CSSOM-backed style computation for basic selectors, nested CSSOM rules, cascade order, inheritance, common shorthands, and simple custom-property/calc values
 - SceneGraph ⇄ DesignDOM conversion for simple HTML/CSS-shaped layouts, including flex alignment, logical padding, independent side borders, constraints, clipping, opacity, typography, and shadows
+- JSX runtime helpers for DOM-shaped authoring into DesignDOM and SceneGraph
 - Tailwind v4 compiler adapter
 - Browser oracle fixtures for CSS variables, `calc()`, modern color output, and Tailwind utility output
 
