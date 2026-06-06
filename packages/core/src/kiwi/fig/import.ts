@@ -1,7 +1,8 @@
 import { isNotNil } from 'es-toolkit/predicate'
 
-import { BLACK } from '#core/constants'
 import type { NodeChange, VariableDataValuesEntry, Color, GUID } from '@open-pencil/kiwi/fig/codec'
+
+import { BLACK } from '#core/constants'
 import { populateAndApplyOverrides } from '#core/kiwi/fig/instance-overrides'
 import type { InstanceNodeChange } from '#core/kiwi/fig/instance-overrides'
 import { setLazyFigImportContext } from '#core/kiwi/fig/lazy-import'

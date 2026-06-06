@@ -1,6 +1,7 @@
 import { prepareWithSegments, layoutWithLines } from '@chenglou/pretext'
 
 import type { NodeChange } from '@open-pencil/kiwi/fig/codec'
+
 import { encodePathCommandsBlob } from '#core/kiwi/fig/node-change/path-commands'
 import type { SceneNode } from '#core/scene-graph'
 import { normalizeFontFamily, weightToFigmaStyle, weightToStyle } from '#core/text/fonts'

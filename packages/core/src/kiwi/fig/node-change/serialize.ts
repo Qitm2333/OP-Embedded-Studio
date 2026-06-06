@@ -14,6 +14,7 @@ export {
 export { buildFontDigestMap } from './font/digests'
 
 import type { NodeChange, Paint, VariableConsumptionEntry } from '@open-pencil/kiwi/fig/codec'
+
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import type { Color, GUID, JsonObject, Matrix } from '#core/types'
 

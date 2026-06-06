@@ -1,4 +1,5 @@
 import type { NodeChange, Paint } from '@open-pencil/kiwi/fig/codec'
+
 import type { CharacterStyleOverride, SceneNode } from '#core/scene-graph'
 import { normalizeFontFamily, weightToFigmaStyle } from '#core/text/fonts'
 

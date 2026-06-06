@@ -27,6 +27,7 @@ import { resolveGeometryPaths, resolveVectorNetwork } from './vector-geometry'
 export { resolveGeometryPaths } from './vector-geometry'
 
 import type { NodeChange } from '@open-pencil/kiwi/fig/codec'
+
 import type {
   SceneNode,
   NodeType,

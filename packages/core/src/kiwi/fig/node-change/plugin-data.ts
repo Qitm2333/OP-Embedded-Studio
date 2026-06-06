@@ -106,6 +106,8 @@ function parseExportSettingsPluginValue(value: string | null): ExportSetting[] |
       if (typeof scale !== 'number' || !Number.isFinite(scale) || !isExportFormatId(format)) {
         return []
       }
+      // Clamp at the file-format boundary: imported plugin data may carry an
+      // out-of-range scale the UI would never produce.
       return [{ scale: clampExportScale(scale), format }]
     })
     return settings.length === parsed.length ? settings : null
@@ -128,6 +130,7 @@ function extractNativeConstraintScale(constraint: unknown): number {
   const type = (constraint as { type?: unknown }).type
   if (type !== 'CONTENT_SCALE' && type !== 0) return 1
   const value = (constraint as { value?: unknown }).value
+  // Clamp native CONTENT_SCALE too: malformed .fig data can carry huge multipliers.
   return typeof value === 'number' && Number.isFinite(value) ? clampExportScale(value) : 1
 }
 

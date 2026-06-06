@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 
 import type { NodeChange, Paint } from '@open-pencil/kiwi/fig/codec'
+
 import { nodeChangeToProps } from '#core/kiwi/fig/node-change/convert'
 import { sceneNodeToKiwi } from '#core/kiwi/fig/node-change/serialize'
 import { SceneGraph } from '#core/scene-graph'

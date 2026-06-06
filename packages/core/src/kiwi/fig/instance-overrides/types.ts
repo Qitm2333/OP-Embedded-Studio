@@ -1,4 +1,5 @@
 import type { GUID, NodeChange, VariableConsumptionEntry } from '@open-pencil/kiwi/fig/codec'
+
 import type { SceneGraph } from '#core/scene-graph'
 import type { Matrix, Vector } from '#core/types'
 

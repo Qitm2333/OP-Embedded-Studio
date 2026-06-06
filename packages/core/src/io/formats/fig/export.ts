@@ -1,13 +1,13 @@
 import type { CanvasKit } from 'canvaskit-wasm'
 import { deflateSync, inflateSync } from 'fflate'
 
+import { initCodec, getCompiledSchema, getSchemaBytes } from '@open-pencil/kiwi/fig/codec'
+import type { NodeChange } from '@open-pencil/kiwi/fig/codec'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from '@open-pencil/kiwi/schema-runtime'
 
 import type { SkiaRenderer } from '#core/canvas'
 import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from '#core/constants'
 import { renderThumbnail } from '#core/io/formats/raster'
-import { initCodec, getCompiledSchema, getSchemaBytes } from '@open-pencil/kiwi/fig/codec'
-import type { NodeChange } from '@open-pencil/kiwi/fig/codec'
 import { populateAllLazyFigImportRoots } from '#core/kiwi/fig/lazy-import'
 import { stringToGuid } from '#core/kiwi/fig/node-change/convert'
 import {

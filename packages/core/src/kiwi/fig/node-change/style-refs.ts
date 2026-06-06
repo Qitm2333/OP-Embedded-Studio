@@ -1,4 +1,5 @@
 import type { GUID, NodeChange } from '@open-pencil/kiwi/fig/codec'
+
 import { guidToString } from '#core/kiwi/fig/node-change/guid'
 
 const TEXT_STYLE_FIELDS = [

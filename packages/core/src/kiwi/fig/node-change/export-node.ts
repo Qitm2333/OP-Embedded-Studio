@@ -1,6 +1,7 @@
+import type { NodeChange, Paint } from '@open-pencil/kiwi/fig/codec'
+
 /* eslint-disable max-lines */
 import { bytesToHex } from '#core/bytes/hex'
-import type { NodeChange, Paint } from '@open-pencil/kiwi/fig/codec'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import type { Color, GUID, Matrix, Vector } from '#core/types'
 
