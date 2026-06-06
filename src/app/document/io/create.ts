@@ -56,7 +56,7 @@ export function createDocumentIOActions(
     setDocumentSource: sourceActions.setDocumentSource,
     fitCurrentPageToViewport
   })
-  const { openDOMFile } = createDOMOpenActions({
+  const { openDOMFile, importDOMText } = createDOMOpenActions({
     editor,
     state,
     setDocumentSource: sourceActions.setDocumentSource,
@@ -73,6 +73,7 @@ export function createDocumentIOActions(
     disposeDocumentIO: sourceActions.disposeDocumentIO,
     openFigFile,
     openDOMFile,
+    importDOMText,
     saveFigFile: sourceActions.saveFigFile,
     saveFigFileAs: sourceActions.saveFigFileAs
   }

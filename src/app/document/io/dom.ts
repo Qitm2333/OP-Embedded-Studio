@@ -28,6 +28,11 @@ type DOMImportOptions = {
   path?: string
 }
 
+type DOMTextImportOptions = {
+  cssText?: string
+  documentName?: string
+}
+
 function documentNameFor(file: File): string {
   return file.name.replace(/\.(html?|xhtml)$/i, '')
 }
@@ -38,19 +43,41 @@ export function createDOMOpenActions({
   setDocumentSource,
   fitCurrentPageToViewport
 }: OpenDOMFileOptions) {
+  async function applyDOMText(html: string, options: DOMTextImportOptions) {
+    await yieldToUI()
+    const pageName = options.documentName ?? 'DOM Import'
+    const graph = await browserHTMLToSceneGraph(html, { cssText: options.cssText, pageName })
+    await yieldToUI()
+    await applyImportedDocument(editor, graph)
+    state.documentName = pageName
+    await fitCurrentPageToViewport()
+    editor.requestRender()
+    return pageName
+  }
+
+  async function importDOMText(html: string, options: DOMTextImportOptions = {}) {
+    try {
+      state.loading = true
+      const pageName = await applyDOMText(html, options)
+      setDocumentSource(`${pageName}.html`, 'html')
+      toast.info('Imported DOM/CSS document')
+    } catch (e) {
+      console.error('Failed to import DOM/CSS:', e)
+      toast.error(`Failed to import DOM/CSS: ${e instanceof Error ? e.message : String(e)}`)
+    } finally {
+      state.loading = false
+    }
+  }
+
   async function openDOMFile(file: File, options: DOMImportOptions = {}) {
     try {
       state.loading = true
-      await yieldToUI()
       const html = await file.text()
-      const pageName = documentNameFor(file)
-      const graph = await browserHTMLToSceneGraph(html, { cssText: options.cssText, pageName })
-      await yieldToUI()
-      await applyImportedDocument(editor, graph)
-      state.documentName = pageName
+      await applyDOMText(html, {
+        cssText: options.cssText,
+        documentName: documentNameFor(file)
+      })
       setDocumentSource(file.name, 'html', options.handle, options.path)
-      await fitCurrentPageToViewport()
-      editor.requestRender()
     } catch (e) {
       console.error('Failed to open DOM/CSS file:', e)
       toast.error(`Failed to open DOM/CSS file: ${e instanceof Error ? e.message : String(e)}`)
@@ -59,5 +86,5 @@ export function createDOMOpenActions({
     }
   }
 
-  return { openDOMFile }
+  return { openDOMFile, importDOMText }
 }

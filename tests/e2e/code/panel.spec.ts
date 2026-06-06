@@ -98,3 +98,25 @@ test('switching back to Design tab works', async () => {
       .first()
   ).toBeVisible()
 })
+
+test('imports HTML and CSS into the canvas', async () => {
+  await codeTab().click()
+  await editor.page.getByTestId('code-panel-import-toggle').click()
+  await editor.page.getByTestId('code-panel-import-html').fill('<div class="card">Hello DOM</div>')
+  await editor.page
+    .getByTestId('code-panel-import-css')
+    .fill('.card { width: 240px; height: 120px; padding: 16px; background: #ffffff; }')
+  await editor.page.getByTestId('code-panel-import').click()
+  await editor.page.waitForFunction(() => {
+    const store = window.openPencil?.getStore?.()
+    return store?.graph.getAllNodes().some((node) => node.name.includes('Hello DOM'))
+  })
+  await editor.canvas.waitForRender()
+
+  const imported = await editor.page.evaluate(() => {
+    const store = window.openPencil?.getStore?.()
+    if (!store) throw new Error('OpenPencil store not initialized')
+    return store.graph.getAllNodes().some((node) => node.name.includes('Hello DOM'))
+  })
+  expect(imported).toBe(true)
+})
