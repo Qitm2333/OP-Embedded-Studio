@@ -32,6 +32,21 @@ describe('@open-pencil/dom-css runtime', () => {
     expect(section.children[0]).toEqual({ type: 'text', text: 'OpenPencil' })
   })
 
+  it('parses inline style values with embedded semicolons', () => {
+    const runtime = createHeadlessCSSRuntime()
+    const document = runtime.parseHTML(
+      '<section style="background-image: url(\'data:image/svg+xml;utf8,<svg></svg>\'); width: 320px">OpenPencil</section>'
+    )
+    const section = document.children[0]
+
+    expect(section?.type).toBe('element')
+    if (section?.type !== 'element') return
+    expect(section.inlineStyle?.['background-image']).toBe(
+      "url('data:image/svg+xml;utf8,<svg></svg>')"
+    )
+    expect(section.inlineStyle?.width).toBe('320px')
+  })
+
   it('computes selector specificity, inheritance, and shorthands', async () => {
     const runtime = createHeadlessCSSRuntime()
     const parsed = runtime.parseHTML(`
