@@ -52,6 +52,7 @@
     "@open-pencil/cli": "workspace:*",
     "@open-pencil/core": "workspace:*",
     "@open-pencil/dom-css": "workspace:*",
+    "@open-pencil/kiwi": "workspace:*",
     "@open-pencil/vue": "workspace:*",
     "@openrouter/ai-sdk-provider": "^2.9.0",
     "@tailwindcss/vite": "^4.2.1",

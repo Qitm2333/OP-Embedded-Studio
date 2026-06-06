@@ -1,6 +1,8 @@
 import type { CanvasKit } from 'canvaskit-wasm'
 import { deflateSync, inflateSync } from 'fflate'
 
+import { decodeBinarySchema, compileSchema, ByteBuffer } from '@open-pencil/kiwi/schema-runtime'
+
 import type { SkiaRenderer } from '#core/canvas'
 import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from '#core/constants'
 import { renderThumbnail } from '#core/io/formats/raster'
@@ -16,7 +18,6 @@ import {
   makeDocumentNodeChange,
   makeCanvasNodeChange
 } from '#core/kiwi/fig/node-change/serialize'
-import { decodeBinarySchema, compileSchema, ByteBuffer } from '#core/kiwi/schema-runtime'
 import type { SceneGraph, VariableValue } from '#core/scene-graph'
 import type { GUID } from '#core/types'
 

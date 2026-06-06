@@ -1,5 +1,7 @@
 import { inflateSync, deflateSync } from 'fflate'
 
+import { decodeBinarySchema, compileSchema, ByteBuffer } from '@open-pencil/kiwi/schema-runtime'
+
 import { shapeTextForClipboard } from './canvas/text'
 import { initCodec, getCompiledSchema, getSchemaBytes } from './kiwi/fig/codec'
 import type { NodeChange as KiwiNodeChange } from './kiwi/fig/codec'
@@ -15,7 +17,6 @@ import {
   makeCanvasNodeChange,
   buildFontDigestMap
 } from './kiwi/fig/node-change/serialize'
-import { decodeBinarySchema, compileSchema, ByteBuffer } from './kiwi/schema-runtime'
 import { randomInt } from './random'
 import type { SceneGraph, SceneNode } from './scene-graph'
 import { buildDerivedTextDataV4 } from './text/derived-text/clipboard'

@@ -17,6 +17,7 @@
         "@open-pencil/cli": "workspace:*",
         "@open-pencil/core": "workspace:*",
         "@open-pencil/dom-css": "workspace:*",
+        "@open-pencil/kiwi": "workspace:*",
         "@open-pencil/vue": "workspace:*",
         "@openrouter/ai-sdk-provider": "^2.9.0",
         "@tailwindcss/vite": "^4.2.1",
@@ -120,6 +121,7 @@
       "dependencies": {
         "@chenglou/pretext": "^0.0.7",
         "@iconify/utils": "^3.1.0",
+        "@open-pencil/kiwi": "workspace:*",
         "@tauri-apps/api": "^2",
         "acorn": "^8.16.0",
         "canvaskit-wasm": "^0.40.0",

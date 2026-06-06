@@ -20,7 +20,12 @@ import { SceneGraph } from '#core/scene-graph'
 import { fontManager } from '#core/text'
 
 import { expectDefined } from '#tests/helpers/assert'
-import { coreSourcePath, publicPath, testPath as repoTestPath } from '#tests/helpers/paths'
+import {
+  coreSourcePath,
+  publicPath,
+  repoPath,
+  testPath as repoTestPath
+} from '#tests/helpers/paths'
 
 // === CLAIM EXTRACTION ===
 // Each claim is: [doc_section, claim_text, verification_strategy]
@@ -34,7 +39,7 @@ const rendererPath = coreSourcePath('canvas/renderer.ts')
 const sgTypesPath = coreSourcePath('scene-graph/types.ts')
 const nodeExportPath = coreSourcePath('kiwi/fig/node-change/export-node.ts')
 const convertPath = coreSourcePath('kiwi/fig/node-change/paint.ts')
-const schemaPath = coreSourcePath('kiwi/fig/codec/schema/fig.kiwi')
+const schemaPath = repoPath('packages/kiwi/src/fig/schema/fig.kiwi')
 const codecPath = coreSourcePath('kiwi/fig/codec/index.ts')
 const lifecyclePath = coreSourcePath('canvas/renderer/lifecycle.ts')
 

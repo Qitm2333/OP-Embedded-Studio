@@ -48,4 +48,4 @@ export {
   getKiwiMessageType,
   parseVarint,
   FIG_WIRE_MAGIC
-} from './fig/codec/protocol'
+} from '@open-pencil/kiwi/fig'
