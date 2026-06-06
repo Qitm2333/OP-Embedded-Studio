@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 const rootDir = fileURLToPath(new URL('../../..', import.meta.url))
 const packageDirs = [
   'packages/kiwi',
+  'packages/fig',
   'packages/core',
   'packages/dom-css',
   'packages/vue',
@@ -69,6 +70,7 @@ try {
   nodeEval("await import('@open-pencil/kiwi/fig/container')", tempDir)
   nodeEval("await import('@open-pencil/kiwi/fig/guid')", tempDir)
   nodeEval("await import('@open-pencil/kiwi/fig/parse')", tempDir)
+  nodeEval("await import('@open-pencil/fig')", tempDir)
   nodeEval("await import('@open-pencil/core')", tempDir)
   nodeEval("await import('@open-pencil/core/scene-graph')", tempDir)
   nodeEval("await import('@open-pencil/dom-css')", tempDir)
@@ -83,7 +85,19 @@ try {
     tempDir
   )
   nodeEval(
+    "const { buildFigKiwi, parseFigKiwiChunks } = await import('@open-pencil/kiwi/fig/container'); const chunks = parseFigKiwiChunks(buildFigKiwi(new Uint8Array([1]), new Uint8Array([2]))); if (chunks?.length !== 2) throw new Error('Kiwi container subpath failed')",
+    tempDir
+  )
+  nodeEval(
+    "const { FIG_PACKAGE_STATUS } = await import('@open-pencil/fig'); if (FIG_PACKAGE_STATUS !== 'scaffold') throw new Error('Fig package smoke failed')",
+    tempDir
+  )
+  nodeEval(
     "const { htmlToSceneGraph } = await import('@open-pencil/dom-css'); const graph = await htmlToSceneGraph('<div class=card>OpenPencil</div>', { cssText: '.card { width: 320px; }' }); if (graph.getPages()[0].width !== 320) throw new Error('DOM/CSS scene graph smoke failed')",
+    tempDir
+  )
+  nodeEval(
+    "const { jsx, jsxToDesignDocument } = await import('@open-pencil/dom-css/jsx-runtime'); const document = await jsxToDesignDocument(jsx('section', { class: 'card', style: { width: '120px' }, children: 'OpenPencil' })); const node = document.children[0]; if (node?.type !== 'element' || node.inlineStyle?.width !== '120px') throw new Error('DOM/CSS JSX runtime smoke failed')",
     tempDir
   )
 

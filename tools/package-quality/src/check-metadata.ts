@@ -4,6 +4,8 @@ import { join } from 'node:path'
 const publicPackages = [
   'packages/core',
   'packages/dom-css',
+  'packages/kiwi',
+  'packages/fig',
   'packages/cli',
   'packages/mcp',
   'packages/vue'
