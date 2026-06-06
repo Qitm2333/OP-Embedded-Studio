@@ -19,7 +19,8 @@ export default defineConfig({
   entry: {
     index: './src/index.ts',
     'schema-runtime': './src/schema-runtime/index.ts',
-    fig: './src/fig/index.ts'
+    fig: './src/fig/index.ts',
+    'fig/codec': './src/fig/codec.ts'
   },
   plugins: [rawText()],
   platform: 'neutral',
