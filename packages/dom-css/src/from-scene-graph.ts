@@ -84,13 +84,15 @@ function addStroke(style: DesignStyleDeclaration, node: SceneNode): void {
   const stroke = node.strokes[0]
   const border = strokeToCSS(stroke)
   if (!border) return
+  const borderStyle = node.dashPattern.length > 0 ? 'dashed' : 'solid'
   if (!node.independentStrokeWeights) {
     style.border = border
+    if (borderStyle !== 'solid') style['border-style'] = borderStyle
     return
   }
 
   const color = strokeColorToCSS(stroke) ?? 'currentColor'
-  style['border-style'] = 'solid'
+  style['border-style'] = borderStyle
   style['border-color'] = color
   style['border-top-width'] = `${node.borderTopWeight}px`
   style['border-right-width'] = `${node.borderRightWeight}px`

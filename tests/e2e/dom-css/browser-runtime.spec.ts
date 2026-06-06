@@ -274,6 +274,33 @@ test.describe('@open-pencil/dom-css browser CSS runtime oracle', () => {
     expect(styles.width).toBe('176px')
   })
 
+  test('resolves border styles in a real browser', async ({ page }) => {
+    await setStyledContent(
+      page,
+      `
+        .outline {
+          border: 2px dashed #0f172a;
+          width: 160px;
+          height: 80px;
+        }
+      `,
+      '<div class="outline"></div>'
+    )
+
+    const outline = await computedStyleProperties(page, '.outline', [
+      'border-bottom-color',
+      'border-bottom-style',
+      'border-bottom-width',
+      'height',
+      'width'
+    ])
+    expect(outline['border-bottom-color']).toBe('rgb(15, 23, 42)')
+    expect(outline['border-bottom-style']).toBe('dashed')
+    expect(outline['border-bottom-width']).toBe('2px')
+    expect(outline.width).toBe('160px')
+    expect(outline.height).toBe('80px')
+  })
+
   test('resolves aspect ratio, object fit, text transform, and white space in a real browser', async ({
     page
   }) => {

@@ -88,6 +88,23 @@ function strokeWeightFromStyle(style: DesignStyleDeclaration) {
   return Math.max(...sideWeights)
 }
 
+function borderStyleFromCSS(style: DesignStyleDeclaration): string | undefined {
+  return (
+    pickStyle(style, 'border-style') ??
+    pickStyle(style, 'border-top-style') ??
+    pickStyle(style, 'border-right-style') ??
+    pickStyle(style, 'border-bottom-style') ??
+    pickStyle(style, 'border-left-style')
+  )
+}
+
+function dashPatternFromCSS(style: DesignStyleDeclaration, strokeWeight: number): number[] {
+  const borderStyle = borderStyleFromCSS(style)
+  if (borderStyle === 'dashed') return [strokeWeight * 3, strokeWeight * 2]
+  if (borderStyle === 'dotted') return [strokeWeight, strokeWeight]
+  return []
+}
+
 function setBorderWeights(node: SceneNode, style: DesignStyleDeclaration, stroke: Stroke): void {
   const top = firstCSSNumber(style, 'border-top-width') ?? stroke.weight
   const right = firstCSSNumber(style, 'border-right-width') ?? stroke.weight
@@ -197,6 +214,11 @@ function applyElementStyle(node: SceneNode, style: DesignStyleDeclaration): void
     strokeWeightFromStyle(style)?.toString()
   )
   if (strokes.length > 0) {
+    const dashPattern = dashPatternFromCSS(style, strokes[0].weight)
+    if (dashPattern.length > 0) {
+      strokes[0].dashPattern = dashPattern
+      node.dashPattern = dashPattern
+    }
     node.strokes = strokes
     setBorderWeights(node, style, strokes[0])
   }
@@ -291,10 +313,15 @@ function hasBoxStyle(style: DesignStyleDeclaration): boolean {
   return [
     'background-color',
     'border-color',
+    'border-style',
     'border-width',
+    'border-top-style',
     'border-top-width',
+    'border-right-style',
     'border-right-width',
+    'border-bottom-style',
     'border-bottom-width',
+    'border-left-style',
     'border-left-width',
     'border-radius',
     'box-shadow',

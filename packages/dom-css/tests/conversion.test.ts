@@ -41,6 +41,7 @@ function createStyleRoundTripGraph() {
           'padding-block': '8px',
           'padding-inline': '12px',
           'border-color': TEST_COLORS.slate200,
+          'border-style': 'dashed',
           'border-top-width': '0px',
           'border-right-width': '2px',
           'border-bottom-width': '0px',
@@ -85,6 +86,7 @@ function expectStyleRoundTripPanel(graph: SceneGraph) {
   expect(panel.borderRightWeight).toBe(2)
   expect(panel.borderBottomWeight).toBe(0)
   expect(panel.borderLeftWeight).toBe(4)
+  expect(panel.dashPattern).toEqual([12, 8])
   expect(panel.opacity).toBe(0.75)
   expect(panel.effects[0]?.type).toBe('DROP_SHADOW')
   return panel
@@ -106,6 +108,7 @@ function expectStyleRoundTripText(graph: SceneGraph, panel: SceneNode) {
 function expectRoundTripPanelStyle(element: DesignElement) {
   expect(element.inlineStyle?.['padding-block']).toBe('8px')
   expect(element.inlineStyle?.['padding-inline']).toBe('12px')
+  expect(element.inlineStyle?.['border-style']).toBe('dashed')
   expect(element.inlineStyle?.['border-top-width']).toBe('0px')
   expect(element.inlineStyle?.['border-left-width']).toBe('4px')
   expect(element.inlineStyle?.opacity).toBe('0.75')
