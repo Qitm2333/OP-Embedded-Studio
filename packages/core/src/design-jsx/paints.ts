@@ -1,7 +1,14 @@
+import type {
+  BlendMode,
+  Fill,
+  FillType,
+  GradientStop,
+  GradientTransform
+} from '@open-pencil/scene-graph'
+import type { Color } from '@open-pencil/scene-graph/primitives'
+
 import { colorToFill, parseColor } from '#core/color'
 import { TRANSPARENT } from '#core/constants'
-import type { BlendMode, Fill, FillType, GradientStop, GradientTransform } from '#core/scene-graph'
-import type { Color } from '#core/types'
 
 export type PaintColor = string | Color
 export type PaintStop = readonly [PaintColor, number] | { color: PaintColor; position: number }

@@ -1,4 +1,4 @@
-import type { Color } from '#core/types'
+import type { Color } from '@open-pencil/scene-graph/primitives'
 
 const VAR_SYMBOL = Symbol.for('open-pencil.variable')
 

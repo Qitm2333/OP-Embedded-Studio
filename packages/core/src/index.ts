@@ -1,13 +1,3 @@
-export type { GUID, Color, Vector, Matrix, Rect } from './types'
-export {
-  computeBounds,
-  computeAbsoluteBounds,
-  degToRad,
-  radToDeg,
-  rotatePoint,
-  rotatedCorners,
-  rotatedBBox
-} from './geometry'
 export { randomHex, randomInt, randomIndex } from './random'
 
 export * from './constants'
@@ -74,7 +64,7 @@ export {
   type StyleRun,
   type SceneGraphEvents,
   type DocumentColorSpace
-} from './scene-graph'
+} from '@open-pencil/scene-graph'
 
 export { FigmaAPI, FigmaNodeProxy, computeImageHash, type FigmaFontName } from './figma-api'
 export {
@@ -248,8 +238,8 @@ export {
   type NearestResult,
   type NetworkNearestResult
 } from './vector/bezier'
-export { computeSelectionBounds, computeSnap, type SnapGuide } from './scene-graph/snap'
-export { UndoManager, type UndoEntry, type UndoManagerOptions } from './scene-graph/undo'
+export { computeSelectionBounds, computeSnap, type SnapGuide } from '@open-pencil/scene-graph/snap'
+export { UndoManager, type UndoEntry, type UndoManagerOptions } from '@open-pencil/scene-graph/undo'
 export { TextEditor, type TextCaret, type TextEditorState } from './text/editor'
 export {
   getStyleAt,
@@ -438,11 +428,3 @@ export {
   getStockPhotoProviders
 } from './tools/stock-photo'
 export type { StockPhotoProvider, StockPhotoResult } from './tools/stock-photo'
-
-export {
-  getAbsoluteRotation,
-  getWorldHandles,
-  getWorldMatrix,
-  getAbsolutePosition
-} from './canvas/coordinate'
-export { default as TransformMatrix } from './canvas/matrix'

@@ -1,6 +1,5 @@
 import type { NodeChange } from '@open-pencil/kiwi/fig/codec'
-
-import type { SceneNode } from '#core/scene-graph'
+import type { SceneNode } from '@open-pencil/scene-graph'
 
 interface DerivedTextDataOptions {
   node: SceneNode

@@ -1,8 +1,8 @@
 import { guidToString } from '@open-pencil/kiwi/fig/guid'
+import { parseVariantName } from '@open-pencil/scene-graph/variant-name'
 
 /* eslint-disable max-lines -- kiwi↔scene conversion helpers are tightly coupled */
 import { DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from '#core/constants'
-import { parseVariantName } from '#core/scene-graph/variant-name'
 import { styleToWeight } from '#core/text/fonts'
 
 import { convertEffects, convertFills, convertStrokes } from './paint'
@@ -28,7 +28,6 @@ import { resolveGeometryPaths, resolveVectorNetwork } from './vector-geometry'
 export { resolveGeometryPaths } from './vector-geometry'
 
 import type { NodeChange } from '@open-pencil/kiwi/fig/codec'
-
 import type {
   SceneNode,
   NodeType,
@@ -50,8 +49,8 @@ import type {
   ComponentPropertyType,
   SymbolLink,
   VariantPropSpec
-} from '#core/scene-graph'
-import type { GUID } from '#core/types'
+} from '@open-pencil/scene-graph'
+import type { GUID } from '@open-pencil/scene-graph/primitives'
 
 export { guidToString, stringToGuid } from '@open-pencil/kiwi/fig/guid'
 

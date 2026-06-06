@@ -1,7 +1,6 @@
-import { getWorldMatrix } from '#core/canvas/coordinate'
-import Matrix from '#core/canvas/matrix'
-
 import type { SceneGraph, SceneNode, NodeType } from './'
+import { getWorldMatrix } from './coordinate'
+import Matrix from './matrix'
 
 const CONTAINER_TYPES = new Set<NodeType>([
   'CANVAS',

@@ -1,5 +1,5 @@
-import type { Effect, Stroke } from './scene-graph'
-import type { Rect, Vector } from './types'
+import type { Effect, Stroke } from './index'
+import type { Rect, Vector } from './primitives'
 
 export function degToRad(degrees: number): number {
   return (degrees * Math.PI) / 180

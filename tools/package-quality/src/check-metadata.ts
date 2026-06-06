@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const publicPackages = [
+  'packages/scene-graph',
+  'packages/pen',
   'packages/core',
   'packages/dom-css',
   'packages/kiwi',

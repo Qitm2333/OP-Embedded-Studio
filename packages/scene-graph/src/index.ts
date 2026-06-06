@@ -1,3 +1,4 @@
+export * from './images'
 export * from './snap'
 export * from './export-scale'
 export { UndoManager, type UndoEntry, type UndoManagerOptions } from './undo'
@@ -16,14 +17,13 @@ import { TEXT_PICTURE_KEYS } from './text-picture'
 import * as Variables from './variables'
 import { normalizeVectorNetwork } from './vector-network'
 
-export type { GUID, Color } from '#core/types'
+export type { GUID, Color } from './primitives'
 export * from './types'
 
 import type { Emitter } from 'nanoevents'
 
-import { getAbsolutePosition } from '#core/canvas/coordinate'
-import type { Color, Rect, Vector } from '#core/types'
-
+import { getAbsolutePosition } from './coordinate'
+import type { Color, Rect, Vector } from './primitives'
 import type {
   DocumentColorSpace,
   NodeType,

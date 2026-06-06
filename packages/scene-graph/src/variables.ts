@@ -1,9 +1,8 @@
 import { omit, omitBy } from 'es-toolkit/object'
 
-import { BLACK } from '#core/constants'
-import type { Color } from '#core/types'
-
+import { BLACK } from './constants'
 import type { SceneGraph } from './index'
+import type { Color } from './primitives'
 import type { Variable, VariableCollection, VariableType, VariableValue } from './types'
 
 export function addVariable(graph: SceneGraph, variable: Variable): void {

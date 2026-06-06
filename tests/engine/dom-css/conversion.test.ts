@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'bun:test'
 
-import type { SceneGraph, SceneNode } from '@open-pencil/core/scene-graph'
 import type { DesignElement } from '@open-pencil/dom-css'
 import {
   compileTailwindCSS,
@@ -12,6 +11,7 @@ import {
   serializeHTML,
   tailwindHTMLToSceneGraph
 } from '@open-pencil/dom-css'
+import type { SceneGraph, SceneNode } from '@open-pencil/scene-graph'
 
 import {
   DOM_CSS_COLORS,

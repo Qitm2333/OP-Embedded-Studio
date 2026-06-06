@@ -1,4 +1,4 @@
-import type { SceneGraph, SceneNode } from '@open-pencil/core/scene-graph'
+import type { SceneGraph, SceneNode } from '@open-pencil/scene-graph'
 
 export type DesignNode = DesignElement | DesignText
 

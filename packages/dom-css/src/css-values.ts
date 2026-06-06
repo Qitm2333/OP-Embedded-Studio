@@ -1,8 +1,8 @@
 import valueParser, { type ParsedNode } from 'postcss-value-parser'
 
 import { colorToCSS, parseColor } from '@open-pencil/core/color'
-import type { Effect, Fill, SceneNode, Stroke } from '@open-pencil/core/scene-graph'
-import type { Color } from '@open-pencil/core/types'
+import type { Effect, Fill, SceneNode, Stroke } from '@open-pencil/scene-graph'
+import type { Color } from '@open-pencil/scene-graph/primitives'
 
 import type { DesignStyleDeclaration } from './types'
 

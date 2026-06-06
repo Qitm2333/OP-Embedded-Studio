@@ -1,5 +1,4 @@
-import type { Vector } from '#core/types'
-
+import type { Vector } from './primitives'
 import type { VectorNetwork, VectorSegment } from './types'
 
 /** Deep-copy a VectorNetwork, stripping any Vue Proxy wrappers. */

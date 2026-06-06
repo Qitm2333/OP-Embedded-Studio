@@ -1,4 +1,4 @@
-import type { Vector } from '#core/types'
+import type { Vector } from './primitives'
 
 export type Mat3 = number[]
 

@@ -474,6 +474,22 @@
     },
     {
       "files": [
+        "packages/scene-graph/src/constants.ts"
+      ],
+      "rules": {
+        "open-pencil/no-hardcoded-color-constants": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/scene-graph/src/index.ts"
+      ],
+      "rules": {
+        "open-pencil/no-direct-graph-emitter-subscriptions": "off"
+      }
+    },
+    {
+      "files": [
         "packages/core/src/io/formats/fig/export.ts",
         "packages/core/src/kiwi/fig/parse/worker.ts"
       ],

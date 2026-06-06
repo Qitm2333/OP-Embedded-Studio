@@ -1,12 +1,12 @@
-import { TRANSPARENT } from '@open-pencil/core/constants'
-import { computeImageHash } from '@open-pencil/core/figma-api'
 import {
   SceneGraph,
   type Fill,
   type ImageScaleMode,
   type SceneNode,
   type Stroke
-} from '@open-pencil/core/scene-graph'
+} from '@open-pencil/scene-graph'
+import { TRANSPARENT } from '@open-pencil/scene-graph/constants'
+import { computeImageHash } from '@open-pencil/scene-graph/images'
 
 import {
   colorToFillFromCSS,

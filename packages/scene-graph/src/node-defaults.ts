@@ -1,5 +1,4 @@
-import { BLACK, DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from '#core/constants'
-
+import { BLACK, DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from './constants'
 import type { NodeType, SceneNode } from './types'
 
 export function createDefaultNode(

@@ -1,7 +1,8 @@
 import { transform } from 'sucrase'
 
+import type { SceneGraph } from '@open-pencil/scene-graph'
+
 import type { RenderOptions as RenderJSXOptions } from '#core/design-jsx/types'
-import type { SceneGraph } from '#core/scene-graph'
 
 import { backgroundBlur, dropShadow, foregroundBlur, innerShadow, layerBlur } from './effects'
 import * as React from './mini-react'

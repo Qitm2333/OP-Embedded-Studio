@@ -1,6 +1,6 @@
 import { colorToCSS } from '@open-pencil/core/color'
-import { BLACK } from '@open-pencil/core/constants'
-import type { SceneGraph, SceneNode } from '@open-pencil/core/scene-graph'
+import type { SceneGraph, SceneNode } from '@open-pencil/scene-graph'
+import { BLACK } from '@open-pencil/scene-graph/constants'
 
 import {
   dropShadowToCSS,

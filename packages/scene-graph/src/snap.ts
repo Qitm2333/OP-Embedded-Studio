@@ -1,7 +1,6 @@
-import { rotatedBBox } from '#core/geometry'
-import type { Rect } from '#core/types'
-
 import type { SceneNode } from './'
+import { rotatedBBox } from './geometry'
+import type { Rect } from './primitives'
 
 const SNAP_THRESHOLD = 5
 

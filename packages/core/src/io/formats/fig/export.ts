@@ -4,6 +4,8 @@ import { deflateSync, inflateSync } from 'fflate'
 import { initCodec, getCompiledSchema, getSchemaBytes } from '@open-pencil/kiwi/fig/codec'
 import type { NodeChange } from '@open-pencil/kiwi/fig/codec'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from '@open-pencil/kiwi/schema-runtime'
+import type { SceneGraph, VariableValue } from '@open-pencil/scene-graph'
+import type { GUID } from '@open-pencil/scene-graph/primitives'
 
 import type { SkiaRenderer } from '#core/canvas'
 import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from '#core/constants'
@@ -18,8 +20,6 @@ import {
   makeDocumentNodeChange,
   makeCanvasNodeChange
 } from '#core/kiwi/fig/node-change/serialize'
-import type { SceneGraph, VariableValue } from '#core/scene-graph'
-import type { GUID } from '#core/types'
 
 import { compressFigDataSync } from './compress'
 

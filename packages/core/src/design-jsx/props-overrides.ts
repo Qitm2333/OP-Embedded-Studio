@@ -1,7 +1,15 @@
+import type {
+  Effect,
+  Fill,
+  GridTrack,
+  LayoutMode,
+  SceneNode,
+  Stroke
+} from '@open-pencil/scene-graph'
+import type { Color, JsonObject } from '@open-pencil/scene-graph/primitives'
+
 import { colorToFill, parseColor } from '#core/color'
 import { TRANSPARENT } from '#core/constants'
-import type { Effect, Fill, GridTrack, LayoutMode, SceneNode, Stroke } from '#core/scene-graph'
-import type { Color, JsonObject } from '#core/types'
 
 const WEIGHT_MAP: Record<string, number> = {
   normal: 400,

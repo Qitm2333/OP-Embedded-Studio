@@ -3,6 +3,7 @@ import { inflateSync, deflateSync } from 'fflate'
 import { initCodec, getCompiledSchema, getSchemaBytes } from '@open-pencil/kiwi/fig/codec'
 import type { NodeChange as KiwiNodeChange } from '@open-pencil/kiwi/fig/codec'
 import { decodeBinarySchema, compileSchema, ByteBuffer } from '@open-pencil/kiwi/schema-runtime'
+import type { SceneGraph, SceneNode } from '@open-pencil/scene-graph'
 
 import { shapeTextForClipboard } from './canvas/text'
 import { populateAndApplyOverrides } from './kiwi/fig/instance-overrides'
@@ -18,7 +19,6 @@ import {
   buildFontDigestMap
 } from './kiwi/fig/node-change/serialize'
 import { randomInt } from './random'
-import type { SceneGraph, SceneNode } from './scene-graph'
 import { buildDerivedTextDataV4 } from './text/derived-text/clipboard'
 
 interface FigmaClipboardMeta {

@@ -1,4 +1,4 @@
-import type { SceneGraph } from '@open-pencil/core/scene-graph'
+import type { SceneGraph } from '@open-pencil/scene-graph'
 
 import { jsxToDesignDocument, type JSXChild } from './jsx/runtime'
 

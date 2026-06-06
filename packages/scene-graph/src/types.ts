@@ -1,4 +1,4 @@
-import type { Color, Matrix, Rect, Vector } from '#core/types'
+import type { Color, Matrix, Rect, Vector } from './primitives'
 
 export interface SceneGraphEvents {
   'node:created': (node: SceneNode) => void

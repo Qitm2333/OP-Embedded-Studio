@@ -1,16 +1,17 @@
+import type {
+  ComponentPropertyDefinition,
+  SceneGraph,
+  SceneNode,
+  NodeType
+} from '@open-pencil/scene-graph'
+import type { Color } from '@open-pencil/scene-graph/primitives'
+
 import { parseColor } from '#core/color'
 import type { RenderOptions } from '#core/design-jsx/types'
 import { fetchIcons } from '#core/icons'
 import { createIconFromPaths } from '#core/icons/render'
 import { computeAllLayouts } from '#core/layout'
 import { randomHex } from '#core/random'
-import type {
-  ComponentPropertyDefinition,
-  SceneGraph,
-  SceneNode,
-  NodeType
-} from '#core/scene-graph'
-import type { Color } from '#core/types'
 
 import { applySizeOverrides, propsToOverrides } from './props-overrides'
 import { isTreeNode } from './tree'

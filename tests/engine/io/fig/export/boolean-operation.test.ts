@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test'
 
 import { createNodeChangesMessage, encodeMessage, initCodec } from '@open-pencil/kiwi/fig/codec'
+import { SceneGraph } from '@open-pencil/scene-graph'
 
 import { sceneNodeToKiwi } from '#core/kiwi/fig/node-change/serialize'
-import { SceneGraph } from '#core/scene-graph'
 
 describe('Figma boolean operation export', () => {
   test('exports boolean operation node type and operation', () => {
