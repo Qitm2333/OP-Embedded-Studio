@@ -15,6 +15,7 @@
 | `packages/kiwi/src/fig/schema.ts` | Parses and validates the bundled Figma Kiwi schema. |
 | `packages/kiwi/src/fig/protocol.ts` | Low-level Figma multiplayer/Kiwi byte inspection and message-type helpers. |
 | `packages/kiwi/src/fig/types.ts` | Minimal structural `GUID`, `Color`, `Vector`, and `Matrix` types used by low-level FIG helpers. |
+| `packages/kiwi/src/fig/guid.ts` | GUID string formatting/parsing helpers used by low-level FIG data. |
 | `packages/kiwi/src/fig/variable-bindings.ts` | Variable binding binary encode/decode helpers. |
 | `packages/kiwi/src/fig/codec.ts` | Figma Kiwi message encode/decode and structural `NodeChange` helpers. |
 | `packages/kiwi/src/fig/container.ts` | `fig-kiwi` byte container framing and compression helpers. |
@@ -29,6 +30,7 @@ Public exports:
   "./fig": "./dist/fig.js",
   "./fig/codec": "./dist/fig/codec.js",
   "./fig/container": "./dist/fig/container.js",
+  "./fig/guid": "./dist/fig/guid.js",
   "./fig/parse": "./dist/fig/parse.js"
 }
 ```
@@ -59,6 +61,8 @@ Public exports:
 5. Moved Figma Kiwi codec, parse helpers, and container helpers into `@open-pencil/kiwi`.
 6. Rewired core internals and tests to import moved helpers from `@open-pencil/kiwi` directly.
 7. Removed redundant deep core re-export shims for moved codec/parse/container modules.
+8. Moved pure FIG GUID parsing/formatting helpers into `@open-pencil/kiwi`.
+9. Fixed SceneGraph `EXCLUDE` export to serialize as Kiwi/Figma `XOR`, keeping low-level codec types aligned with the Figma enum.
 
 ## Package-local test plan
 
@@ -105,7 +109,7 @@ Repo-level tests under `tests/engine/io/fig/**`, `tests/engine/kiwi/**`, and Fig
 
 ## Next extraction candidates
 
-Move only helpers that are proven scene-graph-agnostic and useful to a future `@open-pencil/fig` package. Good candidates may include small byte/GUID helpers that operate only on structural Kiwi data.
+Move only helpers that are proven scene-graph-agnostic and useful to a future `@open-pencil/fig` package. Good candidates may include small byte helpers or structural data utilities that do not depend on `SceneGraph`.
 
 Do not move yet:
 
@@ -129,4 +133,4 @@ For targeted behavior checks, prefer focused repo tests such as:
 bun test tests/engine/kiwi/schema-runtime.test.ts tests/engine/io/fig/roundtrip/basic.test.ts
 ```
 
-The broader `material3.fig` fixture currently still exposes the known `BooleanOperation: EXCLUDE` codec enum issue and should not be treated as a regression from this package split.
+Boolean operation export now maps SceneGraph `EXCLUDE` to the Kiwi/Figma `XOR` enum. Import remains tolerant of legacy `EXCLUDE` values in structural test data but real encoded messages should use `XOR`.

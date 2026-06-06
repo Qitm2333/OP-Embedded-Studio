@@ -30,6 +30,7 @@ Scope:
 - Figma Kiwi schema data and validation.
 - Low-level Figma Kiwi protocol/message helpers.
 - Structural `NodeChange` encode/decode.
+- FIG GUID parsing/formatting helpers.
 - `fig-kiwi` container framing and raw parse helpers that do not create `SceneGraph` objects.
 
 Does not include:
@@ -81,6 +82,7 @@ In `@open-pencil/kiwi`:
 - `packages/kiwi/src/fig/schema.ts`
 - `packages/kiwi/src/fig/protocol.ts`
 - `packages/kiwi/src/fig/types.ts`
+- `packages/kiwi/src/fig/guid.ts`
 - `packages/kiwi/src/fig/variable-bindings.ts`
 - `packages/kiwi/src/fig/codec.ts`
 - `packages/kiwi/src/fig/container.ts`
