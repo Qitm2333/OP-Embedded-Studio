@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 
 const rootDir = fileURLToPath(new URL('../../..', import.meta.url))
 const packageDirs = [
+  'packages/kiwi',
   'packages/core',
   'packages/dom-css',
   'packages/vue',
@@ -61,11 +62,30 @@ try {
   run(['npm', 'init', '-y'], tempDir)
   run(['npm', 'install', '--ignore-scripts', '--no-audit', '--no-fund', ...tarballs], tempDir)
 
+  nodeEval("await import('@open-pencil/kiwi')", tempDir)
+  nodeEval("await import('@open-pencil/kiwi/schema-runtime')", tempDir)
+  nodeEval("await import('@open-pencil/kiwi/fig')", tempDir)
+  nodeEval("await import('@open-pencil/kiwi/fig/codec')", tempDir)
+  nodeEval("await import('@open-pencil/kiwi/fig/container')", tempDir)
+  nodeEval("await import('@open-pencil/kiwi/fig/guid')", tempDir)
+  nodeEval("await import('@open-pencil/kiwi/fig/parse')", tempDir)
   nodeEval("await import('@open-pencil/core')", tempDir)
   nodeEval("await import('@open-pencil/core/scene-graph')", tempDir)
   nodeEval("await import('@open-pencil/dom-css')", tempDir)
+  nodeEval("await import('@open-pencil/dom-css/browser')", tempDir)
+  nodeEval("await import('@open-pencil/dom-css/jsx-runtime')", tempDir)
+  nodeEval("await import('@open-pencil/dom-css/jsx-dev-runtime')", tempDir)
   nodeEval("await import('@open-pencil/vue')", tempDir)
   nodeEval("await import('@open-pencil/mcp')", tempDir)
+
+  nodeEval(
+    "const { guidToString } = await import('@open-pencil/kiwi/fig/guid'); if (guidToString({ sessionID: 1, localID: 2 }) !== '1:2') throw new Error('Kiwi GUID subpath failed')",
+    tempDir
+  )
+  nodeEval(
+    "const { htmlToSceneGraph } = await import('@open-pencil/dom-css'); const graph = await htmlToSceneGraph('<div class=card>OpenPencil</div>', { cssText: '.card { width: 320px; }' }); if (graph.getPages()[0].width !== 320) throw new Error('DOM/CSS scene graph smoke failed')",
+    tempDir
+  )
 
   run(['node', 'node_modules/.bin/openpencil', '--help'], tempDir)
   run(['node', 'node_modules/.bin/openpencil-mcp', '--help'], tempDir)
