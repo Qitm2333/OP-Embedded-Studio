@@ -1,7 +1,7 @@
 import type { Paint, Effect as KiwiEffect } from '@open-pencil/kiwi/fig/codec'
+import { guidToString } from '@open-pencil/kiwi/fig/guid'
 
 import { normalizeColor } from '#core/color'
-import { guidToString } from '#core/kiwi/fig/node-change/guid'
 import type {
   Fill,
   FillType,

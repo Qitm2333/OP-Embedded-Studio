@@ -22,6 +22,7 @@ export default defineConfig({
     fig: './src/fig/index.ts',
     'fig/codec': './src/fig/codec.ts',
     'fig/container': './src/fig/container.ts',
+    'fig/guid': './src/fig/guid.ts',
     'fig/parse': './src/fig/parse.ts'
   },
   plugins: [rawText()],

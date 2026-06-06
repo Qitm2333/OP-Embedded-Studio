@@ -1,5 +1,6 @@
 import { getSchemaBytes, initCodec, isCodecReady } from '../dist/fig/codec.js'
 import { buildFigKiwi, parseFigKiwiChunks } from '../dist/fig/container.js'
+import { guidToString } from '../dist/fig/guid.js'
 import { parseFigKiwiContainer } from '../dist/fig/parse.js'
 import { figmaSchema, getKiwiMessageType, parseSchema, validateSchema } from '../dist/index.js'
 
@@ -32,4 +33,8 @@ if (parseFigKiwiContainer(new TextEncoder().encode('not-fig-kiwi')) !== null) {
 const figKiwi = buildFigKiwi(new Uint8Array([1]), new Uint8Array([2]))
 if (parseFigKiwiChunks(figKiwi)?.length !== 2) {
   throw new Error('Failed to read built FIG Kiwi container chunks')
+}
+
+if (guidToString({ sessionID: 1, localID: 2 }) !== '1:2') {
+  throw new Error('Failed to format built FIG GUID helper')
 }

@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs'
 
 import { exportFigFile, extractExportGraph, parseFigFile } from '@open-pencil/core/io'
 import { initCodec } from '@open-pencil/core/kiwi'
-import { guidToString } from '@open-pencil/core/kiwi/fig/node-change/guid'
 import { SceneGraph } from '@open-pencil/core/scene-graph'
+import { guidToString } from '@open-pencil/kiwi/fig/guid'
 import { parseFigBuffer } from '@open-pencil/kiwi/fig/parse'
 
 describe('export subgraph extraction', () => {

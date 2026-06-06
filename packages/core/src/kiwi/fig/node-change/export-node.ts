@@ -5,7 +5,7 @@ import { bytesToHex } from '#core/bytes/hex'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import type { Color, GUID, Matrix, Vector } from '#core/types'
 
-import { stringToGuid } from './guid'
+import { stringToGuid } from '@open-pencil/kiwi/fig/guid'
 import {
   applyExportSettingsPluginData,
   mergePluginData,
