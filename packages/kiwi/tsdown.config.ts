@@ -20,7 +20,8 @@ export default defineConfig({
     index: './src/index.ts',
     'schema-runtime': './src/schema-runtime/index.ts',
     fig: './src/fig/index.ts',
-    'fig/codec': './src/fig/codec.ts'
+    'fig/codec': './src/fig/codec.ts',
+    'fig/parse': './src/fig/parse.ts'
   },
   plugins: [rawText()],
   platform: 'neutral',

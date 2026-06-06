@@ -27,6 +27,12 @@
       "bun": "./src/fig/codec.ts",
       "import": "./dist/fig/codec.js",
       "default": "./dist/fig/codec.js"
+    },
+    "./fig/parse": {
+      "types": "./dist/src/fig/parse.d.ts",
+      "bun": "./src/fig/parse.ts",
+      "import": "./dist/fig/parse.js",
+      "default": "./dist/fig/parse.js"
     }
   },
   "main": "./dist/index.js",
@@ -54,6 +60,7 @@
     "provenance": true
   },
   "dependencies": {
+    "fflate": "^0.8.2",
     "fzstd": "^0.1.1"
   },
   "devDependencies": {
