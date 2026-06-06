@@ -28,8 +28,9 @@ OpenPencil maps browser-computed DOM/CSS styles into SceneGraph fields through `
 | `border-style: dashed/dotted` | `dashPattern` | Unsupported border styles fall back to solid. |
 | `border-radius`, `border-*-radius` | corner radii | Independent corners are preserved when sides differ. |
 | `opacity` | node opacity | Numeric computed value. |
-| `box-shadow` | drop shadow | Simple shadows only; see parser audit before expanding. |
-| `<img src="data:...">` | image fill | Data URL images are stored in the graph image map. External URL fetching is not performed. |
+| `box-shadow` | drop shadow | First simple outer shadow only; see parser audit before expanding. |
+| `<img src="data:...">` | image fill | Data URL images are stored in the graph image map. |
+| `<img src="https://...">` | preserved source URL metadata | External URL fetching is not performed; the URL is retained for HTML round-trip. |
 | `object-fit: contain/cover` | image `FIT` / `FILL` scale mode | `scale-down` maps to `FIT`; other object-fit values are not mapped yet. |
 
 ## Text

@@ -89,11 +89,15 @@ try {
     tempDir
   )
   nodeEval(
-    "const { FIG_PACKAGE_STATUS } = await import('@open-pencil/fig'); if (FIG_PACKAGE_STATUS !== 'scaffold') throw new Error('Fig package smoke failed')",
+    "const { FIG_PACKAGE_STATUS, readFigContainer, writeFigContainer } = await import('@open-pencil/fig'); if (FIG_PACKAGE_STATUS !== 'container-api') throw new Error('Fig package status smoke failed'); const document = readFigContainer(writeFigContainer({ schemaDeflated: new Uint8Array([1]), dataRaw: new Uint8Array([2]) })); if (document.dataRaw[0] !== 2) throw new Error('Fig container smoke failed')",
     tempDir
   )
   nodeEval(
     "const { htmlToSceneGraph } = await import('@open-pencil/dom-css'); const graph = await htmlToSceneGraph('<div class=card>OpenPencil</div>', { cssText: '.card { width: 320px; }' }); if (graph.getPages()[0].width !== 320) throw new Error('DOM/CSS scene graph smoke failed')",
+    tempDir
+  )
+  nodeEval(
+    "const browser = await import('@open-pencil/dom-css/browser'); for (const key of ['browserHTMLToDesignDocument', 'browserHTMLToSceneGraph', 'browserTailwindJSXToSceneGraph']) if (typeof browser[key] !== 'function') throw new Error('DOM/CSS browser export missing: ' + key)",
     tempDir
   )
   nodeEval(

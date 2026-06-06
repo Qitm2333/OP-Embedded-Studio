@@ -6,6 +6,7 @@ OpenPencil's DOM/CSS compatibility layer should not grow hand-rolled CSS parsing
 
 - HTML parsing: `parse5` in the headless runtime, native `DOMParser` in the browser runtime.
 - Stylesheet parsing and headless inline style declaration parsing: `@acemir/cssom` in the headless runtime, native CSSOM in the browser runtime.
+- CSS value tokenization for shadow values: `postcss-value-parser`.
 - Tailwind generation: Tailwind v4 `compile()` / `build()`.
 - Color parsing: `@open-pencil/core/color` (`culori`-backed).
 
@@ -19,7 +20,7 @@ These are intentionally limited and should not be expanded without replacing the
 | Shorthand expansion | `packages/dom-css/src/headless-css.ts` | Expands simple margin/padding boxes, border color/width, and background color. | Use parsed declarations from CSSOM/native computed style; avoid adding new shorthand parsers. |
 | `calc()` / custom properties | `packages/dom-css/src/headless-css.ts` | Resolves variables by direct lookup and only handles `calc(<number><unit> * <number>)`. | Browser runtime for real computed values; do not add arithmetic or fallback parsing manually. |
 | JSX object style serialization | `packages/dom-css/src/jsx/runtime.ts` | Serializes object style props to inline CSS strings with simple camelCase to kebab-case conversion. | Keep as JSX authoring serialization only; use CSSOM/native parsing after HTML parsing. |
-| Shadow values | `packages/dom-css/src/css-values.ts` | Extracts one color and numeric offsets for simple shadows. | Replace with a CSS value parser before supporting multiple shadows, inset, color functions, or spread edge cases. |
+| Shadow values | `packages/dom-css/src/css-values.ts` | Uses `postcss-value-parser` tokenization for one simple outer shadow layer. Multiple shadows and inset shadows remain unsupported. | Keep using value-parser/browser-computed values; do not add string splitting for complex shadow grammar. |
 | Numeric lengths | `packages/dom-css/src/css-values.ts` | Parses px/rem-ish numbers with `Number.parseFloat`. | Consume browser-computed pixel values where available; keep headless numeric parsing narrow. |
 
 ## Rule for new mapping work

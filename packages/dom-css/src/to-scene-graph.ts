@@ -18,6 +18,9 @@ import {
 } from './css-values'
 import type { DesignDocument, DesignElement, DesignNode, DesignStyleDeclaration } from './types'
 
+const DOM_CSS_PLUGIN_ID = 'open-pencil-dom-css'
+const IMAGE_SOURCE_URL_KEY = 'image-source-url'
+
 export interface DesignDocumentToSceneGraphOptions {
   pageName?: string
 }
@@ -247,8 +250,19 @@ function applyImageFill(
   style: DesignStyleDeclaration
 ): void {
   if (element.tagName.toLowerCase() !== 'img') return
-  const bytes = bytesFromDataURL(element.attrs.src)
-  if (!bytes) return
+  const source = element.attrs.src
+  const bytes = bytesFromDataURL(source)
+  if (!bytes) {
+    if (source) {
+      node.pluginData.push({
+        pluginId: DOM_CSS_PLUGIN_ID,
+        key: IMAGE_SOURCE_URL_KEY,
+        value: source
+      })
+    }
+    return
+  }
+
   const imageHash = computeImageHash(bytes)
   graph.images.set(imageHash, bytes)
   node.fills = [

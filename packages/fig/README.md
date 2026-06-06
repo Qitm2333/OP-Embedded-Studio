@@ -2,7 +2,12 @@
 
 `.fig` document policy package for OpenPencil.
 
-This package is currently a scaffold for the next package-split stage. Use `@open-pencil/core` for production `.fig` read/write APIs until behavior moves here.
+This package currently exposes low-level `fig-kiwi` container read/write helpers and remains the staging area for the next package-split stage. Use `@open-pencil/core` for production SceneGraph `.fig` read/write APIs until higher-level behavior moves here.
+
+Current ownership:
+
+- `readFigContainer()` / `writeFigContainer()` wrappers over `@open-pencil/kiwi` container helpers
+- `.fig` document source typing
 
 Planned ownership:
 

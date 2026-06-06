@@ -11,6 +11,9 @@ import {
 } from './css-values'
 import type { DesignDocument, DesignNode, DesignStyleDeclaration } from './types'
 
+const DOM_CSS_PLUGIN_ID = 'open-pencil-dom-css'
+const IMAGE_SOURCE_URL_KEY = 'image-source-url'
+
 export interface SceneGraphToDesignOptions {
   rootId?: string
   includeSourceIds?: boolean
@@ -143,8 +146,8 @@ function addFlexGap(style: DesignStyleDeclaration, node: SceneNode): void {
 }
 
 function addImageStyle(style: DesignStyleDeclaration, node: SceneNode): void {
-  const fill = node.fills[0]
-  if (fill.type !== 'IMAGE' || !fill.visible) return
+  const fill = node.fills.at(0)
+  if (fill?.type !== 'IMAGE' || !fill.visible) return
   if (node.width > 0 && node.height > 0) style['aspect-ratio'] = `${node.width} / ${node.height}`
   if (fill.imageScaleMode === 'FIT') style['object-fit'] = 'contain'
   if (fill.imageScaleMode === 'FILL') style['object-fit'] = 'cover'
@@ -154,7 +157,7 @@ function styleFromSceneNode(node: SceneNode): DesignStyleDeclaration {
   const style = sceneNodeSizeStyle(node)
   addPositioning(style, node)
   addSizeConstraints(style, node)
-  const fill = fillToCSS(node.fills[0])
+  const fill = fillToCSS(node.fills.at(0))
   if (fill) style['background-color'] = fill
   addImageStyle(style, node)
   addStroke(style, node)
@@ -184,7 +187,7 @@ function styleFromSceneNode(node: SceneNode): DesignStyleDeclaration {
 function styleFromTextNode(node: SceneNode): DesignStyleDeclaration {
   const style = sceneNodeSizeStyle(node)
   addPositioning(style, node)
-  style.color = fillToCSS(node.fills[0]) ?? colorToCSS(BLACK)
+  style.color = fillToCSS(node.fills.at(0)) ?? colorToCSS(BLACK)
   style['font-family'] = node.fontFamily
   style['font-size'] = `${node.fontSize}px`
   style['font-weight'] = String(node.fontWeight)
@@ -212,6 +215,12 @@ function bytesToBase64(bytes: Uint8Array): string {
   return globalThis.btoa(binary)
 }
 
+function imageSourceURL(node: SceneNode): string | undefined {
+  return node.pluginData.find(
+    (entry) => entry.pluginId === DOM_CSS_PLUGIN_ID && entry.key === IMAGE_SOURCE_URL_KEY
+  )?.value
+}
+
 function attrsForNode(
   graph: SceneGraph,
   node: SceneNode,
@@ -220,16 +229,18 @@ function attrsForNode(
   const attrs: Record<string, string> = includeSourceIds
     ? { 'data-open-pencil-node-id': node.id }
     : {}
-  const fill = node.fills[0]
-  if (fill.type !== 'IMAGE' || !fill.imageHash) return attrs
+  const sourceURL = imageSourceURL(node)
+  if (sourceURL) attrs.src = sourceURL
+  const fill = node.fills.at(0)
+  if (fill?.type !== 'IMAGE' || !fill.imageHash) return attrs
   const bytes = graph.images.get(fill.imageHash)
   if (!bytes) return attrs
   return { ...attrs, src: `data:image/png;base64,${bytesToBase64(bytes)}` }
 }
 
 function tagNameForNode(node: SceneNode): string {
-  const fill = node.fills[0]
-  if (fill.type === 'IMAGE' && node.childIds.length === 0) return 'img'
+  const fill = node.fills.at(0)
+  if ((fill?.type === 'IMAGE' || imageSourceURL(node)) && node.childIds.length === 0) return 'img'
   return 'div'
 }
 

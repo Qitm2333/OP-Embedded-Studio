@@ -50,7 +50,7 @@ function createStyleRoundTripGraph() {
           'border-bottom-width': '0px',
           'border-left-width': '4px',
           opacity: '0.75',
-          'box-shadow': `0px 8px 24px 0px ${TEST_COLORS.slateShadow}`
+          'box-shadow': `0px 8px 24px 0px ${TEST_COLORS.slateShadow}, 0 0 2px ${TEST_COLORS.slate200}`
         },
         children: [
           {
@@ -255,6 +255,41 @@ describe('@open-pencil/dom-css conversion', () => {
     if (card?.type !== 'FRAME') return
     expect(card.fills[0]?.type).toBe('SOLID')
     expect(card.strokes[0]?.weight).toBe(1)
+  })
+
+  it('preserves external image URLs without fetching bytes', () => {
+    const graph = designDocumentToSceneGraph({
+      type: 'document',
+      children: [
+        {
+          type: 'element',
+          tagName: 'img',
+          attrs: { src: 'https://example.com/hero.png' },
+          computedStyle: { width: '320px', height: '180px', 'object-fit': 'cover' },
+          children: []
+        }
+      ]
+    })
+    const page = graph.getPages()[0]
+    const image = expectFrame(page ? graph.getChildren(page.id)[0] : undefined)
+
+    expect(image.fills[0]).toBeUndefined()
+    expect(image.pluginData).toContainEqual({
+      pluginId: 'open-pencil-dom-css',
+      key: 'image-source-url',
+      value: 'https://example.com/hero.png'
+    })
+    expect(graph.images.size).toBe(0)
+
+    const roundTrip = sceneGraphToDesignDocument(graph)
+    const root = roundTrip.children[0]
+    expect(root?.type).toBe('element')
+    if (root?.type !== 'element') throw new Error('Expected root element')
+    const roundTripImage = root.children[0]
+    expect(roundTripImage?.type).toBe('element')
+    if (roundTripImage?.type !== 'element') throw new Error('Expected image element')
+    expect(roundTripImage.tagName).toBe('img')
+    expect(roundTripImage.attrs.src).toBe('https://example.com/hero.png')
   })
 
   it('maps data URL images, object fit, and aspect ratio', () => {
