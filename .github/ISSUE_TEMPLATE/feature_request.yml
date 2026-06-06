@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting an improvement. Strong feature requests describe the workflow, not just the solution.
+        Thanks for suggesting an improvement. It is okay if you do not know the implementation details — describe the workflow or problem as clearly as you can.
 
   - type: textarea
     id: problem
@@ -23,23 +23,18 @@ body:
     id: proposal
     attributes:
       label: Proposed solution
-      description: Describe the behavior you would like OpenPencil to support.
+      description: What behavior would you like OpenPencil to support?
       placeholder: |
         Add support for …
         It should work by …
     validations:
       required: true
 
-  - type: textarea
-    id: alternatives
-    attributes:
-      label: Alternatives considered
-      description: Optional, but helpful. How do you work around this today? Are there simpler alternatives?
-
   - type: dropdown
     id: affected-area
     attributes:
       label: Affected area
+      description: Optional triage hint.
       multiple: true
       options:
         - App UI
@@ -52,20 +47,18 @@ body:
         - Collaboration
         - Documentation
         - Not sure
-    validations:
-      required: true
 
   - type: textarea
-    id: figma-reference
+    id: alternatives
     attributes:
-      label: Figma or design-tool reference
-      description: If this exists in Figma or another tool, describe how it works there. Screenshots and links help.
+      label: Alternatives or workarounds
+      description: Optional. How do you work around this today? Are there simpler alternatives?
 
   - type: textarea
-    id: examples
+    id: references
     attributes:
-      label: Examples or mockups
-      description: Attach screenshots, sketches, files, or links that make the request concrete.
+      label: References, examples, or mockups
+      description: Optional. Add Figma/design-tool references, screenshots, sketches, files, or links that make the request concrete.
 
   - type: checkboxes
     id: checklist
@@ -73,6 +66,4 @@ body:
       label: Before submitting
       options:
         - label: I searched existing issues and did not find a duplicate.
-          required: true
-        - label: I described the user problem, not only an implementation detail.
-          required: true
+          required: false
