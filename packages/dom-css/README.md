@@ -91,40 +91,117 @@ const graph = await jsxToSceneGraph(
 
 The JSX runtime preserves `class`, attributes, inline `style`, text, fragments, and simple function components as DesignDOM. Class semantics still come from generated or authored CSS passed to a CSS runtime; the JSX layer does not interpret Tailwind or CSS utility names directly.
 
-When running in a browser, use the browser-first helpers so native `getComputedStyle()` is used automatically:
+When running in a browser, use the browser-first helpers so native `getComputedStyle()` is used automatically. Import them from `@open-pencil/dom-css/browser` so browser bundles do not load headless-only CSSOM dependencies:
 
 ```tsx
 /** @jsxImportSource @open-pencil/dom-css */
-import { browserTailwindJSXToSceneGraph } from '@open-pencil/dom-css/browser'
+import { browserJSXToSceneGraph } from '@open-pencil/dom-css/browser'
 
-const classes = ['flex', 'flex-col', 'gap-3', 'w-80', 'p-6', 'rounded-xl', 'bg-white']
-const graph = await browserTailwindJSXToSceneGraph(
-  <article class={classes.join(' ')}>
+const graph = await browserJSXToSceneGraph(
+  <article class="card">
     <h1>OpenPencil</h1>
   </article>,
-  classes,
-  { sandbox: 'iframe' }
+  {
+    cssText: '.card { display: flex; width: 320px; padding: 24px; }',
+    sandbox: 'iframe'
+  }
 )
 ```
 
-Use `browserJSXToDesignDocument()` / `browserJSXToSceneGraph()` for authored CSS, and `browserTailwindJSXToDesignDocument()` / `browserTailwindJSXToSceneGraph()` when Tailwind utilities should flow through Tailwind's compiler first. Import these from `@open-pencil/dom-css/browser` in browser bundles to avoid loading headless-only CSSOM dependencies. Browser Tailwind compilation may need an explicit `css` or `loadStylesheet` option from the host bundler; precompiling with `compileTailwindCSS()` and passing `cssText` to `browserJSXToSceneGraph()` is the most portable browser path.
+Use `browserJSXToDesignDocument()` / `browserJSXToSceneGraph()` for authored CSS. Use `browserTailwindJSXToDesignDocument()` / `browserTailwindJSXToSceneGraph()` only when Tailwind utilities should be compiled at runtime by the host app. Browser Tailwind compilation needs the host bundler to provide Tailwind source CSS or stylesheet loading; see the Tailwind recipes below.
 
 ## Tailwind pipeline
 
-Tailwind classes flow through Tailwind's own compiler, then through the CSS runtime. Prefer the browser runtime when a document is available so custom properties, `calc()`, modern colors, and browser-default behavior come from native `getComputedStyle()`:
+Tailwind classes flow through Tailwind's own compiler, then through the CSS runtime. Prefer the browser helpers when a document is available so custom properties, `calc()`, modern colors, and browser-default behavior come from native `getComputedStyle()`.
+
+### Browser recipe: precompiled Tailwind CSS
+
+The most portable browser path is to compile Tailwind CSS in the host app, then pass the resulting CSS as normal `cssText`:
 
 ```ts
-import { createBrowserCSSRuntime, tailwindHTMLToSceneGraph } from '@open-pencil/dom-css'
+import { browserHTMLToSceneGraph } from '@open-pencil/dom-css/browser'
+
+import tailwindCSS from './generated-tailwind.css?raw'
+
+const graph = await browserHTMLToSceneGraph(
+  '<article class="flex w-80 rounded-xl bg-white p-6">OpenPencil</article>',
+  {
+    cssText: tailwindCSS,
+    sandbox: 'iframe'
+  }
+)
+```
+
+This also works with JSX:
+
+```tsx
+/** @jsxImportSource @open-pencil/dom-css */
+import { browserJSXToSceneGraph } from '@open-pencil/dom-css/browser'
+
+import tailwindCSS from './generated-tailwind.css?raw'
+
+const graph = await browserJSXToSceneGraph(
+  <article class="flex w-80 rounded-xl bg-white p-6">OpenPencil</article>,
+  {
+    cssText: tailwindCSS,
+    sandbox: 'iframe'
+  }
+)
+```
+
+### Browser recipe: runtime Tailwind compilation with supplied CSS
+
+If the app wants to compile utility candidates at runtime, provide Tailwind source CSS yourself. Do not rely on the default Node-oriented stylesheet loader in browser bundles:
+
+```ts
+import { browserTailwindHTMLToSceneGraph } from '@open-pencil/dom-css/browser'
+
+const classes = ['flex', 'w-80', 'rounded-xl', 'bg-white', 'p-6']
+const graph = await browserTailwindHTMLToSceneGraph(
+  `<article class="${classes.join(' ')}">OpenPencil</article>`,
+  classes,
+  {
+    css: await fetch('/tailwind-source.css').then((response) => response.text()),
+    sandbox: 'iframe'
+  }
+)
+```
+
+Use `loadStylesheet` when the supplied Tailwind CSS contains imports and the host app owns import resolution:
+
+```ts
+import { browserTailwindHTMLToSceneGraph } from '@open-pencil/dom-css/browser'
+
+const classes = ['flex', 'w-80', 'rounded-xl', 'bg-white', 'p-6']
+const graph = await browserTailwindHTMLToSceneGraph(
+  `<article class="${classes.join(' ')}">OpenPencil</article>`,
+  classes,
+  {
+    css: '@import "tailwindcss";',
+    loadStylesheet: async (id) => {
+      const url = id === 'tailwindcss' ? '/tailwindcss/index.css' : `/tailwindcss/${id}`
+      return fetch(url).then((response) => response.text())
+    },
+    sandbox: 'iframe'
+  }
+)
+```
+
+### Bun/Node recipe
+
+In Bun or Node, the package can load Tailwind's default stylesheet through filesystem-backed module resolution. Without a DOM, this uses the headless CSS runtime; pass a browser runtime only when the process has a real `document` available, such as Playwright or a browser extension page:
+
+```ts
+import { tailwindHTMLToSceneGraph } from '@open-pencil/dom-css'
 
 const classes = ['flex', 'w-80', 'p-6', 'rounded-xl', 'bg-white']
 const graph = await tailwindHTMLToSceneGraph(
   `<article class="${classes.join(' ')}">OpenPencil</article>`,
-  classes,
-  { runtime: createBrowserCSSRuntime({ sandbox: 'iframe' }) }
+  classes
 )
 ```
 
-`compileTailwindCSS()` remains available when callers want to manage runtime selection themselves.
+`compileTailwindCSS()` remains available when callers want to manage CSS compilation and runtime selection themselves.
 
 ## Current scope
 
