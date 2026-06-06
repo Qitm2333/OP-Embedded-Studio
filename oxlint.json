@@ -418,7 +418,8 @@
     },
     {
       "files": [
-        "**/kiwi/schema-runtime/**"
+        "**/kiwi/schema-runtime/**",
+        "**/kiwi/src/schema-runtime/**"
       ],
       "rules": {
         "typescript/no-explicit-any": "off",
