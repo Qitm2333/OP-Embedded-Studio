@@ -1,9 +1,22 @@
-import { hexToBytes } from '#core/bytes/hex'
-import type { GUID } from '#core/types'
+export interface GUID {
+  sessionID: number
+  localID: number
+}
 
-import type { NodeChange, Paint } from './index'
+export interface VariableBinding {
+  variableID: GUID
+}
 
-export interface VariableBindingCodec {
+export interface PaintWithVariableBinding {
+  colorVariableBinding?: VariableBinding
+}
+
+export interface NodeChangeWithVariableBindings {
+  fillPaints?: PaintWithVariableBinding[]
+  strokePaints?: PaintWithVariableBinding[]
+}
+
+export interface VariableBindingCodec<Paint, NodeChange> {
   encodePaint(paint: Paint): Uint8Array
   encodeNodeChange(nodeChange: NodeChange): Uint8Array
 }
@@ -18,8 +31,8 @@ export function encodeVarint(value: number): number[] {
   return bytes
 }
 
-export function encodePaintWithVariableBinding(
-  codec: VariableBindingCodec,
+export function encodePaintWithVariableBinding<Paint extends PaintWithVariableBinding>(
+  codec: VariableBindingCodec<Omit<Paint, 'colorVariableBinding'>, unknown>,
   paint: Paint,
   variableSessionID: number,
   variableLocalID: number
@@ -52,12 +65,18 @@ export function parseVariableId(variableId: string): GUID | null {
   }
 }
 
-export function encodeNodeChangeWithVariables(
-  codec: VariableBindingCodec,
+export function encodeNodeChangeWithVariables<NodeChange extends NodeChangeWithVariableBindings>(
+  codec: VariableBindingCodec<
+    unknown,
+    Omit<NodeChange, 'fillPaints' | 'strokePaints'> & {
+      fillPaints?: Omit<PaintWithVariableBinding, 'colorVariableBinding'>[]
+      strokePaints?: Omit<PaintWithVariableBinding, 'colorVariableBinding'>[]
+    }
+  >,
   nodeChange: NodeChange
 ): Uint8Array {
-  const hasFillBinding = nodeChange.fillPaints?.some((p) => p.colorVariableBinding)
-  const hasStrokeBinding = nodeChange.strokePaints?.some((p) => p.colorVariableBinding)
+  const hasFillBinding = nodeChange.fillPaints?.some((paint) => paint.colorVariableBinding)
+  const hasStrokeBinding = nodeChange.strokePaints?.some((paint) => paint.colorVariableBinding)
 
   if (!hasFillBinding && !hasStrokeBinding) {
     return codec.encodeNodeChange(nodeChange)
@@ -91,7 +110,7 @@ export function encodeNodeChangeWithVariables(
   return hexToBytes(hex)
 }
 
-function injectVariableBinding(hex: string, marker: string, binding: { variableID: GUID }): string {
+function injectVariableBinding(hex: string, marker: string, binding: VariableBinding): string {
   const markerIdx = hex.indexOf(marker)
   if (markerIdx === -1) return hex
 
@@ -131,4 +150,14 @@ function injectVariableBinding(hex: string, marker: string, binding: { variableI
   const afterVar = hex.slice(afterIdx)
 
   return beforeVar + varHex + afterVar
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  if (hex.length % 2 !== 0) throw new Error('Hex string must have an even length')
+
+  const bytes = new Uint8Array(hex.length / 2)
+  for (let index = 0; index < bytes.length; index++) {
+    bytes[index] = Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16)
+  }
+  return bytes
 }

@@ -8,12 +8,18 @@
 
 import { decompress as zstdDecompress } from 'fzstd'
 
-import { figmaSchema, isZstdCompressed, getKiwiMessageType } from '@open-pencil/kiwi/fig'
+import {
+  figmaSchema,
+  isZstdCompressed,
+  getKiwiMessageType,
+  encodeVarint,
+  encodePaintWithVariableBinding as encodePaintVariableBinding,
+  encodeNodeChangeWithVariables as encodeNodeChangeVariableBindings,
+  parseVariableId
+} from '@open-pencil/kiwi/fig'
 import { compileSchema, encodeBinarySchema } from '@open-pencil/kiwi/schema-runtime'
 
 import { parseColor } from '#core/color'
-
-import * as VariableBindings from './variable-bindings'
 
 interface CompiledSchema {
   encodeMessage(message: unknown): Uint8Array
@@ -123,7 +129,7 @@ export function encodeMessage(message: FigmaMessage): Uint8Array {
 
   // Build nodeChanges array with our encoded nodes
   const ncBytes: number[] = [0x04] // field 4
-  ncBytes.push(...VariableBindings.encodeVarint(nodeChangeBytes.length)) // array length
+  ncBytes.push(...encodeVarint(nodeChangeBytes.length)) // array length
   for (const ncArr of nodeChangeBytes) {
     ncBytes.push(...Array.from(ncArr))
   }
@@ -557,19 +563,14 @@ export function encodePaintWithVariableBinding(
   if (!compiledSchema) {
     throw new Error('Codec not initialized. Call initCodec() first.')
   }
-  return VariableBindings.encodePaintWithVariableBinding(
-    compiledSchema,
-    paint,
-    variableSessionID,
-    variableLocalID
-  )
+  return encodePaintVariableBinding(compiledSchema, paint, variableSessionID, variableLocalID)
 }
 
-export { parseVariableId } from './variable-bindings'
+export { parseVariableId }
 
 export function encodeNodeChangeWithVariables(nodeChange: NodeChange): Uint8Array {
   if (!compiledSchema) {
     throw new Error('Codec not initialized. Call initCodec() first.')
   }
-  return VariableBindings.encodeNodeChangeWithVariables(compiledSchema, nodeChange)
+  return encodeNodeChangeVariableBindings(compiledSchema, nodeChange)
 }
