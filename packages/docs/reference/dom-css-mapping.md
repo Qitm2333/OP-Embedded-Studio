@@ -16,6 +16,7 @@ OpenPencil maps browser-computed DOM/CSS styles into SceneGraph fields through `
 | `position: absolute/fixed`, `left`, `top` | `layoutPositioning`, `x`, `y` | Right/bottom constraints are not mapped yet. |
 | `overflow: hidden/clip` | `clipsContent` | Other overflow values are ignored. |
 | `width`, `height`, min/max sizes | node size constraints | Browser-computed pixel values are preferred. |
+| `aspect-ratio` | fallback width/height sizing | Used when one axis is available and the other is `auto`/missing. |
 
 ## Paint, stroke, and effects
 
@@ -28,6 +29,8 @@ OpenPencil maps browser-computed DOM/CSS styles into SceneGraph fields through `
 | `border-radius`, `border-*-radius` | corner radii | Independent corners are preserved when sides differ. |
 | `opacity` | node opacity | Numeric computed value. |
 | `box-shadow` | drop shadow | Simple shadows only; see parser audit before expanding. |
+| `<img src="data:...">` | image fill | Data URL images are stored in the graph image map. External URL fetching is not performed. |
+| `object-fit: contain/cover` | image `FIT` / `FILL` scale mode | `scale-down` maps to `FIT`; other object-fit values are not mapped yet. |
 
 ## Text
 
@@ -50,8 +53,6 @@ OpenPencil maps browser-computed DOM/CSS styles into SceneGraph fields through `
 
 These values are collected or covered by browser oracle tests but do not yet have a stable SceneGraph mapping:
 
-- `aspect-ratio`
-- `object-fit`
 - complex gradients
 - CSS filters
 - multi-shadow lists
@@ -60,4 +61,4 @@ These values are collected or covered by browser oracle tests but do not yet hav
 
 ## Headless limitations
 
-The headless runtime uses maintained parsers for HTML (`parse5`) and stylesheets (`@acemir/cssom`), but still has limited approximations for selector matching, shorthand expansion, inline style text, `calc()`, and simple shadows. Do not expand those with ad hoc parsers. See [`../development/dom-css-parser-audit.md`](../development/dom-css-parser-audit.md).
+The headless runtime uses maintained parsers for HTML (`parse5`) and stylesheets/inline declarations (`@acemir/cssom`), but still has limited approximations for selector matching, shorthand expansion, `calc()`, and simple shadows. Do not expand those with ad hoc parsers. See [`../development/dom-css-parser-audit.md`](../development/dom-css-parser-audit.md).

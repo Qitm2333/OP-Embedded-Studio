@@ -13,6 +13,9 @@ import {
 } from '../src/index'
 import { TEST_COLORS, cardCSS, cardHTML, fixtureCSS, fixtureHTML } from './helpers'
 
+const TRANSPARENT_PIXEL_DATA_URL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADElEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+
 function expectFrame(node: SceneNode | undefined) {
   expect(node?.type).toBe('FRAME')
   if (node?.type !== 'FRAME') throw new Error('Expected frame node')
@@ -252,6 +255,47 @@ describe('@open-pencil/dom-css conversion', () => {
     if (card?.type !== 'FRAME') return
     expect(card.fills[0]?.type).toBe('SOLID')
     expect(card.strokes[0]?.weight).toBe(1)
+  })
+
+  it('maps data URL images, object fit, and aspect ratio', () => {
+    const graph = designDocumentToSceneGraph({
+      type: 'document',
+      children: [
+        {
+          type: 'element',
+          tagName: 'img',
+          attrs: { src: TRANSPARENT_PIXEL_DATA_URL },
+          computedStyle: {
+            'aspect-ratio': '16 / 9',
+            width: '320px',
+            'object-fit': 'contain'
+          },
+          children: []
+        }
+      ]
+    })
+    const page = graph.getPages()[0]
+    const image = expectFrame(page ? graph.getChildren(page.id)[0] : undefined)
+    const fill = image.fills[0]
+
+    expect(image.width).toBe(320)
+    expect(image.height).toBe(180)
+    expect(fill?.type).toBe('IMAGE')
+    expect(fill?.imageScaleMode).toBe('FIT')
+    expect(fill?.imageHash).toBeDefined()
+    expect(fill?.imageHash ? graph.images.has(fill.imageHash) : false).toBe(true)
+
+    const roundTrip = sceneGraphToDesignDocument(graph)
+    const root = roundTrip.children[0]
+    expect(root?.type).toBe('element')
+    if (root?.type !== 'element') throw new Error('Expected root element')
+    const roundTripImage = root.children[0]
+    expect(roundTripImage?.type).toBe('element')
+    if (roundTripImage?.type !== 'element') throw new Error('Expected image element')
+    expect(roundTripImage.tagName).toBe('img')
+    expect(roundTripImage.inlineStyle?.['aspect-ratio']).toBe('320 / 180')
+    expect(roundTripImage.inlineStyle?.['object-fit']).toBe('contain')
+    expect(roundTripImage.attrs.src).toStartWith('data:image/png;base64,')
   })
 
   it('round-trips logical padding, side borders, opacity, and text style fields', () => {

@@ -142,12 +142,21 @@ function addFlexGap(style: DesignStyleDeclaration, node: SceneNode): void {
   style['column-gap'] = `${node.counterAxisSpacing}px`
 }
 
+function addImageStyle(style: DesignStyleDeclaration, node: SceneNode): void {
+  const fill = node.fills[0]
+  if (fill.type !== 'IMAGE' || !fill.visible) return
+  if (node.width > 0 && node.height > 0) style['aspect-ratio'] = `${node.width} / ${node.height}`
+  if (fill.imageScaleMode === 'FIT') style['object-fit'] = 'contain'
+  if (fill.imageScaleMode === 'FILL') style['object-fit'] = 'cover'
+}
+
 function styleFromSceneNode(node: SceneNode): DesignStyleDeclaration {
   const style = sceneNodeSizeStyle(node)
   addPositioning(style, node)
   addSizeConstraints(style, node)
   const fill = fillToCSS(node.fills[0])
   if (fill) style['background-color'] = fill
+  addImageStyle(style, node)
   addStroke(style, node)
   const shadow = dropShadowToCSS(node.effects[0])
   if (shadow) style['box-shadow'] = shadow
@@ -197,8 +206,31 @@ function styleFromTextNode(node: SceneNode): DesignStyleDeclaration {
   return style
 }
 
-function attrsForNode(node: SceneNode, includeSourceIds: boolean): Record<string, string> {
-  return includeSourceIds ? { 'data-open-pencil-node-id': node.id } : {}
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = ''
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  return globalThis.btoa(binary)
+}
+
+function attrsForNode(
+  graph: SceneGraph,
+  node: SceneNode,
+  includeSourceIds: boolean
+): Record<string, string> {
+  const attrs: Record<string, string> = includeSourceIds
+    ? { 'data-open-pencil-node-id': node.id }
+    : {}
+  const fill = node.fills[0]
+  if (fill.type !== 'IMAGE' || !fill.imageHash) return attrs
+  const bytes = graph.images.get(fill.imageHash)
+  if (!bytes) return attrs
+  return { ...attrs, src: `data:image/png;base64,${bytesToBase64(bytes)}` }
+}
+
+function tagNameForNode(node: SceneNode): string {
+  const fill = node.fills[0]
+  if (fill.type === 'IMAGE' && node.childIds.length === 0) return 'img'
+  return 'div'
 }
 
 function sceneNodeToDesignNode(
@@ -212,7 +244,7 @@ function sceneNodeToDesignNode(
     return {
       type: 'element',
       tagName: 'span',
-      attrs: attrsForNode(node, options.includeSourceIds),
+      attrs: attrsForNode(graph, node, options.includeSourceIds),
       inlineStyle: styleFromTextNode(node),
       sourceSceneNodeId: node.id,
       sourceSceneNode: node,
@@ -228,7 +260,7 @@ function sceneNodeToDesignNode(
     return {
       type: 'element',
       tagName: 'main',
-      attrs: attrsForNode(node, options.includeSourceIds),
+      attrs: attrsForNode(graph, node, options.includeSourceIds),
       sourceSceneNodeId: node.id,
       sourceSceneNode: node,
       children
@@ -237,8 +269,8 @@ function sceneNodeToDesignNode(
 
   return {
     type: 'element',
-    tagName: 'div',
-    attrs: attrsForNode(node, options.includeSourceIds),
+    tagName: tagNameForNode(node),
+    attrs: attrsForNode(graph, node, options.includeSourceIds),
     inlineStyle: styleFromSceneNode(node),
     sourceSceneNodeId: node.id,
     sourceSceneNode: node,

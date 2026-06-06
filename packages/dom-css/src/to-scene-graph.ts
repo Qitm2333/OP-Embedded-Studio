@@ -1,4 +1,12 @@
-import { SceneGraph, type Fill, type SceneNode, type Stroke } from '@open-pencil/core/scene-graph'
+import { TRANSPARENT } from '@open-pencil/core/constants'
+import { computeImageHash } from '@open-pencil/core/figma-api'
+import {
+  SceneGraph,
+  type Fill,
+  type ImageScaleMode,
+  type SceneNode,
+  type Stroke
+} from '@open-pencil/core/scene-graph'
 
 import {
   colorToFillFromCSS,
@@ -49,6 +57,17 @@ function fillsFromStyle(style: DesignStyleDeclaration, property: string): Fill[]
   return colorToFillFromCSS(pickStyle(style, property))
 }
 
+function aspectRatioFromCSS(value: string | undefined): number | null {
+  if (!value || value === 'auto') return null
+  const parts = value
+    .split('/')
+    .map((part) => Number.parseFloat(part.trim()))
+    .filter(Number.isFinite)
+  if (parts.length === 1 && parts[0] > 0) return parts[0]
+  if (parts.length === 2 && parts[0] > 0 && parts[1] > 0) return parts[0] / parts[1]
+  return null
+}
+
 function setNodeBox(node: SceneNode, style: DesignStyleDeclaration): void {
   const width = firstCSSNumber(style, 'width')
   const height = firstCSSNumber(style, 'height')
@@ -56,8 +75,11 @@ function setNodeBox(node: SceneNode, style: DesignStyleDeclaration): void {
   const maxWidth = firstCSSNumber(style, 'max-width')
   const minHeight = firstCSSNumber(style, 'min-height')
   const maxHeight = firstCSSNumber(style, 'max-height')
+  const aspectRatio = aspectRatioFromCSS(pickStyle(style, 'aspect-ratio'))
   if (width !== null) node.width = width
   if (height !== null) node.height = height
+  if (height === null && width !== null && aspectRatio !== null) node.height = width / aspectRatio
+  if (width === null && height !== null && aspectRatio !== null) node.width = height * aspectRatio
   if (minWidth !== null) node.minWidth = minWidth
   if (maxWidth !== null) node.maxWidth = maxWidth
   if (minHeight !== null) node.minHeight = minHeight
@@ -201,13 +223,59 @@ function applyPadding(node: SceneNode, style: DesignStyleDeclaration): void {
   node.paddingLeft = firstCSSNumber(style, 'padding-left', 'padding-inline', 'padding') ?? 0
 }
 
-function applyElementStyle(node: SceneNode, style: DesignStyleDeclaration): void {
+function imageScaleModeFromObjectFit(value: string | undefined): ImageScaleMode | null {
+  if (value === 'contain' || value === 'scale-down') return 'FIT'
+  if (value === 'cover') return 'FILL'
+  return null
+}
+
+function bytesFromDataURL(value: string | undefined): Uint8Array | null {
+  if (!value?.startsWith('data:')) return null
+  const commaIndex = value.indexOf(',')
+  if (commaIndex === -1) return null
+  const metadata = value.slice(0, commaIndex)
+  const body = value.slice(commaIndex + 1)
+  if (!metadata.endsWith(';base64')) return null
+  const binary = globalThis.atob(body)
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0))
+}
+
+function applyImageFill(
+  graph: SceneGraph,
+  node: SceneNode,
+  element: DesignElement,
+  style: DesignStyleDeclaration
+): void {
+  if (element.tagName.toLowerCase() !== 'img') return
+  const bytes = bytesFromDataURL(element.attrs.src)
+  if (!bytes) return
+  const imageHash = computeImageHash(bytes)
+  graph.images.set(imageHash, bytes)
+  node.fills = [
+    {
+      type: 'IMAGE',
+      imageHash,
+      imageScaleMode: imageScaleModeFromObjectFit(pickStyle(style, 'object-fit')) ?? 'FILL',
+      color: TRANSPARENT,
+      opacity: 1,
+      visible: true
+    }
+  ]
+}
+
+function applyElementStyle(
+  graph: SceneGraph,
+  node: SceneNode,
+  element: DesignElement,
+  style: DesignStyleDeclaration
+): void {
   setNodeBox(node, style)
   applyPositioning(node, style)
   applyPadding(node, style)
 
   const fills = fillsFromStyle(style, 'background-color')
   if (fills.length > 0) node.fills = fills
+  applyImageFill(graph, node, element, style)
 
   const strokes = colorToStrokeFromCSS(
     firstStrokeColor(style),
@@ -311,6 +379,7 @@ function createTextNode(
 
 function hasBoxStyle(style: DesignStyleDeclaration): boolean {
   return [
+    'aspect-ratio',
     'background-color',
     'border-color',
     'border-style',
@@ -339,6 +408,7 @@ function hasBoxStyle(style: DesignStyleDeclaration): boolean {
     'max-width',
     'min-height',
     'max-height',
+    'object-fit',
     'overflow',
     'position',
     'top',
@@ -364,7 +434,7 @@ function createElementNode(graph: SceneGraph, parentId: string, element: DesignE
     name: element.attrs.id || element.attrs.class || element.tagName,
     clipsContent: false
   })
-  applyElementStyle(node, style)
+  applyElementStyle(graph, node, element, style)
 
   for (const child of element.children) {
     createDesignNode(graph, node.id, child, style)

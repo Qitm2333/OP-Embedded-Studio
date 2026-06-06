@@ -99,6 +99,32 @@ export async function publicBrowserSceneGraph(page: Page, classes: string[], css
   )
 }
 
+export async function publicBrowserImageNode(page: Page, html: string, cssText: string) {
+  await ensureAppPage(page)
+  await page.setContent('<main></main>')
+
+  return page.evaluate(
+    async ({ sourceHTML, css, modulePath }) => {
+      const { browserHTMLToSceneGraph } = await import(modulePath)
+      const graph = await browserHTMLToSceneGraph(sourceHTML, { cssText: css })
+      const pageNode = graph.getPages()[0]
+      const image = pageNode ? graph.getChildren(pageNode.id)[0] : undefined
+      const fill = image?.fills[0]
+      return image
+        ? {
+            fillType: fill?.type,
+            hasImageBytes: fill?.imageHash ? graph.images.has(fill.imageHash) : false,
+            height: image.height,
+            imageScaleMode: fill?.imageScaleMode,
+            type: image.type,
+            width: image.width
+          }
+        : null
+    },
+    { sourceHTML: html, css: cssText, modulePath: DOM_CSS_BROWSER_MODULE }
+  )
+}
+
 export async function publicBrowserTextNode(page: Page, html: string, cssText: string) {
   await ensureAppPage(page)
   await page.setContent('<main></main>')
