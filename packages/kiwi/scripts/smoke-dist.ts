@@ -1,4 +1,5 @@
 import { getSchemaBytes, initCodec, isCodecReady } from '../dist/fig/codec.js'
+import { buildFigKiwi, parseFigKiwiChunks } from '../dist/fig/container.js'
 import { parseFigKiwiContainer } from '../dist/fig/parse.js'
 import { figmaSchema, getKiwiMessageType, parseSchema, validateSchema } from '../dist/index.js'
 
@@ -26,4 +27,9 @@ if (!isCodecReady() || getSchemaBytes().length === 0) {
 
 if (parseFigKiwiContainer(new TextEncoder().encode('not-fig-kiwi')) !== null) {
   throw new Error('Failed to reject invalid FIG Kiwi container')
+}
+
+const figKiwi = buildFigKiwi(new Uint8Array([1]), new Uint8Array([2]))
+if (parseFigKiwiChunks(figKiwi)?.length !== 2) {
+  throw new Error('Failed to read built FIG Kiwi container chunks')
 }

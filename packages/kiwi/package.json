@@ -28,6 +28,12 @@
       "import": "./dist/fig/codec.js",
       "default": "./dist/fig/codec.js"
     },
+    "./fig/container": {
+      "types": "./dist/src/fig/container.d.ts",
+      "bun": "./src/fig/container.ts",
+      "import": "./dist/fig/container.js",
+      "default": "./dist/fig/container.js"
+    },
     "./fig/parse": {
       "types": "./dist/src/fig/parse.d.ts",
       "bun": "./src/fig/parse.ts",

@@ -21,6 +21,7 @@ export default defineConfig({
     'schema-runtime': './src/schema-runtime/index.ts',
     fig: './src/fig/index.ts',
     'fig/codec': './src/fig/codec.ts',
+    'fig/container': './src/fig/container.ts',
     'fig/parse': './src/fig/parse.ts'
   },
   plugins: [rawText()],
