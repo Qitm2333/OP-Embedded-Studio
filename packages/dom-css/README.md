@@ -45,7 +45,7 @@ const document = runtime.parseHTML('<article class="card">OpenPencil</article>')
 const styled = await runtime.computeStyles(document, '.card { width: calc(10rem + 16px); }')
 ```
 
-The headless runtime is useful for Bun/Node tests, CLI flows, and fast approximate conversion. It supports common selectors, inheritance, shorthands, CSSOM grouping rules, and simple variable/calc values, but it is not a browser replacement. Do not use it as an oracle for browser-only CSS behavior such as layout-dependent computed values, full custom-property fallback behavior, modern color serialization, or UA defaults.
+The headless runtime is useful for Bun/Node tests, CLI flows, and fast approximate conversion. It supports common selectors, inheritance, shorthands, CSSOM grouping rules, and simple variable/calc values, but it is not a browser replacement. Do not use it as an oracle for browser-only CSS behavior such as layout-dependent computed values, full custom-property fallback behavior, modern color serialization, or UA defaults. Do not expand headless CSS parsing with ad hoc regex/string parsers; add a maintained parser/runtime dependency or use the browser runtime instead.
 
 ```ts
 import { createHeadlessCSSRuntime } from '@open-pencil/dom-css'
@@ -216,6 +216,6 @@ const graph = await tailwindHTMLToSceneGraph(
 ## Roadmap
 
 - Expand reusable fixtures: inputs, badges, nav/menu rows, dialog shells, and richer cards
-- Map more computed CSS properties to scene graph fields: richer shadows, typography details, position constraints, borders, and grid once OpenPencil's grid support matures
+- Map more computed CSS properties to scene graph fields through browser-native computed style or dependency-backed parsers: richer shadows, typography details, position constraints, borders, gradients, and grid once OpenPencil's grid support matures
 - Improve SceneGraph → CSS export so generated HTML/CSS is useful for JSX, Tailwind, and web export
 - Keep `@open-pencil/dom-css` stable before splitting lower-level file-format packages such as future `@open-pencil/kiwi` and `@open-pencil/fig`
