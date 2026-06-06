@@ -69,6 +69,7 @@ export function createEditorStoreModules(
     ...pen,
     ...vectorEdit,
     openFigFile: documentIO.openFigFile,
+    openDOMFile: documentIO.openDOMFile,
     setViewportSize: documentIO.setViewportSize,
     fitCurrentPageToViewport: documentIO.fitCurrentPageToViewport,
     saveFigFile: documentIO.saveFigFile,

@@ -58,6 +58,33 @@ async function browserRuntimeComputeStyles(
   )
 }
 
+async function publicBrowserHTMLSceneGraph(page: Page, html: string, cssText: string) {
+  if (!page.url().startsWith('http://localhost:1420')) {
+    await page.goto('/')
+    await page.setContent('<main></main>')
+  }
+
+  return page.evaluate(
+    async ({ sourceHTML, css, modulePath }) => {
+      const { browserHTMLToSceneGraph } = await import(modulePath)
+      const graph = await browserHTMLToSceneGraph(sourceHTML, { cssText: css })
+      const pageNode = graph.getPages()[0]
+      const card = pageNode ? graph.getChildren(pageNode.id)[0] : undefined
+      return card
+        ? {
+            height: card.height,
+            itemSpacing: card.itemSpacing,
+            layoutMode: card.layoutMode,
+            paddingLeft: card.paddingLeft,
+            type: card.type,
+            width: card.width
+          }
+        : null
+    },
+    { sourceHTML: html, css: cssText, modulePath: DOM_CSS_BROWSER_MODULE }
+  )
+}
+
 async function publicBrowserSceneGraph(page: Page, classes: string[], cssText: string) {
   if (!page.url().startsWith('http://localhost:1420')) {
     await page.goto('/')
@@ -463,6 +490,31 @@ test.describe('@open-pencil/dom-css browser CSS runtime oracle', () => {
       .locator('article.card')
       .evaluate((element) => getComputedStyle(element).width)
     expect(hostWidth).toBe('20px')
+  })
+
+  test('projects HTML through public browser helpers into scene graph', async ({ page }) => {
+    const css = `
+      .card {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 320px;
+        height: 176px;
+        padding: 24px;
+      }
+    `
+    const card = await publicBrowserHTMLSceneGraph(
+      page,
+      '<article class="card"><h1>OpenPencil</h1></article>',
+      css
+    )
+
+    expect(card?.type).toBe('FRAME')
+    expect(card?.width).toBe(320)
+    expect(card?.height).toBe(176)
+    expect(card?.layoutMode).toBe('VERTICAL')
+    expect(card?.itemSpacing).toBe(12)
+    expect(card?.paddingLeft).toBe(24)
   })
 
   test('projects JSX through public browser helpers into scene graph', async ({ page }) => {

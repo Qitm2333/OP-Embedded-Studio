@@ -93,26 +93,25 @@ function styleToRecord(style: CSSStyleDeclaration): Record<string, string> | und
 }
 
 function domNodeToDesignNode(node: Node): DesignNode | null {
-  const view = node.ownerDocument?.defaultView
-  if (!view) return null
-
-  if (node.nodeType === view.Node.TEXT_NODE) {
+  if (node.nodeType === 3) {
     const text = node.textContent ?? ''
     return text.length > 0 ? { type: 'text', text } : null
   }
 
-  if (node.nodeType !== view.Node.ELEMENT_NODE || !(node instanceof view.Element)) return null
+  if (node.nodeType !== 1) return null
 
-  const children = Array.from(node.childNodes)
+  const element = node as Element
+  const children = Array.from(element.childNodes)
     .map(domNodeToDesignNode)
     .filter((child): child is DesignNode => child !== null)
+  const style = 'style' in element ? (element.style as CSSStyleDeclaration) : undefined
 
   return {
     type: 'element',
-    tagName: node.tagName.toLowerCase(),
-    attrs: attributesToRecord(node),
+    tagName: element.tagName.toLowerCase(),
+    attrs: attributesToRecord(element),
     children,
-    inlineStyle: node instanceof view.HTMLElement ? styleToRecord(node.style) : undefined
+    inlineStyle: style ? styleToRecord(style) : undefined
   }
 }
 

@@ -14,6 +14,17 @@ export interface BrowserToDesignDocumentOptions extends BrowserCSSRuntimeOptions
   compute?: CSSComputeOptions
 }
 
+export type BrowserHTMLToDesignDocumentOptions = BrowserToDesignDocumentOptions
+
+export interface BrowserHTMLToSceneGraphOptions
+  extends BrowserToDesignDocumentOptions, ToSceneGraphOptions {}
+
+export interface BrowserTailwindHTMLToDesignDocumentOptions
+  extends Omit<BrowserHTMLToDesignDocumentOptions, 'cssText'>, CompileTailwindCSSOptions {}
+
+export interface BrowserTailwindHTMLToSceneGraphOptions
+  extends BrowserTailwindHTMLToDesignDocumentOptions, ToSceneGraphOptions {}
+
 export interface BrowserToSceneGraphOptions
   extends BrowserToDesignDocumentOptions, ToSceneGraphOptions {}
 
@@ -25,6 +36,41 @@ export interface BrowserTailwindToSceneGraphOptions
 
 function createRuntime(options: BrowserCSSRuntimeOptions) {
   return createBrowserCSSRuntime({ sandbox: 'iframe', ...options })
+}
+
+export async function browserHTMLToDesignDocument(
+  html: string,
+  options: BrowserHTMLToDesignDocumentOptions = {}
+): Promise<DesignDocument> {
+  const runtime = createRuntime(options)
+  const document = runtime.parseHTML(html)
+  return runtime.computeStyles(document, options.cssText, options.compute)
+}
+
+export async function browserHTMLToSceneGraph(
+  html: string,
+  options: BrowserHTMLToSceneGraphOptions = {}
+): Promise<SceneGraph> {
+  const document = await browserHTMLToDesignDocument(html, options)
+  return designDocumentToSceneGraph(document, options)
+}
+
+export async function browserTailwindHTMLToDesignDocument(
+  html: string,
+  candidates: string | Iterable<string>,
+  options: BrowserTailwindHTMLToDesignDocumentOptions = {}
+): Promise<DesignDocument> {
+  const cssText = await compileTailwindCSS(candidates, options)
+  return browserHTMLToDesignDocument(html, { ...options, cssText })
+}
+
+export async function browserTailwindHTMLToSceneGraph(
+  html: string,
+  candidates: string | Iterable<string>,
+  options: BrowserTailwindHTMLToSceneGraphOptions = {}
+): Promise<SceneGraph> {
+  const document = await browserTailwindHTMLToDesignDocument(html, candidates, options)
+  return designDocumentToSceneGraph(document, options)
 }
 
 export async function browserJSXToDesignDocument(

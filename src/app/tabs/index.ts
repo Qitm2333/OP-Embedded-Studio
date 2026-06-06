@@ -91,6 +91,10 @@ function yieldToUI(): Promise<void> {
   })
 }
 
+function isDOMImportFile(file: File): boolean {
+  return /\.(html?|xhtml)$/i.test(file.name)
+}
+
 export async function openFileInNewTab(
   file: File,
   handle?: FileSystemFileHandle,
@@ -100,6 +104,11 @@ export async function openFileInNewTab(
   const isUntouched =
     current?.store.state.documentName === 'Untitled' && !current.store.undo.canUndo
   const store = isUntouched ? current.store : createTab().store
+  if (isDOMImportFile(file)) {
+    await store.openDOMFile(file, { handle, path })
+    return
+  }
+
   const documentName = file.name.replace(/\.[^.]+$/i, '')
 
   store.state.documentName = documentName

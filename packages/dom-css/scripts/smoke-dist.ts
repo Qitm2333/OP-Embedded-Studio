@@ -5,6 +5,7 @@ const browserDistPath = '../dist/browser.js'
 const dist = await import(distPath)
 const browserDist = await import(browserDistPath)
 
+const browserHTMLToSceneGraph: typeof DomCSS.browserHTMLToSceneGraph = dist.browserHTMLToSceneGraph
 const browserTailwindJSXToDesignDocument: typeof DomCSS.browserTailwindJSXToDesignDocument =
   dist.browserTailwindJSXToDesignDocument
 const compileTailwindCSS: typeof DomCSS.compileTailwindCSS = dist.compileTailwindCSS
@@ -56,8 +57,16 @@ if (jsxDocument.children[0]?.type !== 'element') {
   throw new Error('Expected built JSX helpers to produce DesignDOM elements')
 }
 
+if (typeof browserHTMLToSceneGraph !== 'function') {
+  throw new TypeError('Expected built browser HTML helper to be exported')
+}
+
 if (typeof browserTailwindJSXToDesignDocument !== 'function') {
   throw new TypeError('Expected built browser JSX helper to be exported')
+}
+
+if (typeof browserDist.browserHTMLToSceneGraph !== 'function') {
+  throw new TypeError('Expected built browser subpath HTML helper to be exported')
 }
 
 if (typeof browserDist.browserTailwindJSXToDesignDocument !== 'function') {
