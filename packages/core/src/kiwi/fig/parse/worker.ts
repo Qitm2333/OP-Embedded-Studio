@@ -4,7 +4,7 @@ import {
   serializedSceneGraphTransferList
 } from '#core/kiwi/fig/parse/transfer'
 
-import { parseFigBuffer } from './core'
+import { parseFigBuffer } from '@open-pencil/kiwi/fig/parse'
 
 interface WorkerParseRequest {
   buffer: ArrayBuffer

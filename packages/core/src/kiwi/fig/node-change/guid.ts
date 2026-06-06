@@ -1,4 +1,4 @@
-import type { GUID } from '#core/kiwi/fig/codec'
+import type { GUID } from '@open-pencil/kiwi/fig/codec'
 
 export function guidToString(guid: GUID): string {
   return `${guid.sessionID}:${guid.localID}`

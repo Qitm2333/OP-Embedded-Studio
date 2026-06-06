@@ -40,7 +40,7 @@ const sgTypesPath = coreSourcePath('scene-graph/types.ts')
 const nodeExportPath = coreSourcePath('kiwi/fig/node-change/export-node.ts')
 const convertPath = coreSourcePath('kiwi/fig/node-change/paint.ts')
 const schemaPath = repoPath('packages/kiwi/src/fig/schema/fig.kiwi')
-const codecPath = coreSourcePath('kiwi/fig/codec/index.ts')
+const codecPath = repoPath('packages/kiwi/src/fig/codec.ts')
 const lifecyclePath = coreSourcePath('canvas/renderer/lifecycle.ts')
 
 function readSource(path: string): string {

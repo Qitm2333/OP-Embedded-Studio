@@ -2,7 +2,7 @@ import { expect, setDefaultTimeout, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 
 import { importNodeChanges } from '#core/kiwi'
-import { parseFigBuffer } from '#core/kiwi/fig/parse/core'
+import { parseFigBuffer } from '@open-pencil/kiwi/fig/parse'
 
 import { expectDefined } from '#tests/helpers/assert'
 import { heavy } from '#tests/helpers/test-utils'

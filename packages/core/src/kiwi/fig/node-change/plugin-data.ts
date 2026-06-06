@@ -1,13 +1,12 @@
-import type { NodeChange, PluginData, PluginRelaunchData } from '#core/kiwi/fig/codec'
-import { clampExportScale } from '#core/scene-graph'
-import type {
-  ExportFormatId,
-  ExportSetting,
-  PluginDataEntry,
-  PluginRelaunchDataEntry
-} from '#core/scene-graph'
-
-import { guidToString } from './guid'
+import type { NodeChange, PluginData, PluginRelaunchData } from '@open-pencil/kiwi/fig/codec'
+import { guidToString } from '@open-pencil/kiwi/fig/guid'
+import {
+  clampExportScale,
+  type ExportFormatId,
+  type ExportSetting,
+  type PluginDataEntry,
+  type PluginRelaunchDataEntry
+} from '@open-pencil/scene-graph'
 
 export const OPEN_PENCIL_PLUGIN_ID = 'open-pencil'
 export const TEXT_DIRECTION_PLUGIN_KEY = 'textDirection'
@@ -107,8 +106,6 @@ function parseExportSettingsPluginValue(value: string | null): ExportSetting[] |
       if (typeof scale !== 'number' || !Number.isFinite(scale) || !isExportFormatId(format)) {
         return []
       }
-      // Clamp at the file-format boundary: imported plugin data may carry an
-      // out-of-range scale the UI would never produce.
       return [{ scale: clampExportScale(scale), format }]
     })
     return settings.length === parsed.length ? settings : null
@@ -131,7 +128,6 @@ function extractNativeConstraintScale(constraint: unknown): number {
   const type = (constraint as { type?: unknown }).type
   if (type !== 'CONTENT_SCALE' && type !== 0) return 1
   const value = (constraint as { value?: unknown }).value
-  // Clamp native CONTENT_SCALE too: malformed .fig data can carry huge multipliers.
   return typeof value === 'number' && Number.isFinite(value) ? clampExportScale(value) : 1
 }
 

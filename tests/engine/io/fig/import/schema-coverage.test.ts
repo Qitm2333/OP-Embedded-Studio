@@ -30,7 +30,7 @@ type SchemaCoverageBucket =
   | 'internalBookkeeping'
 
 const SCHEMA_PATH = 'packages/kiwi/src/fig/schema/fig.kiwi'
-const CODEC_PATH = 'packages/core/src/kiwi/fig/codec/index.ts'
+const CODEC_PATH = 'packages/kiwi/src/fig/codec.ts'
 
 function nodeChangeSchemaFields(): SchemaField[] {
   const schema = parseSchema(readFileSync(SCHEMA_PATH, 'utf8'))

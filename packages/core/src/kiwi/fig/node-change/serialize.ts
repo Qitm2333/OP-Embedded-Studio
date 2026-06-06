@@ -10,10 +10,10 @@ export {
   decompressFigKiwiDataAsync,
   FIG_KIWI_DEFAULT_VERSION,
   parseFigKiwiChunks
-} from '#core/kiwi/fig/container/kiwi'
+} from '@open-pencil/kiwi/fig/container'
 export { buildFontDigestMap } from './font/digests'
 
-import type { NodeChange, Paint, VariableConsumptionEntry } from '#core/kiwi/fig/codec'
+import type { NodeChange, Paint, VariableConsumptionEntry } from '@open-pencil/kiwi/fig/codec'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import type { Color, GUID, JsonObject, Matrix } from '#core/types'
 

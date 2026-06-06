@@ -1,5 +1,5 @@
 import { normalizeColor } from '#core/color'
-import type { Paint, Effect as KiwiEffect } from '#core/kiwi/fig/codec'
+import type { Paint, Effect as KiwiEffect } from '@open-pencil/kiwi/fig/codec'
 import { guidToString } from '#core/kiwi/fig/node-change/guid'
 import type {
   Fill,

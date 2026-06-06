@@ -1,4 +1,4 @@
-import type { NodeChange, Paint, Effect as KiwiEffect } from '#core/kiwi/fig/codec'
+import type { NodeChange, Paint, Effect as KiwiEffect } from '@open-pencil/kiwi/fig/codec'
 import {
   convertFills,
   mapStackSizing,

@@ -1,4 +1,4 @@
-import type { NodeChange } from '#core/kiwi/fig/codec'
+import type { NodeChange } from '@open-pencil/kiwi/fig/codec'
 import type { FontFeature } from '#core/scene-graph'
 
 const BOOLEAN_FEATURES = [

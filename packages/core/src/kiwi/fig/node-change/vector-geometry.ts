@@ -1,4 +1,4 @@
-import type { NodeChange } from '#core/kiwi/fig/codec'
+import type { NodeChange } from '@open-pencil/kiwi/fig/codec'
 import type { GeometryPath, VectorNetwork, WindingRule } from '#core/scene-graph'
 import type { Vector } from '#core/types'
 import { decodeVectorNetworkBlob } from '#core/vector'
