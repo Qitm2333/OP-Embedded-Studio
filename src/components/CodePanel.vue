@@ -3,7 +3,7 @@ import Prism from 'prismjs'
 import 'prismjs/components/prism-jsx'
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport } from 'reka-ui'
 import { useClipboard } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { JSX_REFERENCE, selectionToJSX } from '@open-pencil/core/design-jsx'
 import { useI18n, useSceneComputed } from '@open-pencil/vue'
@@ -21,6 +21,7 @@ const jsxFormat = ref<JSXFormat>('openpencil')
 const showImporter = ref(false)
 const importHTML = ref('')
 const importCSS = ref('')
+const importError = ref('')
 const importing = ref(false)
 
 function toggleFormat() {
@@ -44,15 +45,25 @@ const { copy: copyRef, copied: copiedRef } = useClipboard({ copiedDuring: 2000 }
 
 const canImport = computed(() => importHTML.value.trim().length > 0)
 
+watch([importHTML, importCSS], () => {
+  importError.value = ''
+})
+
+function errorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message
+  return 'Import failed. Check the HTML and CSS, then try again.'
+}
+
 function toggleImporter() {
   showImporter.value = !showImporter.value
 }
 
 async function pasteImportHTML() {
   try {
+    importError.value = ''
     importHTML.value = await navigator.clipboard.readText()
   } catch (e) {
-    console.error('Failed to read clipboard:', e)
+    importError.value = errorMessage(e)
   }
 }
 
@@ -60,9 +71,12 @@ async function importCode() {
   if (!canImport.value || importing.value) return
   try {
     importing.value = true
+    importError.value = ''
     await store.importDOMText(importHTML.value, {
       cssText: importCSS.value.trim() || undefined
     })
+  } catch (e) {
+    importError.value = errorMessage(e)
   } finally {
     importing.value = false
   }
@@ -161,6 +175,13 @@ function copyReference() {
         placeholder=".card { width: 240px; padding: 16px; border-radius: 12px; background: white; }"
         spellcheck="false"
       />
+      <div
+        v-if="importError"
+        data-test-id="code-panel-import-error"
+        class="mb-2 rounded border border-red-500/40 bg-red-500/10 px-2 py-1.5 text-[11px] text-red-200"
+      >
+        {{ importError }}
+      </div>
       <div class="flex items-center justify-between gap-2">
         <span class="text-[11px] text-muted">Import replaces the current document.</span>
         <AppTextButton
