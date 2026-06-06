@@ -20,5 +20,22 @@ export default defineConfig({
   deps: {
     neverBundle: ['@open-pencil/core', /^@open-pencil\/core\//, 'node:fs/promises'],
     onlyBundle: false
+  },
+  outputOptions: {
+    minifyInternalExports: false,
+    codeSplitting: {
+      groups: [
+        {
+          test: /(?<!\.d\.c?ts)$/,
+          name: (id) => {
+            const cleanId = id.split('?')[0]
+            const parts = cleanId.split(/[\\/]/g)
+            const srcIndex = parts.lastIndexOf('src')
+            const file = srcIndex >= 0 ? parts.slice(srcIndex + 1).join('/') : parts.at(-1) ?? 'chunk'
+            return `chunks/${file.replace(/\.(ts|tsx)$/, '')}`
+          }
+        }
+      ]
+    }
   }
 })
