@@ -14,6 +14,7 @@ export interface BrowserCSSRuntimeOptions {
 
 const DEFAULT_COMPUTED_PROPERTIES = [
   'align-items',
+  'aspect-ratio',
   'background-color',
   'background-image',
   'border-bottom-color',
@@ -51,6 +52,7 @@ const DEFAULT_COMPUTED_PROPERTIES = [
   'max-width',
   'min-height',
   'min-width',
+  'object-fit',
   'opacity',
   'overflow',
   'padding-bottom',
@@ -63,7 +65,9 @@ const DEFAULT_COMPUTED_PROPERTIES = [
   'text-align',
   'text-decoration-line',
   'text-shadow',
+  'text-transform',
   'top',
+  'white-space',
   'width'
 ] as const
 

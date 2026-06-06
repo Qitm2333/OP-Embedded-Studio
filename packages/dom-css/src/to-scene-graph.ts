@@ -149,6 +149,13 @@ function layoutAlignSelfFromCSS(value: string | undefined): SceneNode['layoutAli
   return 'AUTO'
 }
 
+function textCaseFromCSS(value: string | undefined): SceneNode['textCase'] {
+  if (value === 'uppercase') return 'UPPER'
+  if (value === 'lowercase') return 'LOWER'
+  if (value === 'capitalize') return 'TITLE'
+  return 'ORIGINAL'
+}
+
 function applyFlexGap(node: SceneNode, style: DesignStyleDeclaration): void {
   const gap = firstCSSNumber(style, 'gap')
   const rowGap = firstCSSNumber(style, 'row-gap')
@@ -257,6 +264,11 @@ function applyTextStyle(node: SceneNode, style: DesignStyleDeclaration): void {
   const textDecoration = pickStyle(style, 'text-decoration-line')
   if (textDecoration === 'underline') node.textDecoration = 'UNDERLINE'
   if (textDecoration === 'line-through') node.textDecoration = 'STRIKETHROUGH'
+
+  const textCase = textCaseFromCSS(pickStyle(style, 'text-transform'))
+  if (textCase !== 'ORIGINAL') node.textCase = textCase
+
+  if (pickStyle(style, 'white-space') === 'nowrap') node.maxLines = 1
 }
 
 function createTextNode(

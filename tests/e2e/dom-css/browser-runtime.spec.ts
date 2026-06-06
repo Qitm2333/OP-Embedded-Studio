@@ -1,7 +1,3 @@
-import process from 'node:process'
-
-import type { Page } from '@playwright/test'
-
 import {
   compileTailwindCSS,
   designDocumentToSceneGraph,
@@ -20,116 +16,16 @@ import {
   tailwindInputClasses,
   tailwindNavClasses
 } from '#tests/helpers/dom-css'
+import {
+  browserRuntimeComputeStyles,
+  computedStyleProperties,
+  publicBrowserHTMLSceneGraph,
+  publicBrowserSceneGraph,
+  publicBrowserTextNode,
+  setStyledContent
+} from '#tests/helpers/dom-css-browser'
 
 import { expect, test } from '../fixtures'
-
-async function setStyledContent(page: Page, css: string, body: string) {
-  await page.setContent(`
-    <style>${css}</style>
-    ${body}
-  `)
-}
-
-const BROWSER_RUNTIME_MODULE = `http://localhost:1420/@fs${process.cwd()}/packages/dom-css/src/runtime/browser.ts`
-const DOM_CSS_BROWSER_MODULE = 'http://localhost:1420/@id/@open-pencil/dom-css/browser'
-
-async function browserRuntimeComputeStyles(
-  page: Page,
-  document: DesignDocument,
-  cssText: string,
-  sandbox: 'shadow-root' | 'iframe' = 'iframe'
-) {
-  if (!page.url().startsWith('http://localhost:1420')) {
-    await page.goto('/')
-  }
-
-  return page.evaluate(
-    async ({ designDocument, css, modulePath, sandboxMode }) => {
-      const { createBrowserCSSRuntime } = await import(modulePath)
-      const runtime = createBrowserCSSRuntime({ document: window.document, sandbox: sandboxMode })
-      return runtime.computeStyles(designDocument, css)
-    },
-    {
-      designDocument: document,
-      css: cssText,
-      modulePath: BROWSER_RUNTIME_MODULE,
-      sandboxMode: sandbox
-    }
-  )
-}
-
-async function publicBrowserHTMLSceneGraph(page: Page, html: string, cssText = '') {
-  if (!page.url().startsWith('http://localhost:1420')) {
-    await page.goto('/')
-    await page.setContent('<main></main>')
-  }
-
-  return page.evaluate(
-    async ({ sourceHTML, css, modulePath }) => {
-      const { browserHTMLToSceneGraph } = await import(modulePath)
-      const graph = await browserHTMLToSceneGraph(sourceHTML, { cssText: css })
-      const pageNode = graph.getPages()[0]
-      const card = pageNode ? graph.getChildren(pageNode.id)[0] : undefined
-      return card
-        ? {
-            height: card.height,
-            itemSpacing: card.itemSpacing,
-            layoutMode: card.layoutMode,
-            paddingLeft: card.paddingLeft,
-            type: card.type,
-            width: card.width
-          }
-        : null
-    },
-    { sourceHTML: html, css: cssText, modulePath: DOM_CSS_BROWSER_MODULE }
-  )
-}
-
-async function publicBrowserSceneGraph(page: Page, classes: string[], cssText: string) {
-  if (!page.url().startsWith('http://localhost:1420')) {
-    await page.goto('/')
-    await page.setContent('<main></main>')
-  }
-
-  return page.evaluate(
-    async ({ candidates, css, modulePath }) => {
-      const { browserJSXToSceneGraph, jsx } = await import(modulePath)
-      const graph = await browserJSXToSceneGraph(
-        jsx('article', {
-          class: candidates.join(' '),
-          children: jsx('h1', { children: 'OpenPencil' })
-        }),
-        { cssText: css }
-      )
-      const pageNode = graph.getPages()[0]
-      const card = pageNode ? graph.getChildren(pageNode.id)[0] : undefined
-      return card
-        ? {
-            height: card.height,
-            itemSpacing: card.itemSpacing,
-            layoutMode: card.layoutMode,
-            paddingLeft: card.paddingLeft,
-            type: card.type,
-            width: card.width
-          }
-        : null
-    },
-    { candidates: classes, css: cssText, modulePath: DOM_CSS_BROWSER_MODULE }
-  )
-}
-
-async function computedStyleProperties(
-  page: Page,
-  selector: string,
-  properties: readonly string[]
-) {
-  return page.locator(selector).evaluate((element, styleProperties) => {
-    const computed = getComputedStyle(element)
-    return Object.fromEntries(
-      styleProperties.map((property) => [property, computed.getPropertyValue(property)])
-    )
-  }, properties)
-}
 
 test.describe('@open-pencil/dom-css browser CSS runtime oracle', () => {
   test('resolves Tailwind card variables and calc values in a real browser', async ({ page }) => {
@@ -376,6 +272,58 @@ test.describe('@open-pencil/dom-css browser CSS runtime oracle', () => {
     expect(styles.gap).toBe('12px')
     expect(styles.paddingTop).toBe('24px')
     expect(styles.width).toBe('176px')
+  })
+
+  test('resolves aspect ratio, object fit, text transform, and white space in a real browser', async ({
+    page
+  }) => {
+    await setStyledContent(
+      page,
+      `
+        .ratio {
+          aspect-ratio: 16 / 9;
+          width: 320px;
+        }
+        .media {
+          object-fit: contain;
+          width: 320px;
+          height: 180px;
+        }
+        .title {
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+      `,
+      '<div class="ratio"></div><img class="media" alt="Preview" /><h1 class="title">OpenPencil</h1>'
+    )
+
+    const ratio = await computedStyleProperties(page, '.ratio', ['aspect-ratio', 'height', 'width'])
+    expect(ratio['aspect-ratio']).toBe('16 / 9')
+    expect(ratio.width).toBe('320px')
+    expect(ratio.height).toBe('180px')
+
+    const media = await computedStyleProperties(page, '.media', ['height', 'object-fit', 'width'])
+    expect(media['object-fit']).toBe('contain')
+    expect(media.width).toBe('320px')
+    expect(media.height).toBe('180px')
+
+    const title = await computedStyleProperties(page, '.title', ['text-transform', 'white-space'])
+    expect(title['text-transform']).toBe('uppercase')
+    expect(title['white-space']).toBe('nowrap')
+  })
+
+  test('projects browser text transform and nowrap into scene graph text fields', async ({
+    page
+  }) => {
+    const textNode = await publicBrowserTextNode(
+      page,
+      '<h1 class="title">OpenPencil</h1>',
+      '.title { color: #111827; text-transform: uppercase; white-space: nowrap; }'
+    )
+
+    expect(textNode?.type).toBe('TEXT')
+    expect(textNode?.textCase).toBe('UPPER')
+    expect(textNode?.maxLines).toBe(1)
   })
 
   test('resolves flex wrap, self alignment, absolute positioning, and clipping', async ({

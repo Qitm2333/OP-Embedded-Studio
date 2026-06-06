@@ -61,6 +61,8 @@ function createStyleRoundTripGraph() {
               'line-height': '24px',
               'letter-spacing': '0.2px',
               'text-align': 'center',
+              'text-transform': 'uppercase',
+              'white-space': 'nowrap',
               opacity: '0.5',
               'text-shadow': `0px 1px 2px 0px ${TEST_COLORS.slateShadow}`
             },
@@ -95,6 +97,8 @@ function expectStyleRoundTripText(graph: SceneGraph, panel: SceneNode) {
   expect(heading.lineHeight).toBe(24)
   expect(heading.letterSpacing).toBe(0.2)
   expect(heading.textAlignHorizontal).toBe('CENTER')
+  expect(heading.textCase).toBe('UPPER')
+  expect(heading.maxLines).toBe(1)
   expect(heading.opacity).toBe(0.5)
   expect(heading.effects[0]?.type).toBe('DROP_SHADOW')
 }
@@ -114,6 +118,8 @@ function expectRoundTripHeadingStyle(element: DesignElement) {
   expect(element.inlineStyle?.['line-height']).toBe('24px')
   expect(element.inlineStyle?.['letter-spacing']).toBe('0.2px')
   expect(element.inlineStyle?.['text-align']).toBe('center')
+  expect(element.inlineStyle?.['text-transform']).toBe('uppercase')
+  expect(element.inlineStyle?.['white-space']).toBe('nowrap')
   expect(element.inlineStyle?.opacity).toBe('0.5')
   expect(element.inlineStyle?.['text-shadow']).toContain('2px')
 }

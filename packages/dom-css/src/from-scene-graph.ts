@@ -46,6 +46,13 @@ function alignSelfToCSS(value: SceneNode['layoutAlignSelf']): string | undefined
   return undefined
 }
 
+function textCaseToCSS(value: SceneNode['textCase']): string | undefined {
+  if (value === 'UPPER') return 'uppercase'
+  if (value === 'LOWER') return 'lowercase'
+  if (value === 'TITLE') return 'capitalize'
+  return undefined
+}
+
 function addPositioning(style: DesignStyleDeclaration, node: SceneNode): void {
   if (node.layoutPositioning !== 'ABSOLUTE') return
   style.position = 'absolute'
@@ -182,6 +189,9 @@ function styleFromTextNode(node: SceneNode): DesignStyleDeclaration {
     style['text-decoration-line'] =
       node.textDecoration === 'UNDERLINE' ? 'underline' : 'line-through'
   }
+  const textTransform = textCaseToCSS(node.textCase)
+  if (textTransform) style['text-transform'] = textTransform
+  if (node.maxLines === 1) style['white-space'] = 'nowrap'
   return style
 }
 
