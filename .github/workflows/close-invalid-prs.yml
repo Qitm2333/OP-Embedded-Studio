@@ -4,14 +4,14 @@ on:
   pull_request_review:
     types: [submitted]
   issue_comment:
-    types: [created]
+    types: [created, edited]
 
 concurrency:
   group: close-invalid-prs-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: false
 
 jobs:
-  # This job only reacts to trusted CodeRabbit review signals and then labels/closes PRs.
+  # This job only reacts to CodeRabbit PR Hygiene pre-merge failures and never runs contributor code.
   close-invalid:
     name: Close PRs failed by PR Hygiene
     runs-on: ubuntu-latest
