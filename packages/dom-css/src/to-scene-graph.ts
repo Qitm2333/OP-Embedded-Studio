@@ -149,6 +149,17 @@ function layoutAlignSelfFromCSS(value: string | undefined): SceneNode['layoutAli
   return 'AUTO'
 }
 
+function applyFlexGap(node: SceneNode, style: DesignStyleDeclaration): void {
+  const gap = firstCSSNumber(style, 'gap')
+  const rowGap = firstCSSNumber(style, 'row-gap')
+  const columnGap = firstCSSNumber(style, 'column-gap')
+  const isHorizontal = node.layoutMode === 'HORIZONTAL'
+  const isWrapped = node.layoutWrap === 'WRAP'
+
+  node.itemSpacing = (isHorizontal ? columnGap : rowGap) ?? gap ?? 0
+  node.counterAxisSpacing = (isHorizontal ? rowGap : columnGap) ?? (isWrapped ? (gap ?? 0) : 0)
+}
+
 function applyPositioning(node: SceneNode, style: DesignStyleDeclaration): void {
   const position = pickStyle(style, 'position')
   if (position === 'absolute' || position === 'fixed') node.layoutPositioning = 'ABSOLUTE'
@@ -203,8 +214,7 @@ function applyElementStyle(node: SceneNode, style: DesignStyleDeclaration): void
     node.primaryAxisAlign = primaryAxisAlignFromCSS(pickStyle(style, 'justify-content'))
     node.counterAxisAlign = counterAxisAlignFromCSS(pickStyle(style, 'align-items'))
     node.layoutWrap = pickStyle(style, 'flex-wrap') === 'wrap' ? 'WRAP' : 'NO_WRAP'
-    node.itemSpacing = firstCSSNumber(style, 'gap', 'column-gap', 'row-gap') ?? 0
-    node.counterAxisSpacing = firstCSSNumber(style, 'row-gap') ?? 0
+    applyFlexGap(node, style)
   }
 }
 

@@ -252,6 +252,44 @@ describe('@open-pencil/dom-css conversion', () => {
     expectStyleRoundTripHTML(graph)
   })
 
+  it('maps flex row and column gaps by axis', () => {
+    const graph = designDocumentToSceneGraph({
+      type: 'document',
+      children: [
+        {
+          type: 'element',
+          tagName: 'div',
+          attrs: { class: 'column-wrap' },
+          computedStyle: {
+            display: 'flex',
+            'flex-direction': 'column',
+            'flex-wrap': 'wrap',
+            'row-gap': '14px',
+            'column-gap': '24px'
+          },
+          children: []
+        }
+      ]
+    })
+    const page = graph.getPages()[0]
+    const stack = expectFrame(page ? graph.getChildren(page.id)[0] : undefined)
+
+    expect(stack.layoutMode).toBe('VERTICAL')
+    expect(stack.layoutWrap).toBe('WRAP')
+    expect(stack.itemSpacing).toBe(14)
+    expect(stack.counterAxisSpacing).toBe(24)
+
+    const roundTrip = sceneGraphToDesignDocument(graph)
+    const root = roundTrip.children[0]
+    expect(root?.type).toBe('element')
+    if (root?.type !== 'element') return
+    const roundTripStack = root.children[0]
+    expect(roundTripStack?.type).toBe('element')
+    if (roundTripStack?.type !== 'element') return
+    expect(roundTripStack.inlineStyle?.['row-gap']).toBe('14px')
+    expect(roundTripStack.inlineStyle?.['column-gap']).toBe('24px')
+  })
+
   it('maps flex wrapping, align-self, clipping, and absolute positioning', () => {
     const graph = designDocumentToSceneGraph({
       type: 'document',

@@ -116,6 +116,23 @@ function addPadding(style: DesignStyleDeclaration, node: SceneNode): void {
   if (paddingLeft > 0) style['padding-left'] = `${paddingLeft}px`
 }
 
+function addFlexGap(style: DesignStyleDeclaration, node: SceneNode): void {
+  if (node.itemSpacing <= 0 && node.counterAxisSpacing <= 0) return
+  if (node.counterAxisSpacing <= 0) {
+    style.gap = `${node.itemSpacing}px`
+    return
+  }
+
+  if (node.layoutMode === 'HORIZONTAL') {
+    if (node.itemSpacing > 0) style['column-gap'] = `${node.itemSpacing}px`
+    style['row-gap'] = `${node.counterAxisSpacing}px`
+    return
+  }
+
+  if (node.itemSpacing > 0) style['row-gap'] = `${node.itemSpacing}px`
+  style['column-gap'] = `${node.counterAxisSpacing}px`
+}
+
 function styleFromSceneNode(node: SceneNode): DesignStyleDeclaration {
   const style = sceneNodeSizeStyle(node)
   addPositioning(style, node)
@@ -139,8 +156,7 @@ function styleFromSceneNode(node: SceneNode): DesignStyleDeclaration {
     if (justifyContent) style['justify-content'] = justifyContent
     if (alignItems) style['align-items'] = alignItems
     if (node.layoutWrap === 'WRAP') style['flex-wrap'] = 'wrap'
-    if (node.itemSpacing > 0) style.gap = `${node.itemSpacing}px`
-    if (node.counterAxisSpacing > 0) style['row-gap'] = `${node.counterAxisSpacing}px`
+    addFlexGap(style, node)
     addPadding(style, node)
   }
 
