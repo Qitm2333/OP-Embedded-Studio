@@ -1,9 +1,10 @@
+import { guidToString } from '@open-pencil/kiwi/fig/guid'
+
 /* eslint-disable max-lines -- kiwi↔scene conversion helpers are tightly coupled */
 import { DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from '#core/constants'
 import { parseVariantName } from '#core/scene-graph/variant-name'
 import { styleToWeight } from '#core/text/fonts'
 
-import { guidToString } from '@open-pencil/kiwi/fig/guid'
 import { convertEffects, convertFills, convertStrokes } from './paint'
 import { importStyleRuns } from './style-runs'
 export { importStyleRuns } from './style-runs'
@@ -133,10 +134,11 @@ function mapNodeType(type?: string): NodeType | 'DOCUMENT' | 'VARIABLE' {
 
 function mapBooleanOperation(nc: NodeChange): SceneNode['booleanOperation'] {
   if (nc.type !== 'BOOLEAN_OPERATION') return undefined
-  switch (nc.booleanOperation) {
+  const operation = nc.booleanOperation as NodeChange['booleanOperation'] | 'EXCLUDE' | undefined
+  switch (operation) {
     case 'SUBTRACT':
     case 'INTERSECT':
-      return nc.booleanOperation
+      return operation
     case 'EXCLUDE':
     case 'XOR':
       return 'EXCLUDE'

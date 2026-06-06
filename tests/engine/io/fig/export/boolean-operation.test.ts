@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
+import { createNodeChangesMessage, encodeMessage, initCodec } from '@open-pencil/kiwi/fig/codec'
+
 import { sceneNodeToKiwi } from '#core/kiwi/fig/node-change/serialize'
 import { SceneGraph } from '#core/scene-graph'
 
@@ -15,6 +17,21 @@ describe('Figma boolean operation export', () => {
 
     expect(changes[0].type).toBe('BOOLEAN_OPERATION')
     expect(changes[0].booleanOperation).toBe('INTERSECT')
+  })
+
+  test('exports exclude as Kiwi XOR', async () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const node = graph.createNode('BOOLEAN_OPERATION', page.id, {
+      booleanOperation: 'EXCLUDE'
+    })
+
+    const changes = sceneNodeToKiwi(node, { sessionID: 1, localID: 1 }, 0, { value: 2 }, graph, [])
+
+    expect(changes[0].booleanOperation).toBe('XOR')
+
+    await initCodec()
+    expect(() => encodeMessage(createNodeChangesMessage(1, 1, changes))).not.toThrow()
   })
 
   test('exports boolean operation children in order', () => {
