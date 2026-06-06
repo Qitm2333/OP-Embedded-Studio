@@ -1,6 +1,6 @@
 # Package split plan
 
-OpenPencil currently keeps file-format internals in `@open-pencil/core` while `@open-pencil/dom-css` is being split out as a standalone DOM/CSS compatibility layer. Future package splits should preserve the current app behavior first, then move stable surfaces into independently publishable packages.
+OpenPencil is splitting stable compatibility layers into independently publishable packages while keeping editor/runtime behavior intact. Each package boundary should be narrow, covered by package-local checks, and consumed through public workspace exports.
 
 ## Goals
 
@@ -11,48 +11,54 @@ OpenPencil currently keeps file-format internals in `@open-pencil/core` while `@
 
 ## Current package boundary
 
-- `@open-pencil/core` owns scene graph, renderer, editor actions, Figma API compatibility, Kiwi codec internals, and format import/export.
+- `@open-pencil/core` owns scene graph, renderer, editor actions, Figma API compatibility, `.fig` SceneGraph policy, and format import/export.
 - `@open-pencil/dom-css` owns DesignDOM, CSS runtimes, HTML/JSX/Tailwind projection, and SceneGraph ⇄ DesignDOM conversion.
+- `@open-pencil/kiwi` owns pure Kiwi schema/runtime code plus low-level Figma Kiwi codec, container, and parse helpers.
 - App, CLI, MCP, and Vue SDK consume packages through public workspace exports only.
 
-See [`kiwi-package-plan.md`](./kiwi-package-plan.md) for the detailed `@open-pencil/kiwi` inventory, dependency blockers, and package-local test plan.
+See [`kiwi-package-plan.md`](./kiwi-package-plan.md) for the detailed `@open-pencil/kiwi` inventory, package-local test plan, and remaining split boundaries.
 
 ## Candidate packages
 
 ### `@open-pencil/kiwi`
 
+Status: extracted.
+
 Scope:
 
 - Kiwi binary schema runtime.
-- Schema-generated codec modules.
-- Generic binary parse/serialize helpers.
-- Low-level validation helpers that do not know about OpenPencil scene graph nodes.
+- Figma Kiwi schema data and validation.
+- Low-level Figma Kiwi protocol/message helpers.
+- Structural `NodeChange` encode/decode.
+- `fig-kiwi` container framing and raw parse helpers that do not create `SceneGraph` objects.
 
-Should not include:
+Does not include:
 
-- Figma `.fig` container policy.
 - SceneGraph conversion.
+- Raw metadata invalidation policy.
+- Component/instance override interpretation.
 - Renderer/editor code.
 
-Minimum exit criteria:
+Minimum maintenance criteria:
 
 - Package-local typecheck, unit tests, build, and dist smoke.
-- Existing Kiwi serialize/parse tests passing through the package public API.
-- No import cycles from `@open-pencil/core` back into the package.
+- No `@open-pencil/core`, `#core/*`, app, CLI, MCP, or Vue imports.
+- Existing repo-level Kiwi/FIG tests continue to pass through public package APIs.
 
 ### `@open-pencil/fig`
 
 Scope:
 
-- `.fig` container read/write.
+- `.fig` document read/write policy.
 - Figma node-change import/export.
 - Raw metadata preservation and invalidation policy.
+- Figma component/instance interpretation.
 - Figma oracle fixtures and compatibility helpers.
 
 Should depend on:
 
-- `@open-pencil/core` scene graph types.
-- `@open-pencil/kiwi` once the Kiwi split exists.
+- `@open-pencil/core` scene graph types and conversion policy while those remain core-owned.
+- `@open-pencil/kiwi` for low-level schema/runtime/container/codec helpers.
 
 Should not include:
 
@@ -66,45 +72,53 @@ Minimum exit criteria:
 - Heavy Figma fixture coverage still available at repo level.
 - Public API supports CLI/MCP/app document I/O without private path imports.
 
-## Initial inventory
+## Current inventory
 
-Likely `@open-pencil/kiwi` candidates:
+In `@open-pencil/kiwi`:
 
-- `packages/core/src/kiwi/schema-runtime/**`
-- `packages/core/src/kiwi/fig/codec/**`
-- Generated Kiwi schema modules under the Figma codec directory, as long as they stay scene-graph agnostic
+- `packages/kiwi/src/schema-runtime/**`
+- `packages/kiwi/src/fig/schema/**`
+- `packages/kiwi/src/fig/schema.ts`
+- `packages/kiwi/src/fig/protocol.ts`
+- `packages/kiwi/src/fig/types.ts`
+- `packages/kiwi/src/fig/variable-bindings.ts`
+- `packages/kiwi/src/fig/codec.ts`
+- `packages/kiwi/src/fig/container.ts`
+- `packages/kiwi/src/fig/parse.ts`
 
 Likely `@open-pencil/fig` candidates:
 
 - `packages/core/src/kiwi/fig/file.ts`
-- `packages/core/src/kiwi/fig/container/**`
-- `packages/core/src/kiwi/fig/parse/**`
+- `packages/core/src/kiwi/fig/parse/transfer.ts`
+- `packages/core/src/kiwi/fig/parse/worker.ts`
 - `packages/core/src/kiwi/fig/import.ts`
+- `packages/core/src/kiwi/fig/lazy-import.ts`
 - `packages/core/src/kiwi/fig/node-change/**`
 - `packages/core/src/kiwi/fig/instance-overrides/**`
 - `packages/core/src/io/formats/fig/**`
 
 Keep in `@open-pencil/core` unless proven otherwise:
 
-- `SceneGraph` and node type definitions
-- Renderer/editor fallback behavior
-- Layout, text measurement, and canvas-specific code
-- Generic IO registry contracts that other formats use
+- `SceneGraph` and node type definitions.
+- Renderer/editor fallback behavior.
+- Layout, text measurement, and canvas-specific code.
+- Generic IO registry contracts that other formats use.
 
 ## Migration checklist
 
 1. Add package-local tests before moving files.
 2. Confirm every moved module imports only allowed public package exports.
-3. Preserve existing `@open-pencil/core/kiwi` re-exports during the first migration step.
-4. Move one boundary at a time: schema runtime first, generated codec second, `.fig` policy last.
-5. Keep fixture/oracle tests in the repo-level suite even after package-local tests exist.
-6. Run package smoke checks from a temporary consumer project before publishing.
+3. Prefer direct imports from the new package for internal code; avoid accumulating deep re-export shims.
+4. Preserve only intentional public compatibility barrels, such as `@open-pencil/core/kiwi`, when external consumers need a deprecation window.
+5. Move one boundary at a time: schema/runtime first, low-level codec/container/parse second, `.fig` policy last.
+6. Keep fixture/oracle tests in the repo-level suite even after package-local tests exist.
+7. Run package smoke checks from a temporary consumer project before publishing.
 
 ## Migration order
 
 1. Keep `@open-pencil/dom-css` standalone and stabilize its browser/headless runtime split.
-2. Extract pure Kiwi runtime/codecs behind `@open-pencil/kiwi` without moving `.fig` policy.
-3. Move `.fig` container and node-change conversion into `@open-pencil/fig`.
+2. Extract pure Kiwi runtime/codecs behind `@open-pencil/kiwi` without moving `.fig` SceneGraph policy.
+3. Move `.fig` document policy and node-change conversion into `@open-pencil/fig` when the boundary is clear.
 4. Update core/app/CLI/MCP imports to consume public package exports.
 5. Keep compatibility re-exports in `@open-pencil/core` only if existing consumers need a deprecation window.
 
@@ -113,3 +127,4 @@ Keep in `@open-pencil/core` unless proven otherwise:
 - Do not guess Figma schema fields during the split.
 - Do not move renderer-specific fallback behavior into file-format packages.
 - Do not add browser DOM dependencies to core or file-format packages.
+- Do not widen app/CLI imports to private package source paths.
