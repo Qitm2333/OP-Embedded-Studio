@@ -210,6 +210,27 @@ const preferDomainFoldersOverFilenamePrefixes: Rule = {
   }
 }
 
+const scriptsAreEntrypointShims = createTextRule(
+  'open-pencil/scripts-are-entrypoint-shims',
+  (sourceRel, content) => {
+    if (!sourceRel.startsWith('scripts/')) return []
+    if (/^#!\/usr\/bin\/env bun\s+import ['"]\.\.\/tools\/[^'"]+['"]\s*;?$/u.test(content.trim())) return []
+    return [{ message: 'Root scripts must be tiny shims. Move implementation logic into tools/<domain>/.' }]
+  }
+)
+
+const TOOL_LAYOUT_MESSAGE = 'Tool files must live under tools/<domain>/src/** or tools/<domain>/tests/*.test.ts.'
+
+const strictToolsLayout = createFileRule('open-pencil/strict-tools-layout', (sourceRel) => {
+  if (!sourceRel.startsWith('tools/') || !TEXT_EXTENSIONS.has(path.extname(sourceRel))) return null
+  if (sourceRel === 'tools/test.ts') return null
+  const [, domain, segment] = sourceRel.split('/')
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(domain)) return 'Tool package folders must use kebab-case domain names.'
+  if (segment === 'src') return null
+  if (segment === 'tests' && sourceRel.endsWith('.test.ts')) return null
+  return TOOL_LAYOUT_MESSAGE
+})
+
 const strictTestFilePlacement = createFileRule(
   'open-pencil/strict-test-file-placement',
   (sourceRel) => {
@@ -549,6 +570,8 @@ export const openPencilArchitecturePlugin = {
   meta: { name: 'open-pencil-architecture', version: '0.0.0' },
   ruleDefinitions: [
     preferDomainFoldersOverFilenamePrefixes,
+    scriptsAreEntrypointShims,
+    strictToolsLayout,
     strictTestFilePlacement,
     noMisplacedEngineTestDomainPaths,
     noKitchenSinkEngineBasicTests,

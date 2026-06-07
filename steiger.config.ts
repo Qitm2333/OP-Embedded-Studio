@@ -1,7 +1,7 @@
 import fsd from '@feature-sliced/steiger-plugin'
 import { defineConfig } from 'steiger'
 
-import { openPencilArchitecturePlugin } from './scripts/steiger-rules.ts'
+import { openPencilArchitecturePlugin } from './tools/architecture/src/steiger-rules.ts'
 
 // OpenPencil is not laid out as canonical Feature-Sliced Design layers.
 // Keep Steiger focused on project-specific architecture boundaries instead of
@@ -37,7 +37,9 @@ export default defineConfig([
       'open-pencil/no-non-ui-imports-in-shared-ui': 'error',
       'open-pencil/no-app-imports-in-shared-ui': 'error',
       'open-pencil/no-property-panel-internals-outside-panel': 'error',
-      'open-pencil/no-ui-imports-in-core': 'error'
+      'open-pencil/no-ui-imports-in-core': 'error',
+      'open-pencil/scripts-are-entrypoint-shims': 'error',
+      'open-pencil/strict-tools-layout': 'error'
     }
   }
 ])
