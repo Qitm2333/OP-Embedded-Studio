@@ -59,14 +59,19 @@ export function markdownTableCells(line: string): string[] {
 }
 
 export function normalizedCheckName(value: string): string {
-  return value.replace(/[^a-z0-9]+/gi, ' ').trim().toLowerCase()
+  return value
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .trim()
+    .toLowerCase()
 }
 
 export function reviewGuidanceCheckName(line: string): string | null {
   const [rawCheckName = '', status = ''] = markdownTableCells(line)
   const checkName = rawCheckName.replace(/^\[ignored\]\s*/i, '')
   const normalizedName = normalizedCheckName(checkName)
-  const isRelevantCheck = REVIEW_GUIDANCE_PREFIXES.some((prefix) => normalizedName.startsWith(prefix))
+  const isRelevantCheck = REVIEW_GUIDANCE_PREFIXES.some((prefix) =>
+    normalizedName.startsWith(prefix)
+  )
   const needsMaintainerAttention = /❌/u.test(status) || /\berror\b/i.test(status)
 
   if (!isRelevantCheck || !needsMaintainerAttention) return null
@@ -167,7 +172,9 @@ export async function monitorPRReviewGuidance(options: MonitorOptions = {}): Pro
 
   const checks = reviewGuidanceChecks(context.text)
   if (checks.length === 0) {
-    log('CodeRabbit did not report a PR description/readability check that needs maintainer attention.')
+    log(
+      'CodeRabbit did not report a PR description/readability check that needs maintainer attention.'
+    )
     return
   }
 
@@ -189,7 +196,9 @@ export async function monitorPRReviewGuidance(options: MonitorOptions = {}): Pro
   )
 }
 
-const isDirectRun = process.argv[1] ? import.meta.url === pathToFileURL(process.argv[1]).href : false
+const isDirectRun = process.argv[1]
+  ? import.meta.url === pathToFileURL(process.argv[1]).href
+  : false
 
 if (isDirectRun) {
   await monitorPRReviewGuidance()

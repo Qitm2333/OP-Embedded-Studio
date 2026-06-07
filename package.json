@@ -28,7 +28,7 @@
     "test:unit": "bun test ./tests/engine",
     "test:coverage": "bun test --coverage ./tests/engine",
     "test:type-shapes": "bun scripts/type-shapes.ts",
-    "test:tools": "bun --cwd tools/pr-review-guidance test",
+    "test:tools": "bun tools/test.ts",
     "test:dupes": "jscpd packages/core/src packages/cli/src src --min-lines 5 --min-tokens 50 --format typescript --threshold 0",
     "test:packages": "bun scripts/check-package-metadata.ts && bun scripts/smoke-packages.ts",
     "build:packages": "bun --filter @open-pencil/core build && bun --filter @open-pencil/vue build && bun --filter @open-pencil/mcp build && bun --filter @open-pencil/cli build",
