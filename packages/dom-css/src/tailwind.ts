@@ -35,6 +35,6 @@ function normalizeClasses(classes: string | Iterable<string>): string[] {
 async function loadTailwindStylesheet(id: string): Promise<string> {
   const stylesheet = id === 'tailwindcss' ? 'tailwindcss/index.css' : id
   const url = new URL(import.meta.resolve(stylesheet))
-  const { readFile } = await import('node:fs/promises')
+  const { readFile } = await import(/* @vite-ignore */ 'node:fs/promises')
   return readFile(url, 'utf8')
 }

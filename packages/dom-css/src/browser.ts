@@ -1,14 +1,14 @@
 import type { SceneGraph } from '@open-pencil/scene-graph'
 
-import { jsxToDesignDocument, type JSXChild } from './jsx/runtime'
-
-export { Fragment, jsx, jsxs } from './jsx/runtime'
-export type { JSXChild, JSXElementProps, JSXStyleInput, JSXTag } from './jsx/runtime'
 import { mergeCSSText } from './css-text'
+import { jsxToDesignDocumentCore, type JSXChild } from './jsx/core'
 import { createBrowserCSSRuntime, type BrowserCSSRuntimeOptions } from './runtime/browser'
-import { compileTailwindCSS, type CompileTailwindCSSOptions } from './tailwind'
+import type { CompileTailwindCSSOptions } from './tailwind'
 import { designDocumentToSceneGraph, type ToSceneGraphOptions } from './to-scene-graph'
 import type { CSSComputeOptions, DesignDocument } from './types'
+
+export { Fragment, jsx, jsxs } from './jsx/core'
+export type { JSXChild, JSXElementProps, JSXStyleInput, JSXTag } from './jsx/core'
 
 export interface BrowserToDesignDocumentOptions extends BrowserCSSRuntimeOptions {
   cssText?: string
@@ -37,6 +37,14 @@ export interface BrowserTailwindToSceneGraphOptions
 
 function createRuntime(options: BrowserCSSRuntimeOptions) {
   return createBrowserCSSRuntime({ sandbox: 'iframe', ...options })
+}
+
+async function compileBrowserTailwindCSS(
+  candidates: string | Iterable<string>,
+  options: CompileTailwindCSSOptions
+): Promise<string> {
+  const { compileTailwindCSS } = await import('./tailwind')
+  return compileTailwindCSS(candidates, options)
 }
 
 function resolveBrowserDocument(documentOverride: Document | undefined): Document {
@@ -81,7 +89,7 @@ export async function browserTailwindHTMLToDesignDocument(
   candidates: string | Iterable<string>,
   options: BrowserTailwindHTMLToDesignDocumentOptions = {}
 ): Promise<DesignDocument> {
-  const cssText = await compileTailwindCSS(candidates, options)
+  const cssText = await compileBrowserTailwindCSS(candidates, options)
   return browserHTMLToDesignDocument(html, { ...options, cssText })
 }
 
@@ -98,7 +106,7 @@ export async function browserJSXToDesignDocument(
   input: JSXChild,
   options: BrowserToDesignDocumentOptions = {}
 ): Promise<DesignDocument> {
-  const document = await jsxToDesignDocument(input)
+  const document = jsxToDesignDocumentCore(input)
   const runtime = createRuntime(options)
   return runtime.computeStyles(document, options.cssText, options.compute)
 }
@@ -116,7 +124,7 @@ export async function browserTailwindJSXToDesignDocument(
   candidates: string | Iterable<string>,
   options: BrowserTailwindToDesignDocumentOptions = {}
 ): Promise<DesignDocument> {
-  const cssText = await compileTailwindCSS(candidates, options)
+  const cssText = await compileBrowserTailwindCSS(candidates, options)
   return browserJSXToDesignDocument(input, { ...options, cssText })
 }
 
