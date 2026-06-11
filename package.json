@@ -26,6 +26,8 @@
     "test:figma": "playwright test --project=figma",
     "figma:debug": "open -a Figma --args --remote-debugging-port=9222",
     "test:unit": "bun test ./tests/engine",
+    "test:unit:quick": "bash -lc 'mapfile -t test_files < <(bun tools/unit-tests/src/list.ts all); bun test \"${test_files[@]}\"'",
+    "test:unit:heavy": "bash -lc 'mapfile -t test_files < <(bun tools/unit-tests/src/list.ts all --heavy-only); bun test --timeout 180000 \"${test_files[@]}\"'",
     "test:coverage": "bun test --coverage ./tests/engine",
     "test:type-shapes": "bun tools/type-shapes/src/index.ts",
     "test:tools": "bun tools/test.ts",
