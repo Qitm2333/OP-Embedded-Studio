@@ -20,6 +20,9 @@ jobs:
         with:
           lfs: 'true'
 
+      - name: Build packages
+        run: bun run build:packages
+
       - name: Heavy fixture unit tests
         shell: bash
         run: |
