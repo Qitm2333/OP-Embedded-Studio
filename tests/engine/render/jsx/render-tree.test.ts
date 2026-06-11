@@ -27,6 +27,33 @@ import {
 import { expectDefined, getNodeOrThrow, childIdAt } from '#tests/helpers/assert'
 import { makeSceneGraph } from '#tests/helpers/scene'
 
+function addTestColorVariable(
+  graph: ReturnType<typeof makeSceneGraph>,
+  id: string,
+  name: string,
+  value = { r: 1, g: 1, b: 1, a: 1 }
+): void {
+  if (!graph.variableCollections.has('colors')) {
+    graph.addCollection({
+      id: 'colors',
+      name: 'Colors',
+      modes: [{ modeId: 'light', name: 'Light' }],
+      defaultModeId: 'light',
+      variableIds: []
+    })
+  }
+
+  graph.addVariable({
+    id,
+    name,
+    type: 'COLOR',
+    collectionId: 'colors',
+    valuesByMode: { light: value },
+    description: '',
+    hiddenFromPublishing: false
+  })
+}
+
 describe('renderTree', () => {
   it('renders a simple frame', async () => {
     const g = makeSceneGraph()
@@ -187,8 +214,10 @@ describe('renderTree', () => {
     expect(node.fills[0]?.type).toBe('SOLID')
   })
 
-  it('supports explicit variable bindings for arbitrary paths', async () => {
+  it('supports explicit variable bindings for supported paths', async () => {
     const g = makeSceneGraph()
+    addTestColorVariable(g, 'var-shadow', 'Shadow', { r: 0, g: 0, b: 0, a: 1 })
+    addTestColorVariable(g, 'var-bg', 'Background')
     const variable = designVar('var-shadow', '#000000')
     const result = await renderTree(
       g,
@@ -196,17 +225,20 @@ describe('renderTree', () => {
         name: 'Bound explicit',
         w: 100,
         h: 100,
-        bind: { 'effects/0/color': variable, 'fills/0/color': 'var-bg' }
+        fill: '#ffffff',
+        stroke: '#000000',
+        bind: { 'strokes/0/color': variable, 'fills/0/color': 'var-bg' }
       })
     )
     const node = getNodeOrThrow(g, result.id)
 
-    expect(node.boundVariables['effects/0/color']).toBe('var-shadow')
+    expect(node.boundVariables['strokes/0/color']).toBe('var-shadow')
     expect(node.boundVariables['fills/0/color']).toBe('var-bg')
   })
 
   it('binds variables from JSX strings', async () => {
     const g = makeSceneGraph()
+    addTestColorVariable(g, 'var-bg', 'Background')
     const [result] = await renderJSX(
       g,
       `<Frame name="Bound JSX" w={100} h={100} fill={designVar('var-bg', '#ffffff')} />`
