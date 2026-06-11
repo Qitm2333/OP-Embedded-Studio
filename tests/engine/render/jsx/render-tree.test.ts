@@ -25,34 +25,7 @@ import {
 } from '@open-pencil/core'
 
 import { expectDefined, getNodeOrThrow, childIdAt } from '#tests/helpers/assert'
-import { makeSceneGraph } from '#tests/helpers/scene'
-
-function addTestColorVariable(
-  graph: ReturnType<typeof makeSceneGraph>,
-  id: string,
-  name: string,
-  value = { r: 1, g: 1, b: 1, a: 1 }
-): void {
-  if (!graph.variableCollections.has('colors')) {
-    graph.addCollection({
-      id: 'colors',
-      name: 'Colors',
-      modes: [{ modeId: 'light', name: 'Light' }],
-      defaultModeId: 'light',
-      variableIds: []
-    })
-  }
-
-  graph.addVariable({
-    id,
-    name,
-    type: 'COLOR',
-    collectionId: 'colors',
-    valuesByMode: { light: value },
-    description: '',
-    hiddenFromPublishing: false
-  })
-}
+import { addTestColorVariable, makeSceneGraph } from '#tests/helpers/scene'
 
 describe('renderTree', () => {
   it('renders a simple frame', async () => {
