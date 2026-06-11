@@ -29,5 +29,6 @@ export function computeImageHash(data: Uint8Array): string {
         break
     }
   }
-  return `img_${h1.toString(36)}${h2.toString(36)}${h3.toString(36)}${h4.toString(36)}${h5.toString(36)}_${data.length}`
+  h5 = Math.imul(h5 ^ data.length, 0x01000193) >>> 0
+  return [h1, h2, h3, h4, h5].map((hash) => hash.toString(16).padStart(8, '0')).join('')
 }
