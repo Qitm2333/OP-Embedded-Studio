@@ -24,6 +24,11 @@
 - Preserve rotated Figma transform origins for imported vector nodes.
 - Render complex text fills through vector glyph outlines so imported Figma text can use the normal fill pipeline for gradients, images, patterns, and other non-solid paints.
 - Fix file-backed CLI commands (`convert`, `eval --output`, `export`) to use Node `fs/promises` instead of Bun runtime APIs, so the published CLI works when installed and run under Node.
+- Fix `analyze_overlaps` stroke-overflow bounds for rotated nodes by expanding the local rectangle before transforming through the world matrix, so stroked rotated nodes are measured with their true rotated footprint.
+- Fix `analyze_overlaps` clipping across multiple rotated ancestors by preserving the clipped polygon through the full clip chain instead of collapsing to an AABB between clips, which could reintroduce corners removed by an inner clip.
+- Fix `analyze_overlaps` `limit` of `0` (or a negative value) so it caps the returned overlaps to an empty list instead of returning the full set; summary totals still reflect the complete result.
+- Trim whitespace from `analyze_overlaps` `scope` and `severity` inputs so values like `" major "` resolve instead of falling back to defaults.
+- Export `OverlapScope`, `AnalyzeOverlapsSummary`, and `OverlapIntersection` from the `@open-pencil/core/tools/analyze` barrel so consumers do not need to deep-import the overlaps module.
 
 ## 0.13.2 — 2026-05-30
 

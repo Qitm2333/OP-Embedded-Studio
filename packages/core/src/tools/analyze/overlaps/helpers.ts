@@ -1,7 +1,7 @@
 import { getWorldMatrix } from '#core/canvas/coordinate'
 import Matrix from '#core/canvas/matrix'
 import {
-  clipBoundsToPolygon,
+  clipPolygon,
   effectOverflow,
   geometryBlobBounds,
   intersectVisualBounds,
@@ -274,15 +274,20 @@ function aabbFromCorners(corners: Vector[]): VisualBounds {
  */
 function computeNodeVisualBounds(node: SceneNode, graph: SceneGraph): VisualBounds {
   const matrix = getWorldMatrix(node, graph)
+  // Expand the local rectangle by the stroke overflow *before* transforming
+  // through the world matrix. Expanding the already-rotated AABB by `stroke`
+  // underestimates the stroked bounds for rotated nodes (the true stroked AABB
+  // grows by `stroke * (|cos θ| + |sin θ|)`, not `stroke`).
+  const stroke = strokeOverflow(node.strokes)
   const baseCorners = Matrix.mapPoints(matrix, [
-    0,
-    0,
-    node.width,
-    0,
-    node.width,
-    node.height,
-    0,
-    node.height
+    -stroke,
+    -stroke,
+    node.width + stroke,
+    -stroke,
+    node.width + stroke,
+    node.height + stroke,
+    -stroke,
+    node.height + stroke
   ])
   let bounds = aabbFromCorners([
     { x: baseCorners[0], y: baseCorners[1] },
@@ -291,14 +296,8 @@ function computeNodeVisualBounds(node: SceneNode, graph: SceneGraph): VisualBoun
     { x: baseCorners[6], y: baseCorners[7] }
   ])
 
-  const stroke = strokeOverflow(node.strokes)
-  if (stroke > 0) {
-    bounds.minX -= stroke
-    bounds.minY -= stroke
-    bounds.maxX += stroke
-    bounds.maxY += stroke
-  }
-
+  // Effects (drop shadow, blur) radiate in screen space, so expanding the
+  // canvas-space AABB by the directional overflow is correct regardless of rotation.
   const effects = effectOverflow(node.effects)
   bounds.minX -= effects.left
   bounds.minY -= effects.top
@@ -369,15 +368,28 @@ export function computeNodeBounds(
   node: SceneNode,
   graph: SceneGraph
 ): { bounds: VisualBounds; area: number } {
-  let bounds = computeNodeVisualBounds(node, graph)
+  const visual = computeNodeVisualBounds(node, graph)
   const clips = collectClipChain(graph, node)
+  if (clips.length === 0) {
+    return { bounds: visual, area: visualBoundsArea(visual) }
+  }
+  // Seed the subject polygon from the visual AABB, then clip against each
+  // ancestor preserving the polygon. Collapsing to an AABB between clips would
+  // reintroduce corners already removed by an inner clip, so hidden regions
+  // could look visible again to a later outer clip.
+  let polygon: Vector[] | null = [
+    { x: visual.minX, y: visual.minY },
+    { x: visual.maxX, y: visual.minY },
+    { x: visual.maxX, y: visual.maxY },
+    { x: visual.minX, y: visual.maxY }
+  ]
   for (const clip of clips) {
-    const clipped = clipBoundsToPolygon(bounds, clip)
-    if (!clipped) {
+    polygon = clipPolygon(polygon, clip)
+    if (!polygon) {
       return { bounds: EMPTY_BOUNDS, area: 0 }
     }
-    bounds = clipped
   }
+  const bounds = aabbFromCorners(polygon)
   return { bounds, area: visualBoundsArea(bounds) }
 }
 

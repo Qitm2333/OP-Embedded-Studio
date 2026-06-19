@@ -303,7 +303,9 @@ export function computeOverlaps(
   )
 
   const limit = Math.max(0, Number.isFinite(Number(args.limit)) ? Number(args.limit) : 100)
-  const trimmed = limit > 0 ? sorted.slice(0, limit) : sorted
+  // A limit of 0 (or a negative value clamped to 0) caps the returned overlaps
+  // to an empty list. The summary totals still reflect the full `sorted` set.
+  const trimmed = sorted.slice(0, limit)
 
   const byCategory = emptyByCategory()
   const bySeverity = emptyBySeverity()

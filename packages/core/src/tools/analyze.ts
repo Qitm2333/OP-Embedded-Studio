@@ -7,9 +7,12 @@ export { analyzeOverlaps, computeOverlaps } from './analyze/overlaps'
 export type {
   AnalyzeOverlapsArgs,
   AnalyzeOverlapsResult,
+  AnalyzeOverlapsSummary,
   OverlapCategory,
+  OverlapIntersection,
   OverlapItem,
   OverlapNodeSummary,
+  OverlapScope,
   OverlapSeverity
 } from './analyze/overlaps'
 export { analyzeSpacing } from './analyze/spacing'

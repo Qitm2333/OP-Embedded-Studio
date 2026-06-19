@@ -438,22 +438,20 @@ function clipHalfPlane(polygon: Vector[], a: Vector, b: Vector, wantPositive: bo
 }
 
 /**
- * Clip an axis-aligned VisualBounds rectangle against a convex polygon
- * (e.g. the 4 canvas-space corners of a rotated clipping ancestor).
+ * Clip a subject polygon against a convex polygon (e.g. the 4 canvas-space
+ * corners of a rotated clipping ancestor).
  *
  * Uses Sutherland–Hodgman polygon clipping with centroid-based interior
  * detection, making it robust to either winding order of the clip polygon.
- * Returns the AABB of the intersection, or null if the bounds are fully
- * outside the clip polygon.
+ * Returns the clipped polygon, or null if the subject is fully outside the
+ * clip polygon. When `clipCorners` has fewer than 3 points the subject is
+ * returned unchanged (no clipping).
  *
- * For a non-rotated clip (axis-aligned corners) the result is identical
- * to `intersectVisualBounds`.
+ * Preserving the polygon (rather than collapsing to an AABB) lets callers
+ * chain multiple clips without reintroducing corners removed by an inner clip.
  */
-export function clipBoundsToPolygon(
-  bounds: VisualBounds,
-  clipCorners: Vector[]
-): VisualBounds | null {
-  if (clipCorners.length < 3) return bounds
+export function clipPolygon(subject: Vector[], clipCorners: Vector[]): Vector[] | null {
+  if (clipCorners.length < 3) return subject
 
   let cx = 0
   let cy = 0
@@ -464,28 +462,50 @@ export function clipBoundsToPolygon(
   cx /= clipCorners.length
   cy /= clipCorners.length
 
-  let subject: Vector[] = [
+  let polygon: Vector[] = subject
+
+  for (let i = 0; i < clipCorners.length; i++) {
+    if (polygon.length === 0) return null
+    const a = clipCorners[i]
+    const b = clipCorners[(i + 1) % clipCorners.length]
+    const centroidCross = crossProduct(a, b, { x: cx, y: cy })
+    polygon = clipHalfPlane(polygon, a, b, centroidCross >= 0)
+  }
+
+  return polygon.length === 0 ? null : polygon
+}
+
+/**
+ * Clip an axis-aligned VisualBounds rectangle against a convex polygon
+ * (e.g. the 4 canvas-space corners of a rotated clipping ancestor).
+ *
+ * Returns the AABB of the intersection, or null if the bounds are fully
+ * outside the clip polygon. Delegates to {@link clipPolygon}.
+ *
+ * For a non-rotated clip (axis-aligned corners) the result is identical
+ * to `intersectVisualBounds`.
+ */
+export function clipBoundsToPolygon(
+  bounds: VisualBounds,
+  clipCorners: Vector[]
+): VisualBounds | null {
+  if (clipCorners.length < 3) return bounds
+
+  const subject: Vector[] = [
     { x: bounds.minX, y: bounds.minY },
     { x: bounds.maxX, y: bounds.minY },
     { x: bounds.maxX, y: bounds.maxY },
     { x: bounds.minX, y: bounds.maxY }
   ]
 
-  for (let i = 0; i < clipCorners.length; i++) {
-    if (subject.length === 0) return null
-    const a = clipCorners[i]
-    const b = clipCorners[(i + 1) % clipCorners.length]
-    const centroidCross = crossProduct(a, b, { x: cx, y: cy })
-    subject = clipHalfPlane(subject, a, b, centroidCross >= 0)
-  }
-
-  if (subject.length === 0) return null
+  const polygon = clipPolygon(subject, clipCorners)
+  if (!polygon) return null
 
   let minX = Infinity
   let minY = Infinity
   let maxX = -Infinity
   let maxY = -Infinity
-  for (const p of subject) {
+  for (const p of polygon) {
     if (p.x < minX) minX = p.x
     if (p.y < minY) minY = p.y
     if (p.x > maxX) maxX = p.x

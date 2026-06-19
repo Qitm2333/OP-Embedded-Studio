@@ -23,7 +23,8 @@ export const VALID_OVERLAP_SEVERITIES: readonly OverlapSeverity[] = [
 
 export function parseOverlapScope(raw: string | undefined): OverlapScope | undefined {
   if (!raw) return undefined
-  const normalized = raw.toLowerCase()
+  const normalized = raw.trim().toLowerCase()
+  if (!normalized) return undefined
   return VALID_OVERLAP_SCOPES.find((scope) => scope === normalized)
 }
 
@@ -42,6 +43,7 @@ export function parseOverlapCategories(raw: string | undefined): OverlapCategory
 
 export function parseOverlapSeverity(raw: string | undefined): OverlapSeverity | undefined {
   if (!raw) return undefined
-  const normalized = raw.toLowerCase()
+  const normalized = raw.trim().toLowerCase()
+  if (!normalized) return undefined
   return VALID_OVERLAP_SEVERITIES.find((severity) => severity === normalized)
 }

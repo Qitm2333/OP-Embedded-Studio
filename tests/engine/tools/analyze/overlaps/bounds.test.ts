@@ -178,4 +178,60 @@ describe('analyze overlaps visible bounds', () => {
     const result = computeOverlaps(graph, { category: 'sibling-overlap' })
     expect(result.summary.overlapCount).toBe(0)
   })
+
+  test('a stroked rotated node expands bounds along the rotated axes', () => {
+    const graph = new SceneGraph()
+    const page = pageId(graph)
+
+    // 10x10 rectangle at (45,45) rotated 45° around its center (50,50). Its
+    // unstroked canvas AABB is [42.93, 57.07]² (half-diagonal ≈ 7.07).
+    // An OUTSIDE stroke of weight 20 expands the LOCAL box by 20 on each side;
+    // after 45° rotation the canvas-space expansion is 20*(|cos45|+|sin45|) ≈
+    // 28.28 per side, so the stroked AABB is [14.64, 85.36]². The OLD code
+    // expanded the already-rotated AABB by 20 → only [22.93, 77.07]².
+    const stroked = graph.createNode('RECTANGLE', page, {
+      name: 'RotatedStroked',
+      x: 45,
+      y: 45,
+      width: 10,
+      height: 10,
+      rotation: 45,
+      strokes: [
+        {
+          color: { r: 0, g: 0, b: 0, a: 1 },
+          weight: 20,
+          opacity: 1,
+          visible: true,
+          align: 'OUTSIDE'
+        }
+      ]
+    })
+
+    // Target at canvas (18, 48, 2, 2): inside the rotation-aware stroked AABB
+    // (18 > 14.64) but outside both the unstroked AABB (18 < 42.93) and the
+    // OLD naive expansion (18 < 22.93). Only the rotation-aware stroke reaches it.
+    rect(graph, 'GapTarget', page, 18, 48, 2, 2)
+
+    const result = computeOverlaps(graph, { category: 'sibling-overlap' })
+    expect(result.summary.overlapCount).toBeGreaterThan(0)
+    expect(
+      result.overlaps.some((o) => o.nodeA.id === stroked.id || o.nodeB.id === stroked.id)
+    ).toBe(true)
+
+    // Without the stroke, the same target must NOT overlap — proving the reach
+    // into the gap is caused by the stroked bounds, not the raw node box.
+    const plain = new SceneGraph()
+    const plainPage = pageId(plain)
+    graph.createNode('RECTANGLE', plainPage, {
+      name: 'RotatedPlain',
+      x: 45,
+      y: 45,
+      width: 10,
+      height: 10,
+      rotation: 45
+    })
+    rect(plain, 'GapTarget', plainPage, 18, 48, 2, 2)
+    const plainResult = computeOverlaps(plain, { category: 'sibling-overlap' })
+    expect(plainResult.summary.overlapCount).toBe(0)
+  })
 })

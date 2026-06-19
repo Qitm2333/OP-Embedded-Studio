@@ -315,6 +315,23 @@ describe('analyze overlaps', () => {
     expect(result.overlaps.length).toBeGreaterThan(0)
   })
 
+  test('scope and severity inputs are trimmed of surrounding whitespace', () => {
+    const graph = new SceneGraph()
+    const page = pageId(graph)
+    rect(graph, 'A', page, 0, 0, 100, 100)
+    rect(graph, 'B', page, 50, 50, 100, 100)
+
+    const scoped = computeOverlaps(graph, { scope: '  same-parent  ' as OverlapScope })
+    expect(scoped.overlaps.length).toBeGreaterThan(0)
+
+    const severityCapped = computeOverlaps(graph, {
+      scope: '  same-parent  ' as OverlapScope,
+      severity: '  minor  ' as OverlapSeverity
+    })
+    // Both overlaps are minor sibling-overlaps, so trimming severity keeps them.
+    expect(severityCapped.overlaps.length).toBe(scoped.overlaps.length)
+  })
+
   test('ToolDef defaults to current page and does not report overlaps on other pages', () => {
     const graph = new SceneGraph()
     const page2 = graph.addPage('Page 2')
@@ -416,5 +433,33 @@ describe('analyze overlaps', () => {
     expect(totalByCategory).toBe(result.summary.overlapCount)
     const totalBySeverity = Object.values(result.summary.bySeverity).reduce((a, b) => a + b, 0)
     expect(totalBySeverity).toBe(result.summary.overlapCount)
+  })
+
+  test('limit of zero returns no overlaps while the summary still reports the full set', () => {
+    const graph = new SceneGraph()
+    const page = pageId(graph)
+    const parent = frame(graph, 'Frame', page, 0, 0, 200, 200)
+
+    for (let i = 0; i < 4; i++) {
+      rect(graph, `R${i}`, parent.id, 0, 0, 100, 100)
+    }
+
+    const result = computeOverlaps(graph, { scope: 'inside-parent', limit: 0 })
+    expect(result.overlaps).toHaveLength(0)
+    expect(result.summary.overlapCount).toBeGreaterThan(0)
+  })
+
+  test('a negative limit is clamped to zero and returns no overlaps', () => {
+    const graph = new SceneGraph()
+    const page = pageId(graph)
+    const parent = frame(graph, 'Frame', page, 0, 0, 200, 200)
+
+    for (let i = 0; i < 4; i++) {
+      rect(graph, `R${i}`, parent.id, 0, 0, 100, 100)
+    }
+
+    const result = computeOverlaps(graph, { scope: 'inside-parent', limit: -3 })
+    expect(result.overlaps).toHaveLength(0)
+    expect(result.summary.overlapCount).toBeGreaterThan(0)
   })
 })
