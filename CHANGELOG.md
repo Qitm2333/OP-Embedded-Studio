@@ -14,6 +14,7 @@
 
 ### Fixes
 
+- Increase per-test timeout for slow `gold-preview.fig` fixture tests (`clipboard roundtrip`, `group reclassification`, `glyph blob preservation`, `auto-layout text measurement`, and `render/canvas/cache`) so they no longer flake on slower CI runners.
 - Fix clone operations (duplicate, instance creation, clipboard copy) sharing mutable references with the original — editing fills, strokes, variable bindings, overrides, or vector networks on one no longer corrupts the other.
 - Fix instance overrides shallow-copied on clone — override values containing objects are now deep-copied.
 - Fix stale variable bindings not cleaned up when fills/strokes arrays shrink — any indexed sub-path is now handled, not just `/color`.
