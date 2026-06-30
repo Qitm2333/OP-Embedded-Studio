@@ -257,18 +257,37 @@ bun run tauri dev  # Desktop app (requires Rust)
 | `bun run test:unit` | Unit tests |
 | `bun run format` | Code formatting |
 
+### Published packages
+
+| Package | Purpose |
+|---------|---------|
+| `@open-pencil/scene-graph` | Scene graph nodes, primitives, hit testing, copy/snap/undo helpers |
+| `@open-pencil/pen` | Pencil document format helpers |
+| `@open-pencil/kiwi` | Kiwi binary runtime, Figma schema helpers, and `.fig` container parsing |
+| `@open-pencil/fig` | Focused `.fig` package entrypoint |
+| `@open-pencil/core` | Editor engine, CanvasKit renderer, layout, tools, RPC, and document I/O |
+| `@open-pencil/dom-css` | HTML/CSS/Tailwind conversion into editable design documents |
+| `@open-pencil/vue` | Headless Vue SDK components and composables |
+| `@open-pencil/cli` | Headless `openpencil` CLI |
+| `@open-pencil/mcp` | MCP server with stdio and HTTP transports |
+
 ### Project structure
 
 ```
 packages/
-  core/           @open-pencil/core — engine (scene graph, renderer, layout, file formats, tools)
-  vue/            @open-pencil/vue — headless Vue SDK
-  cli/            @open-pencil/cli — headless CLI
-  mcp/            @open-pencil/mcp — MCP server (stdio + HTTP)
-  docs/           Documentation site (openpencil.dev)
-src/              Vue app (components, composables, stores)
-desktop/          Tauri v2 (Rust + config)
-tests/            E2E (188 tests) + unit (764 tests)
+  scene-graph/    @open-pencil/scene-graph
+  pen/            @open-pencil/pen
+  kiwi/           @open-pencil/kiwi
+  fig/            @open-pencil/fig
+  core/           @open-pencil/core
+  dom-css/        @open-pencil/dom-css
+  vue/            @open-pencil/vue
+  cli/            @open-pencil/cli
+  mcp/            @open-pencil/mcp
+  docs/           @open-pencil/docs — documentation site (openpencil.dev)
+src/              Vue app (editor shell, AI, collaboration, document I/O)
+desktop/          Tauri v2 desktop app (Rust + config)
+tests/            E2E, visual, engine, and integration tests
 ```
 
 ### Tech stack
