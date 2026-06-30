@@ -262,23 +262,14 @@ export class SceneGraph {
       height: node?.height ?? 0
     }
   }
-
   private generateNodeId(): string {
     let id = generateId()
     while (this.nodes.has(id)) id = generateId()
     return id
   }
-
-  createNode(type: NodeType, parentId: string, overrides: Partial<SceneNode> = {}): SceneNode {
-    const node = createDefaultNode(() => this.generateNodeId(), type, overrides)
+  private registerNode(node: SceneNode, parentId: string | null): SceneNode {
     node.parentId = parentId
     this.nodes.set(node.id, node)
-
-    const parent = this.nodes.get(parentId)
-    if (parent) {
-      parent.childIds.push(node.id)
-    }
-
     if (node.type === 'INSTANCE' && node.componentId) {
       let set = this.instanceIndex.get(node.componentId)
       if (!set) {
@@ -287,9 +278,25 @@ export class SceneGraph {
       }
       set.add(node.id)
     }
-
     this.emitter.emit('node:created', node)
     return node
+  }
+  createNode(type: NodeType, parentId: string, overrides: Partial<SceneNode> = {}): SceneNode {
+    const node = createDefaultNode(() => this.generateNodeId(), type, overrides)
+    this.nodes.get(parentId)?.childIds.push(node.id)
+    return this.registerNode(node, parentId)
+  }
+  createNodeWithId(
+    id: string,
+    type: NodeType,
+    parentId: string | null,
+    overrides: Partial<SceneNode> = {}
+  ): SceneNode {
+    const node = createDefaultNode(() => id, type, overrides)
+    node.id = id
+    const parent = parentId ? this.nodes.get(parentId) : undefined
+    if (parent && !parent.childIds.includes(id)) parent.childIds.push(id)
+    return this.registerNode(node, parentId)
   }
 
   static TEXT_PICTURE_KEYS: ReadonlySet<string> = TEXT_PICTURE_KEYS
