@@ -64,6 +64,7 @@ export function createDOMOpenActions({
     } catch (e) {
       console.error('Failed to import DOM/CSS:', e)
       toast.error(`Failed to import DOM/CSS: ${e instanceof Error ? e.message : String(e)}`)
+      throw e
     } finally {
       state.loading = false
     }
