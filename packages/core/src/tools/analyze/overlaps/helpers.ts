@@ -1,5 +1,5 @@
+import type { SceneGraph, SceneNode } from '@open-pencil/scene-graph'
 import { getWorldMatrix } from '@open-pencil/scene-graph/coordinate'
-import Matrix from '@open-pencil/scene-graph/matrix'
 import {
   clipPolygon,
   effectOverflow,
@@ -9,7 +9,7 @@ import {
   unionVisualBounds,
   type VisualBounds
 } from '@open-pencil/scene-graph/geometry'
-import type { SceneGraph, SceneNode } from '@open-pencil/scene-graph'
+import Matrix from '@open-pencil/scene-graph/matrix'
 import type { Rect, Vector } from '@open-pencil/scene-graph/primitives'
 
 import type {
