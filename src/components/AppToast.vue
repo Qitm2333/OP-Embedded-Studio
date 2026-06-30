@@ -6,10 +6,21 @@ import { useClipboard } from '@vueuse/core'
 import Tip from '@/components/ui/Tip.vue'
 import { toast } from '@/app/shell/ui'
 import { useToastUI } from '@/components/ui/toast'
+
+import type { ToastVariant } from '@/components/ui/toast'
 import { useI18n } from '@open-pencil/vue'
 
 const { copy, copied } = useClipboard({ copiedDuring: 1500 })
 const { dialogs } = useI18n()
+const defaultToastClass = useToastUI({ tone: 'default' }).base
+const warningToastClass = useToastUI({ tone: 'warning' }).base
+const errorToastClass = useToastUI({ tone: 'error' }).base
+
+function toastClass(tone: ToastVariant) {
+  if (tone === 'error') return errorToastClass
+  if (tone === 'warning') return warningToastClass
+  return defaultToastClass
+}
 </script>
 
 <template>
@@ -19,7 +30,7 @@ const { dialogs } = useI18n()
       :key="t.id"
       data-test-id="toast-item"
       :duration="t.variant === 'error' ? toast.ERROR_TOAST_DURATION : toast.TOAST_DURATION"
-      :class="useToastUI({ tone: t.variant }).base"
+      :class="toastClass(t.variant)"
       @update:open="
         (open) => {
           if (!open) toast.remove(t.id)

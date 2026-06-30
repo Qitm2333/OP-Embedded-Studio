@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import type { TestIdProps } from '@open-pencil/vue'
 
 import { useInputUI } from '@/components/ui/input'
@@ -32,6 +34,8 @@ const {
   testId
 } = defineProps<AppInputProps>()
 
+const inputClass = computed(() => useInputUI({ size, ui }).base)
+
 const modelValue = defineModel<string | number>({ required: true })
 const emit = defineEmits<{
   change: []
@@ -52,7 +56,7 @@ const emit = defineEmits<{
     :min="min"
     :max="max"
     :step="step"
-    :class="useInputUI({ size, ui }).base"
+    :class="inputClass"
     @change="emit('change')"
     @keydown.enter="emit('enter', $event)"
     @focus="emit('focus', $event)"

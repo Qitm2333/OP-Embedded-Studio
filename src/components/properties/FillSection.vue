@@ -3,7 +3,8 @@ import { PropertyListRoot, useFillControls, useOkHCL, useI18n, inputValue } from
 import { colorToHexRaw, parseColor } from '@open-pencil/core/color'
 
 import FillPicker from '@/components/FillPicker.vue'
-import Tip from '@/components/ui/Tip.vue'
+import IconButton from '@/components/ui/IconButton.vue'
+import PanelSection from '@/components/ui/PanelSection.vue'
 import ColorStyleRow from '@/components/properties/ColorStyleRow.vue'
 import {
   boundVariableSwatchBackground,
@@ -11,15 +12,12 @@ import {
 } from '@/components/properties/color-style-row'
 import { fillLabel } from '@/components/properties/fill-label'
 import { createFillOkhclAdapter } from '@/components/properties/fill-okhcl'
-import { useIconButtonUI } from '@/components/ui/icon-button'
-import { useSectionUI } from '@/components/ui/section'
 
 import type { Fill, SceneNode } from '@open-pencil/scene-graph'
 
 const fillCtx = useFillControls()
 const okhcl = useOkHCL()
 const { panels } = useI18n()
-const sectionCls = useSectionUI()
 
 function updateFill(
   activeNode: SceneNode | null | undefined,
@@ -53,22 +51,19 @@ function updateFillHex(
     prop-key="fills"
     :label="panels.fill"
   >
-    <div data-test-id="fill-section" :class="sectionCls.wrapper">
-      <div class="flex items-center justify-between">
-        <label :class="sectionCls.label">{{ panels.fill }}</label>
-        <Tip :label="panels.addFill">
-          <button
-            data-test-id="fill-section-add"
-            :class="useIconButtonUI().base"
-            @click="actions.add({ ...fillCtx.defaultFill })"
-          >
-            +
-          </button>
-        </Tip>
-      </div>
+    <PanelSection :label="panels.fill" test-id="fill-section">
+      <template #actions>
+        <IconButton
+          :label="panels.addFill"
+          data-test-id="fill-section-add"
+          @click="actions.add({ ...fillCtx.defaultFill })"
+        >
+          <icon-lucide-plus class="size-3.5" />
+        </IconButton>
+      </template>
       <p v-if="isMixed" class="text-[11px] text-muted">{{ panels.mixedFillsHelp }}</p>
       <ColorStyleRow
-        v-for="(fill, i) in items as Fill[]"
+        v-for="(fill, i) in items"
         :key="`${i}:${fill.visible ? 'visible' : 'hidden'}`"
         :item="fill"
         :index="i"
@@ -116,6 +111,6 @@ function updateFillHex(
           {{ fillLabel(fill, activeNode ? fillCtx.getBoundVariable(activeNode.id, i) : undefined) }}
         </span>
       </ColorStyleRow>
-    </div>
+    </PanelSection>
   </PropertyListRoot>
 </template>
