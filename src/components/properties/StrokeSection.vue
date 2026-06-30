@@ -15,9 +15,9 @@ import { boundVariableColor } from '@/components/properties/color-style-row'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ColorInput from '@/components/ColorPicker/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
+import IconButton from '@/components/ui/IconButton.vue'
+import PanelSection from '@/components/ui/PanelSection.vue'
 import Tip from '@/components/ui/Tip.vue'
-import { useIconButtonUI } from '@/components/ui/icon-button'
-import { useSectionUI } from '@/components/ui/section'
 
 import type { Color, SceneNode, Stroke } from '@open-pencil/scene-graph'
 
@@ -25,7 +25,6 @@ const strokeCtx = useStrokeControls()
 const strokeVarCtx = useColorVariableBinding('strokes')
 const okhcl = useOkHCL()
 const { panels } = useI18n()
-const sectionCls = useSectionUI()
 
 const expandedSides = ref(false)
 
@@ -88,19 +87,16 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
     prop-key="strokes"
     :label="panels.stroke"
   >
-    <div data-test-id="stroke-section" :class="sectionCls.wrapper">
-      <div class="flex items-center justify-between">
-        <label :class="sectionCls.label">{{ panels.stroke }}</label>
-        <Tip :label="panels.addStroke">
-          <button
-            data-test-id="stroke-section-add"
-            :class="useIconButtonUI().base"
-            @click="actions.add(strokeCtx.defaultStroke)"
-          >
-            +
-          </button>
-        </Tip>
-      </div>
+    <PanelSection :label="panels.stroke" test-id="stroke-section">
+      <template #actions>
+        <IconButton
+          :label="panels.addStroke"
+          data-test-id="stroke-section-add"
+          @click="actions.add(strokeCtx.defaultStroke)"
+        >
+          <icon-lucide-plus class="size-3.5" />
+        </IconButton>
+      </template>
 
       <p v-if="isMixed" class="text-[11px] text-muted">{{ panels.mixedStrokesHelp }}</p>
 
@@ -161,94 +157,53 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
           <ScrubInput
             v-if="!expandedSides"
             class="flex-1"
+            icon="W"
             :model-value="activeNode!.strokes[0]?.weight ?? 1"
             :min="0"
             @update:model-value="actions.patch(0, { weight: $event })"
-          >
-            <template #icon>
-              <svg
-                class="size-3"
-                viewBox="0 0 12 12"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <line x1="1" y1="3" x2="11" y2="3" />
-                <line x1="1" y1="6" x2="11" y2="6" />
-                <line x1="1" y1="9" x2="11" y2="9" />
-              </svg>
-            </template>
-          </ScrubInput>
+          />
         </Tip>
-        <Tip :label="panels.strokeSides">
-          <button
-            data-test-id="stroke-sides-toggle"
-            :class="[
-              useIconButtonUI({ size: 'md', ui: { base: 'size-[26px] shrink-0' } }).base,
-              { '!border-accent !text-accent': expandedSides }
-            ]"
-            @click="onToggleSides(activeNode!)"
-          >
-            <svg class="size-3.5" viewBox="0 0 14 14" fill="currentColor">
-              <rect x="1" y="1" width="5" height="5" rx="1" />
-              <rect x="8" y="1" width="5" height="5" rx="1" />
-              <rect x="1" y="8" width="5" height="5" rx="1" />
-              <rect x="8" y="8" width="5" height="5" rx="1" />
-            </svg>
-          </button>
-        </Tip>
+        <IconButton
+          :label="panels.strokeSides"
+          size="md"
+          class="size-[26px] shrink-0"
+          :active="expandedSides"
+          data-test-id="stroke-sides-toggle"
+          @click="onToggleSides(activeNode!)"
+        >
+          <icon-lucide-grid-2x2 class="size-3.5" />
+        </IconButton>
       </div>
 
       <div
         v-if="!isMixed && (items as unknown[]).length > 0"
         class="mt-1.5 flex items-center gap-1.5"
       >
-        <Tip :label="panels.strokeDash">
-          <button
-            data-test-id="stroke-dash-toggle"
-            :aria-label="panels.strokeDash"
-            class="flex h-[26px] shrink-0 cursor-pointer items-center gap-1 rounded border bg-input px-1.5 text-[11px]"
-            :class="
-              dashState((items as Stroke[])[0]).on
-                ? '!border-accent !text-accent'
-                : 'border-border text-muted hover:bg-hover hover:text-surface'
-            "
-            @click="toggleDash((items as Stroke[])[0], actions.patch)"
-          >
-            <svg
-              class="size-3"
-              viewBox="0 0 12 12"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-            >
-              <line x1="1" y1="6" x2="11" y2="6" stroke-dasharray="3 2" />
-            </svg>
-          </button>
-        </Tip>
+        <IconButton
+          :label="panels.strokeDash"
+          size="md"
+          class="shrink-0"
+          :active="dashState((items as Stroke[])[0]).on"
+          data-test-id="stroke-dash-toggle"
+          @click="toggleDash((items as Stroke[])[0], actions.patch)"
+        >
+          <span class="flex items-center gap-0.5">
+            <icon-lucide-minus class="size-2.5" />
+            <icon-lucide-minus class="size-2.5" />
+          </span>
+        </IconButton>
         <template v-if="dashState((items as Stroke[])[0]).on">
           <ScrubInput
             class="flex-1"
+            icon="D"
             :model-value="(items as Stroke[])[0].dashPattern?.[0] ?? 6"
             :min="1"
             data-test-id="stroke-dash-length"
             @update:model-value="setDash((items as Stroke[])[0], actions.patch, $event)"
-          >
-            <template #icon>
-              <svg
-                class="size-3"
-                viewBox="0 0 12 12"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <line x1="1" y1="6" x2="5" y2="6" />
-                <line x1="7" y1="6" x2="11" y2="6" />
-              </svg>
-            </template>
-          </ScrubInput>
+          />
           <ScrubInput
             class="flex-1"
+            icon="G"
             :model-value="
               (items as Stroke[])[0].dashPattern?.[1] ??
               (items as Stroke[])[0].dashPattern?.[0] ??
@@ -257,20 +212,7 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
             :min="1"
             data-test-id="stroke-dash-gap"
             @update:model-value="setGap((items as Stroke[])[0], actions.patch, $event)"
-          >
-            <template #icon>
-              <svg
-                class="size-3"
-                viewBox="0 0 12 12"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <line x1="1" y1="6" x2="3" y2="6" />
-                <line x1="9" y1="6" x2="11" y2="6" />
-              </svg>
-            </template>
-          </ScrubInput>
+          />
         </template>
       </div>
 
@@ -281,6 +223,7 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
         <ScrubInput
           v-for="side in strokeCtx.borderSides"
           :key="side"
+          :label="side[0].toUpperCase()"
           :model-value="
             activeNode![
               `border${side[0].toUpperCase()}${side.slice(1)}Weight` as keyof SceneNode
@@ -288,41 +231,8 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
           "
           :min="0"
           @update:model-value="strokeCtx.updateBorderWeight(side, $event, activeNode!)"
-        >
-          <template #icon>
-            <svg class="size-3" viewBox="0 0 12 12" fill="none" stroke-width="1.5">
-              <rect
-                x="1"
-                y="1"
-                width="10"
-                height="10"
-                rx="1"
-                stroke="currentColor"
-                stroke-opacity="0.3"
-                stroke-dasharray="2 2"
-              />
-              <line v-if="side === 'top'" x1="1" y1="1" x2="11" y2="1" stroke="currentColor" />
-              <line
-                v-else-if="side === 'right'"
-                x1="11"
-                y1="1"
-                x2="11"
-                y2="11"
-                stroke="currentColor"
-              />
-              <line
-                v-else-if="side === 'bottom'"
-                x1="1"
-                y1="11"
-                x2="11"
-                y2="11"
-                stroke="currentColor"
-              />
-              <line v-else x1="1" y1="1" x2="1" y2="11" stroke="currentColor" />
-            </svg>
-          </template>
-        </ScrubInput>
+        />
       </div>
-    </div>
+    </PanelSection>
   </PropertyListRoot>
 </template>
