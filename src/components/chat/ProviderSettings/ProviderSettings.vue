@@ -9,6 +9,7 @@ import CustomEndpointSection from '@/components/chat/ProviderSettings/CustomEndp
 import MaxTokensSection from '@/components/chat/ProviderSettings/MaxTokensSection.vue'
 import ProviderSelectField from '@/components/chat/ProviderSelect/ProviderSelectField.vue'
 import StockPhotoKeysSection from '@/components/chat/ProviderSettings/StockPhotoKeysSection.vue'
+import TestConnectionSection from '@/components/chat/ProviderSettings/TestConnectionSection.vue'
 import { provideProviderSettings } from '@/components/chat/ProviderSettings/context'
 import { usePopoverUI } from '@/components/ui/popover'
 import Tip from '@/components/ui/Tip.vue'
@@ -59,6 +60,7 @@ function onInteractOutside(e: Event) {
           <CustomEndpointSection />
           <ApiTypeSection />
           <ApiKeySection />
+          <TestConnectionSection />
 
           <PopoverClose
             class="mt-1 w-full rounded bg-accent px-2 py-1 text-center text-[11px] font-medium text-white hover:bg-accent/90"

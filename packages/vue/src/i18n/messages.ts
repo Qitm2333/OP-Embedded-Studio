@@ -395,6 +395,23 @@ export const dialogMessages = i18n('dialogs', {
   clickToFollowPeer: params('Click to follow {name}'),
   connectAIProvider: 'Connect an AI provider to start chatting.',
   connect: 'Connect',
+  testConnection: 'Test connection',
+  testingConnection: 'Testing…',
+  connectionTestSuccess: 'Connected successfully. Model is reachable.',
+  connectionTestMissingAPIKey: 'Enter an API key before testing.',
+  connectionTestMissingBaseURL: 'Enter a base URL before testing.',
+  connectionTestMissingModel: 'Enter a model ID before testing.',
+  connectionTestInvalidBaseURL:
+    'Base URL is invalid. Use a full URL like https://api.example.com/v1.',
+  connectionTestAuthFailed: 'Authentication failed. Check your API key.',
+  connectionTestModelNotFound: 'Model not found. Check the model ID.',
+  connectionTestAPITypeMismatch:
+    'This endpoint does not appear to support the selected API type. Try Completions or Responses.',
+  connectionTestBrowserNetworkFailed:
+    'Could not reach this endpoint from the browser. Try the desktop app or use an endpoint with CORS enabled.',
+  connectionTestNetworkFailed:
+    'Could not reach the endpoint. Check the URL and your network connection.',
+  connectionTestUnknownFailed: 'Connection test failed. Check the provider settings and try again.',
   getAPIKey: params('Get an {provider} API key →'),
   oneKeyManyModels: 'One key for 100+ models from all providers.',
   describeChange: 'Describe a change…',
