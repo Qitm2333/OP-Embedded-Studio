@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { useAttrs, watch } from 'vue'
 import { templateRef } from '@vueuse/core'
-import { TreeItem, ContextMenuRoot, ContextMenuTrigger, ContextMenuPortal } from 'reka-ui'
+import {
+  TreeItem,
+  TreeVirtualizer,
+  ContextMenuRoot,
+  ContextMenuTrigger,
+  ContextMenuPortal
+} from 'reka-ui'
 
 import { LayerTreeRoot, LayerTreeItem, useI18n, useInlineRename } from '@open-pencil/vue'
+import type { LayerNode } from '@open-pencil/vue'
 import { useEditorStore } from '@/app/editor/active-store'
 import { nodeIcon, COMPONENT_TYPES } from '@/app/editor/icons'
 import CanvasMenu from './CanvasMenu.vue'
@@ -33,41 +40,66 @@ function isAdditiveSelect(e: CustomEvent): boolean {
   return !!(mouseEvent?.shiftKey || mouseEvent?.metaKey || mouseEvent?.ctrlKey)
 }
 
-function onTreeSelect(e: CustomEvent, select: (additive: boolean) => void) {
+function onTreeSelect(e: CustomEvent, id: string, select: (id: string, additive: boolean) => void) {
   e.preventDefault()
-  select(isAdditiveSelect(e))
+  select(id, isAdditiveSelect(e))
+}
+
+function isLayerNode(value: unknown): value is LayerNode {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    'name' in value &&
+    'type' in value &&
+    'layoutMode' in value &&
+    'visible' in value &&
+    'locked' in value &&
+    typeof value.id === 'string' &&
+    typeof value.name === 'string' &&
+    typeof value.type === 'string' &&
+    typeof value.layoutMode === 'string' &&
+    typeof value.visible === 'boolean' &&
+    typeof value.locked === 'boolean'
+  )
+}
+
+function toLayerNode(value: unknown): LayerNode {
+  if (isLayerNode(value)) return value
+  throw new Error('[open-pencil] Invalid layer tree item')
+}
+
+function layerTextContent(value: unknown): string {
+  return toLayerNode(value).name
 }
 </script>
 
 <template>
   <LayerTreeRoot
-    v-slot="{ flattenItems, draggingId, instruction, instructionTargetId }"
+    v-slot="{ actions: rootActions, draggingId, instruction, instructionTargetId }"
     :indent-per-level="INDENT"
   >
     <ContextMenuRoot :modal="false">
       <div v-bind="attrs" class="relative min-h-0 flex-1 overflow-hidden">
         <ContextMenuTrigger as-child @contextmenu="onLayerRightClick">
           <div data-test-id="layers-scroll" class="scrollbar-thin h-full overflow-y-auto px-1">
-            <template v-if="flattenItems">
-              <LayerTreeItem
-                v-for="item in flattenItems"
-                :key="item._id"
-                v-slot="{ node, isSelected, padLeft, actions }"
-                :node="item.value"
-                :level="item.level"
-                :has-children="item.hasChildren"
+            <TreeVirtualizer v-slot="{ item }" :estimate-size="24" :text-content="layerTextContent">
+              <TreeItem
+                v-slot="{ isExpanded }"
+                v-bind="item.bind"
+                as-child
+                @select="(e: CustomEvent) => onTreeSelect(e, toLayerNode(item.value).id, rootActions.select)"
+                @toggle="
+                  (e: CustomEvent) => {
+                    if (e.detail.originalEvent?.type === 'click') e.preventDefault()
+                  }
+                "
               >
-                <TreeItem
-                  v-slot="{ isExpanded }"
-                  :value="item.value"
+                <LayerTreeItem
+                  v-slot="{ node, isSelected, padLeft, actions }"
+                  :node="toLayerNode(item.value)"
                   :level="item.level"
-                  as-child
-                  @select="(e: CustomEvent) => onTreeSelect(e, actions.select)"
-                  @toggle="
-                    (e: CustomEvent) => {
-                      if (e.detail.originalEvent?.type === 'click') e.preventDefault()
-                    }
-                  "
+                  :has-children="item.hasChildren"
                 >
                   <!-- Rename mode -->
                   <div
@@ -204,9 +236,9 @@ function onTreeSelect(e: CustomEvent, select: (additive: boolean) => void) {
                       }"
                     />
                   </button>
-                </TreeItem>
-              </LayerTreeItem>
-            </template>
+                </LayerTreeItem>
+              </TreeItem>
+            </TreeVirtualizer>
           </div>
         </ContextMenuTrigger>
       </div>
