@@ -146,7 +146,7 @@ function onToggleSides(activeNode: SceneNode | null) {
           data-test-id="stroke-sides-toggle"
           @click="onToggleSides(activeNode)"
         >
-          <icon-lucide-grid-2x2 class="size-3.5" />
+          <icon-lucide-layout-grid class="size-3.5" />
         </IconButton>
       </div>
 
