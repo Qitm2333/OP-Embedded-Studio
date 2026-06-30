@@ -40,7 +40,8 @@ function updateStrokeColor(
   patch(index, applySolidStrokeColor(color))
 }
 
-function onToggleSides(activeNode: SceneNode) {
+function onToggleSides(activeNode: SceneNode | null) {
+  if (!activeNode) return
   const next = !expandedSides.value
   expandedSides.value = next
   if (next && !activeNode.independentStrokeWeights) {
@@ -51,33 +52,10 @@ function onToggleSides(activeNode: SceneNode) {
       borderRightWeight: weight,
       borderBottomWeight: weight,
       borderLeftWeight: weight
-    } as SceneNode)
+    })
   } else if (!next && activeNode.independentStrokeWeights) {
     strokeCtx.selectSide('ALL', activeNode)
   }
-}
-
-type StrokePatch = (i: number, partial: Partial<Stroke>) => void
-
-function dashState(stroke: Stroke | undefined): { dash: number; gap: number; on: boolean } {
-  const p = stroke?.dashPattern
-  if (!p || p.length === 0) return { dash: 6, gap: 6, on: false }
-  return { dash: p[0] ?? 6, gap: p[1] ?? p[0] ?? 6, on: true }
-}
-
-function toggleDash(stroke: Stroke | undefined, patch: StrokePatch) {
-  const { dash, gap, on } = dashState(stroke)
-  patch(0, { dashPattern: on ? [] : [Math.max(dash, 1), Math.max(gap, 1)] })
-}
-
-function setDash(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
-  const { gap } = dashState(stroke)
-  patch(0, { dashPattern: [Math.max(1, value), gap] })
-}
-
-function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
-  const { dash } = dashState(stroke)
-  patch(0, { dashPattern: [dash, Math.max(1, value)] })
 }
 </script>
 
@@ -101,7 +79,7 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
       <p v-if="isMixed" class="text-[11px] text-muted">{{ panels.mixedStrokesHelp }}</p>
 
       <ColorStyleRow
-        v-for="(stroke, i) in items as Stroke[]"
+        v-for="(stroke, i) in items"
         :key="`${i}:${stroke.visible ? 'visible' : 'hidden'}`"
         :item="stroke"
         :index="i"
@@ -142,23 +120,20 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
         />
       </ColorStyleRow>
 
-      <div
-        v-if="!isMixed && (items as unknown[]).length > 0"
-        class="mt-1 flex items-center gap-1.5"
-      >
+      <div v-if="!isMixed && items.length > 0" class="mt-1 flex items-center gap-1.5">
         <AppSelect
           class="w-[72px]"
           :label="panels.strokeType"
           :model-value="strokeCtx.currentAlign(activeNode)"
           :options="strokeCtx.alignOptions"
-          @update:model-value="strokeCtx.updateAlign($event as Stroke['align'], activeNode!)"
+          @update:model-value="strokeCtx.updateAlign($event as Stroke['align'], activeNode)"
         />
         <Tip :label="panels.strokeWeight">
           <ScrubInput
             v-if="!expandedSides"
             class="flex-1"
             icon="W"
-            :model-value="activeNode!.strokes[0]?.weight ?? 1"
+            :model-value="items[0]?.weight ?? 1"
             :min="0"
             @update:model-value="actions.patch(0, { weight: $event })"
           />
@@ -169,68 +144,57 @@ function setGap(stroke: Stroke | undefined, patch: StrokePatch, value: number) {
           class="size-[26px] shrink-0"
           :active="expandedSides"
           data-test-id="stroke-sides-toggle"
-          @click="onToggleSides(activeNode!)"
+          @click="onToggleSides(activeNode)"
         >
           <icon-lucide-grid-2x2 class="size-3.5" />
         </IconButton>
       </div>
 
-      <div
-        v-if="!isMixed && (items as unknown[]).length > 0"
-        class="mt-1.5 flex items-center gap-1.5"
-      >
+      <div v-if="!isMixed && items.length > 0" class="mt-1.5 flex items-center gap-1.5">
         <IconButton
           :label="panels.strokeDash"
           size="md"
           class="shrink-0"
-          :active="dashState((items as Stroke[])[0]).on"
+          :active="strokeCtx.dashState(items[0]).on"
           data-test-id="stroke-dash-toggle"
-          @click="toggleDash((items as Stroke[])[0], actions.patch)"
+          @click="actions.patch(0, strokeCtx.toggleDash(items[0]))"
         >
           <span class="flex items-center gap-0.5">
             <icon-lucide-minus class="size-2.5" />
             <icon-lucide-minus class="size-2.5" />
           </span>
         </IconButton>
-        <template v-if="dashState((items as Stroke[])[0]).on">
+        <template v-if="strokeCtx.dashState(items[0]).on">
           <ScrubInput
             class="flex-1"
             icon="D"
-            :model-value="(items as Stroke[])[0].dashPattern?.[0] ?? 6"
+            :model-value="items[0]?.dashPattern?.[0] ?? 6"
             :min="1"
             data-test-id="stroke-dash-length"
-            @update:model-value="setDash((items as Stroke[])[0], actions.patch, $event)"
+            @update:model-value="actions.patch(0, strokeCtx.setDash(items[0], $event))"
           />
           <ScrubInput
             class="flex-1"
             icon="G"
-            :model-value="
-              (items as Stroke[])[0].dashPattern?.[1] ??
-              (items as Stroke[])[0].dashPattern?.[0] ??
-              6
-            "
+            :model-value="items[0]?.dashPattern?.[1] ?? items[0]?.dashPattern?.[0] ?? 6"
             :min="1"
             data-test-id="stroke-dash-gap"
-            @update:model-value="setGap((items as Stroke[])[0], actions.patch, $event)"
+            @update:model-value="actions.patch(0, strokeCtx.setGap(items[0], $event))"
           />
         </template>
       </div>
 
       <div
-        v-if="!isMixed && (items as unknown[]).length > 0 && expandedSides"
+        v-if="!isMixed && items.length > 0 && expandedSides"
         class="mt-1.5 grid grid-cols-2 gap-1.5"
       >
         <ScrubInput
           v-for="side in strokeCtx.borderSides"
           :key="side"
           :label="side[0].toUpperCase()"
-          :model-value="
-            activeNode![
-              `border${side[0].toUpperCase()}${side.slice(1)}Weight` as keyof SceneNode
-            ] as number
-          "
+          :model-value="strokeCtx.borderWeight(activeNode, side)"
           :min="0"
-          @update:model-value="strokeCtx.updateBorderWeight(side, $event, activeNode!)"
+          @update:model-value="strokeCtx.updateBorderWeight(side, $event, activeNode)"
         />
       </div>
     </PanelSection>

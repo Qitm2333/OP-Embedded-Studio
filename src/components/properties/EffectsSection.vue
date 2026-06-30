@@ -35,7 +35,7 @@ const { panels } = useI18n()
       <p v-if="isMixed" class="text-[11px] text-muted">{{ panels.mixedEffectsHelp }}</p>
 
       <div
-        v-for="(effect, i) in items as Effect[]"
+        v-for="(effect, i) in items"
         :key="`${i}:${effect.visible ? 'visible' : 'hidden'}`"
         data-test-id="effect-item"
         :data-test-index="i"

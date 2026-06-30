@@ -63,7 +63,7 @@ function updateFillHex(
       </template>
       <p v-if="isMixed" class="text-[11px] text-muted">{{ panels.mixedFillsHelp }}</p>
       <ColorStyleRow
-        v-for="(fill, i) in items as Fill[]"
+        v-for="(fill, i) in items"
         :key="`${i}:${fill.visible ? 'visible' : 'hidden'}`"
         :item="fill"
         :index="i"
