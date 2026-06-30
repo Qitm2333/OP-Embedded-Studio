@@ -10,6 +10,20 @@
 - Add structured design JSX effect helpers for shadows and blur effects.
 - Add the `@open-pencil/dom-css` package skeleton for DOM/CSS projection and browser/headless CSS runtime adapters.
 - Add initial `@open-pencil/dom-css` DesignDOM ⇄ SceneGraph conversion helpers for HTML/CSS-shaped card layouts.
+- Add `parse5`-backed headless HTML parsing for `@open-pencil/dom-css` DesignDOM documents.
+- Add CSSOM-backed headless style computation for basic `tag`, `.class`, `#id`, descendant, and child selectors with shorthand expansion.
+- Add an HTML/CSS card round-trip fixture covering DesignDOM style computation, SceneGraph import, and HTML serialization.
+- Add `compileTailwindCSS()` to delegate utility compilation to Tailwind v4 and cover generated CSS ingestion through CSSOM and SceneGraph conversion.
+- Add browser-oracle DOM/CSS fixtures for Tailwind cards/buttons, CSS custom properties, `calc()`, and modern computed color output.
+- Add high-level `htmlToDesignDocument()`, `htmlToSceneGraph()`, `tailwindHTMLToDesignDocument()`, and `tailwindHTMLToSceneGraph()` helpers.
+- Improve `@open-pencil/dom-css` conversion for flex alignment, independent corner radii, per-side stroke weights, clipping, and size constraints.
+- Expand DOM/CSS fixture coverage for inputs, badges, nav rows, dialogs, and Tailwind-generated utility styles.
+- Add package-local `@open-pencil/dom-css` tests so the package can be validated independently with `bun run test` from `packages/dom-css`.
+- Add standalone `@open-pencil/dom-css` typecheck, check, and built-package smoke scripts for external package maintenance.
+- Improve `@open-pencil/dom-css` SceneGraph → CSS export parity for logical padding, independent border sides, opacity, text typography, and shadows.
+- Add `@open-pencil/dom-css` JSX runtime helpers for DOM-shaped authoring into DesignDOM, CSS runtime styling, SceneGraph conversion, and Tailwind-generated CSS flows.
+- Add browser-first JSX/Tailwind helpers for native `getComputedStyle()` conversion, expand CSS mapping for flex wrapping, self alignment, absolute positioning basics, and document the future `@open-pencil/kiwi` / `@open-pencil/fig` package split plan.
+- Add a CLI `dom` command for converting HTML/CSS/Tailwind input into editable `.fig` documents through `@open-pencil/dom-css`.
 - Add type-validated `bindVariable`/`unbindVariable` with event emission and indexed binding format (`fills/N/color` instead of `fills[N]`).
 - Add `unbind_variable` MCP tool for removing variable bindings.
 - Add `openpencil analyze overlaps`, the `analyze_overlaps` RPC command, and the `analyze_overlaps` ToolDef for heuristic overlap detection. The command reports sibling overlaps, children overflowing non-clipping parents, and overlay/backdrop patterns, with filters for page/page ID, scope, category, severity, min area/ratio, node type, hidden/locked/absolute nodes, result limit, and `--json` output.
