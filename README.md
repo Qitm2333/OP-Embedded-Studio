@@ -111,6 +111,7 @@ openpencil analyze colors design.fig
 openpencil analyze typography design.fig
 openpencil analyze spacing design.fig
 openpencil analyze clusters design.fig
+openpencil analyze overlaps design.fig
 openpencil variables design.fig
 ```
 
