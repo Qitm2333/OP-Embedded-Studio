@@ -1,14 +1,15 @@
 import { orderBy, sortBy } from 'es-toolkit/array'
 
+import type { SceneGraph, SceneNode } from '@open-pencil/scene-graph'
+import type { Color } from '@open-pencil/scene-graph/primitives'
+
 import { colorToHex, colorDistance as colorDist } from '#core/color'
 import type { ColorUsageEntry } from '#core/color/analysis'
-import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import {
   computeOverlaps,
   type AnalyzeOverlapsArgs,
   type AnalyzeOverlapsResult
 } from '#core/tools/analyze/overlaps'
-import type { Color } from '#core/types'
 
 import type { RpcCommand } from './types'
 

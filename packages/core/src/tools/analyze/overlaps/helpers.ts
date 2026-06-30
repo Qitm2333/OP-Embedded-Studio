@@ -1,5 +1,5 @@
-import { getWorldMatrix } from '#core/canvas/coordinate'
-import Matrix from '#core/canvas/matrix'
+import type { SceneGraph, SceneNode } from '@open-pencil/scene-graph'
+import { getWorldMatrix } from '@open-pencil/scene-graph/coordinate'
 import {
   clipPolygon,
   effectOverflow,
@@ -8,9 +8,9 @@ import {
   strokeOverflow,
   unionVisualBounds,
   type VisualBounds
-} from '#core/geometry'
-import type { SceneGraph, SceneNode } from '#core/scene-graph'
-import type { Rect, Vector } from '#core/types'
+} from '@open-pencil/scene-graph/geometry'
+import Matrix from '@open-pencil/scene-graph/matrix'
+import type { Rect, Vector } from '@open-pencil/scene-graph/primitives'
 
 import type {
   AnalyzeOverlapsArgs,

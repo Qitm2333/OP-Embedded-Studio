@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import { createEditor } from '@open-pencil/core/editor'
-import type { VectorNetwork } from '@open-pencil/core/scene-graph'
+import type { VectorNetwork } from '@open-pencil/scene-graph'
 
 import { getNodeOrThrow } from '#tests/helpers/assert'
 
