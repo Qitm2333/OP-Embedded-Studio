@@ -261,14 +261,19 @@ bun run tauri dev  # Desktop app (requires Rust)
 
 ```
 packages/
-  core/           @open-pencil/core — engine (scene graph, renderer, layout, file formats, tools)
+  scene-graph/    @open-pencil/scene-graph — nodes, primitives, hit testing, copy/snap/undo
+  pen/            @open-pencil/pen — Pencil document format helpers
+  kiwi/           @open-pencil/kiwi — Kiwi runtime and low-level .fig container parsing
+  fig/            @open-pencil/fig — focused .fig package entrypoint
+  core/           @open-pencil/core — editor engine, renderer, layout, tools, RPC, document I/O
+  dom-css/        @open-pencil/dom-css — HTML/CSS/Tailwind to editable design documents
   vue/            @open-pencil/vue — headless Vue SDK
   cli/            @open-pencil/cli — headless CLI
   mcp/            @open-pencil/mcp — MCP server (stdio + HTTP)
   docs/           Documentation site (openpencil.dev)
-src/              Vue app (components, composables, stores)
-desktop/          Tauri v2 (Rust + config)
-tests/            E2E (188 tests) + unit (764 tests)
+src/              Vue app (editor shell, AI, collaboration, document I/O)
+desktop/          Tauri v2 desktop app (Rust + config)
+tests/            E2E, visual, engine, and integration tests
 ```
 
 ### Tech stack
