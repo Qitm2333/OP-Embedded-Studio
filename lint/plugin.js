@@ -2083,6 +2083,25 @@ const noLocalJsonObjectAliases = {
   }
 }
 
+const noImportTypeAnnotations = {
+  meta: {
+    docs: {
+      description: 'Disallow inline import() type annotations — use top-level import type instead'
+    }
+  },
+  create(context) {
+    return {
+      TSImportType(node) {
+        context.report({
+          node,
+          message:
+            'Use a top-level import type instead of an inline import() type annotation. Dynamic imports are only for runtime lazy loading.'
+        })
+      }
+    }
+  }
+}
+
 const noFlatKiwiModules = createProgramFilenameRule({
   description: 'Disallow flat top-level Kiwi modules — group code under Kiwi subdomains',
   check(file) {
@@ -2101,6 +2120,7 @@ const plugin = {
   meta: { name: 'open-pencil' },
   rules: {
     'no-inline-named-types': noInlineNamedTypes,
+    'no-import-type-annotations': noImportTypeAnnotations,
     'no-structuredclone-scene-arrays': noStructuredCloneSceneArrays,
     'no-vue-style-blocks': noVueStyleBlocks,
     'no-native-title-attributes-in-vue': noNativeTitleAttributesInVue,

@@ -137,6 +137,7 @@
     ],
     "vue/require-default-export": "error",
     "vue/require-typed-ref": "error",
+    "open-pencil/no-import-type-annotations": "error",
     "open-pencil/no-inline-named-types": [
       "error",
       {
