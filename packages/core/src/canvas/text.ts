@@ -14,6 +14,7 @@ import type { SceneNode } from '@open-pencil/scene-graph'
 import { getCanvasKit } from '#core/canvaskit'
 import { resolveRGBAForPreview } from '#core/color/management'
 import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE } from '#core/constants'
+import { textNeedsFallbackScript } from '#core/text/coverage'
 import { resolveNodeTextDirection } from '#core/text/direction'
 import { fontManager, weightToStyle } from '#core/text/fonts'
 
@@ -41,14 +42,19 @@ export interface ClipboardShapedText {
   logicalIndexToCharacterOffsetMap: number[]
 }
 
-const CJK_RE = /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uac00-\ud7af]/u
-const ARABIC_RE = /[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]/u
 const FONT_FAMILY_CACHE_LIMIT = 256
 const fontFamilyCache = new Map<string, string[]>()
 
-function hasRequiredFallbackFonts(text: string): boolean {
-  if (CJK_RE.test(text) && fontManager.getCJKFallbackFamilies().length === 0) return false
-  if (ARABIC_RE.test(text) && fontManager.getArabicFallbackFamilies().length === 0) return false
+function hasRequiredFallbackFonts(node: SceneNode): boolean {
+  if (textNeedsFallbackScript(node, 'cjk') && fontManager.getCJKFallbackFamilies().length === 0) {
+    return false
+  }
+  if (
+    textNeedsFallbackScript(node, 'arabic') &&
+    fontManager.getArabicFallbackFamilies().length === 0
+  ) {
+    return false
+  }
   return true
 }
 
@@ -65,7 +71,7 @@ export function isNodeFontLoaded(_r: TextRenderer, node: SceneNode): boolean {
     if (!fontManager.isStyleLoaded(family, weightToStyle(weight, italic))) return false
   }
 
-  return hasRequiredFallbackFonts(node.text)
+  return hasRequiredFallbackFonts(node)
 }
 
 export function measureTextNode(

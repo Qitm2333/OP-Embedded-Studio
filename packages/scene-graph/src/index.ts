@@ -394,7 +394,7 @@ export class SceneGraph {
     if (node.type === 'TEXT') {
       const textChanged = Object.keys(changes).some((k) => TEXT_PICTURE_KEYS.has(k))
       if (node.textPicture && textChanged) node.textPicture = null
-      if (node.figmaDerivedTextGlyphs && 'text' in changes) node.figmaDerivedTextGlyphs = null
+      if (node.figmaDerivedTextGlyphs && textChanged) node.figmaDerivedTextGlyphs = null
     }
     const entries = Object.entries(changes) as Array<[string, unknown]>
     changes = Object.fromEntries(

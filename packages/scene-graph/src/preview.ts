@@ -73,12 +73,10 @@ export function updateNodePreview(
   }
   const affectsLayout = Object.keys(changes).some((key) => LAYOUT_AFFECTING_KEYS.has(key))
   if (affectsLayout) graph.clearAbsPosCache()
-  if (
-    node.type === 'TEXT' &&
-    node.textPicture &&
-    Object.keys(changes).some((key) => TEXT_PICTURE_KEYS.has(key))
-  ) {
-    node.textPicture = null
+  if (node.type === 'TEXT') {
+    const textChanged = Object.keys(changes).some((key) => TEXT_PICTURE_KEYS.has(key))
+    if (node.textPicture && textChanged) node.textPicture = null
+    if (node.figmaDerivedTextGlyphs && textChanged) node.figmaDerivedTextGlyphs = null
   }
   const normalizedChanges = changes.vectorNetwork
     ? { ...changes, vectorNetwork: normalizeVectorNetwork(changes.vectorNetwork) }

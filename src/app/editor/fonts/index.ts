@@ -6,6 +6,7 @@ import {
   WEB_FONT_PROVIDER_IDS,
   fontManager,
   styleToWeight,
+  textNeededFallbackScripts,
   type FontFamilyOption,
   type LocalFontAccessState,
   type WebFontProviderId
@@ -66,6 +67,7 @@ function configureTauriFontCache() {
   tauriFontCacheConfigured = true
   fontManager.setDownloadedFontCache(createTauriDownloadedFontCache())
   fontManager.setWebFontFetch(tauriFetch)
+  fontManager.setHostFallbackFontLoader(loadFont)
 }
 
 configureTauriFontCache()
@@ -162,12 +164,30 @@ export async function listFonts(): Promise<TauriFontFamily[]> {
 export async function ensureGraphFonts(graph: SceneGraph, nodeIds: string[]): Promise<boolean> {
   const fontKeys = fontManager.collectFontKeys(graph, nodeIds)
   const missing = fontKeys.filter(([family, style]) => !fontManager.isStyleLoaded(family, style))
-  if (missing.length === 0) return false
-
   const results = await Promise.all(missing.map(([family, style]) => loadFont(family, style)))
   const loaded = results.some((result) => result !== null)
-  if (loaded) clearTextPictures(graph)
-  return loaded
+  const fallbackScripts = neededFallbackScriptsForNodes(graph, nodeIds)
+  if (fallbackScripts.length > 0) {
+    const fallbacks = await fontManager.ensureFallbackPack(fallbackScripts)
+    if (Object.values(fallbacks).some((families) => families.length > 0)) clearTextPictures(graph)
+  } else if (loaded) {
+    clearTextPictures(graph)
+  }
+  return loaded || fallbackScripts.length > 0
+}
+
+function neededFallbackScriptsForNodes(graph: SceneGraph, nodeIds: string[]) {
+  const scripts = new Set<ReturnType<typeof textNeededFallbackScripts>[number]>()
+  const collect = (id: string) => {
+    const node = graph.getNode(id)
+    if (!node) return
+    if (node.type === 'TEXT') {
+      for (const script of textNeededFallbackScripts(node)) scripts.add(script)
+    }
+    for (const childId of node.childIds) collect(childId)
+  }
+  for (const id of nodeIds) collect(id)
+  return [...scripts]
 }
 
 function clearTextPictures(graph: SceneGraph): void {

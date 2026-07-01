@@ -29,6 +29,8 @@ export interface DownloadedFontCache {
   write(family: string, style: string, data: ArrayBuffer): Promise<void>
 }
 
+export type HostFontLoader = (family: string, style: string) => Promise<ArrayBuffer | null>
+
 type FindLocalFontOptions = { allowVariable?: boolean }
 
 type LocalFontMatch = Pick<FontInfo, 'family' | 'style'>
@@ -137,6 +139,7 @@ export class FontManager {
   private localFontAccessState: LocalFontAccessState = IS_BROWSER ? 'prompt' : 'unsupported'
   private downloadedFontCache: DownloadedFontCache | null = null
   private fallbackUserAgent: string | undefined
+  private hostFallbackFontLoader: HostFontLoader | null = null
   private webFonts = new WebFontResolver()
   private registeredRenderFamilies = new Set<string>()
   private cjkFallbackFamilies: string[] = []
@@ -171,6 +174,10 @@ export class FontManager {
 
   setFallbackUserAgent(userAgent: string | undefined): void {
     this.fallbackUserAgent = userAgent
+  }
+
+  setHostFallbackFontLoader(loader: HostFontLoader | null): void {
+    this.hostFallbackFontLoader = loader
   }
 
   setOnlineFontProviders(settings: Partial<Record<WebFontProviderId, boolean>>): void {
@@ -429,9 +436,11 @@ export class FontManager {
     const manifest = fontFallbackEntry(script, this.fallbackUserAgent)
 
     for (const family of manifest.localFamilies) {
-      const buffer = await this.findLocalFont(family, undefined, {
-        allowVariable: options.allowVariableLocalFonts
-      })
+      const buffer =
+        (await this.loadHostFallbackFont(family, 'Regular')) ??
+        (await this.findLocalFont(family, undefined, {
+          allowVariable: options.allowVariableLocalFonts
+        }))
       if (buffer && this.registerAndCache(family, 'Regular', buffer)) {
         targetFamilies.push(family)
       }
@@ -450,6 +459,16 @@ export class FontManager {
     }
 
     return targetFamilies
+  }
+
+  private async loadHostFallbackFont(family: string, style: string): Promise<ArrayBuffer | null> {
+    if (!this.hostFallbackFontLoader) return null
+    try {
+      return await this.hostFallbackFontLoader(family, style)
+    } catch (e) {
+      console.warn(`Host fallback font load failed for "${family}" ${style}:`, e)
+      return null
+    }
   }
 
   private async readDownloadedFont(family: string, style: string): Promise<ArrayBuffer | null> {

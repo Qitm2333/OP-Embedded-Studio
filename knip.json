@@ -9,6 +9,7 @@
   "ignoreUnresolved": [
     "~icons/*",
     "/packages/core/src/text/fonts.ts",
+    "/src/app/editor/fonts/index.ts",
     "#core/*"
   ],
   "ignoreBinaries": ["figma-use", "identify", "magick", "open", "osascript"]
