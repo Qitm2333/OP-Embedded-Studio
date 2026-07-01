@@ -49,7 +49,7 @@ const indicator = ui?.indicator ?? 'absolute left-1.5 inline-flex items-center j
 
 <template>
   <SelectRoot v-model="modelValue">
-    <SelectTrigger v-test-id="testId" :class="select.trigger" :aria-label="label" :title="label">
+    <SelectTrigger v-test-id="testId" :class="select.trigger" :aria-label="label">
       <SelectValue :placeholder="placeholder" />
       <icon-lucide-chevron-down class="ml-1 size-3 shrink-0 text-muted" />
     </SelectTrigger>

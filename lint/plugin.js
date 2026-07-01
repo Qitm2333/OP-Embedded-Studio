@@ -182,7 +182,13 @@ function vueTemplateAst(source, filename) {
 }
 
 function isVueSourceFile(file) {
-  return file.endsWith('.vue') && (file.includes('/src/') || file.includes('/packages/vue/src/'))
+  return (
+    file.endsWith('.vue') &&
+    (file.startsWith('src/') ||
+      file.includes('/src/') ||
+      file.startsWith('packages/vue/src/') ||
+      file.includes('/packages/vue/src/'))
+  )
 }
 
 function sourceLineCount(source) {
@@ -272,8 +278,7 @@ const noVueStyleBlocks = {
   },
   create(context) {
     const file = normalizedFilename(context)
-    if (!file.endsWith('.vue')) return {}
-    if (!file.includes('/src/') && !file.includes('/packages/vue/src/')) return {}
+    if (!isVueSourceFile(file)) return {}
 
     return {
       Program(node) {
@@ -297,8 +302,7 @@ const noNativeTitleAttributesInVue = {
   },
   create(context) {
     const file = normalizedFilename(context)
-    if (!file.endsWith('.vue')) return {}
-    if (!file.includes('/src/') && !file.includes('/packages/vue/src/')) return {}
+    if (!isVueSourceFile(file)) return {}
 
     return {
       Program(node) {
@@ -329,8 +333,7 @@ const noHardcodedTipLabelsInVue = {
   },
   create(context) {
     const file = normalizedFilename(context)
-    if (!file.endsWith('.vue')) return {}
-    if (!file.includes('/src/') && !file.includes('/packages/vue/src/')) return {}
+    if (!isVueSourceFile(file)) return {}
 
     return {
       Program(node) {
