@@ -31,7 +31,7 @@ import IconLucidePanelLeft from '~icons/lucide/panel-left'
 import IconLucidePanelRight from '~icons/lucide/panel-right'
 import IconLucidePanelTop from '~icons/lucide/panel-top'
 import CanvasMenu from './CanvasMenu.vue'
-import ScrubInput from './ScrubInput.vue'
+import ScrubInput from './inputs/ScrubInput.vue'
 
 const store = useEditorStore()
 const collab = useCollabInjected()

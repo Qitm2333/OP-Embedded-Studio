@@ -35,7 +35,7 @@ import IconToggleLeft from '~icons/lucide/toggle-left'
 import IconType from '~icons/lucide/type'
 import IconX from '~icons/lucide/x'
 import ColorInput from '@/components/ColorPicker/ColorInput.vue'
-import Tip from './ui/Tip.vue'
+import Tip from '@/components/ui/Tip.vue'
 import { useDialogUI } from '@/components/ui/dialog'
 import { useMenuUI } from '@/components/ui/menu'
 

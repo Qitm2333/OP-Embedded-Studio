@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import AppSelect from './ui/AppSelect.vue'
-import Tip from './ui/Tip.vue'
-import ColorPickerPanel from '@/components/ColorPickerPanel/ColorPickerPanel.vue'
-import ScrubInput from './ScrubInput.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
+import Tip from '@/components/ui/Tip.vue'
+import ColorPickerPanel from '@/components/color-picker-panel/ColorPickerPanel.vue'
+import ScrubInput from '@/components/inputs/ScrubInput.vue'
 import { colorToCSS } from '@open-pencil/core/color'
 import {
   GradientEditorRoot,

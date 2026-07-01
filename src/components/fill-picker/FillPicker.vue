@@ -4,10 +4,10 @@ import { twMerge } from 'tailwind-merge'
 import { applySolidFillColor, FillPickerRoot, useI18n } from '@open-pencil/vue'
 
 import GradientEditor from './GradientEditor.vue'
-import ColorPickerPanel from '@/components/ColorPickerPanel/ColorPickerPanel.vue'
+import ColorPickerPanel from '@/components/color-picker-panel/ColorPickerPanel.vue'
 import ImageFillPicker from './ImageFillPicker.vue'
-import Tip from './ui/Tip.vue'
-import { usePopoverUI } from './ui/popover'
+import Tip from '@/components/ui/Tip.vue'
+import { usePopoverUI } from '@/components/ui/popover'
 
 import type { Fill } from '@open-pencil/scene-graph'
 import type { OkHCLControls } from '@open-pencil/vue'

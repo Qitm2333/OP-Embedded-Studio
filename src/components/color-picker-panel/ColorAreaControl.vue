@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ColorAreaArea, ColorAreaRoot, ColorAreaThumb } from 'reka-ui'
 
-import { useColorPickerPanelContext } from '@/components/ColorPickerPanel/context'
+import { useColorPickerPanelContext } from '@/components/color-picker-panel/context'
 
 const ctx = useColorPickerPanelContext()
 </script>
