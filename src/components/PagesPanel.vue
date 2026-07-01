@@ -118,10 +118,12 @@ function onDrop(
             <ContextMenuTrigger as-child>
               <div
                 data-test-id="pages-row"
-                class="relative"
+                class="relative cursor-grab active:cursor-grabbing"
+                :class="draggingPageId === pg.id ? 'opacity-60' : ''"
                 :data-page-id="pg.id"
                 draggable="true"
                 @dragstart="onDragStart($event, pg.id)"
+                @dragenter="onDragOver($event, pg.id)"
                 @dragover="onDragOver($event, pg.id)"
                 @dragleave="dragTargetPageId === pg.id && (dragTargetPageId = null)"
                 @drop="onDrop($event, pg.id, pages, actions.move)"
@@ -130,7 +132,7 @@ function onDrop(
                 <div
                   v-if="isDraggingTarget(pg, 'above')"
                   data-test-id="pages-drop-indicator"
-                  class="pointer-events-none absolute inset-x-1 top-0 z-10 h-px bg-accent"
+                  class="pointer-events-none absolute inset-x-1 top-0 z-10 h-0.5 rounded-full bg-accent"
                 />
                 <div
                   v-if="rename.editingId.value === pg.id"
@@ -172,7 +174,7 @@ function onDrop(
                 <div
                   v-if="isDraggingTarget(pg, 'below')"
                   data-test-id="pages-drop-indicator"
-                  class="pointer-events-none absolute inset-x-1 bottom-0 z-10 h-px bg-accent"
+                  class="pointer-events-none absolute inset-x-1 bottom-0 z-10 h-0.5 rounded-full bg-accent"
                 />
               </div>
             </ContextMenuTrigger>
