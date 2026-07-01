@@ -407,12 +407,13 @@ export class FontManager {
 
   async ensureFallbackPack(
     scripts: FontFallbackScript[] = ['cjk', 'arabic']
-  ): Promise<Record<FontFallbackScript, string[]>> {
-    const result: Record<FontFallbackScript, string[]> = { cjk: [], arabic: [] }
+  ): Promise<Partial<Record<FontFallbackScript, string[]>>> {
+    const result: Partial<Record<FontFallbackScript, string[]>> = {}
     await Promise.all(
       scripts.map(async (script) => {
-        result[script] =
-          script === 'cjk' ? await this.ensureCJKFallback() : await this.ensureArabicFallback()
+        if (script === 'arabic') result[script] = await this.ensureArabicFallback()
+        else if (script === 'cjk') result[script] = await this.ensureCJKFallback()
+        else result[script] = await this.ensureFallbackFamilies(script, this.cjkFallbackFamilies)
       })
     )
     return result

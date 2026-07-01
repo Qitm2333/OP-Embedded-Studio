@@ -51,7 +51,7 @@ test('tool-created CJK text requests fallback through app font loading', async (
 
   expect(result).toEqual({
     changed: true,
-    requestedScripts: ['cjk'],
+    requestedScripts: ['cjk-sc'],
     textPictureCleared: true
   })
   canvas.assertNoErrors()

@@ -14,7 +14,7 @@ import type { SceneNode } from '@open-pencil/scene-graph'
 import { getCanvasKit } from '#core/canvaskit'
 import { resolveRGBAForPreview } from '#core/color/management'
 import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE } from '#core/constants'
-import { textNeedsFallbackScript } from '#core/text/coverage'
+import { textNeededFallbackScripts } from '#core/text/coverage'
 import { resolveNodeTextDirection } from '#core/text/direction'
 import { fontManager, weightToStyle } from '#core/text/fonts'
 
@@ -46,14 +46,9 @@ const FONT_FAMILY_CACHE_LIMIT = 256
 const fontFamilyCache = new Map<string, string[]>()
 
 function hasRequiredFallbackFonts(node: SceneNode): boolean {
-  if (textNeedsFallbackScript(node, 'cjk') && fontManager.getCJKFallbackFamilies().length === 0) {
-    return false
-  }
-  if (
-    textNeedsFallbackScript(node, 'arabic') &&
-    fontManager.getArabicFallbackFamilies().length === 0
-  ) {
-    return false
+  for (const script of textNeededFallbackScripts(node)) {
+    if (script === 'arabic' && fontManager.getArabicFallbackFamilies().length === 0) return false
+    if (script !== 'arabic' && fontManager.getCJKFallbackFamilies().length === 0) return false
   }
   return true
 }

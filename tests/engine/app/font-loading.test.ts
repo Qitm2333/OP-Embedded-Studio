@@ -33,7 +33,7 @@ describe('app font loading', () => {
       const changed = await ensureGraphFonts(graph, [text.id])
 
       expect(changed).toBe(true)
-      expect(requestedScripts).toEqual(['cjk'])
+      expect(requestedScripts).toEqual(['cjk-sc'])
       expect(expectDefined(graph.getNode(text.id), 'text node').textPicture).toBeNull()
     } finally {
       fontManager.ensureFallbackPack = originalEnsureFallbackPack
