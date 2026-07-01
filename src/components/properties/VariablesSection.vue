@@ -25,7 +25,7 @@ const { panels } = useI18n()
 <template>
   <PanelSection
     :label="panels.variables"
-    test-id="variables-section"
+    data-test-id="variables-section"
     :ui="{ label: 'font-medium text-surface' }"
   >
     <template #actions>

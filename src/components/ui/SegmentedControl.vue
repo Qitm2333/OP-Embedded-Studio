@@ -1,26 +1,22 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import type { TestIdProps } from '@open-pencil/vue'
-
-export interface SegmentedControlOption extends TestIdProps {
+export interface SegmentedControlOption {
   value: string
   label: string
   disabled?: boolean
+  testHook?: string
 }
 
 const {
   options,
   label,
-  size = 'sm',
-  testId
-} = defineProps<
-  TestIdProps & {
-    options: SegmentedControlOption[]
-    label?: string
-    size?: 'sm' | 'md'
-  }
->()
+  size = 'sm'
+} = defineProps<{
+  options: SegmentedControlOption[]
+  label?: string
+  size?: 'sm' | 'md'
+}>()
 
 const modelValue = defineModel<string>({ required: true })
 const emit = defineEmits<{ change: [value: string] }>()
@@ -37,7 +33,6 @@ function select(value: string) {
 
 <template>
   <div
-    :data-test-id="testId"
     role="radiogroup"
     :aria-label="label"
     class="inline-flex min-w-0 items-center gap-0.5 rounded bg-input p-0.5"
@@ -45,7 +40,7 @@ function select(value: string) {
     <button
       v-for="option in options"
       :key="option.value"
-      :data-test-id="option.testId"
+      :data-test-id="option.testHook"
       type="button"
       role="radio"
       :aria-label="option.label"

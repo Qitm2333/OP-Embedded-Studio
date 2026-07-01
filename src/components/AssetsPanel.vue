@@ -181,7 +181,7 @@ function insertSelectedAsset() {
       <AppInput
         v-model="query"
         type="search"
-        test-id="assets-search"
+        data-test-id="assets-search"
         size="sm"
         :placeholder="panels.searchLocalComponents"
       />

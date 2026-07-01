@@ -8,24 +8,19 @@ import {
   DropdownMenuTrigger
 } from 'reka-ui'
 
-import { vTestId, type TestIdProps } from '@open-pencil/vue'
-
 import { useInputUI } from '@/components/ui/input'
 import { menuItem, useMenuUI } from '@/components/ui/menu'
 import Tip from '@/components/ui/Tip.vue'
 
-interface ExportScaleInputProps extends TestIdProps {
+interface ExportScaleInputProps {
   presets: readonly number[]
   clamp: (scale: number) => number
   label?: string
 }
 
-const {
-  presets,
-  clamp,
-  label,
-  testId = 'export-scale-input'
-} = defineProps<ExportScaleInputProps>()
+defineOptions({ inheritAttrs: false })
+
+const { presets, clamp, label } = defineProps<ExportScaleInputProps>()
 
 const modelValue = defineModel<number>({ required: true })
 
@@ -69,7 +64,7 @@ function isActive(scale: number) {
       <input
         ref="inputRef"
         v-model="text"
-        v-test-id="testId"
+        v-bind="$attrs"
         type="text"
         :aria-label="label"
         :class="inputClass"

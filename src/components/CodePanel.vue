@@ -101,7 +101,7 @@ function copyReference() {
       <div class="flex items-center gap-1.5">
         <span class="text-[11px] text-muted">JSX</span>
         <AppTextButton
-          test-id="code-panel-format-toggle"
+          data-test-id="code-panel-format-toggle"
           :ui="{ base: 'rounded px-1.5 py-0.5 text-[11px] hover:bg-hover' }"
           @click="toggleFormat"
         >
@@ -110,7 +110,7 @@ function copyReference() {
       </div>
       <div class="flex items-center gap-1">
         <AppTextButton
-          test-id="code-panel-import-toggle"
+          data-test-id="code-panel-import-toggle"
           :ui="{ base: 'flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] hover:bg-hover' }"
           @click="toggleImporter"
         >
@@ -119,7 +119,7 @@ function copyReference() {
         </AppTextButton>
         <Tip :label="dialogs.copyJSXReference">
           <AppTextButton
-            test-id="code-panel-copy-ref"
+            data-test-id="code-panel-copy-ref"
             :ui="{
               base: 'flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] hover:bg-hover'
             }"
@@ -130,7 +130,7 @@ function copyReference() {
           </AppTextButton>
         </Tip>
         <AppTextButton
-          test-id="code-panel-copy"
+          data-test-id="code-panel-copy"
           :ui="{ base: 'flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] hover:bg-hover' }"
           @click="copyCode"
         >
@@ -154,7 +154,7 @@ function copyReference() {
           </div>
         </div>
         <AppTextButton
-          test-id="code-panel-paste-import"
+          data-test-id="code-panel-paste-import"
           :ui="{ base: 'rounded px-1.5 py-0.5 text-[11px] hover:bg-hover' }"
           @click="pasteImportHTML"
         >
@@ -185,7 +185,7 @@ function copyReference() {
       <div class="flex items-center justify-between gap-2">
         <span class="text-[11px] text-muted">Import replaces the current document.</span>
         <AppTextButton
-          test-id="code-panel-import"
+          data-test-id="code-panel-import"
           :ui="{
             base: [
               'rounded px-2 py-1 text-[11px]',

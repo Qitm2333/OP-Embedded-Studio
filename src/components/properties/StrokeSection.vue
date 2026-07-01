@@ -65,7 +65,7 @@ function onToggleSides(activeNode: SceneNode | null) {
     prop-key="strokes"
     :label="panels.stroke"
   >
-    <PanelSection :label="panels.stroke" test-id="stroke-section">
+    <PanelSection :label="panels.stroke" data-test-id="stroke-section">
       <template #actions>
         <IconButton
           :label="panels.addStroke"
@@ -86,9 +86,6 @@ function onToggleSides(activeNode: SceneNode | null) {
         :active-node-id="activeNode?.id ?? null"
         :binding-api="strokeVarCtx"
         :variable-color="stroke.color"
-        :visibility-test-id="`stroke-visibility-${i}`"
-        :apply-variable-test-id="`stroke-apply-variable-${i}`"
-        unbind-test-id="stroke-unbind-variable"
         data-test-id="stroke-item"
         :data-test-index="i"
         :remove-label="panels.removeStroke"

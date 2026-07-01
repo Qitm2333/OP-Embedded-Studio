@@ -113,7 +113,7 @@ onScopeDispose(() => {
 </script>
 
 <template>
-  <PanelSection :label="panels.export" test-id="export-section">
+  <PanelSection :label="panels.export" data-test-id="export-section">
     <template #actions>
       <IconButton :label="panels.addExport" data-test-id="export-section-add" @click="addSetting">
         <icon-lucide-plus class="size-3.5" />
@@ -132,6 +132,7 @@ onScopeDispose(() => {
     >
       <ExportScaleInput
         v-if="formatSupportsScale(setting.format)"
+        data-test-id="export-scale-input"
         :model-value="setting.scale"
         :presets="scales"
         :clamp="clampExportScale"
@@ -139,6 +140,7 @@ onScopeDispose(() => {
         @update:model-value="updateScale(i, $event)"
       />
       <AppSelect
+        data-test-id="app-select-trigger"
         :model-value="setting.format"
         :options="FORMAT_OPTIONS"
         :label="panels.exportFormat"

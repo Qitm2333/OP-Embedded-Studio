@@ -100,13 +100,13 @@ function save() {
     <p class="mb-5 text-center text-xs text-muted">{{ dialogs.connectAIProvider }}</p>
 
     <form v-if="!isACP" class="flex w-full flex-col gap-2" @submit.prevent="save">
-      <ProviderSelectField test-id="provider-selector" />
+      <ProviderSelectField data-test-id="provider-selector" />
 
       <!-- Base URL (compatible providers only) -->
       <AppInput
         v-if="providerDef.supportsCustomBaseURL"
         v-model="baseURLInput"
-        test-id="provider-base-url"
+        data-test-id="provider-base-url"
         :placeholder="dialogs.baseURLPlaceholder"
       />
 
@@ -114,14 +114,14 @@ function save() {
       <AppInput
         v-if="providerDef.supportsCustomModel && providerID !== 'openrouter'"
         v-model="customModelInput"
-        test-id="provider-custom-model"
+        data-test-id="provider-custom-model"
         :placeholder="dialogs.modelIDPlaceholder"
       />
 
       <AppInput
         v-model="keyInput"
         type="password"
-        test-id="api-key-input"
+        data-test-id="api-key-input"
         :placeholder="providerDef.keyPlaceholder"
       />
 
@@ -144,7 +144,7 @@ function save() {
 
     <!-- ACP agent — no API key needed -->
     <div v-else class="flex w-full flex-col gap-2">
-      <ProviderSelectField test-id="provider-selector" />
+      <ProviderSelectField data-test-id="provider-selector" />
 
       <p class="text-center text-[10px] leading-relaxed text-muted">
         Uses your existing {{ acpAgent?.name }} subscription.
@@ -167,7 +167,7 @@ function save() {
 
     <AppTextButton
       v-if="!isACP && providerDef.keyURL"
-      test-id="api-key-get-link"
+      data-test-id="api-key-get-link"
       underline
       :ui="{ base: 'mt-2.5' }"
       @click="openExternalLink(providerDef.keyURL as string)"

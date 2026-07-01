@@ -28,7 +28,7 @@ function handleAlign(
   <PositionControlsRoot
     v-slot="{ active, isMulti, xValue, yValue, wValue, hValue, rotationValue, actions }"
   >
-    <PanelSection v-if="active" :label="panels.position" test-id="position-section">
+    <PanelSection v-if="active" :label="panels.position" data-test-id="position-section">
       <PanelRow class="mb-1.5 gap-2">
         <PanelRow gap="sm">
           <IconButton

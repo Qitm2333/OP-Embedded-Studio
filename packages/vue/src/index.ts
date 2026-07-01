@@ -61,14 +61,7 @@ export {
   variablesAddTestId
 } from '#vue/testing/test-id'
 export { vTestId } from '#vue/testing/v-test-id'
-export type {
-  RequiredTestIdProps,
-  TestId,
-  TestIdProps,
-  WithoutTestId,
-  WithRequiredTestId,
-  WithTestId
-} from '#vue/testing/test-id'
+export type { TestId } from '#vue/testing/test-id'
 
 /** Property-panel composables. */
 export { usePosition } from '#vue/controls/position/use'

@@ -28,7 +28,7 @@ OpenPencil maps browser-computed DOM/CSS styles into SceneGraph fields through `
 | `border-style: dashed/dotted` | `dashPattern` | Unsupported border styles fall back to solid. |
 | `border-radius`, `border-*-radius` | corner radii | Independent corners are preserved when sides differ. |
 | `opacity` | node opacity | Numeric computed value. |
-| `box-shadow` | drop shadow | First simple outer shadow only; see parser audit before expanding. |
+| `box-shadow` | drop shadow | First simple outer shadow only; complex shadow lists require maintained parser or browser-computed support before mapping. |
 | `<img src="data:...">` | image fill | Data URL images are stored in the graph image map. |
 | `<img src="https://...">` | preserved source URL metadata | External URL fetching is not performed; the URL is retained for HTML round-trip. |
 | `object-fit: contain/cover` | image `FIT` / `FILL` scale mode | `scale-down` maps to `FIT`; other object-fit values are not mapped yet. |
@@ -62,4 +62,4 @@ These values are collected or covered by browser oracle tests but do not yet hav
 
 ## Headless limitations
 
-The headless runtime uses maintained parsers for HTML (`parse5`) and stylesheets/inline declarations (`@acemir/cssom`), but still has limited approximations for selector matching, shorthand expansion, `calc()`, and simple shadows. Do not expand those with ad hoc parsers. See [`../development/dom-css-parser-audit.md`](../development/dom-css-parser-audit.md).
+The headless runtime uses maintained parsers for HTML (`parse5`) and stylesheets/inline declarations (`@acemir/cssom`), but still has limited approximations for selector matching, shorthand expansion, `calc()`, and simple shadows. Do not expand those with ad hoc parsers; prefer browser `getComputedStyle()` oracle coverage or maintained parser dependencies for new CSS behavior.

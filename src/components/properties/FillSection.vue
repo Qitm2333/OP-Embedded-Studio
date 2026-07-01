@@ -51,7 +51,7 @@ function updateFillHex(
     prop-key="fills"
     :label="panels.fill"
   >
-    <PanelSection :label="panels.fill" test-id="fill-section">
+    <PanelSection :label="panels.fill" data-test-id="fill-section">
       <template #actions>
         <IconButton
           :label="panels.addFill"
@@ -70,9 +70,6 @@ function updateFillHex(
         :active-node-id="activeNode?.id ?? null"
         :binding-api="fillCtx"
         :variable-color="fill.type === 'SOLID' ? fill.color : undefined"
-        :visibility-test-id="`fill-visibility-${i}`"
-        :apply-variable-test-id="`fill-apply-variable-${i}`"
-        unbind-test-id="fill-unbind-variable"
         data-test-id="fill-item"
         :data-test-index="i"
         :remove-label="panels.removeFill"

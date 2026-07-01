@@ -17,7 +17,7 @@ const CONTAINER_TYPES = ['FRAME', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE']
 <template>
   <LayoutControlsRoot v-slot="ctx">
     <template v-if="ctx.node">
-      <PanelSection :label="panels.layout" test-id="layout-section">
+      <PanelSection :label="panels.layout" data-test-id="layout-section">
         <SizeControls />
       </PanelSection>
 

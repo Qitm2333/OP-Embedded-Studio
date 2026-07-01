@@ -18,7 +18,11 @@ const fontLoader = { load: loadFont }
 
 <template>
   <TypographyControlsRoot v-slot="ctx" :font-loader="fontLoader">
-    <PanelSection v-if="ctx.node.value" :label="panels.typography" test-id="typography-section">
+    <PanelSection
+      v-if="ctx.node.value"
+      :label="panels.typography"
+      data-test-id="typography-section"
+    >
       <PanelRow class="mb-1.5">
         <FontPicker
           class="min-w-0 flex-1"

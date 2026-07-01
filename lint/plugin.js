@@ -451,34 +451,26 @@ const TEST_ID_FORMAT = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
 const noRawTestIdStringProps = {
   meta: {
     docs: {
-      description: 'Disallow raw testId string props — use TestIdProps or RequiredTestIdProps'
+      description: 'Disallow test-id component props — use data-test-id attrs or internal semantic ids'
     }
   },
   create(context) {
     const file = normalizedFilename(context)
-    if (file.endsWith('/packages/vue/src/testing/test-id.ts')) return {}
+    if (!file.endsWith('.vue')) return {}
 
     function isTestIdKey(key) {
-      return key?.type === 'Identifier' && key.name === 'testId'
-    }
-
-    function isStringType(member) {
-      return member.typeAnnotation?.typeAnnotation?.type === 'TSStringKeyword'
-    }
-
-    function report(node, optional) {
-      context.report({
-        node,
-        message: optional
-          ? 'Use TestIdProps instead of declaring testId?: string directly.'
-          : 'Use RequiredTestIdProps or TestId instead of declaring testId: string directly.'
-      })
+      if (key?.type !== 'Identifier') return false
+      return key.name === 'testId' || /TestId$/u.test(key.name)
     }
 
     return {
       TSPropertySignature(node) {
-        if (!isTestIdKey(node.key) || !isStringType(node)) return
-        report(node, !!node.optional)
+        if (!isTestIdKey(node.key)) return
+        context.report({
+          node,
+          message:
+            'Do not expose test-id component props. Let callers pass data-test-id attrs or derive internal ids from semantic component state.'
+        })
       }
     }
   }
@@ -567,7 +559,9 @@ const noInvalidTestIdAttributes = {
           if (hasInvalidSpelling || invalidId !== null) return
           if (
             isStaticVueAttribute(templateNode, 'data-testid') ||
-            isVueBindDirective(templateNode, 'data-testid')
+            isVueBindDirective(templateNode, 'data-testid') ||
+            isStaticVueAttribute(templateNode, 'test-id') ||
+            isVueBindDirective(templateNode, 'test-id')
           ) {
             hasInvalidSpelling = true
             return
@@ -579,7 +573,7 @@ const noInvalidTestIdAttributes = {
         if (hasInvalidSpelling) {
           context.report({
             node,
-            message: 'Use data-test-id instead of data-testid.'
+            message: 'Use data-test-id attrs instead of data-testid or test-id component props.'
           })
           return
         }

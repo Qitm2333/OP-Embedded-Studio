@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { TestIdProps } from '@open-pencil/vue'
-
 import { useSectionUI } from '@/components/ui/section'
 
 interface PanelSectionUi {
@@ -8,18 +6,18 @@ interface PanelSectionUi {
   wrapper?: string
 }
 
-interface PanelSectionProps extends TestIdProps {
+interface PanelSectionProps {
   label: string
   ui?: PanelSectionUi
 }
 
-const { label, testId, ui } = defineProps<PanelSectionProps>()
+const { label, ui } = defineProps<PanelSectionProps>()
 
 const sectionCls = useSectionUI(ui)
 </script>
 
 <template>
-  <section :data-test-id="testId" :class="sectionCls.wrapper">
+  <section :class="sectionCls.wrapper">
     <div v-if="$slots.actions" class="flex items-center justify-between">
       <label :class="sectionCls.label">{{ label }}</label>
       <slot name="actions" />

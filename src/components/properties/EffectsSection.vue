@@ -21,7 +21,7 @@ const { panels } = useI18n()
     prop-key="effects"
     :label="panels.effects"
   >
-    <PanelSection :label="panels.effects" test-id="effects-section">
+    <PanelSection :label="panels.effects" data-test-id="effects-section">
       <template #actions>
         <IconButton
           :label="panels.addEffect"

@@ -48,7 +48,7 @@ function onToggleCorners() {
 </script>
 
 <template>
-  <PanelSection v-if="active" :label="panels.appearance" test-id="appearance-section">
+  <PanelSection v-if="active" :label="panels.appearance" data-test-id="appearance-section">
     <template #actions>
       <IconButton
         :label="panels.toggleVisibility"

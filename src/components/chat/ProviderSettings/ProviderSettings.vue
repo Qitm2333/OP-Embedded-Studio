@@ -54,7 +54,7 @@ function onInteractOutside(e: Event) {
       >
         <div class="flex flex-col gap-2.5">
           <h3 class="text-[11px] font-semibold text-surface">{{ dialogs.aiProvider }}</h3>
-          <ProviderSelectField test-id="provider-settings-provider" />
+          <ProviderSelectField data-test-id="provider-settings-provider" />
           <MaxTokensSection />
           <StockPhotoKeysSection />
           <CustomEndpointSection />

@@ -13,7 +13,7 @@ const { panels } = useI18n()
 </script>
 
 <template>
-  <PanelSection :label="panels.page ?? 'Page'" test-id="page-section">
+  <PanelSection :label="panels.page ?? 'Page'" data-test-id="page-section">
     <ColorInput :color="pageColor" editable @update="editor.setPageColor($event)" />
   </PanelSection>
 </template>

@@ -45,7 +45,7 @@ function switchVariant(propertyName: string, newValue: string) {
   <PanelSection
     v-if="hasVariants"
     :label="panels.variants"
-    test-id="variant-section"
+    data-test-id="variant-section"
     :ui="{ label: 'font-medium text-component' }"
   >
     <div class="flex flex-col gap-1.5">
