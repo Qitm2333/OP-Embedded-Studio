@@ -606,6 +606,12 @@ function drawOutlinedText(r: SkiaRenderer, canvas: Canvas, node: SceneNode): boo
   return true
 }
 
+const CJK_TEXT_PATTERN = /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uac00-\ud7af]/u
+
+function shouldRenderCJKAsOutline(node: SceneNode): boolean {
+  return CJK_TEXT_PATTERN.test(node.text)
+}
+
 function drawGradientText(
   r: SkiaRenderer,
   canvas: Canvas,
@@ -666,7 +672,10 @@ export function renderText(r: SkiaRenderer, canvas: Canvas, node: SceneNode, fil
     canvas.restore()
     return
   }
-  if (shouldRenderTextAsOutline(fill) && drawOutlinedText(r, canvas, node)) {
+  if (
+    (shouldRenderTextAsOutline(fill) || shouldRenderCJKAsOutline(node)) &&
+    drawOutlinedText(r, canvas, node)
+  ) {
     canvas.restore()
     return
   }
