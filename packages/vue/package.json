@@ -3,13 +3,6 @@
   "version": "0.13.2",
   "license": "MIT",
   "type": "module",
-  "imports": {
-    "#vue/*": {
-      "types": "./src/*",
-      "bun": "./src/*",
-      "default": "./dist/*"
-    }
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

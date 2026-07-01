@@ -1,21 +1,8 @@
 import { publicPackageDirs } from '../packages'
 
-const excludedPackages = new Map([
-  [
-    'packages/vue',
-    'tsdown currently emits declaration imports through generated #vue/scene-graph/dist/*2.js names'
-  ]
-])
-
 let failed = false
 
 for (const packageDir of publicPackageDirs) {
-  const exclusionReason = excludedPackages.get(packageDir)
-  if (exclusionReason) {
-    console.warn(`Skipping ATTW for ${packageDir}: ${exclusionReason}`)
-    continue
-  }
-
   const proc = Bun.spawnSync(
     ['bun', 'attw', '--pack', packageDir, '--profile', 'esm-only', '--format', 'ascii'],
     {
