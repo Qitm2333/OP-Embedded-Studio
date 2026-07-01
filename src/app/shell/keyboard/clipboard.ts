@@ -32,6 +32,7 @@ export function bindEditorClipboard(store: EditorStore) {
     if (isTauri()) {
       void copySelectionToTauriClipboard(store).then((copied) => {
         if (copied) store.deleteSelected()
+        return undefined
       })
       return
     }

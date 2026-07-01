@@ -6,7 +6,7 @@ export default defineConfig({
   },
   platform: 'neutral',
   format: ['esm'],
-  dts: false,
+  dts: true,
   sourcemap: true,
   hash: false,
   clean: true,

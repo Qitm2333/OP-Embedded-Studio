@@ -1,5 +1,7 @@
+import codegenPrompt from './prompts/codegen.md'
+
 export { ALL_TOOLS, CORE_TOOLS, EXTENDED_TOOLS } from './registry'
-export { default as CODEGEN_PROMPT } from './prompts/codegen.md'
+export const CODEGEN_PROMPT: string = codegenPrompt
 export { exportImage } from './vector'
 export { defineTool, nodeToResult, nodeSummary, requireNode, NodeNotFoundError } from './schema'
 export type { ToolDef, ParamDef, ParamType } from './schema'

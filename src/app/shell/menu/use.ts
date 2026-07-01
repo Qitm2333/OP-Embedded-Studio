@@ -83,7 +83,7 @@ export function useMenu() {
   }
 
   void import('@tauri-apps/api/event').then(({ listen }) => {
-    void listen<string>('menu-event', (event) => {
+    return listen<string>('menu-event', (event) => {
       if (COMMAND_MENU_IDS.has(event.payload)) {
         runCommand(event.payload as EditorCommandId)
         return
@@ -91,6 +91,7 @@ export function useMenu() {
       actions[event.payload]?.()
     }).then((fn) => {
       unlisten = fn
+      return undefined
     })
   })
 

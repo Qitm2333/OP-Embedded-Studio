@@ -1,3 +1,6 @@
+import codegenPrompt from './tools/prompts/codegen.md'
+import jsxReference from './tools/prompts/jsx-reference.md'
+
 export { randomHex, randomInt, randomIndex } from './random'
 
 export * from './constants'
@@ -418,8 +421,8 @@ export {
 export * from './io'
 export * from './lint'
 
-export { default as CODEGEN_PROMPT } from './tools/prompts/codegen.md'
-export { default as JSX_REFERENCE } from './tools/prompts/jsx-reference.md'
+export const CODEGEN_PROMPT: string = codegenPrompt
+export const JSX_REFERENCE: string = jsxReference
 export {
   setPexelsApiKey,
   setUnsplashAccessKey,

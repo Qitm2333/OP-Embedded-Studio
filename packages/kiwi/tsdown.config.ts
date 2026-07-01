@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 
 import { defineConfig } from 'tsdown'
-import type { Plugin } from 'rolldown'
+import type { Rolldown } from 'tsdown'
 
-function rawText(): Plugin {
+function rawText(): Rolldown.Plugin {
   return {
     name: 'raw-text',
     load(id) {
@@ -28,7 +28,7 @@ export default defineConfig({
   plugins: [rawText()],
   platform: 'neutral',
   format: ['esm'],
-  dts: false,
+  dts: true,
   sourcemap: true,
   hash: false,
   clean: true,

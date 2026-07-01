@@ -3,18 +3,9 @@ import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { publicPackageDirs } from './packages'
+
 const rootDir = fileURLToPath(new URL('../../..', import.meta.url))
-const packageDirs = [
-  'packages/scene-graph',
-  'packages/pen',
-  'packages/kiwi',
-  'packages/fig',
-  'packages/core',
-  'packages/dom-css',
-  'packages/vue',
-  'packages/mcp',
-  'packages/cli'
-]
 
 function run(command: string[], cwd = rootDir): string {
   const proc = Bun.spawnSync(command, { cwd, stdout: 'pipe', stderr: 'pipe' })
@@ -39,7 +30,7 @@ try {
   run(['bun', 'run', 'build:packages'])
 
   const tarballs: string[] = []
-  for (const packageDir of packageDirs) {
+  for (const packageDir of publicPackageDirs) {
     const output = run(
       ['bun', 'pm', 'pack', '--destination', tempDir, '--quiet'],
       join(rootDir, packageDir)

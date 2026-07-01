@@ -27,9 +27,14 @@ const { dialogs } = useI18n()
 
 const chat = ref<Chat<UIMessage> | null>(null)
 
-ensureChat().then((c) => {
-  if (c) chat.value = markRaw(c)
-})
+void ensureChat()
+  .then((c) => {
+    if (c) chat.value = markRaw(c)
+    return undefined
+  })
+  .catch((error: unknown) => {
+    toast.error(error instanceof Error ? error.message : 'Failed to initialize chat')
+  })
 const messagesEnd = ref<HTMLDivElement>()
 const debugCopied = refAutoReset(false, 1500)
 const acpLogCopied = refAutoReset(false, 1500)

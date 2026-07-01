@@ -54,12 +54,14 @@ export async function loadFonts(
       r.invalidateAllPictures()
       onFallbackFontsLoaded?.()
     }
+    return undefined
   })
   void fontManager.ensureArabicFallback().then((families) => {
     if (!r.isDestroyed() && families.length > 0) {
       r.invalidateAllPictures()
       onFallbackFontsLoaded?.()
     }
+    return undefined
   })
 }
 

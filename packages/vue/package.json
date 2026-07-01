@@ -38,9 +38,9 @@
     "provenance": true
   },
   "peerDependencies": {
-    "vue": "^3.4.0",
     "@open-pencil/core": "workspace:*",
-    "canvaskit-wasm": ">=0.39.0"
+    "canvaskit-wasm": ">=0.39.0",
+    "vue": "^3.4.0"
   },
   "peerDependenciesMeta": {
     "canvaskit-wasm": {
@@ -59,7 +59,7 @@
     "reka-ui": "^2.9.0"
   },
   "devDependencies": {
-    "tsdown": "^0.21.7",
+    "tsdown": "^0.22.3",
     "unplugin-raw": "^0.6.4",
     "unplugin-vue": "^7.1.1"
   }

@@ -1,20 +1,11 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const publicPackages = [
-  'packages/scene-graph',
-  'packages/pen',
-  'packages/core',
-  'packages/dom-css',
-  'packages/kiwi',
-  'packages/fig',
-  'packages/cli',
-  'packages/mcp',
-  'packages/vue'
-]
+import { publicPackageDirs } from '../packages'
 
 interface PackageJson {
   name: string
+  version: string
   main?: string
   types?: string
   files?: string[]
@@ -28,6 +19,9 @@ const errors: string[] = []
 function readPackageJson(packageDir: string): PackageJson {
   return JSON.parse(readFileSync(join(packageDir, 'package.json'), 'utf8'))
 }
+
+const rootPackage = readPackageJson('.')
+const expectedVersion = rootPackage.version
 
 function checkRuntimePath(packageName: string, field: string, value: string): void {
   if (value.endsWith('.ts') && !value.endsWith('.d.ts')) {
@@ -67,8 +61,12 @@ function walkExports(packageName: string, value: unknown, path: string[] = []): 
   }
 }
 
-for (const packageDir of publicPackages) {
+for (const packageDir of publicPackageDirs) {
   const pkg = readPackageJson(packageDir)
+
+  if (pkg.version !== expectedVersion) {
+    errors.push(`${pkg.name}: version ${pkg.version} must match root version ${expectedVersion}`)
+  }
 
   if (!pkg.files?.includes('dist')) {
     errors.push(`${pkg.name}: files must include dist`)

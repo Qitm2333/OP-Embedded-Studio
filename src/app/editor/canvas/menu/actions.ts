@@ -26,6 +26,7 @@ export function createCanvasMenuActions(store: EditorStore, selectedIds: Ref<Set
   function execCommand(cmd: 'copy' | 'cut' | 'paste') {
     void executeClipboardCommand(store, cmd).then((ok) => {
       if (!ok) toast.error('Clipboard access is blocked in this browser context')
+      return undefined
     })
   }
 

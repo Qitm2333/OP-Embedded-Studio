@@ -178,9 +178,8 @@ export function getHitHandleByMatrix(
   const CORNER_R = HANDLE_HIT_RADIUS / zoom
 
   const rotation = getAbsoluteRotation(node, graph)
-  for (const key in handles) {
+  for (const [key, p] of Object.entries(handles)) {
     const handleKey = key as HandlePosition
-    const p = handles[handleKey]
 
     const dx = cx - p.x
     const dy = cy - p.y

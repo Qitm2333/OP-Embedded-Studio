@@ -1,3 +1,5 @@
+import type * as DesignTypes from './types'
+
 export { serializeHTML, serializeNode } from './serialize'
 export { createBrowserCSSRuntime, createCSSRuntime, createHeadlessCSSRuntime } from './runtime'
 export {
@@ -60,13 +62,11 @@ export type {
 } from './browser'
 export type { CompileTailwindCSSOptions } from './tailwind'
 export type { ToSceneGraphOptions } from './to-scene-graph'
-export type {
-  CSSComputeOptions,
-  CSSRuntime,
-  DesignDocument,
-  DesignElement,
-  DesignNode,
-  DesignStyleDeclaration,
-  DesignStyleSheet,
-  DesignText
-} from './types'
+export type CSSComputeOptions = DesignTypes.CSSComputeOptions
+export type CSSRuntime = DesignTypes.CSSRuntime
+export type DesignDocument = DesignTypes.DesignDocument
+export type DesignElement = DesignTypes.DesignElement
+export type DesignNode = DesignTypes.DesignNode
+export type DesignStyleDeclaration = DesignTypes.DesignStyleDeclaration
+export type DesignStyleSheet = DesignTypes.DesignStyleSheet
+export type DesignText = DesignTypes.DesignText
