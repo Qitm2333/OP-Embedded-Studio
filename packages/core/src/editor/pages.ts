@@ -60,6 +60,17 @@ export function createPageActions(ctx: EditorContext) {
     }
   }
 
+  function movePage(pageId: string, index: number) {
+    const pages = ctx.graph.getPages()
+    const currentIndex = pages.findIndex((page) => page.id === pageId)
+    if (currentIndex === -1) return
+
+    const nextIndex = Math.max(0, Math.min(index, pages.length - 1))
+    if (nextIndex === currentIndex) return
+
+    ctx.graph.insertChildAt(pageId, ctx.graph.rootId, nextIndex)
+  }
+
   function renamePage(pageId: string, name: string) {
     ctx.graph.updateNode(pageId, { name })
   }
@@ -73,6 +84,7 @@ export function createPageActions(ctx: EditorContext) {
     switchPage,
     addPage,
     deletePage,
+    movePage,
     renamePage,
     setPageColor,
     clearPageViewports: pageViewportStore.clearPageViewports
