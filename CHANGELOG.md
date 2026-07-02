@@ -34,6 +34,7 @@
 
 ### Fixes
 
+- Resize auto-height text when typography metrics such as line height or font size change, keeping imported Figma text bounds editable and undoable.
 - Match Figma auto-layout reflow when deleting children or hiding optional instance slots, including HUG-height component instances.
 - Fix desktop clipboard copy/cut/paste by using Tauri's system clipboard bridge when browser clipboard events are unavailable.
 - Add AI provider connection testing with clearer setup errors for OpenAI-compatible endpoints.
