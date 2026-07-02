@@ -34,6 +34,7 @@
 
 ### Fixes
 
+- Match Figma auto-layout reflow when deleting children or hiding optional instance slots, including HUG-height component instances.
 - Fix desktop clipboard copy/cut/paste by using Tauri's system clipboard bridge when browser clipboard events are unavailable.
 - Add AI provider connection testing with clearer setup errors for OpenAI-compatible endpoints.
 - Increase per-test timeout for slow `gold-preview.fig` fixture tests (`clipboard roundtrip`, `group reclassification`, `glyph blob preservation`, `auto-layout text measurement`, and `render/canvas/cache`) so they no longer flake on slower CI runners.
