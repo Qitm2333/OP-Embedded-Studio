@@ -7,7 +7,7 @@ import { getNodeOrThrow } from '#tests/helpers/assert'
 import { rect } from '#tests/helpers/layout'
 
 describe('structure state actions', () => {
-  test('toggleNodeVisibility reflows HUG auto-layout instance slots', () => {
+  test('toggleNodeVisibility reflows HUG auto-layout instance slots', async () => {
     const editor = createEditor()
     const page = editor.state.currentPageId
     const component = editor.graph.createNode('COMPONENT', page, {
@@ -34,6 +34,11 @@ describe('structure state actions', () => {
     if (!content || !bottom) throw new Error('Expected instance slot children')
 
     editor.toggleNodeVisibility(content.id)
+
+    expect(getNodeOrThrow(editor.graph, instance.id).height).toBe(80)
+    expect(getNodeOrThrow(editor.graph, bottom.id).y).toBe(40)
+
+    await Promise.resolve()
 
     expect(getNodeOrThrow(editor.graph, instance.id).height).toBe(80)
     expect(getNodeOrThrow(editor.graph, bottom.id).y).toBe(40)
