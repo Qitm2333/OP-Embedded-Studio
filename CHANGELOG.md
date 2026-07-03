@@ -31,6 +31,7 @@
 - Add overlap analysis exports for automation consumers, including `computeOverlaps`, `analyzeOverlaps`, overlap result types, and parameter parsers from core subpath exports.
 - Add world-matrix visual bounds to overlap analysis, covering vector/stroke/text geometry, ancestor clipping, rotated clipping frames, and nested ancestor rotations.
 - Add the `@open-pencil/core/package.json` subpath export for package metadata consumers.
+- Add explicit document/page targeting for live MCP and CLI automation, including `list_documents` / `openpencil documents` discovery and `document_id` / `page_id` target fields.
 
 ### Fixes
 
@@ -44,7 +45,7 @@
 - Fix stale variable bindings not cleaned up when fills/strokes arrays shrink — any indexed sub-path is now handled, not just `/color`.
 - Fix desktop "Share This File" links to use the public `https://app.openpencil.dev/share/{roomId}` URL instead of the internal `tauri://localhost` app scheme.
 - Fix tooltips around inspector dropdowns/popovers without breaking floating menu anchoring.
-- Harden MCP calls with bounded page-tree responses, oversized-result errors, JSON HTTP responses, and stale WebSocket cleanup.
+- Harden MCP calls with bounded page-tree responses, oversized-result errors, JSON HTTP responses, stale WebSocket cleanup, and live document/page target resolution to avoid active-tab drift.
 - Improve Figma boolean imports by preserving XOR operations as editable exclude nodes and falling back to imported fill geometry when boolean path reconstruction cannot produce a path.
 - Preserve rotated Figma transform origins for imported vector nodes.
 - Render complex text fills through vector glyph outlines so imported Figma text can use the normal fill pipeline for gradients, images, patterns, and other non-solid paints.
