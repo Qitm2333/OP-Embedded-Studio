@@ -67,7 +67,7 @@ test('export CLI can write HTML styles as Tailwind classes', async () => {
     figPath,
     '--format',
     'html',
-    '--style',
+    '--css',
     'tailwind',
     '--output',
     output
@@ -81,4 +81,58 @@ test('export CLI can write HTML styles as Tailwind classes', async () => {
   expect(html).toContain('class="')
   expect(html).toContain('flex')
   expect(html).not.toContain('style=')
+})
+
+test('export CLI can write standalone HTML', async () => {
+  const { dir, figPath } = await createFigFixture()
+  const output = join(dir, 'card-standalone.html')
+
+  const { stderr, exitCode } = await runOpenPencilCLI([
+    'export',
+    figPath,
+    '--format',
+    'html',
+    '--html',
+    'standalone',
+    '--output',
+    output
+  ])
+
+  expect(stderr).toBe('')
+  expect(exitCode).toBe(0)
+
+  const html = await Bun.file(output).text()
+  expect(html).toContain('<!doctype html>')
+  expect(html).toContain('data-open-pencil-html="standalone"')
+  expect(html).toContain('position: relative')
+  expect(html).toContain('position: absolute')
+  expect(html).not.toContain('@tailwindcss/browser@4')
+})
+
+test('export CLI includes Tailwind browser runtime for standalone Tailwind HTML', async () => {
+  const { dir, figPath } = await createFigFixture()
+  const output = join(dir, 'card-standalone-tailwind.html')
+
+  const { stderr, exitCode } = await runOpenPencilCLI([
+    'export',
+    figPath,
+    '--format',
+    'html',
+    '--html',
+    'standalone',
+    '--css',
+    'tailwind',
+    '--output',
+    output
+  ])
+
+  expect(stderr).toBe('')
+  expect(exitCode).toBe(0)
+
+  const html = await Bun.file(output).text()
+  expect(html).toContain('<!doctype html>')
+  expect(html).toContain(
+    '<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>'
+  )
+  expect(html).toContain('class="')
 })

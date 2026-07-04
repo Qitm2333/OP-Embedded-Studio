@@ -21,6 +21,7 @@ const RASTER_FORMATS = ['PNG', 'JPG', 'WEBP']
 const ALL_FORMATS = new Set([...RASTER_FORMATS, 'SVG', 'PDF', 'JSX', 'FIG', 'HTML'])
 const JSX_STYLES = new Set(['openpencil', 'tailwind'])
 const HTML_STYLES = new Set(['inline', 'tailwind'])
+const HTML_MODES = new Set(['fragment', 'standalone'])
 
 interface ExportArgs {
   file?: string
@@ -31,6 +32,8 @@ interface ExportArgs {
   page?: string
   node?: string
   style: string
+  html: string
+  css: string
   thumbnail?: boolean
   width: string
   height: string
@@ -111,7 +114,10 @@ async function exportHTMLFromFile(
   const document = sceneGraphToDesignDocument(graph, {
     rootId: target.scope === 'page' ? target.pageId : target.nodeId
   })
-  const html = serializeHTML(document, { style: args.style as SerializeHTMLOptions['style'] })
+  const html = serializeHTML(document, {
+    html: args.html as SerializeHTMLOptions['html'],
+    style: args.css as SerializeHTMLOptions['style']
+  })
   const output = resolve(args.output ?? exportFileName(defaultName, 'html'))
   await writeAndLog(output, html)
   console.log(ok(`Target: ${targetLabel(args.page, args.node)}`))
@@ -222,9 +228,18 @@ export default defineCommand({
     },
     style: {
       type: 'string',
-      description:
-        'Code style for JSX/HTML: openpencil or tailwind for JSX; inline or tailwind for HTML (default: openpencil)',
+      description: 'JSX style: openpencil or tailwind (default: openpencil)',
       default: 'openpencil'
+    },
+    html: {
+      type: 'string',
+      description: 'HTML output mode: fragment or standalone (default: fragment)',
+      default: 'fragment'
+    },
+    css: {
+      type: 'string',
+      description: 'HTML CSS output: inline or tailwind (default: inline)',
+      default: 'inline'
     },
     thumbnail: { type: 'boolean', description: 'Export page thumbnail instead of full render' },
     width: { type: 'string', description: 'Thumbnail width (default: 1920)', default: '1920' },
@@ -245,20 +260,20 @@ export default defineCommand({
       process.exit(1)
     }
 
-    const normalizedArgs = {
-      ...args,
-      style: format === 'HTML' && args.style === 'openpencil' ? 'inline' : args.style
+    if (format === 'HTML' && !HTML_MODES.has(args.html)) {
+      printError(`Invalid HTML mode "${args.html}". Use fragment or standalone.`)
+      process.exit(1)
     }
 
-    if (format === 'HTML' && !HTML_STYLES.has(normalizedArgs.style)) {
-      printError(`Invalid HTML style "${args.style}". Use inline or tailwind.`)
+    if (format === 'HTML' && !HTML_STYLES.has(args.css)) {
+      printError(`Invalid HTML CSS output "${args.css}". Use inline or tailwind.`)
       process.exit(1)
     }
 
     if (isAppMode(args.file)) {
-      await exportViaApp(format, normalizedArgs)
+      await exportViaApp(format, args)
     } else {
-      await exportFromFile(format, normalizedArgs)
+      await exportFromFile(format, args)
     }
   }
 })

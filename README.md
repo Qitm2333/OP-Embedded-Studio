@@ -79,7 +79,7 @@ openpencil export design.fig                           # PNG
 openpencil export design.fig -f jpg -s 2 -q 90        # JPG at 2x, quality 90
 openpencil export design.fig -f fig --page "Page 1"   # Export a page as .fig
 openpencil export design.fig -f jsx --style tailwind   # Tailwind JSX
-openpencil export design.fig -f html --style tailwind  # Tailwind HTML
+openpencil export design.fig -f html --css tailwind    # Tailwind HTML fragment
 openpencil convert design.pen output.fig               # Convert between document formats
 openpencil import page.html --css styles.css -o page.fig # HTML/CSS → editable .fig
 ```

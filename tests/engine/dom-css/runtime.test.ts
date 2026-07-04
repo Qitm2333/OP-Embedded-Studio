@@ -36,6 +36,23 @@ describe('@open-pencil/dom-css', () => {
     expect(html).toBe('<section class="card flex p-4 gap-2 bg-white">OpenPencil</section>')
   })
 
+  it('serializes standalone HTML documents when requested', () => {
+    const html = serializeHTML(simpleCardDocument, { html: 'standalone' })
+
+    expect(html).toContain('<!doctype html>')
+    expect(html).toContain('data-open-pencil-html="standalone"')
+    expect(html).toContain('OpenPencil')
+    expect(html).not.toContain('@tailwindcss/browser@4')
+  })
+
+  it('loads the Tailwind browser runtime for standalone Tailwind HTML', () => {
+    const html = serializeHTML(simpleCardDocument, { html: 'standalone', style: 'tailwind' })
+
+    expect(html).toContain(
+      '<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>'
+    )
+  })
+
   it('uses the headless runtime outside browser contexts', () => {
     const runtime = createCSSRuntime()
 

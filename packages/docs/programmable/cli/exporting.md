@@ -16,7 +16,7 @@ openpencil export design.fig -f webp -s 3             # WEBP at 3×
 openpencil export design.fig -f svg                   # SVG vector
 openpencil export design.fig -f fig --page "Page 1"   # export one page as .fig
 openpencil export design.fig -f fig --node 1:23        # export one node as .fig
-openpencil export design.fig -f html --style tailwind  # export HTML with Tailwind classes
+openpencil export design.fig -f html --css tailwind    # export an HTML fragment with Tailwind classes
 ```
 
 Options:
@@ -49,12 +49,21 @@ Also supports `--style openpencil` for the native JSX format (see [JSX Renderer]
 
 ## HTML Export
 
-Export as HTML with inline styles by default, or Tailwind utility classes:
+Export as an HTML fragment with inline styles by default, or Tailwind utility classes:
 
 ```sh
 openpencil export design.fig -f html
-openpencil export design.fig -f html --style tailwind
+openpencil export design.fig -f html --css tailwind
 ```
+
+Use `--html standalone` for a browser-openable HTML document with reset styles and a page wrapper. Standalone HTML is intended as a useful visual/code handoff, not a pixel-perfect renderer replacement:
+
+```sh
+openpencil export design.fig -f html --html standalone --css inline
+openpencil export design.fig -f html --html standalone --css tailwind
+```
+
+Standalone Tailwind output includes Tailwind's v4 browser runtime from jsDelivr, so it needs network access when opened and is best for previews/prototypes. Use `--css inline` for a self-contained offline file.
 
 HTML export is available in file mode.
 

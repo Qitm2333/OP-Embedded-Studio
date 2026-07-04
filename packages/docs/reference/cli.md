@@ -104,7 +104,9 @@ openpencil export [file] [options]
 | `--quality` | `-q` | Quality 0–100, JPG/WEBP only (default: 90) |
 | `--page` | | Page name (default: first page) |
 | `--node` | | Node ID to export (default: all top-level nodes) |
-| `--style` | | JSX style: `openpencil` (default), `tailwind`; HTML style: `inline`, `tailwind` |
+| `--style` | | JSX style: `openpencil` (default), `tailwind` |
+| `--html` | | HTML mode: `fragment` (default), `standalone` |
+| `--css` | | HTML CSS output: `inline` (default), `tailwind` |
 | `--thumbnail` | | Export page thumbnail instead of full render |
 | `--width` | | Thumbnail width (default: 1920) |
 | `--height` | | Thumbnail height (default: 1080) |
