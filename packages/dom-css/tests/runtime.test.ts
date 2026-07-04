@@ -9,6 +9,31 @@ describe('@open-pencil/dom-css runtime', () => {
     expect(serializeHTML(cardDocument)).toContain('OpenPencil')
   })
 
+  it('serializes inline styles as Tailwind classes when requested', () => {
+    const html = serializeHTML(
+      {
+        type: 'document',
+        children: [
+          {
+            type: 'element',
+            tagName: 'section',
+            attrs: { class: 'card' },
+            inlineStyle: {
+              display: 'flex',
+              padding: '16px',
+              gap: '8px',
+              'background-color': 'white'
+            },
+            children: [{ type: 'text', text: 'OpenPencil' }]
+          }
+        ]
+      },
+      { style: 'tailwind' }
+    )
+
+    expect(html).toBe('<section class="card flex p-4 gap-2 bg-white">OpenPencil</section>')
+  })
+
   it('uses the headless runtime outside browser contexts', () => {
     const runtime = createCSSRuntime()
 

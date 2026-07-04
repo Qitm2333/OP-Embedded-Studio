@@ -1,4 +1,10 @@
+import { twirl } from 'twirlwind'
+
 import type { DesignDocument, DesignElement, DesignNode, DesignText } from './types'
+
+export interface SerializeHTMLOptions {
+  style?: 'inline' | 'tailwind'
+}
 
 const VOID_ELEMENTS = new Set([
   'area',
@@ -37,27 +43,52 @@ function serializeStyle(node: DesignElement): string | undefined {
     .join('; ')
 }
 
-function serializeAttrs(node: DesignElement): string {
+function serializeTailwindClasses(node: DesignElement): string | undefined {
   const style = serializeStyle(node)
-  const attrs = Object.entries({ ...node.attrs, ...(style ? { style } : {}) })
+  if (!style) return undefined
+  const className = twirl(style)
+  return className.length > 0 ? className : undefined
+}
+
+function mergeClassNames(...values: Array<string | undefined>): string | undefined {
+  const className = values
+    .flatMap((value) => value?.split(/\s+/) ?? [])
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0)
+    .join(' ')
+  return className.length > 0 ? className : undefined
+}
+
+function serializeAttrs(node: DesignElement, options: SerializeHTMLOptions): string {
+  const style = serializeStyle(node)
+  const tailwindClass = options.style === 'tailwind' ? serializeTailwindClasses(node) : undefined
+  const attrs = {
+    ...node.attrs,
+    ...(tailwindClass ? { class: mergeClassNames(node.attrs.class, tailwindClass) } : {}),
+    ...(style && options.style !== 'tailwind' ? { style } : {})
+  }
+  const serialized = Object.entries(attrs)
     .filter(([, value]) => value !== '')
     .map(([name, value]) => `${name}="${escapeAttr(value)}"`)
 
-  if (attrs.length === 0) return ''
-  return ` ${attrs.join(' ')}`
+  if (serialized.length === 0) return ''
+  return ` ${serialized.join(' ')}`
 }
 
-function serializeElement(node: DesignElement): string {
+function serializeElement(node: DesignElement, options: SerializeHTMLOptions): string {
   const tagName = node.tagName.toLowerCase()
-  const attrs = serializeAttrs(node)
+  const attrs = serializeAttrs(node, options)
   if (VOID_ELEMENTS.has(tagName)) return `<${tagName}${attrs}>`
-  return `<${tagName}${attrs}>${node.children.map(serializeNode).join('')}</${tagName}>`
+  return `<${tagName}${attrs}>${node.children.map((child) => serializeNode(child, options)).join('')}</${tagName}>`
 }
 
-export function serializeNode(node: DesignNode): string {
-  return node.type === 'text' ? serializeText(node) : serializeElement(node)
+export function serializeNode(node: DesignNode, options: SerializeHTMLOptions = {}): string {
+  return node.type === 'text' ? serializeText(node) : serializeElement(node, options)
 }
 
-export function serializeHTML(document: DesignDocument): string {
-  return document.children.map(serializeNode).join('')
+export function serializeHTML(
+  document: DesignDocument,
+  options: SerializeHTMLOptions = {}
+): string {
+  return document.children.map((node) => serializeNode(node, options)).join('')
 }

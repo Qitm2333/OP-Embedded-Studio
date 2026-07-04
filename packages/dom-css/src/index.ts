@@ -61,6 +61,7 @@ export type {
   BrowserToSceneGraphOptions
 } from './browser'
 export type { CompileTailwindCSSOptions } from './tailwind'
+export type { SerializeHTMLOptions } from './serialize'
 export type { ToSceneGraphOptions } from './to-scene-graph'
 export type CSSComputeOptions = DesignTypes.CSSComputeOptions
 export type CSSRuntime = DesignTypes.CSSRuntime
