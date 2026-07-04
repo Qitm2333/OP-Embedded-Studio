@@ -1,11 +1,11 @@
 ---
 title: Exporting
-description: Export document content to PNG, JPG, WEBP, SVG, `.fig`, or JSX, and convert between document formats.
+description: Export document content to PNG, JPG, WEBP, SVG, `.fig`, JSX, or HTML, and convert between document formats.
 ---
 
 # Exporting
 
-Export designs from the terminal — raster images, vectors, `.fig` subsets, or JSX code.
+Export designs from the terminal — raster images, vectors, `.fig` subsets, JSX code, or HTML.
 
 ## Image Export
 
@@ -16,11 +16,12 @@ openpencil export design.fig -f webp -s 3             # WEBP at 3×
 openpencil export design.fig -f svg                   # SVG vector
 openpencil export design.fig -f fig --page "Page 1"   # export one page as .fig
 openpencil export design.fig -f fig --node 1:23        # export one node as .fig
+openpencil export design.fig -f html --style tailwind  # export HTML with Tailwind classes
 ```
 
 Options:
 
-- `-f` — format: `png`, `jpg`, `webp`, `svg`, `jsx`
+- `-f` — format: `png`, `jpg`, `webp`, `svg`, `jsx`, `html`, `fig`
 - `-s` — scale: `1`–`4`
 - `-q` — quality: `0`–`100` (JPG/WEBP only)
 - `-o` — output path
@@ -45,6 +46,17 @@ Output:
 ```
 
 Also supports `--style openpencil` for the native JSX format (see [JSX Renderer](../jsx-renderer)).
+
+## HTML Export
+
+Export as HTML with inline styles by default, or Tailwind utility classes:
+
+```sh
+openpencil export design.fig -f html
+openpencil export design.fig -f html --style tailwind
+```
+
+HTML export is available in file mode.
 
 ## Thumbnails
 

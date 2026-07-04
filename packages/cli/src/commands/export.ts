@@ -5,6 +5,11 @@ import { defineCommand } from 'citty'
 
 import { BUILTIN_IO_FORMATS, IORegistry } from '@open-pencil/core/io'
 import type { RasterExportFormat } from '@open-pencil/core/io'
+import {
+  sceneGraphToDesignDocument,
+  serializeHTML,
+  type SerializeHTMLOptions
+} from '@open-pencil/dom-css'
 
 import { isAppMode, requireFile, rpc } from '#cli/app-client'
 import { appTargetOptions, appTargetRpcArgs } from '#cli/app-target'
@@ -13,8 +18,9 @@ import { loadDocument } from '#cli/headless'
 
 const io = new IORegistry(BUILTIN_IO_FORMATS)
 const RASTER_FORMATS = ['PNG', 'JPG', 'WEBP']
-const ALL_FORMATS = new Set([...RASTER_FORMATS, 'SVG', 'PDF', 'JSX', 'FIG'])
+const ALL_FORMATS = new Set([...RASTER_FORMATS, 'SVG', 'PDF', 'JSX', 'FIG', 'HTML'])
 const JSX_STYLES = new Set(['openpencil', 'tailwind'])
+const HTML_STYLES = new Set(['inline', 'tailwind'])
 
 interface ExportArgs {
   file?: string
@@ -69,7 +75,7 @@ async function exportViaApp(format: string, args: ExportArgs) {
     return
   }
 
-  if (format === 'JSX' || format === 'FIG') {
+  if (format === 'JSX' || format === 'HTML' || format === 'FIG') {
     printError(`${format} export is only available in file mode right now.`)
     process.exit(1)
   }
@@ -92,6 +98,23 @@ function exportFileName(defaultName: string, extension: string, scale?: number):
 function targetLabel(pageName?: string, nodeId?: string): string {
   if (nodeId) return `node ${nodeId}`
   return pageName ? `page "${pageName}"` : 'first page'
+}
+
+type FileExportTarget = { scope: 'node'; nodeId: string } | { scope: 'page'; pageId: string }
+
+async function exportHTMLFromFile(
+  args: ExportArgs,
+  graph: Awaited<ReturnType<typeof loadDocument>>,
+  target: FileExportTarget,
+  defaultName: string
+) {
+  const document = sceneGraphToDesignDocument(graph, {
+    rootId: target.scope === 'page' ? target.pageId : target.nodeId
+  })
+  const html = serializeHTML(document, { style: args.style as SerializeHTMLOptions['style'] })
+  const output = resolve(args.output ?? exportFileName(defaultName, 'html'))
+  await writeAndLog(output, html)
+  console.log(ok(`Target: ${targetLabel(args.page, args.node)}`))
 }
 
 async function exportFromFile(format: string, args: ExportArgs) {
@@ -130,6 +153,11 @@ async function exportFromFile(format: string, args: ExportArgs) {
   let options:
     | { format?: string; scale?: number; quality?: number; renderThumbnail?: boolean }
     | undefined
+  if (format === 'HTML') {
+    await exportHTMLFromFile(args, graph, target, defaultName)
+    return
+  }
+
   if (format === 'JSX') {
     options = { format: args.style }
   } else if (format === 'FIG') {
@@ -156,7 +184,7 @@ async function exportFromFile(format: string, args: ExportArgs) {
 }
 
 export default defineCommand({
-  meta: { description: 'Export a document to PNG, JPG, WEBP, SVG, PDF, JSX, or .fig' },
+  meta: { description: 'Export a document to PNG, JPG, WEBP, SVG, PDF, JSX, HTML, or .fig' },
   args: {
     file: {
       type: 'positional',
@@ -172,7 +200,7 @@ export default defineCommand({
     format: {
       type: 'string',
       alias: 'f',
-      description: 'Export format: png, jpg, webp, svg, pdf, jsx, fig (default: png)',
+      description: 'Export format: png, jpg, webp, svg, pdf, jsx, html, fig (default: png)',
       default: 'png'
     },
     scale: { type: 'string', alias: 's', description: 'Export scale (default: 1)', default: '1' },
@@ -194,7 +222,8 @@ export default defineCommand({
     },
     style: {
       type: 'string',
-      description: 'JSX style: openpencil, tailwind (default: openpencil)',
+      description:
+        'Code style for JSX/HTML: openpencil or tailwind for JSX; inline or tailwind for HTML (default: openpencil)',
       default: 'openpencil'
     },
     thumbnail: { type: 'boolean', description: 'Export page thumbnail instead of full render' },
@@ -203,9 +232,11 @@ export default defineCommand({
     ...appTargetOptions
   },
   async run({ args }) {
-    const format = args.format.toUpperCase() as RasterExportFormat | 'SVG' | 'JSX' | 'FIG'
+    const format = args.format.toUpperCase() as RasterExportFormat | 'SVG' | 'JSX' | 'FIG' | 'HTML'
     if (!ALL_FORMATS.has(format)) {
-      printError(`Invalid format "${args.format}". Use png, jpg, webp, svg, pdf, jsx, or fig.`)
+      printError(
+        `Invalid format "${args.format}". Use png, jpg, webp, svg, pdf, jsx, html, or fig.`
+      )
       process.exit(1)
     }
 
@@ -214,10 +245,20 @@ export default defineCommand({
       process.exit(1)
     }
 
+    const normalizedArgs = {
+      ...args,
+      style: format === 'HTML' && args.style === 'openpencil' ? 'inline' : args.style
+    }
+
+    if (format === 'HTML' && !HTML_STYLES.has(normalizedArgs.style)) {
+      printError(`Invalid HTML style "${args.style}". Use inline or tailwind.`)
+      process.exit(1)
+    }
+
     if (isAppMode(args.file)) {
-      await exportViaApp(format, args)
+      await exportViaApp(format, normalizedArgs)
     } else {
-      await exportFromFile(format, args)
+      await exportFromFile(format, normalizedArgs)
     }
   }
 })

@@ -90,7 +90,7 @@ openpencil variables [file] [options]
 
 ## export
 
-Export to PNG, JPG, WEBP, SVG, or JSX.
+Export to PNG, JPG, WEBP, SVG, JSX, HTML, or `.fig`.
 
 ```sh
 openpencil export [file] [options]
@@ -98,28 +98,28 @@ openpencil export [file] [options]
 
 | Option | Alias | Description |
 |--------|-------|-------------|
-| `--format` | `-f` | `png` (default), `jpg`, `webp`, `svg`, `jsx` |
+| `--format` | `-f` | `png` (default), `jpg`, `webp`, `svg`, `jsx`, `html`, `fig` |
 | `--output` | `-o` | Output file path (default: `<name>.<format>`) |
 | `--scale` | `-s` | Export scale (default: 1) |
 | `--quality` | `-q` | Quality 0–100, JPG/WEBP only (default: 90) |
 | `--page` | | Page name (default: first page) |
 | `--node` | | Node ID to export (default: all top-level nodes) |
-| `--style` | | JSX style: `openpencil` (default), `tailwind` |
+| `--style` | | JSX style: `openpencil` (default), `tailwind`; HTML style: `inline`, `tailwind` |
 | `--thumbnail` | | Export page thumbnail instead of full render |
 | `--width` | | Thumbnail width (default: 1920) |
 | `--height` | | Thumbnail height (default: 1080) |
 
-## dom
+## import
 
-Convert HTML/CSS/Tailwind into an editable OpenPencil document.
+Import HTML/CSS/Tailwind into an editable OpenPencil document.
 
 ```sh
-openpencil dom page.html [options]
+openpencil import page.html [options]
 ```
 
 | Option | Alias | Description |
 |--------|-------|-------------|
-| `--format` | `-f` | Output format: `fig` (default), `html`, `json` |
+| `--format` | `-f` | Output format: `fig` (default), `json` |
 | `--output` | `-o` | Output file path (default: `<name>.<format>`) |
 | `--css` | | CSS file to apply before conversion |
 | `--css-text` | | Inline CSS text to apply before conversion |
@@ -131,8 +131,8 @@ openpencil dom page.html [options]
 Examples:
 
 ```sh
-openpencil dom card.html --css card.css -o card.fig
-openpencil dom card.html --tailwind "flex flex-col gap-3 w-80 p-6 rounded-xl bg-white" -o card.fig
+openpencil import card.html --css card.css -o card.fig
+openpencil import card.html --tailwind "flex flex-col gap-3 w-80 p-6 rounded-xl bg-white" -o card.fig
 ```
 
 ## eval
