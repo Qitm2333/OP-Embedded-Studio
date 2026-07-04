@@ -1,6 +1,5 @@
 import type * as DesignTypes from './types'
 
-export { bundleHTML } from './bundle'
 export { serializeHTML, serializeNode } from './serialize'
 export { createBrowserCSSRuntime, createCSSRuntime, createHeadlessCSSRuntime } from './runtime'
 export {
@@ -62,7 +61,6 @@ export type {
   BrowserToSceneGraphOptions
 } from './browser'
 export type { CompileTailwindCSSOptions } from './tailwind'
-export type { HTMLBundle, HTMLBundleFile, HTMLBundleOptions } from './bundle'
 export type { SerializeHTMLOptions } from './serialize'
 export type { ToSceneGraphOptions } from './to-scene-graph'
 export type CSSComputeOptions = DesignTypes.CSSComputeOptions
