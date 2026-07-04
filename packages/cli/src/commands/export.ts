@@ -1,14 +1,14 @@
-import { writeFile } from 'node:fs/promises'
-import { basename, extname, resolve } from 'node:path'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { basename, dirname, extname, join, resolve } from 'node:path'
 
 import { defineCommand } from 'citty'
 
 import { BUILTIN_IO_FORMATS, IORegistry } from '@open-pencil/core/io'
 import type { RasterExportFormat } from '@open-pencil/core/io'
 import {
+  bundleHTML,
   sceneGraphToDesignDocument,
-  serializeHTML,
-  type SerializeHTMLOptions
+  type HTMLBundleOptions
 } from '@open-pencil/dom-css'
 
 import { isAppMode, requireFile, rpc } from '#cli/app-client'
@@ -22,6 +22,8 @@ const ALL_FORMATS = new Set([...RASTER_FORMATS, 'SVG', 'PDF', 'JSX', 'FIG', 'HTM
 const JSX_STYLES = new Set(['openpencil', 'tailwind'])
 const HTML_STYLES = new Set(['inline', 'tailwind'])
 const HTML_MODES = new Set(['fragment', 'standalone'])
+const HTML_BUNDLES = new Set(['inline', 'external'])
+const HTML_FONTS = new Set(['link', 'none'])
 
 interface ExportArgs {
   file?: string
@@ -34,6 +36,8 @@ interface ExportArgs {
   style: string
   html: string
   css: string
+  bundle: string
+  fonts: string
   thumbnail?: boolean
   width: string
   height: string
@@ -105,6 +109,24 @@ function targetLabel(pageName?: string, nodeId?: string): string {
 
 type FileExportTarget = { scope: 'node'; nodeId: string } | { scope: 'page'; pageId: string }
 
+async function writeBundle(output: string, bundle: Awaited<ReturnType<typeof bundleHTML>>) {
+  const entrypoint = bundle.files.find((file) => file.path === bundle.entrypoint)
+  if (!entrypoint) {
+    printError(`HTML bundle did not include ${bundle.entrypoint}.`)
+    process.exit(1)
+  }
+
+  await writeAndLog(output, entrypoint.content)
+  const outputDir = dirname(output)
+  const assetFiles = bundle.files.filter((file) => file.path !== bundle.entrypoint)
+  for (const file of assetFiles) {
+    const assetPath = join(outputDir, file.path)
+    await mkdir(dirname(assetPath), { recursive: true })
+    await writeFile(assetPath, file.content)
+  }
+  if (assetFiles.length > 0) console.log(ok(`Assets: ${assetFiles.length} files`))
+}
+
 async function exportHTMLFromFile(
   args: ExportArgs,
   graph: Awaited<ReturnType<typeof loadDocument>>,
@@ -114,12 +136,16 @@ async function exportHTMLFromFile(
   const document = sceneGraphToDesignDocument(graph, {
     rootId: target.scope === 'page' ? target.pageId : target.nodeId
   })
-  const html = serializeHTML(document, {
-    html: args.html as SerializeHTMLOptions['html'],
-    style: args.css as SerializeHTMLOptions['style']
-  })
   const output = resolve(args.output ?? exportFileName(defaultName, 'html'))
-  await writeAndLog(output, html)
+  const assetBasePath = `${basename(output, extname(output))}.assets`
+  const bundle = await bundleHTML(document, {
+    html: args.html as HTMLBundleOptions['html'],
+    style: args.css as HTMLBundleOptions['style'],
+    bundle: args.bundle as HTMLBundleOptions['bundle'],
+    fonts: args.fonts as HTMLBundleOptions['fonts'],
+    assetBasePath
+  })
+  await writeBundle(output, bundle)
   console.log(ok(`Target: ${targetLabel(args.page, args.node)}`))
 }
 
@@ -241,6 +267,16 @@ export default defineCommand({
       description: 'HTML CSS output: inline or tailwind (default: inline)',
       default: 'inline'
     },
+    bundle: {
+      type: 'string',
+      description: 'HTML bundle strategy: inline or external (default: inline)',
+      default: 'inline'
+    },
+    fonts: {
+      type: 'string',
+      description: 'HTML font loading: link or none (default: link)',
+      default: 'link'
+    },
     thumbnail: { type: 'boolean', description: 'Export page thumbnail instead of full render' },
     width: { type: 'string', description: 'Thumbnail width (default: 1920)', default: '1920' },
     height: { type: 'string', description: 'Thumbnail height (default: 1080)', default: '1080' },
@@ -267,6 +303,16 @@ export default defineCommand({
 
     if (format === 'HTML' && !HTML_STYLES.has(args.css)) {
       printError(`Invalid HTML CSS output "${args.css}". Use inline or tailwind.`)
+      process.exit(1)
+    }
+
+    if (format === 'HTML' && !HTML_BUNDLES.has(args.bundle)) {
+      printError(`Invalid HTML bundle strategy "${args.bundle}". Use inline or external.`)
+      process.exit(1)
+    }
+
+    if (format === 'HTML' && !HTML_FONTS.has(args.fonts)) {
+      printError(`Invalid HTML font loading "${args.fonts}". Use link or none.`)
       process.exit(1)
     }
 

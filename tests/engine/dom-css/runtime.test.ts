@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'bun:test'
 
-import { createCSSRuntime, createHeadlessCSSRuntime, serializeHTML } from '@open-pencil/dom-css'
+import {
+  bundleHTML,
+  createCSSRuntime,
+  createHeadlessCSSRuntime,
+  serializeHTML
+} from '@open-pencil/dom-css'
 
 import { DOM_CSS_COLORS, simpleCardDocument } from '#tests/helpers/dom-css'
 
@@ -36,8 +41,9 @@ describe('@open-pencil/dom-css', () => {
     expect(html).toBe('<section class="card flex p-4 gap-2 bg-white">OpenPencil</section>')
   })
 
-  it('serializes standalone HTML documents when requested', () => {
-    const html = serializeHTML(simpleCardDocument, { html: 'standalone' })
+  it('bundles standalone HTML documents when requested', async () => {
+    const bundle = await bundleHTML(simpleCardDocument, { html: 'standalone' })
+    const html = String(bundle.files[0]?.content)
 
     expect(html).toContain('<!doctype html>')
     expect(html).toContain('data-open-pencil-html="standalone"')
@@ -45,12 +51,56 @@ describe('@open-pencil/dom-css', () => {
     expect(html).not.toContain('@tailwindcss/browser@4')
   })
 
-  it('loads the Tailwind browser runtime for standalone Tailwind HTML', () => {
-    const html = serializeHTML(simpleCardDocument, { html: 'standalone', style: 'tailwind' })
+  it('precompiles Tailwind CSS for standalone Tailwind HTML', async () => {
+    const bundle = await bundleHTML(simpleCardDocument, { html: 'standalone', style: 'tailwind' })
+    const html = String(bundle.files[0]?.content)
 
-    expect(html).toContain(
-      '<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>'
+    expect(html).toContain('<style>')
+    expect(html).not.toContain('@tailwindcss/browser@4')
+  })
+
+  it('loads detected web fonts for standalone HTML bundles', async () => {
+    const bundle = await bundleHTML(
+      {
+        type: 'document',
+        children: [
+          {
+            type: 'element',
+            tagName: 'span',
+            attrs: {},
+            inlineStyle: { 'font-family': 'Roboto, sans-serif', 'font-weight': '500' },
+            children: [{ type: 'text', text: 'OpenPencil' }]
+          }
+        ]
+      },
+      { html: 'standalone', style: 'tailwind' }
     )
+    const html = String(bundle.files[0]?.content)
+
+    expect(html).toContain('https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap')
+    expect(html).toContain('font-family: Roboto, sans-serif')
+  })
+
+  it('extracts data URI images for external standalone HTML bundles', async () => {
+    const bundle = await bundleHTML(
+      {
+        type: 'document',
+        children: [
+          {
+            type: 'element',
+            tagName: 'img',
+            attrs: { src: 'data:image/png;base64,AQID' },
+            children: []
+          }
+        ]
+      },
+      { html: 'standalone', bundle: 'external', assetBasePath: 'card.assets' }
+    )
+    const html = String(bundle.files.find((file) => file.path === 'index.html')?.content)
+    const image = bundle.files.find((file) => file.path === 'card.assets/images/image-1.png')
+
+    expect(html).toContain('src="card.assets/images/image-1.png"')
+    expect(image?.content).toEqual(new Uint8Array([1, 2, 3]))
   })
 
   it('uses the headless runtime outside browser contexts', () => {
