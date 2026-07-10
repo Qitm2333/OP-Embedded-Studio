@@ -1,33 +1,14 @@
 ---
 title: ScrubInputField
-description: Input element primitive for ScrubInputRoot editing mode.
+description: Deprecated compatibility alias for NumberFieldInput.
 ---
 
 # ScrubInputField
 
-`ScrubInputField` renders the editable input element for `ScrubInputRoot`.
+::: warning Deprecated
+Use [`NumberFieldInput`](./number-field). `ScrubInputField` is an alias backed by the NumberField
+implementation.
+:::
 
-It only renders while the scrub input is in editing mode.
-
-## Usage
-
-Use it inside a `ScrubInputRoot` subtree.
-
-## Props and attrs
-
-<SdkFieldGroup>
-  <SdkField name="$attrs" type="input attributes">Passed through to the rendered input element.</SdkField>
-</SdkFieldGroup>
-
-## Example
-
-```vue
-<ScrubInputRoot v-model:model-value="value">
-  <ScrubInputField class="w-16" />
-</ScrubInputRoot>
-```
-
-## Related APIs
-
-- [ScrubInputRoot](./scrub-input-root)
-- [ScrubInputDisplay](./scrub-input-display)
+The editing element now uses `type="text"` and `inputmode="decimal"` so it can accept safe numeric
+expressions while preserving spinbutton ARIA and keyboard behavior.

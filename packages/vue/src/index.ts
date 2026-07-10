@@ -144,6 +144,41 @@ export { PositionControlsRoot } from '#vue/primitives/PositionControls'
 export { PropertyListRoot, PropertyListItem, usePropertyList } from '#vue/primitives/PropertyList'
 export type { PropertyListContext } from '#vue/primitives/PropertyList'
 export {
+  NumberFieldRoot,
+  NumberFieldInput,
+  NumberFieldValue,
+  NumberFieldLeading,
+  NumberFieldUnit,
+  NumberFieldTrailing,
+  NumberFieldMenu,
+  useNumberField
+} from '#vue/primitives/NumberField'
+export type {
+  NumberFieldActions,
+  NumberFieldContext,
+  NumberFieldEditPolicy,
+  NumberFieldMutationSource,
+  NumberFieldRootAttrs,
+  NumberFieldRootEmits,
+  NumberFieldRootProps,
+  NumberFieldRootSlots,
+  NumberFieldSlotProps,
+  NumberFieldState,
+  NumberFieldStateAttrs,
+  NumberFieldValueSlots
+} from '#vue/primitives/NumberField'
+export {
+  clampNumberValue,
+  evaluateNumberExpression,
+  normalizeNumberValue,
+  stepNumberValue
+} from '#vue/controls/number-expression'
+export type {
+  NumberExpressionError,
+  NumberExpressionOptions,
+  NumberExpressionResult
+} from '#vue/controls/number-expression'
+export {
   ScrubInputRoot,
   ScrubInputField,
   ScrubInputDisplay,

@@ -281,7 +281,7 @@ Self-review checklist:
 - Mac keyboards: use `e.code` not `e.key` for shortcuts with modifiers (Option transforms characters)
 - Icons: use unplugin-icons with Iconify/Lucide (`<icon-lucide-*>`) — don't use raw SVG or Unicode symbols
 - App menu (`src/components/Shell/AppMenu.vue`) — browser-only menu bar using reka-ui Menubar components; Tauri uses native menus, so menu is hidden when `IS_TAURI` is true
-- Preserve established UI gotchas in nearby components before refactoring: splitter handle sizing, ScrubInput pointer ownership, section drag targets, side-panel containment, and global number-spinner styling.
+- Preserve established UI gotchas in nearby components before refactoring: splitter handle sizing, NumberField/ScrubInput pointer ownership, section drag targets, side-panel containment, and global number-spinner styling.
 
 ## File format
 

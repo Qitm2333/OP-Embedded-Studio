@@ -1,4 +1,6 @@
 <script lang="ts">
+import type { NumberExpressionError, NumberFieldEditPolicy } from '@open-pencil/vue'
+
 import type { ComponentUI } from '@/components/ui/types'
 import type { ScrubInputTheme } from '@/theme/scrub-input'
 
@@ -14,6 +16,9 @@ export interface ScrubInputProps {
   suffix?: string
   sensitivity?: number
   placeholder?: string
+  disabled?: boolean
+  bound?: boolean
+  editPolicy?: NumberFieldEditPolicy
   ui?: ScrubInputUI
 }
 </script>
@@ -31,14 +36,33 @@ const store = useEditorStore()
 
 const rootTestId = computed(() => (attrs['data-test-id'] as string | undefined) ?? 'scrub-input')
 
-const { modelValue, min, max, step, icon, label, suffix, sensitivity, placeholder, ui } =
-  defineProps<ScrubInputProps>()
+const {
+  modelValue,
+  min,
+  max,
+  step,
+  icon,
+  label,
+  suffix,
+  sensitivity,
+  placeholder,
+  disabled,
+  bound,
+  editPolicy,
+  ui
+} = defineProps<ScrubInputProps>()
+const accessibleLabel = computed(() => {
+  const ariaLabel = attrs['aria-label']
+  return typeof ariaLabel === 'string' ? ariaLabel : (label ?? icon)
+})
 const styles = computed(() => tv(theme)({ suffix: Boolean(slots.suffix) }))
 
 const emit = defineEmits<{
   'update:modelValue': [value: number]
   'editing-change': [editing: boolean]
   commit: [value: number, previous: number]
+  invalid: [expression: string, reason: NumberExpressionError]
+  'detach-request': [source: 'edit' | 'scrub' | 'step']
 }>()
 
 defineOptions({ inheritAttrs: false })
@@ -46,15 +70,23 @@ defineOptions({ inheritAttrs: false })
 
 <template>
   <ScrubInputRoot
-    v-slot="{ editing, actions, placeholder: ph }"
+    v-slot="{ editing, disabled: isDisabled, actions, attrs: rootAttrs, placeholder: ph }"
     :model-value="modelValue"
     :min="min"
     :max="max"
     :step="step"
     :sensitivity="sensitivity"
     :placeholder="placeholder"
+    :aria-label="accessibleLabel"
+    :disabled="disabled"
+    :bound="bound"
+    :edit-policy="editPolicy"
     @update:model-value="emit('update:modelValue', $event)"
     @commit="(val: number, prev: number) => emit('commit', val, prev)"
+    @invalid="
+      (expression: string, reason: NumberExpressionError) => emit('invalid', expression, reason)
+    "
+    @detach-request="emit('detach-request', $event)"
     @editing-change="
       (editing: boolean) => {
         store.state.scrubInputFocused = editing
@@ -63,16 +95,14 @@ defineOptions({ inheritAttrs: false })
     "
   >
     <div
-      v-bind="{ ...attrs, ...testId(rootTestId) }"
-      :tabindex="editing ? undefined : 0"
+      v-bind="{ ...attrs, ...rootAttrs, ...testId(rootTestId) }"
       :class="styles.root({ class: [ui?.root, normalizeClass(attrs.class)] })"
-      :style="{ cursor: editing ? 'auto' : 'ew-resize' }"
+      :style="{ cursor: editing || isDisabled ? 'auto' : 'ew-resize' }"
       @pointerdown="
         !editing &&
         !($event.target as HTMLElement)?.closest?.('button') &&
         actions.startScrub($event)
       "
-      @focus="!editing && actions.startEdit()"
     >
       <span v-if="attrs['data-test-id']" data-test-id="scrub-input" class="hidden" />
       <span :class="styles.leading({ class: ui?.leading })">
@@ -84,9 +114,6 @@ defineOptions({ inheritAttrs: false })
       <ScrubInputField
         data-test-id="scrub-input-field"
         :class="styles.field({ class: ui?.field })"
-        :min="min === -Infinity ? undefined : min"
-        :max="max === Infinity ? undefined : max"
-        :step="step"
       />
       <slot v-if="editing" name="suffix" />
       <ScrubInputDisplay :class="styles.display({ class: ui?.display })">

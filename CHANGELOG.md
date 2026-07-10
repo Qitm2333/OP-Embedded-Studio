@@ -14,6 +14,7 @@
 - Add Design panel controls for layer blend modes and alpha, vector, and luminance masks.
 - Refine Design panel foundations with 26px controls, consistently aligned action rails, shared Tailwind themes, and Storybook component states.
 - Standardize Vue SDK and app override type names on the `UI` acronym, including `FontPickerUI`.
+- Add a headless Vue SDK NumberField with pointer scrubbing, keyboard stepping, safe arithmetic expressions, mixed/bound states, and deprecated ScrubInput compatibility aliases.
 - Add desktop image drag-and-drop into the Tauri app window.
 - Add open-document discovery for live CLI and MCP automation so agents can target the intended document and page.
 - Publish lower-level SceneGraph, Pen, Kiwi, Fig, and DOM/CSS functionality through clearer package boundaries for SDK and automation consumers.

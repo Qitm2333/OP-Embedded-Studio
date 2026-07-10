@@ -1,16 +1,13 @@
 ---
 title: useScrubInput
-description: Primitive context helper for ScrubInputRoot descendants.
+description: Deprecated compatibility alias for useNumberField.
 ---
 
 # useScrubInput
 
-`useScrubInput()` reads the local scrub-input context provided by `ScrubInputRoot`.
+::: warning Deprecated
+Use [`useNumberField()`](./use-number-field). Both names read the same NumberField context.
+:::
 
-Use it inside `ScrubInputField`, `ScrubInputDisplay`, or custom descendants that need editing and scrubbing state.
-
-## Related APIs
-
-- [ScrubInputRoot](../components/scrub-input-root)
-- [ScrubInputField](../components/scrub-input-field)
-- [ScrubInputDisplay](../components/scrub-input-display)
+See [NumberField](../components/number-field) for the current state, actions, expressions, and
+accessibility contract.

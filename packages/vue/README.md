@@ -86,8 +86,12 @@ Main structural primitives include:
 - `ColorPickerRoot`
 - `FillPickerRoot`
 - `FontPickerRoot`
+- `NumberFieldRoot` / `NumberFieldInput` / `NumberFieldValue`
 
-These components coordinate structure and state, but do not impose app styling.
+These components coordinate structure and state, but do not impose app styling. `NumberField`
+adds pointer scrubbing, Arrow-key stepping, mixed/bound state attributes, and safe arithmetic
+expressions such as `+10`, `*2`, `50%`, and `12*8+4`. The former `ScrubInput` API remains as
+deprecated aliases during migration.
 
 ## Public API tiers
 
@@ -135,6 +139,13 @@ These are the main APIs most SDK consumers should start with.
 - `PageListRoot`
 - `PropertyListRoot`
 - `ToolbarRoot`
+- `NumberFieldRoot`
+- `NumberFieldInput`
+- `NumberFieldValue`
+- `NumberFieldLeading`
+- `NumberFieldUnit`
+- `NumberFieldTrailing`
+- `NumberFieldMenu`
 
 ### Advanced API
 
@@ -168,7 +179,8 @@ These are mostly useful when extending SDK primitives rather than building from 
 - `useLayerTree()`
 - `useToolbar()`
 - `usePropertyList()`
-- `useScrubInput()`
+- `useNumberField()`
+- `useScrubInput()` (deprecated alias)
 - `locale`
 - `localeSetting`
 - `setLocale()`

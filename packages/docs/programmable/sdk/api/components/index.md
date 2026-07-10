@@ -40,7 +40,8 @@ description: Component reference for headless Vue primitives in @open-pencil/vue
   <SdkCard title="GradientEditorRoot" to="/programmable/sdk/api/components/gradient-editor-root" description="Root primitive for gradient editing." />
   <SdkCard title="GradientEditorBar" to="/programmable/sdk/api/components/gradient-editor-bar" description="Draggable gradient bar primitive." />
   <SdkCard title="GradientEditorStop" to="/programmable/sdk/api/components/gradient-editor-stop" description="Single gradient stop primitive." />
-  <SdkCard title="ScrubInputRoot" to="/programmable/sdk/api/components/scrub-input-root" description="Drag-to-scrub numeric input root." />
-  <SdkCard title="ScrubInputField" to="/programmable/sdk/api/components/scrub-input-field" description="Editing input field primitive." />
-  <SdkCard title="ScrubInputDisplay" to="/programmable/sdk/api/components/scrub-input-display" description="Non-editing display primitive." />
+  <SdkCard title="NumberField" to="/programmable/sdk/api/components/number-field" description="Numeric field anatomy with scrubbing, expressions, and keyboard stepping." />
+  <SdkCard title="ScrubInputRoot" to="/programmable/sdk/api/components/scrub-input-root" description="Deprecated alias for NumberFieldRoot." />
+  <SdkCard title="ScrubInputField" to="/programmable/sdk/api/components/scrub-input-field" description="Deprecated alias for NumberFieldInput." />
+  <SdkCard title="ScrubInputDisplay" to="/programmable/sdk/api/components/scrub-input-display" description="Deprecated alias for NumberFieldValue." />
 </SdkCardGroup>
