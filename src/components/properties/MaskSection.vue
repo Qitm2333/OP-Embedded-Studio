@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import { useI18n, useMask } from '@open-pencil/vue'
 
 import AppSelect from '@/components/ui/AppSelect.vue'
-import PanelSection from '@/components/ui/PanelSection.vue'
+import PanelSection from '@/components/ui/panel/PanelSection.vue'
 import Tip from '@/components/ui/Tip.vue'
 
 import type { MaskType } from '@open-pencil/scene-graph'

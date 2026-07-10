@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import ScrubInput from '@/components/inputs/ScrubInput.vue'
 import IconButton from '@/components/ui/IconButton.vue'
-import PanelRow from '@/components/ui/PanelRow.vue'
-import PanelSection from '@/components/ui/PanelSection.vue'
+import PanelRow from '@/components/ui/panel/PanelRow.vue'
+import PanelSection from '@/components/ui/panel/PanelSection.vue'
 import Tip from '@/components/ui/Tip.vue'
 import { useEditorStore } from '@/app/editor/active-store'
 import { PositionControlsRoot, useI18n } from '@open-pencil/vue'

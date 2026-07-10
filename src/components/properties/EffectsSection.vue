@@ -3,7 +3,7 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import ColorInput from '@/components/ColorPicker/ColorInput.vue'
 import ScrubInput from '@/components/inputs/ScrubInput.vue'
 import IconButton from '@/components/ui/IconButton.vue'
-import PanelSection from '@/components/ui/PanelSection.vue'
+import PanelSection from '@/components/ui/panel/PanelSection.vue'
 import Tip from '@/components/ui/Tip.vue'
 import { PropertyListRoot, vTestId, useEffectsControls, useI18n } from '@open-pencil/vue'
 

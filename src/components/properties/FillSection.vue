@@ -4,7 +4,7 @@ import { colorToHexRaw, parseColor } from '@open-pencil/core/color'
 
 import FillPicker from '@/components/fill-picker/FillPicker.vue'
 import IconButton from '@/components/ui/IconButton.vue'
-import PanelSection from '@/components/ui/PanelSection.vue'
+import PanelSection from '@/components/ui/panel/PanelSection.vue'
 import ColorStyleRow from '@/components/properties/ColorStyleRow.vue'
 import {
   boundVariableSwatchBackground,

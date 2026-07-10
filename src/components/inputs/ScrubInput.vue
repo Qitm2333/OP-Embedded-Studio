@@ -1,15 +1,10 @@
-<script setup lang="ts">
-import { computed, useAttrs } from 'vue'
-import { ScrubInputRoot, ScrubInputField, ScrubInputDisplay, testId } from '@open-pencil/vue'
-import { useEditorStore } from '@/app/editor/active-store'
+<script lang="ts">
+import type { ComponentUI } from '@/components/ui/types'
+import type { ScrubInputTheme } from '@/theme/scrub-input'
 
-const attrs = useAttrs()
+export type ScrubInputUI = ComponentUI<ScrubInputTheme>
 
-const store = useEditorStore()
-
-const rootTestId = computed(() => (attrs['data-test-id'] as string | undefined) ?? 'scrub-input')
-
-const { modelValue, min, max, step, icon, label, suffix, sensitivity, placeholder } = defineProps<{
+export interface ScrubInputProps {
   modelValue: number | symbol
   min?: number
   max?: number
@@ -19,7 +14,26 @@ const { modelValue, min, max, step, icon, label, suffix, sensitivity, placeholde
   suffix?: string
   sensitivity?: number
   placeholder?: string
-}>()
+  ui?: ScrubInputUI
+}
+</script>
+
+<script setup lang="ts">
+import { computed, normalizeClass, useAttrs, useSlots } from 'vue'
+import { tv } from 'tailwind-variants'
+import { ScrubInputRoot, ScrubInputField, ScrubInputDisplay, testId } from '@open-pencil/vue'
+import { useEditorStore } from '@/app/editor/active-store'
+import theme from '@/theme/scrub-input'
+
+const attrs = useAttrs()
+const slots = useSlots()
+const store = useEditorStore()
+
+const rootTestId = computed(() => (attrs['data-test-id'] as string | undefined) ?? 'scrub-input')
+
+const { modelValue, min, max, step, icon, label, suffix, sensitivity, placeholder, ui } =
+  defineProps<ScrubInputProps>()
+const styles = computed(() => tv(theme)({ suffix: Boolean(slots.suffix) }))
 
 const emit = defineEmits<{
   'update:modelValue': [value: number]
@@ -51,10 +65,7 @@ defineOptions({ inheritAttrs: false })
     <div
       v-bind="{ ...attrs, ...testId(rootTestId) }"
       :tabindex="editing ? undefined : 0"
-      :class="[
-        attrs.class,
-        'group flex h-[26px] min-w-0 flex-1 items-center rounded border border-border bg-input focus-within:border-accent focus:border-accent'
-      ]"
+      :class="styles.root({ class: [ui?.root, normalizeClass(attrs.class)] })"
       :style="{ cursor: editing ? 'auto' : 'ew-resize' }"
       @pointerdown="
         !editing &&
@@ -64,9 +75,7 @@ defineOptions({ inheritAttrs: false })
       @focus="!editing && actions.startEdit()"
     >
       <span v-if="attrs['data-test-id']" data-test-id="scrub-input" class="hidden" />
-      <span
-        class="flex shrink-0 items-center justify-center self-stretch px-[5px] text-muted select-none [&>*]:pointer-events-none"
-      >
+      <span :class="styles.leading({ class: ui?.leading })">
         <slot name="icon">
           <span v-if="icon" class="text-[11px] leading-none">{{ icon }}</span>
         </slot>
@@ -74,21 +83,18 @@ defineOptions({ inheritAttrs: false })
       </span>
       <ScrubInputField
         data-test-id="scrub-input-field"
-        class="min-w-0 flex-1 cursor-text border-none bg-transparent pr-1.5 font-[inherit] text-xs text-surface outline-none"
+        :class="styles.field({ class: ui?.field })"
         :min="min === -Infinity ? undefined : min"
         :max="max === Infinity ? undefined : max"
         :step="step"
       />
       <slot v-if="editing" name="suffix" />
-      <ScrubInputDisplay
-        class="flex flex-1 items-center truncate overflow-hidden text-xs select-none"
-        :class="$slots.suffix ? 'pr-0' : 'pr-1.5'"
-      >
+      <ScrubInputDisplay :class="styles.display({ class: ui?.display })">
         <template #default="{ value, isMixed: mixed }">
-          <span v-if="mixed" class="flex-1 text-muted">{{ ph }}</span>
+          <span v-if="mixed" :class="styles.mixed({ class: ui?.mixed })">{{ ph }}</span>
           <template v-else>
-            <span class="flex-1 text-surface">{{ value }}</span>
-            <span v-if="suffix" class="shrink-0 pr-1.5 text-muted">{{ suffix }}</span>
+            <span :class="styles.value({ class: ui?.value })">{{ value }}</span>
+            <span v-if="suffix" :class="styles.suffix({ class: ui?.suffix })">{{ suffix }}</span>
           </template>
           <slot name="suffix" />
         </template>

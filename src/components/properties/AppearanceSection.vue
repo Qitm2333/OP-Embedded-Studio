@@ -7,7 +7,7 @@ import ScrubInput from '@/components/inputs/ScrubInput.vue'
 import VariableScrubInput from '@/components/properties/VariableScrubInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import IconButton from '@/components/ui/IconButton.vue'
-import PanelSection from '@/components/ui/PanelSection.vue'
+import PanelSection from '@/components/ui/panel/PanelSection.vue'
 import Tip from '@/components/ui/Tip.vue'
 
 import type { BlendMode } from '@open-pencil/scene-graph'

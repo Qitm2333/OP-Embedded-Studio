@@ -12,6 +12,8 @@
 - Add overlap analysis for finding layout collisions and overflowing children from the CLI, AI tools, and MCP.
 - Add saved per-node export settings for repeat exports.
 - Add Design panel controls for layer blend modes and alpha, vector, and luminance masks.
+- Refine Design panel foundations with 26px controls, consistently aligned action rails, shared Tailwind themes, and Storybook component states.
+- Standardize Vue SDK and app override type names on the `UI` acronym, including `FontPickerUI`.
 - Add desktop image drag-and-drop into the Tauri app window.
 - Add open-document discovery for live CLI and MCP automation so agents can target the intended document and page.
 - Publish lower-level SceneGraph, Pen, Kiwi, Fig, and DOM/CSS functionality through clearer package boundaries for SDK and automation consumers.
