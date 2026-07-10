@@ -77,6 +77,7 @@ export function registerKeyboardShortcuts(options: KeyboardShortcutOptions) {
       'selection.createComponent',
       'selection.detachInstance',
       'selection.createComponentSet',
+      'selection.toggleMask',
       'selection.toggleVisibility',
       'selection.toggleLock',
       'selection.flipHorizontal',

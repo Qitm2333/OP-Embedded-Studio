@@ -39,6 +39,9 @@ function getNode(id: string) {
       effects: n.effects,
       opacity: n.opacity,
       visible: n.visible,
+      blendMode: n.blendMode,
+      isMask: n.isMask,
+      maskType: n.maskType,
       x: n.x,
       y: n.y,
       width: n.width,
@@ -53,6 +56,14 @@ function getSelectedId() {
     const store = window.openPencil?.getStore?.()
     if (!store) throw new Error('OpenPencil store not initialized')
     return [...store.state.selectedIds][0] ?? null
+  })
+}
+
+function getSelectedIds() {
+  return editor.page.evaluate(() => {
+    const store = window.openPencil?.getStore?.()
+    if (!store) throw new Error('OpenPencil store not initialized')
+    return [...store.state.selectedIds]
   })
 }
 
@@ -150,6 +161,83 @@ test('adding a second fill shows two fill items', async () => {
   const id = await getSelectedId()
   const node = await getNode(expectDefined(id, 'selected id'))
   expect(expectDefined(node, 'node node').fills.length).toBe(2)
+})
+
+test('blend mode select updates the selected layer', async () => {
+  const id = await getSelectedId()
+  const blendModeSelect = editor.page.getByTestId('appearance-blend-mode')
+  await expect(blendModeSelect).toBeVisible()
+
+  await blendModeSelect.click()
+  await editor.page.getByRole('option', { name: 'Multiply' }).click()
+  await editor.canvas.waitForRender()
+
+  const node = await getNode(expectDefined(id, 'selected id'))
+  expect(expectDefined(node, 'node').blendMode).toBe('MULTIPLY')
+})
+
+test('multi-select blend mode change is one undo step', async () => {
+  await editor.canvas.drawRect(300, 100, 60, 60)
+  await editor.canvas.drawRect(400, 100, 60, 60)
+  await editor.canvas.selectAll()
+  await editor.canvas.waitForRender()
+
+  const ids = await getSelectedIds()
+  expect(ids.length).toBeGreaterThanOrEqual(2)
+  const previousBlendModes = await Promise.all(
+    ids.map(async (id) => expectDefined(await getNode(id), 'selected node').blendMode)
+  )
+
+  const blendModeSelect = editor.page.getByTestId('appearance-blend-mode')
+  await blendModeSelect.click()
+  await editor.page.getByRole('option', { name: 'Multiply' }).click()
+  await editor.canvas.waitForRender()
+
+  for (const id of ids) {
+    expect(expectDefined(await getNode(id), 'selected node').blendMode).toBe('MULTIPLY')
+  }
+
+  await editor.canvas.undo()
+  const afterUndo = await Promise.all(
+    ids.map(async (id) => expectDefined(await getNode(id), 'selected node').blendMode)
+  )
+  expect(afterUndo).toEqual(previousBlendModes)
+
+  await editor.canvas.redo()
+  const afterRedo = await Promise.all(
+    ids.map(async (id) => expectDefined(await getNode(id), 'selected node').blendMode)
+  )
+  expect(afterRedo).toEqual(ids.map(() => 'MULTIPLY'))
+})
+
+test('mask action toggles mask section and mask type control', async () => {
+  await editor.canvas.drawRect(500, 100, 60, 60)
+  await editor.canvas.waitForRender()
+  const id = await getSelectedId()
+  const maskAction = editor.page.getByTestId('selection-toggle-mask')
+  await expect(maskAction).toBeVisible()
+
+  await expect(editor.page.getByTestId('mask-section')).toHaveCount(0)
+  await maskAction.click()
+  await editor.canvas.waitForRender()
+
+  let node = await getNode(expectDefined(id, 'selected id'))
+  expect(expectDefined(node, 'node').isMask).toBe(true)
+  await expect(editor.page.getByTestId('mask-section')).toBeVisible()
+
+  const maskTypeSelect = editor.page.getByTestId('mask-type-select')
+  await maskTypeSelect.click()
+  await editor.page.getByRole('option', { name: 'Luminance' }).click()
+  await editor.canvas.waitForRender()
+
+  node = await getNode(expectDefined(id, 'selected id'))
+  expect(expectDefined(node, 'node').maskType).toBe('LUMINANCE')
+
+  await maskAction.click()
+  await editor.canvas.waitForRender()
+  node = await getNode(expectDefined(id, 'selected id'))
+  expect(expectDefined(node, 'node').isMask).toBe(false)
+  await expect(editor.page.getByTestId('mask-section')).toHaveCount(0)
 })
 
 test('visibility toggle in appearance section works', async () => {

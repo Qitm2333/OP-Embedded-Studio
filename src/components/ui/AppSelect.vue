@@ -15,6 +15,7 @@ import { useSelectUI } from '@/components/ui/select'
 import type { SelectUi } from '@/components/ui/select'
 
 interface AppSelectUi extends SelectUi {
+  value?: string
   viewport?: string
   indicator?: string
 }
@@ -37,6 +38,7 @@ const select = useSelectUI({
   content: ui?.content ?? 'max-h-56',
   item: ui?.item ?? 'rounded py-1.5 pr-2 pl-6 text-xs'
 })
+const value = ui?.value ?? 'min-w-0 flex-1 truncate text-left'
 const viewport = ui?.viewport ?? 'p-0.5'
 const indicator = ui?.indicator ?? 'absolute left-1.5 inline-flex items-center justify-center'
 </script>
@@ -44,7 +46,7 @@ const indicator = ui?.indicator ?? 'absolute left-1.5 inline-flex items-center j
 <template>
   <SelectRoot v-model="modelValue">
     <SelectTrigger v-bind="$attrs" :class="select.trigger" :aria-label="label">
-      <SelectValue :placeholder="placeholder" />
+      <SelectValue :placeholder="placeholder" :class="value" />
       <icon-lucide-chevron-down class="ml-1 size-3 shrink-0 text-muted" />
     </SelectTrigger>
     <SelectPortal>

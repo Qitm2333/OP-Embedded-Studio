@@ -1,15 +1,45 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { useAppearance, useI18n } from '@open-pencil/vue'
+import { MIXED, useAppearance, useI18n } from '@open-pencil/vue'
 
 import ScrubInput from '@/components/inputs/ScrubInput.vue'
 import VariableScrubInput from '@/components/properties/VariableScrubInput.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import PanelSection from '@/components/ui/PanelSection.vue'
 import Tip from '@/components/ui/Tip.vue'
 
+import type { BlendMode } from '@open-pencil/scene-graph'
+
 const { panels } = useI18n()
+
+type BlendModeSelectValue = BlendMode | 'MIXED'
+
+const blendModeOptions = computed<Array<{ value: BlendModeSelectValue; label: string }>>(() => {
+  const options: Array<{ value: BlendModeSelectValue; label: string }> = [
+    { value: 'PASS_THROUGH', label: panels.value.blendModePassThrough },
+    { value: 'NORMAL', label: panels.value.blendModeNormal },
+    { value: 'DARKEN', label: panels.value.blendModeDarken },
+    { value: 'MULTIPLY', label: panels.value.blendModeMultiply },
+    { value: 'COLOR_BURN', label: panels.value.blendModeColorBurn },
+    { value: 'LIGHTEN', label: panels.value.blendModeLighten },
+    { value: 'SCREEN', label: panels.value.blendModeScreen },
+    { value: 'COLOR_DODGE', label: panels.value.blendModeColorDodge },
+    { value: 'OVERLAY', label: panels.value.blendModeOverlay },
+    { value: 'SOFT_LIGHT', label: panels.value.blendModeSoftLight },
+    { value: 'HARD_LIGHT', label: panels.value.blendModeHardLight },
+    { value: 'DIFFERENCE', label: panels.value.blendModeDifference },
+    { value: 'EXCLUSION', label: panels.value.blendModeExclusion },
+    { value: 'HUE', label: panels.value.blendModeHue },
+    { value: 'SATURATION', label: panels.value.blendModeSaturation },
+    { value: 'COLOR', label: panels.value.blendModeColor },
+    { value: 'LUMINOSITY', label: panels.value.blendModeLuminosity }
+  ]
+  return blendModeValue.value === MIXED
+    ? [{ value: 'MIXED', label: panels.value.mixed }, ...options]
+    : options
+})
 const {
   node,
   isMulti,
@@ -18,7 +48,9 @@ const {
   independentCorners,
   cornerRadiusValue,
   opacityPercent,
+  blendModeValue,
   visibilityState,
+  setBlendMode,
   updateProp,
   commitProp,
   toggleVisibility,
@@ -45,6 +77,13 @@ function onToggleCorners() {
   manualExpanded.value = !showIndependentCorners.value
   toggleIndependentCorners()
 }
+
+const blendModeSelectValue = computed<BlendModeSelectValue>({
+  get: () => (blendModeValue.value === MIXED ? 'MIXED' : blendModeValue.value),
+  set: (value) => {
+    if (value !== 'MIXED') setBlendMode(value)
+  }
+})
 </script>
 
 <template>
@@ -62,7 +101,17 @@ function onToggleCorners() {
       </IconButton>
     </template>
 
-    <div class="flex gap-1.5">
+    <div class="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-1.5">
+      <Tip :label="panels.blendMode">
+        <AppSelect
+          v-model="blendModeSelectValue"
+          class="w-full"
+          :label="panels.blendMode"
+          :options="blendModeOptions"
+          data-test-id="appearance-blend-mode"
+        />
+      </Tip>
+
       <Tip :label="panels.opacity">
         <VariableScrubInput
           v-if="node"
@@ -93,48 +142,48 @@ function onToggleCorners() {
           </template>
         </ScrubInput>
       </Tip>
+    </div>
 
-      <template v-if="hasCornerRadius">
-        <Tip :label="panels.radius">
-          <VariableScrubInput
-            v-if="!showIndependentCorners && node"
-            data-test-id="corner-radius-input"
-            :model-value="cornerRadiusValue"
-            :min="0"
-            :node-id="node.id"
-            binding-path="cornerRadius"
-            @update:model-value="updateProp('cornerRadius', $event)"
-            @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
-          >
-            <template #icon>
-              <icon-lucide-square-round-corner class="size-3" />
-            </template>
-          </VariableScrubInput>
-          <ScrubInput
-            v-else-if="!showIndependentCorners"
-            data-test-id="corner-radius-input"
-            :model-value="cornerRadiusValue"
-            :min="0"
-            @update:model-value="updateProp('cornerRadius', $event)"
-            @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
-          >
-            <template #icon>
-              <icon-lucide-square-round-corner class="size-3" />
-            </template>
-          </ScrubInput>
-        </Tip>
-
-        <IconButton
-          :label="panels.independentCornerRadii"
-          size="md"
-          class="size-[26px] shrink-0"
-          :active="showIndependentCorners"
-          data-test-id="independent-corners-toggle"
-          @click="onToggleCorners"
+    <div v-if="hasCornerRadius" class="mt-1.5 flex gap-1.5">
+      <Tip :label="panels.radius">
+        <VariableScrubInput
+          v-if="!showIndependentCorners && node"
+          data-test-id="corner-radius-input"
+          :model-value="cornerRadiusValue"
+          :min="0"
+          :node-id="node.id"
+          binding-path="cornerRadius"
+          @update:model-value="updateProp('cornerRadius', $event)"
+          @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
         >
-          <icon-lucide-square-round-corner class="size-3" />
-        </IconButton>
-      </template>
+          <template #icon>
+            <icon-lucide-square-round-corner class="size-3" />
+          </template>
+        </VariableScrubInput>
+        <ScrubInput
+          v-else-if="!showIndependentCorners"
+          data-test-id="corner-radius-input"
+          :model-value="cornerRadiusValue"
+          :min="0"
+          @update:model-value="updateProp('cornerRadius', $event)"
+          @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
+        >
+          <template #icon>
+            <icon-lucide-square-round-corner class="size-3" />
+          </template>
+        </ScrubInput>
+      </Tip>
+
+      <IconButton
+        :label="panels.independentCornerRadii"
+        size="md"
+        class="size-[26px] shrink-0"
+        :active="showIndependentCorners"
+        data-test-id="independent-corners-toggle"
+        @click="onToggleCorners"
+      >
+        <icon-lucide-square-round-corner class="size-3" />
+      </IconButton>
     </div>
 
     <div

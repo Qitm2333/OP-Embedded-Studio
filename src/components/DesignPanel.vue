@@ -4,14 +4,15 @@ import { computed, ref } from 'vue'
 import { useI18n, useSelectionState, useEditorCommands } from '@open-pencil/vue'
 
 import VariablesDialog from './variables/VariablesDialog.vue'
-import BooleanOperationsControl from './properties/BooleanOperationsControl.vue'
 import AppearanceSection from './properties/AppearanceSection.vue'
 import EffectsSection from './properties/EffectsSection.vue'
 import ExportSection from './properties/ExportSection.vue'
 import FillSection from './properties/FillSection.vue'
 import LayoutSection from './properties/LayoutSection/LayoutSection.vue'
+import MaskSection from './properties/MaskSection.vue'
 import PageSection from './properties/PageSection.vue'
 import PositionSection from './properties/PositionSection.vue'
+import SelectionActionsControl from './properties/SelectionActionsControl.vue'
 import StrokeSection from './properties/StrokeSection.vue'
 import TypographySection from './properties/TypographySection.vue'
 import VariablesSection from './properties/VariablesSection.vue'
@@ -45,9 +46,7 @@ const { panels } = useI18n()
       <span class="text-xs font-semibold">{{
         panels.layersCount({ count: String(multiCount) })
       }}</span>
-      <div class="ml-auto flex items-center">
-        <BooleanOperationsControl v-if="showBooleanOperations" />
-      </div>
+      <SelectionActionsControl :show-boolean-operations="showBooleanOperations" />
     </div>
     <PositionSection />
     <AppearanceSection />
@@ -71,6 +70,7 @@ const { panels } = useI18n()
         node.type
       }}</span>
       <span class="text-xs font-semibold">{{ node.name }}</span>
+      <SelectionActionsControl />
     </div>
 
     <!-- Component actions -->
@@ -99,6 +99,7 @@ const { panels } = useI18n()
     <PositionSection />
     <LayoutSection />
     <AppearanceSection />
+    <MaskSection />
     <TypographySection v-if="node.type === 'TEXT'" />
     <FillSection />
     <StrokeSection />

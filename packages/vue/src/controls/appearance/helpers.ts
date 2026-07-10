@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
 
 import type { Editor } from '@open-pencil/core/editor'
-import type { SceneNode } from '@open-pencil/scene-graph'
+import type { BlendMode, SceneNode } from '@open-pencil/scene-graph'
 
 import { MIXED, type MixedValue } from '#vue/controls/node-props/use'
 
@@ -46,16 +46,42 @@ export function createAppearanceState({ node, nodes, isMulti, merged }: Appearan
     return v === MIXED ? MIXED : Math.round(v * 100)
   })
 
+  const blendModeValue = computed(() => {
+    const v = merged('blendMode')
+    return v === MIXED ? MIXED : v
+  })
+
   const visibilityState = computed<'visible' | 'hidden' | 'mixed'>(() => {
     const v = merged('visible')
     if (v === MIXED) return 'mixed'
     return v ? 'visible' : 'hidden'
   })
 
-  return { hasCornerRadius, independentCorners, cornerRadiusValue, opacityPercent, visibilityState }
+  return {
+    hasCornerRadius,
+    independentCorners,
+    cornerRadiusValue,
+    opacityPercent,
+    blendModeValue,
+    visibilityState
+  }
 }
 
 export function createAppearanceActions({ editor, node, nodes, isMulti }: AppearanceActionOptions) {
+  function setBlendMode(value: BlendMode) {
+    const selected = node.value
+    const targets = isMulti.value ? nodes.value : []
+    if (!isMulti.value && selected) targets.push(selected)
+    const changed = targets.filter((target) => target.blendMode !== value)
+    if (changed.length === 0) return
+
+    editor.undo.runBatch('Change blend mode', () => {
+      for (const target of changed) {
+        editor.updateNodeWithUndo(target.id, { blendMode: value }, 'Change blend mode')
+      }
+    })
+  }
+
   function toggleVisibility() {
     if (isMulti.value) {
       const liveNodes = nodes.value
@@ -135,5 +161,11 @@ export function createAppearanceActions({ editor, node, nodes, isMulti }: Appear
     }
   }
 
-  return { toggleVisibility, toggleIndependentCorners, updateCornerProp, commitCornerProp }
+  return {
+    setBlendMode,
+    toggleVisibility,
+    toggleIndependentCorners,
+    updateCornerProp,
+    commitCornerProp
+  }
 }
