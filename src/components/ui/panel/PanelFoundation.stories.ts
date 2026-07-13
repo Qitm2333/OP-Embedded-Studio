@@ -2,9 +2,11 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { TooltipProvider } from 'reka-ui'
 import { expect, userEvent, within } from 'storybook/test'
 import { ref } from 'vue'
+import MoreIcon from '~icons/lucide/ellipsis'
 import EyeIcon from '~icons/lucide/eye'
 import LinkIcon from '~icons/lucide/link'
 import RotateIcon from '~icons/lucide/rotate-ccw'
+import SquareIcon from '~icons/lucide/square'
 
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -13,6 +15,7 @@ import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 
 import PanelFieldGroup from './PanelFieldGroup.vue'
 import PanelGrid from './PanelGrid.vue'
+import PanelHeader from './PanelHeader.vue'
 import PanelRail from './PanelRail.vue'
 import PanelSection from './PanelSection.vue'
 
@@ -40,12 +43,15 @@ export const StateMatrix: Story = {
       EyeIcon,
       IconButton,
       LinkIcon,
+      MoreIcon,
       PanelFieldGroup,
       PanelGrid,
+      PanelHeader,
       PanelRail,
       PanelSection,
       RotateIcon,
       SegmentedControl,
+      SquareIcon,
       TooltipProvider
     },
     setup() {
@@ -80,10 +86,13 @@ export const StateMatrix: Story = {
     template: `
       <TooltipProvider>
         <div class="w-[320px] overflow-hidden rounded-lg border border-border bg-panel shadow-xl">
-          <header class="border-b border-border px-panel-x py-panel-y">
-            <p class="text-xs font-semibold">Properties</p>
-            <p class="mt-1 text-[11px] text-muted">Panel foundation states</p>
-          </header>
+          <PanelHeader>
+            <template #icon><SquareIcon class="size-panel-icon" /></template>
+            <span role="heading" aria-level="2">Rectangle</span>
+            <template #actions>
+              <IconButton label="Selection actions"><MoreIcon class="size-panel-icon" /></IconButton>
+            </template>
+          </PanelHeader>
 
           <PanelSection label="Layout">
             <template #actions>

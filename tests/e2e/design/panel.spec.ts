@@ -8,10 +8,6 @@ function designPanel() {
   return editor.page.getByTestId('design-panel-single')
 }
 
-function nodeHeader() {
-  return editor.page.getByTestId('design-node-header')
-}
-
 function fillSection() {
   return editor.page.getByTestId('fill-section')
 }
@@ -21,7 +17,7 @@ function strokeSection() {
 }
 
 function positionSection() {
-  return editor.page.getByTestId('position-section')
+  return propertySection(editor.page, 'Position')
 }
 
 function effectsSection() {
@@ -73,8 +69,9 @@ test('selecting a rectangle shows design panel with type and name', async () => 
   await editor.canvas.waitForRender()
 
   await expect(designPanel()).toBeVisible()
-  await expect(nodeHeader()).toContainText('RECTANGLE')
-  await expect(nodeHeader()).toContainText('Rectangle')
+  await expect(designPanel().getByRole('img', { name: 'RECTANGLE' })).toBeVisible()
+  await expect(designPanel().getByRole('heading', { name: 'Rectangle' })).toBeVisible()
+  await expect(designPanel()).toHaveScreenshot('design-panel-position-appearance.png')
 })
 
 test('position section shows X, Y, rotation inputs', async () => {
@@ -246,7 +243,9 @@ test('mask action toggles mask section and mask type control', async () => {
 })
 
 test('visibility toggle in appearance section works', async () => {
-  const visBtn = editor.page.getByTestId('appearance-visibility')
+  const visBtn = propertySection(editor.page, 'Appearance').getByRole('button', {
+    name: 'Toggle visibility'
+  })
   await expect(visBtn).toBeVisible()
 
   const id = await getSelectedId()
@@ -393,10 +392,10 @@ test('multi-select shows mixed header and boolean operations', async () => {
   await editor.canvas.selectAll()
   await editor.canvas.waitForRender()
 
-  const multiHeader = editor.page.getByTestId('design-multi-header')
+  const multiHeader = editor.page
+    .getByTestId('design-panel-multi')
+    .getByRole('heading', { name: /layers/ })
   await expect(multiHeader).toBeVisible()
-  await expect(multiHeader).toContainText('Mixed')
-  await expect(multiHeader).toContainText('layers')
 
   const booleanOperations = editor.page.getByTestId('boolean-operations-trigger')
   await booleanOperations.hover()

@@ -139,6 +139,12 @@ export type { LayerDragInstruction, LayerTreeContext, LayerNode } from '#vue/pri
 export { LayoutControlsRoot, useLayoutControlsContext } from '#vue/primitives/LayoutControls'
 export type { LayoutControlsContext } from '#vue/primitives/LayoutControls'
 export { AppearanceControlsRoot } from '#vue/primitives/AppearanceControls'
+export type {
+  AppearanceControlsActions,
+  AppearanceControlsRootSlotProps,
+  AppearanceControlsRootSlots
+} from '#vue/primitives/AppearanceControls'
+export type { CornerRadiusKey } from '#vue/controls/appearance/types'
 export { PageListRoot } from '#vue/primitives/PageList'
 export { PositionControlsRoot } from '#vue/primitives/PositionControls'
 export { useEditorPropertyList } from '#vue/controls/property-list'

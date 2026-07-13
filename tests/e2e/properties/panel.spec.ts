@@ -41,7 +41,7 @@ test('corner radius uniform sets cornerRadius', async () => {
   const scrubContainer = propertyField(editor.page, 'cornerRadius')
   await scrubContainer.click()
   await editor.canvas.waitForRender()
-  const input = scrubContainer.getByRole('spinbutton', { name: 'cornerRadius' })
+  const input = scrubContainer.getByRole('spinbutton', { name: 'Radius' })
   await input.fill('12')
   await input.press('Enter')
   await editor.canvas.waitForRender()
@@ -52,13 +52,15 @@ test('corner radius uniform sets cornerRadius', async () => {
 })
 
 test('independent corners toggle shows four corner inputs', async () => {
-  await editor.page.getByTestId('independent-corners-toggle').click()
+  await propertySection(editor.page, 'Appearance')
+    .getByRole('button', { name: 'Independent corner radii' })
+    .click()
   await editor.canvas.waitForRender()
 
-  await expect(editor.page.getByTestId('corner-tl-input')).toBeVisible()
-  await expect(editor.page.getByTestId('corner-tr-input')).toBeVisible()
-  await expect(editor.page.getByTestId('corner-br-input')).toBeVisible()
-  await expect(editor.page.getByTestId('corner-bl-input')).toBeVisible()
+  await expect(propertyField(editor.page, 'topLeftRadius')).toBeVisible()
+  await expect(propertyField(editor.page, 'topRightRadius')).toBeVisible()
+  await expect(propertyField(editor.page, 'bottomRightRadius')).toBeVisible()
+  await expect(propertyField(editor.page, 'bottomLeftRadius')).toBeVisible()
   editor.canvas.assertNoErrors()
 })
 
@@ -246,7 +248,7 @@ test('bound NumberField detach edit is one undo step', async () => {
     })
 
   await field.click({ position: { x: 40, y: 13 } })
-  const input = field.getByRole('spinbutton', { name: 'cornerRadius' })
+  const input = field.getByRole('spinbutton', { name: 'Radius' })
   await input.press('Tab')
   expect(await readState()).toEqual({ radius: 0, binding: 'Radius/default' })
   await editor.canvas.pressKey('Meta+z')
@@ -285,7 +287,7 @@ test('alignment buttons align nodes to same X', async () => {
   await editor.canvas.pressKey('Meta+a')
   await editor.canvas.waitForRender()
 
-  await editor.page.getByTestId('position-align-left').click()
+  await propertySection(editor.page, 'Position').getByRole('button', { name: 'Align left' }).click()
   await editor.canvas.waitForRender()
 
   const children = await getPageChildren(editor.page)
@@ -298,7 +300,9 @@ test('flip horizontal sets flipX', async () => {
   await editor.canvas.clearCanvas()
   await editor.canvas.drawRect(200, 200, 80, 80)
 
-  await editor.page.getByTestId('position-flip-horizontal').click()
+  await propertySection(editor.page, 'Position')
+    .getByRole('button', { name: 'Flip horizontal' })
+    .click()
   await editor.canvas.waitForRender()
 
   const node = await getSelectedNode(editor.page)

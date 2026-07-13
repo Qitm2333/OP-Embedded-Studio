@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
 import { CanvasHelper } from '#tests/helpers/canvas'
+import { propertySection } from '#tests/helpers/properties'
 
 let page: Page
 let canvas: CanvasHelper
@@ -48,14 +49,16 @@ test('independent corners toggle shows per-corner inputs', async () => {
   expect(flags?.type).toBe('FRAME')
   expect(flags?.independentCorners).toBe(false)
 
-  const toggle = page.getByTestId('independent-corners-toggle')
+  const toggle = propertySection(page, 'Appearance').getByRole('button', {
+    name: 'Independent corner radii'
+  })
   await expect(toggle).toBeVisible()
 
   await toggle.click()
   await canvas.waitForRender()
 
   expect((await getSelectedNodeFlags())?.independentCorners).toBe(true)
-  const grid = page.getByTestId('independent-corners-grid')
+  const grid = page.locator('[data-corner-grid]')
   await expect(grid).toBeVisible()
   const cornerInputs = grid.getByRole('spinbutton')
   expect(await cornerInputs.count()).toBe(4)
@@ -63,6 +66,34 @@ test('independent corners toggle shows per-corner inputs', async () => {
   await toggle.click()
   await canvas.waitForRender()
   await expect(grid).not.toBeVisible()
+})
+
+test('multi-selection independent corners toggle is one undo step', async () => {
+  await canvas.clearCanvas()
+  await drawFrame(80, 80, 100, 70)
+  await drawFrame(240, 80, 100, 70)
+  await canvas.pressKey('Meta+a')
+  await canvas.waitForRender()
+
+  const independentStates = () =>
+    page.evaluate(() => {
+      const store = window.openPencil?.getStore?.()
+      if (!store) throw new Error('OpenPencil store not initialized')
+      return [...store.state.selectedIds].map(
+        (id) => store.graph.getNode(id)?.independentCorners ?? null
+      )
+    })
+
+  const toggle = propertySection(page, 'Appearance').getByRole('button', {
+    name: 'Independent corner radii'
+  })
+  await toggle.click()
+  await canvas.waitForRender()
+  expect(await independentStates()).toEqual([true, true])
+
+  await canvas.pressKey('Meta+z')
+  await canvas.waitForRender()
+  expect(await independentStates()).toEqual([false, false])
 })
 
 test('stroke sides toggle shows per-side weight inputs', async () => {

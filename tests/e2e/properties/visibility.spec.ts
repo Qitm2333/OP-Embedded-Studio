@@ -1,5 +1,6 @@
 import { expect, test, useEditorSetup } from '#tests/e2e/fixtures'
 import { expectDefined } from '#tests/helpers/assert'
+import { propertySection } from '#tests/helpers/properties'
 import { getSelectedNode } from '#tests/helpers/store'
 
 const editor = useEditorSetup()
@@ -92,7 +93,9 @@ test('multi-selection list add is one undo step', async () => {
 })
 
 test('appearance visibility supports repeat click and undo redo in one step', async () => {
-  const visibilityButton = editor.page.getByTestId('appearance-visibility')
+  const visibilityButton = propertySection(editor.page, 'Appearance').getByRole('button', {
+    name: 'Toggle visibility'
+  })
   await expect(visibilityButton).toBeVisible()
   expect(expectDefined(await getSelectedNode(editor.page), 'selected node').visible).toBe(true)
 

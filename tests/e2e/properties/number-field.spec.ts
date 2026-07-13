@@ -11,7 +11,7 @@ function xField() {
 
 async function editField(field: ReturnType<typeof xField>) {
   await field.click()
-  return field.getByRole('spinbutton', { name: 'X' })
+  return field.getByRole('spinbutton', { name: 'X Axis' })
 }
 
 async function numericFieldValue(field: ReturnType<typeof xField>): Promise<number> {
@@ -30,7 +30,7 @@ test('NumberField commits arithmetic and relative expressions', async () => {
   let input = await editField(field)
   await expect(field).not.toHaveAttribute('role')
   await expect(input).toHaveAttribute('role', 'spinbutton')
-  await expect(input).toHaveAttribute('aria-label', 'X')
+  await expect(input).toHaveAttribute('aria-label', 'X Axis')
   await expect(field.getByRole('spinbutton')).toHaveCount(1)
   await input.fill('*2')
   await input.press('Enter')
