@@ -95,7 +95,8 @@ These components coordinate structure and state, but do not impose app styling. 
 adds pointer scrubbing, Arrow-key stepping, mixed/bound state attributes, and safe arithmetic
 expressions such as `+10`, `*2`, `50%`, and `12*8+4`. `BindableValue` composes fields with a
 generic `BindingProvider` and supports detach-on-edit, read-only, and edit-variable policies.
-`PropertyListRoot` is controlled and editor-agnostic; OpenPencil panels connect it to selection and
+Focusing a bound NumberField is non-destructive; the configured policy begins only on the first
+value mutation. `PropertyListRoot` is controlled and editor-agnostic; OpenPencil panels connect it to selection and
 undo through `useEditorPropertyList()`.
 
 ## Public API tiers

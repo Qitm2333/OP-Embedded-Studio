@@ -17,6 +17,7 @@
 - Add a headless Vue SDK NumberField with pointer scrubbing, keyboard stepping, safe arithmetic expressions, and mixed/bound states; remove the superseded ScrubInput API.
 - Add provider-driven BindableValue primitives for variable and token binding, including detach-on-edit, read-only, edit-variable, mixed-value, and undo-batched interactions.
 - Add headless PropertySection, SegmentedControl, and typed PropertyList anatomy, with controlled list events and an undo-aware OpenPencil adapter.
+- Refine variable-bound number fields with a quiet identity pill, one picker affordance, an accessible variable combobox, and non-destructive focus behavior.
 - Upgrade Vue SDK documentation with shared Tailwind demos, source-generated component API tables, and type-aware Twoslash examples in VitePress.
 - Add desktop image drag-and-drop into the Tauri app window.
 - Add open-document discovery for live CLI and MCP automation so agents can target the intended document and page.

@@ -72,7 +72,7 @@ const ariaLabelValue = computed(() => ariaLabel)
 
 let interactionStartValue = 0
 let interactionStartedMixed = false
-let detachRequested = false
+let mutationRequested = false
 let stopMove: (() => void) | undefined
 let stopUp: (() => void) | undefined
 let stopCancel: (() => void) | undefined
@@ -84,17 +84,13 @@ function canMutate(): boolean {
 }
 
 function requestMutation(source: NumberFieldMutationSource): boolean {
+  if (mutationRequested) return true
   if (!canMutate()) return false
   if (binding && !binding.actions.beginMutation(source)) return false
-  if (
-    !binding &&
-    bound.value &&
-    effectiveEditPolicy.value === 'detach-on-edit' &&
-    !detachRequested
-  ) {
-    detachRequested = true
+  if (!binding && bound.value && effectiveEditPolicy.value === 'detach-on-edit') {
     emit('detach-request', source)
   }
+  mutationRequested = true
   return true
 }
 
@@ -102,7 +98,7 @@ function beginInteraction() {
   interactionStartValue = numericValue.value
   interactionStartedMixed = isMixed.value
   workingValue.value = numericValue.value
-  detachRequested = false
+  mutationRequested = false
   invalidReason.value = null
 }
 
@@ -134,7 +130,6 @@ function finishCommit(value: number) {
 function startEdit() {
   if (editing.value || !canMutate()) return
   beginInteraction()
-  if (!requestMutation('edit')) return
   draftValue.value = interactionStartedMixed ? '' : String(interactionStartValue)
   editing.value = true
   void nextTick(() => {
@@ -144,6 +139,7 @@ function startEdit() {
 }
 
 function setDraft(value: string) {
+  if (value !== draftValue.value && !requestMutation('edit')) return
   draftValue.value = value
   const absoluteNumber = /^\s*(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?\s*$/i.test(value)
   if (absoluteNumber) updateValue(Number(value))

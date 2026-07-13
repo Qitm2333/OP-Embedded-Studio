@@ -24,12 +24,16 @@ automatically when nested beneath `BindableValueRoot`.
 
 ## Policies
 
-- `detach-on-edit` unbinds targets and keeps the complete interaction in one provider undo batch.
+- `detach-on-edit` unbinds targets on the first value mutation and keeps the complete interaction
+  in one provider undo batch.
 - `readonly-when-bound` blocks field editing, scrubbing, and keyboard stepping.
 - `edit-variable` sends changes to `provider.setValue()` instead of changing the target value.
 
-Cancellation rolls back an open provider batch. Providers without undo support still receive
-binding changes, with binding snapshots restored where possible.
+Focusing a bound NumberField or opening its picker is non-destructive. The policy starts only when
+the user types a changed draft, steps the value, or crosses the pointer-scrub threshold. Committing
+an unchanged field creates no undo entry. Cancellation rolls back an open provider batch.
+Providers without undo support still receive binding changes, with binding snapshots restored
+where possible.
 
 ## Provider example
 

@@ -8,7 +8,6 @@ export interface SegmentedControlOption {
   value: string
   label: string
   disabled?: boolean
-  testHook?: string
 }
 
 export type SegmentedControlUI = ComponentUI<SegmentedControlTheme>
@@ -39,13 +38,6 @@ const emit = defineEmits<{ change: [value: string] }>()
 
 const styles = computed(() => tv(theme)({ size }))
 
-function itemClass(option: SegmentedControlOption) {
-  return tv(theme)({
-    size,
-    selected: modelValue.value === option.value
-  }).item({ class: ui?.item })
-}
-
 function select(value: string | string[] | undefined) {
   if (typeof value !== 'string') return
   modelValue.value = value
@@ -65,10 +57,9 @@ function select(value: string | string[] | undefined) {
       :key="option.value"
       v-slot="{ selected }"
       :value="option.value"
-      :data-test-id="option.testHook"
       :aria-label="option.label"
       :disabled="option.disabled"
-      :class="itemClass(option)"
+      :class="styles.item({ class: ui?.item })"
     >
       <slot name="option" :option="option" :selected="selected">
         <span class="truncate">{{ option.label }}</span>

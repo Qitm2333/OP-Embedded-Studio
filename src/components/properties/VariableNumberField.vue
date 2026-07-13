@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useAttrs } from 'vue'
 import { BindableValueRoot, useI18n, useNumberBindingProvider } from '@open-pencil/vue'
 
 import NumberField from '@/components/inputs/NumberField.vue'
-import BoundVariableButton from '@/components/properties/BoundVariableButton.vue'
-import VariablePickerPopover from '@/components/properties/VariablePickerPopover.vue'
+import VariableBindingPicker from '@/components/properties/binding/VariableBindingPicker.vue'
+import { BindingPill, useBindingFieldUI } from '@/components/ui/binding'
 
 import type { BindingTarget, NumberBindingPath } from '@open-pencil/vue'
 
@@ -41,7 +41,18 @@ const emit = defineEmits<{
 
 const { panels, dialogs } = useI18n()
 const provider = useNumberBindingProvider()
+const attrs = useAttrs()
 const targets = computed<BindingTarget[]>(() => [{ nodeId, path: bindingPath }])
+const accessibleLabel = computed(() => {
+  const ariaLabel = attrs['aria-label']
+  return typeof ariaLabel === 'string' ? ariaLabel : (label ?? bindingPath)
+})
+const bindingStyles = useBindingFieldUI()
+
+function bindingTooltip(name: string, resolvedValue: unknown) {
+  if (typeof resolvedValue !== 'number') return name
+  return `${name} · ${resolvedValue}${suffix ?? ''}`
+}
 
 defineOptions({ inheritAttrs: false })
 </script>
@@ -64,26 +75,28 @@ defineOptions({ inheritAttrs: false })
       :min="min"
       :max="max"
       :step="step"
+      :ui="{ root: bindingStyles.root }"
+      :data-property="bindingPath"
+      :aria-label="accessibleLabel"
       @update:model-value="emit('update:modelValue', $event)"
       @commit="(value: number, previous: number) => emit('commit', value, previous)"
     >
       <template v-if="$slots.icon" #icon>
         <slot name="icon" />
       </template>
+      <template v-if="binding.variable" #bound>
+        <BindingPill
+          :label="binding.variable.name"
+          :tooltip="bindingTooltip(binding.variable.name, binding.resolvedValue)"
+        />
+      </template>
       <template #suffix>
         <span :class="$slots['after-variable'] ? '' : 'pr-1'" class="flex items-center">
-          <BoundVariableButton
-            v-if="binding.state === 'bound'"
-            :label="panels.detachVariable"
-            @detach="binding.actions.unbind"
-          />
-          <VariablePickerPopover
-            v-else
-            :search-term="binding.searchTerm"
-            :variables="binding.variables"
+          <VariableBindingPicker
             :trigger-label="panels.applyVariable"
             :search-placeholder="dialogs.search"
             :empty-label="panels.noVariablesFound"
+            :detach-label="panels.detachVariable"
             :create-label="
               panels.createNumberVariable({
                 value: typeof modelValue === 'number' ? Math.round(modelValue) : 0
@@ -91,9 +104,6 @@ defineOptions({ inheritAttrs: false })
             "
             :create-name-placeholder="panels.variableName"
             :create-submit-label="panels.create"
-            @update:search-term="binding.actions.setSearchTerm"
-            @select="binding.actions.bind($event.id)"
-            @create="binding.actions.create"
           />
         </span>
         <slot name="after-variable" />

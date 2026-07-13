@@ -1,5 +1,10 @@
 <script lang="ts">
-import type { NumberExpressionError, NumberFieldEditPolicy } from '@open-pencil/vue'
+import type {
+  NumberExpressionError,
+  NumberFieldEditPolicy,
+  NumberFieldSlotProps
+} from '@open-pencil/vue'
+import type { VNode } from 'vue'
 
 import type { ComponentUI } from '@/components/ui/types'
 import type { NumberFieldTheme } from '@/theme/number-field'
@@ -21,20 +26,25 @@ export interface NumberFieldProps {
   editPolicy?: NumberFieldEditPolicy
   ui?: NumberFieldUI
 }
+
+export interface NumberFieldSlots {
+  icon?(): VNode[]
+  suffix?(): VNode[]
+  display?(props: NumberFieldSlotProps & { value: string }): VNode[]
+  bound?(props: NumberFieldSlotProps & { value: string }): VNode[]
+}
 </script>
 
 <script setup lang="ts">
-import { computed, normalizeClass, useAttrs, useSlots } from 'vue'
+import { computed, normalizeClass, useAttrs } from 'vue'
 import { tv } from 'tailwind-variants'
-import { NumberFieldRoot, NumberFieldInput, NumberFieldValue, testId } from '@open-pencil/vue'
+import { NumberFieldRoot, NumberFieldInput, NumberFieldValue } from '@open-pencil/vue'
 import { useEditorStore } from '@/app/editor/active-store'
 import theme from '@/theme/number-field'
 
 const attrs = useAttrs()
-const slots = useSlots()
+const slots = defineSlots<NumberFieldSlots>()
 const store = useEditorStore()
-
-const rootTestId = computed(() => (attrs['data-test-id'] as string | undefined) ?? 'number-field')
 
 const {
   modelValue,
@@ -95,7 +105,8 @@ defineOptions({ inheritAttrs: false })
     "
   >
     <div
-      v-bind="{ ...attrs, ...rootAttrs, ...testId(rootTestId) }"
+      v-bind="{ ...attrs, ...rootAttrs }"
+      data-slot="root"
       :class="styles.root({ class: [ui?.root, normalizeClass(attrs.class)] })"
       @pointerdown="
         !editing &&
@@ -103,25 +114,29 @@ defineOptions({ inheritAttrs: false })
         actions.startScrub($event)
       "
     >
-      <span v-if="attrs['data-test-id']" data-test-id="number-field" class="hidden" />
       <span :class="styles.leading({ class: ui?.leading })">
         <slot name="icon">
           <span v-if="icon" class="text-[11px] leading-none">{{ icon }}</span>
         </slot>
         <span v-if="label" class="text-[11px] leading-none">{{ label }}</span>
       </span>
-      <NumberFieldInput
-        data-test-id="number-field-input"
-        :class="styles.field({ class: ui?.field })"
-      />
+      <NumberFieldInput :class="styles.field({ class: ui?.field })" />
       <slot v-if="editing" name="suffix" />
       <NumberFieldValue :class="styles.display({ class: ui?.display })">
-        <template #default="{ value, isMixed: mixed }">
-          <span v-if="mixed" :class="styles.mixed({ class: ui?.mixed })">{{ ph }}</span>
-          <template v-else>
-            <span :class="styles.value({ class: ui?.value })">{{ value }}</span>
-            <span v-if="suffix" :class="styles.suffix({ class: ui?.suffix })">{{ suffix }}</span>
-          </template>
+        <template #default="display">
+          <slot name="display" v-bind="display">
+            <slot v-if="display.bound" name="bound" v-bind="display">
+              <span :class="styles.value({ class: ui?.value })">{{ display.value }}</span>
+              <span v-if="suffix" :class="styles.suffix({ class: ui?.suffix })">{{ suffix }}</span>
+            </slot>
+            <span v-else-if="display.isMixed" :class="styles.mixed({ class: ui?.mixed })">
+              {{ ph }}
+            </span>
+            <template v-else>
+              <span :class="styles.value({ class: ui?.value })">{{ display.value }}</span>
+              <span v-if="suffix" :class="styles.suffix({ class: ui?.suffix })">{{ suffix }}</span>
+            </template>
+          </slot>
           <slot name="suffix" />
         </template>
       </NumberFieldValue>

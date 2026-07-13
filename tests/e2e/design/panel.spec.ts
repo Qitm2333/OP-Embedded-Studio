@@ -1,5 +1,6 @@
 import { expect, expectInViewport, test, useEditorSetup } from '#tests/e2e/fixtures'
 import { expectDefined } from '#tests/helpers/assert'
+import { propertySection } from '#tests/helpers/properties'
 
 const editor = useEditorSetup()
 
@@ -79,7 +80,7 @@ test('selecting a rectangle shows design panel with type and name', async () => 
 test('position section shows X, Y, rotation inputs', async () => {
   await expect(positionSection()).toBeVisible()
 
-  const inputs = positionSection().getByTestId('number-field')
+  const inputs = propertySection(editor.page, 'Position').getByRole('spinbutton')
   const count = await inputs.count()
   expect(count).toBeGreaterThanOrEqual(3)
 })
@@ -165,7 +166,9 @@ test('adding a second fill shows two fill items', async () => {
 
 test('blend mode select updates the selected layer', async () => {
   const id = await getSelectedId()
-  const blendModeSelect = editor.page.getByTestId('appearance-blend-mode')
+  const blendModeSelect = propertySection(editor.page, 'Appearance').getByRole('combobox', {
+    name: 'Blend mode'
+  })
   await expect(blendModeSelect).toBeVisible()
 
   await blendModeSelect.click()
@@ -188,7 +191,9 @@ test('multi-select blend mode change is one undo step', async () => {
     ids.map(async (id) => expectDefined(await getNode(id), 'selected node').blendMode)
   )
 
-  const blendModeSelect = editor.page.getByTestId('appearance-blend-mode')
+  const blendModeSelect = propertySection(editor.page, 'Appearance').getByRole('combobox', {
+    name: 'Blend mode'
+  })
   await blendModeSelect.click()
   await editor.page.getByRole('option', { name: 'Multiply' }).click()
   await editor.canvas.waitForRender()

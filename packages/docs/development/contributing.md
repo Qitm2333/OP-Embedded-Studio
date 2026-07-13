@@ -64,6 +64,17 @@ bun run check
 - **Functions/variables** — camelCase
 - **Types/interfaces** — PascalCase
 
+### Test selectors
+
+Playwright tests should locate behavior the way users and assistive technology do: prefer roles and
+accessible names, labels, and visible text. Scope repeated controls to a named region. Multi-part UI
+components expose local `data-slot` anatomy, while stable app concepts may expose semantic
+attributes such as `data-property`, `data-command`, or `data-node-id`.
+
+Reserve `data-test-id` for integration boundaries that have no meaningful user-facing or domain
+identity. Do not add test-ID props to reusable components or generate compound IDs from current
+component nesting.
+
 ### AI Agent Conventions
 
 Developers and AI agents working on the codebase should read `AGENTS.md` in the repo root ([view on GitHub](https://github.com/open-pencil/open-pencil/blob/master/AGENTS.md)). Covers rendering, scene graph, components & instances, layout, UI, file format, Tauri conventions, and known issues.

@@ -1,16 +1,17 @@
 import { expect, test, useEditorSetup } from '#tests/e2e/fixtures'
 import { expectDefined } from '#tests/helpers/assert'
+import { propertyField } from '#tests/helpers/properties'
 import { getSelectedNode } from '#tests/helpers/store'
 
 const editor = useEditorSetup()
 
 function xField() {
-  return editor.page.getByTestId('position-section').getByTestId('number-field').first()
+  return propertyField(editor.page, 'x')
 }
 
 async function editField(field: ReturnType<typeof xField>) {
   await field.click()
-  return field.getByTestId('number-field-input')
+  return field.getByRole('spinbutton', { name: 'X' })
 }
 
 async function numericFieldValue(field: ReturnType<typeof xField>): Promise<number> {

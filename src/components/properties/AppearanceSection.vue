@@ -87,7 +87,7 @@ const blendModeSelectValue = computed<BlendModeSelectValue>({
 </script>
 
 <template>
-  <PanelSection v-if="active" :label="panels.appearance" data-test-id="appearance-section">
+  <PanelSection v-if="active" :label="panels.appearance">
     <template #actions>
       <IconButton
         :label="panels.toggleVisibility"
@@ -108,7 +108,6 @@ const blendModeSelectValue = computed<BlendModeSelectValue>({
           class="w-full"
           :label="panels.blendMode"
           :options="blendModeOptions"
-          data-test-id="appearance-blend-mode"
         />
       </Tip>
 
@@ -148,7 +147,6 @@ const blendModeSelectValue = computed<BlendModeSelectValue>({
       <Tip :label="panels.radius">
         <VariableNumberField
           v-if="!showIndependentCorners && node"
-          data-test-id="corner-radius-input"
           :model-value="cornerRadiusValue"
           :min="0"
           :node-id="node.id"
@@ -162,7 +160,6 @@ const blendModeSelectValue = computed<BlendModeSelectValue>({
         </VariableNumberField>
         <NumberField
           v-else-if="!showIndependentCorners"
-          data-test-id="corner-radius-input"
           :model-value="cornerRadiusValue"
           :min="0"
           @update:model-value="updateProp('cornerRadius', $event)"

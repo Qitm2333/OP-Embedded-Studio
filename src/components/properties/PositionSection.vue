@@ -88,6 +88,7 @@ function handleAlign(
         <Tip :label="panels.xAxis">
           <NumberField
             icon="X"
+            data-property="x"
             :model-value="xValue"
             @update:model-value="actions.updateProp('x', $event)"
             @commit="(v: number, p: number) => actions.commitProp('x', v, p)"
@@ -96,6 +97,7 @@ function handleAlign(
         <Tip :label="panels.yAxis">
           <NumberField
             icon="Y"
+            data-property="y"
             :model-value="yValue"
             @update:model-value="actions.updateProp('y', $event)"
             @commit="(v: number, p: number) => actions.commitProp('y', v, p)"
@@ -107,6 +109,7 @@ function handleAlign(
         <Tip :label="panels.width">
           <NumberField
             icon="W"
+            data-property="width"
             :model-value="wValue"
             :min="1"
             @update:model-value="actions.updateProp('width', $event)"
@@ -116,6 +119,7 @@ function handleAlign(
         <Tip :label="panels.height">
           <NumberField
             icon="H"
+            data-property="height"
             :model-value="hValue"
             :min="1"
             @update:model-value="actions.updateProp('height', $event)"
@@ -129,6 +133,8 @@ function handleAlign(
           <NumberField
             class="flex-1"
             suffix="°"
+            data-property="rotation"
+            :aria-label="panels.rotation"
             :model-value="rotationValue"
             :min="-360"
             :max="360"

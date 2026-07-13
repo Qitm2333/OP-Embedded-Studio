@@ -26,6 +26,24 @@ For list-style panels, use:
 - `useStrokeControls()`
 - `useEffectsControls()`
 
+## Binding-aware fields
+
+Compose `BindableValueRoot` around fields that can reference variables or external design tokens.
+The primitive is presentation-agnostic, but binding-aware interfaces should keep focus
+non-destructive:
+
+- Show variable identity while the field is idle; expose the resolved value in supporting UI such
+  as a tooltip.
+- Focusing or opening the picker must not detach a binding.
+- Apply `detach-on-edit`, `readonly-when-bound`, or `edit-variable` only when the user actually
+  changes the value.
+- Put explicit detach actions in the picker rather than on a destructive one-click field icon.
+- Keep binding replacement, detach-on-edit, and multi-target changes in one provider batch.
+
+OpenPencil's app skin uses a violet variable-name pill at rest and reveals the resolved numeric
+value when NumberField enters editing mode. Custom editor shells can present the same headless
+state differently.
+
 ## Example: position panel
 
 ```vue

@@ -57,6 +57,7 @@ const styles = computed(() => tv(theme)({ actions: Boolean(slots.actions) }))
     v-bind="controlled ? { open } : {}"
     :default-open="defaultOpen"
     :empty="empty"
+    :aria-label="label"
     :class="styles.root({ class: [ui?.root, className] })"
     @update:open="emit('update:open', $event)"
   >
