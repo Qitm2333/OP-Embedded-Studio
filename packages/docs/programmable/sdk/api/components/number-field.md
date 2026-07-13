@@ -4,7 +4,7 @@ description: Headless numeric field primitives with scrubbing, expressions, and 
 ---
 
 <script setup lang="ts">
-import NumberFieldDemo from '../../../../../vue/src/primitives/NumberField/demo/NumberFieldDemo.vue'
+import NumberFieldDemo from '#vue/primitives/NumberField/demo/NumberFieldDemo.vue'
 import { data } from './number-field.data'
 </script>
 

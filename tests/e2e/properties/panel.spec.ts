@@ -4,6 +4,20 @@ import { getPageChildren, getSelectedNode } from '#tests/helpers/store'
 
 const editor = useEditorSetup()
 
+test('property sections collapse and reopen from their title', async () => {
+  await editor.canvas.clearCanvas()
+  await editor.canvas.drawRect(200, 200, 80, 80)
+
+  const title = editor.page.getByRole('button', { name: 'Appearance' })
+  const blendMode = editor.page.getByTestId('appearance-blend-mode')
+  await expect(blendMode).toBeVisible()
+  await title.click()
+  await expect(blendMode).toBeHidden()
+  await expect(title).toHaveAttribute('data-state', 'closed')
+  await title.click()
+  await expect(blendMode).toBeVisible()
+})
+
 test('NumberField drag changes X position', async () => {
   await editor.canvas.clearCanvas()
   await editor.canvas.drawRect(100, 100, 80, 80)

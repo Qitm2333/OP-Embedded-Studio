@@ -7,6 +7,9 @@ import type { PanelSectionTheme } from '@/theme/panel/section'
 
 export interface PanelSectionProps {
   label: string
+  open?: boolean
+  defaultOpen?: boolean
+  empty?: boolean
   class?: ClassValue
   ui?: ComponentUI<PanelSectionTheme>
 }
@@ -14,31 +17,62 @@ export interface PanelSectionProps {
 export interface PanelSectionSlots {
   default(): VNode[]
   actions?(): VNode[]
+  emptyAction?(): VNode[]
 }
 </script>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, getCurrentInstance } from 'vue'
 import { tv } from 'tailwind-variants'
+import {
+  PropertySectionActions,
+  PropertySectionContent,
+  PropertySectionEmptyAction,
+  PropertySectionHeader,
+  PropertySectionRoot,
+  PropertySectionTitle
+} from '@open-pencil/vue'
 
 import theme from '@/theme/panel/section'
 
-const { label, class: className, ui } = defineProps<PanelSectionProps>()
+const {
+  label,
+  open,
+  defaultOpen = true,
+  empty = false,
+  class: className,
+  ui
+} = defineProps<PanelSectionProps>()
+const vnodeProps = getCurrentInstance()?.vnode.props
+const controlled = vnodeProps ? Object.hasOwn(vnodeProps, 'open') : false
+const emit = defineEmits<{ 'update:open': [open: boolean] }>()
 const slots = defineSlots<PanelSectionSlots>()
 
 const styles = computed(() => tv(theme)({ actions: Boolean(slots.actions) }))
 </script>
 
 <template>
-  <section data-slot="root" :class="styles.root({ class: [ui?.root, className] })">
-    <div data-slot="header" :class="styles.header({ class: ui?.header })">
-      <h3 data-slot="title" :class="styles.title({ class: ui?.title })">{{ label }}</h3>
-      <div v-if="slots.actions" data-slot="actions" :class="styles.actions({ class: ui?.actions })">
+  <PropertySectionRoot
+    as="section"
+    v-bind="controlled ? { open } : {}"
+    :default-open="defaultOpen"
+    :empty="empty"
+    :class="styles.root({ class: [ui?.root, className] })"
+    @update:open="emit('update:open', $event)"
+  >
+    <PropertySectionHeader :class="styles.header({ class: ui?.header })">
+      <PropertySectionTitle :class="styles.title({ class: ui?.title })">
+        <span role="heading" aria-level="3">{{ label }}</span>
+      </PropertySectionTitle>
+      <PropertySectionActions v-if="slots.actions" :class="styles.actions({ class: ui?.actions })">
         <slot name="actions" />
-      </div>
-    </div>
-    <div data-slot="body" :class="styles.body({ class: ui?.body })">
+      </PropertySectionActions>
+    </PropertySectionHeader>
+    <PropertySectionContent :class="styles.body({ class: ui?.body })">
       <slot />
-    </div>
-  </section>
+      <PropertySectionEmptyAction v-if="slots.emptyAction" as-child>
+        <slot name="emptyAction" />
+      </PropertySectionEmptyAction>
+    </PropertySectionContent>
+  </PropertySectionRoot>
 </template>

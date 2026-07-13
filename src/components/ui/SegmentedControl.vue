@@ -28,6 +28,7 @@ export interface SegmentedControlSlots {
 <script setup lang="ts">
 import { computed } from 'vue'
 import { tv } from 'tailwind-variants'
+import { SegmentedControlItem, SegmentedControlRoot } from '@open-pencil/vue'
 
 import theme from '@/theme/segmented-control'
 
@@ -45,29 +46,33 @@ function itemClass(option: SegmentedControlOption) {
   }).item({ class: ui?.item })
 }
 
-function select(value: string) {
+function select(value: string | string[] | undefined) {
+  if (typeof value !== 'string') return
   modelValue.value = value
   emit('change', value)
 }
 </script>
 
 <template>
-  <div role="radiogroup" :aria-label="label" :class="styles.root({ class: ui?.root })">
-    <button
+  <SegmentedControlRoot
+    :model-value="modelValue"
+    :aria-label="label"
+    :class="styles.root({ class: ui?.root })"
+    @update:model-value="select"
+  >
+    <SegmentedControlItem
       v-for="option in options"
       :key="option.value"
+      v-slot="{ selected }"
+      :value="option.value"
       :data-test-id="option.testHook"
-      type="button"
-      role="radio"
       :aria-label="option.label"
-      :aria-checked="modelValue === option.value"
       :disabled="option.disabled"
       :class="itemClass(option)"
-      @click="select(option.value)"
     >
-      <slot name="option" :option="option" :selected="modelValue === option.value">
+      <slot name="option" :option="option" :selected="selected">
         <span class="truncate">{{ option.label }}</span>
       </slot>
-    </button>
-  </div>
+    </SegmentedControlItem>
+  </SegmentedControlRoot>
 </template>

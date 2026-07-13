@@ -4,7 +4,7 @@ description: Provider-driven value binding primitives for custom editor controls
 ---
 
 <script setup lang="ts">
-import BindableValueDemo from '../../../../../vue/src/primitives/BindableValue/demo/BindableValueDemo.vue'
+import BindableValueDemo from '#vue/primitives/BindableValue/demo/BindableValueDemo.vue'
 import { data } from './bindable-value.data'
 </script>
 

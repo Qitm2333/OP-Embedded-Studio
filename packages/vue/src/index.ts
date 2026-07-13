@@ -141,8 +141,63 @@ export type { LayoutControlsContext } from '#vue/primitives/LayoutControls'
 export { AppearanceControlsRoot } from '#vue/primitives/AppearanceControls'
 export { PageListRoot } from '#vue/primitives/PageList'
 export { PositionControlsRoot } from '#vue/primitives/PositionControls'
-export { PropertyListRoot, PropertyListItem, usePropertyList } from '#vue/primitives/PropertyList'
-export type { PropertyListContext } from '#vue/primitives/PropertyList'
+export { useEditorPropertyList } from '#vue/controls/property-list'
+export {
+  PropertyListRoot,
+  PropertyListItem,
+  PropertyListAdd,
+  PropertyListRemove,
+  PropertyListVisibility,
+  usePropertyList
+} from '#vue/primitives/PropertyList'
+export type {
+  PropertyListActions,
+  PropertyListContext,
+  PropertyListIdentity,
+  PropertyListItemActions,
+  PropertyListItemFor,
+  PropertyListItemMap,
+  PropertyListItemSlotProps,
+  PropertyListKey,
+  PropertyListPartProps,
+  PropertyListPatchFor,
+  PropertyListRootProps,
+  PropertyListRootSlotProps,
+  PropertyListRootSlots
+} from '#vue/primitives/PropertyList'
+export {
+  PropertySectionRoot,
+  PropertySectionHeader,
+  PropertySectionTitle,
+  PropertySectionActions,
+  PropertySectionContent,
+  PropertySectionEmptyAction,
+  usePropertySection
+} from '#vue/primitives/PropertySection'
+export type {
+  PropertySectionActionAPI,
+  PropertySectionContext,
+  PropertySectionPartProps,
+  PropertySectionRootProps,
+  PropertySectionRootSlots,
+  PropertySectionSlotProps,
+  PropertySectionStateAttrs
+} from '#vue/primitives/PropertySection'
+export {
+  SegmentedControlRoot,
+  SegmentedControlItem,
+  useSegmentedControl
+} from '#vue/primitives/SegmentedControl'
+export type {
+  SegmentedControlContext,
+  SegmentedControlItemProps,
+  SegmentedControlItemSlotProps,
+  SegmentedControlItemSlots,
+  SegmentedControlMode,
+  SegmentedControlOrientation,
+  SegmentedControlRootProps,
+  SegmentedControlRootSlots
+} from '#vue/primitives/SegmentedControl'
 export {
   BindableValueRoot,
   BindableValueTrigger,

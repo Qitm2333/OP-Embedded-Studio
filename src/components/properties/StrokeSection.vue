@@ -3,7 +3,6 @@ import { ref } from 'vue'
 
 import {
   applySolidStrokeColor,
-  PropertyListRoot,
   useColorVariableBinding,
   useStrokeControls,
   useOkHCL,
@@ -11,6 +10,7 @@ import {
 } from '@open-pencil/vue'
 
 import ColorStyleRow from '@/components/properties/ColorStyleRow.vue'
+import PropertyListRoot from '@/components/properties/PropertyListRoot.vue'
 import { boundVariableColor } from '@/components/properties/color-style-row'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import ColorInput from '@/components/ColorPicker/ColorInput.vue'

@@ -51,6 +51,7 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: {
+        '#docs': fileURLToPath(new URL('.', import.meta.url)),
         '#vue': fileURLToPath(new URL('../../vue/src', import.meta.url))
       }
     },

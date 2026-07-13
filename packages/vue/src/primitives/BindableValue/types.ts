@@ -1,4 +1,5 @@
-import type { Component, ComputedRef, Ref, VNode } from 'vue'
+import type { PrimitiveProps } from 'reka-ui'
+import type { ComputedRef, Ref, VNode } from 'vue'
 
 import type { Variable } from '@open-pencil/scene-graph'
 
@@ -10,12 +11,7 @@ import type {
   BoundEditPolicy
 } from '#vue/controls/binding-provider/types'
 
-export interface BindableValueTriggerProps {
-  /** Element or component rendered by the trigger. @default 'button' */
-  as?: string | Component
-  /** Merge trigger behavior into the single child element. @default false */
-  asChild?: boolean
-}
+export type BindableValueTriggerProps = PrimitiveProps
 
 export interface BindableValueRootProps<V = unknown> {
   /** Binding implementation. Falls back to the nearest injected provider. */

@@ -49,19 +49,31 @@ const { x, y, width, height, updateProp, commitProp } = usePosition()
 
 ```vue
 <script setup lang="ts">
-import { PropertyListRoot, useFillControls } from '@open-pencil/vue'
+import {
+  PropertyListRoot,
+  useEditorPropertyList,
+  useFillControls
+} from '@open-pencil/vue'
 
 const fillControls = useFillControls()
+const fills = useEditorPropertyList('fills')
 </script>
 
 <template>
-  <PropertyListRoot prop-key="fills" v-slot="{ items, add, remove }">
+  <PropertyListRoot
+    prop-key="fills"
+    :items="fills.items.value"
+    :mixed="fills.isMixed.value"
+    @add="fills.actions.add"
+    @remove="fills.actions.remove"
+    v-slot="{ items, actions }"
+  >
     <div v-for="(fill, index) in items" :key="index">
       {{ fill.type }}
-      <button @click="remove(index)">Remove</button>
+      <button @click="actions.remove(index)">Remove</button>
     </div>
 
-    <button @click="add(fillControls.defaultFill)">Add fill</button>
+    <button @click="actions.add(fillControls.defaultFill)">Add fill</button>
   </PropertyListRoot>
 </template>
 ```

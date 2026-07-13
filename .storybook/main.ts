@@ -21,7 +21,6 @@ const config: StorybookConfig = {
     const excludedPluginPrefixes = [
       'copy-canvaskit-wasm',
       'open-pencil-automation',
-      'raw-text-assets',
       'vite-plugin-pwa'
     ]
 

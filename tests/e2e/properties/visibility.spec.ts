@@ -70,6 +70,27 @@ test('stroke visibility supports repeat click and undo redo', async () => {
   ).toBe(true)
 })
 
+test('multi-selection list add is one undo step', async () => {
+  await editor.canvas.clearCanvas()
+  await editor.canvas.drawRect(100, 100, 80, 80)
+  await editor.canvas.drawRect(240, 100, 80, 80)
+  await editor.canvas.pressKey('Meta+a')
+
+  const strokeCounts = () =>
+    editor.page.evaluate(() => {
+      const store = window.openPencil?.getStore?.()
+      if (!store) throw new Error('OpenPencil store not initialized')
+      return [...store.state.selectedIds].map((id) => store.getNode(id)?.strokes.length ?? -1)
+    })
+
+  await editor.page.getByTestId('stroke-section-add').click()
+  await editor.canvas.waitForRender()
+  expect(await strokeCounts()).toEqual([1, 1])
+
+  await editor.canvas.undo()
+  expect(await strokeCounts()).toEqual([0, 0])
+})
+
 test('appearance visibility supports repeat click and undo redo in one step', async () => {
   const visibilityButton = editor.page.getByTestId('appearance-visibility')
   await expect(visibilityButton).toBeVisible()

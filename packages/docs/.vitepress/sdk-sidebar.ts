@@ -8,6 +8,8 @@ const SDK_COMPONENT_PAGES = [
   { text: 'ToolbarRoot', slug: 'toolbar-root' },
   { text: 'ToolbarItem', slug: 'toolbar-item' },
   { text: 'PageListRoot', slug: 'page-list-root' },
+  { text: 'PropertySection', slug: 'property-section', canonical: true },
+  { text: 'SegmentedControl', slug: 'segmented-control', canonical: true },
   { text: 'PropertyListRoot', slug: 'property-list-root' },
   { text: 'PropertyListItem', slug: 'property-list-item' },
   { text: 'ColorPickerRoot', slug: 'color-picker-root' },
@@ -17,8 +19,8 @@ const SDK_COMPONENT_PAGES = [
   { text: 'GradientEditorRoot', slug: 'gradient-editor-root' },
   { text: 'GradientEditorBar', slug: 'gradient-editor-bar' },
   { text: 'GradientEditorStop', slug: 'gradient-editor-stop' },
-  { text: 'NumberField', slug: 'number-field' },
-  { text: 'BindableValue', slug: 'bindable-value' },
+  { text: 'NumberField', slug: 'number-field', canonical: true },
+  { text: 'BindableValue', slug: 'bindable-value', canonical: true },
   { text: 'LayoutControlsRoot', slug: 'layout-controls-root' },
   { text: 'AppearanceControlsRoot', slug: 'appearance-controls-root' },
   { text: 'PositionControlsRoot', slug: 'position-controls-root' },
@@ -89,7 +91,7 @@ export const sdkSidebar = (prefix: string): DefaultTheme.SidebarItem[] => [
               { text: 'Overview', link: `${prefix}/programmable/sdk/api/components/` },
               ...SDK_COMPONENT_PAGES.map((page) => ({
                 text: page.text,
-                link: `${prefix}/programmable/sdk/api/components/${page.slug}`
+                link: `${'canonical' in page ? '' : prefix}/programmable/sdk/api/components/${page.slug}`
               }))
             ]
           },

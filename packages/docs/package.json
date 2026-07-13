@@ -4,6 +4,9 @@
   "license": "MIT",
   "private": true,
   "type": "module",
+  "imports": {
+    "#docs/*": "./.vitepress/*"
+  },
   "scripts": {
     "dev": "vitepress dev",
     "build": "vitepress build",
