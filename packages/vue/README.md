@@ -87,10 +87,12 @@ Main structural primitives include:
 - `FillPickerRoot`
 - `FontPickerRoot`
 - `NumberFieldRoot` / `NumberFieldInput` / `NumberFieldValue`
+- `BindableValueRoot` / `BindableValueTrigger` / `BindableValuePicker`
 
 These components coordinate structure and state, but do not impose app styling. `NumberField`
 adds pointer scrubbing, Arrow-key stepping, mixed/bound state attributes, and safe arithmetic
-expressions such as `+10`, `*2`, `50%`, and `12*8+4`.
+expressions such as `+10`, `*2`, `50%`, and `12*8+4`. `BindableValue` composes fields with a
+generic `BindingProvider` and supports detach-on-edit, read-only, and edit-variable policies.
 
 ## Public API tiers
 
@@ -145,6 +147,9 @@ These are the main APIs most SDK consumers should start with.
 - `NumberFieldUnit`
 - `NumberFieldTrailing`
 - `NumberFieldMenu`
+- `BindableValueRoot`
+- `BindableValueTrigger`
+- `BindableValuePicker`
 
 ### Advanced API
 
@@ -153,6 +158,9 @@ These exports are intentionally public, but they are lower-level or more special
 - `useNodeProps()`
 - `useSceneComputed()`
 - `useColorVariableBinding()`
+- `provideBindingProvider()`
+- `useBindingProvider()`
+- `useNumberBindingProvider()`
 - `useFillPicker()`
 - `useGradientStops()`
 - `useFontPicker()`

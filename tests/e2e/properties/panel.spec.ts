@@ -202,6 +202,51 @@ test('width can create, bind, and detach a number variable', async () => {
   editor.canvas.assertNoErrors()
 })
 
+test('bound NumberField detach edit is one undo step', async () => {
+  await editor.canvas.clearCanvas()
+  await editor.canvas.drawRect(200, 200, 80, 80)
+
+  const field = editor.page.getByTestId('corner-radius-input')
+  await field.getByLabel('Apply variable').click()
+  await editor.page.getByText('Create number variable from 0').click()
+  await editor.page.getByPlaceholder('Variable name').fill('Radius/default')
+  await editor.page.getByRole('button', { name: 'Create', exact: true }).click()
+  await editor.canvas.waitForRender()
+  await expect(field.getByLabel('Detach variable')).toBeVisible()
+
+  const readState = () =>
+    editor.page.evaluate(() => {
+      const store = window.openPencil?.getStore?.()
+      if (!store) throw new Error('OpenPencil store not initialized')
+      const id = [...store.state.selectedIds][0]
+      const node = id ? store.getNode(id) : null
+      const variableId = node?.boundVariables.cornerRadius
+      return node
+        ? {
+            radius: node.cornerRadius,
+            binding: variableId ? store.getVariable(variableId)?.name : null
+          }
+        : null
+    })
+
+  await field.click({ position: { x: 40, y: 13 } })
+  const input = field.getByTestId('number-field-input')
+  await input.fill('12')
+  await input.press('Escape')
+  await editor.canvas.waitForRender()
+  expect(await readState()).toEqual({ radius: 0, binding: 'Radius/default' })
+
+  await field.click({ position: { x: 40, y: 13 } })
+  await input.fill('24')
+  await input.press('Enter')
+  await editor.canvas.waitForRender()
+  expect(await readState()).toEqual({ radius: 24, binding: null })
+  await editor.canvas.pressKey('Meta+z')
+  await editor.canvas.waitForRender()
+  expect(await readState()).toEqual({ radius: 0, binding: 'Radius/default' })
+  editor.canvas.assertNoErrors()
+})
+
 test('alignment buttons align nodes to same X', async () => {
   await editor.canvas.clearCanvas()
   await editor.canvas.drawRect(50, 200, 60, 60)

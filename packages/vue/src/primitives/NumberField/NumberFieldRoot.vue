@@ -9,9 +9,11 @@ import {
   stepNumberValue
 } from '#vue/controls/number-expression'
 import type { NumberExpressionError } from '#vue/controls/number-expression'
+import { useOptionalBindableValue } from '#vue/primitives/BindableValue/context'
 import { provideNumberField } from '#vue/primitives/NumberField/context'
 import type {
   NumberFieldActions,
+  NumberFieldEditPolicy,
   NumberFieldMutationSource,
   NumberFieldRootAttrs,
   NumberFieldRootEmits,
@@ -38,6 +40,7 @@ const {
 const emit = defineEmits<NumberFieldRootEmits>()
 defineSlots<NumberFieldRootSlots>()
 
+const binding = useOptionalBindableValue<number>()
 const editing = ref(false)
 const scrubbing = ref(false)
 const draftValue = ref('')
@@ -45,16 +48,27 @@ const inputRef = ref<HTMLInputElement | null>(null)
 const invalidReason = ref<NumberExpressionError | null>(null)
 const workingValue = ref(0)
 
-const isMixed = computed(() => typeof modelValue === 'symbol')
-const numericValue = computed(() => (typeof modelValue === 'number' ? modelValue : 0))
+const isMixed = computed(() => binding?.state.value === 'mixed' || typeof modelValue === 'symbol')
+const numericValue = computed(() => {
+  const resolved = binding?.resolvedValue.value
+  if (binding?.state.value === 'bound' && typeof resolved === 'number') return resolved
+  return typeof modelValue === 'number' ? modelValue : 0
+})
 const displayValue = computed(() =>
   isMixed.value ? '' : String(normalizeNumberValue(numericValue.value))
 )
 const disabled = computed(() => disabledProp)
-const bound = computed(() => boundProp)
+const bound = computed(() => (binding ? binding.state.value === 'bound' : boundProp))
+const effectiveEditPolicy = computed<NumberFieldEditPolicy>(() => {
+  if (!binding) return editPolicy
+  if (binding.policy.value === 'readonly-when-bound') return 'readonly'
+  if (binding.policy.value === 'detach-on-edit') return 'detach-on-edit'
+  return 'editable'
+})
 const minValue = computed(() => min)
 const maxValue = computed(() => max)
 const stepValue = computed(() => (Number.isFinite(step) && step > 0 ? step : 1))
+const ariaLabelValue = computed(() => ariaLabel)
 
 let interactionStartValue = 0
 let interactionStartedMixed = false
@@ -66,12 +80,18 @@ let scrubTarget: Element | undefined
 let scrubPointerId: number | undefined
 
 function canMutate(): boolean {
-  return !disabled.value && !(bound.value && editPolicy === 'readonly')
+  return !disabled.value && !(bound.value && effectiveEditPolicy.value === 'readonly')
 }
 
 function requestMutation(source: NumberFieldMutationSource): boolean {
   if (!canMutate()) return false
-  if (bound.value && editPolicy === 'detach-on-edit' && !detachRequested) {
+  if (binding && !binding.actions.beginMutation(source)) return false
+  if (
+    !binding &&
+    bound.value &&
+    effectiveEditPolicy.value === 'detach-on-edit' &&
+    !detachRequested
+  ) {
     detachRequested = true
     emit('detach-request', source)
   }
@@ -89,13 +109,16 @@ function beginInteraction() {
 function updateValue(value: number) {
   const normalized = normalizeNumberValue(clampNumberValue(value, min, max))
   workingValue.value = normalized
+  if (binding?.actions.applyValue(normalized)) return
   if (modelValue !== normalized) emit('update:modelValue', normalized)
 }
 
 function restoreInteractionValue() {
   if (workingValue.value !== interactionStartValue || interactionStartedMixed !== isMixed.value) {
     workingValue.value = interactionStartValue
-    emit('update:modelValue', interactionStartValue)
+    if (!binding?.actions.applyValue(interactionStartValue)) {
+      emit('update:modelValue', interactionStartValue)
+    }
   }
 }
 
@@ -105,13 +128,14 @@ function finishCommit(value: number) {
   if (workingValue.value !== interactionStartValue) {
     emit('commit', workingValue.value, interactionStartValue)
   }
+  binding?.actions.commitMutation()
 }
 
 function startEdit() {
   if (editing.value || !canMutate()) return
   beginInteraction()
-  requestMutation('edit')
-  draftValue.value = isMixed.value ? '' : displayValue.value
+  if (!requestMutation('edit')) return
+  draftValue.value = interactionStartedMixed ? '' : String(interactionStartValue)
   editing.value = true
   void nextTick(() => {
     inputRef.value?.focus()
@@ -141,6 +165,7 @@ function commitEdit() {
     invalidReason.value = result.error
     restoreInteractionValue()
     editing.value = false
+    binding?.actions.cancelMutation()
     emit('invalid', expression, result.error)
     return
   }
@@ -152,6 +177,7 @@ function cancelEdit() {
   restoreInteractionValue()
   invalidReason.value = null
   editing.value = false
+  binding?.actions.cancelMutation()
 }
 
 function stopScrubListeners() {
@@ -204,6 +230,7 @@ function startScrub(event: PointerEvent) {
     scrubbing.value = false
     if (cancelled) {
       restoreInteractionValue()
+      binding?.actions.cancelMutation()
       return
     }
     if (!hasMoved) {
@@ -213,6 +240,7 @@ function startScrub(event: PointerEvent) {
     if (workingValue.value !== interactionStartValue) {
       emit('commit', workingValue.value, interactionStartValue)
     }
+    binding?.actions.commitMutation()
   }
 
   stopUp = useEventListener(listenerTarget, 'pointerup', (upEvent: PointerEvent) => {
@@ -225,10 +253,10 @@ function startScrub(event: PointerEvent) {
 
 function stepValueFromKeyboard(event: KeyboardEvent) {
   if (event.code !== 'ArrowUp' && event.code !== 'ArrowDown') return false
+  if (!editing.value) beginInteraction()
   if (!requestMutation('step')) return true
   event.preventDefault()
 
-  if (!editing.value) beginInteraction()
   const draftResult = editing.value
     ? evaluateNumberExpression(draftValue.value, {
         current: interactionStartValue,
@@ -248,7 +276,10 @@ function stepValueFromKeyboard(event: KeyboardEvent) {
   updateValue(next)
   draftValue.value = String(next)
 
-  if (!editing.value && next !== interactionStartValue) emit('commit', next, interactionStartValue)
+  if (!editing.value) {
+    if (next !== interactionStartValue) emit('commit', next, interactionStartValue)
+    binding?.actions.commitMutation()
+  }
   return true
 }
 
@@ -332,6 +363,7 @@ provideNumberField({
   min: minValue,
   max: maxValue,
   step: stepValue,
+  ariaLabel: ariaLabelValue,
   inputRef,
   state,
   stateAttrs,

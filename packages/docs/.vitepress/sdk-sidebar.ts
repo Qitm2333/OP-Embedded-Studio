@@ -18,6 +18,7 @@ const SDK_COMPONENT_PAGES = [
   { text: 'GradientEditorBar', slug: 'gradient-editor-bar' },
   { text: 'GradientEditorStop', slug: 'gradient-editor-stop' },
   { text: 'NumberField', slug: 'number-field' },
+  { text: 'BindableValue', slug: 'bindable-value' },
   { text: 'LayoutControlsRoot', slug: 'layout-controls-root' },
   { text: 'AppearanceControlsRoot', slug: 'appearance-controls-root' },
   { text: 'PositionControlsRoot', slug: 'position-controls-root' },

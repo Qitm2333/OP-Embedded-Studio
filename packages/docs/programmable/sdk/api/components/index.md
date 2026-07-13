@@ -41,4 +41,5 @@ description: Component reference for headless Vue primitives in @open-pencil/vue
   <SdkCard title="GradientEditorBar" to="/programmable/sdk/api/components/gradient-editor-bar" description="Draggable gradient bar primitive." />
   <SdkCard title="GradientEditorStop" to="/programmable/sdk/api/components/gradient-editor-stop" description="Single gradient stop primitive." />
   <SdkCard title="NumberField" to="/programmable/sdk/api/components/number-field" description="Numeric field anatomy with scrubbing, expressions, and keyboard stepping." />
+  <SdkCard title="BindableValue" to="/programmable/sdk/api/components/bindable-value" description="Provider-driven variable and token binding composition." />
 </SdkCardGroup>

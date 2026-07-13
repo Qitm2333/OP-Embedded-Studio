@@ -144,6 +144,36 @@ export { PositionControlsRoot } from '#vue/primitives/PositionControls'
 export { PropertyListRoot, PropertyListItem, usePropertyList } from '#vue/primitives/PropertyList'
 export type { PropertyListContext } from '#vue/primitives/PropertyList'
 export {
+  BindableValueRoot,
+  BindableValueTrigger,
+  BindableValuePicker,
+  useBindableValue,
+  useOptionalBindableValue
+} from '#vue/primitives/BindableValue'
+export type {
+  BindableValueActions,
+  BindableValueContext,
+  BindableValueRootProps,
+  BindableValueRootSlots,
+  BindableValueSlotProps,
+  BindableValueStateAttrs,
+  BindableValueTriggerProps
+} from '#vue/primitives/BindableValue'
+export {
+  provideBindingProvider,
+  useBindingProvider,
+  useOpenPencilBindingProvider,
+  useNumberBindingProvider
+} from '#vue/controls/binding-provider'
+export type {
+  BindingMutationSource,
+  BindingProvider,
+  BindingState,
+  BindingTarget,
+  BoundEditPolicy,
+  OpenPencilBindingProviderOptions
+} from '#vue/controls/binding-provider'
+export {
   NumberFieldRoot,
   NumberFieldInput,
   NumberFieldValue,

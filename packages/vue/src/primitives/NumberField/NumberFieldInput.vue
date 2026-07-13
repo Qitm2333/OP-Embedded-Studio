@@ -13,7 +13,7 @@ const ariaAttrs = computed(() => ({
   'aria-valuemin': Number.isFinite(ctx.min.value) ? ctx.min.value : undefined,
   'aria-valuemax': Number.isFinite(ctx.max.value) ? ctx.max.value : undefined,
   'aria-disabled': ctx.disabled.value ? ('true' as const) : undefined,
-  'aria-label': ctx.rootAttrs.value['aria-label']
+  'aria-label': ctx.ariaLabel.value
 }))
 
 watchEffect(() => {

@@ -113,6 +113,7 @@ export interface NumberFieldContext {
   min: ComputedRef<number>
   max: ComputedRef<number>
   step: ComputedRef<number>
+  ariaLabel: ComputedRef<string | undefined>
   inputRef: Ref<HTMLInputElement | null>
   state: ComputedRef<NumberFieldState>
   stateAttrs: ComputedRef<NumberFieldStateAttrs>
