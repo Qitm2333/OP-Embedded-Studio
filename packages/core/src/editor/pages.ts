@@ -27,17 +27,30 @@ export function createPageActions(ctx: EditorContext) {
 
     const populated = populateLazyFigImportRoots(ctx.graph, [pageId])
 
-    const nodeIds = ctx.graph.getChildren(pageId).map((n) => n.id)
-    const toLoad = fontManager.collectFontKeys(ctx.graph, nodeIds)
+    // Load every text face on this page (open + lazy multi-page populate).
+    // collectFontKeys walks the page subtree including styleRuns.
+    const pageRootIds = [pageId]
+    const toLoad = fontManager.collectFontKeys(ctx.graph, pageRootIds)
+    let anyLoaded = false
+    let fallbacksLoaded = false
     try {
-      if (toLoad.length > 0) {
-        await Promise.all(toLoad.map(([family, style]) => ctx.loadFont(family, style)))
-      }
-      await ensureTextFallbackPacksForNodes(ctx.graph, nodeIds)
+      const loadResults =
+        toLoad.length > 0
+          ? await Promise.all(toLoad.map(([family, style]) => ctx.loadFont(family, style)))
+          : []
+      anyLoaded = loadResults.some((result) => result != null)
+      fallbacksLoaded = await ensureTextFallbackPacksForNodes(ctx.graph, pageRootIds)
     } catch (err) {
       console.error('Failed to load fonts during page switch:', err)
     }
-    if (ctx.getRenderer() || populated) {
+
+    if (anyLoaded || fallbacksLoaded) {
+      for (const [, node] of ctx.graph.nodes) {
+        if (node.type === 'TEXT') node.textPicture = null
+      }
+    }
+
+    if (ctx.getRenderer() || populated || anyLoaded || fallbacksLoaded) {
       computeAllLayouts(ctx.graph, pageId)
     }
     ctx.requestRender()
