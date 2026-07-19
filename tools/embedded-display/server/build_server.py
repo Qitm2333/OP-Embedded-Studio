@@ -27,7 +27,8 @@ SERVER_DIR = Path(__file__).resolve().parent
 WEB_DIR = SERVER_DIR / "web"
 PROFILES_JSON = PROJECT_DIR / "screen_profiles" / "profiles.json"
 GENERATED_IMAGE_HEADER = PROJECT_DIR / "main" / "generated_image_user.h"
-GENERATED_PROTOTYPE_HEADER = PROJECT_DIR / "main" / "generated_prototype_user.h"
+GENERATED_PROTOTYPE_HEADER = PROJECT_DIR / "main" / "generated_prototype_runtime.h"
+GENERATED_CONTENT_DIR = PROJECT_DIR / "generated-content"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 LOG_TAIL_LINES = 80
@@ -127,6 +128,39 @@ def build_dir_for_profile(profile_id, build_mode=DEFAULT_BUILD_MODE):
     safe_mode = safe_path_segment(normalize_build_mode(build_mode))
     safe_id = safe_path_segment(profile_id)
     return Path("build") / "modes" / safe_mode / f"profile_{safe_id}"
+
+
+def generated_content_dir(profile_id, build_mode):
+    return (
+        GENERATED_CONTENT_DIR
+        / safe_path_segment(normalize_build_mode(build_mode))
+        / f"profile_{safe_path_segment(profile_id)}"
+    )
+
+
+def store_generated_resources(profile_id, build_mode):
+    """Snapshot generated headers so build modes cannot overwrite each other."""
+    content_dir = generated_content_dir(profile_id, build_mode)
+    content_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(GENERATED_IMAGE_HEADER, content_dir / GENERATED_IMAGE_HEADER.name)
+    shutil.copyfile(GENERATED_PROTOTYPE_HEADER, content_dir / GENERATED_PROTOTYPE_HEADER.name)
+
+
+def restore_generated_resources(profile_id, build_mode):
+    """Materialize the exact resource pair owned by the requested build mode."""
+    content_dir = generated_content_dir(profile_id, build_mode)
+    image_header = content_dir / GENERATED_IMAGE_HEADER.name
+    prototype_header = content_dir / GENERATED_PROTOTYPE_HEADER.name
+    if not image_header.is_file() or not prototype_header.is_file():
+        resource_name = "状态机" if build_mode.endswith("-prototype") else "Frame"
+        raise ApiError(
+            HTTPStatus.BAD_REQUEST,
+            f"{resource_name} 资源尚未准备，请先重新烘焙后再生成固件",
+        )
+    shutil.copyfile(image_header, GENERATED_IMAGE_HEADER)
+    shutil.copyfile(prototype_header, GENERATED_PROTOTYPE_HEADER)
+    touch_generated_image_wrapper()
+    touch_generated_prototype_wrapper()
 
 
 def find_idf_path():
@@ -567,6 +601,7 @@ def clear_generated_image():
         ]),
         encoding="utf-8",
     )
+    write_disabled_prototype_header()
     return {"ok": True, "image": generated_image_status()}
 
 
@@ -772,6 +807,8 @@ def run_build(profile_id, wifi_credentials=None, build_mode=DEFAULT_BUILD_MODE):
     normalize_idf_env(env)
 
     with BUILD_LOCK:
+        if mode in ("usb-frame", "usb-prototype"):
+            restore_generated_resources(profile_id, mode)
         build_signature = prepare_build_dir(registry, profile, mode, build_dir)
         completed = subprocess.run(
             command,
@@ -895,7 +932,10 @@ class RequestHandler(BaseHTTPRequestHandler):
                 if not isinstance(profile_id, str) or not profile_id:
                     raise ApiError(HTTPStatus.BAD_REQUEST, "request body must include non-empty profileId")
                 profile = find_profile(registry, profile_id)
-                self.write_json(write_generated_image_header(profile, body))
+                with BUILD_LOCK:
+                    result = write_generated_image_header(profile, body)
+                    store_generated_resources(profile_id, "usb-frame")
+                self.write_json(result)
                 return
 
             if method == "POST" and parsed.path == "/api/prototype":
@@ -905,11 +945,16 @@ class RequestHandler(BaseHTTPRequestHandler):
                 if not isinstance(profile_id, str) or not profile_id:
                     raise ApiError(HTTPStatus.BAD_REQUEST, "request body must include non-empty profileId")
                 profile = find_profile(registry, profile_id)
-                self.write_json(write_generated_prototype_header(profile, body))
+                with BUILD_LOCK:
+                    result = write_generated_prototype_header(profile, body)
+                    store_generated_resources(profile_id, "usb-prototype")
+                self.write_json(result)
                 return
 
             if method == "POST" and parsed.path == "/api/image/clear":
-                self.write_json(clear_generated_image())
+                with BUILD_LOCK:
+                    result = clear_generated_image()
+                self.write_json(result)
                 return
 
             raise ApiError(HTTPStatus.NOT_FOUND, f"unknown endpoint: {method} {parsed.path}")

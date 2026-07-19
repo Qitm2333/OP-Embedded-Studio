@@ -1,6 +1,8 @@
-﻿build/
+build/
+generated-content/
 __pycache__/
 *.pyc
 sdkconfig
 sdkconfig.old
 main/generated_image_user.h
+main/generated_prototype_runtime.h
