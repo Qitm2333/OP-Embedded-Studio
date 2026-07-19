@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>屏幕UI展示台</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/esp-web-tools@10/dist/web/install-button.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="topbar-copy">
+          <div class="topbar-kicker">ESP32-S3 屏幕演示工具</div>
+          <h1>屏幕UI展示台</h1>
+          <p>选择屏幕、放入图片，一键生成并烧录到开发板。</p>
+          <div class="topbar-meta">
+            <span>本地生成</span>
+            <span>屏幕方案</span>
+            <span>浏览器烧录</span>
+          </div>
+        </div>
+        <div class="status-pill" id="serverStatus">正在检查服务器</div>
+      </header>
+
+      <section class="layout">
+        <aside class="sidebar">
+          <div class="section-title">屏幕配置</div>
+          <div id="profileList" class="profile-list"></div>
+
+          <div class="side-block current-profile">
+            <button id="currentProfileToggle" class="side-toggle" type="button" aria-expanded="false" aria-controls="currentProfileDetails">
+              <span>
+                <span class="section-title">当前选择</span>
+                <strong id="currentProfileName">-</strong>
+              </span>
+              <span class="side-toggle-meta">
+                <span id="currentProfileToggleLabel">展开</span>
+                <span class="collapsible-arrow" aria-hidden="true"></span>
+              </span>
+            </button>
+            <div id="currentProfileDetails" class="current-summary hidden">
+              <div>
+                <span>开发板</span>
+                <strong id="boardName">-</strong>
+              </div>
+              <div>
+                <span>屏幕芯片</span>
+                <strong id="driverIc">-</strong>
+              </div>
+              <div>
+                <span>分辨率</span>
+                <strong id="resolution">-</strong>
+              </div>
+              <div>
+                <span>接口</span>
+                <strong id="interfaceName">-</strong>
+              </div>
+              <div>
+                <span>可视区域</span>
+                <strong id="visibleArea">-</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="side-block">
+            <div class="section-title">操作流程</div>
+            <ol class="flow-list">
+              <li id="stepSelect" class="active">选择屏幕</li>
+              <li id="stepBuild">生成固件</li>
+              <li id="stepFlash">浏览器烧录</li>
+              <li id="stepVerify">观察屏幕</li>
+            </ol>
+          </div>
+        </aside>
+
+        <section class="content">
+          <div class="panel">
+            <button id="wiringToggle" class="panel-header compact collapsible-toggle" type="button" aria-expanded="false" aria-controls="wiringContent">
+              <span class="collapsible-title">接线说明</span>
+              <span class="collapsible-meta">
+                <span id="wiringToggleLabel">展开</span>
+                <span class="collapsible-arrow" aria-hidden="true"></span>
+              </span>
+            </button>
+            <div id="wiringContent" class="collapsible-content hidden">
+              <div id="wiringDiagram" class="wiring-diagram"></div>
+              <table class="wiring-table hidden">
+                <thead>
+                  <tr>
+                    <th>FPC Pin</th>
+                    <th>信号</th>
+                    <th>连接到</th>
+                    <th>说明</th>
+                  </tr>
+                </thead>
+                <tbody id="wiringBody"></tbody>
+              </table>
+              <div class="note" id="backlightNote"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header compact">
+              <h3>图片资源</h3>
+            </div>
+            <div id="imageDropZone" class="image-tool image-drop-zone">
+              <div class="drop-hint">
+                <strong>拖拽图片到这里</strong>
+                <span>支持 GIF、单张图片或多张序列帧</span>
+              </div>
+              <div class="image-library-bar">
+                <label class="file-trigger" for="imageInput">选择图片</label>
+                <div class="image-library-meta">
+                  <strong id="selectedFilesLabel">未选择素材</strong>
+                  <span id="selectedFilesMeta">支持 GIF、PNG、JPG、BMP、WebP</span>
+                </div>
+              </div>
+              <div class="image-controls">
+                <input id="imageInput" class="hidden-file-input" type="file" accept="image/gif,image/png,image/jpeg,image/webp,image/bmp" multiple>
+                <button id="uploadImageButton" class="secondary-button" type="button" disabled>上传图片</button>
+                <button id="clearImageButton" class="secondary-button ghost" type="button">清除图片</button>
+              </div>
+              <div class="image-options">
+                <label>
+                  <span>适配模式</span>
+                  <select id="imageFitMode">
+                    <option value="stretch">拉伸填满</option>
+                    <option value="center" selected>居中等比</option>
+                    <option value="top-left">左上等比</option>
+                  </select>
+                </label>
+                <label>
+                  <span>旋转</span>
+                  <select id="imageRotation">
+                    <option value="0" selected>0°</option>
+                    <option value="90">90°</option>
+                    <option value="180">180°</option>
+                    <option value="270">270°</option>
+                  </select>
+                </label>
+                <label>
+                  <span>背景颜色</span>
+                  <div class="color-row">
+                    <input id="imageBgColor" type="color" value="#000000">
+                    <input id="imageBgText" type="text" value="#000000" spellcheck="false">
+                  </div>
+                </label>
+                <label>
+                  <span>FPS</span>
+                  <input id="imageFps" type="number" value="10" min="1" max="30">
+                </label>
+                <label>
+                  <span>帧选择</span>
+                  <select id="framePickMode">
+                    <option value="even" selected>均匀抽帧</option>
+                    <option value="first">取前 N 帧</option>
+                  </select>
+                </label>
+                <label>
+                  <span>最大帧数</span>
+                  <input id="imageMaxFrames" type="number" value="20" min="1" max="120">
+                </label>
+              </div>
+              <div id="imageState" class="build-state">未选择图片时，固件会显示默认几何测试图。</div>
+              <div id="imageStats" class="stats-grid hidden">
+                <div>
+                  <span>原始帧数</span>
+                  <strong id="sourceFrameCount">-</strong>
+                </div>
+                <div>
+                  <span>使用帧数</span>
+                  <strong id="selectedFrameCount">-</strong>
+                </div>
+                <div>
+                  <span>图片数据</span>
+                  <strong id="imageRawSize">-</strong>
+                </div>
+                <div>
+                  <span>资源余量</span>
+                  <strong id="imageRawFree">-</strong>
+                </div>
+                <div>
+                  <span>当前屏幕最多</span>
+                  <strong id="profileMaxFrames">-</strong>
+                </div>
+              </div>
+              <div id="previewPanel" class="preview-panel hidden">
+                <div class="preview-stage">
+                  <canvas id="imagePreview" class="image-preview"></canvas>
+                </div>
+                <div class="preview-controls">
+                  <div class="preview-toolbar">
+                    <button id="prevFrameButton" class="secondary-button ghost" type="button">上一帧</button>
+                    <button id="playPreviewButton" class="secondary-button" type="button">播放</button>
+                    <button id="nextFrameButton" class="secondary-button ghost" type="button">下一帧</button>
+                  </div>
+                  <div class="preview-scrub">
+                    <input id="previewFrameSlider" type="range" min="1" max="1" value="1" step="1">
+                    <span id="previewFrameLabel" class="preview-frame-label">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header compact">
+              <h3>生成与烧录</h3>
+              <button id="buildButton" class="primary-button" type="button" disabled>生成固件</button>
+            </div>
+            <div class="flash-checks">
+              <div id="serialSupport" class="check-pill">检查浏览器串口</div>
+              <div id="buildReady" class="check-pill">等待生成</div>
+            </div>
+            <div id="buildState" class="build-state">请选择一个屏幕后开始生成。</div>
+            <div id="artifactPanel" class="artifact-panel hidden">
+              <div class="install-box">
+                <div>
+                  <h4>浏览器串口烧录</h4>
+                  <p id="flashHint">点击右侧 Connect 按钮，选择开发板串口后自动烧录。</p>
+                </div>
+                <div class="install-actions">
+                  <esp-web-install-button id="installButton" class="install-button"></esp-web-install-button>
+                  <button id="reloadInstallButton" class="secondary-button ghost hidden" type="button">重试加载 Connect</button>
+                </div>
+              </div>
+              <details class="advanced-details">
+                <summary>高级信息</summary>
+                <div class="artifact-grid">
+                  <div>
+                    <span>应用大小</span>
+                    <code id="appSize">-</code>
+                  </div>
+                  <div>
+                    <span>存储余量</span>
+                    <code id="appFree">-</code>
+                  </div>
+                  <div>
+                    <span>主程序</span>
+                    <code id="appBin">-</code>
+                  </div>
+                  <div>
+                    <span>启动文件</span>
+                    <code id="bootloaderBin">-</code>
+                  </div>
+                  <div>
+                    <span>存储布局</span>
+                    <code id="partitionTableBin">-</code>
+                  </div>
+                  <div>
+                    <span>烧录信息</span>
+                    <code id="flashArgs">-</code>
+                  </div>
+                </div>
+                <div class="manifest-row">
+                  <span>固件文件</span>
+                  <a id="manifestLink" href="#" target="_blank" rel="noreferrer">-</a>
+                </div>
+                <pre id="logTail" class="log-tail"></pre>
+              </details>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

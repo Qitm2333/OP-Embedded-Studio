@@ -5,6 +5,7 @@ import { useEditorCommands, useI18n } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { executeClipboardCommand } from '@/app/editor/clipboard/system'
+import { showTopLayersFirst } from '@/app/editor/layer-tree-preferences'
 import { createSharedEditorMenuActions } from '@/app/shell/menu/editor-actions'
 import type { AppMenuActionItem, AppMenuEntry, AppMenuGroupSchema } from '@/app/shell/menu/schema'
 import { APP_MENU_SCHEMA } from '@/app/shell/menu/schema'
@@ -43,6 +44,7 @@ export function useAppMenu() {
     cut: 'cut',
     paste: 'paste',
     'paste-to-replace': 'pasteToReplace',
+    'layer-order-front-first': 'layersTopFirst',
     language: 'language',
     profiler: 'profiler',
     'toggle-ui': 'toggleUI',
@@ -104,6 +106,8 @@ export function useAppMenu() {
         return store.state.autosaveEnabled
       case 'profiler':
         return store.renderer?.profiler.hudVisible ?? false
+      case 'layer-order-front-first':
+        return showTopLayersFirst.value
       case 'theme-light':
         return theme.value === 'light'
       case 'theme-dark':
@@ -123,6 +127,10 @@ export function useAppMenu() {
         }
       case 'profiler':
         return () => store.toggleProfiler()
+      case 'layer-order-front-first':
+        return (value: boolean) => {
+          showTopLayersFirst.value = value
+        }
       case 'theme-light':
       case 'theme-dark':
       case 'theme-auto':

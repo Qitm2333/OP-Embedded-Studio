@@ -36,6 +36,7 @@
   "underline": "下划线",
   "pasteHere": "粘贴到这里",
   "pasteToReplace": "粘贴并替换",
+  "layersTopFirst": "图层面板顶层优先（Figma）",
   "copyPasteAs": "复制/粘贴为",
   "copyAsText": "复制为文本",
   "copyAsSVG": "复制为 SVG",

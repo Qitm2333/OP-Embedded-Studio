@@ -1,0 +1,411 @@
+{
+  "schemaVersion": 1,
+  "project": "examples/peripherals/lcd/st7789_simple",
+  "board": {
+    "id": "esp32s3_qfn56_8m_flash_8m_psram",
+    "name": "ESP32-S3 QFN56",
+    "target": "esp32s3",
+    "flash": "8MB",
+    "psram": "8MB",
+    "notes": [
+      "Avoid GPIO19 and GPIO20 for LCD signals on ESP32-S3 boards that use native USB.",
+      "The LCD modules use write-only SPI in this project; MISO is not connected."
+    ],
+    "commonGpio": {
+      "sclk": 12,
+      "mosi": 11,
+      "miso": -1,
+      "dc": 9,
+      "reset": 14,
+      "cs": 10,
+      "backlight": -1
+    }
+  },
+  "defaults": {
+    "base": "screen_profiles/base.defaults"
+  },
+  "profiles": [
+    {
+      "id": "st7789_qs130tab1005a",
+      "displayName": "QS130TAB1005A 240x240 ST7789",
+      "displayNameZh": "QS130TAB1005A 240x240 ST7789 方屏",
+      "screenType": "square_tft",
+      "module": "QS130TAB1005A",
+      "driverIc": "ST7789P3-G5 / ST7789 compatible",
+      "controller": "ST7789",
+      "interface": "4-wire SPI",
+      "logicalResolution": {
+        "width": 240,
+        "height": 240
+      },
+      "visibleArea": {
+        "shape": "square",
+        "description": "Full 240 x 240 logical frame is visible."
+      },
+      "verified": true,
+      "defaultsFile": "screen_profiles/st7789_qs130tab1005a.defaults",
+      "menuconfig": {
+        "CONFIG_EXAMPLE_LCD_CONTROLLER_ST7789": true,
+        "CONFIG_EXAMPLE_LCD_H_RES": 240,
+        "CONFIG_EXAMPLE_LCD_V_RES": 240,
+        "CONFIG_EXAMPLE_LCD_X_GAP": 0,
+        "CONFIG_EXAMPLE_LCD_Y_GAP": 0,
+        "CONFIG_EXAMPLE_LCD_INVERT_COLOR": true,
+        "CONFIG_EXAMPLE_LCD_RGB_ORDER_RGB": true,
+        "CONFIG_EXAMPLE_LCD_PIXEL_CLOCK_HZ": 10000000
+      },
+      "wiring": [
+        {
+          "fpcPin": 1,
+          "signal": "SDA",
+          "connectTo": "ESP32-S3 GPIO11",
+          "gpio": 11,
+          "note": "SPI MOSI"
+        },
+        {
+          "fpcPin": 2,
+          "signal": "SCL",
+          "connectTo": "ESP32-S3 GPIO12",
+          "gpio": 12,
+          "note": "SPI SCLK"
+        },
+        {
+          "fpcPin": 3,
+          "signal": "RS",
+          "connectTo": "ESP32-S3 GPIO9",
+          "gpio": 9,
+          "note": "LCD DC"
+        },
+        {
+          "fpcPin": 4,
+          "signal": "RESET",
+          "connectTo": "ESP32-S3 GPIO14",
+          "gpio": 14,
+          "note": "Active-low reset"
+        },
+        {
+          "fpcPin": 5,
+          "signal": "CS",
+          "connectTo": "ESP32-S3 GPIO10",
+          "gpio": 10,
+          "note": "SPI chip select"
+        },
+        {
+          "fpcPin": 6,
+          "signal": "GND",
+          "connectTo": "GND",
+          "gpio": null,
+          "note": "Common ground"
+        },
+        {
+          "fpcPin": 7,
+          "signal": "VDD",
+          "connectTo": "3V3",
+          "gpio": null,
+          "note": "LCD logic power"
+        },
+        {
+          "fpcPin": 8,
+          "signal": "LEDK",
+          "connectTo": "Backlight cathode",
+          "gpio": null,
+          "note": "Use current limiting or a backlight driver"
+        },
+        {
+          "fpcPin": 9,
+          "signal": "LEDA",
+          "connectTo": "Backlight anode",
+          "gpio": null,
+          "note": "Backlight positive"
+        },
+        {
+          "fpcPin": 10,
+          "signal": "GND",
+          "connectTo": "GND",
+          "gpio": null,
+          "note": "Common ground"
+        }
+      ],
+      "backlight": {
+        "recommended": "LEDA -> 3V3; LEDK -> current-limit resistor or constant-current sink -> GND.",
+        "recommendedZh": "LEDA 接 3V3；LEDK 通过限流电阻或恒流驱动回到 GND。",
+        "controlledByFirmware": false,
+        "menuconfigBacklightGpio": -1
+      }
+    },
+    {
+      "id": "st7735s_lb090r_if03",
+      "displayName": "LB090R-IF03 128x128 ST7735S",
+      "displayNameZh": "LB090R-IF03 128x128 ST7735S 圆屏",
+      "screenType": "round_tft",
+      "module": "LB090R-IF03",
+      "driverIc": "ST7735S",
+      "controller": "ST7735",
+      "interface": "4-wire SPI",
+      "logicalResolution": {
+        "width": 128,
+        "height": 128
+      },
+      "visibleArea": {
+        "shape": "round",
+        "description": "Circular active area inside a 128 x 128 logical frame. Logical corners can be clipped by the round visible area."
+      },
+      "verified": true,
+      "defaultsFile": "screen_profiles/st7735s_lb090r_if03.defaults",
+      "menuconfig": {
+        "CONFIG_EXAMPLE_LCD_CONTROLLER_ST7735": true,
+        "CONFIG_EXAMPLE_LCD_H_RES": 128,
+        "CONFIG_EXAMPLE_LCD_V_RES": 128,
+        "CONFIG_EXAMPLE_LCD_X_GAP": 0,
+        "CONFIG_EXAMPLE_LCD_Y_GAP": 0,
+        "CONFIG_EXAMPLE_LCD_INVERT_COLOR": true,
+        "CONFIG_EXAMPLE_LCD_RGB_ORDER_RGB": false,
+        "CONFIG_EXAMPLE_LCD_RGB_ORDER_BGR": true,
+        "CONFIG_EXAMPLE_LCD_PIXEL_CLOCK_HZ": 10000000
+      },
+      "wiring": [
+        {
+          "fpcPin": 1,
+          "signal": "GND",
+          "connectTo": "GND",
+          "gpio": null,
+          "note": "Common ground"
+        },
+        {
+          "fpcPin": 2,
+          "signal": "VDD",
+          "connectTo": "3V3",
+          "gpio": null,
+          "note": "LCD logic power"
+        },
+        {
+          "fpcPin": 3,
+          "signal": "SCLK",
+          "connectTo": "ESP32-S3 GPIO12",
+          "gpio": 12,
+          "note": "SPI SCLK"
+        },
+        {
+          "fpcPin": 4,
+          "signal": "TE",
+          "connectTo": "Not connected",
+          "gpio": null,
+          "note": "Tearing-effect signal is unused"
+        },
+        {
+          "fpcPin": 5,
+          "signal": "RESET",
+          "connectTo": "ESP32-S3 GPIO14",
+          "gpio": 14,
+          "note": "Active-low reset"
+        },
+        {
+          "fpcPin": 6,
+          "signal": "CS",
+          "connectTo": "ESP32-S3 GPIO10",
+          "gpio": 10,
+          "note": "SPI chip select"
+        },
+        {
+          "fpcPin": 7,
+          "signal": "SDA",
+          "connectTo": "ESP32-S3 GPIO11",
+          "gpio": 11,
+          "note": "SPI MOSI"
+        },
+        {
+          "fpcPin": 8,
+          "signal": "D/C",
+          "connectTo": "ESP32-S3 GPIO9",
+          "gpio": 9,
+          "note": "LCD DC"
+        },
+        {
+          "fpcPin": 9,
+          "signal": "LEDK",
+          "connectTo": "Backlight cathode",
+          "gpio": null,
+          "note": "Use current limiting or a backlight driver"
+        },
+        {
+          "fpcPin": 10,
+          "signal": "LEDA",
+          "connectTo": "Backlight anode",
+          "gpio": null,
+          "note": "Backlight positive"
+        }
+      ],
+      "backlight": {
+        "recommended": "Use a constant-current backlight driver when possible. LEDA connects to driver positive output or 3V3 test power; LEDK returns through the current limit path.",
+        "recommendedZh": "建议优先使用恒流背光驱动。LEDA 接驱动正输出，或调试时接 3V3；LEDK 通过限流通路回到负端或 GND。",
+        "spec": "3 white LEDs, 2.9V-3.1V, 60mA typical, 90mA maximum.",
+        "specZh": "背光为 3 颗白光 LED，电压 2.9V-3.1V，典型电流 60mA，最大电流 90mA。",
+        "controlledByFirmware": false,
+        "menuconfigBacklightGpio": -1
+      }
+    },
+    {
+      "id": "gc9d01n_gvh099wq010b_a0",
+      "displayName": "GVH099WQ010B-A0 160x160 GC9D01N",
+      "displayNameZh": "GVH099WQ010B-A0 160x160 GC9D01N 圆屏",
+      "screenType": "round_tft",
+      "module": "GVH099WQ010B-A0",
+      "driverIc": "GC9D01N",
+      "controller": "GC9D01N",
+      "interface": "4-wire SPI",
+      "logicalResolution": {
+        "width": 160,
+        "height": 160
+      },
+      "visibleArea": {
+        "shape": "round",
+        "description": "0.99 inch circular active area inside a 160 x 160 logical frame. Logical corners can be clipped by the round visible area.",
+        "descriptionZh": "0.99 英寸圆形可视区，位于 160 x 160 逻辑画面内；逻辑四角会被圆形可视区裁切。"
+      },
+      "physicalSize": {
+        "diagonalInch": 0.99,
+        "activeAreaMm": {
+          "width": 23.1,
+          "height": 23.1
+        },
+        "moduleSizeMm": {
+          "width": 25.2,
+          "height": 27.05,
+          "thickness": 1.75
+        }
+      },
+      "verified": false,
+      "defaultsFile": "screen_profiles/gc9d01n_gvh099wq010b_a0.defaults",
+      "menuconfig": {
+        "CONFIG_EXAMPLE_LCD_CONTROLLER_GC9D01N": true,
+        "CONFIG_EXAMPLE_LCD_H_RES": 160,
+        "CONFIG_EXAMPLE_LCD_V_RES": 160,
+        "CONFIG_EXAMPLE_LCD_X_GAP": 0,
+        "CONFIG_EXAMPLE_LCD_Y_GAP": 0,
+        "CONFIG_EXAMPLE_LCD_INVERT_COLOR": false,
+        "CONFIG_EXAMPLE_LCD_RGB_ORDER_RGB": true,
+        "CONFIG_EXAMPLE_LCD_PIXEL_CLOCK_HZ": 10000000
+      },
+      "wiring": [
+        {
+          "fpcPin": 1,
+          "signal": "GND",
+          "connectTo": "GND",
+          "gpio": null,
+          "note": "Common ground"
+        },
+        {
+          "fpcPin": 2,
+          "signal": "SDA",
+          "connectTo": "ESP32-S3 GPIO11",
+          "gpio": 11,
+          "note": "SPI MOSI"
+        },
+        {
+          "fpcPin": 3,
+          "signal": "SCL",
+          "connectTo": "ESP32-S3 GPIO12",
+          "gpio": 12,
+          "note": "SPI SCLK"
+        },
+        {
+          "fpcPin": 4,
+          "signal": "RS",
+          "connectTo": "ESP32-S3 GPIO9",
+          "gpio": 9,
+          "note": "LCD DC, command/data select"
+        },
+        {
+          "fpcPin": 5,
+          "signal": "RESET",
+          "connectTo": "ESP32-S3 GPIO14",
+          "gpio": 14,
+          "note": "Active-low reset"
+        },
+        {
+          "fpcPin": 6,
+          "signal": "CS",
+          "connectTo": "ESP32-S3 GPIO10",
+          "gpio": 10,
+          "note": "SPI chip select"
+        },
+        {
+          "fpcPin": 7,
+          "signal": "VCC",
+          "connectTo": "3V3",
+          "gpio": null,
+          "note": "LCD logic power, 2.8V or 3.3V"
+        },
+        {
+          "fpcPin": 8,
+          "signal": "LEDK",
+          "connectTo": "Backlight cathode",
+          "gpio": null,
+          "note": "Use current limiting or a backlight driver"
+        },
+        {
+          "fpcPin": 9,
+          "signal": "LEDA",
+          "connectTo": "Backlight anode",
+          "gpio": null,
+          "note": "Backlight positive"
+        },
+        {
+          "fpcPin": 10,
+          "signal": "GND",
+          "connectTo": "GND",
+          "gpio": null,
+          "note": "Common ground"
+        }
+      ],
+      "backlight": {
+        "recommended": "Use a constant-current backlight driver when possible. LEDA connects to driver positive output or 3V3 test power; LEDK returns through the current limit path.",
+        "recommendedZh": "建议优先使用恒流背光驱动。LEDA 接驱动正输出，或调试时接 3V3；LEDK 通过限流通路回到负端或 GND。",
+        "spec": "2 white LEDs, 2.8V-3.2V, 40mA typical.",
+        "specZh": "背光为 2 颗白光 LED，电压 2.8V-3.2V，典型电流 40mA。",
+        "controlledByFirmware": false,
+        "menuconfigBacklightGpio": -1
+      }
+    },
+    {
+      "id": "co5300_waveshare_amoled_1_75c",
+      "displayName": "Waveshare 1.75C 466x466 CO5300",
+      "displayNameZh": "Waveshare 1.75C 466x466 圆形 AMOLED",
+      "screenType": "round_amoled",
+      "module": "ESP32-S3-Touch-AMOLED-1.75C",
+      "driverIc": "CO5300",
+      "controller": "CO5300",
+      "interface": "QSPI",
+      "logicalResolution": {
+        "width": 466,
+        "height": 466
+      },
+      "visibleArea": {
+        "shape": "round",
+        "description": "466 x 466 logical frame with a round AMOLED active area.",
+        "descriptionZh": "466 x 466 逻辑画布，实际可视区域为圆形 AMOLED。"
+      },
+      "physicalSize": {
+        "diagonalInch": 1.75
+      },
+      "verified": true,
+      "imageOnly": false,
+      "defaultsFile": "screen_profiles/co5300_waveshare_amoled_1_75c.defaults",
+      "image": {
+        "pixelFormat": "RGB565",
+        "colorOrder": "RGB",
+        "byteOrder": "little",
+        "rotation": 0,
+        "xGap": 6,
+        "yGap": 0,
+        "transport": "QSPI"
+      },
+      "tearingEffect": {
+        "enabled": true,
+        "gpio": 13,
+        "fallbackOnTimeout": true,
+        "note": "LCD_TE is physically routed to GPIO13 and is used to align full-frame transfers."
+      }
+    }
+  ]
+}

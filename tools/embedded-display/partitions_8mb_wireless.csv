@@ -1,0 +1,6 @@
+# Name,   Type, SubType, Offset,  Size,     Flags
+# The factory app remains large enough for the display runtime; wireless content is stored separately.
+nvs,      data, nvs,     ,        0x6000,
+phy_init, data, phy,     ,        0x1000,
+factory,  app,  factory, ,        0x300000,
+content,  data, 0x40,    ,        0x4F0000,

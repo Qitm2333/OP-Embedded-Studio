@@ -45,6 +45,7 @@ export const menuMessageDefaults = {
 
   pasteHere: 'Paste here',
   pasteToReplace: 'Paste to replace',
+  layersTopFirst: 'Show top layers first (Figma)',
   copyPasteAs: 'Copy/Paste as',
   copyAsText: 'Copy as text',
   copyAsSVG: 'Copy as SVG',

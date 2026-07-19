@@ -67,7 +67,7 @@ defineExpose({ rowEl })
 </script>
 
 <template>
-  <div :ref="onRef" :data-node-id="node.id">
+  <div :ref="onRef" class="w-full" :data-node-id="node.id">
     <slot
       :node="node"
       :level="level"

@@ -11,6 +11,7 @@ import {
 import { LayerTreeRoot, LayerTreeItem, useInlineRename } from '@open-pencil/vue'
 import type { LayerDragInstruction, LayerNode } from '@open-pencil/vue'
 import { useEditorStore } from '@/app/editor/active-store'
+import { layerTreeDisplayOrder } from '@/app/editor/layer-tree-preferences'
 import CanvasMenu from '../canvas/CanvasMenu.vue'
 import LayerTreeNodeRow from './LayerTreeNodeRow.vue'
 import LayerTreeRenameRow from './LayerTreeRenameRow.vue'
@@ -94,7 +95,7 @@ function chrome(scope: Omit<LayerTreeSlotScope, 'actions'>) {
 </script>
 
 <template>
-  <LayerTreeRoot v-slot="scope" :indent-per-level="INDENT">
+  <LayerTreeRoot v-slot="scope" :indent-per-level="INDENT" :display-order="layerTreeDisplayOrder">
     <ContextMenuRoot :modal="false">
       <div v-bind="attrs" class="relative min-h-0 flex-1 overflow-hidden">
         <ContextMenuTrigger as-child @contextmenu="onLayerRightClick">

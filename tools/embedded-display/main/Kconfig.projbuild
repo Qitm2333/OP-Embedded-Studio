@@ -1,0 +1,133 @@
+menu "Example Configuration"
+
+    config OPENPENCIL_WIFI_SERVER
+        bool "Enable OpenPencil Wi-Fi content server"
+        default y
+
+    config OPENPENCIL_EXTERNAL_CONTENT_ONLY
+        bool "Load display content from the content partition"
+        default n
+
+    choice EXAMPLE_LCD_CONTROLLER
+        prompt "LCD controller IC"
+        default EXAMPLE_LCD_CONTROLLER_ST7789
+
+        config EXAMPLE_LCD_CONTROLLER_ST7789
+            bool "ST7789"
+
+        config EXAMPLE_LCD_CONTROLLER_ST7735
+            bool "ST7735"
+
+        config EXAMPLE_LCD_CONTROLLER_GC9D01N
+            bool "GC9D01N"
+
+        config EXAMPLE_LCD_CONTROLLER_CO5300
+            bool "CO5300 (Waveshare 1.75C QSPI)"
+    endchoice
+
+    config EXAMPLE_LCD_PIXEL_CLOCK_HZ
+        int "LCD pixel clock in Hz"
+        default 30000000 if EXAMPLE_LCD_CONTROLLER_CO5300
+        default 10000000
+        help
+            SPI clock used to write pixels to the LCD panel. 10 MHz is a stable
+            baseline for jumper wires and FPC adapter boards.
+
+    config EXAMPLE_PIN_NUM_SCLK
+        int "LCD SPI SCLK GPIO"
+        default 12
+
+    config EXAMPLE_PIN_NUM_MOSI
+        int "LCD SPI MOSI GPIO"
+        default 11
+
+    config EXAMPLE_PIN_NUM_MISO
+        int "LCD SPI MISO GPIO (-1 if unused)"
+        default -1
+
+    config EXAMPLE_PIN_NUM_LCD_DC
+        int "LCD DC GPIO"
+        default 9
+
+    config EXAMPLE_PIN_NUM_LCD_RST
+        int "LCD reset GPIO (-1 if unused)"
+        default 1 if EXAMPLE_LCD_CONTROLLER_CO5300
+        default 14
+
+    config EXAMPLE_PIN_NUM_LCD_CS
+        int "LCD CS GPIO"
+        default 12 if EXAMPLE_LCD_CONTROLLER_CO5300
+        default 10
+
+    config EXAMPLE_PIN_NUM_LCD_TE
+        int "LCD tearing-effect GPIO (-1 if unused)"
+        default 13 if EXAMPLE_LCD_CONTROLLER_CO5300
+        default -1
+        help
+            Optional tearing-effect signal used to align full-frame transfers
+            with the panel refresh cycle. The Waveshare CO5300 board routes
+            LCD_TE to GPIO13.
+
+    config EXAMPLE_PIN_NUM_BK_LIGHT
+        int "LCD backlight GPIO (-1 if tied on)"
+        default -1
+
+    config EXAMPLE_LCD_BK_LIGHT_ON_LEVEL
+        int "Backlight ON level"
+        range 0 1
+        default 1
+
+    config EXAMPLE_LCD_H_RES
+        int "LCD horizontal resolution"
+        default 240 if EXAMPLE_LCD_CONTROLLER_ST7789
+        default 128 if EXAMPLE_LCD_CONTROLLER_ST7735
+        default 160 if EXAMPLE_LCD_CONTROLLER_GC9D01N
+        default 466 if EXAMPLE_LCD_CONTROLLER_CO5300
+
+    config EXAMPLE_LCD_V_RES
+        int "LCD vertical resolution"
+        default 240 if EXAMPLE_LCD_CONTROLLER_ST7789
+        default 128 if EXAMPLE_LCD_CONTROLLER_ST7735
+        default 160 if EXAMPLE_LCD_CONTROLLER_GC9D01N
+        default 466 if EXAMPLE_LCD_CONTROLLER_CO5300
+
+    config EXAMPLE_LCD_X_GAP
+        int "LCD X gap/offset"
+        default 6 if EXAMPLE_LCD_CONTROLLER_CO5300
+        default 0
+
+    config EXAMPLE_LCD_Y_GAP
+        int "LCD Y gap/offset"
+        default 0
+
+    config EXAMPLE_LCD_MIRROR_X
+        bool "Mirror LCD on X axis"
+        default n
+
+    config EXAMPLE_LCD_MIRROR_Y
+        bool "Mirror LCD on Y axis"
+        default n
+
+    config EXAMPLE_LCD_SWAP_XY
+        bool "Swap LCD X/Y axes"
+        default n
+
+    config EXAMPLE_LCD_INVERT_COLOR
+        bool "Invert LCD colors"
+        default y if EXAMPLE_LCD_CONTROLLER_ST7789
+        default n if EXAMPLE_LCD_CONTROLLER_ST7735
+        default n if EXAMPLE_LCD_CONTROLLER_GC9D01N
+        default n if EXAMPLE_LCD_CONTROLLER_CO5300
+
+    choice EXAMPLE_LCD_RGB_ORDER
+        prompt "LCD RGB element order"
+        default EXAMPLE_LCD_RGB_ORDER_RGB
+
+        config EXAMPLE_LCD_RGB_ORDER_RGB
+            bool "RGB"
+
+        config EXAMPLE_LCD_RGB_ORDER_BGR
+            bool "BGR"
+    endchoice
+
+endmenu

@@ -86,6 +86,7 @@ async function getTauriFonts(): Promise<TauriFontFamily[]> {
 
 export function preloadFonts(): void {
   configureTauriFontCache()
+  void fontManager.ensureFallbackPack(['cjk-sc'])
   if (isTauri()) {
     void getTauriFonts().then(registerFontFaces)
     return

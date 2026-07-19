@@ -1,0 +1,6 @@
+# Name,   Type, SubType, Offset,  Size,     Flags
+# 8MB flash layout for local LCD demos without OTA.
+# App starts at 0x10000 and can grow to 6MB.
+nvs,      data, nvs,     ,        0x6000,
+phy_init, data, phy,     ,        0x1000,
+factory,  app,  factory, ,        0x600000,

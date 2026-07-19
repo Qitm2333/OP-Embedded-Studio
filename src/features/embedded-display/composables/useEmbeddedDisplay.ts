@@ -1,0 +1,224 @@
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+
+import { createEmbeddedDisplayHttpAdapter, embeddedArtifactUrl } from '../adapters/http'
+import { imageFileToRgb565, prototypeBakeToRgb565 } from '../adapters/image'
+import { MOCK_DISPLAY_VARIABLES } from '../adapters/mock'
+import type {
+  EmbeddedBuildMode,
+  EmbeddedBuildStatus,
+  EmbeddedDisplayProfile,
+  EmbeddedImagePayload,
+  EmbeddedWifiCredentials,
+  EmbeddedPrototypeBakeResult
+} from '../model/types'
+
+const adapter = createEmbeddedDisplayHttpAdapter()
+const profiles = ref<EmbeddedDisplayProfile[]>([])
+const selectedProfileId = ref('')
+const selectedImageName = ref('')
+const previewUrl = ref('')
+const imagePayload = ref<EmbeddedImagePayload | null>(null)
+const buildStatus = ref<EmbeddedBuildStatus>('loading')
+const buildMessage = ref('正在连接设备服务…')
+const buildLog = ref<string[]>([])
+const manifestUrl = ref('')
+const serviceAvailable = ref(false)
+let loaded = false
+
+function deviceLog(message: string, details?: unknown) {
+  if (details === undefined) console.info('[embedded-display]', message)
+  else console.info('[embedded-display]', message, details)
+}
+
+export function useEmbeddedDisplay() {
+  const selectedProfile = computed(
+    () => profiles.value.find((profile) => profile.id === selectedProfileId.value) ?? null
+  )
+
+  async function loadProfiles() {
+    if (loaded) return
+    deviceLog('loading profiles')
+    buildStatus.value = 'loading'
+    buildMessage.value = '正在读取屏幕方案…'
+    try {
+      profiles.value = await adapter.listProfiles()
+      selectedProfileId.value = profiles.value[0]?.id ?? ''
+      serviceAvailable.value = true
+      loaded = true
+      deviceLog('service ready', { profileCount: profiles.value.length })
+      buildStatus.value = 'idle'
+      buildMessage.value = '请选择图片，然后生成固件。未选择图片时将使用默认测试图。'
+    } catch (error) {
+      serviceAvailable.value = false
+      deviceLog('service error', error)
+      buildStatus.value = 'error'
+      buildMessage.value = `无法连接设备服务：${error instanceof Error ? error.message : String(error)}`
+    }
+  }
+
+  function selectProfile(id: string) {
+    if (profiles.value.some((profile) => profile.id === id)) {
+      selectedProfileId.value = id
+      manifestUrl.value = ''
+      imagePayload.value = null
+      deviceLog('profile selected', { profileId: id })
+      if (selectedImageName.value) {
+        buildMessage.value = '屏幕方案已切换，请重新选择图片后再生成固件。'
+      }
+    }
+  }
+
+  async function selectImage(file: File | undefined) {
+    selectedImageName.value = file?.name ?? ''
+    deviceLog('image selected', { name: file?.name, size: file?.size, type: file?.type })
+    manifestUrl.value = ''
+    if (!file) {
+      imagePayload.value = null
+      buildStatus.value = 'idle'
+      buildMessage.value = '未选择图片时，将使用默认测试图。'
+      return
+    }
+    const profile = selectedProfile.value
+    if (!profile) {
+      buildStatus.value = 'error'
+      buildMessage.value = '请先连接设备服务并选择屏幕方案。'
+      return
+    }
+    buildStatus.value = 'uploading'
+    buildMessage.value = `正在转换并上传素材：${file.name}`
+    try {
+      if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+      previewUrl.value = URL.createObjectURL(file)
+      const payload = await imageFileToRgb565(file, profile)
+      imagePayload.value = payload
+      deviceLog('image payload ready', {
+        profileId: payload.profileId,
+        width: payload.width,
+        height: payload.height,
+        encodedLength: payload.pixelsRgb565Base64.length
+      })
+      await adapter.uploadImage(payload)
+      deviceLog('image uploaded')
+      buildStatus.value = 'idle'
+      buildMessage.value = '图片已上传，可以生成固件。'
+      buildLog.value = [
+        `image: ${file.name}`,
+        `size: ${profile.resolution.width}×${profile.resolution.height}`,
+        'upload: ok'
+      ]
+    } catch (error) {
+      deviceLog('image upload error', error)
+      buildStatus.value = 'error'
+      buildMessage.value = `图片上传失败：${error instanceof Error ? error.message : String(error)}`
+    }
+  }
+
+  async function selectPrototype(bake: EmbeddedPrototypeBakeResult) {
+    const profile = selectedProfile.value
+    if (!profile) throw new Error('请先连接设备服务并选择屏幕方案')
+    manifestUrl.value = ''
+    buildStatus.value = 'uploading'
+    buildMessage.value = `正在批量烘焙并上传交互：${bake.name}`
+    try {
+      const payload = await prototypeBakeToRgb565(bake, profile)
+      deviceLog('prototype payload ready', {
+        profileId: payload.profileId,
+        states: payload.states.length,
+        transitions: payload.transitions.length,
+        encodedLength: payload.pixelsRgb565Base64.length
+      })
+      await adapter.uploadPrototype(payload)
+      buildStatus.value = 'idle'
+      buildMessage.value = '状态机资源已上传，可以生成固件。'
+      buildLog.value = [
+        `prototype: ${bake.name}`,
+        `states: ${payload.states.length}`,
+        `transitions: ${payload.transitions.length}`,
+        `size: ${profile.resolution.width}×${profile.resolution.height}`,
+        'upload: ok'
+      ]
+    } catch (error) {
+      deviceLog('prototype upload error', error)
+      buildStatus.value = 'error'
+      buildMessage.value = `状态机资源上传失败：${error instanceof Error ? error.message : String(error)}`
+      throw error
+    }
+  }
+
+  async function buildFirmware(
+    buildMode: EmbeddedBuildMode,
+    wifiCredentials?: EmbeddedWifiCredentials
+  ) {
+    if (!selectedProfile.value || !serviceAvailable.value) return
+    deviceLog('build requested', { profileId: selectedProfile.value.id, buildMode })
+    buildStatus.value = 'building'
+    buildMessage.value = '正在调用 ESP-IDF 构建服务…'
+    manifestUrl.value = ''
+    try {
+      const result = await adapter.build(selectedProfile.value.id, buildMode, wifiCredentials)
+      buildLog.value = result.logTail || []
+      if (!result.ok) {
+        throw new Error(result.error || `构建失败（${result.returnCode ?? 'unknown'}）`)
+      }
+      const manifest = await adapter.getManifest(selectedProfile.value.id, buildMode)
+      deviceLog('build ready', {
+        appBytes: result.size?.appBytes,
+        logLines: result.logTail?.length,
+        flashParts: manifest.builds[0]?.parts.length ?? 0
+      })
+      buildStatus.value = 'ready'
+      buildMessage.value = '固件和烧录清单已生成，可以连接设备并烧录。'
+      manifestUrl.value = embeddedArtifactUrl(selectedProfile.value.id, 'manifest.json', buildMode)
+    } catch (error) {
+      deviceLog('build error', error)
+      buildStatus.value = 'error'
+      buildMessage.value = `固件构建失败：${error instanceof Error ? error.message : String(error)}`
+    }
+  }
+
+  async function clearGeneratedImage() {
+    await adapter.clearImage()
+    imagePayload.value = null
+    selectedImageName.value = ''
+    if (previewUrl.value) {
+      URL.revokeObjectURL(previewUrl.value)
+      previewUrl.value = ''
+    }
+  }
+
+  const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+    const reason = event.reason instanceof Error ? event.reason.message : String(event.reason)
+    if (reason.includes('dynamically imported module') || reason.includes('install-dialog')) {
+      deviceLog('web serial module load error', event.reason)
+    }
+  }
+
+  onMounted(() => {
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+    void loadProfiles()
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+  })
+
+  return {
+    selectedProfile,
+    profiles,
+    variables: MOCK_DISPLAY_VARIABLES,
+    selectedImageName,
+    buildStatus,
+    buildMessage,
+    buildLog,
+    manifestUrl,
+    previewUrl,
+    imagePayload,
+    serviceAvailable,
+    selectProfile,
+    selectImage,
+    selectPrototype,
+    buildFirmware,
+    clearGeneratedImage,
+    loadProfiles
+  }
+}

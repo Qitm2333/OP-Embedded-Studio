@@ -22,7 +22,7 @@ import { createChatSessionManager } from '@/app/ai/chat/transports'
 import { exposeChatTransportOverride } from '@/app/browser-bridge'
 import { getActiveEditorStore } from '@/app/editor/active-store'
 
-const activeTab = ref<'design' | 'code' | 'ai'>('design')
+const activeTab = ref<'design' | 'code' | 'ai' | 'prototype' | 'embedded'>('design')
 
 const chatSession = createChatSessionManager({
   isConfigured,

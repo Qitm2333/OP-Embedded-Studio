@@ -77,5 +77,13 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, store: Edi
     focusTextAreaOnCanvasPointerDown(textareaRef, store)
   )
 
-  useTextEditingSession({ store, textareaRef, resetBlink, stopBlink, resetComposition })
+  useTextEditingSession({
+    store,
+    canvasRef,
+    textareaRef,
+    resetBlink,
+    stopBlink,
+    resetComposition,
+    isComposing
+  })
 }

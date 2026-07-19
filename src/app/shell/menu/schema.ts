@@ -85,6 +85,13 @@ export const APP_MENU_SCHEMA = [
         id: 'selection.selectAll',
         label: 'Select All',
         command: 'selection.selectAll'
+      },
+      { type: 'separator' },
+      {
+        id: 'layer-order-front-first',
+        label: 'Show top layers first (Figma)',
+        checkbox: true,
+        target: 'browser'
       }
     ]
   },

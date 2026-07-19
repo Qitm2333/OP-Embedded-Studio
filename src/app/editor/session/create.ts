@@ -9,6 +9,7 @@ import {
   setActiveEditorStore,
   useEditorStore
 } from '@/app/editor/active-store'
+import { installCanvasCompatibility } from '@/app/editor/canvas-compat'
 import { loadFont } from '@/app/editor/fonts'
 import {
   createEditorComputedRefs,
@@ -61,6 +62,7 @@ export function createEditorStore(initialGraph?: SceneGraph) {
   }
 
   defineEditorStoreAccessors(store, editor)
+  installCanvasCompatibility(store)
 
   return store
 }

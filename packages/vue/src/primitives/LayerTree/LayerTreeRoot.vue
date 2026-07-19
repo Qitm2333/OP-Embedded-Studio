@@ -4,13 +4,16 @@ import { TreeRoot } from 'reka-ui'
 
 import { useEditor } from '#vue/editor/context'
 import { provideLayerTree } from '#vue/primitives/LayerTree/context'
+import { orderedLayerChildIds } from '#vue/primitives/LayerTree/order'
 import { useLayerDrag } from '#vue/primitives/LayerTree/useLayerDrag'
 
 import type { LayerNode } from '#vue/primitives/LayerTree/context'
+import type { LayerTreeDisplayOrder } from '#vue/primitives/LayerTree/order'
 import type { SceneNode } from '@open-pencil/scene-graph'
 
-const { indentPerLevel = 16 } = defineProps<{
+const { indentPerLevel = 16, displayOrder = 'document' } = defineProps<{
   indentPerLevel?: number
+  displayOrder?: LayerTreeDisplayOrder
 }>()
 
 const emit = defineEmits<{
@@ -30,7 +33,8 @@ function expandNode(id: string) {
 const { draggingId, instruction, instructionTargetId, setupItem } = useLayerDrag(
   editor,
   indentPerLevel,
-  expandNode
+  expandNode,
+  () => displayOrder
 )
 
 function nodeToLayerNode(node: SceneNode): LayerNode {
@@ -47,7 +51,7 @@ function nodeToLayerNode(node: SceneNode): LayerNode {
 function buildTree(parentId: string): LayerNode[] {
   const parent = editor.graph.getNode(parentId)
   if (!parent) return []
-  return parent.childIds
+  return orderedLayerChildIds(parent.childIds, displayOrder)
     .map((cid) => editor.graph.getNode(cid))
     .filter((n): n is NonNullable<typeof n> => !!n)
     .map((node) => ({
@@ -65,6 +69,8 @@ function rebuildTree() {
   items.value = buildTree(editor.state.currentPageId)
   treeVersion.value++
 }
+
+watch(() => displayOrder, rebuildTree)
 
 function replaceLayerNode(nodes: LayerNode[], replacement: LayerNode): LayerNode[] | null {
   let changed = false

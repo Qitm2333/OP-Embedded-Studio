@@ -49,6 +49,14 @@ export function resolveWebFontProviderOrder(
   return WEB_FONT_PROVIDER_IDS.filter((provider) => enabledSet.has(provider))
 }
 
+function fontSubsetsForFamily(family: string): string[] {
+  const normalized = family.toLowerCase()
+  if (normalized.includes('noto sans sc')) return ['chinese-simplified', 'latin']
+  if (normalized.includes('noto sans tc')) return ['chinese-traditional', 'latin']
+  if (normalized.includes('noto sans jp')) return ['japanese', 'latin']
+  if (normalized.includes('noto sans kr')) return ['korean', 'latin']
+  return ['latin']
+}
 export class WebFontResolver {
   private enabled = new Set<WebFontProviderId>(
     WEB_FONT_PROVIDER_IDS.filter((provider) => DEFAULT_WEB_FONT_PROVIDER_SETTINGS[provider])
@@ -201,7 +209,7 @@ export class WebFontResolver {
         weights: [String(parsed.weight)],
         styles: [parsed.italic ? 'italic' : 'normal'],
         formats: ['ttf'],
-        subsets: ['latin']
+        subsets: fontSubsetsForFamily(family)
       } satisfies WebFontResolveOptions
       const result = await this.withFetchProxy<ResolveFontResult>(() =>
         unifont.resolveFont(family, options)

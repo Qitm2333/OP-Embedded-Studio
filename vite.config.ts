@@ -19,7 +19,14 @@ const host = process.env.TAURI_DEV_HOST
 
 export default defineConfig(async ({ command }) => ({
   resolve: {
-    alias: createOpenPencilAliases(__dirname)
+    alias: [
+      ...createOpenPencilAliases(__dirname),
+      {
+        find: /^atob-lite$/,
+        replacement: `${__dirname}/src/features/embedded-display/adapters/atob-lite.ts`
+      }
+    ],
+    dedupe: ['@material/web']
   },
   define: {
     __OPENPENCIL_APP_VERSION__: JSON.stringify(packageJson.version),
@@ -32,10 +39,19 @@ export default defineConfig(async ({ command }) => ({
     Icons({ compiler: 'vue3' }),
     Components({ resolvers: [IconsResolver({ prefix: 'icon' })] }),
     openPencilAutomationPlugin(command, host),
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag === 'esp-web-install-button'
+        }
+      }
+    }),
     openPencilPwaPlugin()
   ],
   clearScreen: false,
+  optimizeDeps: {
+    exclude: ['esp-web-tools']
+  },
   build: {
     chunkSizeWarningLimit: 2500
   },
