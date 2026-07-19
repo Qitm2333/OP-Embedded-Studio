@@ -33,6 +33,8 @@ const wifiPassword = ref('')
 const wirelessBaseUrl = ref('http://192.168.4.1')
 const wirelessStatus = ref<'idle' | 'checking' | 'uploading' | 'success' | 'error'>('idle')
 const wirelessMessage = ref('连接设备后，可直接传输当前图片')
+const wirelessDeviceReady = ref(false)
+const wifiBaseFirmwareReady = ref(false)
 const deviceDetailsOpen = ref(false)
 const selectedPrototypeId = ref('')
 const bakePending = ref(false)
@@ -57,7 +59,6 @@ const {
   selectImage,
   selectPrototype,
   buildFirmware,
-  clearGeneratedImage,
   loadProfiles
 } = useEmbeddedDisplay()
 
@@ -164,6 +165,7 @@ const canWirelessUpload = computed(
     transportMode.value === 'wifi' &&
     burnMode.value === 'frame' &&
     Boolean(imagePayload.value) &&
+    wirelessDeviceReady.value &&
     wirelessStatus.value !== 'checking' &&
     wirelessStatus.value !== 'uploading'
 )
@@ -204,7 +206,7 @@ async function handleBakeFrame() {
   try {
     const file = await props.bakeFrame()
     if (file) {
-      await selectImage(file)
+      await selectImage(file, { upload: transportMode.value !== 'wifi' })
       frameResourceSource.value = 'baked'
     }
   } catch (error) {
@@ -218,7 +220,7 @@ function handleImageChange(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   frameResourceSource.value = file ? 'uploaded' : null
-  void selectImage(file)
+  void selectImage(file, { upload: transportMode.value !== 'wifi' })
 }
 
 async function preparePrototypeResources() {
@@ -248,23 +250,12 @@ async function handlePreparePrototype() {
 async function handleBuildFirmware() {
   if (!canBuild.value) return
 
-  const isWirelessBaseBuild = transportMode.value === 'wifi'
-
-  if (isWirelessBaseBuild) {
-    try {
-      await clearGeneratedImage()
-    } catch (error) {
-      bakeError.value = error instanceof Error ? error.message : String(error)
-      return
-    }
-  }
-
   // Firmware builds consume generated headers on the local build service. A Frame
   // build must refresh the current canvas resource; otherwise a stale generated
   // header can silently compile the built-in geometry test image.
   if (transportMode.value === 'usb' && burnMode.value === 'prototype') {
     if (!(await preparePrototypeResources())) return
-  } else if (!isWirelessBaseBuild && frameResourceSource.value !== 'uploaded') {
+  } else if (transportMode.value !== 'wifi' && frameResourceSource.value !== 'uploaded') {
     if (!props.bakeFrame || bakeReason.value) {
       bakeError.value = bakeReason.value || '无法重新烘焙当前 Frame'
       return
@@ -284,7 +275,16 @@ async function handleBuildFirmware() {
   }
 
   const buildMode = `${transportMode.value}-${burnMode.value}` as EmbeddedBuildMode
-  await buildFirmware(buildMode, isWirelessBaseBuild ? wifiCredentials.value : undefined)
+  const buildSucceeded = await buildFirmware(
+    buildMode,
+    transportMode.value === 'wifi' ? wifiCredentials.value : undefined
+  )
+  if (!buildSucceeded) return
+  if (buildMode === 'wifi-frame') {
+    wifiBaseFirmwareReady.value = true
+    wirelessDeviceReady.value = false
+    wirelessMessage.value = '基础固件已生成；烧录完成后请检查设备连接'
+  }
 }
 
 async function handleProbeWireless() {
@@ -292,6 +292,17 @@ async function handleProbeWireless() {
   wirelessMessage.value = '正在检查设备连接…'
   try {
     const device = await probeWirelessDevice(wirelessBaseUrl.value)
+    if (!selectedProfile.value) throw new Error('请先选择设备型号')
+    if (
+      device.width !== selectedProfile.value.resolution.width ||
+      device.height !== selectedProfile.value.resolution.height
+    ) {
+      throw new Error(
+        `设备分辨率为 ${device.width} × ${device.height}，与当前方案 ${selectedProfile.value.resolution.width} × ${selectedProfile.value.resolution.height} 不匹配`
+      )
+    }
+    wirelessDeviceReady.value = true
+    wifiBaseFirmwareReady.value = true
     wirelessStatus.value = 'success'
     wirelessMessage.value = `设备已连接：${device.width} × ${device.height}${device.ip ? `，Wi-Fi 地址 ${device.ip}` : ''}`
   } catch (error) {
@@ -307,12 +318,32 @@ async function handleWirelessUpload() {
   try {
     await uploadWirelessImage(wirelessBaseUrl.value, imagePayload.value)
     wirelessStatus.value = 'success'
-    wirelessMessage.value = '图片已传输，设备会立即显示新内容'
+    wirelessMessage.value = '图片已传输，设备将重启并加载新内容'
   } catch (error) {
     wirelessStatus.value = 'error'
     wirelessMessage.value = error instanceof Error ? error.message : String(error)
   }
 }
+
+watch(transportMode, (mode) => {
+  wirelessDeviceReady.value = false
+  if (mode !== 'wifi') {
+    wirelessStatus.value = 'idle'
+    wirelessMessage.value = '切换到 Wi-Fi 后可检查设备并传输图片'
+  }
+})
+
+watch([wifiSsid, wifiPassword], () => {
+  wifiBaseFirmwareReady.value = false
+})
+
+watch(
+  () => selectedProfile.value?.id,
+  () => {
+    wirelessDeviceReady.value = false
+    wifiBaseFirmwareReady.value = false
+  }
+)
 </script>
 <template>
   <div class="flex min-h-0 flex-1 flex-col bg-panel text-surface">
@@ -401,6 +432,13 @@ async function handleWirelessUpload() {
             />
           </template>
           <template v-if="burnMode === 'frame'">
+            <p class="text-[10px] leading-relaxed text-muted">
+              {{
+                wifiBaseFirmwareReady
+                  ? '基础固件已准备；烧录后检查设备，再传输图片。'
+                  : '先生成并烧录 Wi-Fi 基础固件，图片随后单独通过网络传输。'
+              }}
+            </p>
             <input
               v-model="wirelessBaseUrl"
               class="h-control rounded-panel border border-border bg-panel-field px-2 text-xs text-surface outline-none focus:border-accent"
@@ -584,7 +622,16 @@ async function handleWirelessUpload() {
             :disabled="!canBuild"
             @click="handleBuildFirmware"
           >
-            1. {{ buildStatus === 'building' ? '正在生成固件…' : '生成固件' }}
+            1.
+            {{
+              buildStatus === 'building'
+                ? '正在生成固件…'
+                : transportMode === 'wifi' && burnMode === 'frame'
+                  ? wifiBaseFirmwareReady
+                    ? '重新生成 Wi-Fi 基础固件'
+                    : '生成 Wi-Fi 基础固件'
+                  : '生成固件'
+            }}
           </button>
 
           <esp-web-install-button v-if="manifestUrl" :manifest="manifestUrl">

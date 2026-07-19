@@ -1,4 +1,5 @@
 #include "wireless_content.h"
+#include "lcd_panel_factory.h"
 
 #include <string.h>
 #include "sdkconfig.h"
@@ -88,7 +89,19 @@ esp_err_t openpencil_content_load_frame(uint16_t frame_index, uint16_t *destinat
     if (pixels * sizeof(uint16_t) < expected || active_header.payload_bytes < expected) {
         return ESP_ERR_INVALID_SIZE;
     }
-    return esp_partition_read(content_partition, sizeof(active_header), destination, expected);
+    ESP_RETURN_ON_ERROR(esp_partition_read(content_partition, sizeof(active_header), destination, expected),
+                        TAG,
+                        "read content payload failed");
+
+    // Wireless content stays in logical RGB565 format on flash. Convert it
+    // to the selected panel's native transfer order only after validation,
+    // matching the USB build path without coupling the content protocol to
+    // a specific display controller.
+    for (size_t pixel = 0; pixel < expected / sizeof(uint16_t); pixel++) {
+        destination[pixel] = example_lcd_panel_color_from_rgb565(destination[pixel]);
+    }
+
+    return ESP_OK;
 }
 
 esp_err_t openpencil_content_write(const uint8_t *data, size_t length)

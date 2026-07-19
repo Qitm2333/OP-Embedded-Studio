@@ -174,6 +174,7 @@ static esp_err_t draw_geometry_test(esp_lcd_panel_handle_t panel, uint16_t *fram
     return ESP_OK;
 }
 
+#if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER
 static esp_err_t draw_wireless_image(esp_lcd_panel_handle_t panel, uint16_t *frame_buffer)
 {
     const openpencil_content_header_t *content = openpencil_content_header();
@@ -184,19 +185,18 @@ static esp_err_t draw_wireless_image(esp_lcd_panel_handle_t panel, uint16_t *fra
     }
 
     ESP_LOGI(TAG, "Draw wireless image (%ux%u)", content->width, content->height);
-    while (1) {
-        ESP_RETURN_ON_ERROR(openpencil_content_load_frame(0, frame_buffer, LCD_FRAME_PIXELS),
-                            TAG,
-                            "load wireless image failed");
-        ESP_RETURN_ON_ERROR(openpencil_display_presenter_draw(panel,
-                                                              CONFIG_EXAMPLE_LCD_H_RES,
-                                                              CONFIG_EXAMPLE_LCD_V_RES,
-                                                              frame_buffer),
-                            TAG,
-                            "draw wireless image failed");
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
+    ESP_RETURN_ON_ERROR(openpencil_content_load_frame(0, frame_buffer, LCD_FRAME_PIXELS),
+                        TAG,
+                        "load wireless image failed");
+    ESP_RETURN_ON_ERROR(openpencil_display_presenter_draw(panel,
+                                                          CONFIG_EXAMPLE_LCD_H_RES,
+                                                          CONFIG_EXAMPLE_LCD_V_RES,
+                                                          frame_buffer),
+                        TAG,
+                        "draw wireless image failed");
+    return ESP_OK;
 }
+#endif
 static esp_err_t draw_generated_image(esp_lcd_panel_handle_t panel, uint16_t *frame_buffer)
 {
     if (LCD_GENERATED_IMAGE_WIDTH != CONFIG_EXAMPLE_LCD_H_RES ||
@@ -307,13 +307,26 @@ void app_main(void)
 #if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER
     ESP_ERROR_CHECK(openpencil_content_init());
 #endif
-#if CONFIG_OPENPENCIL_WIFI_SERVER
-    ESP_ERROR_CHECK(openpencil_wireless_server_start());
-#endif
 
 #if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER
     if (LCD_GENERATED_IMAGE_PIXEL_COUNT == 0 && openpencil_content_is_valid()) {
         ESP_ERROR_CHECK(draw_wireless_image(panel_handle, frame_buffer));
+#if CONFIG_OPENPENCIL_WIFI_SERVER
+        // Present persisted content before starting Wi-Fi. On CO5300 hardware,
+        // the first full-frame QSPI DMA transfer can underflow when it competes
+        // with Wi-Fi startup work. Wireless content is static until an upload
+        // completes and reboots the device, so one synchronized draw is enough.
+        ESP_ERROR_CHECK(openpencil_wireless_server_start());
+        return;
+#endif
+    } else
+#endif
+#if CONFIG_OPENPENCIL_WIFI_SERVER
+    if (LCD_GENERATED_IMAGE_PIXEL_COUNT == 0) {
+        // A blank Wi-Fi base firmware must remain reachable even before its
+        // first content upload; do not enter the blocking geometry-test loop.
+        ESP_ERROR_CHECK(openpencil_wireless_server_start());
+        return;
     } else
 #endif
     if (OPENPENCIL_PROTOTYPE_ENABLED) {

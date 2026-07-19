@@ -68,7 +68,8 @@ export function useEmbeddedDisplay() {
     }
   }
 
-  async function selectImage(file: File | undefined) {
+  async function selectImage(file: File | undefined, options: { upload?: boolean } = {}) {
+    const uploadToBuildService = options.upload ?? true
     selectedImageName.value = file?.name ?? ''
     deviceLog('image selected', { name: file?.name, size: file?.size, type: file?.type })
     manifestUrl.value = ''
@@ -85,7 +86,9 @@ export function useEmbeddedDisplay() {
       return
     }
     buildStatus.value = 'uploading'
-    buildMessage.value = `正在转换并上传素材：${file.name}`
+    buildMessage.value = uploadToBuildService
+      ? `正在转换并上传素材：${file.name}`
+      : `正在转换素材：${file.name}`
     try {
       if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
       previewUrl.value = URL.createObjectURL(file)
@@ -97,19 +100,25 @@ export function useEmbeddedDisplay() {
         height: payload.height,
         encodedLength: payload.pixelsRgb565Base64.length
       })
-      await adapter.uploadImage(payload)
-      deviceLog('image uploaded')
+      if (uploadToBuildService) {
+        await adapter.uploadImage(payload)
+        deviceLog('image uploaded to build service')
+      } else {
+        deviceLog('image prepared for wireless transfer')
+      }
       buildStatus.value = 'idle'
-      buildMessage.value = '图片已上传，可以生成固件。'
+      buildMessage.value = uploadToBuildService
+        ? '图片已上传，可以生成固件。'
+        : '图片已准备，可以通过 Wi-Fi 传输。'
       buildLog.value = [
         `image: ${file.name}`,
         `size: ${profile.resolution.width}×${profile.resolution.height}`,
-        'upload: ok'
+        uploadToBuildService ? 'build-resource: ok' : 'wireless-payload: ready'
       ]
     } catch (error) {
       deviceLog('image upload error', error)
       buildStatus.value = 'error'
-      buildMessage.value = `图片上传失败：${error instanceof Error ? error.message : String(error)}`
+      buildMessage.value = `${uploadToBuildService ? '图片上传' : '图片转换'}失败：${error instanceof Error ? error.message : String(error)}`
     }
   }
 
@@ -148,8 +157,8 @@ export function useEmbeddedDisplay() {
   async function buildFirmware(
     buildMode: EmbeddedBuildMode,
     wifiCredentials?: EmbeddedWifiCredentials
-  ) {
-    if (!selectedProfile.value || !serviceAvailable.value) return
+  ): Promise<boolean> {
+    if (!selectedProfile.value || !serviceAvailable.value) return false
     deviceLog('build requested', { profileId: selectedProfile.value.id, buildMode })
     buildStatus.value = 'building'
     buildMessage.value = '正在调用 ESP-IDF 构建服务…'
@@ -169,10 +178,12 @@ export function useEmbeddedDisplay() {
       buildStatus.value = 'ready'
       buildMessage.value = '固件和烧录清单已生成，可以连接设备并烧录。'
       manifestUrl.value = embeddedArtifactUrl(selectedProfile.value.id, 'manifest.json', buildMode)
+      return true
     } catch (error) {
       deviceLog('build error', error)
       buildStatus.value = 'error'
       buildMessage.value = `固件构建失败：${error instanceof Error ? error.message : String(error)}`
+      return false
     }
   }
 

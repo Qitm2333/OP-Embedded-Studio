@@ -163,6 +163,17 @@ def restore_generated_resources(profile_id, build_mode):
     touch_generated_prototype_wrapper()
 
 
+def ensure_wireless_base_resources(profile_id, build_mode):
+    """Create and restore an empty resource pair for external-content firmware."""
+    content_dir = generated_content_dir(profile_id, build_mode)
+    image_header = content_dir / GENERATED_IMAGE_HEADER.name
+    prototype_header = content_dir / GENERATED_PROTOTYPE_HEADER.name
+    if not image_header.is_file() or not prototype_header.is_file():
+        clear_generated_image()
+        store_generated_resources(profile_id, build_mode)
+    restore_generated_resources(profile_id, build_mode)
+
+
 def find_idf_path():
     env_idf_path = os.environ.get("IDF_PATH")
     if env_idf_path:
@@ -299,13 +310,16 @@ def mode_defaults_path(build_mode):
     path.parent.mkdir(parents=True, exist_ok=True)
     wireless_enabled = mode.startswith("wifi-")
     external_content = mode == "wifi-frame"
-    contents = "\n".join([
+    settings = [
         f'CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="{partition_table}"',
         f'CONFIG_PARTITION_TABLE_FILENAME="{partition_table}"',
         f'CONFIG_OPENPENCIL_WIFI_SERVER={"y" if wireless_enabled else "n"}',
         f'CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY={"y" if external_content else "n"}',
-        "",
-    ])
+    ]
+    if wireless_enabled:
+        settings.append("CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192")
+    settings.append("")
+    contents = "\n".join(settings)
     if not path.is_file() or path.read_text(encoding="utf-8") != contents:
         path.write_text(contents, encoding="utf-8")
     return path.relative_to(PROJECT_DIR).as_posix()
@@ -321,6 +335,7 @@ def build_command(registry, profile, build_mode):
     return idf_build_command([
         "-B",
         build_dir.as_posix(),
+        f"-DOPENPENCIL_BUILD_MODE={normalize_build_mode(build_mode)}",
         f"-DSDKCONFIG={sdkconfig.as_posix()}",
         f"-DSDKCONFIG_DEFAULTS={defaults}",
         "build",
@@ -362,6 +377,7 @@ def build_inputs_signature(registry, profile, build_mode):
         PROJECT_DIR / "main" / "CMakeLists.txt",
         PROJECT_DIR / "main" / "Kconfig.projbuild",
         PROJECT_DIR / "main" / "idf_component.yml",
+        PROJECT_DIR / "components" / "openpencil_wifi_server" / "CMakeLists.txt",
     ]
     stable_sources.extend(
         path for path in (PROJECT_DIR / "main").glob("*.[ch]")
@@ -809,6 +825,8 @@ def run_build(profile_id, wifi_credentials=None, build_mode=DEFAULT_BUILD_MODE):
     with BUILD_LOCK:
         if mode in ("usb-frame", "usb-prototype"):
             restore_generated_resources(profile_id, mode)
+        elif mode in ("wifi-frame", "wifi-prototype"):
+            ensure_wireless_base_resources(profile_id, mode)
         build_signature = prepare_build_dir(registry, profile, mode, build_dir)
         completed = subprocess.run(
             command,

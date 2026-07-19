@@ -18,6 +18,8 @@ static httpd_handle_t server;
 static esp_netif_t *access_point_netif;
 static esp_netif_t *station_netif;
 
+static void reboot_task(void *arg);
+
 static bool json_string_field(const char *json,
                               const char *key,
                               char *destination,
@@ -87,8 +89,8 @@ static esp_err_t device_handler(httpd_req_t *request)
     snprintf(response, sizeof(response),
              "{\"ok\":true,\"wirelessContent\":%s,\"width\":%u,\"height\":%u,\"ip\":\"%u.%u.%u.%u\",\"apIp\":\"%u.%u.%u.%u\"}",
              content ? "true" : "false",
-             content ? content->width : 0,
-             content ? content->height : 0,
+             (unsigned)CONFIG_EXAMPLE_LCD_H_RES,
+             (unsigned)CONFIG_EXAMPLE_LCD_V_RES,
              IP2STR(&ip.ip),
              IP2STR(&ap_ip.ip));
     return send_json(request, response);
@@ -126,7 +128,9 @@ static esp_err_t content_handler(httpd_req_t *request)
         httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, esp_err_to_name(result));
         return ESP_OK;
     }
-    return send_json(request, "{\"ok\":true,\"message\":\"content updated\"}");
+    const esp_err_t response_result = send_json(request, "{\"ok\":true,\"message\":\"content updated; device restarting\"}");
+    xTaskCreate(reboot_task, "content_reboot", 2048, NULL, 1, NULL);
+    return response_result;
 }
 
 static void reboot_task(void *arg)
