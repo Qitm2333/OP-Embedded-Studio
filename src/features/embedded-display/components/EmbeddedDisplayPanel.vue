@@ -35,6 +35,8 @@ const wirelessStatus = ref<'idle' | 'checking' | 'uploading' | 'success' | 'erro
 const wirelessMessage = ref('连接设备后，可直接传输当前图片')
 const wirelessDeviceReady = ref(false)
 const wifiBaseFirmwareReady = ref(false)
+const DEFAULT_WIFI_AP_SSID = 'OpenPencil-Setup'
+const DEFAULT_WIFI_AP_PASSWORD = 'openpencil'
 const deviceDetailsOpen = ref(false)
 const selectedPrototypeId = ref('')
 const bakePending = ref(false)
@@ -143,21 +145,12 @@ const canPreparePrototype = computed(
     !['uploading', 'building'].includes(buildStatus.value)
 )
 const canBuild = computed(() => {
-  if (
-    !serviceAvailable.value ||
-    !selectedProfile.value ||
-    selectedProfile.value.imageOnly ||
-    bakePending.value ||
-    prototypePending.value ||
-    ['loading', 'uploading', 'building'].includes(buildStatus.value)
-  ) {
+  if (!serviceAvailable.value || !selectedProfile.value || selectedProfile.value.imageOnly || bakePending.value || prototypePending.value || ['loading', 'uploading', 'building'].includes(buildStatus.value)) {
     return false
   }
-
   if (transportMode.value === 'wifi') {
-    return burnMode.value === 'frame' && wifiProvisionEnabled.value && Boolean(wifiSsid.value.trim())
+    return burnMode.value === 'frame' && (!wifiProvisionEnabled.value || Boolean(wifiSsid.value.trim()))
   }
-
   return burnMode.value === 'frame' || Boolean(selectedPrototype.value && !prototypeReason.value)
 })
 const canWirelessUpload = computed(
@@ -174,6 +167,11 @@ const wifiCredentials = computed(() =>
     ? { ssid: wifiSsid.value.trim(), password: wifiPassword.value }
     : undefined
 )
+const wifiFoundationLabel = computed(() => {
+  if (wirelessDeviceReady.value) return '设备已验证'
+  if (wifiBaseFirmwareReady.value) return '待烧录并验证'
+  return '待创建基础固件'
+})
 
 watch(
   () => props.prototypeOptions,
@@ -402,82 +400,21 @@ watch(
       </PanelSection>
 
       <PanelSection label="传输方式">
-        <SegmentedControl
-          v-model="transportMode"
-          class="w-full"
-          :options="transportOptions"
-          label="选择传输方式"
-        />
-        <div v-if="transportMode === 'wifi'" class="mt-panel grid gap-1.5">
-          <label class="flex items-center gap-2 text-[11px] text-surface">
-            <input v-model="wifiProvisionEnabled" type="checkbox" class="accent-accent" />
-            <span>首次烧录时写入 Wi-Fi 配置</span>
-          </label>
-          <template v-if="wifiProvisionEnabled">
-            <input
-              v-model="wifiSsid"
-              class="h-control rounded-panel border border-border bg-panel-field px-2 text-xs text-surface outline-none focus:border-accent"
-              type="text"
-              maxlength="32"
-              placeholder="Wi-Fi 名称（SSID）"
-              aria-label="Wi-Fi 名称"
-            />
-            <input
-              v-model="wifiPassword"
-              class="h-control rounded-panel border border-border bg-panel-field px-2 text-xs text-surface outline-none focus:border-accent"
-              type="password"
-              maxlength="64"
-              placeholder="Wi-Fi 密码（可为空）"
-              aria-label="Wi-Fi 密码"
-            />
-          </template>
-          <template v-if="burnMode === 'frame'">
-            <p class="text-[10px] leading-relaxed text-muted">
-              {{
-                wifiBaseFirmwareReady
-                  ? '基础固件已准备；烧录后检查设备，再传输图片。'
-                  : '先生成并烧录 Wi-Fi 基础固件，图片随后单独通过网络传输。'
-              }}
-            </p>
-            <input
-              v-model="wirelessBaseUrl"
-              class="h-control rounded-panel border border-border bg-panel-field px-2 text-xs text-surface outline-none focus:border-accent"
-              type="url"
-              placeholder="http://192.168.4.1"
-              aria-label="设备 Wi-Fi 地址"
-            />
-            <div class="grid grid-cols-2 gap-1.5">
-              <button
-                type="button"
-                class="h-control rounded-panel border border-transparent bg-panel-field px-2 text-[11px] text-surface hover:bg-panel-field-hover disabled:opacity-50"
-                :disabled="wirelessStatus === 'checking'"
-                @click="handleProbeWireless"
-              >
-                {{ wirelessStatus === 'checking' ? '检查中…' : '检查连接' }}
-              </button>
-              <button
-                type="button"
-                class="h-control rounded-panel bg-accent px-2 text-[11px] text-white disabled:cursor-not-allowed disabled:opacity-50"
-                :disabled="!canWirelessUpload"
-                @click="handleWirelessUpload"
-              >
-                {{ wirelessStatus === 'uploading' ? '传输中…' : '传输图片' }}
-              </button>
-            </div>
-            <p
-              class="text-[10px] leading-relaxed"
-              :class="wirelessStatus === 'error' ? 'text-error' : 'text-muted'"
-            >
-              {{ wirelessMessage }}
-            </p>
-          </template>
-          <p v-if="burnMode === 'prototype'" class="text-[10px] leading-relaxed text-muted">
-            Wi-Fi 状态机传输协议暂未启用；USB 状态机流程不受影响。
-          </p>
-          <p v-else class="text-[10px] leading-relaxed text-muted">
-            Wi-Fi 模式分两步：先烧录带配置的基础固件，再通过 Wi-Fi 传输当前图片。USB 烧录和 Wi-Fi 传图使用不同协议。
-          </p>
+        <SegmentedControl v-model="transportMode" class="w-full" :options="transportOptions" label="选择传输方式" />
+      </PanelSection>
+
+      <PanelSection v-if="transportMode === 'wifi'" label="Wi-Fi 基础固件">
+        <div class="grid gap-1.5">
+          <div class="flex items-center justify-between rounded-panel border border-border bg-panel-field px-2 py-1.5 text-[11px]"><span class="text-muted">1. 创建基础固件</span><span :class="wifiBaseFirmwareReady ? 'text-success' : 'text-muted'">{{ wifiBaseFirmwareReady ? '已生成' : '待创建' }}</span></div>
+          <div class="flex items-center justify-between rounded-panel border border-border bg-panel-field px-2 py-1.5 text-[11px]"><span class="text-muted">2. 烧录并显示诊断图</span><span :class="wirelessDeviceReady ? 'text-success' : 'text-muted'">{{ wifiFoundationLabel }}</span></div>
+          <div class="flex items-center justify-between rounded-panel border border-border bg-panel-field px-2 py-1.5 text-[11px]"><span class="text-muted">3. 连接设备</span><span :class="wirelessDeviceReady ? 'text-success' : 'text-muted'">{{ wirelessDeviceReady ? '已连接' : '待检查' }}</span></div>
         </div>
+        <div class="mt-panel rounded-panel border border-border bg-panel-field px-2 py-2 text-[11px]"><p class="text-surface">默认设备热点</p><p class="mt-1 text-muted">名称：{{ DEFAULT_WIFI_AP_SSID }}</p><p class="text-muted">密码：{{ DEFAULT_WIFI_AP_PASSWORD }}</p><p class="mt-1 leading-relaxed text-muted">烧录基础固件后，设备会开启这个热点。电脑连接后，再检查设备并上传 Frame。</p></div>
+        <label class="mt-panel flex items-center gap-2 text-[11px] text-surface"><input v-model="wifiProvisionEnabled" type="checkbox" class="accent-accent" /><span>同时写入局域网 Wi-Fi（可选）</span></label>
+        <div v-if="wifiProvisionEnabled" class="mt-1.5 grid gap-1.5"><input v-model="wifiSsid" class="h-control rounded-panel border border-border bg-panel-field px-2 text-xs text-surface outline-none focus:border-accent" type="text" maxlength="32" placeholder="局域网 Wi-Fi 名称（SSID）" aria-label="局域网 Wi-Fi 名称" /><input v-model="wifiPassword" class="h-control rounded-panel border border-border bg-panel-field px-2 text-xs text-surface outline-none focus:border-accent" type="password" maxlength="64" placeholder="局域网 Wi-Fi 密码（可为空）" aria-label="局域网 Wi-Fi 密码" /></div>
+        <button type="button" class="mt-panel h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50" :disabled="!canBuild" @click="handleBuildFirmware">{{ buildStatus === 'building' ? '正在创建基础固件…' : '1. 创建 Wi-Fi 基础固件' }}</button>
+        <esp-web-install-button v-if="manifestUrl" :manifest="manifestUrl" class="mt-1.5 block"><button slot="activate" type="button" class="h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white">2. 烧录基础固件</button></esp-web-install-button>
+        <div class="mt-panel grid gap-1.5 border-t border-border pt-panel"><p class="text-[10px] leading-relaxed text-muted">烧录后屏幕会显示棋盘格和十字诊断图，用于确认屏幕、分辨率和固件启动正常。</p><input v-model="wirelessBaseUrl" class="h-control rounded-panel border border-border bg-panel-field px-2 text-xs text-surface outline-none focus:border-accent" type="url" placeholder="http://192.168.4.1" aria-label="设备地址" /><button type="button" class="h-control w-full rounded-panel border border-transparent bg-panel-field px-2 text-[11px] text-surface hover:bg-panel-field-hover disabled:opacity-50" :disabled="wirelessStatus === 'checking'" @click="handleProbeWireless">{{ wirelessStatus === 'checking' ? '检查中…' : '3. 检查设备连接' }}</button><p class="text-[10px] leading-relaxed" :class="wirelessStatus === 'error' ? 'text-error' : 'text-muted'">{{ wirelessMessage }}</p></div>
       </PanelSection>
 
       <PanelSection label="烧录模式">
@@ -579,6 +516,18 @@ watch(
           />
           <span v-else class="text-[11px] text-muted">{{ resolutionLabel }}</span>
         </div>
+        <button
+          v-if="transportMode === 'wifi'"
+          type="button"
+          class="mt-panel h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="!canWirelessUpload"
+          @click="handleWirelessUpload"
+        >
+          {{ wirelessStatus === 'uploading' ? '正在传输…' : '4. 上传图片到设备' }}
+        </button>
+        <p v-if="transportMode === 'wifi'" class="mt-1 text-[10px] leading-relaxed text-muted">
+          只有完成基础固件烧录并检查设备后，才可以上传 Frame。
+        </p>
       </PanelSection>
 
       <PanelSection
@@ -598,73 +547,11 @@ watch(
         </div>
       </PanelSection>
 
-      <PanelSection label="构建与烧录">
-        <div class="mb-panel flex items-center justify-between text-[11px]">
-          <span class="text-muted">当前状态</span>
-          <span
-            :class="
-              buildStatus === 'error'
-                ? 'text-error'
-                : buildStatus === 'ready'
-                  ? 'text-success'
-                  : 'text-surface'
-            "
-          >
-            {{ buildStatusLabel }}
-          </span>
-        </div>
+      <PanelSection v-if="transportMode === 'usb'" label="构建与烧录">
+        <div class="mb-panel flex items-center justify-between text-[11px]"><span class="text-muted">当前状态</span><span :class="buildStatus === 'error' ? 'text-error' : buildStatus === 'ready' ? 'text-success' : 'text-surface'">{{ buildStatusLabel }}</span></div>
         <p class="mb-panel text-[11px] leading-relaxed text-muted">{{ buildMessage }}</p>
-
-        <div class="grid gap-1.5">
-          <button
-            type="button"
-            class="h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="!canBuild"
-            @click="handleBuildFirmware"
-          >
-            1.
-            {{
-              buildStatus === 'building'
-                ? '正在生成固件…'
-                : transportMode === 'wifi' && burnMode === 'frame'
-                  ? wifiBaseFirmwareReady
-                    ? '重新生成 Wi-Fi 基础固件'
-                    : '生成 Wi-Fi 基础固件'
-                  : '生成固件'
-            }}
-          </button>
-
-          <esp-web-install-button v-if="manifestUrl" :manifest="manifestUrl">
-            <button
-              slot="activate"
-              type="button"
-              class="h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white"
-            >
-              2. 连接设备并烧录
-            </button>
-          </esp-web-install-button>
-          <button
-            v-else
-            type="button"
-            class="h-control w-full cursor-not-allowed rounded-panel border border-transparent bg-panel-field px-3 text-xs text-muted opacity-60"
-            disabled
-          >
-            2. 连接设备并烧录
-          </button>
-        </div>
-
-        <p class="mt-panel text-[10px] leading-relaxed text-muted">
-          生成固件只会在本机构建产物；第二步才会打开串口并把固件写入设备。
-        </p>
-        <a
-          v-if="manifestUrl"
-          class="mt-1 block truncate text-[10px] text-accent hover:underline"
-          :href="manifestUrl"
-          target="_blank"
-          rel="noreferrer"
-        >
-          查看烧录清单
-        </a>
+        <button type="button" class="h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50" :disabled="!canBuild" @click="handleBuildFirmware">{{ buildStatus === 'building' ? '正在生成固件…' : '生成 USB 固件' }}</button>
+        <esp-web-install-button v-if="manifestUrl" :manifest="manifestUrl" class="mt-1.5 block"><button slot="activate" type="button" class="h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white">连接设备并烧录</button></esp-web-install-button>
       </PanelSection>
 
       <PanelSection label="构建日志" :default-open="false">

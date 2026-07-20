@@ -323,9 +323,11 @@ void app_main(void)
 #endif
 #if CONFIG_OPENPENCIL_WIFI_SERVER
     if (LCD_GENERATED_IMAGE_PIXEL_COUNT == 0) {
-        // A blank Wi-Fi base firmware must remain reachable even before its
-        // first content upload; do not enter the blocking geometry-test loop.
+        // Keep the base firmware reachable while showing a deterministic
+        // checkerboard/cross diagnostic image until the first Frame upload.
         ESP_ERROR_CHECK(openpencil_wireless_server_start());
+        ESP_LOGI(TAG, "Start Wi-Fi base firmware diagnostic pattern");
+        ESP_ERROR_CHECK(draw_geometry_test(panel_handle, frame_buffer));
         return;
     } else
 #endif
