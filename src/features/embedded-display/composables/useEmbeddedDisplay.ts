@@ -150,7 +150,7 @@ export function useEmbeddedDisplay() {
       buildStatus.value = 'idle'
       buildMessage.value = uploadToBuildService
         ? '状态机资源已上传，可以生成固件。'
-        : '状态机资源已准备，可以通过 BLE 传输。'
+        : '状态机资源已准备，可以通过无线方式传输。'
       buildLog.value = [
         `prototype: ${bake.name}`,
         `states: ${payload.states.length}`,

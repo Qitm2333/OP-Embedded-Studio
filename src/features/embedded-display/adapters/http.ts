@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   EmbeddedBuildMode,
   EmbeddedBuildResult,
   EmbeddedDisplayAdapter,
@@ -88,6 +88,16 @@ export function createEmbeddedDisplayHttpAdapter(): EmbeddedDisplayAdapter {
       )
     }
   }
+}
+
+export async function prepareWifiFirmwareCredentials(
+  profileId: string,
+  wifiCredentials?: EmbeddedWifiCredentials
+): Promise<void> {
+  await requestJson('/api/wifi-credentials', {
+    method: 'POST',
+    body: JSON.stringify({ profileId, wifiCredentials })
+  })
 }
 
 export function embeddedArtifactUrl(

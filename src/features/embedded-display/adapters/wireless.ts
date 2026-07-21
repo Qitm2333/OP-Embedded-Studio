@@ -1,5 +1,9 @@
-import { encodeWirelessImage } from './wireless-content'
-import type { EmbeddedImagePayload, EmbeddedWirelessDevice } from '../model/types'
+import type {
+  EmbeddedImagePayload,
+  EmbeddedPrototypePayload,
+  EmbeddedWirelessDevice
+} from '../model/types'
+import { encodeWirelessImage, encodeWirelessPrototype } from './wireless-content'
 
 interface WirelessResponse {
   ok?: boolean
@@ -58,16 +62,32 @@ export async function probeWirelessDevice(baseUrl: string): Promise<EmbeddedWire
   }
 }
 
-export async function uploadWirelessImage(
+async function uploadWirelessContent(
   baseUrl: string,
-  payload: EmbeddedImagePayload,
+  body: ArrayBuffer,
   signal?: AbortSignal
 ): Promise<void> {
   const response = await fetch(`${normalizeBaseUrl(baseUrl)}/api/content`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/octet-stream' },
-    body: encodeWirelessImage(payload),
+    body,
     signal
   })
   await parseResponse(response)
+}
+
+export async function uploadWirelessImage(
+  baseUrl: string,
+  payload: EmbeddedImagePayload,
+  signal?: AbortSignal
+): Promise<void> {
+  await uploadWirelessContent(baseUrl, encodeWirelessImage(payload), signal)
+}
+
+export async function uploadWirelessPrototype(
+  baseUrl: string,
+  payload: EmbeddedPrototypePayload,
+  signal?: AbortSignal
+): Promise<void> {
+  await uploadWirelessContent(baseUrl, encodeWirelessPrototype(payload), signal)
 }

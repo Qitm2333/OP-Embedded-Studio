@@ -10,6 +10,7 @@
 #include "ble_server.h"
 #include "display_presenter.h"
 #include "lcd_panel_factory.h"
+#include "wireless_diagnostic_view.h"
 
 #define VIEW_WIDTH CONFIG_EXAMPLE_LCD_H_RES
 #define VIEW_HEIGHT CONFIG_EXAMPLE_LCD_V_RES
@@ -96,14 +97,12 @@ static esp_err_t draw(esp_lcd_panel_handle_t panel, uint16_t *buffer,
                       const openpencil_ble_status_t *status)
 {
     const int scale = VIEW_WIDTH >= 400 ? 2 : (VIEW_WIDTH >= 220 ? 2 : 1);
-    const int background = color(10, 14, 22);
     const uint16_t white = color(242, 245, 250);
     const uint16_t muted = color(142, 154, 174);
-    const uint16_t blue = color(88, 145, 255);
     const uint16_t green = color(68, 210, 132);
     const uint16_t orange = color(255, 184, 76);
     const uint16_t red = color(255, 96, 96);
-    fill(buffer, 0, 0, VIEW_WIDTH, VIEW_HEIGHT, (uint16_t)background);
+    openpencil_wireless_diagnostic_draw(buffer, "BLE MODE");
 
     const char *state = !status->connected ? "WAITING" :
                         status->failed ? "ERROR" :
@@ -111,13 +110,12 @@ static esp_err_t draw(esp_lcd_panel_handle_t panel, uint16_t *buffer,
                         status->completed ? "COMPLETE" : "READY";
     const uint16_t state_color = status->failed ? red :
                                  status->receiving || status->completed ? green : orange;
-    const int title_y = VIEW_HEIGHT / 2 - 74;
-    centered_text(buffer, title_y, "BLE FRAME", scale, blue);
-    centered_text(buffer, title_y + 16, state, scale, state_color);
+    const int status_y = VIEW_HEIGHT / 2 + 58;
+    centered_text(buffer, status_y, state, scale, state_color);
 
     const int bar_width = VIEW_WIDTH >= 400 ? 300 : VIEW_WIDTH - 32;
     const int bar_x = (VIEW_WIDTH - bar_width) / 2;
-    const int bar_y = title_y + 42;
+    const int bar_y = status_y + 22;
     const int bar_height = scale * 5;
     const int percent = status->total_bytes == 0 ? 0 :
         (int)((status->received_bytes * 100U) / status->total_bytes);

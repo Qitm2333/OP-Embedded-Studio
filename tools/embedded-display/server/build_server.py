@@ -29,6 +29,7 @@ PROFILES_JSON = PROJECT_DIR / "screen_profiles" / "profiles.json"
 GENERATED_IMAGE_HEADER = PROJECT_DIR / "main" / "generated_image_user.h"
 GENERATED_PROTOTYPE_HEADER = PROJECT_DIR / "main" / "generated_prototype_runtime.h"
 GENERATED_CONTENT_DIR = PROJECT_DIR / "generated-content"
+PREBUILT_FIRMWARE_DIR = PROJECT_DIR / "prebuilt-firmware"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 LOG_TAIL_LINES = 80
@@ -71,6 +72,7 @@ NVS_PARTITION_SIZE = 0x6000
 WIRELESS_CONTENT_RESET_ARTIFACT = "content-reset.bin"
 WIRELESS_CONTENT_OFFSET = 0x310000
 WIRELESS_CONTENT_RESET_BYTES = 0x1000
+PREBUILT_FIRMWARE_MODES = frozenset(("wifi-frame", "ble-frame"))
 EXTERNAL_CONTENT_BUILD_MODES = frozenset((
     "usb-frame", "usb-prototype",
     "wifi-frame", "wifi-prototype", "lan-frame", "lan-prototype",
@@ -321,7 +323,9 @@ def mode_defaults_path(build_mode):
     path = PROJECT_DIR / "build" / "modes" / safe_path_segment(mode) / "mode.defaults"
     path.parent.mkdir(parents=True, exist_ok=True)
     wireless_enabled = mode.startswith(("wifi-", "lan-"))
-    external_content = mode in ("usb-frame", "usb-prototype", "wifi-frame", "lan-frame")
+    external_content = mode in (
+        "usb-frame", "usb-prototype", "wifi-frame", "wifi-prototype", "lan-frame"
+    )
     lan_status_screen = mode.startswith("lan-")
     setup_access_point = mode.startswith("wifi-")
     ble_enabled = mode.startswith("ble-")
@@ -330,7 +334,7 @@ def mode_defaults_path(build_mode):
         f'CONFIG_PARTITION_TABLE_FILENAME="{partition_table}"',
         f'CONFIG_OPENPENCIL_WIFI_SERVER={"y" if wireless_enabled else "n"}',
         f'CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY={"y" if external_content else "n"}',
-        f'CONFIG_OPENPENCIL_EXTERNAL_PROTOTYPE={"y" if mode.startswith("usb-") else "n"}',
+        f'CONFIG_OPENPENCIL_EXTERNAL_PROTOTYPE={"y" if mode.startswith(("usb-", "wifi-")) else "n"}',
         f'CONFIG_OPENPENCIL_LAN_STATUS_SCREEN={"y" if lan_status_screen else "n"}',
         f'CONFIG_OPENPENCIL_SETUP_ACCESS_POINT={"y" if setup_access_point else "n"}',
         f'CONFIG_OPENPENCIL_BLE_SERVER={"y" if ble_enabled else "n"}',
@@ -720,6 +724,21 @@ def write_generated_prototype_header(profile, body):
     return {"ok": True, "states": len(states), "transitions": len(normalized_transitions)}
 
 
+def prebuilt_artifact_path(profile_id, file_name, build_mode):
+    mode = normalize_build_mode(build_mode)
+    if mode not in PREBUILT_FIRMWARE_MODES:
+        return None
+    return PREBUILT_FIRMWARE_DIR / mode / safe_path_segment(profile_id) / file_name
+
+
+def stable_artifact_path(profile_id, public_name, build_mode, build_path):
+    prebuilt_path = prebuilt_artifact_path(profile_id, public_name, build_mode)
+    if prebuilt_path is not None:
+        return prebuilt_path
+    relative_path = ARTIFACT_FILES[public_name][0]
+    return build_path / relative_path
+
+
 def artifact_manifest(profile_id, build_mode=DEFAULT_BUILD_MODE):
     registry = load_profile_registry()
     profile = find_profile(registry, profile_id)
@@ -733,8 +752,8 @@ def artifact_manifest(profile_id, build_mode=DEFAULT_BUILD_MODE):
         base = f"/api/artifacts/{profile_id}/{file_name}"
         return base if mode == "usb-frame" else f"{base}?mode={mode}"
 
-    for public_name, (relative_path, offset) in ARTIFACT_FILES.items():
-        artifact_path = build_path / relative_path
+    for public_name, (_, offset) in ARTIFACT_FILES.items():
+        artifact_path = stable_artifact_path(profile_id, public_name, mode, build_path)
         if not artifact_path.is_file():
             missing.append(public_name)
             continue
@@ -744,7 +763,10 @@ def artifact_manifest(profile_id, build_mode=DEFAULT_BUILD_MODE):
         })
 
     if mode in EXTERNAL_CONTENT_BUILD_MODES:
-        reset_path = build_path / WIRELESS_CONTENT_RESET_ARTIFACT
+        reset_path = (
+            prebuilt_artifact_path(profile_id, WIRELESS_CONTENT_RESET_ARTIFACT, mode)
+            or build_path / WIRELESS_CONTENT_RESET_ARTIFACT
+        )
         if not reset_path.is_file():
             missing.append(WIRELESS_CONTENT_RESET_ARTIFACT)
         else:
@@ -793,12 +815,23 @@ def artifact_file_path(profile_id, file_name, build_mode=DEFAULT_BUILD_MODE):
     extra_artifacts = (WIFI_CREDENTIALS_ARTIFACT, WIRELESS_CONTENT_RESET_ARTIFACT)
     if file_name not in ARTIFACT_FILES and file_name not in extra_artifacts:
         raise ApiError(HTTPStatus.NOT_FOUND, f"unknown artifact file: {file_name}")
-    build_dir = build_dir_for_profile(profile_id, build_mode)
-    relative_path = ARTIFACT_FILES[file_name][0] if file_name in ARTIFACT_FILES else file_name
-    path = (PROJECT_DIR / build_dir / relative_path).resolve()
+    mode = normalize_build_mode(build_mode)
+    build_dir = build_dir_for_profile(profile_id, mode)
     build_root = (PROJECT_DIR / build_dir).resolve()
-    if build_root != path and build_root not in path.parents:
-        raise ApiError(HTTPStatus.BAD_REQUEST, "artifact path escapes build directory")
+    if file_name == WIFI_CREDENTIALS_ARTIFACT:
+        path = (build_root / file_name).resolve()
+        allowed_root = build_root
+    else:
+        path = prebuilt_artifact_path(profile_id, file_name, mode)
+        if path is None:
+            relative_path = ARTIFACT_FILES[file_name][0] if file_name in ARTIFACT_FILES else file_name
+            path = (build_root / relative_path).resolve()
+            allowed_root = build_root
+        else:
+            path = path.resolve()
+            allowed_root = PREBUILT_FIRMWARE_DIR.resolve()
+    if allowed_root != path and allowed_root not in path.parents:
+        raise ApiError(HTTPStatus.BAD_REQUEST, "artifact path escapes firmware directory")
     if not path.is_file():
         raise ApiError(HTTPStatus.NOT_FOUND, f"artifact does not exist: {file_name}. Build the profile first.")
     return path
@@ -1004,6 +1037,20 @@ class RequestHandler(BaseHTTPRequestHandler):
                     )
                     return
                 raise ApiError(HTTPStatus.NOT_FOUND, f"unknown artifact endpoint: {parsed.path}")
+
+            if method == "POST" and parsed.path == "/api/wifi-credentials":
+                body = read_json_body(self)
+                profile_id = body.get("profileId")
+                if not isinstance(profile_id, str) or not profile_id:
+                    raise ApiError(HTTPStatus.BAD_REQUEST, "request body must include non-empty profileId")
+                registry = load_profile_registry()
+                find_profile(registry, profile_id)
+                build_path = PROJECT_DIR / build_dir_for_profile(profile_id, "wifi-frame")
+                build_path.mkdir(parents=True, exist_ok=True)
+                with BUILD_LOCK:
+                    write_wifi_credentials(build_path, body.get("wifiCredentials"))
+                self.write_json({"ok": True})
+                return
 
             if method == "POST" and parsed.path == "/api/build":
                 body = read_json_body(self)

@@ -1,4 +1,8 @@
-import type { EmbeddedImagePayload, EmbeddedPrototypeEventId, EmbeddedPrototypePayload } from '../model/types'
+import type {
+  EmbeddedImagePayload,
+  EmbeddedPrototypeEventId,
+  EmbeddedPrototypePayload
+} from '../model/types'
 
 const CONTENT_MAGIC = 0x4f504331
 const CONTENT_VERSION = 1
@@ -66,20 +70,21 @@ export function encodeWirelessImage(payload: EmbeddedImagePayload): ArrayBuffer 
 
 export function encodeWirelessPrototype(payload: EmbeddedPrototypePayload): ArrayBuffer {
   if (payload.states.length < 1 || payload.states.length > MAX_PROTOTYPE_STATES) {
-    throw new Error(`BLE 状态机必须包含 1 至 ${MAX_PROTOTYPE_STATES} 个状态`)
+    throw new Error(`无线状态机必须包含 1 至 ${MAX_PROTOTYPE_STATES} 个状态`)
   }
-  if (payload.transitions.length > 0xffff) throw new Error('BLE 状态机跳转数量过多')
+  if (payload.transitions.length > 0xffff) throw new Error('无线状态机跳转数量过多')
   if (payload.initialStateIndex < 0 || payload.initialStateIndex >= payload.states.length) {
-    throw new Error('BLE 状态机缺少有效的初始状态')
+    throw new Error('无线状态机缺少有效的初始状态')
   }
 
   const pixels = bytesFromBase64(payload.pixelsRgb565Base64)
   const frameBytes = payload.width * payload.height * 2
   if (pixels.byteLength !== frameBytes * payload.states.length) {
-    throw new Error('BLE 状态机图像数据与状态数量不匹配')
+    throw new Error('无线状态机图像数据与状态数量不匹配')
   }
 
-  const metadataBytes = PROTOTYPE_HEADER_BYTES + payload.transitions.length * PROTOTYPE_TRANSITION_BYTES
+  const metadataBytes =
+    PROTOTYPE_HEADER_BYTES + payload.transitions.length * PROTOTYPE_TRANSITION_BYTES
   const content = new Uint8Array(metadataBytes + pixels.byteLength)
   const view = new DataView(content.buffer)
   view.setUint16(0, payload.initialStateIndex, true)

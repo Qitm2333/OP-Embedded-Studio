@@ -23,6 +23,7 @@
 #include "lcd_panel_factory.h"
 #include "prototype_runtime.h"
 #include "wireless_content.h"
+#include "wireless_diagnostic_view.h"
 #if CONFIG_OPENPENCIL_WIFI_SERVER
 #include "wireless_server.h"
 #include "wireless_status_view.h"
@@ -70,16 +71,6 @@ static const char *TAG = "lcd_simple";
 #define LCD_INVERT_COLOR false
 #endif
 
-static uint16_t panel_color_from_rgb565(uint16_t color)
-{
-    return example_lcd_panel_color_from_rgb565(color);
-}
-
-static uint16_t rgb565(uint8_t red, uint8_t green, uint8_t blue)
-{
-    return panel_color_from_rgb565(((red & 0xF8) << 8) | ((green & 0xF8) << 3) | (blue >> 3));
-}
-
 static esp_err_t backlight_init(void)
 {
 #if CONFIG_EXAMPLE_PIN_NUM_BK_LIGHT >= 0
@@ -100,83 +91,6 @@ static void backlight_set(bool on)
 #else
     (void)on;
 #endif
-}
-
-static void frame_fill(uint16_t *frame_buffer, uint16_t color)
-{
-    for (int i = 0; i < LCD_FRAME_PIXELS; i++) {
-        frame_buffer[i] = color;
-    }
-}
-
-static void frame_rect(uint16_t *frame_buffer, int x1, int y1, int x2, int y2, uint16_t color)
-{
-    if (x1 < 0) {
-        x1 = 0;
-    }
-    if (y1 < 0) {
-        y1 = 0;
-    }
-    if (x2 > CONFIG_EXAMPLE_LCD_H_RES) {
-        x2 = CONFIG_EXAMPLE_LCD_H_RES;
-    }
-    if (y2 > CONFIG_EXAMPLE_LCD_V_RES) {
-        y2 = CONFIG_EXAMPLE_LCD_V_RES;
-    }
-    if (x2 <= x1 || y2 <= y1) {
-        return;
-    }
-
-    for (int y = y1; y < y2; y++) {
-        for (int x = x1; x < x2; x++) {
-            frame_buffer[y * CONFIG_EXAMPLE_LCD_H_RES + x] = color;
-        }
-    }
-}
-
-static esp_err_t draw_geometry_test(esp_lcd_panel_handle_t panel, uint16_t *frame_buffer)
-{
-    const int width = CONFIG_EXAMPLE_LCD_H_RES;
-    const int height = CONFIG_EXAMPLE_LCD_V_RES;
-    const int center_x = width / 2;
-    const int center_y = height / 2;
-    const uint16_t black = rgb565(0, 0, 0);
-    const uint16_t white = rgb565(255, 255, 255);
-    const uint16_t gray = rgb565(40, 40, 40);
-    const uint16_t red = rgb565(255, 0, 0);
-    const uint16_t green = rgb565(0, 255, 0);
-    const uint16_t blue = rgb565(0, 0, 255);
-    const uint16_t yellow = rgb565(255, 255, 0);
-
-    frame_fill(frame_buffer, black);
-
-    for (int x = 40; x < width; x += 40) {
-        frame_rect(frame_buffer, x, 0, x + 1, height, gray);
-    }
-    for (int y = 40; y < height; y += 40) {
-        frame_rect(frame_buffer, 0, y, width, y + 1, gray);
-    }
-
-    frame_rect(frame_buffer, 4, 4, 24, 24, red);
-    frame_rect(frame_buffer, width - 24, 4, width - 4, 24, green);
-    frame_rect(frame_buffer, 4, height - 24, 24, height - 4, blue);
-    frame_rect(frame_buffer, width - 24, height - 24, width - 4, height - 4, yellow);
-
-    frame_rect(frame_buffer, center_x - 10, center_y, center_x + 11, center_y + 1, white);
-    frame_rect(frame_buffer, center_x, center_y - 10, center_x + 1, center_y + 11, white);
-
-    frame_rect(frame_buffer, 0, 0, width, 1, white);
-    frame_rect(frame_buffer, 0, height - 1, width, height, white);
-    frame_rect(frame_buffer, 0, 0, 1, height, white);
-    frame_rect(frame_buffer, width - 1, 0, width, height, white);
-
-    ESP_RETURN_ON_ERROR(esp_lcd_panel_draw_bitmap(panel, 0, 0, width, height, frame_buffer), TAG, "draw frame failed");
-
-    while (1) {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-
-    return ESP_OK;
 }
 
 #if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER || CONFIG_OPENPENCIL_BLE_SERVER
@@ -215,7 +129,7 @@ static esp_err_t draw_generated_image(esp_lcd_panel_handle_t panel, uint16_t *fr
                  LCD_GENERATED_IMAGE_FRAME_COUNT,
                  CONFIG_EXAMPLE_LCD_H_RES,
                  CONFIG_EXAMPLE_LCD_V_RES);
-        return draw_geometry_test(panel, frame_buffer);
+        return openpencil_wireless_diagnostic_view_run(panel, frame_buffer, NULL);
     }
 
     ESP_LOGI(TAG, "Draw generated image: %s (%dx%d, %d frame(s), %d ms)",
@@ -320,6 +234,9 @@ void app_main(void)
 #if CONFIG_OPENPENCIL_BLE_SERVER
             ESP_ERROR_CHECK(openpencil_ble_server_start());
 #endif
+#if CONFIG_OPENPENCIL_WIFI_SERVER
+            ESP_ERROR_CHECK(openpencil_wireless_server_start());
+#endif
             ESP_ERROR_CHECK(openpencil_wireless_prototype_run(panel_handle, frame_buffer));
             return;
         }
@@ -347,9 +264,9 @@ void app_main(void)
         ESP_ERROR_CHECK(openpencil_wireless_status_view_run(panel_handle, frame_buffer));
 #else
         // Keep the hotspot base firmware reachable while showing a deterministic
-        // checkerboard/cross diagnostic image until the first Frame upload.
+        // checkerboard/cross diagnostic image until the first content upload.
         ESP_LOGI(TAG, "Start Wi-Fi base firmware diagnostic pattern");
-        ESP_ERROR_CHECK(draw_geometry_test(panel_handle, frame_buffer));
+        ESP_ERROR_CHECK(openpencil_wireless_diagnostic_view_run(panel_handle, frame_buffer, "WIFI MODE"));
 #endif
         return;
     } else
@@ -368,6 +285,6 @@ void app_main(void)
         ESP_ERROR_CHECK(draw_generated_image(panel_handle, frame_buffer));
     } else {
         ESP_LOGI(TAG, "Start %dx%d geometry test for %s", CONFIG_EXAMPLE_LCD_H_RES, CONFIG_EXAMPLE_LCD_V_RES, example_lcd_controller_name());
-        ESP_ERROR_CHECK(draw_geometry_test(panel_handle, frame_buffer));
+        ESP_ERROR_CHECK(openpencil_wireless_diagnostic_view_run(panel_handle, frame_buffer, NULL));
     }
 }
