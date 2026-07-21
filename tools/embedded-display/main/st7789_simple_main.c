@@ -315,9 +315,11 @@ void app_main(void)
 
 #if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER || CONFIG_OPENPENCIL_BLE_SERVER
     if (LCD_GENERATED_IMAGE_PIXEL_COUNT == 0 && openpencil_content_is_valid()) {
-#if CONFIG_OPENPENCIL_BLE_SERVER
+#if CONFIG_OPENPENCIL_BLE_SERVER || CONFIG_OPENPENCIL_EXTERNAL_PROTOTYPE
         if (openpencil_content_is_prototype()) {
+#if CONFIG_OPENPENCIL_BLE_SERVER
             ESP_ERROR_CHECK(openpencil_ble_server_start());
+#endif
             ESP_ERROR_CHECK(openpencil_wireless_prototype_run(panel_handle, frame_buffer));
             return;
         }

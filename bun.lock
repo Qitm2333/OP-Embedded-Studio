@@ -41,6 +41,7 @@
         "culori": "^4.0.2",
         "dedent": "^1.7.1",
         "esp-web-tools": "10.4.0",
+        "esptool-js": "0.6.0",
         "fflate": "^0.8.2",
         "fzstd": "^0.1.1",
         "jspdf": "^4.2.1",

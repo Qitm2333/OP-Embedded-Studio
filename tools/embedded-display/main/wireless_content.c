@@ -19,7 +19,7 @@ static bool content_valid;
 
 uint8_t openpencil_content_firmware_mode(void)
 {
-#if CONFIG_OPENPENCIL_BLE_SERVER
+#if CONFIG_OPENPENCIL_BLE_SERVER || CONFIG_OPENPENCIL_EXTERNAL_PROTOTYPE
     return OPENPENCIL_CONTENT_FIRMWARE_MODE_UNIFIED;
 #else
     return OPENPENCIL_CONTENT_MODE_FRAME;
@@ -28,7 +28,7 @@ uint8_t openpencil_content_firmware_mode(void)
 
 static bool content_mode_supported(uint8_t mode)
 {
-#if CONFIG_OPENPENCIL_BLE_SERVER
+#if CONFIG_OPENPENCIL_BLE_SERVER || CONFIG_OPENPENCIL_EXTERNAL_PROTOTYPE
     return mode == OPENPENCIL_CONTENT_MODE_FRAME ||
            mode == OPENPENCIL_CONTENT_MODE_PROTOTYPE;
 #else

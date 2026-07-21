@@ -17,7 +17,7 @@ typedef struct {
     uint8_t to_state;
 } openpencil_transition_t;
 
-#if __has_include("generated_prototype_user.h")
+#if !CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY && __has_include("generated_prototype_user.h")
 #include "generated_prototype_user.h"
 #else
 #define OPENPENCIL_PROTOTYPE_ENABLED 0

@@ -8,6 +8,11 @@ menu "Example Configuration"
         bool "Load display content from the content partition"
         default n
 
+    config OPENPENCIL_EXTERNAL_PROTOTYPE
+        bool "Allow prototype content from the content partition"
+        depends on OPENPENCIL_EXTERNAL_CONTENT_ONLY
+        default n
+
     config OPENPENCIL_LAN_STATUS_SCREEN
         bool "Show LAN connection details while waiting for content"
         default n
