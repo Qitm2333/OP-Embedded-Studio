@@ -378,7 +378,7 @@ watch(
     const sequence = ++firmwareLoadSequence
     wirelessDeviceReady.value = false
     wifiBaseFirmwareReady.value = false
-    bleSession.reset()
+    if (mode === 'ble') bleSession.setProfile(selectedProfile.value)
     if (mode === 'wifi') burnMode.value = 'frame'
     if (!profileId) return
 

@@ -30,6 +30,7 @@ static const char *TAG = "ble_server";
 #define OPENPENCIL_BLE_CONN_INTERVAL_MIN 6
 #define OPENPENCIL_BLE_CONN_INTERVAL_MAX 12
 #define OPENPENCIL_BLE_SUPERVISION_TIMEOUT 400
+#define OPENPENCIL_BLE_STATUS_NOTIFY_STEP (12 * 1024)
 #define OPENPENCIL_BLE_SERVICE_UUID \
     BLE_UUID128_DECLARE(0x7d, 0x12, 0x2b, 0x89, 0x91, 0x47, 0x4a, 0x8e, 0x9b, 0x55, 0x4d, 0x8f, 0x7d, 0x20, 0x10, 0xa1)
 #define OPENPENCIL_BLE_TRANSFER_UUID \
@@ -52,6 +53,8 @@ static uint8_t transfer_header[sizeof(openpencil_content_header_t)];
 static size_t transfer_header_received;
 static size_t transfer_capacity;
 static size_t transfer_received;
+static size_t last_notified_received;
+static bool status_notify_enabled;
 static portMUX_TYPE ble_status_lock = portMUX_INITIALIZER_UNLOCKED;
 
 void ble_store_config_init(void);
@@ -69,6 +72,43 @@ static void advertise_retry_task(void *param);
 static void tune_connection_task(void *param);
 static int ble_gap_event(struct ble_gap_event *event, void *arg);
 
+static size_t encode_status_payload(uint8_t payload[14])
+{
+    openpencil_ble_status_t status;
+    openpencil_ble_server_get_status(&status);
+    memset(payload, 0, 14);
+    payload[0] = status.connected;
+    payload[1] = status.paired;
+    payload[2] = status.receiving;
+    payload[3] = status.completed;
+    payload[4] = status.failed;
+    memcpy(payload + 5, &status.received_bytes, sizeof(uint32_t));
+    memcpy(payload + 9, &status.total_bytes, sizeof(uint32_t));
+    payload[13] = openpencil_content_firmware_mode();
+    return 14;
+}
+
+static void notify_status(bool force)
+{
+    if (!status_notify_enabled || connection_handle == BLE_HS_CONN_HANDLE_NONE) return;
+
+    openpencil_ble_status_t status;
+    openpencil_ble_server_get_status(&status);
+    if (!force && status.received_bytes < last_notified_received + OPENPENCIL_BLE_STATUS_NOTIFY_STEP) return;
+
+    uint8_t payload[14];
+    const size_t payload_length = encode_status_payload(payload);
+    struct os_mbuf *om = ble_hs_mbuf_from_flat(payload, payload_length);
+    if (!om) return;
+
+    const int result = ble_gatts_notify_custom(connection_handle, status_value_handle, om);
+    if (result == 0) {
+        last_notified_received = status.received_bytes;
+    } else {
+        ESP_LOGW(TAG, "BLE status notification failed: %d", result);
+    }
+}
+
 void openpencil_ble_server_get_status(openpencil_ble_status_t *status)
 {
     if (!status) return;
@@ -84,12 +124,14 @@ static void reset_transfer(bool failed)
     transfer_header_received = 0;
     transfer_capacity = 0;
     transfer_received = 0;
+    last_notified_received = 0;
     taskENTER_CRITICAL(&ble_status_lock);
     ble_status.receiving = false;
     ble_status.failed = failed;
     ble_status.received_bytes = 0;
     ble_status.total_bytes = 0;
     taskEXIT_CRITICAL(&ble_status_lock);
+    notify_status(true);
 }
 
 static bool validate_header(const openpencil_content_header_t *header, size_t *total)
@@ -175,6 +217,7 @@ static int receive_chunk(struct os_mbuf *om)
         ble_status.received_bytes = transfer_received;
         ble_status.total_bytes = transfer_capacity;
         taskEXIT_CRITICAL(&ble_status_lock);
+        notify_status(true);
     }
 
     const size_t payload_length = packet_length - packet_data_offset;
@@ -189,6 +232,7 @@ static int receive_chunk(struct os_mbuf *om)
     taskENTER_CRITICAL(&ble_status_lock);
     ble_status.received_bytes = transfer_received;
     taskEXIT_CRITICAL(&ble_status_lock);
+    notify_status(false);
 
     if (transfer_received == transfer_capacity) {
         const esp_err_t result = openpencil_content_write(transfer_buffer, transfer_capacity);
@@ -204,6 +248,7 @@ static int receive_chunk(struct os_mbuf *om)
         ble_status.completed = true;
         ble_status.received_bytes = transfer_capacity;
         taskEXIT_CRITICAL(&ble_status_lock);
+        notify_status(true);
         ESP_LOGI(TAG, "BLE content received: %u bytes", (unsigned)transfer_capacity);
         xTaskCreate(content_reboot_task, "ble_content_reboot", 2048, NULL, 1, NULL);
     }
@@ -227,20 +272,9 @@ static int status_access(uint16_t conn_handle, uint16_t attr_handle,
     (void)attr_handle;
     (void)arg;
     if (ctxt->op != BLE_GATT_ACCESS_OP_READ_CHR) return BLE_ATT_ERR_UNLIKELY;
-    openpencil_ble_status_t status;
-    openpencil_ble_server_get_status(&status);
-    uint8_t payload[17] = {0};
-    payload[0] = status.connected;
-    payload[1] = status.paired;
-    payload[2] = status.receiving;
-    payload[3] = status.completed;
-    payload[4] = status.failed;
-    memcpy(payload + 5, &status.received_bytes, sizeof(uint32_t));
-    memcpy(payload + 9, &status.total_bytes, sizeof(uint32_t));
-    // Expose the base-firmware content mode so the browser can reject a
-    // Frame/Prototype mismatch before sending a multi-megabyte payload.
-    payload[13] = openpencil_content_firmware_mode();
-    return os_mbuf_append(ctxt->om, payload, 14) == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    uint8_t payload[14];
+    const size_t payload_length = encode_status_payload(payload);
+    return os_mbuf_append(ctxt->om, payload, payload_length) == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 }
 
 static const struct ble_gatt_svc_def services[] = {
@@ -262,7 +296,7 @@ static const struct ble_gatt_svc_def services[] = {
                 .uuid = OPENPENCIL_BLE_STATUS_UUID,
                 .access_cb = status_access,
                 .val_handle = &status_value_handle,
-                .flags = BLE_GATT_CHR_F_READ
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY
 #if CONFIG_OPENPENCIL_BLE_REQUIRE_PAIRING
                          | BLE_GATT_CHR_F_READ_ENC
 #endif
@@ -387,12 +421,22 @@ static int ble_gap_event(struct ble_gap_event *event, void *arg)
     case BLE_GAP_EVENT_DISCONNECT:
         ESP_LOGW(TAG, "BLE client disconnected, reason=%d", event->disconnect.reason);
         connection_handle = BLE_HS_CONN_HANDLE_NONE;
+        status_notify_enabled = false;
+        last_notified_received = 0;
         taskENTER_CRITICAL(&ble_status_lock);
         ble_status.connected = false;
         ble_status.paired = false;
         taskEXIT_CRITICAL(&ble_status_lock);
         if (xTaskCreate(advertise_retry_task, "ble_adv_retry", 3072, NULL, 5, NULL) != pdPASS) {
             advertise();
+        }
+        break;
+    case BLE_GAP_EVENT_SUBSCRIBE:
+        if (event->subscribe.attr_handle == status_value_handle) {
+            status_notify_enabled = event->subscribe.cur_notify != 0;
+            last_notified_received = 0;
+            ESP_LOGI(TAG, "BLE status notifications: %s", status_notify_enabled ? "enabled" : "disabled");
+            notify_status(true);
         }
         break;
     case BLE_GAP_EVENT_CONN_UPDATE: {

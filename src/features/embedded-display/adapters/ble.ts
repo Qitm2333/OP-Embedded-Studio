@@ -10,9 +10,13 @@ export const OPENPENCIL_BLE_TRANSFER_UUID = 'a210207d-8f4d-559b-8e4a-4791892b127
 export const OPENPENCIL_BLE_STATUS_UUID = 'a310207d-8f4d-559b-8e4a-4791892b127d'
 
 interface BluetoothCharacteristic {
+  value?: DataView
   writeValueWithResponse(value: BufferSource): Promise<void>
   writeValueWithoutResponse?(value: BufferSource): Promise<void>
   readValue?(): Promise<DataView>
+  startNotifications?(): Promise<BluetoothCharacteristic>
+  addEventListener?(type: 'characteristicvaluechanged', listener: (event: Event) => void): void
+  removeEventListener?(type: 'characteristicvaluechanged', listener: (event: Event) => void): void
 }
 
 interface BluetoothService {
@@ -44,6 +48,8 @@ interface BluetoothNavigator extends Navigator {
 export interface BleTransferProgress {
   receivedBytes: number
   totalBytes: number
+  chunkSize: number
+  fallbackUsed: boolean
 }
 
 export type BleFirmwareMode = 'frame' | 'prototype' | 'unified'
@@ -108,9 +114,7 @@ function readFirmwareMode(value: DataView): BleFirmwareMode | null {
   return mode === 1 ? 'prototype' : 'frame'
 }
 
-export async function readBleTransferStatus(status: BluetoothCharacteristic): Promise<BleTransferStatus> {
-  if (!status.readValue) throw new Error('BLE 固件不支持状态读取')
-  const value = await status.readValue()
+function parseBleTransferStatus(value: DataView): BleTransferStatus {
   return {
     connected: value.getUint8(0) !== 0,
     receiving: value.getUint8(2) !== 0,
@@ -120,6 +124,132 @@ export async function readBleTransferStatus(status: BluetoothCharacteristic): Pr
     totalBytes: value.getUint32(9, true),
     firmwareMode: readFirmwareMode(value)
   }
+}
+
+interface BleStatusMonitor {
+  waitForProgress(minimumBytes: number, timeoutMs: number): Promise<BleTransferStatus | null>
+  dispose(): void
+}
+
+async function createBleStatusMonitor(status: BluetoothCharacteristic): Promise<BleStatusMonitor | null> {
+  if (!status.startNotifications || !status.addEventListener || !status.removeEventListener) return null
+
+  let latestStatus: BleTransferStatus | null = null
+  const listeners = new Set<(value: BleTransferStatus) => void>()
+  const handleNotification = (event: Event) => {
+    const value = (event.target as BluetoothCharacteristic | null)?.value
+    if (!value) return
+    latestStatus = parseBleTransferStatus(value)
+    for (const listener of listeners) listener(latestStatus)
+  }
+
+  status.addEventListener('characteristicvaluechanged', handleNotification)
+  try {
+    await status.startNotifications()
+  } catch {
+    status.removeEventListener('characteristicvaluechanged', handleNotification)
+    return null
+  }
+
+  return {
+    waitForProgress(minimumBytes, timeoutMs) {
+      if (
+        latestStatus &&
+        (latestStatus.completed || latestStatus.failed || latestStatus.receivedBytes > minimumBytes)
+      ) {
+        return Promise.resolve(latestStatus)
+      }
+
+      return new Promise((resolve) => {
+        const timeoutId = window.setTimeout(() => {
+          listeners.delete(handleStatus)
+          resolve(null)
+        }, timeoutMs)
+        const handleStatus = (nextStatus: BleTransferStatus) => {
+          if (!nextStatus.completed && !nextStatus.failed && nextStatus.receivedBytes <= minimumBytes) return
+          window.clearTimeout(timeoutId)
+          listeners.delete(handleStatus)
+          resolve(nextStatus)
+        }
+        listeners.add(handleStatus)
+      })
+    },
+    dispose() {
+      listeners.clear()
+      status.removeEventListener?.('characteristicvaluechanged', handleNotification)
+    }
+  }
+}
+
+export async function readBleTransferStatus(status: BluetoothCharacteristic): Promise<BleTransferStatus> {
+  if (!status.readValue) throw new Error('BLE 固件不支持状态读取')
+  return parseBleTransferStatus(await status.readValue())
+}
+
+interface BleUploadState {
+  offset: number
+  chunkSize: number
+  packetsPerCheckpoint: number
+  checkpointDelayMs: number
+  healthyCheckpoints: number
+  stalledCheckpoints: number
+  wrotePacket: boolean
+  fallbackUsed: boolean
+}
+
+async function writeBleWindow(
+  transfer: BluetoothCharacteristic,
+  bytes: Uint8Array,
+  state: BleUploadState
+): Promise<void> {
+  const fallbackChunkSize = 244
+  for (
+    let packetIndex = 0;
+    packetIndex < state.packetsPerCheckpoint && state.offset < bytes.byteLength;
+    packetIndex += 1
+  ) {
+    const chunk = bytes.slice(state.offset, Math.min(state.offset + state.chunkSize, bytes.byteLength))
+    const packet = new Uint8Array(4 + chunk.byteLength)
+    new DataView(packet.buffer).setUint32(0, state.offset, true)
+    packet.set(chunk, 4)
+    try {
+      await transfer.writeValueWithoutResponse?.(packet)
+    } catch (error) {
+      if (!state.wrotePacket && state.chunkSize > fallbackChunkSize) {
+        state.chunkSize = fallbackChunkSize
+        state.fallbackUsed = true
+        state.packetsPerCheckpoint = 64
+        state.checkpointDelayMs = 4
+        packetIndex -= 1
+        continue
+      }
+      throw error
+    }
+    state.wrotePacket = true
+    state.offset += chunk.byteLength
+  }
+}
+
+function updateBleSendWindow(
+  state: BleUploadState,
+  checkpointStart: number,
+  confirmedOffset: number
+): void {
+  if (confirmedOffset <= checkpointStart) {
+    state.healthyCheckpoints = 0
+    state.stalledCheckpoints += 1
+    state.packetsPerCheckpoint = Math.max(16, Math.floor(state.packetsPerCheckpoint / 2))
+    state.checkpointDelayMs = Math.min(20, state.checkpointDelayMs + 4)
+    if (state.stalledCheckpoints >= 20) throw new Error('BLE 传输长时间没有进展')
+    return
+  }
+
+  state.stalledCheckpoints = 0
+  state.healthyCheckpoints += 1
+  if (state.healthyCheckpoints < 2) return
+  state.packetsPerCheckpoint = Math.min(128, state.packetsPerCheckpoint + 16)
+  state.checkpointDelayMs = Math.max(2, state.checkpointDelayMs - 1)
+  state.healthyCheckpoints = 0
 }
 
 async function uploadBleBytes(
@@ -132,72 +262,57 @@ async function uploadBleBytes(
   if (startOffset < 0 || startOffset > bytes.byteLength) throw new Error('BLE 续传位置无效')
   if (!transfer.writeValueWithoutResponse) throw new Error('当前浏览器不支持 BLE 无响应写入')
 
-  const fallbackChunkSize = 244
-  let chunkSize = 505
-  const minimumPacketsPerCheckpoint = 8
-  const maximumPacketsPerCheckpoint = 48
-  let packetsPerCheckpoint = 24
-  let checkpointDelayMs = 4
-  let healthyCheckpoints = 0
-  let stalledCheckpoints = 0
-  let wrotePacket = false
-  let offset = startOffset
+  const state: BleUploadState = {
+    offset: startOffset,
+    chunkSize: 505,
+    packetsPerCheckpoint: 48,
+    checkpointDelayMs: 4,
+    healthyCheckpoints: 0,
+    stalledCheckpoints: 0,
+    wrotePacket: false,
+    fallbackUsed: false
+  }
+  const statusMonitor = await createBleStatusMonitor(status)
 
-  while (offset < bytes.byteLength) {
-    const checkpointStart = offset
-    for (let packetIndex = 0; packetIndex < packetsPerCheckpoint && offset < bytes.byteLength; packetIndex += 1) {
-      const chunk = bytes.slice(offset, Math.min(offset + chunkSize, bytes.byteLength))
-      const packet = new Uint8Array(4 + chunk.byteLength)
-      new DataView(packet.buffer).setUint32(0, offset, true)
-      packet.set(chunk, 4)
-      try {
-        await transfer.writeValueWithoutResponse(packet)
-      } catch (error) {
-        if (!wrotePacket && chunkSize > fallbackChunkSize) {
-          chunkSize = fallbackChunkSize
-          packetsPerCheckpoint = 16
-          checkpointDelayMs = 6
-          continue
-        }
-        throw error
+  try {
+    while (state.offset < bytes.byteLength) {
+      const checkpointStart = state.offset
+      await writeBleWindow(transfer, bytes, state)
+
+      let remoteStatus = statusMonitor
+        ? await statusMonitor.waitForProgress(checkpointStart, 150)
+        : null
+      const receivedNotification = remoteStatus !== null
+      if (!remoteStatus) {
+        await wait(state.checkpointDelayMs)
+        remoteStatus = await readBleTransferStatus(status)
       }
-      wrotePacket = true
-      offset += chunk.byteLength
-    }
-
-    await wait(checkpointDelayMs)
-    const remoteStatus = await readBleTransferStatus(status)
-    if (remoteStatus.failed) throw new Error('设备拒绝了 BLE 内容数据')
-    if (remoteStatus.completed) {
-      onProgress?.({ receivedBytes: bytes.byteLength, totalBytes: bytes.byteLength })
-      return
-    }
-
-    const confirmedOffset = Math.min(remoteStatus.receivedBytes, bytes.byteLength)
-    if (confirmedOffset <= checkpointStart) {
-      healthyCheckpoints = 0
-      stalledCheckpoints += 1
-      packetsPerCheckpoint = Math.max(
-        minimumPacketsPerCheckpoint,
-        Math.floor(packetsPerCheckpoint / 2)
-      )
-      checkpointDelayMs = Math.min(20, checkpointDelayMs + 4)
-      if (stalledCheckpoints >= 20) throw new Error('BLE 传输长时间没有进展')
-    } else {
-      stalledCheckpoints = 0
-      healthyCheckpoints += 1
-      if (healthyCheckpoints >= 3) {
-        packetsPerCheckpoint = Math.min(maximumPacketsPerCheckpoint, packetsPerCheckpoint + 8)
-        checkpointDelayMs = Math.max(3, checkpointDelayMs - 1)
-        healthyCheckpoints = 0
+      if (remoteStatus.failed) throw new Error('设备拒绝了 BLE 内容数据')
+      if (remoteStatus.completed) {
+        onProgress?.({
+          receivedBytes: bytes.byteLength,
+          totalBytes: bytes.byteLength,
+          chunkSize: state.chunkSize,
+          fallbackUsed: state.fallbackUsed
+        })
+        return
       }
-    }
 
-    // If the device confirmed less than we sent, queued packets after the gap
-    // are harmless duplicates or rejected by the offset check; resend from the
-    // confirmed contiguous position.
-    offset = confirmedOffset
-    onProgress?.({ receivedBytes: confirmedOffset, totalBytes: bytes.byteLength })
+      const confirmedOffset = Math.min(remoteStatus.receivedBytes, bytes.byteLength)
+      updateBleSendWindow(state, checkpointStart, confirmedOffset)
+
+      // Notifications are progress snapshots and may lag behind queued writes.
+      // Only a direct status read is authoritative enough to rewind the sender.
+      if (!receivedNotification) state.offset = confirmedOffset
+      onProgress?.({
+        receivedBytes: confirmedOffset,
+        totalBytes: bytes.byteLength,
+        chunkSize: state.chunkSize,
+        fallbackUsed: state.fallbackUsed
+      })
+    }
+  } finally {
+    statusMonitor?.dispose()
   }
 }
 

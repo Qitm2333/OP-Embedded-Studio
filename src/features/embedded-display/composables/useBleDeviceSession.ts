@@ -7,7 +7,7 @@ import {
   uploadBleImage,
   uploadBlePrototype
 } from '../adapters/ble'
-import type { BleFirmwareMode } from '../adapters/ble'
+import type { BleFirmwareMode, BleTransferProgress } from '../adapters/ble'
 import type {
   EmbeddedDisplayProfile,
   EmbeddedImagePayload,
@@ -49,7 +49,7 @@ function firmwareModeLabel(mode: BleFirmwareMode): string {
 function uploadBleContent(
   connection: ActiveBleConnection,
   payload: EmbeddedImagePayload | EmbeddedPrototypePayload,
-  onProgress: (progress: { receivedBytes: number; totalBytes: number }) => void,
+  onProgress: (progress: BleTransferProgress) => void,
   startOffset: number
 ): Promise<void> {
   if ('states' in payload) {
@@ -58,7 +58,55 @@ function uploadBleContent(
   return uploadBleImage(connection.transfer, connection.status, payload, onProgress, startOffset)
 }
 
-export function useBleDeviceSession() {
+function createBleTransferMetrics(onUpdate: (message: string, percent: number) => void) {
+  let startedAt = 0
+  let previousSampleAt = 0
+  let previousReceivedBytes = 0
+  let totalReceivedBytes = 0
+  let chunkSize = 0
+  let fallbackUsed = false
+
+  return {
+    begin(resumeOffset: number) {
+      if (startedAt) return
+      startedAt = performance.now()
+      previousSampleAt = startedAt
+      previousReceivedBytes = resumeOffset
+    },
+    update: (transferProgress: BleTransferProgress) => {
+      const now = performance.now()
+      const sampleSeconds = (now - previousSampleAt) / 1000
+      const currentRateKbps = sampleSeconds > 0
+        ? Math.round(
+            Math.max(0, transferProgress.receivedBytes - previousReceivedBytes) / 1024 / sampleSeconds
+          )
+        : 0
+      totalReceivedBytes = transferProgress.receivedBytes
+      chunkSize = transferProgress.chunkSize
+      fallbackUsed = transferProgress.fallbackUsed
+      previousSampleAt = now
+      previousReceivedBytes = transferProgress.receivedBytes
+      const percent = transferProgress.totalBytes
+        ? Math.round((transferProgress.receivedBytes / transferProgress.totalBytes) * 100)
+        : 0
+      onUpdate(
+        '正在通过 BLE 传输：' + percent + '% · ' + currentRateKbps + ' KB/s · ' +
+          chunkSize + 'B/包' + (fallbackUsed ? '（兼容模式）' : ''),
+        percent
+      )
+    },
+    complete(): string {
+      const totalSeconds = startedAt ? (performance.now() - startedAt) / 1000 : 0
+      const averageRateKbps = totalSeconds > 0
+        ? Math.round(totalReceivedBytes / 1024 / totalSeconds)
+        : 0
+      return '内容传输完成，平均 ' + averageRateKbps + ' KB/s · ' + chunkSize +
+        'B/包' + (fallbackUsed ? '（兼容模式）' : '') + '；设备正在重启'
+    }
+  }
+}
+
+function createBleDeviceSession() {
   const status = ref<BleSessionStatus>('idle')
   const message = ref('尚未连接 BLE 设备')
   const deviceReady = ref(false)
@@ -81,15 +129,16 @@ export function useBleDeviceSession() {
 
   function markFirmwareBuilt(nextMessage: string) {
     baseFirmwareReady.value = true
-    deviceReady.value = false
-    firmwareMode.value = null
-    connectedDevice.value = null
     progress.value = 0
-    status.value = 'idle'
+    status.value = deviceReady.value ? 'success' : 'idle'
     message.value = nextMessage
   }
 
-  function reset(nextMessage = '尚未连接 BLE 设备') {
+  function setProfile(profile: EmbeddedDisplayProfile | null) {
+    selectedProfile.value = profile
+  }
+
+  function disconnect(nextMessage = '尚未连接 BLE 设备') {
     connectedDevice.value?.server.disconnect()
     baseFirmwareReady.value = false
     deviceReady.value = false
@@ -106,6 +155,7 @@ export function useBleDeviceSession() {
     if (monitoredDevices.has(device)) return
     monitoredDevices.add(device)
     device.addEventListener('gattserverdisconnected', () => {
+      if (selectedDevice.value !== device) return
       deviceReady.value = false
       firmwareMode.value = null
       connectedDevice.value = null
@@ -149,9 +199,12 @@ export function useBleDeviceSession() {
     status.value = 'checking'
     message.value = '正在等待选择 BLE 设备…'
     try {
+      const previousDevice = selectedDevice.value
+      const previousConnection = connectedDevice.value
       const device = await requestOpenPencilBleDevice()
       selectedDevice.value = device
       selectedProfile.value = profile
+      if (previousDevice && previousDevice !== device) previousConnection?.server.disconnect()
       const connection = await connectSelectedDevice()
       if (!isActiveBleConnection(connection)) {
         status.value = 'error'
@@ -220,6 +273,10 @@ export function useBleDeviceSession() {
 
     const expectedMode = payloadFirmwareMode(payload)
     progress.value = 0
+    const transferMetrics = createBleTransferMetrics((nextMessage, nextProgress) => {
+      message.value = nextMessage
+      progress.value = nextProgress
+    })
     let resumeOffset = 0
     for (let attempt = 0; attempt < 20; attempt += 1) {
       let connection = connectedDevice.value
@@ -267,11 +324,9 @@ export function useBleDeviceSession() {
       }
 
       status.value = 'uploading'
+      transferMetrics.begin(resumeOffset)
       try {
-        await uploadBleContent(connection, payload, ({ receivedBytes, totalBytes }) => {
-          progress.value = totalBytes ? Math.round((receivedBytes / totalBytes) * 100) : 0
-          message.value = '正在通过 BLE 传输：' + progress.value + '%'
-        }, resumeOffset)
+        await uploadBleContent(connection, payload, transferMetrics.update, resumeOffset)
         await new Promise<void>((resolve) => {
           window.setTimeout(resolve, 300)
         })
@@ -279,7 +334,7 @@ export function useBleDeviceSession() {
         if (!finalStatus.completed) throw new Error('BLE 数据已发送，但设备尚未确认完成')
         progress.value = 100
         status.value = 'success'
-        message.value = '内容传输完成，设备正在重启'
+        message.value = transferMetrics.complete()
         return true
       } catch (error) {
         if (isDisconnectedError(error)) {
@@ -310,8 +365,15 @@ export function useBleDeviceSession() {
     canReconnect,
     setBaseFirmwareReady,
     markFirmwareBuilt,
-    reset,
+    setProfile,
+    disconnect,
     probe,
     upload
   }
+}
+
+const bleDeviceSession = createBleDeviceSession()
+
+export function useBleDeviceSession() {
+  return bleDeviceSession
 }
