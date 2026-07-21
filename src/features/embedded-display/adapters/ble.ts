@@ -132,16 +132,15 @@ async function uploadBleBytes(
   if (startOffset < 0 || startOffset > bytes.byteLength) throw new Error('BLE 续传位置无效')
   if (!transfer.writeValueWithoutResponse) throw new Error('当前浏览器不支持 BLE 无响应写入')
 
-  // Keep the four-byte absolute offset while using most of the negotiated
-  // 256-byte ATT payload. Checkpoints adapt to link health instead of forcing
-  // a status read after every small burst.
-  const chunkSize = 244
+  const fallbackChunkSize = 244
+  let chunkSize = 505
   const minimumPacketsPerCheckpoint = 8
-  const maximumPacketsPerCheckpoint = 32
-  let packetsPerCheckpoint = 16
-  let checkpointDelayMs = 6
+  const maximumPacketsPerCheckpoint = 48
+  let packetsPerCheckpoint = 24
+  let checkpointDelayMs = 4
   let healthyCheckpoints = 0
   let stalledCheckpoints = 0
+  let wrotePacket = false
   let offset = startOffset
 
   while (offset < bytes.byteLength) {
@@ -151,7 +150,18 @@ async function uploadBleBytes(
       const packet = new Uint8Array(4 + chunk.byteLength)
       new DataView(packet.buffer).setUint32(0, offset, true)
       packet.set(chunk, 4)
-      await transfer.writeValueWithoutResponse(packet)
+      try {
+        await transfer.writeValueWithoutResponse(packet)
+      } catch (error) {
+        if (!wrotePacket && chunkSize > fallbackChunkSize) {
+          chunkSize = fallbackChunkSize
+          packetsPerCheckpoint = 16
+          checkpointDelayMs = 6
+          continue
+        }
+        throw error
+      }
+      wrotePacket = true
       offset += chunk.byteLength
     }
 

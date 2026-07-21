@@ -12,6 +12,7 @@
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
 #include "host/ble_hs.h"
+#include "host/ble_esp_gap.h"
 #include "host/ble_store.h"
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
@@ -24,6 +25,11 @@
 static const char *TAG = "ble_server";
 
 #define OPENPENCIL_BLE_DEVICE_NAME "OpenPencil BLE"
+#define OPENPENCIL_BLE_DATA_LENGTH_OCTETS 251
+#define OPENPENCIL_BLE_DATA_LENGTH_TIME_US 2120
+#define OPENPENCIL_BLE_CONN_INTERVAL_MIN 6
+#define OPENPENCIL_BLE_CONN_INTERVAL_MAX 12
+#define OPENPENCIL_BLE_SUPERVISION_TIMEOUT 400
 #define OPENPENCIL_BLE_SERVICE_UUID \
     BLE_UUID128_DECLARE(0x7d, 0x12, 0x2b, 0x89, 0x91, 0x47, 0x4a, 0x8e, 0x9b, 0x55, 0x4d, 0x8f, 0x7d, 0x20, 0x10, 0xa1)
 #define OPENPENCIL_BLE_TRANSFER_UUID \
@@ -60,6 +66,7 @@ static void content_reboot_task(void *param)
 }
 static void advertise(void);
 static void advertise_retry_task(void *param);
+static void tune_connection_task(void *param);
 static int ble_gap_event(struct ble_gap_event *event, void *arg);
 
 void openpencil_ble_server_get_status(openpencil_ble_status_t *status)
@@ -317,6 +324,44 @@ static void advertise_retry_task(void *param)
     vTaskDelete(NULL);
 }
 
+static void tune_connection_task(void *param)
+{
+    const uint16_t handle = (uint16_t)(uintptr_t)param;
+    vTaskDelay(pdMS_TO_TICKS(150));
+    if (connection_handle != handle) {
+        vTaskDelete(NULL);
+        return;
+    }
+
+    int result = ble_hs_hci_util_set_data_len(
+        handle, OPENPENCIL_BLE_DATA_LENGTH_OCTETS, OPENPENCIL_BLE_DATA_LENGTH_TIME_US);
+    if (result != 0) ESP_LOGW(TAG, "BLE data length request rejected: %d", result);
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+    if (connection_handle != handle) {
+        vTaskDelete(NULL);
+        return;
+    }
+    result = ble_gap_set_prefered_le_phy(
+        handle, BLE_GAP_LE_PHY_2M_MASK, BLE_GAP_LE_PHY_2M_MASK, BLE_GAP_LE_PHY_CODED_ANY);
+    if (result != 0) ESP_LOGW(TAG, "BLE 2M PHY request rejected: %d", result);
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+    if (connection_handle == handle) {
+        const struct ble_gap_upd_params params = {
+            .itvl_min = OPENPENCIL_BLE_CONN_INTERVAL_MIN,
+            .itvl_max = OPENPENCIL_BLE_CONN_INTERVAL_MAX,
+            .latency = 0,
+            .supervision_timeout = OPENPENCIL_BLE_SUPERVISION_TIMEOUT,
+            .min_ce_len = 0,
+            .max_ce_len = 0,
+        };
+        result = ble_gap_update_params(handle, &params);
+        if (result != 0) ESP_LOGW(TAG, "BLE connection interval request rejected: %d", result);
+    }
+    vTaskDelete(NULL);
+}
+
 static int ble_gap_event(struct ble_gap_event *event, void *arg)
 {
     (void)arg;
@@ -330,6 +375,10 @@ static int ble_gap_event(struct ble_gap_event *event, void *arg)
             ble_status.failed = false;
             ble_status.completed = false;
             taskEXIT_CRITICAL(&ble_status_lock);
+            if (xTaskCreate(tune_connection_task, "ble_link_tune", 3072,
+                            (void *)(uintptr_t)connection_handle, 5, NULL) != pdPASS) {
+                ESP_LOGW(TAG, "BLE link tuning task could not start");
+            }
         } else {
             ESP_LOGW(TAG, "BLE connection failed, status=%d", event->connect.status);
             advertise();
@@ -345,6 +394,30 @@ static int ble_gap_event(struct ble_gap_event *event, void *arg)
         if (xTaskCreate(advertise_retry_task, "ble_adv_retry", 3072, NULL, 5, NULL) != pdPASS) {
             advertise();
         }
+        break;
+    case BLE_GAP_EVENT_CONN_UPDATE: {
+        struct ble_gap_conn_desc descriptor;
+        if (event->conn_update.status == 0 &&
+            ble_gap_conn_find(event->conn_update.conn_handle, &descriptor) == 0) {
+            ESP_LOGI(TAG, "BLE connection interval: %.2f ms, latency=%u, timeout=%u ms",
+                     descriptor.conn_itvl * 1.25, descriptor.conn_latency,
+                     descriptor.supervision_timeout * 10);
+        } else {
+            ESP_LOGW(TAG, "BLE connection update failed: %d", event->conn_update.status);
+        }
+        break;
+    }
+    case BLE_GAP_EVENT_MTU:
+        ESP_LOGI(TAG, "BLE ATT MTU negotiated: %u", event->mtu.value);
+        break;
+    case BLE_GAP_EVENT_PHY_UPDATE_COMPLETE:
+        ESP_LOGI(TAG, "BLE PHY update: status=%d tx=%u rx=%u", event->phy_updated.status,
+                 event->phy_updated.tx_phy, event->phy_updated.rx_phy);
+        break;
+    case BLE_GAP_EVENT_DATA_LEN_CHG:
+        ESP_LOGI(TAG, "BLE data length: tx=%u/%u us rx=%u/%u us",
+                 event->data_len_chg.max_tx_octets, event->data_len_chg.max_tx_time,
+                 event->data_len_chg.max_rx_octets, event->data_len_chg.max_rx_time);
         break;
     case BLE_GAP_EVENT_ENC_CHANGE:
         taskENTER_CRITICAL(&ble_status_lock);
@@ -379,6 +452,9 @@ static int ble_gap_event(struct ble_gap_event *event, void *arg)
 static void on_sync(void)
 {
     if (ble_hs_id_infer_auto(0, &own_address_type) != 0) return;
+    const int phy_result = ble_gap_set_prefered_default_le_phy(
+        BLE_GAP_LE_PHY_2M_MASK, BLE_GAP_LE_PHY_2M_MASK);
+    if (phy_result != 0) ESP_LOGW(TAG, "BLE default 2M PHY preference rejected: %d", phy_result);
     advertise();
 }
 

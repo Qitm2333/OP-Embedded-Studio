@@ -345,6 +345,8 @@ def mode_defaults_path(build_mode):
             "CONFIG_BT_NIMBLE_ENABLED=y",
             "CONFIG_BT_NIMBLE_ROLE_PERIPHERAL=y",
             "CONFIG_BT_NIMBLE_MAX_CONNECTIONS=1",
+            "CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU=512",
+            "CONFIG_BT_NIMBLE_MSYS_1_BLOCK_COUNT=50",
         ])
     settings.append("")
     contents = "\n".join(settings)
