@@ -1,4 +1,4 @@
-﻿/*
+/*
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: CC0-1.0
@@ -315,6 +315,13 @@ void app_main(void)
 
 #if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER || CONFIG_OPENPENCIL_BLE_SERVER
     if (LCD_GENERATED_IMAGE_PIXEL_COUNT == 0 && openpencil_content_is_valid()) {
+#if CONFIG_OPENPENCIL_BLE_SERVER
+        if (openpencil_content_is_prototype()) {
+            ESP_ERROR_CHECK(openpencil_ble_server_start());
+            ESP_ERROR_CHECK(openpencil_wireless_prototype_run(panel_handle, frame_buffer));
+            return;
+        }
+#endif
         ESP_ERROR_CHECK(draw_wireless_image(panel_handle, frame_buffer));
 #if CONFIG_OPENPENCIL_WIFI_SERVER
         // Present persisted content before starting Wi-Fi. On CO5300 hardware,

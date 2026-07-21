@@ -8,8 +8,9 @@ import type {
   EmbeddedBuildStatus,
   EmbeddedDisplayProfile,
   EmbeddedImagePayload,
-  EmbeddedWifiCredentials,
-  EmbeddedPrototypeBakeResult
+  EmbeddedPrototypeBakeResult,
+  EmbeddedPrototypePayload,
+  EmbeddedWifiCredentials
 } from '../model/types'
 
 const adapter = createEmbeddedDisplayHttpAdapter()
@@ -18,6 +19,7 @@ const selectedProfileId = ref('')
 const selectedImageName = ref('')
 const previewUrl = ref('')
 const imagePayload = ref<EmbeddedImagePayload | null>(null)
+const prototypePayload = ref<EmbeddedPrototypePayload | null>(null)
 const buildStatus = ref<EmbeddedBuildStatus>('loading')
 const buildMessage = ref('正在连接设备服务…')
 const buildLog = ref<string[]>([])
@@ -61,6 +63,7 @@ export function useEmbeddedDisplay() {
       selectedProfileId.value = id
       manifestUrls.value = {}
       imagePayload.value = null
+      prototypePayload.value = null
       deviceLog('profile selected', { profileId: id })
       if (selectedImageName.value) {
         buildMessage.value = '屏幕方案已切换，请重新选择图片后再生成固件。'
@@ -122,38 +125,46 @@ export function useEmbeddedDisplay() {
     }
   }
 
-  async function selectPrototype(bake: EmbeddedPrototypeBakeResult) {
+  async function selectPrototype(
+    bake: EmbeddedPrototypeBakeResult,
+    options: { upload?: boolean } = {}
+  ) {
     const profile = selectedProfile.value
     if (!profile) throw new Error('请先连接设备服务并选择屏幕方案')
+    const uploadToBuildService = options.upload ?? true
     manifestUrls.value['usb-prototype'] = ''
     buildStatus.value = 'uploading'
-    buildMessage.value = `正在批量烘焙并上传交互：${bake.name}`
+    buildMessage.value = uploadToBuildService
+      ? `正在批量烘焙并上传交互：${bake.name}`
+      : `正在批量烘焙交互：${bake.name}`
     try {
       const payload = await prototypeBakeToRgb565(bake, profile)
+      prototypePayload.value = payload
       deviceLog('prototype payload ready', {
         profileId: payload.profileId,
         states: payload.states.length,
         transitions: payload.transitions.length,
         encodedLength: payload.pixelsRgb565Base64.length
       })
-      await adapter.uploadPrototype(payload)
+      if (uploadToBuildService) await adapter.uploadPrototype(payload)
       buildStatus.value = 'idle'
-      buildMessage.value = '状态机资源已上传，可以生成固件。'
+      buildMessage.value = uploadToBuildService
+        ? '状态机资源已上传，可以生成固件。'
+        : '状态机资源已准备，可以通过 BLE 传输。'
       buildLog.value = [
         `prototype: ${bake.name}`,
         `states: ${payload.states.length}`,
         `transitions: ${payload.transitions.length}`,
         `size: ${profile.resolution.width}×${profile.resolution.height}`,
-        'upload: ok'
+        uploadToBuildService ? 'upload: ok' : 'wireless-payload: ready'
       ]
     } catch (error) {
       deviceLog('prototype upload error', error)
       buildStatus.value = 'error'
-      buildMessage.value = `状态机资源上传失败：${error instanceof Error ? error.message : String(error)}`
+      buildMessage.value = `状态机资源准备失败：${error instanceof Error ? error.message : String(error)}`
       throw error
     }
   }
-
   function manifestUrlFor(buildMode: EmbeddedBuildMode): string {
     return manifestUrls.value[buildMode] ?? ''
   }
@@ -245,6 +256,7 @@ export function useEmbeddedDisplay() {
     manifestUrlFor,
     previewUrl,
     imagePayload,
+    prototypePayload,
     serviceAvailable,
     selectProfile,
     selectImage,

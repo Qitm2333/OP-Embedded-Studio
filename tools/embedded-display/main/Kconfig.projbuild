@@ -23,7 +23,6 @@ menu "Example Configuration"
     config OPENPENCIL_BLE_REQUIRE_PAIRING
         bool "Require BLE link encryption before content writes"
         default y
-
     choice EXAMPLE_LCD_CONTROLLER
         prompt "LCD controller IC"
         default EXAMPLE_LCD_CONTROLLER_ST7789

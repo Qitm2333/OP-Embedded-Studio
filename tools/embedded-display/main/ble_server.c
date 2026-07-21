@@ -1,4 +1,4 @@
-﻿#include "ble_server.h"
+#include "ble_server.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -87,19 +87,29 @@ static void reset_transfer(bool failed)
 
 static bool validate_header(const openpencil_content_header_t *header, size_t *total)
 {
-    const size_t payload_bytes = (size_t)CONFIG_EXAMPLE_LCD_H_RES *
-                                 CONFIG_EXAMPLE_LCD_V_RES * sizeof(uint16_t);
     if (!header || header->magic != OPENPENCIL_CONTENT_MAGIC ||
         header->version != OPENPENCIL_CONTENT_VERSION ||
-        header->mode != OPENPENCIL_CONTENT_MODE_FRAME || header->frame_count != 1 ||
         header->width != CONFIG_EXAMPLE_LCD_H_RES || header->height != CONFIG_EXAMPLE_LCD_V_RES ||
-        header->payload_bytes != payload_bytes) {
+        header->payload_bytes == 0) {
+        return false;
+    }
+    const size_t frame_bytes = (size_t)CONFIG_EXAMPLE_LCD_H_RES *
+                               CONFIG_EXAMPLE_LCD_V_RES * sizeof(uint16_t);
+    if (header->mode == OPENPENCIL_CONTENT_MODE_FRAME) {
+        if (header->frame_count != 1 || header->payload_bytes != frame_bytes) return false;
+    } else if (header->mode == OPENPENCIL_CONTENT_MODE_PROTOTYPE) {
+        if (header->frame_count < 1 ||
+            header->frame_count > OPENPENCIL_CONTENT_MAX_PROTOTYPE_STATES ||
+            header->payload_bytes < sizeof(openpencil_prototype_content_header_t) +
+                                        frame_bytes * header->frame_count) {
+            return false;
+        }
+    } else {
         return false;
     }
     *total = sizeof(*header) + header->payload_bytes;
     return true;
 }
-
 static int receive_chunk(struct os_mbuf *om)
 {
     const uint16_t length = OS_MBUF_PKTLEN(om);
@@ -220,7 +230,10 @@ static int status_access(uint16_t conn_handle, uint16_t attr_handle,
     payload[4] = status.failed;
     memcpy(payload + 5, &status.received_bytes, sizeof(uint32_t));
     memcpy(payload + 9, &status.total_bytes, sizeof(uint32_t));
-    return os_mbuf_append(ctxt->om, payload, 13) == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    // Expose the base-firmware content mode so the browser can reject a
+    // Frame/Prototype mismatch before sending a multi-megabyte payload.
+    payload[13] = openpencil_content_firmware_mode();
+    return os_mbuf_append(ctxt->om, payload, 14) == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 }
 
 static const struct ble_gatt_svc_def services[] = {

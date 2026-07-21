@@ -126,6 +126,7 @@ export type EmbeddedBuildMode =
   | 'lan-frame'
   | 'lan-prototype'
   | 'ble-frame'
+  | 'ble-prototype'
 
 export interface EmbeddedBuildResult {
   profileId: string

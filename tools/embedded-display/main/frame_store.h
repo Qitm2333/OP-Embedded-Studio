@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-esp_err_t openpencil_frame_store_load(uint8_t frame_index,
+esp_err_t openpencil_frame_store_load(uint16_t frame_index,
                                       uint16_t *destination,
                                       size_t destination_pixels);
 

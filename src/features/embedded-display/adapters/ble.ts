@@ -1,5 +1,9 @@
-import { encodeWirelessImage } from './wireless'
-import type { EmbeddedDisplayProfile, EmbeddedImagePayload } from '../model/types'
+import { encodeWirelessImage, encodeWirelessPrototype } from './wireless-content'
+import type {
+  EmbeddedDisplayProfile,
+  EmbeddedImagePayload,
+  EmbeddedPrototypePayload
+} from '../model/types'
 
 export const OPENPENCIL_BLE_SERVICE_UUID = 'a110207d-8f4d-559b-8e4a-4791892b127d'
 export const OPENPENCIL_BLE_TRANSFER_UUID = 'a210207d-8f4d-559b-8e4a-4791892b127d'
@@ -42,6 +46,8 @@ export interface BleTransferProgress {
   totalBytes: number
 }
 
+export type BleFirmwareMode = 'frame' | 'prototype' | 'unified'
+
 export interface BleTransferStatus {
   connected: boolean
   receiving: boolean
@@ -49,6 +55,7 @@ export interface BleTransferStatus {
   failed: boolean
   receivedBytes: number
   totalBytes: number
+  firmwareMode: BleFirmwareMode | null
 }
 
 export interface BleDeviceConnection {
@@ -60,10 +67,15 @@ export interface BleDeviceConnection {
 
 function getBluetooth(): NonNullable<BluetoothNavigator['bluetooth']> {
   const bluetooth = (navigator as BluetoothNavigator).bluetooth
-  if (!bluetooth) throw new Error('???????? Web Bluetooth???? Chrome ? Edge')
+  if (!bluetooth) throw new Error('当前环境不支持 Web Bluetooth，请使用 Chrome 或 Edge')
   return bluetooth
 }
 
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds)
+  })
+}
 export async function requestOpenPencilBleDevice(): Promise<BluetoothDevice> {
   return getBluetooth().requestDevice({
     filters: [{ namePrefix: 'OpenPencil BLE' }],
@@ -82,15 +94,22 @@ export async function connectOpenPencilBleDevice(
   device: BluetoothDevice,
   profile: EmbeddedDisplayProfile
 ): Promise<BleDeviceConnection> {
-  if (!device.gatt) throw new Error('BLE ????? GATT ??')
+  if (!device.gatt) throw new Error('BLE 设备缺少 GATT 服务')
   const server = device.gatt.connected ? device.gatt : await device.gatt.connect()
   const characteristics = await discoverOpenPencilBleService(server)
   void profile
   return { device, server, ...characteristics }
 }
 
+function readFirmwareMode(value: DataView): BleFirmwareMode | null {
+  if (value.byteLength <= 13) return null
+  const mode = value.getUint8(13)
+  if (mode === 2) return 'unified'
+  return mode === 1 ? 'prototype' : 'frame'
+}
+
 export async function readBleTransferStatus(status: BluetoothCharacteristic): Promise<BleTransferStatus> {
-  if (!status.readValue) throw new Error('BLE ????????')
+  if (!status.readValue) throw new Error('BLE 固件不支持状态读取')
   const value = await status.readValue()
   return {
     connected: value.getUint8(0) !== 0,
@@ -98,18 +117,18 @@ export async function readBleTransferStatus(status: BluetoothCharacteristic): Pr
     completed: value.getUint8(3) !== 0,
     failed: value.getUint8(4) !== 0,
     receivedBytes: value.getUint32(5, true),
-    totalBytes: value.getUint32(9, true)
+    totalBytes: value.getUint32(9, true),
+    firmwareMode: readFirmwareMode(value)
   }
 }
 
-export async function uploadBleImage(
+async function uploadBleBytes(
   transfer: BluetoothCharacteristic,
   status: BluetoothCharacteristic,
-  payload: EmbeddedImagePayload,
+  bytes: Uint8Array,
   onProgress?: (progress: BleTransferProgress) => void,
   startOffset = 0
 ): Promise<void> {
-  const bytes = new Uint8Array(encodeWirelessImage(payload))
   if (startOffset < 0 || startOffset > bytes.byteLength) throw new Error('BLE 续传位置无效')
   if (!transfer.writeValueWithoutResponse) throw new Error('当前浏览器不支持 BLE 无响应写入')
 
@@ -136,9 +155,9 @@ export async function uploadBleImage(
       offset += chunk.byteLength
     }
 
-    await new Promise((resolve) => window.setTimeout(resolve, checkpointDelayMs))
+    await wait(checkpointDelayMs)
     const remoteStatus = await readBleTransferStatus(status)
-    if (remoteStatus.failed) throw new Error('设备拒绝了 BLE 图片数据')
+    if (remoteStatus.failed) throw new Error('设备拒绝了 BLE 内容数据')
     if (remoteStatus.completed) {
       onProgress?.({ receivedBytes: bytes.byteLength, totalBytes: bytes.byteLength })
       return
@@ -170,4 +189,36 @@ export async function uploadBleImage(
     offset = confirmedOffset
     onProgress?.({ receivedBytes: confirmedOffset, totalBytes: bytes.byteLength })
   }
+}
+
+export function uploadBleImage(
+  transfer: BluetoothCharacteristic,
+  status: BluetoothCharacteristic,
+  payload: EmbeddedImagePayload,
+  onProgress?: (progress: BleTransferProgress) => void,
+  startOffset = 0
+): Promise<void> {
+  return uploadBleBytes(
+    transfer,
+    status,
+    new Uint8Array(encodeWirelessImage(payload)),
+    onProgress,
+    startOffset
+  )
+}
+
+export function uploadBlePrototype(
+  transfer: BluetoothCharacteristic,
+  status: BluetoothCharacteristic,
+  payload: EmbeddedPrototypePayload,
+  onProgress?: (progress: BleTransferProgress) => void,
+  startOffset = 0
+): Promise<void> {
+  return uploadBleBytes(
+    transfer,
+    status,
+    new Uint8Array(encodeWirelessPrototype(payload)),
+    onProgress,
+    startOffset
+  )
 }

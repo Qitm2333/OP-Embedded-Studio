@@ -47,7 +47,8 @@ BUILD_MODES = {
     "wifi-prototype": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
     "lan-frame": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
     "lan-prototype": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
-    "ble-frame": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
+    "ble-frame": {"partitionTable": "partitions_32mb_wireless.csv", "appPartitionBytes": 0x300000},
+    "ble-prototype": {"partitionTable": "partitions_32mb_wireless.csv", "appPartitionBytes": 0x300000},
 }
 
 PROTOTYPE_EVENTS = {
@@ -67,6 +68,13 @@ ARTIFACT_FILES = {
 WIFI_CREDENTIALS_ARTIFACT = "wifi-credentials.bin"
 WIFI_CREDENTIALS_OFFSET = 0x9000
 NVS_PARTITION_SIZE = 0x6000
+WIRELESS_CONTENT_RESET_ARTIFACT = "content-reset.bin"
+WIRELESS_CONTENT_OFFSET = 0x310000
+WIRELESS_CONTENT_RESET_BYTES = 0x1000
+WIRELESS_BUILD_MODES = frozenset((
+    "wifi-frame", "wifi-prototype", "lan-frame", "lan-prototype",
+    "ble-frame", "ble-prototype",
+))
 
 
 class ApiError(Exception):
@@ -315,7 +323,7 @@ def mode_defaults_path(build_mode):
     external_content = mode in ("wifi-frame", "lan-frame")
     lan_status_screen = mode.startswith("lan-")
     setup_access_point = mode.startswith("wifi-")
-    ble_enabled = mode == "ble-frame"
+    ble_enabled = mode.startswith("ble-")
     settings = [
         f'CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="{partition_table}"',
         f'CONFIG_PARTITION_TABLE_FILENAME="{partition_table}"',
@@ -330,6 +338,9 @@ def mode_defaults_path(build_mode):
         settings.append("CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192")
     if ble_enabled:
         settings.extend([
+            "# CONFIG_ESPTOOLPY_FLASHSIZE_8MB is not set",
+            "CONFIG_ESPTOOLPY_FLASHSIZE_32MB=y",
+            'CONFIG_ESPTOOLPY_FLASHSIZE="32MB"',
             "CONFIG_BT_ENABLED=y",
             "CONFIG_BT_NIMBLE_ENABLED=y",
             "CONFIG_BT_NIMBLE_ROLE_PERIPHERAL=y",
@@ -728,6 +739,16 @@ def artifact_manifest(profile_id, build_mode=DEFAULT_BUILD_MODE):
             "offset": offset,
         })
 
+    if mode in WIRELESS_BUILD_MODES:
+        reset_path = build_path / WIRELESS_CONTENT_RESET_ARTIFACT
+        if not reset_path.is_file():
+            missing.append(WIRELESS_CONTENT_RESET_ARTIFACT)
+        else:
+            parts.append({
+                "path": artifact_url(WIRELESS_CONTENT_RESET_ARTIFACT),
+                "offset": WIRELESS_CONTENT_OFFSET,
+            })
+
     credentials_path = build_path / WIFI_CREDENTIALS_ARTIFACT
     if credentials_path.is_file():
         parts.append({
@@ -765,7 +786,8 @@ def artifact_manifest(profile_id, build_mode=DEFAULT_BUILD_MODE):
 def artifact_file_path(profile_id, file_name, build_mode=DEFAULT_BUILD_MODE):
     registry = load_profile_registry()
     find_profile(registry, profile_id)
-    if file_name not in ARTIFACT_FILES and file_name != WIFI_CREDENTIALS_ARTIFACT:
+    extra_artifacts = (WIFI_CREDENTIALS_ARTIFACT, WIRELESS_CONTENT_RESET_ARTIFACT)
+    if file_name not in ARTIFACT_FILES and file_name not in extra_artifacts:
         raise ApiError(HTTPStatus.NOT_FOUND, f"unknown artifact file: {file_name}")
     build_dir = build_dir_for_profile(profile_id, build_mode)
     relative_path = ARTIFACT_FILES[file_name][0] if file_name in ARTIFACT_FILES else file_name
@@ -824,6 +846,16 @@ def write_wifi_credentials(build_path, credentials):
         raise ApiError(HTTPStatus.INTERNAL_SERVER_ERROR, f"failed to generate Wi-Fi credentials: {completed.stdout}")
 
 
+
+def write_wireless_content_reset(build_path, mode):
+    reset_path = build_path / WIRELESS_CONTENT_RESET_ARTIFACT
+    if mode not in WIRELESS_BUILD_MODES:
+        reset_path.unlink(missing_ok=True)
+        return
+    # Write a non-erased sector so browser flashers cannot optimize the part away.
+    # This invalidates the persisted envelope without emitting a huge blank image.
+    reset_path.write_bytes(b"\x00" * WIRELESS_CONTENT_RESET_BYTES)
+
 def run_build(profile_id, wifi_credentials=None, build_mode=DEFAULT_BUILD_MODE):
     registry = load_profile_registry()
     profile = find_profile(registry, profile_id)
@@ -842,7 +874,7 @@ def run_build(profile_id, wifi_credentials=None, build_mode=DEFAULT_BUILD_MODE):
     with BUILD_LOCK:
         if mode in ("usb-frame", "usb-prototype"):
             restore_generated_resources(profile_id, mode)
-        elif mode in ("wifi-frame", "wifi-prototype", "lan-frame", "lan-prototype", "ble-frame"):
+        elif mode in ("wifi-frame", "wifi-prototype", "lan-frame", "lan-prototype", "ble-frame", "ble-prototype"):
             ensure_wireless_base_resources(profile_id, mode)
         build_signature = prepare_build_dir(registry, profile, mode, build_dir)
         artifacts = firmware_artifacts(build_dir)
@@ -873,6 +905,8 @@ def run_build(profile_id, wifi_credentials=None, build_mode=DEFAULT_BUILD_MODE):
             if completed.returncode == 0:
                 write_build_signature(build_dir, build_signature)
                 write_wifi_credentials(PROJECT_DIR / build_dir, wifi_credentials)
+
+        write_wireless_content_reset(PROJECT_DIR / build_dir, mode)
 
     artifacts = firmware_artifacts(build_dir)
     artifacts = firmware_artifacts(build_dir)

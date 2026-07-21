@@ -4,13 +4,25 @@ import {
   connectOpenPencilBleDevice,
   readBleTransferStatus,
   requestOpenPencilBleDevice,
-  uploadBleImage
+  uploadBleImage,
+  uploadBlePrototype
 } from '../adapters/ble'
-import type { EmbeddedDisplayProfile, EmbeddedImagePayload } from '../model/types'
+import type { BleFirmwareMode } from '../adapters/ble'
+import type {
+  EmbeddedDisplayProfile,
+  EmbeddedImagePayload,
+  EmbeddedPrototypePayload
+} from '../model/types'
 
 type BleSessionStatus = 'idle' | 'checking' | 'uploading' | 'success' | 'error'
 type BleDevice = Awaited<ReturnType<typeof requestOpenPencilBleDevice>>
 type BleConnection = Awaited<ReturnType<typeof connectOpenPencilBleDevice>>
+type ActiveBleConnection = BleConnection & Required<Pick<BleConnection, 'transfer' | 'status'>>
+
+function isActiveBleConnection(connection: BleConnection | null): connection is ActiveBleConnection {
+  return Boolean(connection?.server.connected && connection.transfer && connection.status)
+}
+
 
 function isDisconnectedError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
@@ -18,7 +30,32 @@ function isDisconnectedError(error: unknown): boolean {
 }
 
 function waitBeforeReconnect(): Promise<void> {
-  return new Promise((resolve) => window.setTimeout(resolve, 500))
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, 500)
+  })
+}
+
+function payloadFirmwareMode(
+  payload: EmbeddedImagePayload | EmbeddedPrototypePayload
+): BleFirmwareMode {
+  return 'states' in payload ? 'prototype' : 'frame'
+}
+
+function firmwareModeLabel(mode: BleFirmwareMode): string {
+  if (mode === 'unified') return '通用'
+  return mode === 'prototype' ? '状态机' : '单 Frame'
+}
+
+function uploadBleContent(
+  connection: ActiveBleConnection,
+  payload: EmbeddedImagePayload | EmbeddedPrototypePayload,
+  onProgress: (progress: { receivedBytes: number; totalBytes: number }) => void,
+  startOffset: number
+): Promise<void> {
+  if ('states' in payload) {
+    return uploadBlePrototype(connection.transfer, connection.status, payload, onProgress, startOffset)
+  }
+  return uploadBleImage(connection.transfer, connection.status, payload, onProgress, startOffset)
 }
 
 export function useBleDeviceSession() {
@@ -26,6 +63,7 @@ export function useBleDeviceSession() {
   const message = ref('尚未连接 BLE 设备')
   const deviceReady = ref(false)
   const baseFirmwareReady = ref(false)
+  const firmwareMode = ref<BleFirmwareMode | null>(null)
   const connectedDevice = ref<BleConnection | null>(null)
   const selectedDevice = ref<BleDevice | null>(null)
   const selectedProfile = ref<EmbeddedDisplayProfile | null>(null)
@@ -44,6 +82,7 @@ export function useBleDeviceSession() {
   function markFirmwareBuilt(nextMessage: string) {
     baseFirmwareReady.value = true
     deviceReady.value = false
+    firmwareMode.value = null
     connectedDevice.value = null
     progress.value = 0
     status.value = 'idle'
@@ -54,6 +93,7 @@ export function useBleDeviceSession() {
     connectedDevice.value?.server.disconnect()
     baseFirmwareReady.value = false
     deviceReady.value = false
+    firmwareMode.value = null
     connectedDevice.value = null
     selectedDevice.value = null
     selectedProfile.value = null
@@ -67,6 +107,7 @@ export function useBleDeviceSession() {
     monitoredDevices.add(device)
     device.addEventListener('gattserverdisconnected', () => {
       deviceReady.value = false
+      firmwareMode.value = null
       connectedDevice.value = null
       if (status.value === 'success') {
         message.value = '传输完成，设备已重启；下次上传时重新连接即可'
@@ -101,7 +142,10 @@ export function useBleDeviceSession() {
     }
   }
 
-  async function probe(profile: EmbeddedDisplayProfile) {
+  async function probe(
+    profile: EmbeddedDisplayProfile,
+    expectedMode?: BleFirmwareMode
+  ) {
     status.value = 'checking'
     message.value = '正在等待选择 BLE 设备…'
     try {
@@ -109,17 +153,32 @@ export function useBleDeviceSession() {
       selectedDevice.value = device
       selectedProfile.value = profile
       const connection = await connectSelectedDevice()
-      if (!connection) {
+      if (!isActiveBleConnection(connection)) {
         status.value = 'error'
+        message.value = '已连接设备，但 BLE 固件不支持内容传输'
         return null
       }
+      const remoteStatus = await readBleTransferStatus(connection.status)
+      firmwareMode.value = remoteStatus.firmwareMode
+      if (
+        expectedMode &&
+        remoteStatus.firmwareMode &&
+        remoteStatus.firmwareMode !== 'unified' &&
+        remoteStatus.firmwareMode !== expectedMode
+      ) {
+        status.value = 'error'
+        message.value = '当前设备运行 BLE ' + firmwareModeLabel(remoteStatus.firmwareMode) +
+          ' 基础固件；请通过 USB 初始化 BLE ' + firmwareModeLabel(expectedMode) + ' 基础固件'
+        return connection
+      }
       status.value = 'success'
-      message.value = connection.transfer
-        ? '已连接 ' + (device.name || 'OpenPencil BLE') + '，可以上传图片'
-        : '已连接 ' + (device.name || 'OpenPencil BLE') + '，但设备固件不支持图片传输'
+      message.value = remoteStatus.firmwareMode
+        ? '已连接 ' + (device.name || 'OpenPencil BLE') + '，固件模式：' + firmwareModeLabel(remoteStatus.firmwareMode)
+        : '已连接 ' + (device.name || 'OpenPencil BLE') + '，建议重新初始化基础固件以启用模式检测'
       return connection
     } catch (error) {
       deviceReady.value = false
+      firmwareMode.value = null
       connectedDevice.value = null
       status.value = 'error'
       message.value = error instanceof Error ? error.message : String(error)
@@ -127,13 +186,39 @@ export function useBleDeviceSession() {
     }
   }
 
-  async function upload(payload: EmbeddedImagePayload) {
+  async function checkFirmwareMode(
+    connection: ActiveBleConnection,
+    expectedMode: BleFirmwareMode
+  ): Promise<'ready' | 'disconnected' | 'error'> {
+    try {
+      const modeStatus = await readBleTransferStatus(connection.status)
+      firmwareMode.value = modeStatus.firmwareMode
+      if (
+        !modeStatus.firmwareMode ||
+        modeStatus.firmwareMode === 'unified' ||
+        modeStatus.firmwareMode === expectedMode
+      ) return 'ready'
+      status.value = 'error'
+      message.value = '当前设备运行 BLE ' + firmwareModeLabel(modeStatus.firmwareMode) +
+        ' 基础固件，不能接收 ' + firmwareModeLabel(expectedMode) +
+        ' 内容；请先通过 USB 初始化正确的基础固件'
+      return 'error'
+    } catch (error) {
+      if (isDisconnectedError(error)) return 'disconnected'
+      status.value = 'error'
+      message.value = error instanceof Error ? error.message : String(error)
+      return 'error'
+    }
+  }
+
+  async function upload(payload: EmbeddedImagePayload | EmbeddedPrototypePayload) {
     if (!selectedDevice.value || !selectedProfile.value) {
       status.value = 'error'
       message.value = '请先连接 BLE 设备'
       return false
     }
 
+    const expectedMode = payloadFirmwareMode(payload)
     progress.value = 0
     let resumeOffset = 0
     for (let attempt = 0; attempt < 20; attempt += 1) {
@@ -144,11 +229,19 @@ export function useBleDeviceSession() {
         await waitBeforeReconnect()
         connection = await connectSelectedDevice()
       }
-      if (!connection?.server.connected || !connection.transfer || !connection.status) {
+      if (!isActiveBleConnection(connection)) {
         connectedDevice.value = null
         deviceReady.value = false
         continue
       }
+
+      const modeCheck = await checkFirmwareMode(connection, expectedMode)
+      if (modeCheck === 'disconnected') {
+        connectedDevice.value = null
+        deviceReady.value = false
+        continue
+      }
+      if (modeCheck === 'error') return false
 
       if (attempt > 0) {
         try {
@@ -157,7 +250,7 @@ export function useBleDeviceSession() {
           if (remoteStatus.completed) {
             progress.value = 100
             status.value = 'success'
-            message.value = '图片传输完成，设备正在重启'
+            message.value = '内容传输完成，设备正在重启'
             return true
           }
           resumeOffset = remoteStatus.receivedBytes
@@ -175,16 +268,18 @@ export function useBleDeviceSession() {
 
       status.value = 'uploading'
       try {
-        await uploadBleImage(connection.transfer, connection.status, payload, ({ receivedBytes, totalBytes }) => {
+        await uploadBleContent(connection, payload, ({ receivedBytes, totalBytes }) => {
           progress.value = totalBytes ? Math.round((receivedBytes / totalBytes) * 100) : 0
           message.value = '正在通过 BLE 传输：' + progress.value + '%'
         }, resumeOffset)
-        await new Promise((resolve) => window.setTimeout(resolve, 300))
+        await new Promise<void>((resolve) => {
+          window.setTimeout(resolve, 300)
+        })
         const finalStatus = await readBleTransferStatus(connection.status)
         if (!finalStatus.completed) throw new Error('BLE 数据已发送，但设备尚未确认完成')
         progress.value = 100
         status.value = 'success'
-        message.value = '图片传输完成，设备正在重启'
+        message.value = '内容传输完成，设备正在重启'
         return true
       } catch (error) {
         if (isDisconnectedError(error)) {
@@ -210,6 +305,7 @@ export function useBleDeviceSession() {
     deviceReady,
     deviceName,
     baseFirmwareReady,
+    firmwareMode,
     progress,
     canReconnect,
     setBaseFirmwareReady,

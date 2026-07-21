@@ -43,11 +43,20 @@ static esp_err_t decode_rle16(const lcd_frame_resource_t *resource,
 }
 #endif
 
-esp_err_t openpencil_frame_store_load(uint8_t frame_index,
+esp_err_t openpencil_frame_store_load(uint16_t frame_index,
                                       uint16_t *destination,
                                       size_t destination_pixels)
 {
     ESP_RETURN_ON_FALSE(destination, ESP_ERR_INVALID_ARG, TAG, "destination is NULL");
+
+    // External wireless content is checked first. BLE/Wi-Fi base firmware has
+    // no generated frames, while USB builds simply fall through to compiled resources.
+    const openpencil_content_header_t *wireless = openpencil_content_header();
+    if (wireless && wireless->width == CONFIG_EXAMPLE_LCD_H_RES &&
+        wireless->height == CONFIG_EXAMPLE_LCD_V_RES && frame_index < wireless->frame_count) {
+        return openpencil_content_load_frame(frame_index, destination, destination_pixels);
+    }
+
 #if LCD_GENERATED_IMAGE_FRAME_COUNT == 0
     return ESP_ERR_NOT_FOUND;
 #else
@@ -58,14 +67,6 @@ esp_err_t openpencil_frame_store_load(uint8_t frame_index,
 #endif
 
     const int64_t started_us = esp_timer_get_time();
-
-#if LCD_GENERATED_IMAGE_FRAME_COUNT == 0
-    const openpencil_content_header_t *wireless = openpencil_content_header();
-    if (wireless && wireless->width == CONFIG_EXAMPLE_LCD_H_RES &&
-        wireless->height == CONFIG_EXAMPLE_LCD_V_RES && wireless->frame_count == 1) {
-        return openpencil_content_load_frame(frame_index, destination, destination_pixels);
-    }
-#endif
 
 #if defined(LCD_GENERATED_IMAGE_STORAGE_VERSION)
     const lcd_frame_resource_t *resource = &lcd_generated_image_frames[frame_index];

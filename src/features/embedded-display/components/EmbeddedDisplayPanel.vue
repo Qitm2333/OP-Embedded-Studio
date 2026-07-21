@@ -56,6 +56,7 @@ const {
   variables,
   selectedImageName,
   imagePayload,
+  prototypePayload,
   previewUrl,
   buildStatus,
   buildMessage,
@@ -95,7 +96,8 @@ const transportOptions = [
 const profileOptions = computed(() =>
   profiles.value.map((profile) => ({ value: profile.id, label: profile.name }))
 )
-const bleManifestUrl = computed(() => manifestUrlFor('ble-frame'))
+const bleBuildMode: EmbeddedBuildMode = 'ble-frame'
+const bleManifestUrl = computed(() => manifestUrlFor(bleBuildMode))
 const wifiManifestUrl = computed(() => manifestUrlFor('wifi-frame'))
 const usbManifestUrl = computed(() =>
   manifestUrlFor(`usb-${burnMode.value}` as EmbeddedBuildMode)
@@ -103,7 +105,11 @@ const usbManifestUrl = computed(() =>
 const canBleBakeAndUpload = computed(
   () =>
     transportMode.value === 'ble' &&
-    canBake.value &&
+    (burnMode.value === 'frame'
+      ? canBake.value
+      : Boolean(props.bakePrototype && selectedPrototype.value) &&
+        prototypeReason.value === '' &&
+        !prototypePending.value) &&
     (bleSession.deviceReady.value || bleSession.canReconnect.value) &&
     !['checking', 'uploading'].includes(bleSession.status.value)
 )
@@ -157,7 +163,7 @@ const canBake = computed(
 )
 const canPreparePrototype = computed(
   () =>
-    transportMode.value === 'usb' &&
+    (transportMode.value === 'usb' || transportMode.value === 'ble') &&
     Boolean(props.bakePrototype && selectedPrototype.value) &&
     prototypeReason.value === '' &&
     !prototypePending.value &&
@@ -171,15 +177,14 @@ const canBuild = computed(() => {
     return burnMode.value === 'frame' && (!wifiProvisionEnabled.value || Boolean(wifiSsid.value.trim()))
   }
   if (transportMode.value === 'ble') {
-    return burnMode.value === 'frame'
+    return burnMode.value === 'frame' || burnMode.value === 'prototype'
   }
   return burnMode.value === 'frame' || Boolean(selectedPrototype.value && !prototypeReason.value)
 })
 const canWirelessUpload = computed(
   () =>
     transportMode.value !== 'usb' &&
-    burnMode.value === 'frame' &&
-    Boolean(imagePayload.value) &&
+    Boolean(burnMode.value === 'frame' ? imagePayload.value : prototypePayload.value) &&
     (transportMode.value === 'ble'
       ? bleSession.deviceReady.value || bleSession.canReconnect.value
       : wirelessDeviceReady.value) &&
@@ -236,6 +241,11 @@ async function handleBakeFrame(): Promise<boolean> {
 
 async function handleBleBakeAndUpload() {
   if (!canBleBakeAndUpload.value) return
+  if (burnMode.value === 'prototype') {
+    if (!(await preparePrototypeResources()) || !prototypePayload.value) return
+    await bleSession.upload(prototypePayload.value)
+    return
+  }
   if (!(await handleBakeFrame()) || !imagePayload.value) return
   await bleSession.upload(imagePayload.value)
 }
@@ -255,7 +265,7 @@ async function preparePrototypeResources() {
   try {
     const bake = await props.bakePrototype(selectedPrototypeId.value)
     if (!bake) throw new Error('无法读取所选交互')
-    await selectPrototype(bake)
+    await selectPrototype(bake, { upload: transportMode.value === 'usb' })
     prototypePrepared.value = true
     return true
   } catch (error) {
@@ -298,7 +308,9 @@ async function handleBuildFirmware() {
     }
   }
 
-  const buildMode = `${transportMode.value}-${burnMode.value}` as EmbeddedBuildMode
+  const buildMode = transportMode.value === 'ble'
+    ? bleBuildMode
+    : `${transportMode.value}-${burnMode.value}` as EmbeddedBuildMode
   const buildSucceeded = await buildFirmware(
     buildMode,
     transportMode.value === 'wifi' ? wifiCredentials.value : undefined
@@ -308,14 +320,14 @@ async function handleBuildFirmware() {
     wifiBaseFirmwareReady.value = true
     wirelessDeviceReady.value = false
     wirelessMessage.value = '基础固件已生成；烧录完成后请检查设备连接'
-  } else if (buildMode === 'ble-frame') {
+  } else if (buildMode === bleBuildMode) {
     bleSession.markFirmwareBuilt('基础固件已生成；请先通过 USB 烧录，再连接 BLE 设备')
   }
 }
 
 async function handleProbeWireless() {
   if (transportMode.value === 'ble') {
-    if (selectedProfile.value) await bleSession.probe(selectedProfile.value)
+    if (selectedProfile.value) await bleSession.probe(selectedProfile.value, burnMode.value)
     return
   }
   wirelessStatus.value = 'checking'
@@ -367,12 +379,16 @@ watch(
     wirelessDeviceReady.value = false
     wifiBaseFirmwareReady.value = false
     bleSession.reset()
-    if (mode !== 'usb') burnMode.value = 'frame'
+    if (mode === 'wifi') burnMode.value = 'frame'
     if (!profileId) return
 
     if (mode === 'ble') {
-      const available = await loadCachedFirmware('ble-frame')
-      if (sequence !== firmwareLoadSequence || transportMode.value !== 'ble') return
+      const available = await loadCachedFirmware(bleBuildMode)
+      if (
+        sequence !== firmwareLoadSequence ||
+        transportMode.value !== 'ble' ||
+        selectedProfile.value?.id !== profileId
+      ) return
       bleSession.setBaseFirmwareReady(available)
       return
     }
@@ -470,15 +486,15 @@ watch([wifiSsid, wifiPassword], () => {
           :disabled="!canBuild"
           @click="handleBuildFirmware"
         >
-          {{ buildingMode === 'ble-frame' ? '正在准备 BLE 基础固件…' : bleManifestUrl ? '重新创建 BLE 基础固件' : '创建 BLE 基础固件' }}
+          {{ buildingMode === bleBuildMode ? '正在准备 BLE 通用基础固件…' : bleManifestUrl ? '重新创建 BLE 通用基础固件' : '创建 BLE 通用基础固件' }}
         </button>
-        <esp-web-install-button v-if="bleManifestUrl" :manifest="bleManifestUrl" class="mt-1.5 block">
+        <esp-web-install-button v-if="bleManifestUrl" :key="bleBuildMode + bleManifestUrl" :manifest="bleManifestUrl" class="mt-1.5 block">
           <button slot="activate" type="button" class="h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white">
             通过 USB 初始化 BLE 设备
           </button>
         </esp-web-install-button>
         <p class="mt-1 text-[10px] leading-relaxed text-muted">
-          {{ bleManifestUrl ? '基础固件已准备，可直接连接 USB 烧录。' : '尚未找到基础固件，请先创建。' }}
+          {{ bleManifestUrl ? '通用基础固件已准备；只需初始化一次，之后可直接切换上传单 Frame 或状态机。USB 初始化会清除上一次传输内容。' : '尚未找到通用基础固件，请先创建。' }}
         </p>
       </PanelSection>
 
@@ -488,7 +504,7 @@ watch([wifiSsid, wifiPassword], () => {
             <span class="size-2 shrink-0 rounded-full" :class="bleSession.deviceReady.value ? 'bg-success' : 'bg-muted'" />
             <div class="min-w-0">
               <p class="truncate text-surface">{{ bleSession.deviceReady.value ? bleSession.deviceName.value : '尚未连接设备' }}</p>
-              <p class="truncate text-[10px] text-muted">{{ bleSession.deviceReady.value ? 'BLE 已连接，可以传输内容' : '连接后即可烘焙并上传当前 Frame' }}</p>
+              <p class="truncate text-[10px] text-muted">{{ bleSession.deviceReady.value ? (bleSession.firmwareMode.value === 'unified' ? 'BLE 通用固件已连接' : bleSession.firmwareMode.value === 'prototype' ? 'BLE 状态机旧版固件已连接' : bleSession.firmwareMode.value === 'frame' ? 'BLE 单 Frame 旧版固件已连接' : 'BLE 已连接，固件模式未知') : '连接后将检查设备固件模式' }}</p>
             </div>
           </div>
           <span :class="bleSession.deviceReady.value ? 'text-success' : 'text-muted'">{{ bleSession.deviceReady.value ? '已连接' : '未连接' }}</span>
@@ -556,7 +572,7 @@ watch([wifiSsid, wifiPassword], () => {
       </PanelSection>
 
 
-      <PanelSection v-if="transportMode === 'usb'" label="烧录模式">
+      <PanelSection v-if="transportMode === 'usb' || transportMode === 'ble'" label="烧录模式">
         <SegmentedControl
           v-model="burnMode"
           class="w-full"
@@ -635,8 +651,17 @@ watch([wifiSsid, wifiPassword], () => {
           }}
         </button>
         <p class="mt-1 text-[10px] leading-relaxed text-muted">
-          此步骤可选；生成固件时会自动重新烘焙全部状态。
+          {{ transportMode === 'ble' ? 'BLE 上传会重新烘焙全部状态，基础固件不会嵌入交互内容。' : '此步骤可选；生成固件时会自动重新烘焙全部状态。' }}
         </p>
+        <button
+          v-if="transportMode === 'ble'"
+          type="button"
+          class="mt-panel h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="!canBleBakeAndUpload"
+          @click="handleBleBakeAndUpload"
+        >
+          {{ bleSession.status.value === 'uploading' ? '正在传输状态机…' : '烘焙并上传状态机到 BLE 设备' }}
+        </button>
       </PanelSection>
 
       <PanelSection v-if="burnMode === 'frame'" label="图片与预览" :default-open="false">
