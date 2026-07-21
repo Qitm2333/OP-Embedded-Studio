@@ -23,7 +23,7 @@ function waitBeforeReconnect(): Promise<void> {
 
 export function useBleDeviceSession() {
   const status = ref<BleSessionStatus>('idle')
-  const message = ref('???? BLE ??')
+  const message = ref('尚未连接 BLE 设备')
   const deviceReady = ref(false)
   const baseFirmwareReady = ref(false)
   const connectedDevice = ref<BleConnection | null>(null)
@@ -31,12 +31,13 @@ export function useBleDeviceSession() {
   const selectedProfile = ref<EmbeddedDisplayProfile | null>(null)
   const progress = ref(0)
   const canReconnect = computed(() => Boolean(selectedDevice.value && selectedProfile.value))
+  const deviceName = computed(() => selectedDevice.value?.name || 'OpenPencil BLE')
   const monitoredDevices = new WeakSet<object>()
 
   function setBaseFirmwareReady(ready: boolean) {
     baseFirmwareReady.value = ready
     if (ready && status.value === 'idle') {
-      message.value = '?????? BLE ?????????'
+      message.value = '已找到 BLE 基础固件，可连接设备或通过 USB 重新烧录'
     }
   }
 
@@ -49,7 +50,7 @@ export function useBleDeviceSession() {
     message.value = nextMessage
   }
 
-  function reset(nextMessage = '???? BLE ??') {
+  function reset(nextMessage = '尚未连接 BLE 设备') {
     connectedDevice.value?.server.disconnect()
     baseFirmwareReady.value = false
     deviceReady.value = false
@@ -67,8 +68,16 @@ export function useBleDeviceSession() {
     device.addEventListener('gattserverdisconnected', () => {
       deviceReady.value = false
       connectedDevice.value = null
-      if (status.value !== 'uploading') status.value = 'idle'
-      message.value = 'BLE ????????????????'
+      if (status.value === 'success') {
+        message.value = '传输完成，设备已重启；下次上传时重新连接即可'
+        return
+      }
+      if (status.value === 'uploading') {
+        message.value = 'BLE 连接中断，正在准备断点续传…'
+        return
+      }
+      status.value = 'idle'
+      message.value = 'BLE 设备已断开，可点击连接按钮重新连接'
     })
   }
 
@@ -94,7 +103,7 @@ export function useBleDeviceSession() {
 
   async function probe(profile: EmbeddedDisplayProfile) {
     status.value = 'checking'
-    message.value = '?????? BLE ???'
+    message.value = '正在等待选择 BLE 设备…'
     try {
       const device = await requestOpenPencilBleDevice()
       selectedDevice.value = device
@@ -106,8 +115,8 @@ export function useBleDeviceSession() {
       }
       status.value = 'success'
       message.value = connection.transfer
-        ? `????${device.name || 'OpenPencil BLE'}?????`
-        : `????${device.name || 'OpenPencil BLE'}????????`
+        ? '已连接 ' + (device.name || 'OpenPencil BLE') + '，可以上传图片'
+        : '已连接 ' + (device.name || 'OpenPencil BLE') + '，但设备固件不支持图片传输'
       return connection
     } catch (error) {
       deviceReady.value = false
@@ -121,7 +130,7 @@ export function useBleDeviceSession() {
   async function upload(payload: EmbeddedImagePayload) {
     if (!selectedDevice.value || !selectedProfile.value) {
       status.value = 'error'
-      message.value = '??????? BLE ??'
+      message.value = '请先连接 BLE 设备'
       return false
     }
 
@@ -131,7 +140,7 @@ export function useBleDeviceSession() {
       let connection = connectedDevice.value
       if (!connection?.server.connected) {
         status.value = 'checking'
-        message.value = attempt === 0 ? '???? BLE ???' : `???????? ${attempt} ??????`
+        message.value = attempt === 0 ? '正在重新连接 BLE 设备…' : '连接中断，正在进行第 ' + attempt + ' 次续传…'
         await waitBeforeReconnect()
         connection = await connectSelectedDevice()
       }
@@ -144,11 +153,11 @@ export function useBleDeviceSession() {
       if (attempt > 0) {
         try {
           const remoteStatus = await readBleTransferStatus(connection.status)
-          if (remoteStatus.failed) throw new Error('???? BLE ????')
+          if (remoteStatus.failed) throw new Error('设备拒绝继续 BLE 传输')
           if (remoteStatus.completed) {
             progress.value = 100
             status.value = 'success'
-            message.value = '??????????'
+            message.value = '图片传输完成，设备正在重启'
             return true
           }
           resumeOffset = remoteStatus.receivedBytes
@@ -168,20 +177,20 @@ export function useBleDeviceSession() {
       try {
         await uploadBleImage(connection.transfer, connection.status, payload, ({ receivedBytes, totalBytes }) => {
           progress.value = totalBytes ? Math.round((receivedBytes / totalBytes) * 100) : 0
-          message.value = `BLE ?????${progress.value}%`
+          message.value = '正在通过 BLE 传输：' + progress.value + '%'
         }, resumeOffset)
         await new Promise((resolve) => window.setTimeout(resolve, 300))
         const finalStatus = await readBleTransferStatus(connection.status)
-        if (!finalStatus.completed) throw new Error('BLE ???????????????')
+        if (!finalStatus.completed) throw new Error('BLE 数据已发送，但设备尚未确认完成')
         progress.value = 100
         status.value = 'success'
-        message.value = '??????????'
+        message.value = '图片传输完成，设备正在重启'
         return true
       } catch (error) {
         if (isDisconnectedError(error)) {
           connectedDevice.value = null
           deviceReady.value = false
-          message.value = 'BLE ???????????????'
+          message.value = 'BLE 连接中断，正在尝试断点续传…'
           continue
         }
         status.value = 'error'
@@ -191,7 +200,7 @@ export function useBleDeviceSession() {
     }
 
     status.value = 'error'
-    message.value = 'BLE ????????????'
+    message.value = 'BLE 多次重连失败，请重新连接设备后再试'
     return false
   }
 
@@ -199,6 +208,7 @@ export function useBleDeviceSession() {
     status,
     message,
     deviceReady,
+    deviceName,
     baseFirmwareReady,
     progress,
     canReconnect,

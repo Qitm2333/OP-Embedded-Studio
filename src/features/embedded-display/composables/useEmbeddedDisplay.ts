@@ -21,7 +21,7 @@ const imagePayload = ref<EmbeddedImagePayload | null>(null)
 const buildStatus = ref<EmbeddedBuildStatus>('loading')
 const buildMessage = ref('正在连接设备服务…')
 const buildLog = ref<string[]>([])
-const manifestUrl = ref('')
+const manifestUrls = ref<Partial<Record<EmbeddedBuildMode, string>>>({})
 const serviceAvailable = ref(false)
 let loaded = false
 
@@ -59,7 +59,7 @@ export function useEmbeddedDisplay() {
   function selectProfile(id: string) {
     if (profiles.value.some((profile) => profile.id === id)) {
       selectedProfileId.value = id
-      manifestUrl.value = ''
+      manifestUrls.value = {}
       imagePayload.value = null
       deviceLog('profile selected', { profileId: id })
       if (selectedImageName.value) {
@@ -72,7 +72,7 @@ export function useEmbeddedDisplay() {
     const uploadToBuildService = options.upload ?? true
     selectedImageName.value = file?.name ?? ''
     deviceLog('image selected', { name: file?.name, size: file?.size, type: file?.type })
-    manifestUrl.value = ''
+    manifestUrls.value['usb-frame'] = ''
     if (!file) {
       imagePayload.value = null
       buildStatus.value = 'idle'
@@ -125,7 +125,7 @@ export function useEmbeddedDisplay() {
   async function selectPrototype(bake: EmbeddedPrototypeBakeResult) {
     const profile = selectedProfile.value
     if (!profile) throw new Error('请先连接设备服务并选择屏幕方案')
-    manifestUrl.value = ''
+    manifestUrls.value['usb-prototype'] = ''
     buildStatus.value = 'uploading'
     buildMessage.value = `正在批量烘焙并上传交互：${bake.name}`
     try {
@@ -154,17 +154,21 @@ export function useEmbeddedDisplay() {
     }
   }
 
+  function manifestUrlFor(buildMode: EmbeddedBuildMode): string {
+    return manifestUrls.value[buildMode] ?? ''
+  }
+
   async function loadCachedFirmware(buildMode: EmbeddedBuildMode): Promise<boolean> {
-    if (!selectedProfile.value || !serviceAvailable.value) return false
+    const profile = selectedProfile.value
+    if (!profile || !serviceAvailable.value) return false
     try {
-      await adapter.getManifest(selectedProfile.value.id, buildMode)
-      manifestUrl.value = embeddedArtifactUrl(selectedProfile.value.id, 'manifest.json', buildMode)
-      buildStatus.value = 'ready'
-      buildMessage.value = '已找到预编译固件，可以直接烧录；配置或源码变化后再重新创建。'
-      deviceLog('cached firmware ready', { profileId: selectedProfile.value.id, buildMode })
+      await adapter.getManifest(profile.id, buildMode)
+      if (selectedProfile.value?.id !== profile.id) return false
+      manifestUrls.value[buildMode] = embeddedArtifactUrl(profile.id, 'manifest.json', buildMode)
+      deviceLog('cached firmware ready', { profileId: profile.id, buildMode })
       return true
     } catch {
-      manifestUrl.value = ''
+      if (selectedProfile.value?.id === profile.id) manifestUrls.value[buildMode] = ''
       return false
     }
   }
@@ -173,18 +177,20 @@ export function useEmbeddedDisplay() {
     buildMode: EmbeddedBuildMode,
     wifiCredentials?: EmbeddedWifiCredentials
   ): Promise<boolean> {
-    if (!selectedProfile.value || !serviceAvailable.value) return false
-    deviceLog('build requested', { profileId: selectedProfile.value.id, buildMode })
+    const profile = selectedProfile.value
+    if (!profile || !serviceAvailable.value) return false
+    deviceLog('build requested', { profileId: profile.id, buildMode })
     buildStatus.value = 'building'
     buildMessage.value = '正在调用 ESP-IDF 构建服务…'
-    manifestUrl.value = ''
+    manifestUrls.value[buildMode] = ''
     try {
-      const result = await adapter.build(selectedProfile.value.id, buildMode, wifiCredentials)
+      const result = await adapter.build(profile.id, buildMode, wifiCredentials)
       buildLog.value = result.logTail || []
       if (!result.ok) {
         throw new Error(result.error || `构建失败（${result.returnCode ?? 'unknown'}）`)
       }
-      const manifest = await adapter.getManifest(selectedProfile.value.id, buildMode)
+      const manifest = await adapter.getManifest(profile.id, buildMode)
+      if (selectedProfile.value?.id !== profile.id) return false
       deviceLog('build ready', {
         appBytes: result.size?.appBytes,
         logLines: result.logTail?.length,
@@ -192,7 +198,7 @@ export function useEmbeddedDisplay() {
       })
       buildStatus.value = 'ready'
       buildMessage.value = '固件和烧录清单已生成，可以连接设备并烧录。'
-      manifestUrl.value = embeddedArtifactUrl(selectedProfile.value.id, 'manifest.json', buildMode)
+      manifestUrls.value[buildMode] = embeddedArtifactUrl(profile.id, 'manifest.json', buildMode)
       return true
     } catch (error) {
       deviceLog('build error', error)
@@ -236,7 +242,7 @@ export function useEmbeddedDisplay() {
     buildStatus,
     buildMessage,
     buildLog,
-    manifestUrl,
+    manifestUrlFor,
     previewUrl,
     imagePayload,
     serviceAvailable,
