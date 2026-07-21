@@ -17,8 +17,18 @@ static const char *TAG = "wireless_server";
 static httpd_handle_t server;
 static esp_netif_t *access_point_netif;
 static esp_netif_t *station_netif;
+static openpencil_wireless_status_t wireless_status;
+static portMUX_TYPE wireless_status_lock = portMUX_INITIALIZER_UNLOCKED;
 
 static void reboot_task(void *arg);
+
+void openpencil_wireless_server_get_status(openpencil_wireless_status_t *status)
+{
+    if (!status) return;
+    taskENTER_CRITICAL(&wireless_status_lock);
+    *status = wireless_status;
+    taskEXIT_CRITICAL(&wireless_status_lock);
+}
 
 static bool json_string_field(const char *json,
                               const char *key,
@@ -80,19 +90,18 @@ static esp_err_t send_json(httpd_req_t *request, const char *json)
 
 static esp_err_t device_handler(httpd_req_t *request)
 {
-    esp_netif_ip_info_t ip = {0};
-    esp_netif_ip_info_t ap_ip = {0};
-    if (station_netif) esp_netif_get_ip_info(station_netif, &ip);
-    if (access_point_netif) esp_netif_get_ip_info(access_point_netif, &ap_ip);
+    openpencil_wireless_status_t status = {0};
+    openpencil_wireless_server_get_status(&status);
     const openpencil_content_header_t *content = openpencil_content_header();
     char response[512];
     snprintf(response, sizeof(response),
-             "{\"ok\":true,\"wirelessContent\":%s,\"width\":%u,\"height\":%u,\"ip\":\"%u.%u.%u.%u\",\"apIp\":\"%u.%u.%u.%u\"}",
+             "{\"ok\":true,\"wirelessContent\":%s,\"width\":%u,\"height\":%u,\"connected\":%s,\"ip\":\"%s\",\"apIp\":\"%s\"}",
              content ? "true" : "false",
              (unsigned)CONFIG_EXAMPLE_LCD_H_RES,
              (unsigned)CONFIG_EXAMPLE_LCD_V_RES,
-             IP2STR(&ip.ip),
-             IP2STR(&ap_ip.ip));
+             status.station_connected ? "true" : "false",
+             status.ip,
+             status.ap_ip);
     return send_json(request, response);
 }
 
@@ -180,12 +189,20 @@ static esp_err_t wifi_handler(httpd_req_t *request)
 static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        esp_wifi_connect();
+        if (wireless_status.station_configured) esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        taskENTER_CRITICAL(&wireless_status_lock);
+        wireless_status.station_connected = false;
+        wireless_status.ip[0] = '\0';
+        taskEXIT_CRITICAL(&wireless_status_lock);
         ESP_LOGW(TAG, "station disconnected; retrying");
-        esp_wifi_connect();
+        if (wireless_status.station_configured) esp_wifi_connect();
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         const ip_event_got_ip_t *event = event_data;
+        taskENTER_CRITICAL(&wireless_status_lock);
+        wireless_status.station_connected = true;
+        snprintf(wireless_status.ip, sizeof(wireless_status.ip), IPSTR, IP2STR(&event->ip_info.ip));
+        taskEXIT_CRITICAL(&wireless_status_lock);
         ESP_LOGI(TAG, "station ready at " IPSTR, IP2STR(&event->ip_info.ip));
     }
 }
@@ -201,9 +218,14 @@ esp_err_t openpencil_wireless_server_start(void)
     ESP_RETURN_ON_ERROR(esp_netif_init(), TAG, "initialize network interface failed");
     ESP_RETURN_ON_ERROR(esp_event_loop_create_default(), TAG, "create event loop failed");
 
-    access_point_netif = esp_netif_create_default_wifi_ap();
     station_netif = esp_netif_create_default_wifi_sta();
-    ESP_RETURN_ON_FALSE(access_point_netif && station_netif, ESP_ERR_NO_MEM, TAG, "create netif failed");
+#if CONFIG_OPENPENCIL_SETUP_ACCESS_POINT
+    access_point_netif = esp_netif_create_default_wifi_ap();
+#endif
+    ESP_RETURN_ON_FALSE(station_netif, ESP_ERR_NO_MEM, TAG, "create station netif failed");
+#if CONFIG_OPENPENCIL_SETUP_ACCESS_POINT
+    ESP_RETURN_ON_FALSE(access_point_netif, ESP_ERR_NO_MEM, TAG, "create access point netif failed");
+#endif
 
     wifi_init_config_t config = WIFI_INIT_CONFIG_DEFAULT();
     ESP_RETURN_ON_ERROR(esp_wifi_init(&config), TAG, "initialize WiFi failed");
@@ -211,12 +233,14 @@ esp_err_t openpencil_wireless_server_start(void)
     ESP_RETURN_ON_ERROR(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL), TAG, "register IP handler failed");
 
     wifi_config_t ap_config = {0};
+#if CONFIG_OPENPENCIL_SETUP_ACCESS_POINT
     strcpy((char *)ap_config.ap.ssid, "OpenPencil-Setup");
     strcpy((char *)ap_config.ap.password, "openpencil");
     ap_config.ap.ssid_len = strlen((char *)ap_config.ap.ssid);
     ap_config.ap.channel = 1;
     ap_config.ap.max_connection = 2;
     ap_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
+#endif
 
     wifi_config_t sta_config = {0};
     nvs_handle_t handle;
@@ -228,10 +252,30 @@ esp_err_t openpencil_wireless_server_start(void)
         nvs_close(handle);
     }
 
+    taskENTER_CRITICAL(&wireless_status_lock);
+    memset(&wireless_status, 0, sizeof(wireless_status));
+    wireless_status.station_configured = sta_config.sta.ssid[0] != '\0';
+    strlcpy(wireless_status.ssid, (const char *)sta_config.sta.ssid, sizeof(wireless_status.ssid));
+    strlcpy(wireless_status.password, (const char *)sta_config.sta.password, sizeof(wireless_status.password));
+    taskEXIT_CRITICAL(&wireless_status_lock);
+
+#if CONFIG_OPENPENCIL_SETUP_ACCESS_POINT
     ESP_RETURN_ON_ERROR(esp_wifi_set_mode(WIFI_MODE_APSTA), TAG, "set WiFi mode failed");
     ESP_RETURN_ON_ERROR(esp_wifi_set_config(WIFI_IF_AP, &ap_config), TAG, "set AP config failed");
+#else
+    ESP_RETURN_ON_ERROR(esp_wifi_set_mode(WIFI_MODE_STA), TAG, "set WiFi mode failed");
+#endif
     ESP_RETURN_ON_ERROR(esp_wifi_set_config(WIFI_IF_STA, &sta_config), TAG, "set station config failed");
     ESP_RETURN_ON_ERROR(esp_wifi_start(), TAG, "start WiFi failed");
+
+#if CONFIG_OPENPENCIL_SETUP_ACCESS_POINT
+    esp_netif_ip_info_t ap_ip = {0};
+    if (esp_netif_get_ip_info(access_point_netif, &ap_ip) == ESP_OK) {
+        taskENTER_CRITICAL(&wireless_status_lock);
+        snprintf(wireless_status.ap_ip, sizeof(wireless_status.ap_ip), IPSTR, IP2STR(&ap_ip.ip));
+        taskEXIT_CRITICAL(&wireless_status_lock);
+    }
+#endif
 
     httpd_config_t server_config = HTTPD_DEFAULT_CONFIG();
     ESP_RETURN_ON_ERROR(httpd_start(&server, &server_config), TAG, "start HTTP server failed");
@@ -245,6 +289,10 @@ esp_err_t openpencil_wireless_server_start(void)
     httpd_register_uri_handler(server, &wifi_uri);
     httpd_register_uri_handler(server, &content_options_uri);
     httpd_register_uri_handler(server, &wifi_options_uri);
+#if CONFIG_OPENPENCIL_SETUP_ACCESS_POINT
     ESP_LOGI(TAG, "wireless content server ready; setup AP OpenPencil-Setup / openpencil");
+#else
+    ESP_LOGI(TAG, "LAN content server ready; station SSID: %s", wireless_status.ssid);
+#endif
     return ESP_OK;
 }

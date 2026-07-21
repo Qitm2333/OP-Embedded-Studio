@@ -1,4 +1,4 @@
-/*
+﻿/*
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: CC0-1.0
@@ -25,6 +25,11 @@
 #include "wireless_content.h"
 #if CONFIG_OPENPENCIL_WIFI_SERVER
 #include "wireless_server.h"
+#include "wireless_status_view.h"
+#endif
+#if CONFIG_OPENPENCIL_BLE_SERVER
+#include "ble_server.h"
+#include "ble_status_view.h"
 #endif
 #include "co5300_panel.h"
 
@@ -174,7 +179,7 @@ static esp_err_t draw_geometry_test(esp_lcd_panel_handle_t panel, uint16_t *fram
     return ESP_OK;
 }
 
-#if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER
+#if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER || CONFIG_OPENPENCIL_BLE_SERVER
 static esp_err_t draw_wireless_image(esp_lcd_panel_handle_t panel, uint16_t *frame_buffer)
 {
     const openpencil_content_header_t *content = openpencil_content_header();
@@ -304,11 +309,11 @@ void app_main(void)
     ESP_LOGI(TAG, "Turn on LCD backlight");
     backlight_set(true);
     ESP_ERROR_CHECK(openpencil_display_presenter_init());
-#if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER
+#if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER || CONFIG_OPENPENCIL_BLE_SERVER
     ESP_ERROR_CHECK(openpencil_content_init());
 #endif
 
-#if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER
+#if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER || CONFIG_OPENPENCIL_BLE_SERVER
     if (LCD_GENERATED_IMAGE_PIXEL_COUNT == 0 && openpencil_content_is_valid()) {
         ESP_ERROR_CHECK(draw_wireless_image(panel_handle, frame_buffer));
 #if CONFIG_OPENPENCIL_WIFI_SERVER
@@ -318,16 +323,33 @@ void app_main(void)
         // completes and reboots the device, so one synchronized draw is enough.
         ESP_ERROR_CHECK(openpencil_wireless_server_start());
         return;
+#elif CONFIG_OPENPENCIL_BLE_SERVER
+        // Keep BLE reachable after boot while leaving the persisted image on screen.
+        ESP_ERROR_CHECK(openpencil_ble_server_start());
+        return;
 #endif
     } else
 #endif
 #if CONFIG_OPENPENCIL_WIFI_SERVER
     if (LCD_GENERATED_IMAGE_PIXEL_COUNT == 0) {
-        // Keep the base firmware reachable while showing a deterministic
-        // checkerboard/cross diagnostic image until the first Frame upload.
         ESP_ERROR_CHECK(openpencil_wireless_server_start());
+#if CONFIG_OPENPENCIL_LAN_STATUS_SCREEN
+        ESP_LOGI(TAG, "Start LAN connection status view");
+        ESP_ERROR_CHECK(openpencil_wireless_status_view_run(panel_handle, frame_buffer));
+#else
+        // Keep the hotspot base firmware reachable while showing a deterministic
+        // checkerboard/cross diagnostic image until the first Frame upload.
         ESP_LOGI(TAG, "Start Wi-Fi base firmware diagnostic pattern");
         ESP_ERROR_CHECK(draw_geometry_test(panel_handle, frame_buffer));
+#endif
+        return;
+    } else
+#endif
+#if CONFIG_OPENPENCIL_BLE_SERVER
+    if (LCD_GENERATED_IMAGE_PIXEL_COUNT == 0) {
+        ESP_ERROR_CHECK(openpencil_ble_server_start());
+        ESP_LOGI(TAG, "Start BLE transfer status view");
+        ESP_ERROR_CHECK(openpencil_ble_status_view_run(panel_handle, frame_buffer));
         return;
     } else
 #endif

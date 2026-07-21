@@ -1,12 +1,15 @@
-#include "wireless_content.h"
+﻿#include "wireless_content.h"
 #include "lcd_panel_factory.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include "sdkconfig.h"
 #include "esp_check.h"
 #include "esp_crc.h"
 #include "esp_log.h"
 #include "esp_partition.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 static const char *TAG = "wireless_content";
 static const esp_partition_t *content_partition;
@@ -47,18 +50,24 @@ esp_err_t openpencil_content_init(void)
         return ESP_OK;
     }
 
-    uint8_t chunk[4096];
+    const size_t chunk_capacity = 4096;
+    uint8_t *chunk = malloc(chunk_capacity);
+    ESP_RETURN_ON_FALSE(chunk, ESP_ERR_NO_MEM, TAG, "allocate CRC buffer failed");
     uint32_t crc = 0;
     size_t remaining = header.payload_bytes;
     size_t offset = sizeof(header);
     while (remaining > 0) {
-        size_t length = remaining > sizeof(chunk) ? sizeof(chunk) : remaining;
+        size_t length = remaining > chunk_capacity ? chunk_capacity : remaining;
         ESP_RETURN_ON_ERROR(esp_partition_read(content_partition, offset, chunk, length), TAG,
                             "read content payload failed");
         crc = esp_crc32_le(crc, chunk, length);
         offset += length;
         remaining -= length;
+        // Large persisted frames take long enough to trip the interrupt watchdog
+        // if startup CRC validation never yields to the other core.
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
+    free(chunk);
     if (crc != header.payload_crc32) {
         ESP_LOGW(TAG, "wireless content CRC mismatch; using generated image");
         content_valid = false;

@@ -5,6 +5,7 @@ interface WirelessResponse {
   wirelessContent?: boolean
   width?: number
   height?: number
+  connected?: boolean
   ip?: string
   apIp?: string
   error?: string
@@ -102,6 +103,7 @@ export async function probeWirelessDevice(baseUrl: string): Promise<EmbeddedWire
     wirelessContent: payload.wirelessContent,
     width: payload.width,
     height: payload.height,
+    connected: payload.connected,
     ip: payload.ip,
     apIp: payload.apIp
   }

@@ -45,6 +45,9 @@ BUILD_MODES = {
     "usb-prototype": {"partitionTable": "partitions_8mb_no_ota.csv", "appPartitionBytes": 0x600000},
     "wifi-frame": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
     "wifi-prototype": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
+    "lan-frame": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
+    "lan-prototype": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
+    "ble-frame": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
 }
 
 PROTOTYPE_EVENTS = {
@@ -308,16 +311,30 @@ def mode_defaults_path(build_mode):
     partition_table = BUILD_MODES[mode]["partitionTable"]
     path = PROJECT_DIR / "build" / "modes" / safe_path_segment(mode) / "mode.defaults"
     path.parent.mkdir(parents=True, exist_ok=True)
-    wireless_enabled = mode.startswith("wifi-")
-    external_content = mode == "wifi-frame"
+    wireless_enabled = mode.startswith(("wifi-", "lan-"))
+    external_content = mode in ("wifi-frame", "lan-frame")
+    lan_status_screen = mode.startswith("lan-")
+    setup_access_point = mode.startswith("wifi-")
+    ble_enabled = mode == "ble-frame"
     settings = [
         f'CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="{partition_table}"',
         f'CONFIG_PARTITION_TABLE_FILENAME="{partition_table}"',
         f'CONFIG_OPENPENCIL_WIFI_SERVER={"y" if wireless_enabled else "n"}',
         f'CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY={"y" if external_content else "n"}',
+        f'CONFIG_OPENPENCIL_LAN_STATUS_SCREEN={"y" if lan_status_screen else "n"}',
+        f'CONFIG_OPENPENCIL_SETUP_ACCESS_POINT={"y" if setup_access_point else "n"}',
+        f'CONFIG_OPENPENCIL_BLE_SERVER={"y" if ble_enabled else "n"}',
+        f'CONFIG_OPENPENCIL_BLE_REQUIRE_PAIRING=n',
     ]
     if wireless_enabled:
         settings.append("CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192")
+    if ble_enabled:
+        settings.extend([
+            "CONFIG_BT_ENABLED=y",
+            "CONFIG_BT_NIMBLE_ENABLED=y",
+            "CONFIG_BT_NIMBLE_ROLE_PERIPHERAL=y",
+            "CONFIG_BT_NIMBLE_MAX_CONNECTIONS=1",
+        ])
     settings.append("")
     contents = "\n".join(settings)
     if not path.is_file() or path.read_text(encoding="utf-8") != contents:
@@ -825,23 +842,39 @@ def run_build(profile_id, wifi_credentials=None, build_mode=DEFAULT_BUILD_MODE):
     with BUILD_LOCK:
         if mode in ("usb-frame", "usb-prototype"):
             restore_generated_resources(profile_id, mode)
-        elif mode in ("wifi-frame", "wifi-prototype"):
+        elif mode in ("wifi-frame", "wifi-prototype", "lan-frame", "lan-prototype", "ble-frame"):
             ensure_wireless_base_resources(profile_id, mode)
         build_signature = prepare_build_dir(registry, profile, mode, build_dir)
-        completed = subprocess.run(
-            command,
-            cwd=PROJECT_DIR,
-            env=env,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=False,
+        artifacts = firmware_artifacts(build_dir)
+        cache_files = ("bootloaderBin", "partitionTableBin", "appBin")
+        cache_hit = (
+            (PROJECT_DIR / build_dir / ".lcd_profile_build_signature").is_file()
+            and all(Path(artifacts[name]).is_file() for name in cache_files)
         )
-        if completed.returncode == 0:
-            write_build_signature(build_dir, build_signature)
+        if cache_hit:
+            output_lines = [
+                f"Build cache hit: {profile_id} / {mode}",
+                "Firmware artifacts are unchanged; skipped ESP-IDF compilation.",
+            ]
+            completed_return_code = 0
             write_wifi_credentials(PROJECT_DIR / build_dir, wifi_credentials)
+        else:
+            completed = subprocess.run(
+                command,
+                cwd=PROJECT_DIR,
+                env=env,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            output_lines = completed.stdout.splitlines()
+            completed_return_code = completed.returncode
+            if completed.returncode == 0:
+                write_build_signature(build_dir, build_signature)
+                write_wifi_credentials(PROJECT_DIR / build_dir, wifi_credentials)
 
-    output_lines = completed.stdout.splitlines()
+    artifacts = firmware_artifacts(build_dir)
     artifacts = firmware_artifacts(build_dir)
     existing_artifacts = {
         name: path for name, path in artifacts.items()
@@ -853,8 +886,9 @@ def run_build(profile_id, wifi_credentials=None, build_mode=DEFAULT_BUILD_MODE):
     return {
         "profileId": profile_id,
         "buildMode": mode,
-        "ok": completed.returncode == 0,
-        "returnCode": completed.returncode,
+        "ok": completed_return_code == 0,
+        "returnCode": completed_return_code,
+        "cached": cache_hit,
         "command": command,
         "artifacts": existing_artifacts,
         "size": {

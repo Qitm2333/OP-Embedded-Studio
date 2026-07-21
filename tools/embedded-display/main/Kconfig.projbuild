@@ -8,6 +8,22 @@ menu "Example Configuration"
         bool "Load display content from the content partition"
         default n
 
+    config OPENPENCIL_LAN_STATUS_SCREEN
+        bool "Show LAN connection details while waiting for content"
+        default n
+
+    config OPENPENCIL_SETUP_ACCESS_POINT
+        bool "Enable the OpenPencil setup access point"
+        default y
+
+    config OPENPENCIL_BLE_SERVER
+        bool "Enable the OpenPencil BLE content server"
+        default n
+
+    config OPENPENCIL_BLE_REQUIRE_PAIRING
+        bool "Require BLE link encryption before content writes"
+        default y
+
     choice EXAMPLE_LCD_CONTROLLER
         prompt "LCD controller IC"
         default EXAMPLE_LCD_CONTROLLER_ST7789

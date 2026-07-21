@@ -108,6 +108,7 @@ export interface EmbeddedWirelessDevice {
   wirelessContent: boolean
   width: number
   height: number
+  connected?: boolean
   ip?: string
   apIp?: string
 }
@@ -117,12 +118,20 @@ export interface EmbeddedWifiCredentials {
   password: string
 }
 
-export type EmbeddedBuildMode = 'usb-frame' | 'usb-prototype' | 'wifi-frame' | 'wifi-prototype'
+export type EmbeddedBuildMode =
+  | 'usb-frame'
+  | 'usb-prototype'
+  | 'wifi-frame'
+  | 'wifi-prototype'
+  | 'lan-frame'
+  | 'lan-prototype'
+  | 'ble-frame'
 
 export interface EmbeddedBuildResult {
   profileId: string
   buildMode?: EmbeddedBuildMode
   ok: boolean
+  cached?: boolean
   returnCode?: number
   command?: string[]
   artifacts?: Record<string, string>

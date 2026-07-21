@@ -8,6 +8,7 @@ import { PanelHeader, PanelSection } from '@/components/ui/panel'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 
 import { probeWirelessDevice, uploadWirelessImage } from '../adapters/wireless'
+import { useBleDeviceSession } from '../composables/useBleDeviceSession'
 import { useEmbeddedDisplay } from '../composables/useEmbeddedDisplay'
 import type {
   EmbeddedBuildMode,
@@ -26,10 +27,11 @@ const props = defineProps<{
 }>()
 
 const burnMode = ref<'frame' | 'prototype'>('frame')
-const transportMode = ref<'usb' | 'wifi'>('usb')
+const transportMode = ref<'usb' | 'wifi' | 'ble'>('usb')
 const wifiProvisionEnabled = ref(false)
 const wifiSsid = ref('')
 const wifiPassword = ref('')
+const bleSession = useBleDeviceSession()
 const wirelessBaseUrl = ref('http://192.168.4.1')
 const wirelessStatus = ref<'idle' | 'checking' | 'uploading' | 'success' | 'error'>('idle')
 const wirelessMessage = ref('连接设备后，可直接传输当前图片')
@@ -61,6 +63,7 @@ const {
   selectImage,
   selectPrototype,
   buildFirmware,
+  loadCachedFirmware,
   loadProfiles
 } = useEmbeddedDisplay()
 
@@ -83,7 +86,8 @@ const burnModeOptions = [
 ]
 const transportOptions = [
   { value: 'usb', label: 'USB 串口' },
-  { value: 'wifi', label: 'Wi-Fi 无线' }
+  { value: 'wifi', label: 'Wi-Fi 无线' },
+  { value: 'ble', label: 'BLE 蓝牙' }
 ]
 const profileOptions = computed(() =>
   profiles.value.map((profile) => ({ value: profile.id, label: profile.name }))
@@ -151,16 +155,21 @@ const canBuild = computed(() => {
   if (transportMode.value === 'wifi') {
     return burnMode.value === 'frame' && (!wifiProvisionEnabled.value || Boolean(wifiSsid.value.trim()))
   }
+  if (transportMode.value === 'ble') {
+    return burnMode.value === 'frame'
+  }
   return burnMode.value === 'frame' || Boolean(selectedPrototype.value && !prototypeReason.value)
 })
 const canWirelessUpload = computed(
   () =>
-    transportMode.value === 'wifi' &&
+    transportMode.value !== 'usb' &&
     burnMode.value === 'frame' &&
     Boolean(imagePayload.value) &&
-    wirelessDeviceReady.value &&
-    wirelessStatus.value !== 'checking' &&
-    wirelessStatus.value !== 'uploading'
+    (transportMode.value === 'ble'
+      ? bleSession.deviceReady.value || bleSession.canReconnect.value
+      : wirelessDeviceReady.value) &&
+    (transportMode.value === 'ble' ? bleSession.status.value : wirelessStatus.value) !== 'checking' &&
+    (transportMode.value === 'ble' ? bleSession.status.value : wirelessStatus.value) !== 'uploading'
 )
 const wifiCredentials = computed(() =>
   wifiProvisionEnabled.value && wifiSsid.value.trim()
@@ -253,7 +262,7 @@ async function handleBuildFirmware() {
   // header can silently compile the built-in geometry test image.
   if (transportMode.value === 'usb' && burnMode.value === 'prototype') {
     if (!(await preparePrototypeResources())) return
-  } else if (transportMode.value !== 'wifi' && frameResourceSource.value !== 'uploaded') {
+  } else if (transportMode.value !== 'wifi' && transportMode.value !== 'ble' && frameResourceSource.value !== 'uploaded') {
     if (!props.bakeFrame || bakeReason.value) {
       bakeError.value = bakeReason.value || '无法重新烘焙当前 Frame'
       return
@@ -282,10 +291,16 @@ async function handleBuildFirmware() {
     wifiBaseFirmwareReady.value = true
     wirelessDeviceReady.value = false
     wirelessMessage.value = '基础固件已生成；烧录完成后请检查设备连接'
+  } else if (buildMode === 'ble-frame') {
+    bleSession.markFirmwareBuilt('基础固件已生成；请先通过 USB 烧录，再连接 BLE 设备')
   }
 }
 
 async function handleProbeWireless() {
+  if (transportMode.value === 'ble') {
+    if (selectedProfile.value) await bleSession.probe(selectedProfile.value)
+    return
+  }
   wirelessStatus.value = 'checking'
   wirelessMessage.value = '正在检查设备连接…'
   try {
@@ -311,6 +326,10 @@ async function handleProbeWireless() {
 
 async function handleWirelessUpload() {
   if (!imagePayload.value || !selectedProfile.value || !canWirelessUpload.value) return
+  if (transportMode.value === 'ble') {
+    await bleSession.upload(imagePayload.value)
+    return
+  }
   wirelessStatus.value = 'uploading'
   wirelessMessage.value = '正在通过 Wi-Fi 传输图片…'
   try {
@@ -325,7 +344,16 @@ async function handleWirelessUpload() {
 
 watch(transportMode, (mode) => {
   wirelessDeviceReady.value = false
-  if (mode !== 'wifi') {
+  if (mode === 'ble') {
+    bleSession.reset()
+    void loadCachedFirmware('ble-frame').then((available) => {
+      bleSession.setBaseFirmwareReady(available)
+    })
+  } else if (mode === 'wifi') {
+    void loadCachedFirmware('wifi-frame').then((available) => {
+      wifiBaseFirmwareReady.value = available
+    })
+  } else {
     wirelessStatus.value = 'idle'
     wirelessMessage.value = '切换到 Wi-Fi 后可检查设备并传输图片'
   }
@@ -337,9 +365,20 @@ watch([wifiSsid, wifiPassword], () => {
 
 watch(
   () => selectedProfile.value?.id,
-  () => {
+  (profileId) => {
     wirelessDeviceReady.value = false
     wifiBaseFirmwareReady.value = false
+    bleSession.reset()
+    if (!profileId) return
+    if (transportMode.value === 'ble') {
+      void loadCachedFirmware('ble-frame').then((available) => {
+        bleSession.setBaseFirmwareReady(available)
+      })
+    } else if (transportMode.value === 'wifi') {
+      void loadCachedFirmware('wifi-frame').then((available) => {
+        wifiBaseFirmwareReady.value = available
+      })
+    }
   }
 )
 </script>
@@ -401,6 +440,19 @@ watch(
 
       <PanelSection label="传输方式">
         <SegmentedControl v-model="transportMode" class="w-full" :options="transportOptions" label="选择传输方式" />
+      </PanelSection>
+
+      <PanelSection v-if="transportMode === 'ble'" label="BLE 基础固件">
+        <div class="grid gap-1.5">
+          <div class="flex items-center justify-between rounded-panel border border-border bg-panel-field px-2 py-1.5 text-[11px]"><span class="text-muted">1. 创建 BLE 基础固件</span><span :class="bleSession.baseFirmwareReady.value ? 'text-success' : 'text-muted'">{{ bleSession.baseFirmwareReady.value ? '已生成' : '待创建' }}</span></div>
+          <div class="flex items-center justify-between rounded-panel border border-border bg-panel-field px-2 py-1.5 text-[11px]"><span class="text-muted">2. USB 烧录并启动 BLE</span><span :class="bleSession.deviceReady.value ? 'text-success' : 'text-muted'">{{ bleSession.deviceReady.value ? '已连接' : '待烧录/连接' }}</span></div>
+        </div>
+        <button type="button" class="mt-panel h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50" :disabled="!canBuild" @click="handleBuildFirmware">{{ buildStatus === 'building' ? '正在创建 BLE 固件…' : '1. 创建 BLE 基础固件' }}</button>
+        <esp-web-install-button v-if="manifestUrl" :manifest="manifestUrl" class="mt-1.5 block"><button slot="activate" type="button" class="h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white">2. USB 烧录 BLE 固件</button></esp-web-install-button>
+        <button type="button" class="mt-panel h-control w-full rounded-panel border border-transparent bg-panel-field px-2 text-[11px] text-surface hover:bg-panel-field-hover disabled:opacity-50" :disabled="bleSession.status.value === 'checking'" @click="handleProbeWireless">{{ bleSession.status.value === 'checking' ? '等待选择 BLE 设备…' : '3. 连接 BLE 设备' }}</button>
+        <p class="mt-1 text-[10px] leading-relaxed" :class="bleSession.status.value === 'error' ? 'text-error' : 'text-muted'">{{ bleSession.message.value }}</p>
+        <div v-if="bleSession.status.value === 'uploading'" class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-panel-field"><div class="h-full bg-accent transition-[width]" :style="{ width: bleSession.progress.value + '%' }" /></div>
+        <button type="button" class="mt-panel h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50" :disabled="!canWirelessUpload" @click="handleWirelessUpload">{{ bleSession.status.value === 'uploading' ? '正在传输…' : '4. 上传图片到设备' }}</button>
       </PanelSection>
 
       <PanelSection v-if="transportMode === 'wifi'" label="Wi-Fi 基础固件">

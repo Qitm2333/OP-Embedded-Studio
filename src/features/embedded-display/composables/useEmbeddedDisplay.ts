@@ -154,6 +154,21 @@ export function useEmbeddedDisplay() {
     }
   }
 
+  async function loadCachedFirmware(buildMode: EmbeddedBuildMode): Promise<boolean> {
+    if (!selectedProfile.value || !serviceAvailable.value) return false
+    try {
+      await adapter.getManifest(selectedProfile.value.id, buildMode)
+      manifestUrl.value = embeddedArtifactUrl(selectedProfile.value.id, 'manifest.json', buildMode)
+      buildStatus.value = 'ready'
+      buildMessage.value = '已找到预编译固件，可以直接烧录；配置或源码变化后再重新创建。'
+      deviceLog('cached firmware ready', { profileId: selectedProfile.value.id, buildMode })
+      return true
+    } catch {
+      manifestUrl.value = ''
+      return false
+    }
+  }
+
   async function buildFirmware(
     buildMode: EmbeddedBuildMode,
     wifiCredentials?: EmbeddedWifiCredentials
@@ -229,6 +244,7 @@ export function useEmbeddedDisplay() {
     selectImage,
     selectPrototype,
     buildFirmware,
+    loadCachedFirmware,
     clearGeneratedImage,
     loadProfiles
   }
