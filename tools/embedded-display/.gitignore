@@ -1,5 +1,6 @@
 build/
 generated-content/
+managed_components/
 __pycache__/
 *.pyc
 sdkconfig
