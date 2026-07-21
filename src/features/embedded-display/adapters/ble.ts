@@ -1,4 +1,4 @@
-﻿import { encodeWirelessImage } from './wireless'
+import { encodeWirelessImage } from './wireless'
 import type { EmbeddedDisplayProfile, EmbeddedImagePayload } from '../model/types'
 
 export const OPENPENCIL_BLE_SERVICE_UUID = 'a110207d-8f4d-559b-8e4a-4791892b127d'
@@ -113,10 +113,17 @@ export async function uploadBleImage(
   if (startOffset < 0 || startOffset > bytes.byteLength) throw new Error('BLE 续传位置无效')
   if (!transfer.writeValueWithoutResponse) throw new Error('当前浏览器不支持 BLE 无响应写入')
 
-  const chunkSize = 236
-  const packetsPerCheckpoint = 8
-  let offset = startOffset
+  // Keep the four-byte absolute offset while using most of the negotiated
+  // 256-byte ATT payload. Checkpoints adapt to link health instead of forcing
+  // a status read after every small burst.
+  const chunkSize = 244
+  const minimumPacketsPerCheckpoint = 8
+  const maximumPacketsPerCheckpoint = 32
+  let packetsPerCheckpoint = 16
+  let checkpointDelayMs = 6
+  let healthyCheckpoints = 0
   let stalledCheckpoints = 0
+  let offset = startOffset
 
   while (offset < bytes.byteLength) {
     const checkpointStart = offset
@@ -129,7 +136,7 @@ export async function uploadBleImage(
       offset += chunk.byteLength
     }
 
-    await new Promise((resolve) => window.setTimeout(resolve, 20))
+    await new Promise((resolve) => window.setTimeout(resolve, checkpointDelayMs))
     const remoteStatus = await readBleTransferStatus(status)
     if (remoteStatus.failed) throw new Error('设备拒绝了 BLE 图片数据')
     if (remoteStatus.completed) {
@@ -139,11 +146,27 @@ export async function uploadBleImage(
 
     const confirmedOffset = Math.min(remoteStatus.receivedBytes, bytes.byteLength)
     if (confirmedOffset <= checkpointStart) {
+      healthyCheckpoints = 0
       stalledCheckpoints += 1
+      packetsPerCheckpoint = Math.max(
+        minimumPacketsPerCheckpoint,
+        Math.floor(packetsPerCheckpoint / 2)
+      )
+      checkpointDelayMs = Math.min(20, checkpointDelayMs + 4)
       if (stalledCheckpoints >= 20) throw new Error('BLE 传输长时间没有进展')
     } else {
       stalledCheckpoints = 0
+      healthyCheckpoints += 1
+      if (healthyCheckpoints >= 3) {
+        packetsPerCheckpoint = Math.min(maximumPacketsPerCheckpoint, packetsPerCheckpoint + 8)
+        checkpointDelayMs = Math.max(3, checkpointDelayMs - 1)
+        healthyCheckpoints = 0
+      }
     }
+
+    // If the device confirmed less than we sent, queued packets after the gap
+    // are harmless duplicates or rejected by the offset check; resend from the
+    // confirmed contiguous position.
     offset = confirmedOffset
     onProgress?.({ receivedBytes: confirmedOffset, totalBytes: bytes.byteLength })
   }
