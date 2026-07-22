@@ -34,6 +34,7 @@ static void fill_rect(uint16_t *buffer, int x, int y, int width, int height, uin
 static const uint8_t *diagnostic_glyph(char character)
 {
     static const uint8_t space[5] = {0, 0, 0, 0, 0};
+    static const uint8_t a[5] = {126, 17, 17, 17, 126};
     static const uint8_t b[5] = {127, 73, 73, 73, 54};
     static const uint8_t d[5] = {127, 65, 65, 34, 28};
     static const uint8_t e[5] = {127, 73, 73, 73, 65};
@@ -42,8 +43,12 @@ static const uint8_t *diagnostic_glyph(char character)
     static const uint8_t l[5] = {127, 64, 64, 64, 64};
     static const uint8_t m[5] = {127, 2, 12, 2, 127};
     static const uint8_t o[5] = {62, 65, 65, 65, 62};
+    static const uint8_t r[5] = {127, 9, 25, 41, 70};
+    static const uint8_t t[5] = {1, 1, 127, 1, 1};
     static const uint8_t w[5] = {63, 64, 56, 64, 63};
+    if (character >= 'a' && character <= 'z') character -= ('a' - 'A');
     switch (character) {
+        case 'A': return a;
         case 'B': return b;
         case 'D': return d;
         case 'E': return e;
@@ -52,6 +57,8 @@ static const uint8_t *diagnostic_glyph(char character)
         case 'L': return l;
         case 'M': return m;
         case 'O': return o;
+        case 'R': return r;
+        case 'T': return t;
         case 'W': return w;
         default: return space;
     }

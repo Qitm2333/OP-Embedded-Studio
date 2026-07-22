@@ -4,10 +4,12 @@ import type { EmbeddedFrameBakeState } from '@/features/embedded-display'
 import { renderEmbeddedFramePng } from './embedded-frame-render'
 
 export function getEmbeddedFrameBakeState(store: EditorStore): EmbeddedFrameBakeState {
-  void store.state.sceneVersion
+  const revision = store.state.sceneVersion
   const selectedIds = [...store.state.selectedIds]
   if (selectedIds.length !== 1) {
     return {
+      id: '',
+      revision,
       available: false,
       name: '',
       width: 0,
@@ -19,6 +21,8 @@ export function getEmbeddedFrameBakeState(store: EditorStore): EmbeddedFrameBake
   const node = store.graph.getNode(selectedIds[0])
   if (!node || node.type !== 'FRAME') {
     return {
+      id: '',
+      revision,
       available: false,
       name: node?.name || '',
       width: node?.width || 0,
@@ -28,6 +32,8 @@ export function getEmbeddedFrameBakeState(store: EditorStore): EmbeddedFrameBake
   }
 
   return {
+    id: node.id,
+    revision,
     available: true,
     name: node.name,
     width: node.width,
@@ -35,14 +41,20 @@ export function getEmbeddedFrameBakeState(store: EditorStore): EmbeddedFrameBake
   }
 }
 
-export async function bakeEmbeddedFrame(store: EditorStore): Promise<File | null> {
-  const selectedIds = [...store.state.selectedIds]
-  if (selectedIds.length !== 1) return null
-  const node = store.graph.getNode(selectedIds[0])
+export async function bakeEmbeddedFrameById(
+  store: EditorStore,
+  frameId: string
+): Promise<File | null> {
+  const node = store.graph.getNode(frameId)
   if (!node || node.type !== 'FRAME') return null
 
   const data = await renderEmbeddedFramePng(store, node.id)
-
   const baseName = node.name.trim().replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]+/g, '_') || 'frame'
   return new File([data], `${baseName}.png`, { type: 'image/png' })
+}
+
+export async function bakeEmbeddedFrame(store: EditorStore): Promise<File | null> {
+  const selectedIds = [...store.state.selectedIds]
+  if (selectedIds.length !== 1) return null
+  return bakeEmbeddedFrameById(store, selectedIds[0])
 }

@@ -6,7 +6,13 @@
 #include "display_presenter.h"
 
 #define CO5300_SPI_HOST SPI2_HOST
+#if CONFIG_OPENPENCIL_WIFI_LIVE_PREVIEW
+// Realtime preview prioritizes a complete TE-synchronized frame over peak
+// throughput. The lower clock gives Wi-Fi and PSRAM DMA more scheduling margin.
+#define CO5300_PCLK_HZ (10 * 1000 * 1000)
+#else
 #define CO5300_PCLK_HZ (30 * 1000 * 1000)
+#endif
 #define CO5300_CS_GPIO 12
 #define CO5300_PCLK_GPIO 38
 #define CO5300_DATA0_GPIO 4

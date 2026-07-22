@@ -27,6 +27,9 @@
 #if CONFIG_OPENPENCIL_WIFI_SERVER
 #include "wireless_server.h"
 #include "wireless_status_view.h"
+#if CONFIG_OPENPENCIL_WIFI_LIVE_PREVIEW
+#include "wireless_preview.h"
+#endif
 #endif
 #if CONFIG_OPENPENCIL_BLE_SERVER
 #include "ble_server.h"
@@ -226,6 +229,9 @@ void app_main(void)
 #if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER || CONFIG_OPENPENCIL_BLE_SERVER
     ESP_ERROR_CHECK(openpencil_content_init());
 #endif
+#if CONFIG_OPENPENCIL_WIFI_LIVE_PREVIEW
+    ESP_ERROR_CHECK(openpencil_wireless_preview_init(panel_handle, frame_buffer, LCD_FRAME_PIXELS));
+#endif
 
 #if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER || CONFIG_OPENPENCIL_BLE_SERVER
     if (LCD_GENERATED_IMAGE_PIXEL_COUNT == 0 && openpencil_content_is_valid()) {
@@ -258,11 +264,23 @@ void app_main(void)
 #endif
 #if CONFIG_OPENPENCIL_WIFI_SERVER
     if (LCD_GENERATED_IMAGE_PIXEL_COUNT == 0) {
+#if CONFIG_OPENPENCIL_WIFI_LIVE_PREVIEW
+        // Present the real-time firmware marker before starting Wi-Fi. The
+        // CO5300 full-frame QSPI path can underflow if its PSRAM DMA read races
+        // Wi-Fi startup; subsequent live frames use the staged internal-SRAM path.
+        ESP_LOGI(TAG, "Draw Wi-Fi real-time mirror diagnostic pattern");
+        openpencil_wireless_diagnostic_draw(frame_buffer, "RealtimeMode");
+        ESP_ERROR_CHECK(openpencil_display_presenter_draw(panel_handle,
+                                                          CONFIG_EXAMPLE_LCD_H_RES,
+                                                          CONFIG_EXAMPLE_LCD_V_RES,
+                                                          frame_buffer));
         ESP_ERROR_CHECK(openpencil_wireless_server_start());
-#if CONFIG_OPENPENCIL_LAN_STATUS_SCREEN
+#elif CONFIG_OPENPENCIL_LAN_STATUS_SCREEN
+        ESP_ERROR_CHECK(openpencil_wireless_server_start());
         ESP_LOGI(TAG, "Start LAN connection status view");
         ESP_ERROR_CHECK(openpencil_wireless_status_view_run(panel_handle, frame_buffer));
 #else
+        ESP_ERROR_CHECK(openpencil_wireless_server_start());
         // Keep the hotspot base firmware reachable while showing a deterministic
         // checkerboard/cross diagnostic image until the first content upload.
         ESP_LOGI(TAG, "Start Wi-Fi base firmware diagnostic pattern");

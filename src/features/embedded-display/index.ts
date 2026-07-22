@@ -4,6 +4,7 @@ export { createEmbeddedDisplayHttpAdapter } from './adapters/http'
 
 export type {
   EmbeddedFrameBake,
+  EmbeddedFrameBakeById,
   EmbeddedFrameBakeState,
   EmbeddedPrototypeBake,
   EmbeddedPrototypeBakeResult,

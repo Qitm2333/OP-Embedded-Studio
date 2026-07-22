@@ -20,10 +20,12 @@ import {
 } from '../adapters/usb-content'
 import { useBleDeviceSession } from '../composables/useBleDeviceSession'
 import { useEmbeddedDisplay } from '../composables/useEmbeddedDisplay'
+import WifiLiveMirrorPanel from '../live-mirror/components/WifiLiveMirrorPanel.vue'
 import type {
   EmbeddedBuildMode,
   EmbeddedBuildStatus,
   EmbeddedFrameBake,
+  EmbeddedFrameBakeById,
   EmbeddedFrameBakeState,
   EmbeddedPrototypeBake,
   EmbeddedPrototypeOption
@@ -32,12 +34,13 @@ import type {
 const props = defineProps<{
   bakeState?: EmbeddedFrameBakeState
   bakeFrame?: EmbeddedFrameBake
+  bakeFrameById?: EmbeddedFrameBakeById
   bakePrototype?: EmbeddedPrototypeBake
   prototypeOptions?: EmbeddedPrototypeOption[]
 }>()
 
 type BurnMode = 'frame' | 'prototype'
-type TransportMode = 'usb' | 'wifi' | 'ble'
+type TransportMode = 'usb' | 'wifi' | 'ble' | 'wifi-live'
 type FrameResourceSource = 'baked' | 'uploaded' | null
 type WirelessTransportMode = 'wifi' | 'ble'
 type FirmwareInitializationStatus = 'idle' | 'uploading' | 'success' | 'error'
@@ -52,7 +55,8 @@ const transportMode = ref<TransportMode>('usb')
 const burnModeByTransport = ref<Record<TransportMode, BurnMode>>({
   usb: 'frame',
   wifi: 'frame',
-  ble: 'frame'
+  ble: 'frame',
+  'wifi-live': 'frame'
 })
 const burnMode = computed<BurnMode>({
   get: () => burnModeByTransport.value[transportMode.value],
@@ -74,12 +78,18 @@ const DEFAULT_WIFI_AP_PASSWORD = 'openpencil'
 const deviceDetailsOpen = ref(false)
 const bleMaintenanceOpen = ref(false)
 const wifiMaintenanceOpen = ref(false)
+const liveMirrorBusy = ref(false)
 const usbFlashing = ref(false)
 const wirelessInitialization = ref<Record<WirelessTransportMode, FirmwareInitializationState>>({
   wifi: { status: 'idle', progress: 0, message: '' },
   ble: { status: 'idle', progress: 0, message: '' }
 })
-const selectedPrototypeIds = ref<Record<TransportMode, string>>({ usb: '', wifi: '', ble: '' })
+const selectedPrototypeIds = ref<Record<TransportMode, string>>({
+  usb: '',
+  wifi: '',
+  ble: '',
+  'wifi-live': ''
+})
 const selectedPrototypeId = computed({
   get: () => selectedPrototypeIds.value[transportMode.value],
   set: (id: string) => {
@@ -91,7 +101,8 @@ const bakeError = ref('')
 const frameResourceSources = ref<Record<TransportMode, FrameResourceSource>>({
   usb: null,
   wifi: null,
-  ble: null
+  ble: null,
+  'wifi-live': null
 })
 const frameResourceSource = computed<FrameResourceSource>({
   get: () => frameResourceSources.value[transportMode.value],
@@ -137,6 +148,7 @@ const selectedPrototypeSelectValue = computed({
 const modeSwitchLocked = computed(
   () =>
     usbFlashing.value ||
+    liveMirrorBusy.value ||
     wirelessInitialization.value.wifi.status === 'uploading' ||
     wirelessInitialization.value.ble.status === 'uploading' ||
     bakePending.value ||
@@ -156,9 +168,10 @@ const burnModeOptions = computed(() =>
 )
 const transportOptions = computed(() =>
   [
-    { value: 'usb', label: 'USB 串口' },
-    { value: 'wifi', label: 'Wi-Fi 无线' },
-    { value: 'ble', label: 'BLE 蓝牙' }
+    { value: 'usb', label: 'USB' },
+    { value: 'wifi', label: 'Wi-Fi' },
+    { value: 'ble', label: 'BLE' },
+    { value: 'wifi-live', label: 'Wi-Fi 实时镜像' }
   ].map((option) => ({
     ...option,
     disabled: modeSwitchLocked.value && option.value !== transportMode.value
@@ -170,6 +183,7 @@ const profileOptions = computed(() =>
 const bleBuildMode: EmbeddedBuildMode = 'ble-frame'
 const bleManifestUrl = computed(() => manifestUrlFor(bleBuildMode))
 const wifiManifestUrl = computed(() => manifestUrlFor('wifi-frame'))
+const wifiLiveManifestUrl = computed(() => manifestUrlFor('wifi-live'))
 const usbFrameFastSupported = computed(() => supportsUsbFrameFastFlash(selectedProfile.value?.id))
 const canBleBakeAndUpload = computed(
   () =>
@@ -729,6 +743,13 @@ async function uploadWifiContent(requestedMode: 'frame' | 'prototype', requested
   }
 }
 
+function buildMessageForTransport(mode: TransportMode): string {
+  if (mode === 'usb') return '选择内容后可直接烧录。'
+  if (mode === 'wifi') return '连接 Wi-Fi 设备后可传输内容。'
+  if (mode === 'wifi-live') return '连接 Wi-Fi 设备后可开始实时镜像。'
+  return bleSession.message.value
+}
+
 let firmwareLoadSequence = 0
 watch(
   [transportMode, () => selectedProfile.value?.id],
@@ -742,12 +763,7 @@ watch(
     prototypePrepared.value = false
     buildLog.value = []
     if (buildStatus.value !== 'loading') buildStatus.value = 'idle'
-    buildMessage.value =
-      mode === 'usb'
-        ? '选择内容后可直接烧录。'
-        : mode === 'wifi'
-          ? '连接 Wi-Fi 设备后可传输内容。'
-          : bleSession.message.value
+    buildMessage.value = buildMessageForTransport(mode)
     if (mode === 'wifi') {
       resetWirelessInitialization('wifi')
       wirelessStatus.value = 'idle'
@@ -771,11 +787,10 @@ watch(
       return
     }
 
-    if (mode === 'wifi') {
-      const available = await loadCachedFirmware('wifi-frame')
-      if (sequence !== firmwareLoadSequence || transportMode.value !== 'wifi') return
+    if (mode === 'wifi' || mode === 'wifi-live') {
+      const available = await loadCachedFirmware(mode === 'wifi-live' ? 'wifi-live' : 'wifi-frame')
+      if (sequence !== firmwareLoadSequence || transportMode.value !== mode) return
       wifiBaseFirmwareReady.value = available
-      return
     }
   },
   { immediate: true }
@@ -853,6 +868,15 @@ watch([wifiSsid, wifiPassword], () => {
           label="选择传输方式"
         />
       </PanelSection>
+
+      <WifiLiveMirrorPanel
+        v-if="transportMode === 'wifi-live'"
+        :profile="selectedProfile"
+        :manifest-url="wifiLiveManifestUrl"
+        :bake-state="bakeState"
+        :bake-frame-by-id="bakeFrameById"
+        @busy-change="liveMirrorBusy = $event"
+      />
 
       <PanelSection
         v-if="transportMode === 'ble'"
@@ -1471,7 +1495,7 @@ watch([wifiSsid, wifiPassword], () => {
         </div>
       </PanelSection>
 
-      <PanelSection label="状态日志" :default-open="false">
+      <PanelSection v-if="transportMode !== 'wifi-live'" label="状态日志" :default-open="false">
         <pre
           class="min-h-16 max-h-48 overflow-auto rounded-panel border border-border bg-canvas p-2 text-[10px] leading-relaxed text-muted"
           >{{ buildLog.length ? buildLog.join('\n') : buildMessage }}</pre

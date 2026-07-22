@@ -12,6 +12,9 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "wireless_content.h"
+#if CONFIG_OPENPENCIL_WIFI_LIVE_PREVIEW
+#include "wireless_preview.h"
+#endif
 
 static const char *TAG = "wireless_server";
 static httpd_handle_t server;
@@ -95,8 +98,13 @@ static esp_err_t device_handler(httpd_req_t *request)
     const openpencil_content_header_t *content = openpencil_content_header();
     char response[512];
     snprintf(response, sizeof(response),
-             "{\"ok\":true,\"wirelessContent\":%s,\"width\":%u,\"height\":%u,\"connected\":%s,\"ip\":\"%s\",\"apIp\":\"%s\"}",
+             "{\"ok\":true,\"wirelessContent\":%s,\"livePreview\":%s,\"width\":%u,\"height\":%u,\"connected\":%s,\"ip\":\"%s\",\"apIp\":\"%s\"}",
              content ? "true" : "false",
+#if CONFIG_OPENPENCIL_WIFI_LIVE_PREVIEW
+             "true",
+#else
+             "false",
+#endif
              (unsigned)CONFIG_EXAMPLE_LCD_H_RES,
              (unsigned)CONFIG_EXAMPLE_LCD_V_RES,
              status.station_connected ? "true" : "false",
@@ -105,6 +113,7 @@ static esp_err_t device_handler(httpd_req_t *request)
     return send_json(request, response);
 }
 
+#if !CONFIG_OPENPENCIL_WIFI_LIVE_PREVIEW
 static esp_err_t content_handler(httpd_req_t *request)
 {
     if (request->content_len <= 0 || request->content_len > 5 * 1024 * 1024) {
@@ -141,12 +150,60 @@ static esp_err_t content_handler(httpd_req_t *request)
     xTaskCreate(reboot_task, "content_reboot", 2048, NULL, 1, NULL);
     return response_result;
 }
+#endif
 
 static void reboot_task(void *arg)
 {
     vTaskDelay(pdMS_TO_TICKS(500));
     esp_restart();
 }
+
+#if CONFIG_OPENPENCIL_WIFI_LIVE_PREVIEW
+static esp_err_t preview_frame_handler(httpd_req_t *request)
+{
+    if (request->content_len <= 0 || request->content_len > 1024 * 1024) {
+        httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, "invalid preview length");
+        return ESP_OK;
+    }
+    const size_t length = (size_t)request->content_len;
+    uint8_t *body = heap_caps_malloc(length, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!body) body = malloc(length);
+    if (!body) {
+        httpd_resp_send_err(request, HTTPD_500_INTERNAL_SERVER_ERROR, "not enough memory");
+        return ESP_OK;
+    }
+
+    size_t received = 0;
+    while (received < length) {
+        const int read = httpd_req_recv(request, (char *)body + received, length - received);
+        if (read <= 0) {
+            free(body);
+            httpd_resp_send_err(request, HTTPD_408_REQ_TIMEOUT, "preview body timeout");
+            return ESP_OK;
+        }
+        received += (size_t)read;
+    }
+
+    const esp_err_t result = openpencil_wireless_preview_apply(body, length);
+    free(body);
+    if (result != ESP_OK) {
+        ESP_LOGE(TAG, "live preview failed: %s", esp_err_to_name(result));
+        httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, esp_err_to_name(result));
+        return ESP_OK;
+    }
+    return send_json(request, "{\"ok\":true,\"message\":\"preview updated\"}");
+}
+
+static esp_err_t preview_stop_handler(httpd_req_t *request)
+{
+    const esp_err_t result = openpencil_wireless_preview_stop();
+    if (result != ESP_OK) {
+        httpd_resp_send_err(request, HTTPD_500_INTERNAL_SERVER_ERROR, esp_err_to_name(result));
+        return ESP_OK;
+    }
+    return send_json(request, "{\"ok\":true,\"message\":\"preview stopped\"}");
+}
+#endif
 
 static esp_err_t wifi_handler(httpd_req_t *request)
 {
@@ -280,15 +337,26 @@ esp_err_t openpencil_wireless_server_start(void)
     httpd_config_t server_config = HTTPD_DEFAULT_CONFIG();
     ESP_RETURN_ON_ERROR(httpd_start(&server, &server_config), TAG, "start HTTP server failed");
     httpd_uri_t device_uri = {.uri = "/api/device", .method = HTTP_GET, .handler = device_handler};
-    httpd_uri_t content_uri = {.uri = "/api/content", .method = HTTP_POST, .handler = content_handler};
     httpd_uri_t wifi_uri = {.uri = "/api/wifi", .method = HTTP_POST, .handler = wifi_handler};
-    httpd_uri_t content_options_uri = {.uri = "/api/content", .method = HTTP_OPTIONS, .handler = options_handler};
     httpd_uri_t wifi_options_uri = {.uri = "/api/wifi", .method = HTTP_OPTIONS, .handler = options_handler};
     httpd_register_uri_handler(server, &device_uri);
-    httpd_register_uri_handler(server, &content_uri);
     httpd_register_uri_handler(server, &wifi_uri);
-    httpd_register_uri_handler(server, &content_options_uri);
     httpd_register_uri_handler(server, &wifi_options_uri);
+#if CONFIG_OPENPENCIL_WIFI_LIVE_PREVIEW
+    httpd_uri_t preview_uri = {.uri = "/api/preview/frame", .method = HTTP_POST, .handler = preview_frame_handler};
+    httpd_uri_t preview_stop_uri = {.uri = "/api/preview/stop", .method = HTTP_POST, .handler = preview_stop_handler};
+    httpd_uri_t preview_options_uri = {.uri = "/api/preview/frame", .method = HTTP_OPTIONS, .handler = options_handler};
+    httpd_uri_t preview_stop_options_uri = {.uri = "/api/preview/stop", .method = HTTP_OPTIONS, .handler = options_handler};
+    httpd_register_uri_handler(server, &preview_uri);
+    httpd_register_uri_handler(server, &preview_stop_uri);
+    httpd_register_uri_handler(server, &preview_options_uri);
+    httpd_register_uri_handler(server, &preview_stop_options_uri);
+#else
+    httpd_uri_t content_uri = {.uri = "/api/content", .method = HTTP_POST, .handler = content_handler};
+    httpd_uri_t content_options_uri = {.uri = "/api/content", .method = HTTP_OPTIONS, .handler = options_handler};
+    httpd_register_uri_handler(server, &content_uri);
+    httpd_register_uri_handler(server, &content_options_uri);
+#endif
 #if CONFIG_OPENPENCIL_SETUP_ACCESS_POINT
     ESP_LOGI(TAG, "wireless content server ready; setup AP OpenPencil-Setup / openpencil");
 #else

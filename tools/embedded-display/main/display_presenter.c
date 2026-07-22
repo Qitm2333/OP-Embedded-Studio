@@ -14,6 +14,7 @@
 static const char *TAG = "display_presenter";
 static SemaphoreHandle_t s_te_signal;
 static SemaphoreHandle_t s_transfer_done;
+static SemaphoreHandle_t s_draw_lock;
 static bool s_te_enabled;
 
 #if CONFIG_EXAMPLE_LCD_CONTROLLER_CO5300 && CONFIG_EXAMPLE_PIN_NUM_LCD_TE >= 0
@@ -27,6 +28,48 @@ static void IRAM_ATTR te_gpio_isr(void *argument)
     }
 }
 #endif
+
+static void wait_for_te(int64_t *waited_us)
+{
+    *waited_us = 0;
+    if (!s_te_enabled) return;
+
+    // Discard a stale pulse so this frame waits for a TE edge that happened
+    // after the frame was fully prepared. The timeout remains a fallback for
+    // panels or boot phases where the TE signal is temporarily unavailable.
+    (void)xSemaphoreTake(s_te_signal, 0);
+    const int64_t started_us = esp_timer_get_time();
+    if (xSemaphoreTake(s_te_signal, pdMS_TO_TICKS(TE_WAIT_TIMEOUT_MS)) != pdTRUE) {
+        ESP_LOGW(TAG, "TE wait timed out; presenting the frame without synchronization");
+    }
+    *waited_us = esp_timer_get_time() - started_us;
+}
+
+static esp_err_t submit_region(esp_lcd_panel_handle_t panel,
+                               int x_start,
+                               int y_start,
+                               int x_end,
+                               int y_end,
+                               const uint16_t *pixels)
+{
+    (void)xSemaphoreTake(s_transfer_done, 0);
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_draw_bitmap(panel,
+                                                  x_start,
+                                                  y_start,
+                                                  x_end,
+                                                  y_end,
+                                                  pixels),
+                        TAG,
+                        "submit frame region failed");
+
+#if CONFIG_EXAMPLE_LCD_CONTROLLER_CO5300
+    ESP_RETURN_ON_FALSE(xSemaphoreTake(s_transfer_done, pdMS_TO_TICKS(TRANSFER_DONE_TIMEOUT_MS)) == pdTRUE,
+                        ESP_ERR_TIMEOUT,
+                        TAG,
+                        "frame transfer completion timed out");
+#endif
+    return ESP_OK;
+}
 
 bool openpencil_display_presenter_on_color_done(esp_lcd_panel_io_handle_t panel_io,
                                                 esp_lcd_panel_io_event_data_t *event_data,
@@ -47,6 +90,9 @@ bool openpencil_display_presenter_on_color_done(esp_lcd_panel_io_handle_t panel_
 
 esp_err_t openpencil_display_presenter_init(void)
 {
+    s_draw_lock = xSemaphoreCreateMutex();
+    ESP_RETURN_ON_FALSE(s_draw_lock, ESP_ERR_NO_MEM, TAG, "create draw mutex failed");
+
     s_transfer_done = xSemaphoreCreateBinary();
     ESP_RETURN_ON_FALSE(s_transfer_done, ESP_ERR_NO_MEM, TAG, "create transfer semaphore failed");
 
@@ -95,35 +141,20 @@ esp_err_t openpencil_display_presenter_draw(esp_lcd_panel_handle_t panel,
                                             const uint16_t *frame_buffer)
 {
     ESP_RETURN_ON_FALSE(panel && frame_buffer, ESP_ERR_INVALID_ARG, TAG, "invalid draw arguments");
-    const int64_t started_us = esp_timer_get_time();
-    int64_t te_wait_us = 0;
-
-    if (s_te_enabled) {
-        // Discard a stale pulse so this frame waits for a TE edge that happened
-        // after the frame was fully decoded into its DMA buffer.
-        (void)xSemaphoreTake(s_te_signal, 0);
-        const int64_t te_started_us = esp_timer_get_time();
-        if (xSemaphoreTake(s_te_signal, pdMS_TO_TICKS(TE_WAIT_TIMEOUT_MS)) != pdTRUE) {
-            ESP_LOGW(TAG, "TE wait timed out; presenting the frame without synchronization");
-        }
-        te_wait_us = esp_timer_get_time() - te_started_us;
-    }
-
-    // A single DMA buffer is intentionally used. Waiting for the completion
-    // callback prevents the next state decode from overwriting bytes that the
-    // SPI peripheral is still reading.
-    (void)xSemaphoreTake(s_transfer_done, 0);
-    const int64_t transfer_started_us = esp_timer_get_time();
-    ESP_RETURN_ON_ERROR(esp_lcd_panel_draw_bitmap(panel, 0, 0, width, height, frame_buffer),
+    ESP_RETURN_ON_FALSE(s_draw_lock && s_transfer_done,
+                        ESP_ERR_INVALID_STATE,
                         TAG,
-                        "submit frame failed");
-
-#if CONFIG_EXAMPLE_LCD_CONTROLLER_CO5300
-    ESP_RETURN_ON_FALSE(xSemaphoreTake(s_transfer_done, pdMS_TO_TICKS(TRANSFER_DONE_TIMEOUT_MS)) == pdTRUE,
+                        "display presenter is not initialized");
+    ESP_RETURN_ON_FALSE(xSemaphoreTake(s_draw_lock, portMAX_DELAY) == pdTRUE,
                         ESP_ERR_TIMEOUT,
                         TAG,
-                        "frame transfer completion timed out");
-#endif
+                        "lock display presenter failed");
+
+    const int64_t started_us = esp_timer_get_time();
+    int64_t te_wait_us = 0;
+    wait_for_te(&te_wait_us);
+    const int64_t transfer_started_us = esp_timer_get_time();
+    const esp_err_t result = submit_region(panel, 0, 0, width, height, frame_buffer);
 
     const int64_t completed_us = esp_timer_get_time();
     ESP_LOGI(TAG,
@@ -131,5 +162,6 @@ esp_err_t openpencil_display_presenter_draw(esp_lcd_panel_handle_t panel,
              (long long)te_wait_us,
              (long long)(completed_us - transfer_started_us),
              (long long)(completed_us - started_us));
-    return ESP_OK;
+    xSemaphoreGive(s_draw_lock);
+    return result;
 }

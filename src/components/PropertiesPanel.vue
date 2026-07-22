@@ -10,12 +10,15 @@ import {
   createDevicePrototypeFrameRenderer,
   getDevicePrototypeFrameCandidate
 } from '@/app/editor/device-prototype'
-import { bakeEmbeddedFrame, getEmbeddedFrameBakeState } from '@/app/editor/embedded-display-bake'
+import {
+  bakeEmbeddedFrame,
+  bakeEmbeddedFrameById,
+  getEmbeddedFrameBakeState
+} from '@/app/editor/embedded-display-bake'
 import { useAIChat } from '@/app/ai/chat/use'
 
 import ChatPanel from './ChatPanel.vue'
-import { DevicePrototypePanel } from '@/features/device-prototype'
-import { useDevicePrototype } from '@/features/device-prototype'
+import { DevicePrototypePanel, useDevicePrototype } from '@/features/device-prototype'
 import { EmbeddedDisplayPanel } from '@/features/embedded-display'
 import CodePanel from './CodePanel.vue'
 import DesignPanel from './DesignPanel.vue'
@@ -32,6 +35,10 @@ const embeddedBakeState = computed(() => getEmbeddedFrameBakeState(editorStore))
 
 async function handleEmbeddedFrameBake() {
   return bakeEmbeddedFrame(editorStore)
+}
+
+async function handleEmbeddedFrameBakeById(frameId: string) {
+  return bakeEmbeddedFrameById(editorStore, frameId)
 }
 
 async function handleEmbeddedPrototypeBake(interactionId: string) {
@@ -135,6 +142,7 @@ async function handleEmbeddedPrototypeBake(interactionId: string) {
         <EmbeddedDisplayPanel
           :bake-state="embeddedBakeState"
           :bake-frame="handleEmbeddedFrameBake"
+          :bake-frame-by-id="handleEmbeddedFrameBakeById"
           :prototype-options="interactionOptions"
           :bake-prototype="handleEmbeddedPrototypeBake"
         />

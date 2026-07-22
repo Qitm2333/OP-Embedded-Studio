@@ -4,6 +4,11 @@ menu "Example Configuration"
         bool "Enable OpenPencil Wi-Fi content server"
         default y
 
+    config OPENPENCIL_WIFI_LIVE_PREVIEW
+        bool "Enable OpenPencil volatile Wi-Fi live preview"
+        depends on OPENPENCIL_WIFI_SERVER
+        default n
+
     config OPENPENCIL_EXTERNAL_CONTENT_ONLY
         bool "Load display content from the content partition"
         default n

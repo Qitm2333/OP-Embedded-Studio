@@ -92,11 +92,12 @@ export function createEmbeddedDisplayHttpAdapter(): EmbeddedDisplayAdapter {
 
 export async function prepareWifiFirmwareCredentials(
   profileId: string,
-  wifiCredentials?: EmbeddedWifiCredentials
+  wifiCredentials?: EmbeddedWifiCredentials,
+  buildMode: 'wifi-frame' | 'wifi-live' = 'wifi-frame'
 ): Promise<void> {
   await requestJson('/api/wifi-credentials', {
     method: 'POST',
-    body: JSON.stringify({ profileId, wifiCredentials })
+    body: JSON.stringify({ profileId, wifiCredentials, buildMode })
   })
 }
 

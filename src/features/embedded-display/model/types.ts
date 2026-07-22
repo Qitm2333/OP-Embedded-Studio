@@ -24,6 +24,8 @@ export interface EmbeddedDisplayProfile {
 }
 
 export interface EmbeddedFrameBakeState {
+  id: string
+  revision: number
   available: boolean
   name: string
   width: number
@@ -32,6 +34,7 @@ export interface EmbeddedFrameBakeState {
 }
 
 export type EmbeddedFrameBake = () => Promise<File | null>
+export type EmbeddedFrameBakeById = (frameId: string) => Promise<File | null>
 
 export interface EmbeddedPrototypeOption {
   id: string
@@ -111,6 +114,7 @@ export interface EmbeddedWirelessDevice {
   connected?: boolean
   ip?: string
   apIp?: string
+  livePreview?: boolean
 }
 
 export interface EmbeddedWifiCredentials {
@@ -123,6 +127,7 @@ export type EmbeddedBuildMode =
   | 'usb-prototype'
   | 'wifi-frame'
   | 'wifi-prototype'
+  | 'wifi-live'
   | 'lan-frame'
   | 'lan-prototype'
   | 'ble-frame'
@@ -164,10 +169,4 @@ export interface EmbeddedDisplayAdapter {
   getManifest(profileId: string, buildMode: EmbeddedBuildMode): Promise<EmbeddedFlashManifest>
 }
 
-export type EmbeddedBuildStatus =
-  | 'loading'
-  | 'idle'
-  | 'uploading'
-  | 'building'
-  | 'ready'
-  | 'error'
+export type EmbeddedBuildStatus = 'loading' | 'idle' | 'uploading' | 'building' | 'ready' | 'error'
