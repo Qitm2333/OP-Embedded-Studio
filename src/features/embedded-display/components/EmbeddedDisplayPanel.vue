@@ -97,6 +97,7 @@ const selectedPrototypeId = computed({
   }
 })
 const bakePending = ref(false)
+const frameBackgroundColor = ref('#000000')
 const bakeError = ref('')
 const frameResourceSources = ref<Record<TransportMode, FrameResourceSource>>({
   usb: null,
@@ -241,27 +242,25 @@ const buildStatusLabels: Record<EmbeddedBuildStatus, string> = {
 }
 const buildStatusLabel = computed(() => buildStatusLabels[buildStatus.value])
 const bakeReason = computed(() => {
-  if (!props.bakeState) return '请在画布中选中一个 Frame'
+  if (!props.bakeState) return '请在画布中选中一个 Frame 或 Frame 内的元素'
   if (!props.bakeState.available) return props.bakeState.reason || '当前选择无法烘焙'
   if (!selectedProfile.value) return '请先选择屏幕方案'
-  if (
-    props.bakeState.width !== selectedProfile.value.resolution.width ||
-    props.bakeState.height !== selectedProfile.value.resolution.height
-  ) {
-    return `Frame 尺寸需为 ${selectedProfile.value.resolution.width} × ${selectedProfile.value.resolution.height}`
-  }
   return props.bakeState.reason || ''
+})
+const bakeSummary = computed(() => {
+  if (bakeReason.value) return bakeReason.value
+  const state = props.bakeState
+  const profile = selectedProfile.value
+  if (!state || !profile) return ''
+  const dimensions = `${state.width} × ${state.height}`
+  return state.width === profile.resolution.width && state.height === profile.resolution.height
+    ? dimensions
+    : `${dimensions} · 1:1 居中裁切 · 背景延展`
 })
 const prototypeReason = computed(() => {
   if (!selectedPrototype.value) return '请先选择一个命名交互'
   if (!selectedPrototype.value.valid) return selectedPrototype.value.reason || '交互定义不完整'
   if (!selectedProfile.value) return '请先选择屏幕方案'
-  if (
-    selectedPrototype.value.width !== selectedProfile.value.resolution.width ||
-    selectedPrototype.value.height !== selectedProfile.value.resolution.height
-  ) {
-    return `交互中的 Frame 尺寸需为 ${selectedProfile.value.resolution.width} × ${selectedProfile.value.resolution.height}`
-  }
   return ''
 })
 const canBake = computed(
@@ -344,7 +343,11 @@ async function handleBakeFrame(): Promise<boolean> {
   try {
     const file = await props.bakeFrame()
     if (!file) return false
-    await selectImage(file, { upload: false })
+    await selectImage(file, {
+      upload: false,
+      placement: 'pixel-perfect',
+      backgroundColor: frameBackgroundColor.value
+    })
     frameResourceSource.value = 'baked'
     return true
   } catch (error) {
@@ -574,7 +577,10 @@ async function preparePrototypeResources(uploadToBuildService = false) {
   try {
     const bake = await props.bakePrototype(selectedPrototypeId.value)
     if (!bake) throw new Error('无法读取所选交互')
-    await selectPrototype(bake, { upload: uploadToBuildService })
+    await selectPrototype(bake, {
+      upload: uploadToBuildService,
+      backgroundColor: frameBackgroundColor.value
+    })
     prototypePrepared.value = true
     return true
   } catch (error) {
@@ -591,7 +597,11 @@ async function handlePreparePrototype() {
 }
 
 function resetWirelessInitialization(mode: WirelessTransportMode) {
-  wirelessInitialization.value[mode] = { status: 'idle', progress: 0, message: '' }
+  wirelessInitialization.value[mode] = {
+    status: 'idle',
+    progress: 0,
+    message: ''
+  }
 }
 
 async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
@@ -869,12 +879,32 @@ watch([wifiSsid, wifiPassword], () => {
         />
       </PanelSection>
 
+      <PanelSection v-if="burnMode === 'frame'" label="Frame 补边背景">
+        <div
+          class="flex items-center justify-between gap-3 rounded-panel border border-border bg-panel-field p-2"
+        >
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-medium text-surface">背景颜色</p>
+            <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
+              尺寸不匹配时用于 1:1 居中补边，默认黑色
+            </p>
+          </div>
+          <input
+            v-model="frameBackgroundColor"
+            type="color"
+            aria-label="Frame 补边背景颜色"
+            class="h-8 w-10 shrink-0 cursor-pointer rounded border border-border bg-canvas p-0.5"
+          />
+        </div>
+      </PanelSection>
+
       <WifiLiveMirrorPanel
         v-if="transportMode === 'wifi-live'"
         :profile="selectedProfile"
         :manifest-url="wifiLiveManifestUrl"
         :bake-state="bakeState"
         :bake-frame-by-id="bakeFrameById"
+        :background-color="frameBackgroundColor"
         @busy-change="liveMirrorBusy = $event"
       />
 
@@ -1070,7 +1100,9 @@ watch([wifiSsid, wifiPassword], () => {
               :class="wirelessDeviceReady ? 'bg-success' : 'bg-muted'"
             />
             <div class="min-w-0">
-              <p class="text-surface">{{ wirelessDeviceReady ? '设备已连接' : '尚未连接设备' }}</p>
+              <p class="text-surface">
+                {{ wirelessDeviceReady ? '设备已连接' : '尚未连接设备' }}
+              </p>
               <p class="text-[10px] text-muted">
                 {{ wirelessDeviceReady ? 'Wi-Fi 已连接，可以传输内容' : '连接设备热点后检查连接' }}
               </p>
@@ -1131,7 +1163,7 @@ watch([wifiSsid, wifiPassword], () => {
                 <p class="truncate text-xs font-medium text-surface">当前 Frame</p>
                 <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
                   {{ bakeState?.name || '未选中 Frame' }} ·
-                  {{ bakeReason || `${bakeState?.width} × ${bakeState?.height}` }}
+                  {{ bakeSummary }}
                 </p>
               </div>
               <span class="shrink-0 text-[10px] text-muted">画布</span>
@@ -1181,7 +1213,9 @@ watch([wifiSsid, wifiPassword], () => {
           </div>
         </div>
 
-        <p v-if="bakeError" class="mt-panel text-[11px] text-error">{{ bakeError }}</p>
+        <p v-if="bakeError" class="mt-panel text-[11px] text-error">
+          {{ bakeError }}
+        </p>
         <div class="mt-panel flex items-center justify-between text-[10px]">
           <span class="text-muted">{{ buildMessage }}</span>
           <span
@@ -1212,7 +1246,9 @@ watch([wifiSsid, wifiPassword], () => {
         >
           <div class="flex min-w-0 items-start justify-between gap-2">
             <div class="min-w-0 flex-1">
-              <p class="truncate text-xs font-medium text-surface">{{ selectedPrototype.name }}</p>
+              <p class="truncate text-xs font-medium text-surface">
+                {{ selectedPrototype.name }}
+              </p>
               <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
                 {{ selectedPrototype.initialStateName || '未设置初始界面' }} ·
                 {{ selectedPrototype.stateCount }} 个状态 · {{ selectedPrototype.width }} ×
@@ -1262,7 +1298,7 @@ watch([wifiSsid, wifiPassword], () => {
                 <p class="truncate text-xs font-medium text-surface">当前 Frame</p>
                 <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
                   {{ bakeState?.name || '未选中 Frame' }} ·
-                  {{ bakeReason || `${bakeState?.width} × ${bakeState?.height}` }}
+                  {{ bakeSummary }}
                 </p>
               </div>
               <span class="shrink-0 text-[10px] text-muted">画布</span>
@@ -1305,7 +1341,9 @@ watch([wifiSsid, wifiPassword], () => {
             </label>
           </div>
         </div>
-        <p v-if="bakeError" class="mt-panel text-[11px] text-error">{{ bakeError }}</p>
+        <p v-if="bakeError" class="mt-panel text-[11px] text-error">
+          {{ bakeError }}
+        </p>
         <p
           class="mt-panel text-[10px] leading-relaxed"
           :class="wirelessStatus === 'error' ? 'text-error' : 'text-muted'"
@@ -1327,7 +1365,9 @@ watch([wifiSsid, wifiPassword], () => {
         >
           <div class="flex min-w-0 items-start justify-between gap-2">
             <div class="min-w-0 flex-1">
-              <p class="truncate text-xs font-medium text-surface">{{ selectedPrototype.name }}</p>
+              <p class="truncate text-xs font-medium text-surface">
+                {{ selectedPrototype.name }}
+              </p>
               <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
                 {{ selectedPrototype.initialStateName || '未设置初始界面' }} ·
                 {{ selectedPrototype.stateCount }} 个状态 · {{ selectedPrototype.width }} ×
@@ -1368,7 +1408,7 @@ watch([wifiSsid, wifiPassword], () => {
                 <p class="truncate text-xs font-medium text-surface">当前 Frame</p>
                 <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
                   {{ bakeState?.name || '未选中 Frame' }} ·
-                  {{ bakeReason || `${bakeState?.width} × ${bakeState?.height}` }}
+                  {{ bakeSummary }}
                 </p>
               </div>
               <span class="shrink-0 text-[10px] text-muted">画布</span>
@@ -1415,7 +1455,9 @@ watch([wifiSsid, wifiPassword], () => {
             </label>
           </div>
         </div>
-        <p v-if="bakeError" class="mt-panel text-[11px] text-error">{{ bakeError }}</p>
+        <p v-if="bakeError" class="mt-panel text-[11px] text-error">
+          {{ bakeError }}
+        </p>
       </PanelSection>
 
       <PanelSection v-if="burnMode === 'prototype' && transportMode === 'ble'" label="状态机内容">

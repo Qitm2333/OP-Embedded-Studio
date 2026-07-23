@@ -21,9 +21,40 @@ function bytesFromBase64(encoded: string): Uint8Array {
   return bytes
 }
 
+export interface PixelPerfectPlacement {
+  sourceX: number
+  sourceY: number
+  width: number
+  height: number
+  destinationX: number
+  destinationY: number
+}
+
+export type EmbeddedImagePlacement = 'contain' | 'pixel-perfect'
+
+export function calculatePixelPerfectPlacement(
+  source: { width: number; height: number },
+  target: { width: number; height: number }
+): PixelPerfectPlacement {
+  const width = Math.max(0, Math.min(source.width, target.width))
+  const height = Math.max(0, Math.min(source.height, target.height))
+  return {
+    sourceX: Math.max(0, Math.floor((source.width - target.width) / 2)),
+    sourceY: Math.max(0, Math.floor((source.height - target.height) / 2)),
+    width,
+    height,
+    destinationX: Math.max(0, Math.floor((target.width - source.width) / 2)),
+    destinationY: Math.max(0, Math.floor((target.height - source.height) / 2))
+  }
+}
+
 export async function imageFileToRgb565(
   file: File,
-  profile: EmbeddedDisplayProfile
+  profile: EmbeddedDisplayProfile,
+  options: {
+    placement?: EmbeddedImagePlacement
+    backgroundColor?: string
+  } = {}
 ): Promise<EmbeddedImagePayload> {
   const width = profile.resolution.width
   const height = profile.resolution.height
@@ -34,18 +65,35 @@ export async function imageFileToRgb565(
   const context = canvas.getContext('2d')
   if (!context) throw new Error('无法创建图片预览画布')
 
-  context.fillStyle = '#000000'
+  context.fillStyle =
+    options.placement === 'pixel-perfect' ? (options.backgroundColor ?? '#000000') : '#000000'
   context.fillRect(0, 0, width, height)
-  const scale = Math.min(width / bitmap.width, height / bitmap.height)
-  const drawWidth = Math.round(bitmap.width * scale)
-  const drawHeight = Math.round(bitmap.height * scale)
-  context.drawImage(
-    bitmap,
-    Math.round((width - drawWidth) / 2),
-    Math.round((height - drawHeight) / 2),
-    drawWidth,
-    drawHeight
-  )
+  if (options.placement === 'pixel-perfect') {
+    const placement = calculatePixelPerfectPlacement(bitmap, { width, height })
+    context.imageSmoothingEnabled = false
+    context.drawImage(
+      bitmap,
+      placement.sourceX,
+      placement.sourceY,
+      placement.width,
+      placement.height,
+      placement.destinationX,
+      placement.destinationY,
+      placement.width,
+      placement.height
+    )
+  } else {
+    const scale = Math.min(width / bitmap.width, height / bitmap.height)
+    const drawWidth = Math.round(bitmap.width * scale)
+    const drawHeight = Math.round(bitmap.height * scale)
+    context.drawImage(
+      bitmap,
+      Math.round((width - drawWidth) / 2),
+      Math.round((height - drawHeight) / 2),
+      drawWidth,
+      drawHeight
+    )
+  }
   bitmap.close()
 
   const pixels = context.getImageData(0, 0, width, height).data
@@ -84,7 +132,8 @@ export async function imageFileToRgb565(
 
 export async function prototypeBakeToRgb565(
   bake: EmbeddedPrototypeBakeResult,
-  profile: EmbeddedDisplayProfile
+  profile: EmbeddedDisplayProfile,
+  backgroundColor?: string
 ): Promise<EmbeddedPrototypePayload> {
   const stateIndex = new Map(bake.states.map((state, index) => [state.id, index]))
   const initialStateIndex = stateIndex.get(bake.initialStateId)
@@ -92,7 +141,10 @@ export async function prototypeBakeToRgb565(
 
   const frameBytes: Uint8Array[] = []
   for (const state of bake.states) {
-    const payload = await imageFileToRgb565(state.file, profile)
+    const payload = await imageFileToRgb565(state.file, profile, {
+      placement: 'pixel-perfect',
+      backgroundColor
+    })
     frameBytes.push(bytesFromBase64(payload.pixelsRgb565Base64))
   }
   const pixels = new Uint8Array(frameBytes.reduce((total, bytes) => total + bytes.length, 0))

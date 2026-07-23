@@ -26,11 +26,12 @@ interface MirrorTarget {
   height: number
 }
 
-const { profile, manifestUrl, bakeState, bakeFrameById } = defineProps<{
+const { profile, manifestUrl, bakeState, bakeFrameById, backgroundColor } = defineProps<{
   profile?: EmbeddedDisplayProfile | null
   manifestUrl: string
   bakeState?: EmbeddedFrameBakeState
   bakeFrameById?: EmbeddedFrameBakeById
+  backgroundColor?: string
 }>()
 
 const emit = defineEmits<{
@@ -62,12 +63,21 @@ let workerPromise: Promise<void> | null = null
 
 const selectedFrameReason = computed(() => {
   const state = bakeState
-  if (!state?.available || !state.id) return '请直接选中一个 Frame'
+  if (!state?.available || !state.id) return '请选择一个 Frame 或 Frame 内的元素'
   if (!profile) return '请先选择设备型号'
-  if (state.width !== profile.resolution.width || state.height !== profile.resolution.height) {
-    return `Frame 尺寸需为 ${profile.resolution.width} × ${profile.resolution.height}`
-  }
   return ''
+})
+
+const selectedFrameSummary = computed(() => {
+  const frame = target.value ?? (bakeState?.available ? bakeState : null)
+  if (!frame) return selectedFrameReason.value
+  const dimensions = `${frame.width} × ${frame.height}`
+  const placement =
+    profile &&
+    (frame.width !== profile.resolution.width || frame.height !== profile.resolution.height)
+      ? ' · 1:1 居中裁切 · 背景延展'
+      : ''
+  return `${target.value ? '固定镜像 · ' : ''}${dimensions}${placement}`
 })
 
 const canStart = computed(
@@ -136,7 +146,10 @@ async function runPendingFrame() {
     status.value = 'rendering'
     const file = await renderFrameById(requestedTarget.id)
     if (!file) throw new Error(`无法烘焙 Frame：${requestedTarget.name}`)
-    const payload = await imageFileToRgb565(file, requestedProfile)
+    const payload = await imageFileToRgb565(file, requestedProfile, {
+      placement: 'pixel-perfect',
+      backgroundColor
+    })
     status.value = 'uploading'
     await uploadWifiLivePreviewFrame(baseUrl.value, payload)
     transmittedFrames.value += 1
@@ -227,7 +240,12 @@ async function initializeFirmware() {
 function startMirror() {
   const state = bakeState
   if (!canStart.value || !state) return
-  target.value = { id: state.id, name: state.name, width: state.width, height: state.height }
+  target.value = {
+    id: state.id,
+    name: state.name,
+    width: state.width,
+    height: state.height
+  }
   active.value = true
   status.value = 'ready'
   appendLog(`开始镜像 Frame：${state.name}`)
@@ -266,15 +284,13 @@ watch(
   () => {
     const state = bakeState
     if (!active.value || !state?.available || !state.id || state.id === target.value?.id) return
-    if (
-      !profile ||
-      state.width !== profile.resolution.width ||
-      state.height !== profile.resolution.height
-    ) {
-      appendLog(`忽略尺寸不匹配的 Frame：${state.name}`)
-      return
+    if (!profile) return
+    target.value = {
+      id: state.id,
+      name: state.name,
+      width: state.width,
+      height: state.height
     }
-    target.value = { id: state.id, name: state.name, width: state.width, height: state.height }
     appendLog(`切换镜像 Frame：${state.name}`)
     scheduleFrame(0)
   }
@@ -401,11 +417,7 @@ onBeforeUnmount(() => {
             {{ target?.name || bakeState?.name || '未选择 Frame' }}
           </p>
           <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
-            {{
-              target
-                ? `固定镜像 · ${target.width} × ${target.height}`
-                : selectedFrameReason || `${bakeState?.width} × ${bakeState?.height}`
-            }}
+            {{ selectedFrameSummary }}
           </p>
         </div>
         <span class="shrink-0 text-[10px]" :class="active ? 'text-success' : 'text-muted'">

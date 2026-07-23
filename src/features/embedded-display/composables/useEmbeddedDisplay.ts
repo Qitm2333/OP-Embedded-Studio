@@ -1,7 +1,11 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import { createEmbeddedDisplayHttpAdapter, embeddedArtifactUrl } from '../adapters/http'
-import { imageFileToRgb565, prototypeBakeToRgb565 } from '../adapters/image'
+import {
+  imageFileToRgb565,
+  prototypeBakeToRgb565,
+  type EmbeddedImagePlacement
+} from '../adapters/image'
 import { MOCK_DISPLAY_VARIABLES } from '../adapters/mock'
 import type {
   EmbeddedBuildMode,
@@ -71,10 +75,21 @@ export function useEmbeddedDisplay() {
     }
   }
 
-  async function selectImage(file: File | undefined, options: { upload?: boolean } = {}) {
+  async function selectImage(
+    file: File | undefined,
+    options: {
+      upload?: boolean
+      placement?: EmbeddedImagePlacement
+      backgroundColor?: string
+    } = {}
+  ) {
     const uploadToBuildService = options.upload ?? true
     selectedImageName.value = file?.name ?? ''
-    deviceLog('image selected', { name: file?.name, size: file?.size, type: file?.type })
+    deviceLog('image selected', {
+      name: file?.name,
+      size: file?.size,
+      type: file?.type
+    })
     manifestUrls.value['usb-frame'] = ''
     if (!file) {
       imagePayload.value = null
@@ -95,7 +110,10 @@ export function useEmbeddedDisplay() {
     try {
       if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
       previewUrl.value = URL.createObjectURL(file)
-      const payload = await imageFileToRgb565(file, profile)
+      const payload = await imageFileToRgb565(file, profile, {
+        placement: options.placement,
+        backgroundColor: options.backgroundColor
+      })
       imagePayload.value = payload
       deviceLog('image payload ready', {
         profileId: payload.profileId,
@@ -127,7 +145,7 @@ export function useEmbeddedDisplay() {
 
   async function selectPrototype(
     bake: EmbeddedPrototypeBakeResult,
-    options: { upload?: boolean } = {}
+    options: { upload?: boolean; backgroundColor?: string } = {}
   ) {
     const profile = selectedProfile.value
     if (!profile) throw new Error('请先连接设备服务并选择屏幕方案')
@@ -138,7 +156,7 @@ export function useEmbeddedDisplay() {
       ? `正在批量烘焙并上传交互：${bake.name}`
       : `正在批量烘焙交互：${bake.name}`
     try {
-      const payload = await prototypeBakeToRgb565(bake, profile)
+      const payload = await prototypeBakeToRgb565(bake, profile, options.backgroundColor)
       prototypePayload.value = payload
       deviceLog('prototype payload ready', {
         profileId: payload.profileId,
