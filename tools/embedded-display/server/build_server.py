@@ -42,7 +42,7 @@ BUILD_LOCK = threading.Lock()
 
 DEFAULT_BUILD_MODE = "usb-frame"
 BUILD_MODES = {
-    "usb-frame": {"partitionTable": "partitions_8mb_content.csv", "appPartitionBytes": 0x300000},
+    "usb-frame": {"partitionTable": "partitions_32mb_usb_frame.csv", "appPartitionBytes": 0x300000},
     "usb-prototype": {"partitionTable": "partitions_8mb_content.csv", "appPartitionBytes": 0x300000},
     "wifi-frame": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
     "wifi-live": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
@@ -338,6 +338,7 @@ def mode_defaults_path(build_mode):
         f'CONFIG_OPENPENCIL_WIFI_SERVER={"y" if wireless_enabled else "n"}',
         f'CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY={"y" if external_content else "n"}',
         f'CONFIG_OPENPENCIL_EXTERNAL_PROTOTYPE={"y" if external_prototype else "n"}',
+        f'CONFIG_OPENPENCIL_USB_SEQUENCE={"y" if mode == "usb-frame" else "n"}',
         f'CONFIG_OPENPENCIL_WIFI_LIVE_PREVIEW={"y" if live_preview else "n"}',
         f'CONFIG_OPENPENCIL_LAN_STATUS_SCREEN={"y" if lan_status_screen else "n"}',
         f'CONFIG_OPENPENCIL_SETUP_ACCESS_POINT={"y" if setup_access_point else "n"}',
@@ -346,11 +347,20 @@ def mode_defaults_path(build_mode):
     ]
     if wireless_enabled:
         settings.append("CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192")
-    if ble_enabled:
+    if ble_enabled or mode == "usb-frame":
         settings.extend([
             "# CONFIG_ESPTOOLPY_FLASHSIZE_8MB is not set",
             "CONFIG_ESPTOOLPY_FLASHSIZE_32MB=y",
             'CONFIG_ESPTOOLPY_FLASHSIZE="32MB"',
+        ])
+    if mode == "usb-frame":
+        settings.extend([
+            "# CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_160 is not set",
+            "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y",
+            "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ=240",
+        ])
+    if ble_enabled:
+        settings.extend([
             "CONFIG_BT_ENABLED=y",
             "CONFIG_BT_NIMBLE_ENABLED=y",
             "CONFIG_BT_NIMBLE_ROLE_PERIPHERAL=y",

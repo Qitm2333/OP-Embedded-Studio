@@ -18,6 +18,11 @@ menu "Example Configuration"
         depends on OPENPENCIL_EXTERNAL_CONTENT_ONLY
         default n
 
+    config OPENPENCIL_USB_SEQUENCE
+        bool "Allow USB PNG sequence content from the content partition"
+        depends on OPENPENCIL_EXTERNAL_CONTENT_ONLY
+        default n
+
     config OPENPENCIL_LAN_STATUS_SCREEN
         bool "Show LAN connection details while waiting for content"
         default n

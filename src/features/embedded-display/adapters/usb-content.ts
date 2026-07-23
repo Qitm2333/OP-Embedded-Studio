@@ -2,16 +2,20 @@ import type { EmbeddedImagePayload, EmbeddedPrototypePayload } from '../model/ty
 import {
   fetchSerialFirmwarePart,
   flashSerialFirmware,
+  requestSerialPort,
   type SerialFlashOptions
 } from './serial-flasher'
+import type { UsbImageSequencePayload } from './usb-sequence'
 import { encodeWirelessImage, encodeWirelessPrototype } from './wireless-content'
 
 const USB_CONTENT_OFFSET = 0x310000
-const USB_CONTENT_BYTES = 0x4f0000
+const USB_CONTENT_BYTES = 0x1cf0000
 const USB_FAST_PROFILES = new Set(['co5300_waveshare_amoled_1_75c'])
 
+export { requestSerialPort as requestUsbSerialPort }
 export type {
   SerialFlashOptions as UsbFlashOptions,
+  SerialPortLike as UsbSerialPort,
   SerialFlashProgress as UsbFlashProgress
 } from './serial-flasher'
 
@@ -44,7 +48,7 @@ async function flashUsbFirmware(
   const firmwareParts = await loadUsbFirmware(profileId, content)
   await flashSerialFirmware(firmwareParts, {
     ...options,
-    flashSize: '8MB',
+    flashSize: '32MB',
     preparingMessage: '正在准备预编译固件和内容…',
     connectedMessage: '已连接，正在一次性写入预编译固件和内容。'
   })
@@ -55,6 +59,13 @@ export async function flashUsbFrameFirmware(
   options: Omit<SerialFlashOptions, 'flashSize'> = {}
 ): Promise<void> {
   await flashUsbFirmware(payload.profileId, new Uint8Array(encodeWirelessImage(payload)), options)
+}
+
+export async function flashUsbSequenceFirmware(
+  payload: UsbImageSequencePayload,
+  options: Omit<SerialFlashOptions, 'flashSize'> = {}
+): Promise<void> {
+  await flashUsbFirmware(payload.profileId, new Uint8Array(payload.content), options)
 }
 
 export async function flashUsbPrototypeFirmware(

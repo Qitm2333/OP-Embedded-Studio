@@ -14,8 +14,11 @@ export interface SerialFlashProgress {
   percent: number
 }
 
+export type SerialPortLike = ConstructorParameters<typeof Transport>[0]
+
 export interface SerialFlashOptions {
   flashSize: FlashSizeValues
+  port?: SerialPortLike
   baudRate?: number
   eraseAll?: boolean
   preparingMessage?: string
@@ -47,25 +50,28 @@ export async function fetchSerialFirmwarePart(
   return { address, data: new Uint8Array(await response.arrayBuffer()) }
 }
 
+export function requestSerialPort(): Promise<SerialPortLike> {
+  const serial = (
+    navigator as Navigator & {
+      serial?: { requestPort: () => Promise<SerialPortLike> }
+    }
+  ).serial
+  if (!serial) throw new Error('当前浏览器不支持 Web Serial，请使用 Chrome 或 Edge')
+  return serial.requestPort()
+}
+
 export async function flashSerialFirmware(
   firmwareParts: SerialFirmwarePart[],
   options: SerialFlashOptions
 ): Promise<void> {
   if (!firmwareParts.length) throw new Error('固件清单中没有可烧录分区')
-  const serial = (
-    navigator as Navigator & {
-      serial?: { requestPort: () => Promise<ConstructorParameters<typeof Transport>[0]> }
-    }
-  ).serial
-  if (!serial) throw new Error('当前浏览器不支持 Web Serial，请使用 Chrome 或 Edge')
-
   options.onLog?.(options.preparingMessage ?? '正在准备固件…')
   const totalBytes = firmwareParts.reduce((sum, part) => sum + part.data.byteLength, 0)
   const completedBytes = firmwareParts.map((_, index) =>
     firmwareParts.slice(0, index).reduce((sum, part) => sum + part.data.byteLength, 0)
   )
 
-  const port = await serial.requestPort()
+  const port = options.port ?? (await requestSerialPort())
   const transport = new Transport(port, false)
   const loader = new ESPLoader({
     transport,

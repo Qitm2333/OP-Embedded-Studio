@@ -140,7 +140,38 @@ esp_err_t openpencil_display_presenter_draw(esp_lcd_panel_handle_t panel,
                                             int height,
                                             const uint16_t *frame_buffer)
 {
-    ESP_RETURN_ON_FALSE(panel && frame_buffer, ESP_ERR_INVALID_ARG, TAG, "invalid draw arguments");
+    return openpencil_display_presenter_draw_measured(panel, width, height, frame_buffer, NULL);
+}
+
+esp_err_t openpencil_display_presenter_draw_measured(
+    esp_lcd_panel_handle_t panel,
+    int width,
+    int height,
+    const uint16_t *frame_buffer,
+    openpencil_display_presenter_metrics_t *metrics)
+{
+    return openpencil_display_presenter_draw_region_measured(panel,
+                                                             0,
+                                                             0,
+                                                             width,
+                                                             height,
+                                                             frame_buffer,
+                                                             metrics);
+}
+
+esp_err_t openpencil_display_presenter_draw_region_measured(
+    esp_lcd_panel_handle_t panel,
+    int x,
+    int y,
+    int width,
+    int height,
+    const uint16_t *pixels,
+    openpencil_display_presenter_metrics_t *metrics)
+{
+    ESP_RETURN_ON_FALSE(panel && pixels && x >= 0 && y >= 0 && width > 0 && height > 0,
+                        ESP_ERR_INVALID_ARG,
+                        TAG,
+                        "invalid draw region arguments");
     ESP_RETURN_ON_FALSE(s_draw_lock && s_transfer_done,
                         ESP_ERR_INVALID_STATE,
                         TAG,
@@ -154,14 +185,14 @@ esp_err_t openpencil_display_presenter_draw(esp_lcd_panel_handle_t panel,
     int64_t te_wait_us = 0;
     wait_for_te(&te_wait_us);
     const int64_t transfer_started_us = esp_timer_get_time();
-    const esp_err_t result = submit_region(panel, 0, 0, width, height, frame_buffer);
+    const esp_err_t result = submit_region(panel, x, y, x + width, y + height, pixels);
 
     const int64_t completed_us = esp_timer_get_time();
-    ESP_LOGI(TAG,
-             "Frame presented: te_wait=%lld us, transfer=%lld us, total=%lld us",
-             (long long)te_wait_us,
-             (long long)(completed_us - transfer_started_us),
-             (long long)(completed_us - started_us));
+    if (metrics) {
+        metrics->te_wait_us = te_wait_us;
+        metrics->transfer_us = completed_us - transfer_started_us;
+        metrics->total_us = completed_us - started_us;
+    }
     xSemaphoreGive(s_draw_lock);
     return result;
 }

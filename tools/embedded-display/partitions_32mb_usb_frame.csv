@@ -1,0 +1,7 @@
+# Name,   Type, SubType, Offset,  Size,       Flags
+# 32MB USB Frame layout with a stable 3MB app and an independent sequence content partition.
+# App: 0x10000-0x30FFFF, content: 0x310000-0x1FFFFFF.
+nvs,      data, nvs,     ,        0x6000,
+phy_init, data, phy,     ,        0x1000,
+factory,  app,  factory, ,        0x300000,
+content,  data, 0x40,    ,        0x1CF0000,

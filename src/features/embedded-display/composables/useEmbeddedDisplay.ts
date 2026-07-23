@@ -7,6 +7,7 @@ import {
   type EmbeddedImagePlacement
 } from '../adapters/image'
 import { MOCK_DISPLAY_VARIABLES } from '../adapters/mock'
+import { imageFilesToUsbSequence, type UsbImageSequencePayload } from '../adapters/usb-sequence'
 import type {
   EmbeddedBuildMode,
   EmbeddedBuildStatus,
@@ -23,6 +24,7 @@ const selectedProfileId = ref('')
 const selectedImageName = ref('')
 const previewUrl = ref('')
 const imagePayload = ref<EmbeddedImagePayload | null>(null)
+const usbSequencePayload = ref<UsbImageSequencePayload | null>(null)
 const prototypePayload = ref<EmbeddedPrototypePayload | null>(null)
 const buildStatus = ref<EmbeddedBuildStatus>('loading')
 const buildMessage = ref('正在连接设备服务…')
@@ -67,6 +69,7 @@ export function useEmbeddedDisplay() {
       selectedProfileId.value = id
       manifestUrls.value = {}
       imagePayload.value = null
+      usbSequencePayload.value = null
       prototypePayload.value = null
       deviceLog('profile selected', { profileId: id })
       if (selectedImageName.value) {
@@ -84,6 +87,7 @@ export function useEmbeddedDisplay() {
     } = {}
   ) {
     const uploadToBuildService = options.upload ?? true
+    usbSequencePayload.value = null
     selectedImageName.value = file?.name ?? ''
     deviceLog('image selected', {
       name: file?.name,
@@ -140,6 +144,39 @@ export function useEmbeddedDisplay() {
       deviceLog('image upload error', error)
       buildStatus.value = 'error'
       buildMessage.value = `${uploadToBuildService ? '图片上传' : '图片转换'}失败：${error instanceof Error ? error.message : String(error)}`
+    }
+  }
+
+  async function selectUsbImageSequence(files: File[]) {
+    const profile = selectedProfile.value
+    if (!profile) throw new Error('请先连接设备服务并选择屏幕方案')
+    if (files.length < 2) throw new Error('PNG 序列至少需要两张图片')
+
+    selectedImageName.value = `${files.length} 张 PNG 序列`
+    manifestUrls.value['usb-frame'] = ''
+    buildStatus.value = 'uploading'
+    buildMessage.value = `正在转换 PNG 序列：0 / ${files.length}`
+    try {
+      if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+      previewUrl.value = URL.createObjectURL(files[0])
+      const payload = await imageFilesToUsbSequence(files, profile)
+      imagePayload.value = null
+      usbSequencePayload.value = payload
+      buildStatus.value = 'idle'
+      buildMessage.value = `PNG 序列已准备：${payload.frameCount} 帧 · 30 FPS · ${(payload.storedBytes / 1024 / 1024).toFixed(2)} MiB`
+      buildLog.value = [
+        `sequence: ${payload.frameCount} PNG frames`,
+        `size: ${payload.width}×${payload.height}`,
+        'frame-rate: 30 FPS',
+        `compressed: ${payload.compressedFrames} / ${payload.frameCount}`,
+        `stored: ${payload.storedBytes} bytes`,
+        'usb-sequence-payload: ready'
+      ]
+    } catch (error) {
+      usbSequencePayload.value = null
+      buildStatus.value = 'error'
+      buildMessage.value = `PNG 序列转换失败：${error instanceof Error ? error.message : String(error)}`
+      throw error
     }
   }
 
@@ -274,10 +311,12 @@ export function useEmbeddedDisplay() {
     manifestUrlFor,
     previewUrl,
     imagePayload,
+    usbSequencePayload,
     prototypePayload,
     serviceAvailable,
     selectProfile,
     selectImage,
+    selectUsbImageSequence,
     selectPrototype,
     buildFirmware,
     loadCachedFirmware,

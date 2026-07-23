@@ -14,6 +14,7 @@
 #include "esp_lcd_panel_ops.h"
 #include "esp_lcd_panel_vendor.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 #include "generated_image.h"
@@ -22,6 +23,7 @@
 #include "generated_prototype.h"
 #include "lcd_panel_factory.h"
 #include "prototype_runtime.h"
+#include "usb_sequence_player.h"
 #include "wireless_content.h"
 #include "wireless_diagnostic_view.h"
 #if CONFIG_OPENPENCIL_WIFI_SERVER
@@ -104,6 +106,14 @@ static esp_err_t draw_wireless_image(esp_lcd_panel_handle_t panel, uint16_t *fra
         content->height != CONFIG_EXAMPLE_LCD_V_RES) {
         ESP_LOGW(TAG, "Wireless content geometry does not match selected display");
         return ESP_ERR_INVALID_SIZE;
+    }
+
+    if (openpencil_content_is_sequence()) {
+        return openpencil_usb_sequence_run(panel,
+                                           frame_buffer,
+                                           LCD_FRAME_PIXELS,
+                                           CONFIG_EXAMPLE_LCD_H_RES,
+                                           CONFIG_EXAMPLE_LCD_V_RES);
     }
 
     ESP_LOGI(TAG, "Draw wireless image (%ux%u)", content->width, content->height);

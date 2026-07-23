@@ -16,6 +16,8 @@ import {
 import {
   flashUsbFrameFirmware,
   flashUsbPrototypeFirmware,
+  flashUsbSequenceFirmware,
+  requestUsbSerialPort,
   supportsUsbFrameFastFlash
 } from '../adapters/usb-content'
 import { useBleDeviceSession } from '../composables/useBleDeviceSession'
@@ -120,6 +122,7 @@ const {
   variables,
   selectedImageName,
   imagePayload,
+  usbSequencePayload,
   prototypePayload,
   buildStatus,
   buildMessage,
@@ -128,6 +131,7 @@ const {
   serviceAvailable,
   selectProfile,
   selectImage,
+  selectUsbImageSequence,
   selectPrototype,
   loadCachedFirmware,
   loadProfiles
@@ -361,40 +365,67 @@ async function handleBakeFrame(): Promise<boolean> {
 async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
   const requestedProfileId = selectedProfile.value?.id
   if (!requestedProfileId || usbFlashing.value) return
+
+  let port
+  try {
+    port = await requestUsbSerialPort()
+  } catch (error) {
+    bakeError.value = error instanceof Error ? error.message : String(error)
+    return
+  }
   if (source === 'frame') {
     if (!canUsbFrameFlash.value || !(await handleBakeFrame())) return
   } else if (!canUsbFileFlash.value) {
     return
   }
-  if (!imagePayload.value) {
-    bakeError.value = '请先烘焙或选择一张 Frame 图片'
+
+  const sequence = source === 'file' ? usbSequencePayload.value : null
+  const image = imagePayload.value
+  const contentProfileId = sequence?.profileId ?? image?.profileId
+  if ((!sequence && !image) || !contentProfileId) {
+    bakeError.value = '请先烘焙、选择图片或选择 PNG 序列'
     return
   }
   if (
     transportMode.value !== 'usb' ||
     burnMode.value !== 'frame' ||
     selectedProfile.value?.id !== requestedProfileId ||
-    imagePayload.value.profileId !== requestedProfileId
+    contentProfileId !== requestedProfileId
   ) {
     return
   }
 
   usbFlashing.value = true
   buildStatus.value = 'uploading'
-  buildMessage.value = '正在准备完整 USB 单 Frame 固件…'
+  buildMessage.value = sequence
+    ? `正在准备 USB PNG 序列：${sequence.frameCount} 帧…`
+    : '正在准备完整 USB 单 Frame 固件…'
   buildLog.value = []
+  const flashOptions = {
+    port,
+    onLog: (message: string) => {
+      const normalized = message.trim()
+      if (normalized) buildLog.value.push(normalized)
+    },
+    onProgress: ({
+      percent,
+      written,
+      total
+    }: {
+      percent: number
+      written: number
+      total: number
+    }) => {
+      buildMessage.value = `正在烧录完整固件：${percent}%（${written} / ${total} 字节）`
+    }
+  }
   try {
-    await flashUsbFrameFirmware(imagePayload.value, {
-      onLog: (message) => {
-        const normalized = message.trim()
-        if (normalized) buildLog.value.push(normalized)
-      },
-      onProgress: ({ percent, written, total }) => {
-        buildMessage.value = `正在烧录完整固件：${percent}%（${written} / ${total} 字节）`
-      }
-    })
+    if (sequence) await flashUsbSequenceFirmware(sequence, flashOptions)
+    else if (image) await flashUsbFrameFirmware(image, flashOptions)
     buildStatus.value = 'ready'
-    buildMessage.value = '完整固件和最新 Frame 已写入，设备正在重启。'
+    buildMessage.value = sequence
+      ? `PNG 序列已写入：${sequence.frameCount} 帧 · 30 FPS，设备正在重启。`
+      : '完整固件和最新 Frame 已写入，设备正在重启。'
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     buildStatus.value = 'error'
@@ -492,27 +523,37 @@ async function handleWifiBakeAndUpload() {
 
 async function handleUsbImageChange(event: Event) {
   const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
+  const files = [...(input.files ?? [])]
   const requestedProfileId = selectedProfile.value?.id
-  if (!file || !requestedProfileId || !canUsbFileFlash.value) return
+  if (!files.length || !requestedProfileId || !canUsbFileFlash.value) return
 
   frameResourceSource.value = 'uploaded'
+  bakeError.value = ''
   try {
-    // Clear the previous payload first so a failed conversion can never flash stale content.
+    // File selection only prepares content. A separate button click requests Web Serial permission.
+    // Clear both USB content variants first so failed conversion can never flash stale data.
     await selectImage(undefined, { upload: false })
-    await selectImage(file, { upload: false })
+    if (files.length === 1) await selectImage(files[0], { upload: false })
+    else await selectUsbImageSequence(files)
+
+    const content = files.length === 1 ? imagePayload.value : usbSequencePayload.value
     if (
-      !imagePayload.value ||
-      imagePayload.value.name !== file.name ||
+      !content ||
+      content.frameCount !== files.length ||
       buildStatus.value === 'error' ||
       transportMode.value !== 'usb' ||
       burnMode.value !== 'frame' ||
       selectedProfile.value?.id !== requestedProfileId ||
-      imagePayload.value.profileId !== requestedProfileId
+      content.profileId !== requestedProfileId
     ) {
       return
     }
-    await handleUsbFrameBakeAndFlash('file')
+    buildMessage.value =
+      files.length === 1
+        ? '图片已准备，请点击“连接串口并烧录”'
+        : 'PNG 序列已准备，请点击“连接串口并烧录”'
+  } catch (error) {
+    bakeError.value = error instanceof Error ? error.message : String(error)
   } finally {
     input.value = ''
   }
@@ -1188,9 +1229,11 @@ watch([wifiSsid, wifiPassword], () => {
                 <p class="truncate text-xs font-medium text-surface">上传文件</p>
                 <p class="mt-0.5 truncate text-[10px] leading-relaxed text-muted">
                   {{
-                    selectedImageName && frameResourceSource === 'uploaded'
-                      ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · ${imagePayload?.frameCount ?? 1} 帧`
-                      : 'PNG、JPG、WebP、BMP、GIF；后续可扩展序列帧'
+                    usbSequencePayload && frameResourceSource === 'uploaded'
+                      ? `${selectedImageName} · ${usbSequencePayload.frameCount} 帧 · 压缩后 ${(usbSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB · RLE ${usbSequencePayload.compressedFrames} 帧`
+                      : selectedImageName && frameResourceSource === 'uploaded'
+                        ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · 1 帧`
+                        : '单张图片，或多张 PNG 序列；30 FPS，按压缩后容量计算'
                   }}
                 </p>
               </div>
@@ -1199,17 +1242,25 @@ watch([wifiSsid, wifiPassword], () => {
             <label
               class="mt-2 flex h-control w-full cursor-pointer items-center justify-center rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
             >
-              {{
-                usbFlashing && frameResourceSource === 'uploaded' ? '正在烧录…' : '选择文件并烧录'
-              }}
+              选择图片或 PNG 序列
               <input
                 class="sr-only"
                 type="file"
                 accept="image/gif,image/png,image/jpeg,image/webp,image/bmp"
+                multiple
                 :disabled="!canUsbFileFlash"
                 @change="handleUsbImageChange"
               />
             </label>
+            <button
+              v-if="frameResourceSource === 'uploaded' && (imagePayload || usbSequencePayload)"
+              type="button"
+              class="mt-2 h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="!canUsbFileFlash"
+              @click="handleUsbFrameBakeAndFlash('file')"
+            >
+              {{ usbFlashing ? '正在烧录…' : '连接串口并烧录' }}
+            </button>
           </div>
         </div>
 
