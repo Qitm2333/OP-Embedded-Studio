@@ -45,7 +45,7 @@ export async function fetchSerialFirmwarePart(
   path: string,
   address: number
 ): Promise<SerialFirmwarePart> {
-  const response = await fetch(path)
+  const response = await fetch(path, { cache: 'no-store' })
   if (!response.ok) throw new Error(`无法读取固件分区：${response.status}`)
   return { address, data: new Uint8Array(await response.arrayBuffer()) }
 }

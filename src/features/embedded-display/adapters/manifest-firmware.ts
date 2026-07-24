@@ -23,7 +23,10 @@ export async function loadFirmwareManifestParts(
   manifestUrl: string,
   onLog?: (message: string) => void
 ): Promise<SerialFirmwarePart[]> {
-  const response = await fetch(manifestUrl, { headers: { Accept: 'application/json' } })
+  const response = await fetch(manifestUrl, {
+    cache: 'no-store',
+    headers: { Accept: 'application/json' }
+  })
   if (!response.ok) throw new Error(`无法读取固件清单：${response.status}`)
   const manifest = (await response.json()) as EmbeddedFlashManifest
   const build = manifest.builds.find((candidate) => candidate.chipFamily === 'ESP32-S3')

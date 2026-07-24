@@ -1,6 +1,7 @@
 #include "wireless_content.h"
 #include "lcd_panel_factory.h"
 
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
 #include "sdkconfig.h"
@@ -18,6 +19,7 @@ static openpencil_prototype_content_header_t active_prototype;
 static openpencil_sequence_content_header_t active_sequence;
 static uint8_t sequence_decode_chunk[16384];
 static bool content_valid;
+static atomic_bool content_write_in_progress = ATOMIC_VAR_INIT(false);
 
 static void fill_rgb565(uint16_t *destination, size_t pixels, uint16_t color)
 {
@@ -67,6 +69,11 @@ static esp_err_t decode_rle_chunk(const uint8_t *encoded,
     return ESP_OK;
 }
 
+bool openpencil_content_write_in_progress(void)
+{
+    return atomic_load_explicit(&content_write_in_progress, memory_order_acquire);
+}
+
 uint8_t openpencil_content_firmware_mode(void)
 {
 #if CONFIG_OPENPENCIL_BLE_SERVER || CONFIG_OPENPENCIL_EXTERNAL_PROTOTYPE
@@ -82,7 +89,7 @@ static bool content_mode_supported(uint8_t mode)
 #if CONFIG_OPENPENCIL_BLE_SERVER || CONFIG_OPENPENCIL_EXTERNAL_PROTOTYPE
     supported = supported || mode == OPENPENCIL_CONTENT_MODE_PROTOTYPE;
 #endif
-#if CONFIG_OPENPENCIL_USB_SEQUENCE
+#if CONFIG_OPENPENCIL_SEQUENCE_PLAYBACK
     supported = supported || mode == OPENPENCIL_CONTENT_MODE_SEQUENCE;
 #endif
     return supported;
@@ -110,7 +117,7 @@ static bool layout_matches(const openpencil_content_header_t *header,
     if (header->mode == OPENPENCIL_CONTENT_MODE_FRAME) {
         return header->frame_count == 1 && header->payload_bytes == frame_bytes;
     }
-#if CONFIG_OPENPENCIL_USB_SEQUENCE
+#if CONFIG_OPENPENCIL_SEQUENCE_PLAYBACK
     if (header->mode == OPENPENCIL_CONTENT_MODE_SEQUENCE) {
         const size_t resources_bytes =
             (size_t)header->frame_count * sizeof(openpencil_sequence_resource_t);
@@ -563,16 +570,29 @@ esp_err_t openpencil_content_write(const uint8_t *data, size_t length)
 
     const size_t erase_size = (length + 0xFFFu) & ~0xFFFu;
     if (erase_size > content_partition->size) return ESP_ERR_INVALID_SIZE;
-    ESP_RETURN_ON_ERROR(esp_partition_erase_range(content_partition, 0, erase_size), TAG,
-                        "erase content partition failed");
-    ESP_RETURN_ON_ERROR(esp_partition_write(content_partition, sizeof(*header), payload,
-                                            header->payload_bytes), TAG,
-                        "write content payload failed");
-    ESP_RETURN_ON_ERROR(esp_partition_write(content_partition, 0, header, sizeof(*header)), TAG,
-                        "write content header failed");
+
+    // A playing sequence reads this partition continuously. Pause its decoder
+    // before erasing so a wireless update cannot consume partially written data.
+    atomic_store_explicit(&content_write_in_progress, true, memory_order_release);
+    esp_err_t result = esp_partition_erase_range(content_partition, 0, erase_size);
+    if (result == ESP_OK) {
+        result = esp_partition_write(content_partition, sizeof(*header), payload,
+                                     header->payload_bytes);
+    }
+    if (result == ESP_OK) {
+        result = esp_partition_write(content_partition, 0, header, sizeof(*header));
+    }
+    if (result != ESP_OK) {
+        atomic_store_explicit(&content_write_in_progress, false, memory_order_release);
+        ESP_LOGE(TAG, "write content partition failed: %s", esp_err_to_name(result));
+        return result;
+    }
+
     active_header = *header;
     active_prototype = prototype;
     active_sequence = sequence;
     content_valid = true;
+    // Successful Wi-Fi/BLE commits always schedule a reboot. Keep playback
+    // paused during that short window so it never mixes old and new resources.
     return ESP_OK;
 }

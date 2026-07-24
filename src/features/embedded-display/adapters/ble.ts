@@ -1,9 +1,10 @@
-import { encodeWirelessImage, encodeWirelessPrototype } from './wireless-content'
 import type {
   EmbeddedDisplayProfile,
   EmbeddedImagePayload,
   EmbeddedPrototypePayload
 } from '../model/types'
+import { encodeWirelessImage, encodeWirelessPrototype } from './wireless-content'
+import type { WirelessImageSequencePayload } from './wireless-sequence'
 
 export const OPENPENCIL_BLE_SERVICE_UUID = 'a110207d-8f4d-559b-8e4a-4791892b127d'
 export const OPENPENCIL_BLE_TRANSFER_UUID = 'a210207d-8f4d-559b-8e4a-4791892b127d'
@@ -131,8 +132,11 @@ interface BleStatusMonitor {
   dispose(): void
 }
 
-async function createBleStatusMonitor(status: BluetoothCharacteristic): Promise<BleStatusMonitor | null> {
-  if (!status.startNotifications || !status.addEventListener || !status.removeEventListener) return null
+async function createBleStatusMonitor(
+  status: BluetoothCharacteristic
+): Promise<BleStatusMonitor | null> {
+  if (!status.startNotifications || !status.addEventListener || !status.removeEventListener)
+    return null
 
   let latestStatus: BleTransferStatus | null = null
   const listeners = new Set<(value: BleTransferStatus) => void>()
@@ -166,7 +170,12 @@ async function createBleStatusMonitor(status: BluetoothCharacteristic): Promise<
           resolve(null)
         }, timeoutMs)
         const handleStatus = (nextStatus: BleTransferStatus) => {
-          if (!nextStatus.completed && !nextStatus.failed && nextStatus.receivedBytes <= minimumBytes) return
+          if (
+            !nextStatus.completed &&
+            !nextStatus.failed &&
+            nextStatus.receivedBytes <= minimumBytes
+          )
+            return
           window.clearTimeout(timeoutId)
           listeners.delete(handleStatus)
           resolve(nextStatus)
@@ -181,7 +190,9 @@ async function createBleStatusMonitor(status: BluetoothCharacteristic): Promise<
   }
 }
 
-export async function readBleTransferStatus(status: BluetoothCharacteristic): Promise<BleTransferStatus> {
+export async function readBleTransferStatus(
+  status: BluetoothCharacteristic
+): Promise<BleTransferStatus> {
   if (!status.readValue) throw new Error('BLE 固件不支持状态读取')
   return parseBleTransferStatus(await status.readValue())
 }
@@ -208,7 +219,10 @@ async function writeBleWindow(
     packetIndex < state.packetsPerCheckpoint && state.offset < bytes.byteLength;
     packetIndex += 1
   ) {
-    const chunk = bytes.slice(state.offset, Math.min(state.offset + state.chunkSize, bytes.byteLength))
+    const chunk = bytes.slice(
+      state.offset,
+      Math.min(state.offset + state.chunkSize, bytes.byteLength)
+    )
     const packet = new Uint8Array(4 + chunk.byteLength)
     new DataView(packet.buffer).setUint32(0, state.offset, true)
     packet.set(chunk, 4)
@@ -346,4 +360,14 @@ export function uploadBlePrototype(
     onProgress,
     startOffset
   )
+}
+
+export function uploadBleSequence(
+  transfer: BluetoothCharacteristic,
+  status: BluetoothCharacteristic,
+  payload: WirelessImageSequencePayload,
+  onProgress?: (progress: BleTransferProgress) => void,
+  startOffset = 0
+): Promise<void> {
+  return uploadBleBytes(transfer, status, new Uint8Array(payload.content), onProgress, startOffset)
 }

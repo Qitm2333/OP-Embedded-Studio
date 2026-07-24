@@ -4,6 +4,7 @@ import type {
   EmbeddedWirelessDevice
 } from '../model/types'
 import { encodeWirelessImage, encodeWirelessPrototype } from './wireless-content'
+import type { WirelessImageSequencePayload } from './wireless-sequence'
 
 interface WirelessResponse {
   ok?: boolean
@@ -90,4 +91,12 @@ export async function uploadWirelessPrototype(
   signal?: AbortSignal
 ): Promise<void> {
   await uploadWirelessContent(baseUrl, encodeWirelessPrototype(payload), signal)
+}
+
+export async function uploadWirelessSequence(
+  baseUrl: string,
+  payload: WirelessImageSequencePayload,
+  signal?: AbortSignal
+): Promise<void> {
+  await uploadWirelessContent(baseUrl, payload.content, signal)
 }

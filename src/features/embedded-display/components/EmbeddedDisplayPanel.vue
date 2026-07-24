@@ -11,8 +11,14 @@ import { flashFirmwareManifest } from '../adapters/manifest-firmware'
 import {
   probeWirelessDevice,
   uploadWirelessImage,
-  uploadWirelessPrototype
+  uploadWirelessPrototype,
+  uploadWirelessSequence
 } from '../adapters/wireless'
+import {
+  imageFilesToBleSequence,
+  imageFilesToWifiSequence,
+  type WirelessImageSequencePayload
+} from '../adapters/wireless-sequence'
 import {
   flashUsbFrameFirmware,
   flashUsbPrototypeFirmware,
@@ -98,6 +104,8 @@ const selectedPrototypeId = computed({
     selectedPrototypeIds.value[transportMode.value] = id
   }
 })
+const wifiSequencePayload = ref<WirelessImageSequencePayload | null>(null)
+const bleSequencePayload = ref<WirelessImageSequencePayload | null>(null)
 const bakePending = ref(false)
 const frameBackgroundColor = ref('#000000')
 const bakeError = ref('')
@@ -424,7 +432,7 @@ async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
     else if (image) await flashUsbFrameFirmware(image, flashOptions)
     buildStatus.value = 'ready'
     buildMessage.value = sequence
-      ? `PNG 序列已写入：${sequence.frameCount} 帧 · 30 FPS，设备正在重启。`
+      ? `PNG 序列已写入：${sequence.frameCount} 帧 · 20 FPS，设备正在重启。`
       : '完整固件和最新 Frame 已写入，设备正在重启。'
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
@@ -478,6 +486,7 @@ async function handleUsbPrototypeBakeAndFlash() {
 
 async function handleBleBakeAndUpload() {
   if (!canBleBakeAndUpload.value) return
+  bleSequencePayload.value = null
   const requestedMode = burnMode.value
   const requestedProfileId = selectedProfile.value?.id
   if (!requestedProfileId) return
@@ -508,6 +517,7 @@ async function handleBleBakeAndUpload() {
 
 async function handleWifiBakeAndUpload() {
   if (!canWifiBakeAndUpload.value) return
+  wifiSequencePayload.value = null
   const requestedMode = burnMode.value
   const requestedProfileId = selectedProfile.value?.id
   if (!requestedProfileId) return
@@ -561,22 +571,43 @@ async function handleUsbImageChange(event: Event) {
 
 async function handleWifiImageChange(event: Event) {
   const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file || !canWifiFileUpload.value) return
+  const files = [...(input.files ?? [])]
+  const profile = selectedProfile.value
+  if (!files.length || !profile || !canWifiFileUpload.value) return
 
   frameResourceSource.value = 'uploaded'
+  wifiSequencePayload.value = null
   try {
     await selectImage(undefined, { upload: false })
-    await selectImage(file, { upload: false })
-    if (
-      !imagePayload.value ||
-      imagePayload.value.name !== file.name ||
-      buildStatus.value === 'error'
-    ) {
+    if (files.length === 1) {
+      await selectImage(files[0], { upload: false })
+      if (
+        !imagePayload.value ||
+        imagePayload.value.name !== files[0].name ||
+        buildStatus.value === 'error'
+      ) {
+        return
+      }
+      await uploadWifiContent('frame', profile.id)
       return
     }
-    const requestedProfileId = selectedProfile.value?.id
-    if (requestedProfileId) await uploadWifiContent('frame', requestedProfileId)
+
+    const sequence = await imageFilesToWifiSequence(files, profile)
+    if (
+      transportMode.value !== 'wifi' ||
+      burnMode.value !== 'frame' ||
+      selectedProfile.value?.id !== profile.id
+    )
+      return
+    wifiSequencePayload.value = sequence
+    wirelessStatus.value = 'uploading'
+    wirelessMessage.value = `正在通过 Wi-Fi 传输 PNG 序列：${sequence.frameCount} 帧…`
+    await uploadWirelessSequence(wirelessBaseUrl.value, sequence)
+    wirelessStatus.value = 'success'
+    wirelessMessage.value = `PNG 序列已传输：${sequence.frameCount} 帧 · 30 FPS，设备正在重启`
+  } catch (error) {
+    wirelessStatus.value = 'error'
+    wirelessMessage.value = error instanceof Error ? error.message : String(error)
   } finally {
     input.value = ''
   }
@@ -584,27 +615,41 @@ async function handleWifiImageChange(event: Event) {
 
 async function handleBleImageChange(event: Event) {
   const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  const requestedProfileId = selectedProfile.value?.id
-  if (!file || !requestedProfileId || !canBleFileUpload.value) return
+  const files = [...(input.files ?? [])]
+  const profile = selectedProfile.value
+  if (!files.length || !profile || !canBleFileUpload.value) return
 
   frameResourceSource.value = 'uploaded'
+  bleSequencePayload.value = null
   try {
-    // Clear the previous payload first so a failed conversion can never upload stale content.
     await selectImage(undefined, { upload: false })
-    await selectImage(file, { upload: false })
-    if (
-      !imagePayload.value ||
-      imagePayload.value.name !== file.name ||
-      buildStatus.value === 'error' ||
-      transportMode.value !== 'ble' ||
-      burnMode.value !== 'frame' ||
-      selectedProfile.value?.id !== requestedProfileId ||
-      imagePayload.value.profileId !== requestedProfileId
-    ) {
+    if (files.length === 1) {
+      await selectImage(files[0], { upload: false })
+      if (
+        !imagePayload.value ||
+        imagePayload.value.name !== files[0].name ||
+        buildStatus.value === 'error' ||
+        transportMode.value !== 'ble' ||
+        burnMode.value !== 'frame' ||
+        selectedProfile.value?.id !== profile.id ||
+        imagePayload.value.profileId !== profile.id
+      )
+        return
+      await bleSession.upload(imagePayload.value)
       return
     }
-    await bleSession.upload(imagePayload.value)
+
+    const sequence = await imageFilesToBleSequence(files, profile)
+    if (
+      transportMode.value !== 'ble' ||
+      burnMode.value !== 'frame' ||
+      selectedProfile.value?.id !== profile.id
+    )
+      return
+    bleSequencePayload.value = sequence
+    await bleSession.upload(sequence)
+  } catch (error) {
+    bakeError.value = error instanceof Error ? error.message : String(error)
   } finally {
     input.value = ''
   }
@@ -1233,7 +1278,7 @@ watch([wifiSsid, wifiPassword], () => {
                       ? `${selectedImageName} · ${usbSequencePayload.frameCount} 帧 · 压缩后 ${(usbSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB · RLE ${usbSequencePayload.compressedFrames} 帧`
                       : selectedImageName && frameResourceSource === 'uploaded'
                         ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · 1 帧`
-                        : '单张图片，或多张 PNG 序列；30 FPS，按压缩后容量计算'
+                        : '单张图片，或多张 PNG 序列；20 FPS，使用稳定整帧播放'
                   }}
                 </p>
               </div>
@@ -1370,9 +1415,11 @@ watch([wifiSsid, wifiPassword], () => {
                 <p class="truncate text-xs font-medium text-surface">上传文件</p>
                 <p class="mt-0.5 truncate text-[10px] leading-relaxed text-muted">
                   {{
-                    selectedImageName && frameResourceSource === 'uploaded'
-                      ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · ${imagePayload?.frameCount ?? 1} 帧`
-                      : 'PNG、JPG、WebP、BMP、GIF；后续可扩展序列帧'
+                    wifiSequencePayload && frameResourceSource === 'uploaded'
+                      ? `${wifiSequencePayload.name} · ${wifiSequencePayload.frameCount} 帧 · 30 FPS · ${(wifiSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB`
+                      : selectedImageName && frameResourceSource === 'uploaded'
+                        ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · 1 帧`
+                        : '暂时仅支持上传单张图片'
                   }}
                 </p>
               </div>
@@ -1381,7 +1428,7 @@ watch([wifiSsid, wifiPassword], () => {
             <label
               class="mt-2 flex h-control w-full cursor-pointer items-center justify-center rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
             >
-              {{ wirelessStatus === 'uploading' ? '正在传输…' : '选择文件并上传' }}
+              {{ wirelessStatus === 'uploading' ? '正在传输…' : '选择单张图片并上传' }}
               <input
                 class="sr-only"
                 type="file"
@@ -1484,9 +1531,11 @@ watch([wifiSsid, wifiPassword], () => {
                 <p class="truncate text-xs font-medium text-surface">上传文件</p>
                 <p class="mt-0.5 truncate text-[10px] leading-relaxed text-muted">
                   {{
-                    selectedImageName && frameResourceSource === 'uploaded'
-                      ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · ${imagePayload?.frameCount ?? 1} 帧`
-                      : 'PNG、JPG、WebP、BMP、GIF；后续可扩展序列帧'
+                    bleSequencePayload && frameResourceSource === 'uploaded'
+                      ? `${bleSequencePayload.name} · ${bleSequencePayload.frameCount} 帧 · 30 FPS · ${(bleSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB`
+                      : selectedImageName && frameResourceSource === 'uploaded'
+                        ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · 1 帧`
+                        : '暂时仅支持上传单张图片'
                   }}
                 </p>
               </div>
@@ -1495,7 +1544,9 @@ watch([wifiSsid, wifiPassword], () => {
             <label
               class="mt-2 flex h-control w-full cursor-pointer items-center justify-center rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
             >
-              {{ bleSession.status.value === 'uploading' ? '正在传输…' : '选择文件并上传' }}
+              {{
+                bleSession.status.value === 'uploading' ? '正在传输…' : '选择单张图片并上传'
+              }}
               <input
                 class="sr-only"
                 type="file"

@@ -5,9 +5,11 @@ import {
   readBleTransferStatus,
   requestOpenPencilBleDevice,
   uploadBleImage,
-  uploadBlePrototype
+  uploadBlePrototype,
+  uploadBleSequence
 } from '../adapters/ble'
 import type { BleFirmwareMode, BleTransferProgress } from '../adapters/ble'
+import type { WirelessImageSequencePayload } from '../adapters/wireless-sequence'
 import type {
   EmbeddedDisplayProfile,
   EmbeddedImagePayload,
@@ -19,10 +21,11 @@ type BleDevice = Awaited<ReturnType<typeof requestOpenPencilBleDevice>>
 type BleConnection = Awaited<ReturnType<typeof connectOpenPencilBleDevice>>
 type ActiveBleConnection = BleConnection & Required<Pick<BleConnection, 'transfer' | 'status'>>
 
-function isActiveBleConnection(connection: BleConnection | null): connection is ActiveBleConnection {
+function isActiveBleConnection(
+  connection: BleConnection | null
+): connection is ActiveBleConnection {
   return Boolean(connection?.server.connected && connection.transfer && connection.status)
 }
-
 
 function isDisconnectedError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
@@ -35,9 +38,12 @@ function waitBeforeReconnect(): Promise<void> {
   })
 }
 
-function payloadFirmwareMode(
-  payload: EmbeddedImagePayload | EmbeddedPrototypePayload
-): BleFirmwareMode {
+type BleUploadPayload =
+  | EmbeddedImagePayload
+  | EmbeddedPrototypePayload
+  | WirelessImageSequencePayload
+
+function payloadFirmwareMode(payload: BleUploadPayload): BleFirmwareMode {
   return 'states' in payload ? 'prototype' : 'frame'
 }
 
@@ -48,12 +54,27 @@ function firmwareModeLabel(mode: BleFirmwareMode): string {
 
 function uploadBleContent(
   connection: ActiveBleConnection,
-  payload: EmbeddedImagePayload | EmbeddedPrototypePayload,
+  payload: BleUploadPayload,
   onProgress: (progress: BleTransferProgress) => void,
   startOffset: number
 ): Promise<void> {
   if ('states' in payload) {
-    return uploadBlePrototype(connection.transfer, connection.status, payload, onProgress, startOffset)
+    return uploadBlePrototype(
+      connection.transfer,
+      connection.status,
+      payload,
+      onProgress,
+      startOffset
+    )
+  }
+  if ('content' in payload) {
+    return uploadBleSequence(
+      connection.transfer,
+      connection.status,
+      payload,
+      onProgress,
+      startOffset
+    )
   }
   return uploadBleImage(connection.transfer, connection.status, payload, onProgress, startOffset)
 }
@@ -76,11 +97,14 @@ function createBleTransferMetrics(onUpdate: (message: string, percent: number) =
     update: (transferProgress: BleTransferProgress) => {
       const now = performance.now()
       const sampleSeconds = (now - previousSampleAt) / 1000
-      const currentRateKbps = sampleSeconds > 0
-        ? Math.round(
-            Math.max(0, transferProgress.receivedBytes - previousReceivedBytes) / 1024 / sampleSeconds
-          )
-        : 0
+      const currentRateKbps =
+        sampleSeconds > 0
+          ? Math.round(
+              Math.max(0, transferProgress.receivedBytes - previousReceivedBytes) /
+                1024 /
+                sampleSeconds
+            )
+          : 0
       totalReceivedBytes = transferProgress.receivedBytes
       chunkSize = transferProgress.chunkSize
       fallbackUsed = transferProgress.fallbackUsed
@@ -90,18 +114,30 @@ function createBleTransferMetrics(onUpdate: (message: string, percent: number) =
         ? Math.round((transferProgress.receivedBytes / transferProgress.totalBytes) * 100)
         : 0
       onUpdate(
-        '正在通过 BLE 传输：' + percent + '% · ' + currentRateKbps + ' KB/s · ' +
-          chunkSize + 'B/包' + (fallbackUsed ? '（兼容模式）' : ''),
+        '正在通过 BLE 传输：' +
+          percent +
+          '% · ' +
+          currentRateKbps +
+          ' KB/s · ' +
+          chunkSize +
+          'B/包' +
+          (fallbackUsed ? '（兼容模式）' : ''),
         percent
       )
     },
     complete(): string {
       const totalSeconds = startedAt ? (performance.now() - startedAt) / 1000 : 0
-      const averageRateKbps = totalSeconds > 0
-        ? Math.round(totalReceivedBytes / 1024 / totalSeconds)
-        : 0
-      return '内容传输完成，平均 ' + averageRateKbps + ' KB/s · ' + chunkSize +
-        'B/包' + (fallbackUsed ? '（兼容模式）' : '') + '；设备正在重启'
+      const averageRateKbps =
+        totalSeconds > 0 ? Math.round(totalReceivedBytes / 1024 / totalSeconds) : 0
+      return (
+        '内容传输完成，平均 ' +
+        averageRateKbps +
+        ' KB/s · ' +
+        chunkSize +
+        'B/包' +
+        (fallbackUsed ? '（兼容模式）' : '') +
+        '；设备正在重启'
+      )
     }
   }
 }
@@ -192,10 +228,7 @@ function createBleDeviceSession() {
     }
   }
 
-  async function probe(
-    profile: EmbeddedDisplayProfile,
-    expectedMode?: BleFirmwareMode
-  ) {
+  async function probe(profile: EmbeddedDisplayProfile, expectedMode?: BleFirmwareMode) {
     status.value = 'checking'
     message.value = '正在等待选择 BLE 设备…'
     try {
@@ -220,13 +253,20 @@ function createBleDeviceSession() {
         remoteStatus.firmwareMode !== expectedMode
       ) {
         status.value = 'error'
-        message.value = '当前设备运行 BLE ' + firmwareModeLabel(remoteStatus.firmwareMode) +
-          ' 基础固件；请通过 USB 初始化 BLE ' + firmwareModeLabel(expectedMode) + ' 基础固件'
+        message.value =
+          '当前设备运行 BLE ' +
+          firmwareModeLabel(remoteStatus.firmwareMode) +
+          ' 基础固件；请通过 USB 初始化 BLE ' +
+          firmwareModeLabel(expectedMode) +
+          ' 基础固件'
         return connection
       }
       status.value = 'success'
       message.value = remoteStatus.firmwareMode
-        ? '已连接 ' + (device.name || 'OpenPencil BLE') + '，固件模式：' + firmwareModeLabel(remoteStatus.firmwareMode)
+        ? '已连接 ' +
+          (device.name || 'OpenPencil BLE') +
+          '，固件模式：' +
+          firmwareModeLabel(remoteStatus.firmwareMode)
         : '已连接 ' + (device.name || 'OpenPencil BLE') + '，建议重新初始化基础固件以启用模式检测'
       return connection
     } catch (error) {
@@ -250,10 +290,14 @@ function createBleDeviceSession() {
         !modeStatus.firmwareMode ||
         modeStatus.firmwareMode === 'unified' ||
         modeStatus.firmwareMode === expectedMode
-      ) return 'ready'
+      )
+        return 'ready'
       status.value = 'error'
-      message.value = '当前设备运行 BLE ' + firmwareModeLabel(modeStatus.firmwareMode) +
-        ' 基础固件，不能接收 ' + firmwareModeLabel(expectedMode) +
+      message.value =
+        '当前设备运行 BLE ' +
+        firmwareModeLabel(modeStatus.firmwareMode) +
+        ' 基础固件，不能接收 ' +
+        firmwareModeLabel(expectedMode) +
         ' 内容；请先通过 USB 初始化正确的基础固件'
       return 'error'
     } catch (error) {
@@ -264,7 +308,7 @@ function createBleDeviceSession() {
     }
   }
 
-  async function upload(payload: EmbeddedImagePayload | EmbeddedPrototypePayload) {
+  async function upload(payload: BleUploadPayload) {
     if (!selectedDevice.value || !selectedProfile.value) {
       status.value = 'error'
       message.value = '请先连接 BLE 设备'
@@ -282,7 +326,8 @@ function createBleDeviceSession() {
       let connection = connectedDevice.value
       if (!connection?.server.connected) {
         status.value = 'checking'
-        message.value = attempt === 0 ? '正在重新连接 BLE 设备…' : '连接中断，正在进行第 ' + attempt + ' 次续传…'
+        message.value =
+          attempt === 0 ? '正在重新连接 BLE 设备…' : '连接中断，正在进行第 ' + attempt + ' 次续传…'
         await waitBeforeReconnect()
         connection = await connectSelectedDevice()
       }

@@ -1,4 +1,4 @@
-#include "usb_sequence_player.h"
+#include "sequence_player.h"
 
 #include "display_presenter.h"
 #include "wireless_content.h"
@@ -14,7 +14,8 @@
 
 #define SEQUENCE_STATS_FRAMES 120
 
-static const char *TAG = "usb_sequence";
+#if CONFIG_OPENPENCIL_SEQUENCE_PLAYBACK
+static const char *TAG = "sequence_player";
 
 typedef struct {
     uint16_t frame_index;
@@ -49,11 +50,18 @@ static void sequence_decoder_task(void *argument)
     while (xQueueReceive(decoder->requests, &request, portMAX_DELAY) == pdTRUE) {
         const int64_t started_us = esp_timer_get_time();
         openpencil_sequence_region_t region = {0};
-        esp_err_t result = openpencil_content_sequence_region(request.frame_index, &region);
-        if (result == ESP_OK) {
+        esp_err_t result = ESP_OK;
+        while (true) {
+            while (openpencil_content_write_in_progress()) {
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
+            result = openpencil_content_sequence_region(request.frame_index, &region);
+            if (result != ESP_OK) break;
+            if (openpencil_content_write_in_progress()) continue;
             result = openpencil_content_load_frame(request.frame_index,
                                                    request.destination,
                                                    decoder->frame_pixels);
+            if (!openpencil_content_write_in_progress()) break;
         }
         const sequence_decode_result_t decoded = {
             .frame_index = request.frame_index,
@@ -67,18 +75,22 @@ static void sequence_decoder_task(void *argument)
     vTaskDelete(NULL);
 }
 
-esp_err_t openpencil_usb_sequence_run(esp_lcd_panel_handle_t panel,
+#endif
+
+esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
                                       uint16_t *primary_frame_buffer,
                                       size_t frame_pixels,
                                       int width,
-                                      int height)
+                                      int height,
+                                      openpencil_sequence_ready_callback_t on_first_frame)
 {
-#if !CONFIG_OPENPENCIL_USB_SEQUENCE
+#if !CONFIG_OPENPENCIL_SEQUENCE_PLAYBACK
     (void)panel;
     (void)primary_frame_buffer;
     (void)frame_pixels;
     (void)width;
     (void)height;
+    (void)on_first_frame;
     return ESP_ERR_NOT_SUPPORTED;
 #else
     const openpencil_content_header_t *content = openpencil_content_header();
@@ -110,7 +122,7 @@ esp_err_t openpencil_usb_sequence_run(esp_lcd_panel_handle_t panel,
 
     TaskHandle_t decoder_task = NULL;
     ESP_RETURN_ON_FALSE(xTaskCreatePinnedToCore(sequence_decoder_task,
-                                                "usb_sequence_decode",
+                                                "sequence_decode",
                                                 4096,
                                                 &decoder,
                                                 6,
@@ -121,7 +133,7 @@ esp_err_t openpencil_usb_sequence_run(esp_lcd_panel_handle_t panel,
                         "create sequence decoder task failed");
 
     ESP_LOGI(TAG,
-             "double-buffer sequence player ready: %ux%u, %u frames, %u ms",
+             "sequence player ready: %ux%u, %u frames, %u ms",
              content->width,
              content->height,
              content->frame_count,
@@ -169,7 +181,11 @@ esp_err_t openpencil_usb_sequence_run(esp_lcd_panel_handle_t panel,
                                 current_buffer,
                                 &present_metrics),
                             TAG,
-                            "draw USB sequence frame failed");
+                            "draw sequence frame failed");
+        if (on_first_frame) {
+            ESP_RETURN_ON_ERROR(on_first_frame(), TAG, "start sequence transport failed");
+            on_first_frame = NULL;
+        }
 
         const int64_t decoder_wait_started_us = esp_timer_get_time();
         sequence_decode_result_t decoded;

@@ -153,6 +153,13 @@ static bool validate_header(const openpencil_content_header_t *header, size_t *t
                                         frame_bytes * header->frame_count) {
             return false;
         }
+#if CONFIG_OPENPENCIL_SEQUENCE_PLAYBACK
+    } else if (header->mode == OPENPENCIL_CONTENT_MODE_SEQUENCE) {
+        const size_t minimum_payload = sizeof(openpencil_sequence_content_header_t) +
+                                       (size_t)header->frame_count *
+                                           sizeof(openpencil_sequence_resource_t);
+        if (header->frame_count < 2 || header->payload_bytes <= minimum_payload) return false;
+#endif
     } else {
         return false;
     }

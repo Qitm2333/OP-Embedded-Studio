@@ -9,11 +9,14 @@
 extern "C" {
 #endif
 
-esp_err_t openpencil_usb_sequence_run(esp_lcd_panel_handle_t panel,
+typedef esp_err_t (*openpencil_sequence_ready_callback_t)(void);
+
+esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
                                       uint16_t *primary_frame_buffer,
                                       size_t frame_pixels,
                                       int width,
-                                      int height);
+                                      int height,
+                                      openpencil_sequence_ready_callback_t on_first_frame);
 
 #ifdef __cplusplus
 }

@@ -23,7 +23,7 @@
 #include "generated_prototype.h"
 #include "lcd_panel_factory.h"
 #include "prototype_runtime.h"
-#include "usb_sequence_player.h"
+#include "sequence_player.h"
 #include "wireless_content.h"
 #include "wireless_diagnostic_view.h"
 #if CONFIG_OPENPENCIL_WIFI_SERVER
@@ -99,7 +99,9 @@ static void backlight_set(bool on)
 }
 
 #if CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY || CONFIG_OPENPENCIL_WIFI_SERVER || CONFIG_OPENPENCIL_BLE_SERVER
-static esp_err_t draw_wireless_image(esp_lcd_panel_handle_t panel, uint16_t *frame_buffer)
+static esp_err_t draw_wireless_image(esp_lcd_panel_handle_t panel,
+                                      uint16_t *frame_buffer,
+                                      openpencil_sequence_ready_callback_t on_sequence_ready)
 {
     const openpencil_content_header_t *content = openpencil_content_header();
     if (!content || content->width != CONFIG_EXAMPLE_LCD_H_RES ||
@@ -109,11 +111,12 @@ static esp_err_t draw_wireless_image(esp_lcd_panel_handle_t panel, uint16_t *fra
     }
 
     if (openpencil_content_is_sequence()) {
-        return openpencil_usb_sequence_run(panel,
+        return openpencil_sequence_player_run(panel,
                                            frame_buffer,
                                            LCD_FRAME_PIXELS,
                                            CONFIG_EXAMPLE_LCD_H_RES,
-                                           CONFIG_EXAMPLE_LCD_V_RES);
+                                           CONFIG_EXAMPLE_LCD_V_RES,
+                                           on_sequence_ready);
     }
 
     ESP_LOGI(TAG, "Draw wireless image (%ux%u)", content->width, content->height);
@@ -257,7 +260,15 @@ void app_main(void)
             return;
         }
 #endif
-        ESP_ERROR_CHECK(draw_wireless_image(panel_handle, frame_buffer));
+        openpencil_sequence_ready_callback_t sequence_ready = NULL;
+        if (openpencil_content_is_sequence()) {
+#if CONFIG_OPENPENCIL_WIFI_SERVER
+            sequence_ready = openpencil_wireless_server_start;
+#elif CONFIG_OPENPENCIL_BLE_SERVER
+            sequence_ready = openpencil_ble_server_start;
+#endif
+        }
+        ESP_ERROR_CHECK(draw_wireless_image(panel_handle, frame_buffer, sequence_ready));
 #if CONFIG_OPENPENCIL_WIFI_SERVER
         // Present persisted content before starting Wi-Fi. On CO5300 hardware,
         // the first full-frame QSPI DMA transfer can underflow when it competes

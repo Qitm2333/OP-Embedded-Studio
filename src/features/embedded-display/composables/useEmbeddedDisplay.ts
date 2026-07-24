@@ -163,11 +163,11 @@ export function useEmbeddedDisplay() {
       imagePayload.value = null
       usbSequencePayload.value = payload
       buildStatus.value = 'idle'
-      buildMessage.value = `PNG 序列已准备：${payload.frameCount} 帧 · 30 FPS · ${(payload.storedBytes / 1024 / 1024).toFixed(2)} MiB`
+      buildMessage.value = `PNG 序列已准备：${payload.frameCount} 帧 · 20 FPS · ${(payload.storedBytes / 1024 / 1024).toFixed(2)} MiB`
       buildLog.value = [
         `sequence: ${payload.frameCount} PNG frames`,
         `size: ${payload.width}×${payload.height}`,
-        'frame-rate: 30 FPS',
+        'frame-rate: 20 FPS',
         `compressed: ${payload.compressedFrames} / ${payload.frameCount}`,
         `stored: ${payload.storedBytes} bytes`,
         'usb-sequence-payload: ready'

@@ -325,7 +325,8 @@ def mode_defaults_path(build_mode):
     path.parent.mkdir(parents=True, exist_ok=True)
     wireless_enabled = mode.startswith(("wifi-", "lan-"))
     external_content = mode in (
-        "usb-frame", "usb-prototype", "wifi-frame", "wifi-prototype", "wifi-live", "lan-frame"
+        "usb-frame", "usb-prototype", "wifi-frame", "wifi-prototype", "wifi-live", "lan-frame",
+        "ble-frame", "ble-prototype",
     )
     external_prototype = mode in ("usb-frame", "usb-prototype", "wifi-frame", "wifi-prototype")
     live_preview = mode == "wifi-live"
@@ -338,7 +339,7 @@ def mode_defaults_path(build_mode):
         f'CONFIG_OPENPENCIL_WIFI_SERVER={"y" if wireless_enabled else "n"}',
         f'CONFIG_OPENPENCIL_EXTERNAL_CONTENT_ONLY={"y" if external_content else "n"}',
         f'CONFIG_OPENPENCIL_EXTERNAL_PROTOTYPE={"y" if external_prototype else "n"}',
-        f'CONFIG_OPENPENCIL_USB_SEQUENCE={"y" if mode == "usb-frame" else "n"}',
+        f'CONFIG_OPENPENCIL_SEQUENCE_PLAYBACK={"y" if mode in ("usb-frame", "wifi-frame", "ble-frame") else "n"}',
         f'CONFIG_OPENPENCIL_WIFI_LIVE_PREVIEW={"y" if live_preview else "n"}',
         f'CONFIG_OPENPENCIL_LAN_STATUS_SCREEN={"y" if lan_status_screen else "n"}',
         f'CONFIG_OPENPENCIL_SETUP_ACCESS_POINT={"y" if setup_access_point else "n"}',
