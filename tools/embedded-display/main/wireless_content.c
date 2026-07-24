@@ -20,6 +20,12 @@ static openpencil_sequence_content_header_t active_sequence;
 static uint8_t sequence_decode_chunk[16384];
 static bool content_valid;
 static atomic_bool content_write_in_progress = ATOMIC_VAR_INIT(false);
+static openpencil_content_header_t pending_header;
+static size_t pending_payload_bytes;
+static size_t pending_erase_size;
+static size_t pending_erased_bytes;
+static uint32_t pending_payload_crc;
+static bool content_stream_active;
 
 static void fill_rgb565(uint16_t *destination, size_t pixels, uint16_t color)
 {
@@ -542,57 +548,132 @@ esp_err_t openpencil_content_load_frame(uint16_t frame_index, uint16_t *destinat
     return ESP_OK;
 }
 
-esp_err_t openpencil_content_write(const uint8_t *data, size_t length)
+size_t openpencil_content_capacity(void)
 {
-    if (!content_partition || !data || length < sizeof(openpencil_content_header_t)) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    const openpencil_content_header_t *header = (const openpencil_content_header_t *)data;
-    const uint8_t *payload = data + sizeof(*header);
-    openpencil_prototype_content_header_t prototype = {0};
-    openpencil_sequence_content_header_t sequence = {0};
-    if (header->mode == OPENPENCIL_CONTENT_MODE_PROTOTYPE &&
-        header->payload_bytes >= sizeof(prototype)) {
-        memcpy(&prototype, payload, sizeof(prototype));
-    } else if (header->mode == OPENPENCIL_CONTENT_MODE_SEQUENCE &&
-               header->payload_bytes >= sizeof(sequence)) {
-        memcpy(&sequence, payload, sizeof(sequence));
-    }
-    if (!layout_matches(header, &prototype, &sequence) ||
-        length != sizeof(*header) + header->payload_bytes ||
-        validate_transitions(header, &prototype, payload) != ESP_OK ||
-        validate_sequence_resources(header, &sequence, payload) != ESP_OK) {
+    return content_partition ? content_partition->size : 0;
+}
+
+void openpencil_content_write_abort(void)
+{
+    content_stream_active = false;
+    pending_payload_bytes = 0;
+    pending_erase_size = 0;
+    pending_erased_bytes = 0;
+    pending_payload_crc = 0;
+    memset(&pending_header, 0, sizeof(pending_header));
+    atomic_store_explicit(&content_write_in_progress, false, memory_order_release);
+}
+
+esp_err_t openpencil_content_write_begin(const openpencil_content_header_t *header, size_t length)
+{
+    if (!content_partition) return ESP_ERR_NOT_FOUND;
+    if (!header || !common_header_matches(header) ||
+        length != sizeof(*header) + header->payload_bytes) {
         return ESP_ERR_INVALID_SIZE;
-    }
-    if (esp_crc32_le(0, payload, header->payload_bytes) != header->payload_crc32) {
-        return ESP_ERR_INVALID_CRC;
     }
 
     const size_t erase_size = (length + 0xFFFu) & ~0xFFFu;
     if (erase_size > content_partition->size) return ESP_ERR_INVALID_SIZE;
 
-    // A playing sequence reads this partition continuously. Pause its decoder
-    // before erasing so a wireless update cannot consume partially written data.
+    openpencil_content_write_abort();
     atomic_store_explicit(&content_write_in_progress, true, memory_order_release);
-    esp_err_t result = esp_partition_erase_range(content_partition, 0, erase_size);
-    if (result == ESP_OK) {
-        result = esp_partition_write(content_partition, sizeof(*header), payload,
-                                     header->payload_bytes);
-    }
-    if (result == ESP_OK) {
-        result = esp_partition_write(content_partition, 0, header, sizeof(*header));
-    }
+    content_valid = false;
+    pending_erase_size = erase_size;
+    const size_t initial_erase = erase_size < 0x10000u ? erase_size : 0x10000u;
+    const esp_err_t result = esp_partition_erase_range(content_partition, 0, initial_erase);
     if (result != ESP_OK) {
-        atomic_store_explicit(&content_write_in_progress, false, memory_order_release);
-        ESP_LOGE(TAG, "write content partition failed: %s", esp_err_to_name(result));
+        openpencil_content_write_abort();
+        ESP_LOGE(TAG, "erase content partition failed: %s", esp_err_to_name(result));
         return result;
     }
 
-    active_header = *header;
-    active_prototype = prototype;
-    active_sequence = sequence;
-    content_valid = true;
-    // Successful Wi-Fi/BLE commits always schedule a reboot. Keep playback
-    // paused during that short window so it never mixes old and new resources.
+    pending_header = *header;
+    pending_payload_bytes = 0;
+    pending_erased_bytes = initial_erase;
+    pending_payload_crc = 0;
+    content_stream_active = true;
     return ESP_OK;
+}
+
+static esp_err_t ensure_content_erased(size_t required_bytes)
+{
+    while (pending_erased_bytes < required_bytes) {
+        const size_t remaining = pending_erase_size - pending_erased_bytes;
+        const size_t erase_bytes = remaining < 0x10000u ? remaining : 0x10000u;
+        ESP_RETURN_ON_ERROR(
+            esp_partition_erase_range(content_partition, pending_erased_bytes, erase_bytes),
+            TAG,
+            "extend content erase failed");
+        pending_erased_bytes += erase_bytes;
+    }
+    return ESP_OK;
+}
+
+esp_err_t openpencil_content_write_chunk(size_t payload_offset,
+                                         const uint8_t *data,
+                                         size_t length)
+{
+    if (!content_stream_active || payload_offset != pending_payload_bytes ||
+        (!data && length > 0) || payload_offset > pending_header.payload_bytes ||
+        length > pending_header.payload_bytes - payload_offset) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (length == 0) return ESP_OK;
+
+    ESP_RETURN_ON_ERROR(
+        ensure_content_erased(sizeof(pending_header) + payload_offset + length),
+        TAG,
+        "prepare content flash failed");
+    ESP_RETURN_ON_ERROR(
+        esp_partition_write(content_partition, sizeof(pending_header) + payload_offset, data, length),
+        TAG,
+        "stream content payload failed");
+    pending_payload_crc = esp_crc32_le(pending_payload_crc, data, length);
+    pending_payload_bytes += length;
+    return ESP_OK;
+}
+
+esp_err_t openpencil_content_write_finish(void)
+{
+    if (!content_stream_active || pending_payload_bytes != pending_header.payload_bytes) {
+        openpencil_content_write_abort();
+        return ESP_ERR_INVALID_SIZE;
+    }
+    if (pending_payload_crc != pending_header.payload_crc32) {
+        openpencil_content_write_abort();
+        return ESP_ERR_INVALID_CRC;
+    }
+
+    const openpencil_content_header_t header = pending_header;
+    esp_err_t result = esp_partition_write(content_partition, 0, &header, sizeof(header));
+    content_stream_active = false;
+    if (result == ESP_OK) result = openpencil_content_init();
+    if (result != ESP_OK || !openpencil_content_is_valid()) {
+        esp_partition_erase_range(content_partition, 0, 0x1000);
+        openpencil_content_write_abort();
+        return result != ESP_OK ? result : ESP_ERR_INVALID_SIZE;
+    }
+
+    pending_payload_bytes = 0;
+    pending_erase_size = 0;
+    pending_erased_bytes = 0;
+    pending_payload_crc = 0;
+    memset(&pending_header, 0, sizeof(pending_header));
+    atomic_store_explicit(&content_write_in_progress, false, memory_order_release);
+    return ESP_OK;
+}
+
+esp_err_t openpencil_content_write(const uint8_t *data, size_t length)
+{
+    if (!data || length < sizeof(openpencil_content_header_t)) return ESP_ERR_INVALID_ARG;
+    const openpencil_content_header_t *header = (const openpencil_content_header_t *)data;
+    ESP_RETURN_ON_ERROR(openpencil_content_write_begin(header, length), TAG,
+                        "begin content write failed");
+    const esp_err_t write_result = openpencil_content_write_chunk(
+        0, data + sizeof(*header), header->payload_bytes);
+    if (write_result != ESP_OK) {
+        openpencil_content_write_abort();
+        return write_result;
+    }
+    return openpencil_content_write_finish();
 }

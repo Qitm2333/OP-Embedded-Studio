@@ -9,7 +9,7 @@ import {
 } from './serial-flasher'
 
 const WIRELESS_FLASH_SIZE: Partial<Record<EmbeddedBuildMode, FlashSizeValues>> = {
-  'wifi-frame': '8MB',
+  'wifi-frame': '32MB',
   'wifi-live': '8MB',
   'ble-frame': '32MB'
 }

@@ -21,6 +21,7 @@ static httpd_handle_t server;
 static esp_netif_t *access_point_netif;
 static esp_netif_t *station_netif;
 static openpencil_wireless_status_t wireless_status;
+static uint8_t content_receive_buffer[16384];
 static portMUX_TYPE wireless_status_lock = portMUX_INITIALIZER_UNLOCKED;
 
 static void reboot_task(void *arg);
@@ -116,37 +117,58 @@ static esp_err_t device_handler(httpd_req_t *request)
 #if !CONFIG_OPENPENCIL_WIFI_LIVE_PREVIEW
 static esp_err_t content_handler(httpd_req_t *request)
 {
-    if (request->content_len <= 0 || request->content_len > 5 * 1024 * 1024) {
+    if (request->content_len < (int)sizeof(openpencil_content_header_t) ||
+        (size_t)request->content_len > openpencil_content_capacity()) {
         httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, "invalid content length");
         return ESP_OK;
     }
-    const size_t length = (size_t)request->content_len;
-    uint8_t *body = heap_caps_malloc(length, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    if (!body) body = malloc(length);
-    if (!body) {
-        httpd_resp_send_err(request, HTTPD_500_INTERNAL_SERVER_ERROR, "not enough memory");
+
+    openpencil_content_header_t header = {0};
+    size_t header_received = 0;
+    while (header_received < sizeof(header)) {
+        const int read = httpd_req_recv(
+            request, (char *)&header + header_received, sizeof(header) - header_received);
+        if (read <= 0) {
+            httpd_resp_send_err(request, HTTPD_408_REQ_TIMEOUT, "content header timeout");
+            return ESP_OK;
+        }
+        header_received += (size_t)read;
+    }
+
+    esp_err_t result = openpencil_content_write_begin(
+        &header, (size_t)request->content_len);
+    if (result != ESP_OK) {
+        httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, esp_err_to_name(result));
         return ESP_OK;
     }
 
-    size_t received = 0;
-    while (received < length) {
-        const int read = httpd_req_recv(request, (char *)body + received, length - received);
+    size_t payload_received = 0;
+    while (payload_received < header.payload_bytes) {
+        const size_t remaining = header.payload_bytes - payload_received;
+        const size_t requested = remaining < sizeof(content_receive_buffer) ? remaining : sizeof(content_receive_buffer);
+        const int read = httpd_req_recv(request, (char *)content_receive_buffer, requested);
         if (read <= 0) {
-            free(body);
-            httpd_resp_send_err(request, HTTPD_408_REQ_TIMEOUT, "request body timeout");
+            openpencil_content_write_abort();
+            httpd_resp_send_err(request, HTTPD_408_REQ_TIMEOUT, "content body timeout");
             return ESP_OK;
         }
-        received += (size_t)read;
+        result = openpencil_content_write_chunk(payload_received, content_receive_buffer, (size_t)read);
+        if (result != ESP_OK) {
+            openpencil_content_write_abort();
+            httpd_resp_send_err(request, HTTPD_500_INTERNAL_SERVER_ERROR, esp_err_to_name(result));
+            return ESP_OK;
+        }
+        payload_received += (size_t)read;
     }
 
-    const esp_err_t result = openpencil_content_write(body, length);
-    free(body);
+    result = openpencil_content_write_finish();
     if (result != ESP_OK) {
         ESP_LOGE(TAG, "content update failed: %s", esp_err_to_name(result));
         httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, esp_err_to_name(result));
         return ESP_OK;
     }
-    const esp_err_t response_result = send_json(request, "{\"ok\":true,\"message\":\"content updated; device restarting\"}");
+    const esp_err_t response_result = send_json(
+        request, "{\"ok\":true,\"message\":\"content updated; device restarting\"}");
     xTaskCreate(reboot_task, "content_reboot", 2048, NULL, 1, NULL);
     return response_result;
 }

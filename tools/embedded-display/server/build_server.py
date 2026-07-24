@@ -44,9 +44,9 @@ DEFAULT_BUILD_MODE = "usb-frame"
 BUILD_MODES = {
     "usb-frame": {"partitionTable": "partitions_32mb_usb_frame.csv", "appPartitionBytes": 0x300000},
     "usb-prototype": {"partitionTable": "partitions_8mb_content.csv", "appPartitionBytes": 0x300000},
-    "wifi-frame": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
+    "wifi-frame": {"partitionTable": "partitions_32mb_wireless.csv", "appPartitionBytes": 0x300000},
     "wifi-live": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
-    "wifi-prototype": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
+    "wifi-prototype": {"partitionTable": "partitions_32mb_wireless.csv", "appPartitionBytes": 0x300000},
     "lan-frame": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
     "lan-prototype": {"partitionTable": "partitions_8mb_wireless.csv", "appPartitionBytes": 0x300000},
     "ble-frame": {"partitionTable": "partitions_32mb_wireless.csv", "appPartitionBytes": 0x300000},
@@ -348,7 +348,7 @@ def mode_defaults_path(build_mode):
     ]
     if wireless_enabled:
         settings.append("CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192")
-    if ble_enabled or mode == "usb-frame":
+    if partition_table.startswith("partitions_32mb"):
         settings.extend([
             "# CONFIG_ESPTOOLPY_FLASHSIZE_8MB is not set",
             "CONFIG_ESPTOOLPY_FLASHSIZE_32MB=y",

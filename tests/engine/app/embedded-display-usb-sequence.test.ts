@@ -81,6 +81,25 @@ describe('USB PNG sequence content', () => {
     expect(view.getUint16(12, true)).toBe(1)
   })
 
+  test('allows Wi-Fi and BLE sequences larger than 5 MiB', () => {
+    const largeProfile = {
+      id: 'large-wireless-display',
+      resolution: { width: 466, height: 466 }
+    } as EmbeddedDisplayProfile
+    const frame = new Uint8Array(466 * 466 * 2)
+    for (let offset = 0; offset < frame.byteLength; offset += 2) {
+      frame[offset] = (offset / 2) & 0xff
+      frame[offset + 1] = ((offset / 2) >> 8) & 0xff
+    }
+    const frames = Array.from({ length: 13 }, () => frame)
+    const wifi = encodeWifiSequenceFrames(largeProfile, frames)
+    const ble = encodeBleSequenceFrames(largeProfile, frames)
+
+    expect(wifi.storedBytes).toBeGreaterThan(5 * 1024 * 1024)
+    expect(ble.storedBytes).toBe(wifi.storedBytes)
+    expect(wifi.patchFrames).toBe(0)
+  })
+
   test('uses the same sequence envelope for USB, Wi-Fi, and BLE', () => {
     const frames = [uniqueFrame(), uniqueFrame(17)]
     const usb = new Uint8Array(encodeUsbSequenceFrames(patchProfile, frames).content)

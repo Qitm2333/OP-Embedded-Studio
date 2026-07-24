@@ -48,7 +48,7 @@ static uint16_t transfer_value_handle;
 static uint16_t status_value_handle;
 static uint16_t connection_handle = BLE_HS_CONN_HANDLE_NONE;
 static uint8_t own_address_type;
-static uint8_t *transfer_buffer;
+static bool transfer_stream_started;
 static uint8_t transfer_header[sizeof(openpencil_content_header_t)];
 static size_t transfer_header_received;
 static size_t transfer_capacity;
@@ -119,8 +119,8 @@ void openpencil_ble_server_get_status(openpencil_ble_status_t *status)
 
 static void reset_transfer(bool failed)
 {
-    if (transfer_buffer) heap_caps_free(transfer_buffer);
-    transfer_buffer = NULL;
+    if (transfer_stream_started) openpencil_content_write_abort();
+    transfer_stream_started = false;
     transfer_header_received = 0;
     transfer_capacity = 0;
     transfer_received = 0;
@@ -180,7 +180,7 @@ static int receive_chunk(struct os_mbuf *om)
     memcpy(&packet_offset, chunk, sizeof(packet_offset));
     const uint8_t *packet_data = chunk + sizeof(packet_offset);
     const size_t packet_length = length - sizeof(packet_offset);
-    const size_t confirmed_offset = transfer_buffer ? transfer_received : transfer_header_received;
+    const size_t confirmed_offset = transfer_stream_started ? transfer_received : transfer_header_received;
     if (packet_offset != confirmed_offset) {
         // A status read can race with packets already queued by the browser.
         // Accept fully duplicated packets, but never append data after a gap.
@@ -189,7 +189,7 @@ static int receive_chunk(struct os_mbuf *om)
     }
 
     size_t packet_data_offset = 0;
-    if (!transfer_buffer) {
+    if (!transfer_stream_started) {
         const size_t header_remaining = sizeof(transfer_header) - transfer_header_received;
         const size_t header_bytes = packet_length < header_remaining ? packet_length : header_remaining;
         memcpy(transfer_header + transfer_header_received, packet_data, header_bytes);
@@ -207,17 +207,13 @@ static int receive_chunk(struct os_mbuf *om)
 
         const openpencil_content_header_t *header =
             (const openpencil_content_header_t *)transfer_header;
-        if (!validate_header(header, &transfer_capacity) || transfer_capacity > 5 * 1024 * 1024) {
+        if (!validate_header(header, &transfer_capacity) ||
+            transfer_capacity > openpencil_content_capacity() ||
+            openpencil_content_write_begin(header, transfer_capacity) != ESP_OK) {
             reset_transfer(true);
             return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
         }
-        transfer_buffer = heap_caps_malloc(transfer_capacity, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-        if (!transfer_buffer) transfer_buffer = malloc(transfer_capacity);
-        if (!transfer_buffer) {
-            reset_transfer(true);
-            return BLE_ATT_ERR_INSUFFICIENT_RES;
-        }
-        memcpy(transfer_buffer, transfer_header, sizeof(transfer_header));
+        transfer_stream_started = true;
         transfer_received = sizeof(transfer_header);
         transfer_header_received = 0;
         taskENTER_CRITICAL(&ble_status_lock);
@@ -233,7 +229,15 @@ static int receive_chunk(struct os_mbuf *om)
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
     }
     if (payload_length > 0) {
-        memcpy(transfer_buffer + transfer_received, packet_data + packet_data_offset, payload_length);
+        const esp_err_t write_result = openpencil_content_write_chunk(
+            transfer_received - sizeof(transfer_header),
+            packet_data + packet_data_offset,
+            payload_length);
+        if (write_result != ESP_OK) {
+            ESP_LOGE(TAG, "BLE content stream failed: %s", esp_err_to_name(write_result));
+            reset_transfer(true);
+            return BLE_ATT_ERR_UNLIKELY;
+        }
         transfer_received += payload_length;
     }
     taskENTER_CRITICAL(&ble_status_lock);
@@ -242,14 +246,13 @@ static int receive_chunk(struct os_mbuf *om)
     notify_status(false);
 
     if (transfer_received == transfer_capacity) {
-        const esp_err_t result = openpencil_content_write(transfer_buffer, transfer_capacity);
+        const esp_err_t result = openpencil_content_write_finish();
         if (result != ESP_OK) {
             ESP_LOGE(TAG, "BLE content commit failed: %s", esp_err_to_name(result));
             reset_transfer(true);
             return BLE_ATT_ERR_UNLIKELY;
         }
-        heap_caps_free(transfer_buffer);
-        transfer_buffer = NULL;
+        transfer_stream_started = false;
         taskENTER_CRITICAL(&ble_status_lock);
         ble_status.receiving = false;
         ble_status.completed = true;

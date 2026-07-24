@@ -615,7 +615,7 @@ async function handleWifiImageChange(event: Event) {
     wirelessMessage.value = `正在通过 Wi-Fi 传输 PNG 序列：${sequence.frameCount} 帧…`
     await uploadWirelessSequence(wirelessBaseUrl.value, sequence)
     wirelessStatus.value = 'success'
-    wirelessMessage.value = `PNG 序列已传输：${sequence.frameCount} 帧 · 30 FPS，设备正在重启`
+    wirelessMessage.value = `PNG 序列已传输：${sequence.frameCount} 帧 · 20 FPS，设备正在重启`
   } catch (error) {
     wirelessStatus.value = 'error'
     wirelessMessage.value = error instanceof Error ? error.message : String(error)
@@ -1485,10 +1485,10 @@ watch([wifiSsid, wifiPassword], () => {
                 <p class="mt-0.5 truncate text-[10px] leading-relaxed text-muted">
                   {{
                     wifiSequencePayload && frameResourceSource === 'uploaded'
-                      ? `${wifiSequencePayload.name} · ${wifiSequencePayload.frameCount} 帧 · 30 FPS · ${(wifiSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB`
+                      ? `${wifiSequencePayload.name} · ${wifiSequencePayload.frameCount} 帧 · 20 FPS · ${(wifiSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB`
                       : selectedImageName && frameResourceSource === 'uploaded'
                         ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · 1 帧`
-                        : '暂时仅支持上传单张图片'
+                        : '单张图片，或多张 PNG 序列；20 FPS，最大约 28.94 MiB'
                   }}
                 </p>
               </div>
@@ -1497,11 +1497,12 @@ watch([wifiSsid, wifiPassword], () => {
             <label
               class="mt-2 flex h-control w-full cursor-pointer items-center justify-center rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
             >
-              {{ wirelessStatus === 'uploading' ? '正在传输…' : '选择单张图片并上传' }}
+              {{ wirelessStatus === 'uploading' ? '正在传输…' : '选择图片或 PNG 序列并上传' }}
               <input
                 class="sr-only"
                 type="file"
                 accept="image/gif,image/png,image/jpeg,image/webp,image/bmp"
+                multiple
                 :disabled="!canWifiFileUpload"
                 @change="handleWifiImageChange"
               />
@@ -1601,10 +1602,10 @@ watch([wifiSsid, wifiPassword], () => {
                 <p class="mt-0.5 truncate text-[10px] leading-relaxed text-muted">
                   {{
                     bleSequencePayload && frameResourceSource === 'uploaded'
-                      ? `${bleSequencePayload.name} · ${bleSequencePayload.frameCount} 帧 · 30 FPS · ${(bleSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB`
+                      ? `${bleSequencePayload.name} · ${bleSequencePayload.frameCount} 帧 · 20 FPS · ${(bleSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB`
                       : selectedImageName && frameResourceSource === 'uploaded'
                         ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · 1 帧`
-                        : '暂时仅支持上传单张图片'
+                        : '单张图片，或多张 PNG 序列；20 FPS，最大约 28.94 MiB'
                   }}
                 </p>
               </div>
@@ -1614,12 +1615,13 @@ watch([wifiSsid, wifiPassword], () => {
               class="mt-2 flex h-control w-full cursor-pointer items-center justify-center rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
             >
               {{
-                bleSession.status.value === 'uploading' ? '正在传输…' : '选择单张图片并上传'
+                bleSession.status.value === 'uploading' ? '正在传输…' : '选择图片或 PNG 序列并上传'
               }}
               <input
                 class="sr-only"
                 type="file"
                 accept="image/gif,image/png,image/jpeg,image/webp,image/bmp"
+                multiple
                 :disabled="!canBleFileUpload"
                 @change="handleBleImageChange"
               />

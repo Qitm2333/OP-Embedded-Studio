@@ -5,8 +5,7 @@ import {
   type UsbImageSequencePayload
 } from './usb-sequence'
 
-const WIFI_SEQUENCE_CONTENT_BYTES = 0x4f0000
-const BLE_SEQUENCE_CONTENT_BYTES = 5 * 1024 * 1024
+const WIRELESS_SEQUENCE_CONTENT_BYTES = 0x1cf0000
 
 export type WirelessImageSequencePayload = UsbImageSequencePayload
 
@@ -29,7 +28,7 @@ export function encodeWifiSequenceFrames(
 ): WirelessImageSequencePayload {
   return ensureWirelessSequenceFits(
     encodeUsbSequenceFrames(profile, frames, name),
-    WIFI_SEQUENCE_CONTENT_BYTES
+    WIRELESS_SEQUENCE_CONTENT_BYTES
   )
 }
 
@@ -40,7 +39,7 @@ export function encodeBleSequenceFrames(
 ): WirelessImageSequencePayload {
   return ensureWirelessSequenceFits(
     encodeUsbSequenceFrames(profile, frames, name),
-    BLE_SEQUENCE_CONTENT_BYTES
+    WIRELESS_SEQUENCE_CONTENT_BYTES
   )
 }
 
@@ -50,7 +49,7 @@ export async function imageFilesToWifiSequence(
 ): Promise<WirelessImageSequencePayload> {
   return ensureWirelessSequenceFits(
     await imageFilesToUsbSequence(files, profile),
-    WIFI_SEQUENCE_CONTENT_BYTES
+    WIRELESS_SEQUENCE_CONTENT_BYTES
   )
 }
 
@@ -60,6 +59,6 @@ export async function imageFilesToBleSequence(
 ): Promise<WirelessImageSequencePayload> {
   return ensureWirelessSequenceFits(
     await imageFilesToUsbSequence(files, profile),
-    BLE_SEQUENCE_CONTENT_BYTES
+    WIRELESS_SEQUENCE_CONTENT_BYTES
   )
 }
