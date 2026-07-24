@@ -3,13 +3,9 @@
   const canvas = document.getElementById('previewCanvas')
   const context = canvas.getContext('2d', { willReadFrequently: true })
   const fileInput = document.getElementById('fileInput')
-  const connectButton = document.getElementById('connectButton')
-  const disconnectButton = document.getElementById('disconnectButton')
+  const editButton = document.getElementById('editButton')
   const uploadButton = document.getElementById('uploadButton')
-  const zoomInput = document.getElementById('zoomInput')
   const backgroundInput = document.getElementById('backgroundInput')
-  const containButton = document.getElementById('containButton')
-  const coverButton = document.getElementById('coverButton')
   const resetButton = document.getElementById('resetButton')
   const statusText = document.getElementById('statusText')
   const progressBar = document.getElementById('progressBar')
@@ -17,33 +13,69 @@
   const fileSummary = document.getElementById('fileSummary')
   const payloadSummary = document.getElementById('payloadSummary')
   const emptyPreview = document.getElementById('emptyPreview')
+  const editHint = document.getElementById('editHint')
+  const editControls = document.getElementById('editControls')
+  const previewWrap = document.getElementById('previewWrap')
 
+  const pointers = new Map()
   let files = []
   let previewBitmap = null
   let connected = false
+  let connecting = false
   let busy = false
-  let fitMode = 'contain'
+  let pendingUpload = false
+  let editing = false
   let zoom = 1
   let offsetX = 0
   let offsetY = 0
-  let pointer = null
+  let gesture = null
 
   function setStatus(message, type = '') {
     statusText.textContent = message
     statusText.className = `status ${type}`
   }
 
+  function updateConnectionBadge() {
+    connectionBadge.className = 'badge'
+    if (connected) {
+      connectionBadge.textContent = '已连接'
+      connectionBadge.classList.add('connected')
+    } else if (connecting) {
+      connectionBadge.textContent = '连接中'
+      connectionBadge.classList.add('connecting')
+    } else {
+      connectionBadge.textContent = '按需连接'
+    }
+  }
+
   function updateActions() {
-    connectButton.disabled = connected || busy
-    disconnectButton.disabled = !connected || busy
-    uploadButton.disabled = !connected || files.length === 0 || busy
+    fileInput.disabled = busy
+    editButton.disabled = files.length === 0 || busy
+    uploadButton.disabled = files.length === 0 || busy
+    editButton.textContent = editing ? '完成' : '编辑'
+    editButton.classList.toggle('active', editing)
+  }
+
+  function clearGesture() {
+    pointers.clear()
+    gesture = null
+  }
+
+  function setEditing(nextEditing) {
+    editing = Boolean(nextEditing && previewBitmap && !busy)
+    previewWrap.classList.toggle('editing', editing)
+    previewWrap.classList.toggle('locked', !editing)
+    editControls.classList.toggle('visible', editing)
+    editControls.setAttribute('aria-hidden', String(!editing))
+    editHint.hidden = !editing
+    clearGesture()
+    updateActions()
   }
 
   function resetCrop() {
     zoom = 1
     offsetX = 0
     offsetY = 0
-    zoomInput.value = '100'
     renderPreview()
   }
 
@@ -52,9 +84,7 @@
     const height = protocol.HEIGHT
     targetContext.fillStyle = backgroundInput.value
     targetContext.fillRect(0, 0, width, height)
-    const baseScale = fitMode === 'cover'
-      ? Math.max(width / bitmap.width, height / bitmap.height)
-      : Math.min(width / bitmap.width, height / bitmap.height)
+    const baseScale = Math.max(width / bitmap.width, height / bitmap.height)
     const scale = baseScale * zoom
     const drawWidth = bitmap.width * scale
     const drawHeight = bitmap.height * scale
@@ -79,6 +109,7 @@
     if (previewBitmap) previewBitmap.close()
     previewBitmap = files.length ? await createImageBitmap(files[0]) : null
     emptyPreview.hidden = Boolean(previewBitmap)
+    setEditing(Boolean(previewBitmap))
     resetCrop()
   }
 
@@ -116,9 +147,16 @@
     if (error) throw new Error(error)
   }
 
+  function startNativeUpload() {
+    pendingUpload = false
+    setStatus('设备已连接，正在上传…')
+    window.OpenPencilNative.upload()
+  }
+
   async function processAndUpload() {
     if (!window.OpenPencilNative) return setStatus('原生 BLE 桥不可用', 'error')
     busy = true
+    pendingUpload = false
     updateActions()
     progressBar.style.width = '0%'
     try {
@@ -137,13 +175,56 @@
         ? protocol.encodeFrame(frames[0])
         : protocol.encodeSequence(frames)
       payloadSummary.textContent = `${frames.length} 帧 · ${(content.byteLength / 1024 / 1024).toFixed(2)} MiB`
-      setStatus('正在交给原生 BLE 传输模块…')
+      setStatus('内容已准备，正在查找设备…')
       sendPayloadToNative(content)
-      window.OpenPencilNative.upload()
+      if (connected) {
+        startNativeUpload()
+      } else {
+        pendingUpload = true
+        connecting = true
+        updateConnectionBadge()
+        window.OpenPencilNative.connect()
+      }
     } catch (error) {
       busy = false
+      pendingUpload = false
+      connecting = false
+      updateConnectionBadge()
       updateActions()
       setStatus(error instanceof Error ? error.message : String(error), 'error')
+    }
+  }
+
+  function canvasPoint(event) {
+    const bounds = previewWrap.getBoundingClientRect()
+    const scale = protocol.WIDTH / bounds.width
+    return {
+      x: (event.clientX - bounds.left) * scale - protocol.WIDTH / 2,
+      y: (event.clientY - bounds.top) * scale - protocol.HEIGHT / 2
+    }
+  }
+
+  function pointerPair() {
+    return [...pointers.values()].slice(0, 2)
+  }
+
+  function beginGesture() {
+    if (pointers.size === 1) {
+      const point = [...pointers.values()][0]
+      gesture = { type: 'pan', point, offsetX, offsetY }
+      return
+    }
+    if (pointers.size >= 2) {
+      const [first, second] = pointerPair()
+      const center = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 }
+      gesture = {
+        type: 'pinch',
+        distance: Math.hypot(second.x - first.x, second.y - first.y),
+        center,
+        zoom,
+        offsetX,
+        offsetY
+      }
     }
   }
 
@@ -151,62 +232,77 @@
     files = [...fileInput.files]
     fileSummary.textContent = files.length
       ? files.length === 1
-        ? `${files[0].name} · 单帧`
-        : `${files[0].name} 等 ${files.length} 帧 · 20 FPS`
+        ? '单帧图片 · 466 × 466'
+        : `${files.length} 帧 PNG 序列 · 20 FPS`
       : '支持单图或 PNG 序列，目标 466 × 466。'
     payloadSummary.textContent = '尚未准备内容'
+    progressBar.style.width = '0%'
+    setStatus(files.length ? '编辑已激活，调整完成后点击“完成”' : '选择图片后即可上传')
     await loadPreview()
     updateActions()
   })
 
-  connectButton.addEventListener('click', () => window.OpenPencilNative?.connect())
-  disconnectButton.addEventListener('click', () => window.OpenPencilNative?.disconnect())
+  editButton.addEventListener('click', () => setEditing(!editing))
   uploadButton.addEventListener('click', processAndUpload)
   resetButton.addEventListener('click', resetCrop)
   backgroundInput.addEventListener('input', renderPreview)
-  zoomInput.addEventListener('input', () => {
-    zoom = Number(zoomInput.value) / 100
-    renderPreview()
-  })
-  containButton.addEventListener('click', () => {
-    fitMode = 'contain'
-    containButton.classList.add('active')
-    coverButton.classList.remove('active')
-    resetCrop()
-  })
-  coverButton.addEventListener('click', () => {
-    fitMode = 'cover'
-    coverButton.classList.add('active')
-    containButton.classList.remove('active')
-    resetCrop()
+
+  previewWrap.addEventListener('pointerdown', (event) => {
+    if (!editing || !previewBitmap) return
+    event.preventDefault()
+    pointers.set(event.pointerId, canvasPoint(event))
+    previewWrap.setPointerCapture(event.pointerId)
+    beginGesture()
   })
 
-  canvas.parentElement.addEventListener('pointerdown', (event) => {
-    pointer = { x: event.clientX, y: event.clientY, offsetX, offsetY }
-    canvas.parentElement.setPointerCapture(event.pointerId)
+  previewWrap.addEventListener('pointermove', (event) => {
+    if (!editing || !pointers.has(event.pointerId)) return
+    event.preventDefault()
+    pointers.set(event.pointerId, canvasPoint(event))
+    if (pointers.size === 1 && gesture?.type === 'pan') {
+      const point = [...pointers.values()][0]
+      offsetX = gesture.offsetX + point.x - gesture.point.x
+      offsetY = gesture.offsetY + point.y - gesture.point.y
+      renderPreview()
+      return
+    }
+    if (pointers.size >= 2 && gesture?.type === 'pinch') {
+      const [first, second] = pointerPair()
+      const distance = Math.max(1, Math.hypot(second.x - first.x, second.y - first.y))
+      const center = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 }
+      const nextZoom = Math.min(6, Math.max(0.2, gesture.zoom * distance / Math.max(1, gesture.distance)))
+      const ratio = nextZoom / gesture.zoom
+      zoom = nextZoom
+      offsetX = center.x - (gesture.center.x - gesture.offsetX) * ratio
+      offsetY = center.y - (gesture.center.y - gesture.offsetY) * ratio
+      renderPreview()
+    }
   })
-  canvas.parentElement.addEventListener('pointermove', (event) => {
-    if (!pointer) return
-    const scale = protocol.WIDTH / canvas.parentElement.clientWidth
-    offsetX = pointer.offsetX + (event.clientX - pointer.x) * scale
-    offsetY = pointer.offsetY + (event.clientY - pointer.y) * scale
-    renderPreview()
-  })
-  canvas.parentElement.addEventListener('pointerup', () => { pointer = null })
-  canvas.parentElement.addEventListener('pointercancel', () => { pointer = null })
+
+  function releasePointer(event) {
+    if (!pointers.has(event.pointerId)) return
+    pointers.delete(event.pointerId)
+    beginGesture()
+  }
+
+  previewWrap.addEventListener('pointerup', releasePointer)
+  previewWrap.addEventListener('pointercancel', releasePointer)
+  previewWrap.addEventListener('lostpointercapture', releasePointer)
 
   window.OpenPencilApp = {
     nativeEvent(event) {
       if (event.type === 'connected') {
         connected = true
-        connectionBadge.textContent = '已连接'
-        connectionBadge.classList.add('connected')
-        setStatus(event.message, 'success')
+        connecting = false
+        updateConnectionBadge()
+        if (pendingUpload) startNativeUpload()
+        else setStatus(event.message, 'success')
       } else if (event.type === 'disconnected') {
         connected = false
+        connecting = false
+        pendingUpload = false
         busy = false
-        connectionBadge.textContent = '未连接'
-        connectionBadge.classList.remove('connected')
+        updateConnectionBadge()
         setStatus(event.message)
       } else if (event.type === 'progress') {
         const percent = event.total ? Math.round(event.written / event.total * 100) : 0
@@ -214,10 +310,15 @@
         setStatus(`${event.message}：${percent}%`)
       } else if (event.type === 'complete') {
         busy = false
+        pendingUpload = false
         progressBar.style.width = '100%'
         setStatus(event.message, 'success')
       } else if (event.type === 'error') {
         busy = false
+        pendingUpload = false
+        if (connecting) connected = false
+        connecting = false
+        updateConnectionBadge()
         setStatus(event.message, 'error')
       } else {
         setStatus(event.message)
@@ -226,6 +327,7 @@
     }
   }
 
+  updateConnectionBadge()
   renderPreview()
   updateActions()
 })()
