@@ -1,4 +1,4 @@
-import type { EmbeddedDisplayProfile } from '../model/types'
+import type { EmbeddedDisplayProfile, EmbeddedImagePayload } from '../model/types'
 import {
   encodeUsbSequenceFrames,
   imageFilesToUsbSequence,
@@ -8,6 +8,13 @@ import {
 const WIRELESS_SEQUENCE_CONTENT_BYTES = 0x1cf0000
 
 export type WirelessImageSequencePayload = UsbImageSequencePayload
+
+export function isWirelessSingleImagePayload(
+  payload: EmbeddedImagePayload | null,
+  profileId: string
+): payload is EmbeddedImagePayload {
+  return payload?.profileId === profileId && payload.frameCount === 1
+}
 
 function ensureWirelessSequenceFits(
   payload: UsbImageSequencePayload,

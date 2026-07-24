@@ -17,6 +17,7 @@ import {
 import {
   imageFilesToBleSequence,
   imageFilesToWifiSequence,
+  isWirelessSingleImagePayload,
   type WirelessImageSequencePayload
 } from '../adapters/wireless-sequence'
 import {
@@ -593,9 +594,11 @@ async function handleWifiImageChange(event: Event) {
     if (files.length === 1) {
       await selectImage(files[0], { upload: false })
       if (
-        !imagePayload.value ||
-        imagePayload.value.name !== files[0].name ||
-        buildStatus.value === 'error'
+        !isWirelessSingleImagePayload(imagePayload.value, profile.id) ||
+        buildStatus.value === 'error' ||
+        transportMode.value !== 'wifi' ||
+        burnMode.value !== 'frame' ||
+        selectedProfile.value?.id !== profile.id
       ) {
         return
       }
@@ -637,13 +640,11 @@ async function handleBleImageChange(event: Event) {
     if (files.length === 1) {
       await selectImage(files[0], { upload: false })
       if (
-        !imagePayload.value ||
-        imagePayload.value.name !== files[0].name ||
+        !isWirelessSingleImagePayload(imagePayload.value, profile.id) ||
         buildStatus.value === 'error' ||
         transportMode.value !== 'ble' ||
         burnMode.value !== 'frame' ||
-        selectedProfile.value?.id !== profile.id ||
-        imagePayload.value.profileId !== profile.id
+        selectedProfile.value?.id !== profile.id
       )
         return
       await bleSession.upload(imagePayload.value)

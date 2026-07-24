@@ -7,7 +7,8 @@ import {
 import { encodeWirelessImage } from '@/features/embedded-display/adapters/wireless-content'
 import {
   encodeBleSequenceFrames,
-  encodeWifiSequenceFrames
+  encodeWifiSequenceFrames,
+  isWirelessSingleImagePayload
 } from '@/features/embedded-display/adapters/wireless-sequence'
 import type {
   EmbeddedDisplayProfile,
@@ -79,6 +80,14 @@ describe('USB PNG sequence content', () => {
     const view = new DataView(encoded)
     expect(view.getUint8(6)).toBe(0)
     expect(view.getUint16(12, true)).toBe(1)
+  })
+
+  test('accepts converted single images without comparing display names', () => {
+    const payload = singleImagePayload()
+    payload.name = 'frame-without-extension'
+
+    expect(isWirelessSingleImagePayload(payload, profile.id)).toBe(true)
+    expect(isWirelessSingleImagePayload(payload, 'another-display')).toBe(false)
   })
 
   test('allows Wi-Fi and BLE sequences larger than 5 MiB', () => {
