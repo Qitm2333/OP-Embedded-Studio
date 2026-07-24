@@ -19,6 +19,7 @@
   "scripts": {
     "dev": "vite",
     "embedded:server": "python tools/embedded-display/server/build_server.py --host 127.0.0.1 --port 8765",
+    "mobile:apk": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/android-ble-uploader/build.ps1",
     "build": "bun run build:packages && bun run lint && vite build",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",

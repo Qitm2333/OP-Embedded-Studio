@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>OpenPencil BLE</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header>
+        <div>
+          <p class="eyebrow">OPENPENCIL MOBILE</p>
+          <h1>BLE 图片上传</h1>
+        </div>
+        <span id="connectionBadge" class="badge">未连接</span>
+      </header>
+
+      <section class="card connection-card">
+        <div>
+          <h2>1. 连接设备</h2>
+          <p>请先断开电脑端 BLE，再连接手机。</p>
+        </div>
+        <div class="button-row">
+          <button id="connectButton" class="primary">连接 OpenPencil</button>
+          <button id="disconnectButton" class="secondary" disabled>断开</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <h2>2. 选择与裁切</h2>
+            <p id="fileSummary">支持单图或 PNG 序列，目标 466 × 466。</p>
+          </div>
+          <label class="file-button">
+            选择图片
+            <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp,image/bmp" multiple />
+          </label>
+        </div>
+
+        <div class="preview-wrap">
+          <canvas id="previewCanvas" width="466" height="466"></canvas>
+          <div class="round-guide"></div>
+          <p id="emptyPreview">选择图片后可拖动调整位置</p>
+        </div>
+
+        <div class="controls">
+          <div class="segmented">
+            <button id="containButton" class="active">完整显示</button>
+            <button id="coverButton">填满裁切</button>
+          </div>
+          <label>
+            <span>缩放</span>
+            <input id="zoomInput" type="range" min="100" max="300" value="100" />
+          </label>
+          <label>
+            <span>背景</span>
+            <input id="backgroundInput" type="color" value="#000000" />
+          </label>
+          <button id="resetButton" class="text-button">重置裁切</button>
+        </div>
+      </section>
+
+      <section class="card upload-card">
+        <div>
+          <h2>3. 传输</h2>
+          <p id="payloadSummary">尚未准备内容</p>
+        </div>
+        <button id="uploadButton" class="primary large" disabled>处理并上传</button>
+        <div class="progress-track"><div id="progressBar"></div></div>
+        <p id="statusText" class="status">等待连接设备</p>
+      </section>
+    </main>
+
+    <script src="protocol.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

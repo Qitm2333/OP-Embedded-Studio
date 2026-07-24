@@ -78,3 +78,8 @@ scratch/
 
 # OpenCode
 .opencode/
+
+# Portable Android toolchain and generated mobile builds
+.android-portable/
+tools/android-ble-uploader/.gradle/
+tools/android-ble-uploader/app/build/
