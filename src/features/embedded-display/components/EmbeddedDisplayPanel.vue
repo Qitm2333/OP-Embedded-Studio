@@ -23,11 +23,11 @@ import {
   flashUsbFrameFirmware,
   flashUsbPrototypeFirmware,
   flashUsbSequenceFirmware,
-  requestUsbSerialPort,
   supportsUsbFrameFastFlash
 } from '../adapters/usb-content'
 import { useBleDeviceSession } from '../composables/useBleDeviceSession'
 import { useEmbeddedDisplay } from '../composables/useEmbeddedDisplay'
+import { useSerialDeviceSession } from '../composables/useSerialDeviceSession'
 import WifiLiveMirrorPanel from '../live-mirror/components/WifiLiveMirrorPanel.vue'
 import type {
   EmbeddedBuildMode,
@@ -76,6 +76,7 @@ const wifiProvisionEnabled = ref(false)
 const wifiSsid = ref('')
 const wifiPassword = ref('')
 const bleSession = useBleDeviceSession()
+const serialSession = useSerialDeviceSession()
 const wirelessBaseUrl = ref('http://192.168.4.1')
 const wirelessStatus = ref<'idle' | 'checking' | 'uploading' | 'success' | 'error'>('idle')
 const wirelessMessage = ref('连接设备后，可直接传输当前图片')
@@ -161,6 +162,7 @@ const selectedPrototypeSelectValue = computed({
 const modeSwitchLocked = computed(
   () =>
     usbFlashing.value ||
+    serialSession.selecting.value ||
     liveMirrorBusy.value ||
     wirelessInitialization.value.wifi.status === 'uploading' ||
     wirelessInitialization.value.ble.status === 'uploading' ||
@@ -376,7 +378,7 @@ async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
 
   let port
   try {
-    port = await requestUsbSerialPort()
+    port = await serialSession.requirePort()
   } catch (error) {
     bakeError.value = error instanceof Error ? error.message : String(error)
     return
@@ -448,6 +450,14 @@ async function handleUsbPrototypeBakeAndFlash() {
   if (!canUsbPrototypeFlash.value) return
   const requestedProfileId = selectedProfile.value?.id
   if (!requestedProfileId) return
+
+  let port
+  try {
+    port = await serialSession.requirePort()
+  } catch (error) {
+    prototypeError.value = error instanceof Error ? error.message : String(error)
+    return
+  }
   if (!(await preparePrototypeResources(false)) || !prototypePayload.value) return
   if (
     transportMode.value !== 'usb' ||
@@ -464,6 +474,7 @@ async function handleUsbPrototypeBakeAndFlash() {
   buildLog.value = []
   try {
     await flashUsbPrototypeFirmware(prototypePayload.value, {
+      port,
       onLog: (message) => {
         const normalized = message.trim()
         if (normalized) buildLog.value.push(normalized)
@@ -697,6 +708,18 @@ async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
   if (!manifestUrl || !profileId) return
 
   const state = wirelessInitialization.value[mode]
+  let port
+  try {
+    port = await serialSession.requirePort()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    state.status = 'error'
+    state.message = message
+    buildStatus.value = 'error'
+    buildMessage.value = message
+    return
+  }
+
   state.status = 'uploading'
   state.progress = 0
   state.message = `正在准备 ${mode === 'wifi' ? 'Wi-Fi' : 'BLE'} 基础固件…`
@@ -711,6 +734,7 @@ async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
       await prepareWifiFirmwareCredentials(profileId, wifiCredentials.value)
     }
     await flashFirmwareManifest(manifestUrl, mode === 'wifi' ? 'wifi-frame' : 'ble-frame', {
+      port,
       preparingMessage: state.message,
       connectedMessage: `已连接，正在初始化 ${mode === 'wifi' ? 'Wi-Fi' : 'BLE'} 设备。`,
       onLog: (message) => {
@@ -942,6 +966,51 @@ watch([wifiSsid, wifiPassword], () => {
           @update:model-value="selectProfile"
         />
         <p v-else class="text-[11px] text-muted">{{ buildMessage }}</p>
+
+        <div
+          v-if="selectedProfile"
+          class="mt-panel rounded-panel border border-border bg-panel-field p-2"
+        >
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex min-w-0 items-center gap-2">
+              <span
+                class="size-2 shrink-0 rounded-full"
+                :class="serialSession.ready.value ? 'bg-success' : 'bg-muted'"
+              />
+              <div class="min-w-0">
+                <p class="truncate text-xs font-medium text-surface">
+                  {{ serialSession.label.value }}
+                </p>
+                <p class="mt-0.5 truncate text-[10px] text-muted">
+                  {{ serialSession.message.value }}
+                </p>
+              </div>
+            </div>
+            <span
+              class="shrink-0 text-[10px]"
+              :class="serialSession.ready.value ? 'text-success' : 'text-muted'"
+            >
+              {{ serialSession.ready.value ? '已选择' : '未选择' }}
+            </span>
+          </div>
+          <button
+            type="button"
+            class="mt-2 h-control w-full rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="modeSwitchLocked || serialSession.selecting.value || !serialSession.supported.value"
+            @click="serialSession.selectPort"
+          >
+            {{
+              serialSession.selecting.value
+                ? '等待选择串口…'
+                : serialSession.ready.value
+                  ? '重新选择串口'
+                  : '选择串口设备'
+            }}
+          </button>
+          <p class="mt-1 text-[10px] leading-relaxed text-muted">
+            仅在烧录时打开串口，完成后自动释放；刷新页面后会恢复已授权设备。
+          </p>
+        </div>
 
         <div
           v-if="selectedProfile && deviceDetailsOpen"
