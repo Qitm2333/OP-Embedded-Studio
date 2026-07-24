@@ -17,6 +17,7 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -26,6 +27,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelUuid;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Base64;
 import android.webkit.JavascriptInterface;
@@ -60,6 +62,7 @@ public final class MainActivity extends Activity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
+    private Uri cameraCaptureUri;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner scanner;
     private BluetoothGatt gatt;
@@ -101,10 +104,30 @@ public final class MainActivity extends Activity {
                     FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
+                if (params != null && params.isCaptureEnabled()) {
+                    File captureFile = CameraFileProvider.captureFile(MainActivity.this);
+                    if (captureFile.exists()) captureFile.delete();
+                    cameraCaptureUri = CameraFileProvider.captureUri(MainActivity.this);
+                    Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraCaptureUri);
+                    cameraIntent.setClipData(ClipData.newRawUri("OpenPencil photo", cameraCaptureUri));
+                    cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    if (cameraIntent.resolveActivity(getPackageManager()) == null) {
+                        fileCallback.onReceiveValue(null);
+                        fileCallback = null;
+                        cameraCaptureUri = null;
+                        emitError("没有找到可用的相机应用");
+                        return true;
+                    }
+                    startActivityForResult(cameraIntent, FILE_CHOOSER_REQUEST);
+                    return true;
+                }
+                cameraCaptureUri = null;
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("image/*");
-                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params != null
+                        && params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
                 startActivityForResult(intent, FILE_CHOOSER_REQUEST);
                 return true;
             }
@@ -119,7 +142,10 @@ public final class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode != FILE_CHOOSER_REQUEST || fileCallback == null) return;
         Uri[] result = null;
-        if (resultCode == RESULT_OK && data != null) {
+        if (resultCode == RESULT_OK && cameraCaptureUri != null) {
+            File captureFile = CameraFileProvider.captureFile(this);
+            if (captureFile.isFile() && captureFile.length() > 0) result = new Uri[]{cameraCaptureUri};
+        } else if (resultCode == RESULT_OK && data != null) {
             if (data.getClipData() != null) {
                 int count = data.getClipData().getItemCount();
                 result = new Uri[count];
@@ -132,6 +158,7 @@ public final class MainActivity extends Activity {
         }
         fileCallback.onReceiveValue(result);
         fileCallback = null;
+        cameraCaptureUri = null;
     }
 
     @Override

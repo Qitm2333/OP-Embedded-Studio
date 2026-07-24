@@ -3,6 +3,7 @@
   const canvas = document.getElementById('previewCanvas')
   const context = canvas.getContext('2d', { willReadFrequently: true })
   const fileInput = document.getElementById('fileInput')
+  const cameraInput = document.getElementById('cameraInput')
   const editButton = document.getElementById('editButton')
   const uploadButton = document.getElementById('uploadButton')
   const backgroundInput = document.getElementById('backgroundInput')
@@ -50,6 +51,7 @@
 
   function updateActions() {
     fileInput.disabled = busy
+    cameraInput.disabled = busy
     editButton.disabled = files.length === 0 || busy
     uploadButton.disabled = files.length === 0 || busy
     editButton.textContent = editing ? '完成' : '编辑'
@@ -228,8 +230,9 @@
     }
   }
 
-  fileInput.addEventListener('change', async () => {
-    files = [...fileInput.files]
+  async function handleFileSelection(input) {
+    files = [...input.files]
+    input.value = ''
     fileSummary.textContent = files.length
       ? files.length === 1
         ? '单帧图片 · 466 × 466'
@@ -240,7 +243,10 @@
     setStatus(files.length ? '编辑已激活，调整完成后点击“完成”' : '选择图片后即可上传')
     await loadPreview()
     updateActions()
-  })
+  }
+
+  fileInput.addEventListener('change', () => handleFileSelection(fileInput))
+  cameraInput.addEventListener('change', () => handleFileSelection(cameraInput))
 
   editButton.addEventListener('click', () => setEditing(!editing))
   uploadButton.addEventListener('click', processAndUpload)
