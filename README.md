@@ -1,328 +1,178 @@
 # OP Embedded Studio
 
-嵌入式 UI 设计、交互原型、固件烧录与无线传输平台。支持在设计画布中制作 Frame 和状态机，并通过 USB、Wi-Fi、BLE 或实时镜像将内容发送到嵌入式显示设备。
+嵌入式 UI 设计、交互原型、固件烧录与无线传输平台。它将可视化设计画布与真实 ESP32 显示设备连接起来，让设计内容可以直接预览、烘焙、传输和烧录。
 
-> **项目来源与致谢：** 本项目最初基于 [OpenPencil](https://github.com/open-pencil/open-pencil) 开发。感谢 OpenPencil 原作者与社区提供优秀的开源设计编辑器基础，包括画布、文档格式、渲染、AI、MCP 和 CLI 等核心能力。OP Embedded Studio 在此基础上进行了面向嵌入式 UI 设计、设备预览和固件传输的深度扩展，目前作为独立项目维护，与 OpenPencil 官方项目不存在隶属关系。
+An embedded UI design, interaction prototyping, firmware flashing, and wireless content transfer platform. OP Embedded Studio connects a visual design canvas to real ESP32 display hardware so that interfaces can be previewed, baked, transferred, and flashed directly to a device.
+
+> **项目来源与致谢：** 本项目最初基于 [OpenPencil](https://github.com/open-pencil/open-pencil) 开发。感谢 OpenPencil 原作者与社区提供优秀的开源设计编辑器基础，包括画布、文档格式、渲染、排版、AI、MCP 和 CLI 等能力。由于嵌入式设备、固件和传输链路相关改动较大，OP Embedded Studio 目前作为独立衍生项目维护，与 OpenPencil 官方项目不存在隶属关系。
+>
+> **Origin and acknowledgements:** This project was originally built on top of [OpenPencil](https://github.com/open-pencil/open-pencil). We sincerely thank the OpenPencil authors and community for the open-source editor foundation, including its canvas, document model, rendering, typography, AI, MCP, and CLI capabilities. Because OP Embedded Studio has diverged substantially around embedded hardware, firmware, and transfer workflows, it is now maintained as an independent derivative project and is not affiliated with or endorsed by the official OpenPencil project.
 
 ## 当前重点适配设备
 
 目前完整适配 [Waveshare ESP32-S3-Touch-AMOLED-1.75C](https://docs.waveshare.net/ESP32-S3-Touch-AMOLED-1.75C)：
 
 - 466 × 466 圆形 AMOLED 屏幕
-- CO5300 显示控制器与 QSPI 显示接口
-- USB 单 Frame、USB 状态机与 PNG 序列帧烧录
-- Wi-Fi 单 Frame、Wi-Fi 状态机与实时镜像
-- BLE 单 Frame、BLE 状态机与 Android BLE 图片上传 App
-- 针对圆形可视区域、RGB565 色彩、TE 同步和设备交互完成适配
+- ESP32-S3 平台
+- CO5300 显示控制器
+- QSPI 显示接口
+- 圆形可视区域与居中裁切
+- RGB565 色彩转换与映射
+- TE 同步与整帧刷新链路
+- Boot 键与触屏交互输入
 
-其他屏幕方案仍保留在设备目录中，便于后续扩展与适配；当前默认设备为上述 Waveshare 屏幕。
+其他屏幕 profile 仍保留在设备目录中，便于后续扩展；当前默认设备为上述 Waveshare 屏幕。
 
 ## 核心能力
 
-- 设计画布与 `.fig` / `.pen` 文件支持
-- Frame 烘焙、状态机交互与 PNG 序列帧
-- USB、Wi-Fi、BLE 内容传输与固件烧录
-- Wi-Fi 实时画面镜像
-- ESP32-S3 AMOLED 设备适配
-- 独立 Android BLE 图片上传 App
-- 基于 OpenPencil 的 AI、MCP、CLI 与设计转代码能力
+- 在设计画布中制作面向嵌入式屏幕的 Frame
+- 将静态 Frame 烘焙为设备可直接显示的 RGB565 内容
+- 创建可命名、可连续切换的多 Frame 交互状态机
+- 支持单图与 PNG 序列帧内容
+- 通过 USB 完成固件与内容的一键烧录
+- 通过 Wi-Fi 或 BLE 无线更新设备内容
+- 将固定 Frame 通过 Wi-Fi 实时镜像到设备
+- 使用独立 Android BLE App 拍照、选图、裁切并上传
+- 保留 OpenPencil 的设计编辑、AI、MCP、CLI 和设计转代码基础能力
 
 ![OP Embedded Studio](packages/docs/public/screenshot.png)
 
-## Installation
+## What OP Embedded Studio Does
 
-**macOS (Homebrew):**
+- **Design for real embedded displays** — create screen-sized Frames with the existing visual editor and target a concrete device profile.
+- **Bake and flash a Frame** — render the selected Frame, apply placement and circular clipping rules, convert it to the device color format, and flash it through USB.
+- **Build interaction prototypes** — connect multiple Frames with tap, double-tap, triple-tap, long-press, Boot-button, and other supported transitions.
+- **Play PNG sequences** — package ordered image sequences for device-side playback without changing the normal single-image workflow.
+- **Transfer over Wi-Fi** — initialize the device with dedicated Wi-Fi firmware and upload Frame or state-machine content wirelessly.
+- **Transfer over BLE** — initialize the BLE firmware, connect from a supported browser or the Android uploader, and send content without a serial cable.
+- **Mirror a Frame in real time** — watch a fixed Frame for changes and deliver ordered updates to the display over the dedicated Wi-Fi realtime channel.
+- **Keep device modes isolated** — USB, Wi-Fi, BLE, and realtime firmware resources are maintained as separate modes to reduce cross-mode regressions.
 
-```sh
-brew install openpencil
-```
+## 传输模式
 
-Or download from the [releases page](https://github.com/open-pencil/open-pencil/releases/latest), or [use the web app](https://app.openpencil.dev) — no install needed.
+| 模式 | 单 Frame | 状态机 | PNG 序列 | 说明 |
+|---|---:|---:|---:|---|
+| USB | ✅ | ✅ | ✅ | 一键烘焙并烧录，也可以上传本地图片或序列帧 |
+| Wi-Fi | ✅ | ✅ | ✅ | 首次通过 USB 初始化专用固件，后续无线传输内容 |
+| BLE | ✅ | ✅ | ✅ | 支持浏览器 Web Bluetooth 与 Android BLE App |
+| Wi-Fi 实时镜像 | ✅ | — | 自动更新 | 固定一个 Frame，设计变化后按顺序同步到设备 |
 
-## What it does
+不同模式拥有独立的状态、固件入口和传输适配器。切换模式不会复用其他模式的临时内容或连接状态。
 
-- **Opens `.fig` and `.pen` files** — read and write native Figma files, open supported Pencil documents from the app or OS file browser, copy & paste nodes between apps
-- **AI builds designs** — describe what you want in chat, 90+ tools create and modify nodes. Connect OpenRouter, Anthropic, OpenAI, Google AI, Z.ai, MiniMax, or compatible endpoints
-- **Fully programmable** — headless CLI, XPath queries, Figma Plugin API via `eval`, MCP server for AI agents, and desktop agent integrations for Claude Code, Codex, and Gemini CLI
-- **Lint, convert, and extract tokens** — inspect documents, lint naming/layout/accessibility, convert between supported formats, analyze colors/typography/spacing/clusters, and extract design tokens
-- **Components and variants** — create reusable components, group variants into component sets, insert local assets as instances, and switch variants from the inspector
-- **Design-to-code export** — export selections as JSX/Tailwind, generate token outputs, and map designs into component-oriented code workflows
-- **Vue SDK for custom editors** — headless components and composables for embedding OpenPencil into other apps or building workflow-specific editing surfaces. [Read the SDK docs →](https://openpencil.dev/programmable/sdk/)
-- **Real-time collaboration** — P2P via WebRTC, no server, no account. Cursors, presence, follow mode
-- **Auto layout & CSS Grid** — flex and grid layout via Yoga WASM, with gap, padding, alignment, track sizing
-- **~7 MB desktop app** — Tauri v2 for macOS, Windows, Linux. Also runs in the browser as a PWA
+## 基本工作流
 
-## CLI
+### USB
 
-```sh
-npm install -g @open-pencil/cli
-# or: bun add -g @open-pencil/cli
-```
+1. 选择设备与串口。
+2. 选择单 Frame 或状态机模式。
+3. 选择画布中的目标 Frame，或选择本地图片/PNG 序列。
+4. 一键烘焙并烧录。
 
-### Inspect design files
+### Wi-Fi / BLE
 
-Browse node trees, search by name or type, dig into properties — all without opening the editor:
+1. 在“首次使用与设备维护”中，通过 USB 烧录对应的预编译基础固件。
+2. 连接设备创建的 Wi-Fi，或在浏览器/Android App 中连接 BLE 设备。
+3. 选择单 Frame、状态机或 PNG 序列内容。
+4. 无线上传，设备端显示传输与刷新状态。
 
-```sh
-openpencil tree design.fig
-openpencil find design.pen --type TEXT
-openpencil node design.fig --id 1:23
-openpencil info design.fig
-```
+### Wi-Fi 实时镜像
 
-```
-[0] [page] "Getting started" (0:46566)
-  [0] [section] "" (0:46567)
-    [0] [frame] "Body" (0:46568)
-      [0] [frame] "Introduction" (0:46569)
-        [0] [frame] "Introduction Card" (0:46570)
-          [0] [frame] "Guidance" (0:46571)
-```
+1. 烧录独立的 Realtime 固件。
+2. 连接设备网络并选择一个固定 Frame。
+3. 开始镜像；后续对该 Frame 的修改会按顺序烘焙并传输。
 
-### Query with XPath
+## 本地运行
 
-Use XPath selectors to find nodes by type, attributes, and structure:
-
-```sh
-openpencil query design.fig "//FRAME"                              # All frames
-openpencil query design.fig "//FRAME[@width < 300]"                # Frames under 300px
-openpencil query design.fig "//TEXT[contains(@name, 'Button')]"     # Text with 'Button' in name
-openpencil query design.fig "//*[@cornerRadius > 0]"               # Rounded corners
-openpencil query design.fig "//SECTION//TEXT"                       # Text inside sections
-```
-
-### Export
-
-Render to PNG, JPG, WEBP, SVG, `.fig`, or JSX — or export selections/pages as `.fig` and convert whole documents between supported formats:
-
-```sh
-openpencil export design.fig                           # PNG
-openpencil export design.fig -f jpg -s 2 -q 90        # JPG at 2x, quality 90
-openpencil export design.fig -f fig --page "Page 1"   # Export a page as .fig
-openpencil export design.fig -f jsx --style tailwind   # Tailwind JSX
-openpencil export design.fig -f html --css tailwind    # Tailwind HTML fragment
-openpencil export design.fig -f html --html standalone --assets external # HTML + assets
-openpencil convert design.pen output.fig               # Convert between document formats
-openpencil import page.html --css styles.css -o page.fig # HTML/CSS → editable .fig
-```
-
-DOM/CSS input flows through `@open-pencil/dom-css`, so HTML, authored CSS, and Tailwind utility CSS can become editable OpenPencil layers:
-
-```sh
-openpencil import card.html --css card.css -o card.fig
-openpencil import card.html --tailwind "flex flex-col gap-3 w-80 p-6 rounded-xl bg-white" -o card.fig
-```
-
-```html
-<div className="flex flex-col gap-4 p-6 bg-white rounded-xl">
-  <p className="text-2xl font-bold text-[#1D1B20]">Card Title</p>
-  <p className="text-sm text-[#49454F]">Description text</p>
-</div>
-```
-
-### Lint design files
-
-Catch naming, layout, structure, and accessibility issues from the terminal:
-
-```sh
-openpencil lint design.fig
-openpencil lint design.pen --preset strict
-openpencil lint design.fig --rule color-contrast
-openpencil lint design.fig --list-rules
-```
-
-### Analyze and extract design tokens
-
-Audit an entire design system from the terminal — find inconsistencies, extract the real palette, and spot components waiting to be extracted:
-
-```sh
-openpencil analyze colors design.fig
-openpencil analyze typography design.fig
-openpencil analyze spacing design.fig
-openpencil analyze clusters design.fig
-openpencil analyze overlaps design.fig
-openpencil variables design.fig
-```
-
-```
-#1d1b20  ██████████████████████████████ 17155×
-#49454f  ██████████████████████████████ 9814×
-#ffffff  ██████████████████████████████ 8620×
-#6750a4  ██████████████████████████████ 3967×
-
-3771× frame "container" (100% match)
-     size: 40×40, structure: Frame > [Frame]
-
-2982× instance "Checkboxes" (100% match)
-     size: 48×48, structure: Instance > [Frame]
-```
-
-### Script with Figma Plugin API
-
-`eval` gives you the full Figma Plugin API. Modify the file, write it back:
-
-```sh
-openpencil eval design.fig -c "figma.currentPage.children.length"
-openpencil eval design.fig -c "figma.currentPage.selection.forEach(n => n.opacity = 0.5)" -w
-```
-
-### Control the running app
-
-When the desktop app is running, omit the file argument — the CLI connects via RPC and operates on the live canvas. Useful for automation scripts, CI pipelines, or AI agents that need to interact with the editor:
-
-```sh
-openpencil tree                               # Inspect the live document
-openpencil export -f png                      # Screenshot the current canvas
-openpencil eval -c "figma.currentPage.name"   # Query the editor
-```
-
-All commands support `--json` for machine-readable output.
-
-## AI & MCP
-
-### Built-in chat
-
-Press <kbd>⌘</kbd><kbd>J</kbd> to open the AI assistant. It has 100+ tools that can create shapes, set fills and strokes, manage auto-layout, work with components and variables, run boolean operations, analyze design tokens, and export assets. Bring your own API key for OpenRouter, Anthropic, OpenAI, Google AI, Z.ai, MiniMax, or compatible endpoints. No backend, no account.
-
-### Coding agents (desktop)
-
-Use Claude Code, Codex, or Gemini CLI directly in the chat panel. The agent connects to the editor's MCP server and uses all 100+ design tools. Requires the desktop app and the agent CLI installed locally.
-
-**Setup (Claude Code):**
-
-1. Install the ACP adapter: `npm install -g @agentclientprotocol/claude-agent-acp`
-2. Add MCP permission to `~/.claude/settings.json`:
-   ```json
-   {
-     "permissions": {
-       "allow": ["mcp__open-pencil__*"]
-     }
-   }
-   ```
-3. Open the desktop app → <kbd>Ctrl</kbd><kbd>J</kbd> → select **Claude Code** from the provider dropdown
-
-### MCP server
-
-Connect Claude Code, Cursor, Windsurf, or any MCP client to inspect, modify, and export design documents headlessly. 100+ tools. [Full docs →](https://openpencil.dev/reference/mcp-tools)
-
-**Stdio** (Claude Code, Cursor, Windsurf):
-
-```sh
-npm install -g @open-pencil/mcp
-claude mcp add --scope user open-pencil -- openpencil-mcp
-```
-
-For other MCP clients:
-
-```json
-{
-  "mcpServers": {
-    "open-pencil": {
-      "command": "openpencil-mcp"
-    }
-  }
-}
-```
-
-**HTTP** (scripts, CI):
-
-```sh
-openpencil-mcp-http   # http://localhost:3100/mcp
-```
-
-**File access:** Set `OPENPENCIL_MCP_ROOT` to scope file operations (`open_file`, `new_document`, export `path` param) to a directory. Defaults to the current working directory.
-
-### AI agent skill
-
-Teach your AI coding agent to use OpenPencil — inspect designs, export assets, analyze tokens, modify .fig files:
-
-```sh
-npx skills add open-pencil/skills@open-pencil
-```
-
-Works with Claude Code, Cursor, Windsurf, Codex, and any agent that supports [skills](https://skills.sh).
-
-For documentation-aware agents, the docs site publishes [llms.txt](https://openpencil.dev/llms.txt), [llms-full.txt](https://openpencil.dev/llms-full.txt), and per-page Markdown files generated from the VitePress docs.
-
-## Collaboration
-
-Share a link to co-edit in real time. No server, no account — peers connect directly via WebRTC.
-
-1. Click the share button in the top-right panel
-2. Share the generated link (`app.openpencil.dev/share/<room-id>`)
-3. Collaborators see your cursor, selection, and edits in real time
-4. Click a peer's avatar to follow their viewport
-
-## Why
-
-Figma is a closed platform that actively fights programmatic access. Their MCP server is read-only. [figma-use](https://github.com/dannote/figma-use) added full read/write automation via CDP — then [Figma 126 killed CDP](https://forum.figma.com/report-a-problem-6/remote-debugging-port-not-working-in-figma-desktop-126-1-2-50858). Your design files are in a proprietary binary format that only their software can fully read. Your workflows break when they decide to ship a point release.
-
-OpenPencil is the alternative: open source (MIT), reads .fig files natively, every operation is scriptable, and your data never leaves your machine.
-
-See the [roadmap](https://openpencil.dev/development/roadmap) for product direction and current Figma compatibility gaps.
-
-## Contributing
-
-### Setup
+当前项目主要以源码方式开发和运行。
 
 ```sh
 bun install
-bun run dev        # Dev server at localhost:1420
-bun run tauri dev  # Desktop app (requires Rust)
+bun run dev
 ```
 
-### Quality gates
+默认开发地址：
 
-| Command | Description |
-|---------|-------------|
-| `bun run check` | Lint + typecheck |
-| `bun run test` | E2E visual regression |
-| `bun run test:unit` | Unit tests |
-| `bun run format` | Code formatting |
-
-### Project structure
-
-```
-packages/
-  scene-graph/    @open-pencil/scene-graph — nodes, primitives, hit testing, copy/snap/undo
-  pen/            @open-pencil/pen — Pencil document format helpers
-  kiwi/           @open-pencil/kiwi — Kiwi runtime and low-level .fig container parsing
-  fig/            @open-pencil/fig — focused .fig package entrypoint
-  core/           @open-pencil/core — editor engine, renderer, layout, tools, RPC, document I/O
-  dom-css/        @open-pencil/dom-css — HTML/CSS/Tailwind to editable design documents
-  vue/            @open-pencil/vue — headless Vue SDK
-  cli/            @open-pencil/cli — headless CLI
-  mcp/            @open-pencil/mcp — MCP server (stdio + HTTP)
-  docs/           Documentation site (openpencil.dev)
-src/              Vue app (editor shell, AI, collaboration, document I/O)
-desktop/          Tauri v2 desktop app (Rust + config)
-tests/            E2E, visual, engine, and integration tests
+```text
+http://localhost:1420
 ```
 
-### Tech stack
-
-| Layer | Tech |
-|-------|------|
-| Rendering | Skia (CanvasKit WASM) |
-| Layout | Yoga WASM (flex + grid via [fork](https://github.com/open-pencil/yoga/tree/grid)) |
-| UI | Vue 3, Reka UI, Tailwind CSS 4 |
-| File format | Kiwi binary + Zstd + ZIP |
-| Collaboration | Trystero (WebRTC P2P) + Yjs (CRDT) |
-| Desktop | Tauri v2 |
-| AI/MCP | Multi-provider (Anthropic, OpenAI, Google AI, OpenRouter), MCP SDK, Hono |
-
-### Desktop builds
-
-Requires [Rust](https://rustup.rs/) and platform-specific prerequisites ([Tauri v2 guide](https://v2.tauri.app/start/prerequisites/)).
+大部分常用设备 profile 与无线基础固件已作为静态资源随项目提供。只有新增屏幕、修改底层驱动或重新生成基础固件时，才需要使用嵌入式构建服务：
 
 ```sh
-bun run tauri build
+bun run embedded:server
 ```
 
-## Acknowledgments
+## Android BLE App
 
-Thanks to [@sld0Ant](https://github.com/sld0Ant) (Anton Soldatov) for creating and maintaining the [documentation site](https://openpencil.dev).
+项目包含一个独立、轻量的 Android BLE 图片上传器：
+
+- 拍照或选择本地图片
+- 圆形画布预览
+- 双指缩放和拖动裁切
+- 自动连接目标 BLE 设备并上传
+- 无需运行完整的桌面编辑器
+
+构建命令：
+
+```sh
+bun run mobile:apk
+```
+
+Android 工程位于 `tools/android-ble-uploader/`。
+
+## 嵌入式模块结构
+
+嵌入式能力尽量与上游编辑器保持解耦：
+
+```text
+src/features/embedded-display/        前端设备面板、状态与传输适配器
+  adapters/                            图片、USB、Wi-Fi、BLE 等适配层
+  components/                          设备与交互界面
+  composables/                         前端状态和业务编排
+  live-mirror/                         Wi-Fi 实时镜像
+  model/                               类型与领域模型
+  runtime/                             设备目录与静态固件入口
+
+tools/embedded-display/                固件工程、构建服务与屏幕 profile
+tools/android-ble-uploader/            独立 Android BLE 上传器
+public/embedded-display/firmware/      可直接调用的预编译固件资源
+```
+
+设备 profile、内容转换、传输协议和界面状态分别维护，方便未来同步 OpenPencil 上游更新，或新增屏幕、控制器和传输方式。
+
+## OpenPencil 基础能力
+
+OP Embedded Studio 仍保留并使用大量 OpenPencil 能力，包括：
+
+- `.fig` 与 `.pen` 文档读写
+- CanvasKit / Skia 渲染
+- Yoga 自动布局
+- 组件、变量和图层编辑
+- AI 设计助手
+- MCP 与 CLI
+- HTML、CSS、JSX 和 Tailwind 相关工作流
+
+这些能力属于项目的编辑器基础，但本仓库的主要产品方向是嵌入式 UI 原型、设备预览与内容传输。OpenPencil 的原始用法和完整文档请访问其[官方仓库](https://github.com/open-pencil/open-pencil)。
+
+## 开发检查
+
+```sh
+bun run check:vue
+bun run build
+bun test tests/engine/app/embedded-display-runtime.test.ts
+```
+
+仓库不包含 OpenPencil 上游的大型 Git LFS 测试素材。相关说明见 `tests/fixtures/README.md`；这些测试素材不参与产品运行，也不影响中文字体 fallback。中文 fallback 优先使用系统字体，并可通过在线字体提供方加载和缓存 Noto Sans SC 等字体。
+
+## Acknowledgements
+
+- [OpenPencil](https://github.com/open-pencil/open-pencil) — the open-source editor foundation on which this project was originally built.
+- The OpenPencil authors and contributors — for the canvas, renderer, document model, typography, AI, MCP, CLI, and the broader development work inherited by this repository.
+- [Waveshare](https://www.waveshare.com/) — for the ESP32-S3-Touch-AMOLED-1.75C hardware and technical documentation used by the current primary device integration.
+- [@sld0Ant](https://github.com/sld0Ant) — for creating and maintaining the original OpenPencil documentation site.
 
 ## License
 
-MIT
+This project is distributed under the MIT License. See `LICENSE` for details.
+
+The original OpenPencil copyright and license notices are retained in accordance with the MIT License.
