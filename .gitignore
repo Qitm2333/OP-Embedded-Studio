@@ -83,3 +83,6 @@ scratch/
 .android-portable/
 tools/android-ble-uploader/.gradle/
 tools/android-ble-uploader/app/build/
+
+# Local Codex runtime artifacts
+.codex-runtime/

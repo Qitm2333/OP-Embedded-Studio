@@ -10,9 +10,9 @@ export function openPencilPwaPlugin() {
       navigateFallback: '/index.html'
     },
     manifest: {
-      name: 'OpenPencil',
-      short_name: 'OpenPencil',
-      description: 'Open-source design editor',
+      name: 'OP Embedded Studio',
+      short_name: 'OP Embedded',
+      description: 'Embedded UI design, prototyping, flashing, and wireless transfer studio',
       display: 'standalone',
       orientation: 'any',
       start_url: '/',

@@ -5,7 +5,7 @@ import { startServer } from './server.js'
 
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
   process.stdout.write(
-    `openpencil-mcp-http\n\nStart the OpenPencil MCP HTTP and WebSocket server.\n\nOptions:\n  --help, -h    Show this help message\n`
+    `openpencil-mcp-http\n\nStart the OP Embedded Studio MCP HTTP and WebSocket server.\n\nOptions:\n  --help, -h    Show this help message\n`
   )
   process.exit(0)
 }
@@ -25,7 +25,7 @@ const { app, httpPort } = startServer({
 
 serve({ fetch: app.fetch, port: httpPort, hostname: host })
 
-process.stderr.write(`OpenPencil MCP server\n`)
+process.stderr.write(`OP Embedded Studio MCP server\n`)
 process.stderr.write(`  HTTP:  http://${host}:${httpPort}\n`)
 process.stderr.write(`  WS:    ws://${host}:${wsPort}\n`)
 process.stderr.write(`  MCP:   http://${host}:${httpPort}/mcp\n`)

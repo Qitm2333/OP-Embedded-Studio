@@ -67,7 +67,7 @@ function isMissingCommandError(message: string): boolean {
 function missingCommandMessage(agentDef?: ACPAgentDef): string {
   if (!agentDef) return 'ACP agent CLI is not installed.'
   if (!agentDef.installCommand) {
-    return `"${agentDef.command}" is not installed. Install it and restart OpenPencil.`
+    return `"${agentDef.command}" is not installed. Install it and restart OP Embedded Studio.`
   }
   return `"${agentDef.command}" is not installed. Install it with: ${agentDef.installCommand}`
 }

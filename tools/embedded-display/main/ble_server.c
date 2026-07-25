@@ -24,7 +24,7 @@
 
 static const char *TAG = "ble_server";
 
-#define OPENPENCIL_BLE_DEVICE_NAME "OpenPencil BLE"
+#define OPENPENCIL_BLE_DEVICE_NAME "OP Embedded BLE"
 #define OPENPENCIL_BLE_DATA_LENGTH_OCTETS 251
 #define OPENPENCIL_BLE_DATA_LENGTH_TIME_US 2120
 #define OPENPENCIL_BLE_CONN_INTERVAL_MIN 6
@@ -556,4 +556,3 @@ esp_err_t openpencil_ble_server_start(void)
     ESP_LOGI(TAG, "BLE server ready: %s", OPENPENCIL_BLE_DEVICE_NAME);
     return ESP_OK;
 }
-

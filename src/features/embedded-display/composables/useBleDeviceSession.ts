@@ -153,7 +153,7 @@ function createBleDeviceSession() {
   const selectedProfile = ref<EmbeddedDisplayProfile | null>(null)
   const progress = ref(0)
   const canReconnect = computed(() => Boolean(selectedDevice.value && selectedProfile.value))
-  const deviceName = computed(() => selectedDevice.value?.name || 'OpenPencil BLE')
+  const deviceName = computed(() => selectedDevice.value?.name || 'OP Embedded BLE')
   const monitoredDevices = new WeakSet<object>()
 
   function setBaseFirmwareReady(ready: boolean) {
@@ -264,10 +264,12 @@ function createBleDeviceSession() {
       status.value = 'success'
       message.value = remoteStatus.firmwareMode
         ? '已连接 ' +
-          (device.name || 'OpenPencil BLE') +
+          (device.name || 'OP Embedded BLE') +
           '，固件模式：' +
           firmwareModeLabel(remoteStatus.firmwareMode)
-        : '已连接 ' + (device.name || 'OpenPencil BLE') + '，建议重新初始化基础固件以启用模式检测'
+        : '已连接 ' +
+          (device.name || 'OP Embedded BLE') +
+          '，建议重新初始化基础固件以启用模式检测'
       return connection
     } catch (error) {
       deviceReady.value = false

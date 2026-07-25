@@ -104,7 +104,7 @@ async function writeOutput(
 }
 
 export default defineCommand({
-  meta: { description: 'Import HTML/CSS/Tailwind into an OpenPencil document' },
+  meta: { description: 'Import HTML/CSS/Tailwind into an OP Embedded Studio document' },
   args: {
     file: {
       type: 'positional',

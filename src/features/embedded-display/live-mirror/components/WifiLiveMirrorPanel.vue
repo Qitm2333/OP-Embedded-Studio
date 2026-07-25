@@ -38,8 +38,8 @@ const emit = defineEmits<{
   busyChange: [busy: boolean]
 }>()
 
-const DEFAULT_WIFI_AP_SSID = 'OpenPencil-Setup'
-const DEFAULT_WIFI_AP_PASSWORD = 'openpencil'
+const DEFAULT_WIFI_AP_SSID = 'OP-Embedded-Setup'
+const DEFAULT_WIFI_AP_PASSWORD = 'opembedded'
 const baseUrl = ref('http://192.168.4.1')
 const deviceReady = ref(false)
 const deviceMessage = ref('连接设备后即可开始实时镜像')
@@ -211,8 +211,12 @@ async function initializeFirmware() {
       wifiProvisionEnabled.value && wifiSsid.value.trim()
         ? { ssid: wifiSsid.value.trim(), password: wifiPassword.value }
         : undefined
-    await prepareWifiFirmwareCredentials(profileId, credentials, 'wifi-live')
-    await flashFirmwareManifest(manifestUrl, 'wifi-live', {
+    const preparedManifestUrl = await prepareWifiFirmwareCredentials(
+      profileId,
+      credentials,
+      'wifi-live'
+    )
+    await flashFirmwareManifest(preparedManifestUrl || manifestUrl, 'wifi-live', {
       preparingMessage: initializationMessage.value,
       connectedMessage: '已连接，正在初始化 Wi-Fi 实时镜像设备。',
       onLog: (message) => {

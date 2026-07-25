@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "open-pencil-app",
+      "name": "op-embedded-studio",
       "dependencies": {
         "@ai-sdk/anthropic": "^3.0.74",
         "@ai-sdk/deepseek": "^2.0.34",

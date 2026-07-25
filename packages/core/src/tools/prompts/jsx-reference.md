@@ -1,4 +1,4 @@
-# OpenPencil JSX Reference
+# OP Embedded Studio JSX Reference
 
 ## Elements
 

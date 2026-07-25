@@ -15,7 +15,7 @@ import { paramToZod } from './schema'
 export type RpcSender = (body: Record<string, unknown>) => Promise<unknown>
 
 const automationTargetSchema = {
-  document_id: z.string().describe('Optional OpenPencil document/tab ID to target').optional(),
+  document_id: z.string().describe('Optional OP Embedded Studio document/tab ID to target').optional(),
   page_id: z.string().describe('Optional page ID to target within the document').optional()
 }
 
@@ -107,7 +107,7 @@ export function registerTools(mcpServer: McpServer, options: RegisterToolsOption
     'list_documents',
     {
       description:
-        'List open OpenPencil documents/tabs with their IDs, file paths, current pages, and pages.',
+        'List open OP Embedded Studio documents/tabs with their IDs, file paths, current pages, and pages.',
       inputSchema: z.object({})
     },
     async () => {

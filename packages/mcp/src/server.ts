@@ -152,7 +152,7 @@ export function startServer(options: ServerOptions = {}) {
   app.use('/rpc', async (c, next) => {
     const rpcToken = browserRpc.currentRpcToken()
     if (!browserRpc.isConnected() || !rpcToken) {
-      return c.json({ error: 'OpenPencil app is not connected. Is a document open?' }, 503)
+      return c.json({ error: 'OP Embedded Studio is not connected. Is a document open?' }, 503)
     }
     const provided = bearerToken(c.req.header('authorization'))
     if (!isAuthorized(provided, rpcToken)) {

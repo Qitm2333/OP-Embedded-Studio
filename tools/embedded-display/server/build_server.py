@@ -710,7 +710,7 @@ def write_generated_prototype_header(profile, body):
         "height": body.get("height"),
         "frameCount": len(states),
         "frameDelayMs": 1000,
-        "name": body.get("name") or "OpenPencil prototype",
+        "name": body.get("name") or "OP Embedded Studio prototype",
         "pixelsRgb565Base64": body.get("pixelsRgb565Base64"),
     })
 
@@ -718,7 +718,7 @@ def write_generated_prototype_header(profile, body):
         "#pragma once",
         "",
         "#define OPENPENCIL_PROTOTYPE_ENABLED 1",
-        f"#define OPENPENCIL_PROTOTYPE_NAME {c_string_literal(body.get('name') or 'OpenPencil prototype')}",
+        f"#define OPENPENCIL_PROTOTYPE_NAME {c_string_literal(body.get('name') or 'OP Embedded Studio prototype')}",
         f"#define OPENPENCIL_PROTOTYPE_STATE_COUNT {len(states)}",
         f"#define OPENPENCIL_PROTOTYPE_INITIAL_STATE {initial_state}",
         f"#define OPENPENCIL_PROTOTYPE_TRANSITION_COUNT {len(normalized_transitions)}",

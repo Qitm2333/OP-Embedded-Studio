@@ -16,7 +16,7 @@ const WIRELESS_FLASH_SIZE: Partial<Record<EmbeddedBuildMode, FlashSizeValues>> =
 
 function resolveArtifactUrl(path: string, manifestUrl: string): string {
   const manifestAbsoluteUrl = new URL(manifestUrl, window.location.href)
-  return new URL(path, manifestAbsoluteUrl.origin).toString()
+  return new URL(path, manifestAbsoluteUrl).toString()
 }
 
 export async function loadFirmwareManifestParts(

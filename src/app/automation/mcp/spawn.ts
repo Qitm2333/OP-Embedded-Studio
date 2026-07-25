@@ -46,10 +46,10 @@ function assertCompatibleMcpVersion(health: AutomationHealth): void {
   if (health.version === APP_VERSION) return
   const runningVersion = health.version ? `v${health.version}` : 'an older version'
   const updateHint = health.installCommand
-    ? `Run: ${health.installCommand}, then restart OpenPencil.`
-    : `Update the global @open-pencil/mcp package to v${APP_VERSION} with your package manager, then restart OpenPencil.`
+    ? `Run: ${health.installCommand}, then restart OP Embedded Studio.`
+    : `Update the global @open-pencil/mcp package to v${APP_VERSION} with your package manager, then restart OP Embedded Studio.`
   throw new Error(
-    `OpenPencil desktop v${APP_VERSION} requires @open-pencil/mcp v${APP_VERSION}, ` +
+    `OP Embedded Studio desktop v${APP_VERSION} requires @open-pencil/mcp v${APP_VERSION}, ` +
       `but the running MCP server is ${runningVersion}. ${updateHint}`
   )
 }
@@ -131,6 +131,6 @@ export async function spawnMCPIfNeeded(): Promise<AutomationServerHandle | null>
 
   await child.kill()
   throw new Error(
-    `Failed to start MCP server. Install @open-pencil/mcp@${APP_VERSION} globally with your package manager, then restart OpenPencil.`
+    `Failed to start MCP server. Install @open-pencil/mcp@${APP_VERSION} globally with your package manager, then restart OP Embedded Studio.`
   )
 }

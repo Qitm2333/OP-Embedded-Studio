@@ -59,7 +59,7 @@ export function createLanguageModel(
         apiKey: config.apiKey,
         fetch,
         headers: {
-          'X-OpenRouter-Title': 'OpenPencil',
+          'X-OpenRouter-Title': 'OP Embedded Studio',
           'HTTP-Referer': 'https://github.com/open-pencil/open-pencil'
         }
       })

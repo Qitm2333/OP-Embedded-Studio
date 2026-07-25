@@ -85,7 +85,7 @@ function wait(milliseconds: number): Promise<void> {
 }
 export async function requestOpenPencilBleDevice(): Promise<BluetoothDevice> {
   return getBluetooth().requestDevice({
-    filters: [{ namePrefix: 'OpenPencil BLE' }],
+    filters: [{ namePrefix: 'OP Embedded BLE' }, { namePrefix: 'OpenPencil BLE' }],
     optionalServices: [OPENPENCIL_BLE_SERVICE_UUID]
   })
 }

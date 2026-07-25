@@ -212,7 +212,7 @@ export function serializeChatLog(messages: UIMessage[]): string {
   const debugLog = buildDebugLog(toolLog)
 
   sections.push('╔══════════════════════════════════════╗')
-  sections.push('║     OPEN PENCIL AI DEBUG LOG         ║')
+  sections.push('║     OP EMBEDDED STUDIO AI DEBUG      ║')
   sections.push(`║     ${new Date().toISOString()}   ║`)
   sections.push('╚══════════════════════════════════════╝')
   sections.push('')

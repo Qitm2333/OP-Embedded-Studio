@@ -1,6 +1,6 @@
-# OpenPencil
+# OP Embedded Studio
 
-Vue 3 + CanvasKit (Skia WASM) + Yoga WASM design editor. Tauri v2 desktop, also runs in browser.
+Embedded UI design and flashing platform built on OpenPencil. Vue 3 + CanvasKit (Skia WASM) + Yoga WASM design editor, Tauri v2 desktop, also runs in browser.
 
 **Roadmap:** `packages/docs/development/roadmap.md` tracks product direction, Figma compatibility gaps, and raw metadata coverage. This file keeps agent-facing architecture, conventions, and commands; detailed public docs live under `packages/docs/**`.
 

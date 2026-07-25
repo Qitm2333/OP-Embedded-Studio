@@ -23,7 +23,7 @@ const { version } = await import('../package.json')
 const main = defineCommand({
   meta: {
     name: 'openpencil',
-    description: 'OpenPencil CLI — inspect, export, and lint OpenPencil design documents',
+    description: 'OP Embedded Studio CLI — inspect, export, and lint design documents',
     version
   },
   subCommands: {

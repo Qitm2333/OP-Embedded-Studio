@@ -66,18 +66,12 @@ fn build_schema_menus<R: tauri::Runtime>(
 
 pub fn install_app_menu<R: tauri::Runtime>(app: &mut tauri::App<R>) -> tauri::Result<()> {
     #[cfg(target_os = "macos")]
-    let app_menu = SubmenuBuilder::new(app, "OpenPencil")
+    let app_menu = SubmenuBuilder::new(app, "OP Embedded Studio")
         .item(&PredefinedMenuItem::about(
             app,
-            Some("About OpenPencil"),
+            Some("About OP Embedded Studio"),
             None,
         )?)
-        .item(
-            &MenuItemBuilder::new("Check for Updates…")
-                .id("check-updates")
-                .build(app)?,
-        )
-        .separator()
         .item(&PredefinedMenuItem::services(app, None)?)
         .separator()
         .item(&PredefinedMenuItem::hide(app, None)?)

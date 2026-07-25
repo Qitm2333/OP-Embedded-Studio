@@ -1,12 +1,20 @@
-# OpenPencil
+# OP Embedded Studio
 
-Open-source design editor. Opens `.fig` and `.pen` design files, includes built-in AI, and ships as a programmable toolkit with a headless Vue SDK for building custom editors.
+嵌入式 UI 设计、交互原型、固件烧录与无线传输平台。支持在设计画布中制作 Frame 和状态机，并通过 USB、Wi-Fi、BLE 或实时镜像将内容发送到嵌入式显示设备。
 
-> **Status:** Active development. Usable today, with some rough edges as features evolve.
+> **项目来源：** 本项目最初基于 OpenPencil 开发，保留原项目 MIT License 与版权声明。当前已针对嵌入式显示设备进行深度扩展，作为独立项目维护，与 OpenPencil 官方项目不存在隶属关系。
 
-**[Try it online →](https://app.openpencil.dev/demo)** · [Download](https://github.com/open-pencil/open-pencil/releases/latest) · [Documentation](https://openpencil.dev) · [llms.txt](https://openpencil.dev/llms.txt)
+## 核心能力
 
-![OpenPencil](packages/docs/public/screenshot.png)
+- 设计画布与 `.fig` / `.pen` 文件支持
+- Frame 烘焙、状态机交互与 PNG 序列帧
+- USB、Wi-Fi、BLE 内容传输与固件烧录
+- Wi-Fi 实时画面镜像
+- ESP32-S3 AMOLED 设备适配
+- 独立 Android BLE 图片上传 App
+- 基于 OpenPencil 的 AI、MCP、CLI 与设计转代码能力
+
+![OP Embedded Studio](packages/docs/public/screenshot.png)
 
 ## Installation
 

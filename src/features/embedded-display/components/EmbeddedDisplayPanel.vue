@@ -83,8 +83,8 @@ const wirelessStatus = ref<'idle' | 'checking' | 'uploading' | 'success' | 'erro
 const wirelessMessage = ref('连接设备后，可直接传输当前图片')
 const wirelessDeviceReady = ref(false)
 const wifiBaseFirmwareReady = ref(false)
-const DEFAULT_WIFI_AP_SSID = 'OpenPencil-Setup'
-const DEFAULT_WIFI_AP_PASSWORD = 'openpencil'
+const DEFAULT_WIFI_AP_SSID = 'OP-Embedded-Setup'
+const DEFAULT_WIFI_AP_PASSWORD = 'opembedded'
 const deviceDetailsOpen = ref(false)
 const bleMaintenanceOpen = ref(false)
 const wifiMaintenanceOpen = ref(false)
@@ -729,12 +729,14 @@ async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
   buildLog.value = []
 
   try {
+    let firmwareManifestUrl = manifestUrl
     if (mode === 'wifi') {
       state.message = '正在准备 Wi-Fi 配置…'
       buildMessage.value = state.message
-      await prepareWifiFirmwareCredentials(profileId, wifiCredentials.value)
+      firmwareManifestUrl =
+        (await prepareWifiFirmwareCredentials(profileId, wifiCredentials.value)) || manifestUrl
     }
-    await flashFirmwareManifest(manifestUrl, mode === 'wifi' ? 'wifi-frame' : 'ble-frame', {
+    await flashFirmwareManifest(firmwareManifestUrl, mode === 'wifi' ? 'wifi-frame' : 'ble-frame', {
       port,
       preparingMessage: state.message,
       connectedMessage: `已连接，正在初始化 ${mode === 'wifi' ? 'Wi-Fi' : 'BLE'} 设备。`,
@@ -937,7 +939,7 @@ watch([wifiSsid, wifiPassword], () => {
           :class="serviceAvailable ? 'text-success' : 'text-muted'"
         >
           <span class="size-1.5 rounded-full bg-current" />
-          {{ serviceAvailable ? '服务正常' : '服务离线' }}
+          {{ serviceAvailable ? '设备资源就绪' : '设备资源缺失' }}
         </span>
       </template>
     </PanelHeader>
@@ -997,7 +999,9 @@ watch([wifiSsid, wifiPassword], () => {
           <button
             type="button"
             class="mt-2 h-control w-full rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="modeSwitchLocked || serialSession.selecting.value || !serialSession.supported.value"
+            :disabled="
+              modeSwitchLocked || serialSession.selecting.value || !serialSession.supported.value
+            "
             @click="serialSession.selectPort"
           >
             {{
@@ -1071,7 +1075,7 @@ watch([wifiSsid, wifiPassword], () => {
         @update:open="bleMaintenanceOpen = $event"
       >
         <p class="text-[10px] leading-relaxed text-muted">
-          基础固件已随 OpenPencil 提供。只有首次使用、设备维护或固件升级时才需要重新初始化。
+          基础固件已随 OP Embedded Studio 提供。只有首次使用、设备维护或固件升级时才需要重新初始化。
         </p>
         <button
           type="button"
@@ -1180,7 +1184,8 @@ watch([wifiSsid, wifiPassword], () => {
         @update:open="wifiMaintenanceOpen = $event"
       >
         <p class="text-[10px] leading-relaxed text-muted">
-          基础固件已随 OpenPencil 提供。只有首次使用、修改网络配置或设备维护时才需要重新初始化。
+          基础固件已随 OP Embedded Studio
+          提供。只有首次使用、修改网络配置或设备维护时才需要重新初始化。
         </p>
         <label class="mt-panel flex items-center gap-2 text-[11px] text-surface">
           <input

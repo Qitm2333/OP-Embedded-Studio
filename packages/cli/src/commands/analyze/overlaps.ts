@@ -178,7 +178,7 @@ export default defineCommand({
     },
     'document-id': {
       type: 'string',
-      description: 'Target OpenPencil document/tab ID when connected to the running app',
+      description: 'Target OP Embedded Studio document/tab ID when connected to the running app',
       required: false
     },
     type: {

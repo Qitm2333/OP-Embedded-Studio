@@ -105,7 +105,7 @@ function copyReference() {
           :ui="{ base: 'rounded px-1.5 py-0.5 text-[11px] hover:bg-hover' }"
           @click="toggleFormat"
         >
-          {{ jsxFormat === 'openpencil' ? 'OpenPencil' : 'Tailwind' }}
+          {{ jsxFormat === 'openpencil' ? 'OP Embedded' : 'Tailwind' }}
         </AppTextButton>
       </div>
       <div class="flex items-center gap-1">

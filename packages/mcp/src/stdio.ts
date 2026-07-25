@@ -7,7 +7,7 @@ import { createStdioRpcBridge } from './stdio-bridge.js'
 
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
   process.stdout.write(
-    `openpencil-mcp\n\nStart the OpenPencil MCP stdio bridge.\n\nOptions:\n  --help, -h    Show this help message\n`
+    `openpencil-mcp\n\nStart the OP Embedded Studio MCP stdio bridge.\n\nOptions:\n  --help, -h    Show this help message\n`
   )
   process.exit(0)
 }
@@ -21,7 +21,7 @@ const wsUrl = `ws://${wsHost}:${wsPort}`
 const bridge = createStdioRpcBridge({
   wsUrl,
   onOpen: () => {
-    process.stderr.write(`Connected to OpenPencil app at ${wsUrl}\n`)
+    process.stderr.write(`Connected to OP Embedded Studio at ${wsUrl}\n`)
   },
   onMalformedMessage: () => {
     process.stderr.write('Malformed WS message\n')

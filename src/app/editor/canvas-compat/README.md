@@ -1,6 +1,6 @@
 # Canvas Compatibility Layer
 
-This app-only module isolates temporary canvas behavior fixes from the OpenPencil workspace packages.
+This app-only module isolates temporary OP Embedded Studio canvas behavior fixes from the upstream OpenPencil workspace packages.
 
 ## Scope
 

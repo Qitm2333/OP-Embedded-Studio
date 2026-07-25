@@ -1,11 +1,11 @@
 menu "Example Configuration"
 
     config OPENPENCIL_WIFI_SERVER
-        bool "Enable OpenPencil Wi-Fi content server"
+        bool "Enable OP Embedded Studio Wi-Fi content server"
         default y
 
     config OPENPENCIL_WIFI_LIVE_PREVIEW
-        bool "Enable OpenPencil volatile Wi-Fi live preview"
+        bool "Enable OP Embedded Studio volatile Wi-Fi live preview"
         depends on OPENPENCIL_WIFI_SERVER
         default n
 
@@ -28,11 +28,11 @@ menu "Example Configuration"
         default n
 
     config OPENPENCIL_SETUP_ACCESS_POINT
-        bool "Enable the OpenPencil setup access point"
+        bool "Enable the OP Embedded Studio setup access point"
         default y
 
     config OPENPENCIL_BLE_SERVER
-        bool "Enable the OpenPencil BLE content server"
+        bool "Enable the OP Embedded Studio BLE content server"
         default n
 
     config OPENPENCIL_BLE_REQUIRE_PAIRING

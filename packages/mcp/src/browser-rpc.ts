@@ -8,7 +8,7 @@ import type { PendingRequest } from '#mcp/rpc-types'
 const RPC_TIMEOUT = 20_000
 
 const APP_NOT_CONNECTED_MESSAGE =
-  'OpenPencil app is not connected. STOP and tell the user: "The OpenPencil desktop app is not running, no document is open, or the desktop app is connected to a different MCP server. Please start OpenPencil, open a document, and try again." Do NOT attempt to start the app yourself or retry automatically.'
+  'OP Embedded Studio is not connected. STOP and tell the user: "OP Embedded Studio is not running, no document is open, or the desktop app is connected to a different MCP server. Please start OP Embedded Studio, open a document, and try again." Do NOT attempt to start the app yourself or retry automatically.'
 
 type BrowserRpcBridgeOptions = {
   authToken: string | null

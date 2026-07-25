@@ -1,6 +1,10 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
-import { createEmbeddedDisplayHttpAdapter, embeddedArtifactUrl } from '../adapters/http'
+import {
+  createEmbeddedDisplayHttpAdapter,
+  embeddedArtifactUrl,
+  embeddedManifestUrl
+} from '../adapters/http'
 import {
   imageFileToRgb565,
   prototypeBakeToRgb565,
@@ -27,7 +31,7 @@ const imagePayload = ref<EmbeddedImagePayload | null>(null)
 const usbSequencePayload = ref<UsbImageSequencePayload | null>(null)
 const prototypePayload = ref<EmbeddedPrototypePayload | null>(null)
 const buildStatus = ref<EmbeddedBuildStatus>('loading')
-const buildMessage = ref('正在连接设备服务…')
+const buildMessage = ref('正在读取设备资源…')
 const buildLog = ref<string[]>([])
 const manifestUrls = ref<Partial<Record<EmbeddedBuildMode, string>>>({})
 const serviceAvailable = ref(false)
@@ -53,14 +57,14 @@ export function useEmbeddedDisplay() {
       selectedProfileId.value = profiles.value[0]?.id ?? ''
       serviceAvailable.value = true
       loaded = true
-      deviceLog('service ready', { profileCount: profiles.value.length })
+      deviceLog('device resources ready', { profileCount: profiles.value.length })
       buildStatus.value = 'idle'
       buildMessage.value = '请选择图片，然后生成固件。未选择图片时将使用默认测试图。'
     } catch (error) {
       serviceAvailable.value = false
       deviceLog('service error', error)
       buildStatus.value = 'error'
-      buildMessage.value = `无法连接设备服务：${error instanceof Error ? error.message : String(error)}`
+      buildMessage.value = `无法读取设备资源：${error instanceof Error ? error.message : String(error)}`
     }
   }
 
@@ -226,11 +230,11 @@ export function useEmbeddedDisplay() {
 
   async function loadCachedFirmware(buildMode: EmbeddedBuildMode): Promise<boolean> {
     const profile = selectedProfile.value
-    if (!profile || !serviceAvailable.value) return false
+    if (!profile) return false
     try {
       await adapter.getManifest(profile.id, buildMode)
       if (selectedProfile.value?.id !== profile.id) return false
-      manifestUrls.value[buildMode] = embeddedArtifactUrl(profile.id, 'manifest.json', buildMode)
+      manifestUrls.value[buildMode] = embeddedManifestUrl(profile.id, buildMode)
       deviceLog('cached firmware ready', { profileId: profile.id, buildMode })
       return true
     } catch {

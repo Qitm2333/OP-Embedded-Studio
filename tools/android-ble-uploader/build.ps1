@@ -81,11 +81,11 @@ Write-Host "Preparing Android SDK packages"
 if ($LASTEXITCODE -ne 0) { throw "Android SDK package installation failed" }
 
 $gradle = Join-Path $GradleRoot "bin\gradle.bat"
-Write-Host "Building OpenPencil BLE APK"
+Write-Host "Building OP Embedded BLE APK"
 & $gradle --project-dir $ProjectDir :app:assembleDebug
 if ($LASTEXITCODE -ne 0) { throw "Android APK build failed" }
 
 $apkSource = Join-Path $ProjectDir "app\build\outputs\apk\debug\app-debug.apk"
-$apkDestination = Join-Path $OutputDir "OpenPencil-BLE-debug.apk"
+$apkDestination = Join-Path $OutputDir "OP-Embedded-BLE-debug.apk"
 Copy-Item -LiteralPath $apkSource -Destination $apkDestination -Force
 Write-Host "APK ready: $apkDestination"

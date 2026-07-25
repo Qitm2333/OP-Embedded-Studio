@@ -313,8 +313,8 @@ esp_err_t openpencil_wireless_server_start(void)
 
     wifi_config_t ap_config = {0};
 #if CONFIG_OPENPENCIL_SETUP_ACCESS_POINT
-    strcpy((char *)ap_config.ap.ssid, "OpenPencil-Setup");
-    strcpy((char *)ap_config.ap.password, "openpencil");
+    strcpy((char *)ap_config.ap.ssid, "OP-Embedded-Setup");
+    strcpy((char *)ap_config.ap.password, "opembedded");
     ap_config.ap.ssid_len = strlen((char *)ap_config.ap.ssid);
     ap_config.ap.channel = 1;
     ap_config.ap.max_connection = 2;
@@ -380,7 +380,7 @@ esp_err_t openpencil_wireless_server_start(void)
     httpd_register_uri_handler(server, &content_options_uri);
 #endif
 #if CONFIG_OPENPENCIL_SETUP_ACCESS_POINT
-    ESP_LOGI(TAG, "wireless content server ready; setup AP OpenPencil-Setup / openpencil");
+    ESP_LOGI(TAG, "wireless content server ready; setup AP OP-Embedded-Setup / opembedded");
 #else
     ESP_LOGI(TAG, "LAN content server ready; station SSID: %s", wireless_status.ssid);
 #endif

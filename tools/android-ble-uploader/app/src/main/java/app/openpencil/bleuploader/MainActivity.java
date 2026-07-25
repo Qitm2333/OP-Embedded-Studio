@@ -110,7 +110,7 @@ public final class MainActivity extends Activity {
                     cameraCaptureUri = CameraFileProvider.captureUri(MainActivity.this);
                     Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                     cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraCaptureUri);
-                    cameraIntent.setClipData(ClipData.newRawUri("OpenPencil photo", cameraCaptureUri));
+                    cameraIntent.setClipData(ClipData.newRawUri("OP Embedded photo", cameraCaptureUri));
                     cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                     if (cameraIntent.resolveActivity(getPackageManager()) == null) {
                         fileCallback.onReceiveValue(null);
@@ -168,7 +168,7 @@ public final class MainActivity extends Activity {
         boolean granted = true;
         for (int result : results) granted &= result == PackageManager.PERMISSION_GRANTED;
         if (granted && pendingConnect) startBleScan();
-        else emitError("需要附近设备权限才能扫描 OpenPencil BLE");
+        else emitError("需要附近设备权限才能扫描 OP Embedded BLE");
         pendingConnect = false;
     }
 
@@ -202,7 +202,7 @@ public final class MainActivity extends Activity {
             return;
         }
         if (connected) {
-            emitEvent("connected", "已连接 OpenPencil BLE", -1, -1);
+            emitEvent("connected", "已连接 OP Embedded BLE", -1, -1);
             return;
         }
         scanner = bluetoothAdapter.getBluetoothLeScanner();
@@ -221,7 +221,7 @@ public final class MainActivity extends Activity {
         mainHandler.postDelayed(() -> {
             if (!connected && scanning) {
                 stopScan();
-                emitError("没有发现 OpenPencil BLE，请确认设备未连接电脑");
+                emitError("没有发现 OP Embedded BLE，请确认设备未连接电脑");
             }
         }, 12000);
     }
@@ -285,12 +285,12 @@ public final class MainActivity extends Activity {
         @Override
         public void onServicesDiscovered(BluetoothGatt nextGatt, int status) {
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                emitError("无法读取 OpenPencil BLE 服务");
+                emitError("无法读取 OP Embedded BLE 服务");
                 return;
             }
             BluetoothGattService service = nextGatt.getService(SERVICE_UUID);
             if (service == null) {
-                emitError("设备缺少 OpenPencil 传输服务");
+                emitError("设备缺少 OP Embedded 传输服务");
                 return;
             }
             transferCharacteristic = service.getCharacteristic(TRANSFER_UUID);
@@ -324,7 +324,7 @@ public final class MainActivity extends Activity {
                 nextGatt.writeDescriptor(descriptor);
             }
         }
-        emitEvent("connected", "OpenPencil BLE 已连接", -1, -1);
+        emitEvent("connected", "OP Embedded BLE 已连接", -1, -1);
     }
 
     @SuppressLint("MissingPermission")
@@ -371,7 +371,7 @@ public final class MainActivity extends Activity {
 
     private void startUpload() {
         if (!connected || gatt == null || transferCharacteristic == null) {
-            emitError("请先连接 OpenPencil BLE");
+            emitError("请先连接 OP Embedded BLE");
             return;
         }
         if (payloadFile == null || !payloadFile.isFile() || payloadWrittenBytes != payloadExpectedBytes) {
