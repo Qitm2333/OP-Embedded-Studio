@@ -81,6 +81,64 @@
     renderPreview()
   }
 
+  function releaseBitmap(bitmap) {
+    if (bitmap?.close) bitmap.close()
+  }
+
+  async function decodeWithImageElement(file) {
+    const objectUrl = URL.createObjectURL(file)
+    const image = new Image()
+    image.decoding = 'async'
+    try {
+      await new Promise((resolve, reject) => {
+        image.onload = resolve
+        image.onerror = () => reject(new Error('HTML image decode failed'))
+        image.src = objectUrl
+      })
+      if (!image.naturalWidth || !image.naturalHeight) throw new Error('Invalid image dimensions')
+      return {
+        source: image,
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        close() {
+          image.src = ''
+          URL.revokeObjectURL(objectUrl)
+        }
+      }
+    } catch (error) {
+      image.src = ''
+      URL.revokeObjectURL(objectUrl)
+      throw error
+    }
+  }
+
+  async function decodeImageFile(file) {
+    if (!file || file.size <= 0) throw new Error('图片文件为空，请确认照片已完整下载到手机')
+    if (typeof createImageBitmap === 'function') {
+      try {
+        const bitmap = await createImageBitmap(file)
+        if (!bitmap.width || !bitmap.height) throw new Error('Invalid bitmap dimensions')
+        return {
+          source: bitmap,
+          width: bitmap.width,
+          height: bitmap.height,
+          close() {
+            bitmap.close()
+          }
+        }
+      } catch {
+        // Some Android gallery providers are not supported by createImageBitmap.
+      }
+    }
+    try {
+      return await decodeWithImageElement(file)
+    } catch {
+      const fileType = file.type || '未知格式'
+      const fileSize = `${(file.size / 1024 / 1024).toFixed(2)} MiB`
+      throw new Error(`无法读取图片（${fileType}，${fileSize}），请确认照片已完整下载到手机`)
+    }
+  }
+
   function drawBitmap(targetContext, bitmap) {
     const width = protocol.WIDTH
     const height = protocol.HEIGHT
@@ -90,14 +148,27 @@
     const scale = baseScale * zoom
     const drawWidth = bitmap.width * scale
     const drawHeight = bitmap.height * scale
+    const drawX = (width - drawWidth) / 2 + offsetX
+    const drawY = (height - drawHeight) / 2 + offsetY
+    const visibleLeft = Math.max(0, drawX)
+    const visibleTop = Math.max(0, drawY)
+    const visibleRight = Math.min(width, drawX + drawWidth)
+    const visibleBottom = Math.min(height, drawY + drawHeight)
+    const visibleWidth = visibleRight - visibleLeft
+    const visibleHeight = visibleBottom - visibleTop
+    if (visibleWidth <= 0 || visibleHeight <= 0) return
     targetContext.imageSmoothingEnabled = true
     targetContext.imageSmoothingQuality = 'high'
     targetContext.drawImage(
-      bitmap,
-      (width - drawWidth) / 2 + offsetX,
-      (height - drawHeight) / 2 + offsetY,
-      drawWidth,
-      drawHeight
+      bitmap.source,
+      (visibleLeft - drawX) / scale,
+      (visibleTop - drawY) / scale,
+      visibleWidth / scale,
+      visibleHeight / scale,
+      visibleLeft,
+      visibleTop,
+      visibleWidth,
+      visibleHeight
     )
   }
 
@@ -108,22 +179,25 @@
   }
 
   async function loadPreview() {
-    if (previewBitmap) previewBitmap.close()
-    previewBitmap = files.length ? await createImageBitmap(files[0]) : null
+    releaseBitmap(previewBitmap)
+    previewBitmap = files.length ? await decodeImageFile(files[0]) : null
     emptyPreview.hidden = Boolean(previewBitmap)
     setEditing(Boolean(previewBitmap))
     resetCrop()
   }
 
   async function renderFile(file) {
-    const bitmap = await createImageBitmap(file)
-    const frameCanvas = document.createElement('canvas')
-    frameCanvas.width = protocol.WIDTH
-    frameCanvas.height = protocol.HEIGHT
-    const frameContext = frameCanvas.getContext('2d', { willReadFrequently: true })
-    drawBitmap(frameContext, bitmap)
-    bitmap.close()
-    return protocol.rgb565(frameContext.getImageData(0, 0, protocol.WIDTH, protocol.HEIGHT))
+    const bitmap = await decodeImageFile(file)
+    try {
+      const frameCanvas = document.createElement('canvas')
+      frameCanvas.width = protocol.WIDTH
+      frameCanvas.height = protocol.HEIGHT
+      const frameContext = frameCanvas.getContext('2d', { willReadFrequently: true })
+      drawBitmap(frameContext, bitmap)
+      return protocol.rgb565(frameContext.getImageData(0, 0, protocol.WIDTH, protocol.HEIGHT))
+    } finally {
+      releaseBitmap(bitmap)
+    }
   }
 
   function bytesToBase64(bytes) {
@@ -232,7 +306,6 @@
 
   async function handleFileSelection(input) {
     files = [...input.files]
-    input.value = ''
     fileSummary.textContent = files.length
       ? files.length === 1
         ? '单帧图片 · 466 × 466'
@@ -241,8 +314,20 @@
     payloadSummary.textContent = '尚未准备内容'
     progressBar.style.width = '0%'
     setStatus(files.length ? '编辑已激活，调整完成后点击“完成”' : '选择图片后即可上传')
-    await loadPreview()
-    updateActions()
+    try {
+      await loadPreview()
+    } catch (error) {
+      files = []
+      input.value = ''
+      releaseBitmap(previewBitmap)
+      previewBitmap = null
+      emptyPreview.hidden = false
+      setEditing(false)
+      fileSummary.textContent = '支持单图或 PNG 序列，目标 466 × 466。'
+      setStatus(error instanceof Error ? error.message : String(error), 'error')
+    } finally {
+      updateActions()
+    }
   }
 
   fileInput.addEventListener('change', () => handleFileSelection(fileInput))

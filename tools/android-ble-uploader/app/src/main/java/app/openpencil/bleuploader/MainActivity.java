@@ -21,6 +21,9 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageDecoder;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,6 +33,7 @@ import android.os.ParcelUuid;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Base64;
+import android.util.Size;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -43,6 +47,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -58,6 +63,8 @@ public final class MainActivity extends Activity {
     private static final UUID CLIENT_CONFIG_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     private static final int DEFAULT_PAYLOAD_CHUNK_BYTES = 16;
     private static final int MAX_PAYLOAD_CHUNK_BYTES = 240;
+    private static final int MAX_IMPORT_DIMENSION = 12288;
+    private static final long MAX_IMPORT_PIXELS = 8L * 1024L * 1024L;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private WebView webView;
@@ -141,24 +148,144 @@ public final class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode != FILE_CHOOSER_REQUEST || fileCallback == null) return;
-        Uri[] result = null;
         if (resultCode == RESULT_OK && cameraCaptureUri != null) {
             File captureFile = CameraFileProvider.captureFile(this);
-            if (captureFile.isFile() && captureFile.length() > 0) result = new Uri[]{cameraCaptureUri};
-        } else if (resultCode == RESULT_OK && data != null) {
-            if (data.getClipData() != null) {
-                int count = data.getClipData().getItemCount();
-                result = new Uri[count];
-                for (int index = 0; index < count; index++) {
-                    result[index] = data.getClipData().getItemAt(index).getUri();
+            finishFileChooser(captureFile.isFile() && captureFile.length() > 0
+                    ? new Uri[]{cameraCaptureUri}
+                    : null);
+            return;
+        }
+        if (resultCode != RESULT_OK || data == null) {
+            finishFileChooser(null);
+            return;
+        }
+        Uri[] selected = selectedUris(data);
+        if (selected == null || selected.length == 0) {
+            finishFileChooser(null);
+            return;
+        }
+        int persistFlags = data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION;
+        if (persistFlags != 0) {
+            for (Uri uri : selected) {
+                try {
+                    getContentResolver().takePersistableUriPermission(uri, persistFlags);
+                } catch (SecurityException ignored) {
                 }
-            } else if (data.getData() != null) {
-                result = new Uri[]{data.getData()};
             }
         }
-        fileCallback.onReceiveValue(result);
+        emitEvent("status", "正在兼容处理图片…", -1, -1);
+        prepareSelectedImages(selected);
+    }
+
+    private Uri[] selectedUris(Intent data) {
+        if (data.getClipData() != null) {
+            int count = data.getClipData().getItemCount();
+            Uri[] selected = new Uri[count];
+            for (int index = 0; index < count; index++) {
+                selected[index] = data.getClipData().getItemAt(index).getUri();
+            }
+            return selected;
+        }
+        return data.getData() == null ? null : new Uri[]{data.getData()};
+    }
+
+    private void finishFileChooser(Uri[] result) {
+        if (fileCallback != null) fileCallback.onReceiveValue(result);
         fileCallback = null;
         cameraCaptureUri = null;
+    }
+
+    private void prepareSelectedImages(Uri[] selected) {
+        new Thread(() -> {
+            try {
+                CameraFileProvider.clearImportedFiles(this);
+                String batchId = Long.toUnsignedString(System.nanoTime());
+                Uri[] normalized = new Uri[selected.length];
+                for (int index = 0; index < selected.length; index++) {
+                    normalized[index] = normalizeSelectedImage(selected[index], batchId, index);
+                }
+                runOnUiThread(() -> finishFileChooser(normalized));
+            } catch (Exception error) {
+                String detail = error.getMessage();
+                runOnUiThread(() -> {
+                    finishFileChooser(null);
+                    emitError("无法处理图片" + (detail == null ? "" : "：" + detail));
+                });
+            }
+        }, "op-image-normalizer").start();
+    }
+
+    private Uri normalizeSelectedImage(Uri sourceUri, String batchId, int index) throws IOException {
+        Bitmap bitmap = decodeSelectedImage(sourceUri);
+        File output = CameraFileProvider.importFile(this, batchId, index);
+        try (FileOutputStream stream = new FileOutputStream(output, false)) {
+            if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)) {
+                throw new IOException("无法编码标准 PNG");
+            }
+        } finally {
+            bitmap.recycle();
+        }
+        if (!output.isFile() || output.length() == 0) throw new IOException("标准 PNG 文件为空");
+        return CameraFileProvider.importUri(this, batchId, index);
+    }
+
+    private Bitmap decodeSelectedImage(Uri uri) throws IOException {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), uri);
+                return ImageDecoder.decodeBitmap(source, (decoder, info, ignored) -> {
+                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                    Size size = info.getSize();
+                    int[] target = targetImageSize(size.getWidth(), size.getHeight());
+                    if (target[0] != size.getWidth() || target[1] != size.getHeight()) {
+                        decoder.setTargetSize(target[0], target[1]);
+                    }
+                });
+            } catch (IOException | RuntimeException ignored) {
+            }
+        }
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        try (InputStream stream = getContentResolver().openInputStream(uri)) {
+            if (stream == null) throw new IOException("无法打开图片数据");
+            BitmapFactory.decodeStream(stream, null, bounds);
+        }
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw new IOException("无法识别图片编码");
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        options.inSampleSize = bitmapSampleSize(bounds.outWidth, bounds.outHeight);
+        try (InputStream stream = getContentResolver().openInputStream(uri)) {
+            if (stream == null) throw new IOException("无法重新打开图片数据");
+            Bitmap bitmap = BitmapFactory.decodeStream(stream, null, options);
+            if (bitmap == null) throw new IOException("系统图片解码器不支持该文件");
+            return bitmap;
+        }
+    }
+
+    private int[] targetImageSize(int width, int height) {
+        double scale = 1.0;
+        int largest = Math.max(width, height);
+        if (largest > MAX_IMPORT_DIMENSION) {
+            scale = Math.min(scale, (double) MAX_IMPORT_DIMENSION / largest);
+        }
+        long pixels = (long) width * height;
+        if (pixels > MAX_IMPORT_PIXELS) {
+            scale = Math.min(scale, Math.sqrt((double) MAX_IMPORT_PIXELS / pixels));
+        }
+        return new int[]{
+                Math.max(1, (int) Math.round(width * scale)),
+                Math.max(1, (int) Math.round(height * scale))
+        };
+    }
+
+    private int bitmapSampleSize(int width, int height) {
+        int sample = 1;
+        while (width / sample > MAX_IMPORT_DIMENSION
+                || height / sample > MAX_IMPORT_DIMENSION
+                || (long) (width / sample) * (height / sample) > MAX_IMPORT_PIXELS) {
+            sample *= 2;
+        }
+        return sample;
     }
 
     @Override
