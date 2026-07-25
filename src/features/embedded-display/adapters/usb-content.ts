@@ -24,7 +24,9 @@ export function supportsUsbFrameFastFlash(profileId: string | undefined): boolea
 }
 
 async function loadUsbFirmware(profileId: string, content: Uint8Array) {
-  const baseUrl = `/embedded-display/firmware/usb-frame/${profileId}`
+  const configuredBaseUrl = import.meta.env.BASE_URL || '/'
+  const appBaseUrl = configuredBaseUrl.endsWith('/') ? configuredBaseUrl : `${configuredBaseUrl}/`
+  const baseUrl = `${appBaseUrl}embedded-display/firmware/usb-frame/${encodeURIComponent(profileId)}`
   const stableParts = await Promise.all([
     fetchSerialFirmwarePart(`${baseUrl}/bootloader.bin`, 0x0000),
     fetchSerialFirmwarePart(`${baseUrl}/partition-table.bin`, 0x8000),

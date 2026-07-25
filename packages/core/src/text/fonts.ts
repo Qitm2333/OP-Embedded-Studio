@@ -70,13 +70,22 @@ export function chooseLocalFontMatch<T extends LocalFontMatch>(
   return undefined
 }
 
+function bundledAssetUrl(path: string): string {
+  const configuredBaseUrl =
+    IS_BROWSER && 'env' in import.meta
+      ? ((import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/')
+      : '/'
+  const baseUrl = configuredBaseUrl.endsWith('/') ? configuredBaseUrl : `${configuredBaseUrl}/`
+  return `${baseUrl}${path.replace(/^\/+/, '')}`
+}
+
 const BUNDLED_FONTS: Record<string, string> = {
-  'Inter|Regular': '/Inter-Regular.ttf',
-  'Inter|Medium': '/Inter-Medium.ttf',
-  'Inter|SemiBold': '/Inter-SemiBold.ttf',
-  'Inter|Bold': '/Inter-Bold.ttf',
-  'Inter|ExtraBold': '/Inter-ExtraBold.ttf',
-  'Noto Naskh Arabic|Regular': '/NotoNaskhArabic-Regular.ttf'
+  'Inter|Regular': bundledAssetUrl('Inter-Regular.ttf'),
+  'Inter|Medium': bundledAssetUrl('Inter-Medium.ttf'),
+  'Inter|SemiBold': bundledAssetUrl('Inter-SemiBold.ttf'),
+  'Inter|Bold': bundledAssetUrl('Inter-Bold.ttf'),
+  'Inter|ExtraBold': bundledAssetUrl('Inter-ExtraBold.ttf'),
+  'Noto Naskh Arabic|Regular': bundledAssetUrl('NotoNaskhArabic-Regular.ttf')
 }
 
 export const FONT_WEIGHT_NAMES: Record<number, string> = {
