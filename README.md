@@ -2,7 +2,20 @@
 
 嵌入式 UI 设计、交互原型、固件烧录与无线传输平台。支持在设计画布中制作 Frame 和状态机，并通过 USB、Wi-Fi、BLE 或实时镜像将内容发送到嵌入式显示设备。
 
-> **项目来源：** 本项目最初基于 OpenPencil 开发，保留原项目 MIT License 与版权声明。当前已针对嵌入式显示设备进行深度扩展，作为独立项目维护，与 OpenPencil 官方项目不存在隶属关系。
+> **项目来源与致谢：** 本项目最初基于 [OpenPencil](https://github.com/open-pencil/open-pencil) 开发。感谢 OpenPencil 原作者与社区提供优秀的开源设计编辑器基础，包括画布、文档格式、渲染、AI、MCP 和 CLI 等核心能力。OP Embedded Studio 在此基础上进行了面向嵌入式 UI 设计、设备预览和固件传输的深度扩展，目前作为独立项目维护，与 OpenPencil 官方项目不存在隶属关系。
+
+## 当前重点适配设备
+
+目前完整适配 [Waveshare ESP32-S3-Touch-AMOLED-1.75C](https://docs.waveshare.net/ESP32-S3-Touch-AMOLED-1.75C)：
+
+- 466 × 466 圆形 AMOLED 屏幕
+- CO5300 显示控制器与 QSPI 显示接口
+- USB 单 Frame、USB 状态机与 PNG 序列帧烧录
+- Wi-Fi 单 Frame、Wi-Fi 状态机与实时镜像
+- BLE 单 Frame、BLE 状态机与 Android BLE 图片上传 App
+- 针对圆形可视区域、RGB565 色彩、TE 同步和设备交互完成适配
+
+其他屏幕方案仍保留在设备目录中，便于后续扩展与适配；当前默认设备为上述 Waveshare 屏幕。
 
 ## 核心能力
 

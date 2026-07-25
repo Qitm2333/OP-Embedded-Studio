@@ -21,6 +21,7 @@ import type {
   EmbeddedPrototypePayload,
   EmbeddedWifiCredentials
 } from '../model/types'
+import { DEFAULT_EMBEDDED_DISPLAY_PROFILE_ID } from '../runtime/catalog'
 
 const adapter = createEmbeddedDisplayHttpAdapter()
 const profiles = ref<EmbeddedDisplayProfile[]>([])
@@ -54,7 +55,10 @@ export function useEmbeddedDisplay() {
     buildMessage.value = '正在读取屏幕方案…'
     try {
       profiles.value = await adapter.listProfiles()
-      selectedProfileId.value = profiles.value[0]?.id ?? ''
+      selectedProfileId.value =
+        profiles.value.find((profile) => profile.id === DEFAULT_EMBEDDED_DISPLAY_PROFILE_ID)?.id ??
+        profiles.value[0]?.id ??
+        ''
       serviceAvailable.value = true
       loaded = true
       deviceLog('device resources ready', { profileCount: profiles.value.length })

@@ -9,6 +9,8 @@ interface EmbeddedProfileRegistry {
   profiles?: Array<Record<string, unknown>>
 }
 
+export const DEFAULT_EMBEDDED_DISPLAY_PROFILE_ID = 'co5300_waveshare_amoled_1_75c'
+
 const BUNDLED_FIRMWARE_PROFILES: Partial<Record<EmbeddedBuildMode, ReadonlySet<string>>> = {
   'wifi-frame': new Set(['co5300_waveshare_amoled_1_75c']),
   'wifi-live': new Set(['co5300_waveshare_amoled_1_75c']),
