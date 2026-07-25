@@ -71,10 +71,9 @@ export function chooseLocalFontMatch<T extends LocalFontMatch>(
 }
 
 function bundledAssetUrl(path: string): string {
-  const configuredBaseUrl =
-    IS_BROWSER && 'env' in import.meta
-      ? ((import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/')
-      : '/'
+  const configuredBaseUrl = IS_BROWSER
+    ? ((import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/')
+    : '/'
   const baseUrl = configuredBaseUrl.endsWith('/') ? configuredBaseUrl : `${configuredBaseUrl}/`
   return `${baseUrl}${path.replace(/^\/+/, '')}`
 }

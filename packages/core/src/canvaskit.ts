@@ -17,7 +17,7 @@ export async function getCanvasKit(options?: CanvasKitOptions): Promise<CanvasKi
       const ckPath = import.meta.resolve('canvaskit-wasm')
       return decodeURIComponent(new URL(file, ckPath).pathname)
     }
-    const base = 'env' in import.meta ? import.meta.env.BASE_URL : '/'
+    const base = import.meta.env?.BASE_URL ?? '/'
     const prefix = base === '/' ? '' : base.replace(/\/$/, '')
     return `${prefix}/${file}`
   }
