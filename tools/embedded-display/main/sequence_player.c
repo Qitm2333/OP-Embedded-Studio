@@ -19,6 +19,7 @@ static const char *TAG = "sequence_player";
 
 typedef struct {
     uint16_t frame_index;
+    const uint16_t *previous_frame;
     uint16_t *destination;
 } sequence_decode_request_t;
 
@@ -43,6 +44,14 @@ static uint16_t *allocate_frame_buffer(size_t frame_bytes)
     return buffer;
 }
 
+static bool sequence_region_is_full_frame(const openpencil_sequence_region_t *region,
+                                          int width,
+                                          int height)
+{
+    return region->x == 0 && region->y == 0 &&
+           region->width == width && region->height == height;
+}
+
 static void sequence_decoder_task(void *argument)
 {
     sequence_decoder_t *decoder = argument;
@@ -58,9 +67,10 @@ static void sequence_decoder_task(void *argument)
             result = openpencil_content_sequence_region(request.frame_index, &region);
             if (result != ESP_OK) break;
             if (openpencil_content_write_in_progress()) continue;
-            result = openpencil_content_load_frame(request.frame_index,
-                                                   request.destination,
-                                                   decoder->frame_pixels);
+            result = openpencil_content_reconstruct_sequence_frame(request.frame_index,
+                                                                   request.previous_frame,
+                                                                   request.destination,
+                                                                   decoder->frame_pixels);
             if (!openpencil_content_write_in_progress()) break;
         }
         const sequence_decode_result_t decoded = {
@@ -140,10 +150,14 @@ esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
              openpencil_content_frame_delay_ms());
 
     int64_t initial_load_started_us = esp_timer_get_time();
-    openpencil_sequence_region_t current_region = {0};
-    ESP_RETURN_ON_ERROR(openpencil_content_sequence_region(0, &current_region),
+    openpencil_sequence_region_t initial_region = {0};
+    ESP_RETURN_ON_ERROR(openpencil_content_sequence_region(0, &initial_region),
                         TAG,
                         "load initial sequence region failed");
+    ESP_RETURN_ON_FALSE(sequence_region_is_full_frame(&initial_region, width, height),
+                        ESP_ERR_INVALID_STATE,
+                        TAG,
+                        "first sequence frame must be a full keyframe");
     ESP_RETURN_ON_ERROR(openpencil_content_load_frame(0, primary_frame_buffer, frame_pixels),
                         TAG,
                         "load initial sequence frame failed");
@@ -155,6 +169,7 @@ esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
     uint16_t *next_buffer = secondary_frame_buffer;
     sequence_decode_request_t request = {
         .frame_index = next_frame,
+        .previous_frame = current_buffer,
         .destination = next_buffer,
     };
     xQueueSend(decoder.requests, &request, portMAX_DELAY);
@@ -172,14 +187,11 @@ esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
 
     while (true) {
         openpencil_display_presenter_metrics_t present_metrics = {0};
-        ESP_RETURN_ON_ERROR(openpencil_display_presenter_draw_region_measured(
-                                panel,
-                                current_region.x,
-                                current_region.y,
-                                current_region.width,
-                                current_region.height,
-                                current_buffer,
-                                &present_metrics),
+        ESP_RETURN_ON_ERROR(openpencil_display_presenter_draw_measured(panel,
+                                                                       width,
+                                                                       height,
+                                                                       current_buffer,
+                                                                       &present_metrics),
                             TAG,
                             "draw sequence frame failed");
         if (on_first_frame) {
@@ -200,10 +212,14 @@ esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
                             TAG,
                             "decoded sequence frame order mismatch");
 
+        uint16_t *following_decode_buffer = current_buffer;
+        current_buffer = decoded.destination;
+
         const uint16_t following_frame =
             (uint16_t)((next_frame + 1) % content->frame_count);
         request.frame_index = following_frame;
-        request.destination = current_buffer;
+        request.previous_frame = current_buffer;
+        request.destination = following_decode_buffer;
         xQueueSend(decoder.requests, &request, portMAX_DELAY);
 
         load_total_us += current_load_us;
@@ -211,14 +227,12 @@ esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
         te_total_us += present_metrics.te_wait_us;
         transfer_total_us += present_metrics.transfer_us;
         present_total_us += present_metrics.total_us;
-        transferred_pixels += (uint64_t)current_region.width * current_region.height;
+        transferred_pixels += (uint64_t)width * height;
         stats_frames++;
 
         vTaskDelayUntil(&next_deadline, frame_delay > 0 ? frame_delay : 1);
 
         current_frame = next_frame;
-        current_buffer = next_buffer;
-        current_region = decoded.region;
         current_load_us = decoded.load_us;
         next_frame = following_frame;
         next_buffer = request.destination;

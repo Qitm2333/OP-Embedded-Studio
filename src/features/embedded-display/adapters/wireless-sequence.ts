@@ -6,6 +6,7 @@ import {
 } from './usb-sequence'
 
 const WIRELESS_SEQUENCE_CONTENT_BYTES = 0x1cf0000
+const WIRELESS_SEQUENCE_ENCODING = { allowPatches: false } as const
 
 export type WirelessImageSequencePayload = UsbImageSequencePayload
 
@@ -34,7 +35,7 @@ export function encodeWifiSequenceFrames(
   name = 'PNG sequence'
 ): WirelessImageSequencePayload {
   return ensureWirelessSequenceFits(
-    encodeUsbSequenceFrames(profile, frames, name),
+    encodeUsbSequenceFrames(profile, frames, name, WIRELESS_SEQUENCE_ENCODING),
     WIRELESS_SEQUENCE_CONTENT_BYTES
   )
 }
@@ -45,7 +46,7 @@ export function encodeBleSequenceFrames(
   name = 'PNG sequence'
 ): WirelessImageSequencePayload {
   return ensureWirelessSequenceFits(
-    encodeUsbSequenceFrames(profile, frames, name),
+    encodeUsbSequenceFrames(profile, frames, name, WIRELESS_SEQUENCE_ENCODING),
     WIRELESS_SEQUENCE_CONTENT_BYTES
   )
 }
@@ -55,7 +56,7 @@ export async function imageFilesToWifiSequence(
   profile: EmbeddedDisplayProfile
 ): Promise<WirelessImageSequencePayload> {
   return ensureWirelessSequenceFits(
-    await imageFilesToUsbSequence(files, profile),
+    await imageFilesToUsbSequence(files, profile, WIRELESS_SEQUENCE_ENCODING),
     WIRELESS_SEQUENCE_CONTENT_BYTES
   )
 }
@@ -65,7 +66,7 @@ export async function imageFilesToBleSequence(
   profile: EmbeddedDisplayProfile
 ): Promise<WirelessImageSequencePayload> {
   return ensureWirelessSequenceFits(
-    await imageFilesToUsbSequence(files, profile),
+    await imageFilesToUsbSequence(files, profile, WIRELESS_SEQUENCE_ENCODING),
     WIRELESS_SEQUENCE_CONTENT_BYTES
   )
 }

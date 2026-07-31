@@ -56,21 +56,32 @@ static void fill_rgb565(uint16_t *destination, size_t pixels, uint16_t color)
 static esp_err_t decode_rle_chunk(const uint8_t *encoded,
                                   size_t encoded_bytes,
                                   uint16_t *destination,
-                                  size_t frame_pixels,
+                                  size_t output_width,
+                                  size_t output_height,
+                                  size_t destination_stride,
                                   size_t *written_pixels)
 {
+    const size_t output_pixels = output_width * output_height;
     for (size_t offset = 0; offset < encoded_bytes; offset += 4) {
         const uint16_t run =
             (uint16_t)encoded[offset] | ((uint16_t)encoded[offset + 1] << 8);
         const uint16_t color =
             (uint16_t)encoded[offset + 2] | ((uint16_t)encoded[offset + 3] << 8);
-        if (run == 0 || run > frame_pixels - *written_pixels) {
+        if (run == 0 || run > output_pixels - *written_pixels) {
             return ESP_ERR_INVALID_SIZE;
         }
-        fill_rgb565(destination + *written_pixels,
-                    run,
-                    example_lcd_panel_color_from_rgb565(color));
-        *written_pixels += run;
+        size_t remaining = run;
+        while (remaining > 0) {
+            const size_t row = *written_pixels / output_width;
+            const size_t column = *written_pixels % output_width;
+            const size_t row_pixels = output_width - column;
+            const size_t chunk_pixels = remaining < row_pixels ? remaining : row_pixels;
+            fill_rgb565(destination + row * destination_stride + column,
+                        chunk_pixels,
+                        example_lcd_panel_color_from_rgb565(color));
+            *written_pixels += chunk_pixels;
+            remaining -= chunk_pixels;
+        }
     }
     return ESP_OK;
 }
@@ -429,6 +440,92 @@ esp_err_t openpencil_content_sequence_region(uint16_t frame_index,
     return ESP_OK;
 }
 
+static esp_err_t decode_sequence_pixels(uint8_t codec,
+                                        size_t data_offset,
+                                        size_t stored_bytes,
+                                        uint16_t *destination,
+                                        size_t output_width,
+                                        size_t output_height,
+                                        size_t destination_stride)
+{
+    const size_t output_pixels = output_width * output_height;
+    if (codec == OPENPENCIL_SEQUENCE_CODEC_RAW_RGB565) {
+        const size_t output_bytes = output_pixels * sizeof(uint16_t);
+        ESP_RETURN_ON_FALSE(stored_bytes == output_bytes,
+                            ESP_ERR_INVALID_SIZE,
+                            TAG,
+                            "raw sequence frame size mismatch");
+        for (size_t row = 0; row < output_height; row++) {
+            uint16_t *row_destination = destination + row * destination_stride;
+            ESP_RETURN_ON_ERROR(esp_partition_read(content_partition,
+                                                   data_offset + row * output_width * sizeof(uint16_t),
+                                                   row_destination,
+                                                   output_width * sizeof(uint16_t)),
+                                TAG,
+                                "read raw sequence frame failed");
+            for (size_t column = 0; column < output_width; column++) {
+                row_destination[column] =
+                    example_lcd_panel_color_from_rgb565(row_destination[column]);
+            }
+        }
+        return ESP_OK;
+    }
+    ESP_RETURN_ON_FALSE(codec == OPENPENCIL_SEQUENCE_CODEC_RLE16 && stored_bytes % 4 == 0,
+                        ESP_ERR_NOT_SUPPORTED,
+                        TAG,
+                        "unsupported sequence frame codec");
+
+    size_t written_pixels = 0;
+    const size_t physical_end =
+        (size_t)content_partition->address + data_offset + stored_bytes;
+    if (physical_end <= 0x1000000) {
+        const void *mapped_data = NULL;
+        esp_partition_mmap_handle_t mmap_handle = 0;
+        ESP_RETURN_ON_ERROR(esp_partition_mmap(content_partition,
+                                               data_offset,
+                                               stored_bytes,
+                                               ESP_PARTITION_MMAP_DATA,
+                                               &mapped_data,
+                                               &mmap_handle),
+                            TAG,
+                            "map RLE sequence frame failed");
+        const esp_err_t result = decode_rle_chunk(mapped_data,
+                                                  stored_bytes,
+                                                  destination,
+                                                  output_width,
+                                                  output_height,
+                                                  destination_stride,
+                                                  &written_pixels);
+        esp_partition_munmap(mmap_handle);
+        if (result != ESP_OK) return result;
+    } else {
+        size_t stored_offset = 0;
+        while (stored_offset < stored_bytes) {
+            const size_t remaining = stored_bytes - stored_offset;
+            const size_t chunk_bytes = remaining < sizeof(sequence_decode_chunk)
+                                           ? remaining
+                                           : sizeof(sequence_decode_chunk);
+            ESP_RETURN_ON_ERROR(esp_partition_read(content_partition,
+                                                   data_offset + stored_offset,
+                                                   sequence_decode_chunk,
+                                                   chunk_bytes),
+                                TAG,
+                                "read high-address RLE sequence frame failed");
+            ESP_RETURN_ON_ERROR(decode_rle_chunk(sequence_decode_chunk,
+                                                 chunk_bytes,
+                                                 destination,
+                                                 output_width,
+                                                 output_height,
+                                                 destination_stride,
+                                                 &written_pixels),
+                                TAG,
+                                "decode high-address RLE sequence frame failed");
+            stored_offset += chunk_bytes;
+        }
+    }
+    return written_pixels == output_pixels ? ESP_OK : ESP_ERR_INVALID_SIZE;
+}
+
 esp_err_t openpencil_content_load_frame(uint16_t frame_index, uint16_t *destination, size_t pixels)
 {
     if (!content_valid || !destination || frame_index >= active_header.frame_count) {
@@ -446,7 +543,8 @@ esp_err_t openpencil_content_load_frame(uint16_t frame_index, uint16_t *destinat
                             "read sequence frame resource failed");
         size_t stored_bytes = resource.stored_bytes;
         uint8_t codec = resource.codec;
-        size_t output_pixels = frame_pixels;
+        size_t output_width = active_header.width;
+        size_t output_height = active_header.height;
 
         if (codec == OPENPENCIL_SEQUENCE_CODEC_PATCH_RGB565) {
             openpencil_sequence_patch_header_t patch;
@@ -456,8 +554,9 @@ esp_err_t openpencil_content_load_frame(uint16_t frame_index, uint16_t *destinat
                                                    sizeof(patch)),
                                 TAG,
                                 "read sequence patch header failed");
-            output_pixels = (size_t)patch.width * patch.height;
-            ESP_RETURN_ON_FALSE(output_pixels <= pixels,
+            output_width = patch.width;
+            output_height = patch.height;
+            ESP_RETURN_ON_FALSE(output_width * output_height <= pixels,
                                 ESP_ERR_INVALID_SIZE,
                                 TAG,
                                 "sequence patch buffer is too small");
@@ -465,71 +564,13 @@ esp_err_t openpencil_content_load_frame(uint16_t frame_index, uint16_t *destinat
             data_offset += sizeof(patch);
             stored_bytes -= sizeof(patch);
         }
-
-        if (codec == OPENPENCIL_SEQUENCE_CODEC_RAW_RGB565) {
-            const size_t output_bytes = output_pixels * sizeof(uint16_t);
-            ESP_RETURN_ON_FALSE(stored_bytes == output_bytes,
-                                ESP_ERR_INVALID_SIZE,
-                                TAG,
-                                "raw sequence frame size mismatch");
-            ESP_RETURN_ON_ERROR(
-                esp_partition_read(content_partition, data_offset, destination, output_bytes),
-                TAG,
-                "read raw sequence frame failed");
-            for (size_t pixel = 0; pixel < output_pixels; pixel++) {
-                destination[pixel] = example_lcd_panel_color_from_rgb565(destination[pixel]);
-            }
-            return ESP_OK;
-        }
-        if (codec != OPENPENCIL_SEQUENCE_CODEC_RLE16 || stored_bytes % 4 != 0) {
-            return ESP_ERR_NOT_SUPPORTED;
-        }
-
-        size_t written_pixels = 0;
-        const size_t physical_end =
-            (size_t)content_partition->address + data_offset + stored_bytes;
-        if (physical_end <= 0x1000000) {
-            const void *mapped_data = NULL;
-            esp_partition_mmap_handle_t mmap_handle = 0;
-            ESP_RETURN_ON_ERROR(esp_partition_mmap(content_partition,
-                                                   data_offset,
-                                                   stored_bytes,
-                                                   ESP_PARTITION_MMAP_DATA,
-                                                   &mapped_data,
-                                                   &mmap_handle),
-                                TAG,
-                                "map RLE sequence frame failed");
-            const esp_err_t result = decode_rle_chunk(mapped_data,
-                                                      stored_bytes,
-                                                      destination,
-                                                      output_pixels,
-                                                      &written_pixels);
-            esp_partition_munmap(mmap_handle);
-            if (result != ESP_OK) return result;
-        } else {
-            size_t stored_offset = 0;
-            while (stored_offset < stored_bytes) {
-                const size_t remaining = stored_bytes - stored_offset;
-                const size_t chunk_bytes = remaining < sizeof(sequence_decode_chunk)
-                                               ? remaining
-                                               : sizeof(sequence_decode_chunk);
-                ESP_RETURN_ON_ERROR(esp_partition_read(content_partition,
-                                                       data_offset + stored_offset,
-                                                       sequence_decode_chunk,
-                                                       chunk_bytes),
-                                    TAG,
-                                    "read high-address RLE sequence frame failed");
-                ESP_RETURN_ON_ERROR(decode_rle_chunk(sequence_decode_chunk,
-                                                     chunk_bytes,
-                                                     destination,
-                                                     output_pixels,
-                                                     &written_pixels),
-                                    TAG,
-                                    "decode high-address RLE sequence frame failed");
-                stored_offset += chunk_bytes;
-            }
-        }
-        return written_pixels == output_pixels ? ESP_OK : ESP_ERR_INVALID_SIZE;
+        return decode_sequence_pixels(codec,
+                                      data_offset,
+                                      stored_bytes,
+                                      destination,
+                                      output_width,
+                                      output_height,
+                                      output_width);
     }
 
     size_t frame_offset = sizeof(active_header);
@@ -546,6 +587,70 @@ esp_err_t openpencil_content_load_frame(uint16_t frame_index, uint16_t *destinat
         destination[pixel] = example_lcd_panel_color_from_rgb565(destination[pixel]);
     }
     return ESP_OK;
+}
+
+esp_err_t openpencil_content_reconstruct_sequence_frame(uint16_t frame_index,
+                                                        const uint16_t *previous_frame,
+                                                        uint16_t *destination,
+                                                        size_t pixels)
+{
+    ESP_RETURN_ON_FALSE(content_valid && active_header.mode == OPENPENCIL_CONTENT_MODE_SEQUENCE &&
+                            previous_frame && destination && previous_frame != destination &&
+                            frame_index < active_header.frame_count,
+                        ESP_ERR_INVALID_STATE,
+                        TAG,
+                        "sequence reconstruction is not ready");
+    const size_t frame_pixels = (size_t)active_header.width * active_header.height;
+    ESP_RETURN_ON_FALSE(pixels >= frame_pixels,
+                        ESP_ERR_INVALID_SIZE,
+                        TAG,
+                        "sequence reconstruction buffer is too small");
+
+    openpencil_sequence_resource_t resource;
+    size_t data_offset = 0;
+    ESP_RETURN_ON_ERROR(read_sequence_resource(frame_index, &resource, &data_offset),
+                        TAG,
+                        "read sequence reconstruction resource failed");
+    if (resource.codec != OPENPENCIL_SEQUENCE_CODEC_PATCH_RGB565) {
+        return openpencil_content_load_frame(frame_index, destination, pixels);
+    }
+
+    openpencil_sequence_patch_header_t patch;
+    ESP_RETURN_ON_ERROR(esp_partition_read(content_partition,
+                                           data_offset,
+                                           &patch,
+                                           sizeof(patch)),
+                        TAG,
+                        "read sequence reconstruction patch failed");
+
+    const size_t frame_width = active_header.width;
+    const size_t frame_height = active_header.height;
+    const size_t patch_right = (size_t)patch.x + patch.width;
+    const size_t patch_bottom = (size_t)patch.y + patch.height;
+    for (size_t row = 0; row < frame_height; row++) {
+        const uint16_t *source_row = previous_frame + row * frame_width;
+        uint16_t *destination_row = destination + row * frame_width;
+        if (row < patch.y || row >= patch_bottom) {
+            memcpy(destination_row, source_row, frame_width * sizeof(uint16_t));
+            continue;
+        }
+        if (patch.x > 0) {
+            memcpy(destination_row, source_row, (size_t)patch.x * sizeof(uint16_t));
+        }
+        if (patch_right < frame_width) {
+            memcpy(destination_row + patch_right,
+                   source_row + patch_right,
+                   (frame_width - patch_right) * sizeof(uint16_t));
+        }
+    }
+
+    return decode_sequence_pixels(patch.codec,
+                                  data_offset + sizeof(patch),
+                                  resource.stored_bytes - sizeof(patch),
+                                  destination + (size_t)patch.y * frame_width + patch.x,
+                                  patch.width,
+                                  patch.height,
+                                  frame_width);
 }
 
 size_t openpencil_content_capacity(void)

@@ -177,6 +177,7 @@ export function useEmbeddedDisplay() {
         `size: ${payload.width}×${payload.height}`,
         'frame-rate: 20 FPS',
         `compressed: ${payload.compressedFrames} / ${payload.frameCount}`,
+        `patches: ${payload.patchFrames} / ${payload.frameCount}`,
         `stored: ${payload.storedBytes} bytes`,
         'usb-sequence-payload: ready'
       ]

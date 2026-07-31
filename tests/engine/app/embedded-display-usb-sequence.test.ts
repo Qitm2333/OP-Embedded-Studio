@@ -58,8 +58,8 @@ describe('USB PNG sequence content', () => {
     const sequence = encodeUsbSequenceFrames(profile, frames)
     const view = new DataView(sequence.content)
     expect(sequence.frameCount).toBe(100)
-    expect(sequence.compressedFrames).toBe(100)
-    expect(sequence.patchFrames).toBe(0)
+    expect(sequence.compressedFrames).toBe(1)
+    expect(sequence.patchFrames).toBe(99)
     expect(view.getUint8(6)).toBe(2)
     expect(view.getUint16(12, true)).toBe(100)
     expect(view.getUint16(30, true)).toBe(100)
@@ -73,6 +73,27 @@ describe('USB PNG sequence content', () => {
     expect(sequence.patchFrames).toBe(0)
     expect(sequence.frameDelayMs).toBe(50)
     expect([0, 1]).toContain(view.getUint8(secondResourceOffset + 8))
+  })
+
+  test('encodes a small changed rectangle as a patch', () => {
+    const first = uniqueFrame()
+    const second = first.slice()
+    second[(2 * 8 + 3) * 2] ^= 0xff
+    second[(3 * 8 + 4) * 2 + 1] ^= 0xff
+
+    const sequence = encodeUsbSequenceFrames(patchProfile, [first, second])
+    const view = new DataView(sequence.content)
+    const secondResourceOffset = 24 + 12 + 12
+    const sequenceDataOffset = 24 + 12 + 2 * 12
+    const firstStoredBytes = view.getUint32(24 + 12 + 4, true)
+    const patchOffset = sequenceDataOffset + firstStoredBytes
+
+    expect(sequence.patchFrames).toBe(1)
+    expect(view.getUint8(secondResourceOffset + 8)).toBe(2)
+    expect(view.getUint16(patchOffset, true)).toBe(3)
+    expect(view.getUint16(patchOffset + 2, true)).toBe(2)
+    expect(view.getUint16(patchOffset + 4, true)).toBe(2)
+    expect(view.getUint16(patchOffset + 6, true)).toBe(2)
   })
 
   test('keeps the existing single-image format unchanged', () => {
@@ -109,13 +130,16 @@ describe('USB PNG sequence content', () => {
     expect(wifi.patchFrames).toBe(0)
   })
 
-  test('uses the same sequence envelope for USB, Wi-Fi, and BLE', () => {
-    const frames = [uniqueFrame(), uniqueFrame(17)]
+  test('keeps Wi-Fi and BLE on full frames while USB uses patches', () => {
+    const frame = uniqueFrame()
+    const frames = [frame, frame.slice()]
     const usb = new Uint8Array(encodeUsbSequenceFrames(patchProfile, frames).content)
     const wifi = new Uint8Array(encodeWifiSequenceFrames(patchProfile, frames).content)
     const ble = new Uint8Array(encodeBleSequenceFrames(patchProfile, frames).content)
 
-    expect(wifi).toEqual(usb)
-    expect(ble).toEqual(usb)
+    expect(wifi).toEqual(ble)
+    expect(wifi).not.toEqual(usb)
+    expect(new DataView(wifi.buffer).getUint8(24 + 12 + 12 + 8)).not.toBe(2)
+    expect(new DataView(usb.buffer).getUint8(24 + 12 + 12 + 8)).toBe(2)
   })
 })

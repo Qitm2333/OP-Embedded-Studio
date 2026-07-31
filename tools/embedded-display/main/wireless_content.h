@@ -88,6 +88,10 @@ bool openpencil_content_state_uses_multi_click(uint16_t state);
 esp_err_t openpencil_content_sequence_region(uint16_t frame_index,
                                              openpencil_sequence_region_t *region);
 esp_err_t openpencil_content_load_frame(uint16_t frame_index, uint16_t *destination, size_t pixels);
+esp_err_t openpencil_content_reconstruct_sequence_frame(uint16_t frame_index,
+                                                        const uint16_t *previous_frame,
+                                                        uint16_t *destination,
+                                                        size_t pixels);
 size_t openpencil_content_capacity(void);
 esp_err_t openpencil_content_write_begin(const openpencil_content_header_t *header, size_t length);
 esp_err_t openpencil_content_write_chunk(size_t payload_offset, const uint8_t *data, size_t length);

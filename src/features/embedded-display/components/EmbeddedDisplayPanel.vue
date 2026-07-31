@@ -1350,7 +1350,7 @@ watch([wifiSsid, wifiPassword], () => {
                 <p class="mt-0.5 truncate text-[10px] leading-relaxed text-muted">
                   {{
                     usbSequencePayload && frameResourceSource === 'uploaded'
-                      ? `${selectedImageName} · ${usbSequencePayload.frameCount} 帧 · 压缩后 ${(usbSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB · RLE ${usbSequencePayload.compressedFrames} 帧`
+                      ? `${selectedImageName} · ${usbSequencePayload.frameCount} 帧 · 压缩后 ${(usbSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB · 局部刷新 ${usbSequencePayload.patchFrames} 帧`
                       : selectedImageName && frameResourceSource === 'uploaded'
                         ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · 1 帧`
                         : '单张图片，或多张 PNG 序列；20 FPS，使用稳定整帧播放'

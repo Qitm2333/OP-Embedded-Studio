@@ -7,10 +7,16 @@ const CONTENT_MODE_SEQUENCE = 2;
 const CONTENT_HEADER_BYTES = 24;
 const SEQUENCE_HEADER_BYTES = 12;
 const SEQUENCE_RESOURCE_BYTES = 12;
+const SEQUENCE_PATCH_HEADER_BYTES = 12;
 const SEQUENCE_CODEC_RAW_RGB565 = 0;
 const SEQUENCE_CODEC_RLE16 = 1;
+const SEQUENCE_CODEC_PATCH_RGB565 = 2;
 const USB_SEQUENCE_CONTENT_BYTES = 0x1cf0000;
 const USB_SEQUENCE_FPS = 20;
+
+export interface SequenceEncodingOptions {
+  allowPatches?: boolean;
+}
 
 export interface UsbImageSequencePayload {
   profileId: string;
@@ -50,7 +56,9 @@ function crc32(bytes: Uint8Array): number {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-export function encodeUsbSequenceFrame(frame: Uint8Array): EncodedFrame {
+export function encodeUsbSequenceFrame(
+  frame: Uint8Array,
+): EncodedFrame {
   if (frame.byteLength % 2 !== 0) throw new Error("RGB565 帧长度必须为偶数");
   const rleBuffer = new Uint8Array(frame.byteLength * 2);
   let rleOffset = 0;
@@ -78,16 +86,95 @@ export function encodeUsbSequenceFrame(frame: Uint8Array): EncodedFrame {
     : { codec: SEQUENCE_CODEC_RAW_RGB565, bytes: frame };
 }
 
+function encodeUsbSequencePatch(
+  previous: Uint8Array,
+  current: Uint8Array,
+  width: number,
+  height: number,
+): EncodedFrame {
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const offset = (y * width + x) * 2;
+      if (
+        previous[offset] === current[offset] &&
+        previous[offset + 1] === current[offset + 1]
+      ) {
+        continue;
+      }
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  const unchanged = maxX < minX || maxY < minY;
+  if (unchanged) {
+    minX = 0;
+    minY = 0;
+    maxX = 0;
+    maxY = 0;
+  }
+
+  const patchWidth = maxX - minX + 1;
+  const patchHeight = maxY - minY + 1;
+  const patchPixels = new Uint8Array(patchWidth * patchHeight * 2);
+  for (let row = 0; row < patchHeight; row += 1) {
+    const sourceOffset = ((minY + row) * width + minX) * 2;
+    const destinationOffset = row * patchWidth * 2;
+    patchPixels.set(
+      current.subarray(sourceOffset, sourceOffset + patchWidth * 2),
+      destinationOffset,
+    );
+  }
+
+  const encodedPatch = encodeUsbSequenceFrame(patchPixels);
+  const patchBytes = new Uint8Array(
+    SEQUENCE_PATCH_HEADER_BYTES + encodedPatch.bytes.byteLength,
+  );
+  const patchView = new DataView(patchBytes.buffer);
+  patchView.setUint16(0, minX, true);
+  patchView.setUint16(2, minY, true);
+  patchView.setUint16(4, patchWidth, true);
+  patchView.setUint16(6, patchHeight, true);
+  patchView.setUint8(8, encodedPatch.codec);
+  patchBytes.set(encodedPatch.bytes, SEQUENCE_PATCH_HEADER_BYTES);
+
+  const fullFrame = encodeUsbSequenceFrame(current);
+  const patchArea = patchWidth * patchHeight;
+  const frameArea = width * height;
+  const patchHasSafeTransferArea = patchArea * 4 <= frameArea * 3;
+  return unchanged ||
+    (patchHasSafeTransferArea && patchBytes.byteLength < fullFrame.bytes.byteLength)
+    ? { codec: SEQUENCE_CODEC_PATCH_RGB565, bytes: patchBytes }
+    : fullFrame;
+}
+
 function encodeSequenceFrames(
   profile: EmbeddedDisplayProfile,
   frames: Uint8Array[],
+  options: SequenceEncodingOptions,
 ): EncodedFrame[] {
   const frameBytes = profile.resolution.width * profile.resolution.height * 2;
   frames.forEach((frame) => {
     if (frame.byteLength !== frameBytes)
       throw new Error("PNG 序列帧尺寸不一致");
   });
-  return frames.map((frame) => encodeUsbSequenceFrame(frame));
+  return frames.map((frame, index) =>
+    index === 0 || options.allowPatches === false
+      ? encodeUsbSequenceFrame(frame)
+      : encodeUsbSequencePatch(
+          frames[index - 1],
+          frame,
+          profile.resolution.width,
+          profile.resolution.height,
+        ),
+  );
 }
 
 function buildUsbSequencePayload(
@@ -161,7 +248,9 @@ function buildUsbSequencePayload(
     compressedFrames: encodedFrames.filter(
       (frame) => frame.codec === SEQUENCE_CODEC_RLE16,
     ).length,
-    patchFrames: 0,
+    patchFrames: encodedFrames.filter(
+      (frame) => frame.codec === SEQUENCE_CODEC_PATCH_RGB565,
+    ).length,
     content: content.buffer,
   };
 }
@@ -170,10 +259,11 @@ export function encodeUsbSequenceFrames(
   profile: EmbeddedDisplayProfile,
   frames: Uint8Array[],
   name = "PNG sequence",
+  options: SequenceEncodingOptions = {},
 ): UsbImageSequencePayload {
   return buildUsbSequencePayload(
     profile,
-    encodeSequenceFrames(profile, frames),
+    encodeSequenceFrames(profile, frames, options),
     name,
   );
 }
@@ -181,6 +271,7 @@ export function encodeUsbSequenceFrames(
 export async function imageFilesToUsbSequence(
   files: File[],
   profile: EmbeddedDisplayProfile,
+  options: SequenceEncodingOptions = {},
 ): Promise<UsbImageSequencePayload> {
   if (files.length < 2) throw new Error("PNG 序列至少需要两张图片");
   if (
@@ -205,7 +296,7 @@ export async function imageFilesToUsbSequence(
   }
   return buildUsbSequencePayload(
     profile,
-    encodeSequenceFrames(profile, frames),
+    encodeSequenceFrames(profile, frames, options),
     `${sortedFiles[0].name} 等 ${sortedFiles.length} 帧`,
   );
 }
