@@ -4,6 +4,8 @@ if(OPENPENCIL_BUILD_MODE MATCHES "^(wifi|lan)-")
     set(COMPONENTS main openpencil_wifi_server)
 elseif(OPENPENCIL_BUILD_MODE MATCHES "^ble-")
     set(COMPONENTS main openpencil_ble_server)
+elseif(OPENPENCIL_BUILD_MODE MATCHES "^usb-")
+    set(COMPONENTS main openpencil_usb_server)
 endif()
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

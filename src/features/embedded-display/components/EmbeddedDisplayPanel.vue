@@ -86,10 +86,16 @@ const wifiBaseFirmwareReady = ref(false)
 const DEFAULT_WIFI_AP_SSID = 'OP-Embedded-Setup'
 const DEFAULT_WIFI_AP_PASSWORD = 'opembedded'
 const deviceDetailsOpen = ref(false)
+const usbMaintenanceOpen = ref(false)
 const bleMaintenanceOpen = ref(false)
 const wifiMaintenanceOpen = ref(false)
 const liveMirrorBusy = ref(false)
 const usbFlashing = ref(false)
+const usbInitialization = ref<FirmwareInitializationState>({
+  status: 'idle',
+  progress: 0,
+  message: ''
+})
 const wirelessInitialization = ref<Record<WirelessTransportMode, FirmwareInitializationState>>({
   wifi: { status: 'idle', progress: 0, message: '' },
   ble: { status: 'idle', progress: 0, message: '' }
@@ -163,6 +169,7 @@ const selectedPrototypeSelectValue = computed({
 const modeSwitchLocked = computed(
   () =>
     usbFlashing.value ||
+    usbInitialization.value.status === 'uploading' ||
     serialSession.selecting.value ||
     liveMirrorBusy.value ||
     wirelessInitialization.value.wifi.status === 'uploading' ||
@@ -197,6 +204,7 @@ const profileOptions = computed(() =>
   profiles.value.map((profile) => ({ value: profile.id, label: profile.name }))
 )
 const bleBuildMode: EmbeddedBuildMode = 'ble-frame'
+const usbManifestUrl = computed(() => manifestUrlFor('usb-frame'))
 const bleManifestUrl = computed(() => manifestUrlFor(bleBuildMode))
 const wifiManifestUrl = computed(() => manifestUrlFor('wifi-frame'))
 const wifiLiveManifestUrl = computed(() => manifestUrlFor('wifi-live'))
@@ -410,7 +418,7 @@ async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
   buildStatus.value = 'uploading'
   buildMessage.value = sequence
     ? `正在准备 USB PNG 序列：${sequence.frameCount} 帧…`
-    : '正在准备完整 USB 单 Frame 固件…'
+    : '正在准备 USB 单 Frame 内容…'
   buildLog.value = []
   const flashOptions = {
     port,
@@ -427,7 +435,7 @@ async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
       written: number
       total: number
     }) => {
-      buildMessage.value = `正在烧录完整固件：${percent}%（${written} / ${total} 字节）`
+      buildMessage.value = `正在通过 USB 高速传输：${percent}%（${written} / ${total} 字节）`
     }
   }
   try {
@@ -436,11 +444,11 @@ async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
     buildStatus.value = 'ready'
     buildMessage.value = sequence
       ? `PNG 序列已写入：${sequence.frameCount} 帧 · 20 FPS，设备正在重启。`
-      : '完整固件和最新 Frame 已写入，设备正在重启。'
+      : '最新 Frame 已写入，设备正在重启。'
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     buildStatus.value = 'error'
-    buildMessage.value = `USB Frame 烧录失败：${message}`
+    buildMessage.value = `USB Frame 传输失败：${message}`
     buildLog.value.push(message)
   } finally {
     usbFlashing.value = false
@@ -481,7 +489,7 @@ async function handleUsbPrototypeBakeAndFlash() {
         if (normalized) buildLog.value.push(normalized)
       },
       onProgress: ({ percent, written, total }) => {
-        buildMessage.value = `正在烧录状态机：${percent}%（${written} / ${total} 字节）`
+        buildMessage.value = `正在通过 USB 高速传输状态机：${percent}%（${written} / ${total} 字节）`
       }
     })
     buildStatus.value = 'ready'
@@ -489,7 +497,7 @@ async function handleUsbPrototypeBakeAndFlash() {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     buildStatus.value = 'error'
-    buildMessage.value = `USB 状态机烧录失败：${message}`
+    buildMessage.value = `USB 状态机传输失败：${message}`
     buildLog.value.push(message)
   } finally {
     usbFlashing.value = false
@@ -572,8 +580,8 @@ async function handleUsbImageChange(event: Event) {
     }
     buildMessage.value =
       files.length === 1
-        ? '图片已准备，请点击“连接串口并烧录”'
-        : 'PNG 序列已准备，请点击“连接串口并烧录”'
+        ? '图片已准备，请点击“通过 USB 上传内容”'
+        : 'PNG 序列已准备，请点击“通过 USB 上传内容”'
   } catch (error) {
     bakeError.value = error instanceof Error ? error.message : String(error)
   } finally {
@@ -699,6 +707,66 @@ function resetWirelessInitialization(mode: WirelessTransportMode) {
     status: 'idle',
     progress: 0,
     message: ''
+  }
+}
+
+function resetUsbInitialization() {
+  usbInitialization.value = { status: 'idle', progress: 0, message: '' }
+}
+
+async function handleInitializeUsbFirmware() {
+  const manifestUrl = usbManifestUrl.value
+  if (transportMode.value !== 'usb' || !manifestUrl || !selectedProfile.value?.id) return
+
+  const state = usbInitialization.value
+  let port
+  try {
+    port = await serialSession.requirePort()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    state.status = 'error'
+    state.message = message
+    buildStatus.value = 'error'
+    buildMessage.value = message
+    return
+  }
+
+  state.status = 'uploading'
+  state.progress = 0
+  state.message = '正在准备 USB 高速基础固件…'
+  buildStatus.value = 'uploading'
+  buildMessage.value = state.message
+  buildLog.value = []
+  try {
+    await flashFirmwareManifest(manifestUrl, 'usb-frame', {
+      port,
+      preparingMessage: state.message,
+      connectedMessage: '已连接，正在初始化 USB 高速内容服务。',
+      onLog: (message) => {
+        const normalized = message.trim()
+        if (!normalized) return
+        state.message = normalized
+        buildMessage.value = normalized
+        buildLog.value.push(normalized)
+      },
+      onProgress: ({ percent, written, total }) => {
+        state.progress = percent
+        state.message = `正在写入 USB 基础固件：${percent}%（${written} / ${total} 字节）`
+        buildMessage.value = state.message
+      }
+    })
+    state.status = 'success'
+    state.progress = 100
+    state.message = 'USB 高速设备初始化完成；后续只传输内容。'
+    buildStatus.value = 'ready'
+    buildMessage.value = state.message
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    state.status = 'error'
+    state.message = `初始化失败：${message}`
+    buildStatus.value = 'error'
+    buildMessage.value = state.message
+    buildLog.value.push(message)
   }
 }
 
@@ -887,6 +955,7 @@ watch(
     buildLog.value = []
     if (buildStatus.value !== 'loading') buildStatus.value = 'idle'
     buildMessage.value = buildMessageForTransport(mode)
+    if (mode === 'usb') resetUsbInitialization()
     if (mode === 'wifi') {
       resetWirelessInitialization('wifi')
       wirelessStatus.value = 'idle'
@@ -897,6 +966,17 @@ watch(
       bleSession.setProfile(selectedProfile.value)
     }
     if (!profileId) return
+
+    if (mode === 'usb') {
+      await loadCachedFirmware('usb-frame')
+      if (
+        sequence !== firmwareLoadSequence ||
+        transportMode.value !== 'usb' ||
+        selectedProfile.value?.id !== profileId
+      )
+        return
+      return
+    }
 
     if (mode === 'ble') {
       const available = await loadCachedFirmware(bleBuildMode)
@@ -1067,6 +1147,51 @@ watch([wifiSsid, wifiPassword], () => {
         :background-color="frameBackgroundColor"
         @busy-change="liveMirrorBusy = $event"
       />
+
+      <PanelSection
+        v-if="transportMode === 'usb'"
+        label="首次使用 / 设备维护"
+        :open="usbMaintenanceOpen"
+        @update:open="usbMaintenanceOpen = $event"
+      >
+        <p class="text-[10px] leading-relaxed text-muted">
+          高速基础固件已随 OP Embedded Studio
+          提供。只有首次使用、设备维护或固件升级时才需要重新初始化。
+        </p>
+        <button
+          type="button"
+          class="mt-1.5 h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="!usbManifestUrl || usbInitialization.status === 'uploading'"
+          @click="handleInitializeUsbFirmware"
+        >
+          {{
+            usbInitialization.status === 'uploading'
+              ? `正在初始化：${usbInitialization.progress}%`
+              : '通过 USB 初始化高速传输固件'
+          }}
+        </button>
+        <div
+          v-if="usbInitialization.status !== 'idle'"
+          class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-panel-field"
+        >
+          <div
+            class="h-full transition-[width]"
+            :class="usbInitialization.status === 'error' ? 'bg-error' : 'bg-accent'"
+            :style="{ width: usbInitialization.progress + '%' }"
+          />
+        </div>
+        <p
+          class="mt-1 text-[10px] leading-relaxed"
+          :class="usbInitialization.status === 'error' ? 'text-error' : 'text-muted'"
+        >
+          {{
+            usbInitialization.message ||
+            (usbManifestUrl
+              ? 'USB 高速基础固件已完备；初始化一次后，日常操作只上传内容。'
+              : '预置 USB 高速固件缺失，请检查固件资源。')
+          }}
+        </p>
+      </PanelSection>
 
       <PanelSection
         v-if="transportMode === 'ble'"
@@ -1337,8 +1462,8 @@ watch([wifiSsid, wifiPassword], () => {
             >
               {{
                 usbFlashing && frameResourceSource === 'baked'
-                  ? '正在烧录…'
-                  : '一键烘焙并烧录当前 Frame'
+                  ? '正在上传…'
+                  : '一键烘焙并上传当前 Frame'
               }}
             </button>
           </div>
@@ -1379,7 +1504,7 @@ watch([wifiSsid, wifiPassword], () => {
               :disabled="!canUsbFileFlash"
               @click="handleUsbFrameBakeAndFlash('file')"
             >
-              {{ usbFlashing ? '正在烧录…' : '连接串口并烧录' }}
+              {{ usbFlashing ? '正在上传…' : '通过 USB 上传内容' }}
             </button>
           </div>
         </div>
@@ -1434,7 +1559,7 @@ watch([wifiSsid, wifiPassword], () => {
             :disabled="!canUsbPrototypeFlash"
             @click="handleUsbPrototypeBakeAndFlash"
           >
-            {{ usbFlashing ? '正在烧录状态机…' : '一键烘焙并烧录状态机' }}
+            {{ usbFlashing ? '正在上传状态机…' : '一键烘焙并上传状态机' }}
           </button>
         </div>
         <p

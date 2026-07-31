@@ -73,7 +73,7 @@ NVS_PARTITION_SIZE = 0x6000
 WIRELESS_CONTENT_RESET_ARTIFACT = "content-reset.bin"
 WIRELESS_CONTENT_OFFSET = 0x310000
 WIRELESS_CONTENT_RESET_BYTES = 0x1000
-PREBUILT_FIRMWARE_MODES = frozenset(("wifi-frame", "wifi-live", "ble-frame"))
+PREBUILT_FIRMWARE_MODES = frozenset(("usb-frame", "wifi-frame", "wifi-live", "ble-frame"))
 EXTERNAL_CONTENT_BUILD_MODES = frozenset((
     "usb-frame", "usb-prototype",
     "wifi-frame", "wifi-prototype", "wifi-live", "lan-frame", "lan-prototype",
@@ -333,6 +333,7 @@ def mode_defaults_path(build_mode):
     lan_status_screen = mode.startswith("lan-")
     setup_access_point = mode.startswith("wifi-")
     ble_enabled = mode.startswith("ble-")
+    usb_content_server = mode == "usb-frame"
     settings = [
         f'CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="{partition_table}"',
         f'CONFIG_PARTITION_TABLE_FILENAME="{partition_table}"',
@@ -344,6 +345,7 @@ def mode_defaults_path(build_mode):
         f'CONFIG_OPENPENCIL_LAN_STATUS_SCREEN={"y" if lan_status_screen else "n"}',
         f'CONFIG_OPENPENCIL_SETUP_ACCESS_POINT={"y" if setup_access_point else "n"}',
         f'CONFIG_OPENPENCIL_BLE_SERVER={"y" if ble_enabled else "n"}',
+        f'CONFIG_OPENPENCIL_USB_CONTENT_SERVER={"y" if usb_content_server else "n"}',
         f'CONFIG_OPENPENCIL_BLE_REQUIRE_PAIRING=n',
     ]
     if wireless_enabled:
@@ -359,6 +361,8 @@ def mode_defaults_path(build_mode):
             "# CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_160 is not set",
             "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y",
             "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ=240",
+            "CONFIG_ESP_CONSOLE_SECONDARY_NONE=y",
+            "# CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG is not set",
         ])
     if ble_enabled:
         settings.extend([
@@ -428,6 +432,7 @@ def build_inputs_signature(registry, profile, build_mode):
         PROJECT_DIR / "main" / "CMakeLists.txt",
         PROJECT_DIR / "main" / "Kconfig.projbuild",
         PROJECT_DIR / "main" / "idf_component.yml",
+        PROJECT_DIR / "components" / "openpencil_usb_server" / "CMakeLists.txt",
         PROJECT_DIR / "components" / "openpencil_wifi_server" / "CMakeLists.txt",
     ]
     stable_sources.extend(

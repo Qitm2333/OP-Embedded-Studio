@@ -37,6 +37,9 @@
 #include "ble_server.h"
 #include "ble_status_view.h"
 #endif
+#if CONFIG_OPENPENCIL_USB_CONTENT_SERVER
+#include "usb_content_server.h"
+#endif
 #include "co5300_panel.h"
 
 static const char *TAG = "lcd_simple";
@@ -256,6 +259,9 @@ void app_main(void)
 #if CONFIG_OPENPENCIL_WIFI_SERVER
             ESP_ERROR_CHECK(openpencil_wireless_server_start());
 #endif
+#if CONFIG_OPENPENCIL_USB_CONTENT_SERVER
+            ESP_ERROR_CHECK(openpencil_usb_content_server_start());
+#endif
             ESP_ERROR_CHECK(openpencil_wireless_prototype_run(panel_handle, frame_buffer));
             return;
         }
@@ -266,6 +272,8 @@ void app_main(void)
             sequence_ready = openpencil_wireless_server_start;
 #elif CONFIG_OPENPENCIL_BLE_SERVER
             sequence_ready = openpencil_ble_server_start;
+#elif CONFIG_OPENPENCIL_USB_CONTENT_SERVER
+            sequence_ready = openpencil_usb_content_server_start;
 #endif
         }
         ESP_ERROR_CHECK(draw_wireless_image(panel_handle, frame_buffer, sequence_ready));
@@ -279,6 +287,9 @@ void app_main(void)
 #elif CONFIG_OPENPENCIL_BLE_SERVER
         // Keep BLE reachable after boot while leaving the persisted image on screen.
         ESP_ERROR_CHECK(openpencil_ble_server_start());
+        return;
+#elif CONFIG_OPENPENCIL_USB_CONTENT_SERVER
+        ESP_ERROR_CHECK(openpencil_usb_content_server_start());
         return;
 #endif
     } else
@@ -315,6 +326,16 @@ void app_main(void)
         ESP_ERROR_CHECK(openpencil_ble_server_start());
         ESP_LOGI(TAG, "Start BLE transfer status view");
         ESP_ERROR_CHECK(openpencil_ble_status_view_run(panel_handle, frame_buffer));
+        return;
+    } else
+#endif
+#if CONFIG_OPENPENCIL_USB_CONTENT_SERVER
+    if (LCD_GENERATED_IMAGE_PIXEL_COUNT == 0) {
+        ESP_ERROR_CHECK(openpencil_usb_content_server_start());
+        ESP_LOGI(TAG, "Start USB base firmware diagnostic pattern");
+        ESP_ERROR_CHECK(openpencil_wireless_diagnostic_view_run(panel_handle,
+                                                                frame_buffer,
+                                                                "USB MODE"));
         return;
     } else
 #endif

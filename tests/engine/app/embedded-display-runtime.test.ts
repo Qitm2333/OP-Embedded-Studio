@@ -17,6 +17,9 @@ describe('embedded display runtime catalog', () => {
 
   test('exposes bundled wireless firmware independently by mode', () => {
     const profileId = 'co5300_waveshare_amoled_1_75c'
+    expect(bundledFirmwareManifestUrl(profileId, 'usb-frame')).toContain(
+      '/embedded-display/firmware/usb-frame/'
+    )
     expect(bundledFirmwareManifestUrl(profileId, 'wifi-frame')).toContain(
       '/embedded-display/firmware/wifi-frame/'
     )

@@ -4,6 +4,7 @@
 
 ### Changed
 
+- Split USB device setup from daily content uploads: install the bundled base firmware once, then update Frames, PNG sequences, and state machines through the dedicated runtime USB protocol without rebuilding or reflashing the application.
 - Add Figma-style page management in the Pages panel, including rename/delete actions and drag-and-drop page reordering.
 - Add DOM/CSS import and authoring support so HTML, CSS, Tailwind, and JSX can be converted into editable OpenPencil documents from the app, CLI, and SDK.
 - Add Tailwind class serialization for DOM/CSS HTML export in the SDK and CLI.

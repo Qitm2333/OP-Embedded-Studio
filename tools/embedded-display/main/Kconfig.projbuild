@@ -35,6 +35,10 @@ menu "Example Configuration"
         bool "Enable the OP Embedded Studio BLE content server"
         default n
 
+    config OPENPENCIL_USB_CONTENT_SERVER
+        bool "Enable the OP Embedded Studio USB content server"
+        default n
+
     config OPENPENCIL_BLE_REQUIRE_PAIRING
         bool "Require BLE link encryption before content writes"
         default y

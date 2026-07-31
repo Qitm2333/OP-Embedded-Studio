@@ -29,7 +29,7 @@ An embedded UI design, interaction prototyping, firmware flashing, and wireless 
 - 将静态 Frame 烘焙为设备可直接显示的 RGB565 内容
 - 创建可命名、可连续切换的多 Frame 交互状态机
 - 支持单图与 PNG 序列帧内容
-- 通过 USB 完成固件与内容的一键烧录
+- 首次通过 USB 初始化预编译基础固件，后续仅高速更新内容
 - 通过 Wi-Fi 或 BLE 无线更新设备内容
 - 将固定 Frame 通过 Wi-Fi 实时镜像到设备
 - 使用独立 Android BLE App 拍照、选图、裁切并上传
@@ -40,7 +40,7 @@ An embedded UI design, interaction prototyping, firmware flashing, and wireless 
 ## What OP Embedded Studio Does
 
 - **Design for real embedded displays** — create screen-sized Frames with the existing visual editor and target a concrete device profile.
-- **Bake and flash a Frame** — render the selected Frame, apply placement and circular clipping rules, convert it to the device color format, and flash it through USB.
+- **Bake and upload a Frame** — render the selected Frame, apply placement and circular clipping rules, convert it to the device color format, and upload only the content through USB.
 - **Build interaction prototypes** — connect multiple Frames with tap, double-tap, triple-tap, long-press, Boot-button, and other supported transitions.
 - **Play PNG sequences** — package ordered image sequences for device-side playback without changing the normal single-image workflow.
 - **Transfer over Wi-Fi** — initialize the device with dedicated Wi-Fi firmware and upload Frame or state-machine content wirelessly.
@@ -52,7 +52,7 @@ An embedded UI design, interaction prototyping, firmware flashing, and wireless 
 
 | 模式 | 单 Frame | 状态机 | PNG 序列 | 说明 |
 |---|---:|---:|---:|---|
-| USB | ✅ | ✅ | ✅ | 一键烘焙并烧录，也可以上传本地图片或序列帧 |
+| USB | ✅ | ✅ | ✅ | 首次初始化预编译基础固件，后续仅上传 Frame、状态机或序列内容 |
 | Wi-Fi | ✅ | ✅ | ✅ | 首次通过 USB 初始化专用固件，后续无线传输内容 |
 | BLE | ✅ | ✅ | ✅ | 支持浏览器 Web Bluetooth 与 Android BLE App |
 | Wi-Fi 实时镜像 | ✅ | — | 自动更新 | 固定一个 Frame，设计变化后按顺序同步到设备 |
@@ -64,9 +64,9 @@ An embedded UI design, interaction prototyping, firmware flashing, and wireless 
 ### USB
 
 1. 选择设备与串口。
-2. 选择单 Frame 或状态机模式。
-3. 选择画布中的目标 Frame，或选择本地图片/PNG 序列。
-4. 一键烘焙并烧录。
+2. 首次使用时，在“首次使用 / 设备维护”中初始化预编译 USB 基础固件。
+3. 选择单 Frame 或状态机模式。
+4. 选择画布中的目标 Frame，或选择本地图片/PNG 序列并上传；后续不会重复烧录应用固件。
 
 ### Wi-Fi / BLE
 
@@ -135,7 +135,7 @@ src/features/embedded-display/        前端设备面板、状态与传输适配
 
 tools/embedded-display/                固件工程、构建服务与屏幕 profile
 tools/android-ble-uploader/            独立 Android BLE 上传器
-public/embedded-display/firmware/      可直接调用的预编译固件资源
+tools/embedded-display/prebuilt-firmware/  可直接调用的预编译固件资源
 ```
 
 设备 profile、内容转换、传输协议和界面状态分别维护，方便未来同步 OpenPencil 上游更新，或新增屏幕、控制器和传输方式。
