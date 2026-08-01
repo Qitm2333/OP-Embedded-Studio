@@ -18,6 +18,12 @@ interface WirelessResponse {
   message?: string
 }
 
+export interface WirelessUploadProgress {
+  percent: number
+  written: number
+  total: number
+}
+
 function normalizeBaseUrl(baseUrl: string): string {
   const value = baseUrl.trim().replace(/\/$/, '')
   if (!value) throw new Error('请输入设备地址')
@@ -66,8 +72,48 @@ export async function probeWirelessDevice(baseUrl: string): Promise<EmbeddedWire
 async function uploadWirelessContent(
   baseUrl: string,
   body: ArrayBuffer,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  onProgress?: (progress: WirelessUploadProgress) => void
 ): Promise<void> {
+  if (onProgress) {
+    await new Promise<void>((resolve, reject) => {
+      const request = new XMLHttpRequest()
+      const abortRequest = () => request.abort()
+      const cleanup = () => signal?.removeEventListener('abort', abortRequest)
+
+      request.open('POST', `${normalizeBaseUrl(baseUrl)}/api/content`)
+      request.setRequestHeader('Content-Type', 'application/octet-stream')
+      request.upload.addEventListener('progress', (event) => {
+        if (!event.lengthComputable || event.total <= 0) return
+        onProgress({
+          percent: Math.min(100, Math.round((event.loaded / event.total) * 100)),
+          written: event.loaded,
+          total: event.total
+        })
+      })
+      request.addEventListener('load', () => {
+        cleanup()
+        void parseResponse(
+          new Response(request.responseText, {
+            status: request.status,
+            statusText: request.statusText
+          })
+        ).then(() => resolve(), reject)
+      })
+      request.addEventListener('error', () => {
+        cleanup()
+        reject(new Error('Wi-Fi 内容传输失败'))
+      })
+      request.addEventListener('abort', () => {
+        cleanup()
+        reject(new DOMException('Wi-Fi 内容传输已取消', 'AbortError'))
+      })
+      signal?.addEventListener('abort', abortRequest, { once: true })
+      request.send(body)
+    })
+    return
+  }
+
   const response = await fetch(`${normalizeBaseUrl(baseUrl)}/api/content`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/octet-stream' },
@@ -80,23 +126,26 @@ async function uploadWirelessContent(
 export async function uploadWirelessImage(
   baseUrl: string,
   payload: EmbeddedImagePayload,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  onProgress?: (progress: WirelessUploadProgress) => void
 ): Promise<void> {
-  await uploadWirelessContent(baseUrl, encodeWirelessImage(payload), signal)
+  await uploadWirelessContent(baseUrl, encodeWirelessImage(payload), signal, onProgress)
 }
 
 export async function uploadWirelessPrototype(
   baseUrl: string,
   payload: EmbeddedPrototypePayload,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  onProgress?: (progress: WirelessUploadProgress) => void
 ): Promise<void> {
-  await uploadWirelessContent(baseUrl, encodeWirelessPrototype(payload), signal)
+  await uploadWirelessContent(baseUrl, encodeWirelessPrototype(payload), signal, onProgress)
 }
 
 export async function uploadWirelessSequence(
   baseUrl: string,
   payload: WirelessImageSequencePayload,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  onProgress?: (progress: WirelessUploadProgress) => void
 ): Promise<void> {
-  await uploadWirelessContent(baseUrl, payload.content, signal)
+  await uploadWirelessContent(baseUrl, payload.content, signal, onProgress)
 }

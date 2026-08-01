@@ -32,7 +32,6 @@ import { useSerialDeviceSession } from '../composables/useSerialDeviceSession'
 import WifiLiveMirrorPanel from '../live-mirror/components/WifiLiveMirrorPanel.vue'
 import type {
   EmbeddedBuildMode,
-  EmbeddedBuildStatus,
   EmbeddedFrameBake,
   EmbeddedFrameBakeById,
   EmbeddedFrameBakeState,
@@ -51,7 +50,7 @@ const props = defineProps<{
 type BurnMode = 'frame' | 'prototype'
 type TransportMode = 'usb' | 'wifi' | 'ble' | 'wifi-live'
 type FrameResourceSource = 'baked' | 'uploaded' | null
-type WirelessTransportMode = 'wifi' | 'ble'
+type WirelessTransportMode = 'wifi' | 'ble' | 'wifi-live'
 type FirmwareInitializationStatus = 'idle' | 'uploading' | 'success' | 'error'
 
 interface FirmwareInitializationState {
@@ -86,11 +85,9 @@ const wifiBaseFirmwareReady = ref(false)
 const DEFAULT_WIFI_AP_SSID = 'OP-Embedded-Setup'
 const DEFAULT_WIFI_AP_PASSWORD = 'opembedded'
 const deviceDetailsOpen = ref(false)
-const usbMaintenanceOpen = ref(false)
-const bleMaintenanceOpen = ref(false)
-const wifiMaintenanceOpen = ref(false)
 const liveMirrorBusy = ref(false)
 const usbFlashing = ref(false)
+const contentUploadProgress = ref(0)
 const usbInitialization = ref<FirmwareInitializationState>({
   status: 'idle',
   progress: 0,
@@ -98,8 +95,15 @@ const usbInitialization = ref<FirmwareInitializationState>({
 })
 const wirelessInitialization = ref<Record<WirelessTransportMode, FirmwareInitializationState>>({
   wifi: { status: 'idle', progress: 0, message: '' },
-  ble: { status: 'idle', progress: 0, message: '' }
+  ble: { status: 'idle', progress: 0, message: '' },
+  'wifi-live': { status: 'idle', progress: 0, message: '' }
 })
+const wifiLiveFirmwareRevision = ref(0)
+const activeFirmwareInitialization = computed<FirmwareInitializationState>(() =>
+  transportMode.value === 'usb'
+    ? usbInitialization.value
+    : wirelessInitialization.value[transportMode.value]
+)
 const selectedPrototypeIds = ref<Record<TransportMode, string>>({
   usb: '',
   wifi: '',
@@ -174,6 +178,7 @@ const modeSwitchLocked = computed(
     liveMirrorBusy.value ||
     wirelessInitialization.value.wifi.status === 'uploading' ||
     wirelessInitialization.value.ble.status === 'uploading' ||
+    wirelessInitialization.value['wifi-live'].status === 'uploading' ||
     bakePending.value ||
     prototypePending.value ||
     ['uploading', 'building'].includes(buildStatus.value) ||
@@ -255,30 +260,11 @@ const prototypeSelectOptions = computed(() => [
     label: `${option.name} · ${option.stateCount} 个状态`
   }))
 ])
-const buildStatusLabels: Record<EmbeddedBuildStatus, string> = {
-  loading: '连接中',
-  idle: '待构建',
-  uploading: '上传资源',
-  building: '构建中',
-  ready: '可烧录',
-  error: '失败'
-}
-const buildStatusLabel = computed(() => buildStatusLabels[buildStatus.value])
 const bakeReason = computed(() => {
   if (!props.bakeState) return '请在画布中选中一个 Frame 或 Frame 内的元素'
   if (!props.bakeState.available) return props.bakeState.reason || '当前选择无法烘焙'
   if (!selectedProfile.value) return '请先选择屏幕方案'
   return props.bakeState.reason || ''
-})
-const bakeSummary = computed(() => {
-  if (bakeReason.value) return bakeReason.value
-  const state = props.bakeState
-  const profile = selectedProfile.value
-  if (!state || !profile) return ''
-  const dimensions = `${state.width} × ${state.height}`
-  return state.width === profile.resolution.width && state.height === profile.resolution.height
-    ? dimensions
-    : `${dimensions} · 1:1 居中裁切 · 背景延展`
 })
 const prototypeReason = computed(() => {
   if (!selectedPrototype.value) return '请先选择一个命名交互'
@@ -415,6 +401,7 @@ async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
   }
 
   usbFlashing.value = true
+  contentUploadProgress.value = 0
   buildStatus.value = 'uploading'
   buildMessage.value = sequence
     ? `正在准备 USB PNG 序列：${sequence.frameCount} 帧…`
@@ -435,12 +422,14 @@ async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
       written: number
       total: number
     }) => {
+      contentUploadProgress.value = percent
       buildMessage.value = `正在通过 USB 高速传输：${percent}%（${written} / ${total} 字节）`
     }
   }
   try {
     if (sequence) await flashUsbSequenceFirmware(sequence, flashOptions)
     else if (image) await flashUsbFrameFirmware(image, flashOptions)
+    contentUploadProgress.value = 100
     buildStatus.value = 'ready'
     buildMessage.value = sequence
       ? `PNG 序列已写入：${sequence.frameCount} 帧 · 20 FPS，设备正在重启。`
@@ -478,6 +467,7 @@ async function handleUsbPrototypeBakeAndFlash() {
   }
 
   usbFlashing.value = true
+  contentUploadProgress.value = 0
   buildStatus.value = 'uploading'
   buildMessage.value = '正在准备 USB 状态机内容…'
   buildLog.value = []
@@ -489,9 +479,11 @@ async function handleUsbPrototypeBakeAndFlash() {
         if (normalized) buildLog.value.push(normalized)
       },
       onProgress: ({ percent, written, total }) => {
+        contentUploadProgress.value = percent
         buildMessage.value = `正在通过 USB 高速传输状态机：${percent}%（${written} / ${total} 字节）`
       }
     })
+    contentUploadProgress.value = 100
     buildStatus.value = 'ready'
     buildMessage.value = '状态机和全部界面已写入，设备正在重启。'
   } catch (error) {
@@ -623,8 +615,12 @@ async function handleWifiImageChange(event: Event) {
       return
     wifiSequencePayload.value = sequence
     wirelessStatus.value = 'uploading'
+    contentUploadProgress.value = 0
     wirelessMessage.value = `正在通过 Wi-Fi 传输 PNG 序列：${sequence.frameCount} 帧…`
-    await uploadWirelessSequence(wirelessBaseUrl.value, sequence)
+    await uploadWirelessSequence(wirelessBaseUrl.value, sequence, undefined, ({ percent }) => {
+      contentUploadProgress.value = percent
+    })
+    contentUploadProgress.value = 100
     wirelessStatus.value = 'success'
     wirelessMessage.value = `PNG 序列已传输：${sequence.frameCount} 帧 · 20 FPS，设备正在重启`
   } catch (error) {
@@ -772,9 +768,16 @@ async function handleInitializeUsbFirmware() {
 
 async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
   if (transportMode.value !== mode) return
-  const manifestUrl = mode === 'wifi' ? wifiManifestUrl.value : bleManifestUrl.value
+  const manifestUrl =
+    mode === 'ble'
+      ? bleManifestUrl.value
+      : mode === 'wifi-live'
+        ? wifiLiveManifestUrl.value
+        : wifiManifestUrl.value
   const profileId = selectedProfile.value?.id
   if (!manifestUrl || !profileId) return
+  const modeLabel = mode === 'ble' ? 'BLE' : mode === 'wifi-live' ? 'Wi-Fi 实时镜像' : 'Wi-Fi'
+  const buildMode = mode === 'ble' ? 'ble-frame' : mode === 'wifi-live' ? 'wifi-live' : 'wifi-frame'
 
   const state = wirelessInitialization.value[mode]
   let port
@@ -791,23 +794,27 @@ async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
 
   state.status = 'uploading'
   state.progress = 0
-  state.message = `正在准备 ${mode === 'wifi' ? 'Wi-Fi' : 'BLE'} 基础固件…`
+  state.message = `正在准备 ${modeLabel} 基础固件…`
   buildStatus.value = 'uploading'
   buildMessage.value = state.message
   buildLog.value = []
 
   try {
     let firmwareManifestUrl = manifestUrl
-    if (mode === 'wifi') {
-      state.message = '正在准备 Wi-Fi 配置…'
+    if (mode !== 'ble') {
+      state.message = `正在准备 ${modeLabel} 配置…`
       buildMessage.value = state.message
       firmwareManifestUrl =
-        (await prepareWifiFirmwareCredentials(profileId, wifiCredentials.value)) || manifestUrl
+        (await prepareWifiFirmwareCredentials(
+          profileId,
+          wifiCredentials.value,
+          mode === 'wifi-live' ? 'wifi-live' : 'wifi-frame'
+        )) || manifestUrl
     }
-    await flashFirmwareManifest(firmwareManifestUrl, mode === 'wifi' ? 'wifi-frame' : 'ble-frame', {
+    await flashFirmwareManifest(firmwareManifestUrl, buildMode, {
       port,
       preparingMessage: state.message,
-      connectedMessage: `已连接，正在初始化 ${mode === 'wifi' ? 'Wi-Fi' : 'BLE'} 设备。`,
+      connectedMessage: `已连接，正在初始化 ${modeLabel} 设备。`,
       onLog: (message) => {
         const normalized = message.trim()
         if (!normalized) return
@@ -823,7 +830,7 @@ async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
     })
     state.status = 'success'
     state.progress = 100
-    state.message = `${mode === 'wifi' ? 'Wi-Fi' : 'BLE'} 设备初始化完成，设备正在重启。`
+    state.message = `${modeLabel} 设备初始化完成，设备正在重启。`
     buildStatus.value = 'ready'
     buildMessage.value = state.message
     if (mode === 'wifi') {
@@ -831,8 +838,11 @@ async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
       wirelessDeviceReady.value = false
       wirelessStatus.value = 'idle'
       wirelessMessage.value = '初始化完成；连接设备热点后检查连接'
-    } else {
+    } else if (mode === 'ble') {
       bleSession.markFirmwareBuilt('BLE 初始化完成；设备重启后可直接连接')
+    } else {
+      wifiBaseFirmwareReady.value = true
+      wifiLiveFirmwareRevision.value += 1
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
@@ -907,6 +917,7 @@ async function uploadWifiContent(requestedMode: 'frame' | 'prototype', requested
   if (requestedMode === 'frame' ? !image : !prototype) return
 
   wirelessStatus.value = 'uploading'
+  contentUploadProgress.value = 0
   wirelessMessage.value =
     requestedMode === 'prototype' ? '正在通过 Wi-Fi 传输状态机…' : '正在通过 Wi-Fi 传输图片…'
   buildLog.value = [
@@ -915,11 +926,15 @@ async function uploadWifiContent(requestedMode: 'frame' | 'prototype', requested
     'upload: sending'
   ]
   try {
-    if (requestedMode === 'prototype' && prototype) {
-      await uploadWirelessPrototype(requestedBaseUrl, prototype)
-    } else if (requestedMode === 'frame' && image) {
-      await uploadWirelessImage(requestedBaseUrl, image)
+    const onProgress = ({ percent }: { percent: number }) => {
+      contentUploadProgress.value = percent
     }
+    if (requestedMode === 'prototype' && prototype) {
+      await uploadWirelessPrototype(requestedBaseUrl, prototype, undefined, onProgress)
+    } else if (requestedMode === 'frame' && image) {
+      await uploadWirelessImage(requestedBaseUrl, image, undefined, onProgress)
+    }
+    contentUploadProgress.value = 100
     wirelessStatus.value = 'success'
     wirelessMessage.value =
       requestedMode === 'prototype'
@@ -965,6 +980,7 @@ watch(
       resetWirelessInitialization('ble')
       bleSession.setProfile(selectedProfile.value)
     }
+    if (mode === 'wifi-live') resetWirelessInitialization('wifi-live')
     if (!profileId) return
 
     if (mode === 'usb') {
@@ -1004,6 +1020,9 @@ watch([wifiSsid, wifiPassword], () => {
   if (wirelessInitialization.value.wifi.status !== 'uploading') {
     resetWirelessInitialization('wifi')
   }
+  if (wirelessInitialization.value['wifi-live'].status !== 'uploading') {
+    resetWirelessInitialization('wifi-live')
+  }
 })
 </script>
 <template>
@@ -1019,13 +1038,13 @@ watch([wifiSsid, wifiPassword], () => {
           :class="serviceAvailable ? 'text-success' : 'text-muted'"
         >
           <span class="size-1.5 rounded-full bg-current" />
-          {{ serviceAvailable ? '设备资源就绪' : '设备资源缺失' }}
+          {{ serviceAvailable ? '就绪' : '离线' }}
         </span>
       </template>
     </PanelHeader>
 
-    <div class="scrollbar-thin min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-4">
-      <PanelSection label="设备选型">
+    <div class="scrollbar-thin flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto pb-4">
+      <PanelSection class="order-[10]" label="设备">
         <template #actions>
           <IconButton
             :label="deviceDetailsOpen ? '收起设备详情' : '查看设备详情'"
@@ -1060,40 +1079,119 @@ watch([wifiSsid, wifiPassword], () => {
                 class="size-2 shrink-0 rounded-full"
                 :class="serialSession.ready.value ? 'bg-success' : 'bg-muted'"
               />
-              <div class="min-w-0">
-                <p class="truncate text-xs font-medium text-surface">
-                  {{ serialSession.label.value }}
-                </p>
-                <p class="mt-0.5 truncate text-[10px] text-muted">
-                  {{ serialSession.message.value }}
-                </p>
-              </div>
+              <p class="truncate text-xs font-medium text-surface">
+                {{ serialSession.ready.value ? serialSession.label.value : '串口设备' }}
+              </p>
             </div>
-            <span
-              class="shrink-0 text-[10px]"
-              :class="serialSession.ready.value ? 'text-success' : 'text-muted'"
+            <button
+              type="button"
+              class="h-7 shrink-0 rounded-panel border border-border bg-canvas px-2 text-[11px] font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="
+                modeSwitchLocked || serialSession.selecting.value || !serialSession.supported.value
+              "
+              @click="serialSession.selectPort"
             >
-              {{ serialSession.ready.value ? '已选择' : '未选择' }}
-            </span>
+              {{
+                serialSession.selecting.value
+                  ? '选择中…'
+                  : serialSession.ready.value
+                    ? '更换'
+                    : '选择'
+              }}
+            </button>
           </div>
+          <p v-if="!serialSession.supported.value" class="mt-1 text-[10px] text-error">
+            当前浏览器不支持串口
+          </p>
+        </div>
+
+        <div v-if="selectedProfile" class="mt-1.5">
           <button
+            v-if="transportMode === 'usb'"
             type="button"
-            class="mt-2 h-control w-full rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="
-              modeSwitchLocked || serialSession.selecting.value || !serialSession.supported.value
-            "
-            @click="serialSession.selectPort"
+            class="h-control w-full rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="!usbManifestUrl || usbInitialization.status === 'uploading'"
+            @click="handleInitializeUsbFirmware"
           >
             {{
-              serialSession.selecting.value
-                ? '等待选择串口…'
-                : serialSession.ready.value
-                  ? '重新选择串口'
-                  : '选择串口设备'
+              usbInitialization.status === 'uploading'
+                ? `正在刷新固件 ${usbInitialization.progress}%`
+                : '刷新设备固件'
             }}
           </button>
-          <p class="mt-1 text-[10px] leading-relaxed text-muted">
-            仅在烧录时打开串口，完成后自动释放；刷新页面后会恢复已授权设备。
+          <button
+            v-else-if="transportMode === 'ble'"
+            type="button"
+            class="h-control w-full rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="!bleManifestUrl || wirelessInitialization.ble.status === 'uploading'"
+            @click="handleInitializeWirelessFirmware('ble')"
+          >
+            {{
+              wirelessInitialization.ble.status === 'uploading'
+                ? `正在刷新固件 ${wirelessInitialization.ble.progress}%`
+                : '刷新设备固件'
+            }}
+          </button>
+          <button
+            v-else-if="transportMode === 'wifi'"
+            type="button"
+            class="h-control w-full rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="!wifiManifestUrl || wirelessInitialization.wifi.status === 'uploading'"
+            @click="handleInitializeWirelessFirmware('wifi')"
+          >
+            {{
+              wirelessInitialization.wifi.status === 'uploading'
+                ? `正在刷新固件 ${wirelessInitialization.wifi.progress}%`
+                : '刷新设备固件'
+            }}
+          </button>
+          <button
+            v-else-if="transportMode === 'wifi-live'"
+            type="button"
+            class="h-control w-full rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="
+              !wifiLiveManifestUrl || wirelessInitialization['wifi-live'].status === 'uploading'
+            "
+            @click="handleInitializeWirelessFirmware('wifi-live')"
+          >
+            {{
+              wirelessInitialization['wifi-live'].status === 'uploading'
+                ? `正在刷新固件 ${wirelessInitialization['wifi-live'].progress}%`
+                : '刷新设备固件'
+            }}
+          </button>
+          <div
+            v-if="activeFirmwareInitialization.status === 'uploading'"
+            class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-panel-field"
+          >
+            <div
+              class="h-full bg-accent transition-[width]"
+              :style="{ width: `${activeFirmwareInitialization.progress}%` }"
+            />
+          </div>
+          <p v-if="usbInitialization.status === 'error'" class="mt-1 text-[10px] text-error">
+            {{ usbInitialization.message }}
+          </p>
+          <p
+            v-if="transportMode === 'ble' && wirelessInitialization.ble.status === 'error'"
+            class="mt-1 text-[10px] text-error"
+          >
+            {{ wirelessInitialization.ble.message }}
+          </p>
+          <p
+            v-if="transportMode === 'wifi' && wirelessInitialization.wifi.status === 'error'"
+            class="mt-1 text-[10px] text-error"
+          >
+            {{ wirelessInitialization.wifi.message }}
+          </p>
+          <p
+            v-if="
+              transportMode === 'wifi-live' &&
+              wirelessInitialization['wifi-live'].status === 'error'
+            "
+            class="mt-1 text-[10px] text-error"
+          >
+            {{ wirelessInitialization['wifi-live'].message }}
           </p>
         </div>
 
@@ -1108,9 +1206,47 @@ watch([wifiSsid, wifiPassword], () => {
           <span class="text-muted">验证</span
           ><span>{{ selectedProfile.verified ? '已验证' : '待验证' }}</span>
         </div>
+        <div
+          v-if="
+            selectedProfile &&
+            deviceDetailsOpen &&
+            (transportMode === 'wifi' || transportMode === 'wifi-live')
+          "
+          class="mt-panel border-t border-border pt-panel"
+        >
+          <label class="flex items-center gap-2 text-[11px] text-surface">
+            <input
+              v-model="wifiProvisionEnabled"
+              type="checkbox"
+              class="accent-accent"
+              :disabled="modeSwitchLocked"
+            />
+            <span>写入局域网 Wi-Fi</span>
+          </label>
+          <div v-if="wifiProvisionEnabled" class="mt-1.5 grid gap-1.5">
+            <input
+              v-model="wifiSsid"
+              class="h-control rounded-panel border border-border bg-panel-field px-2 text-xs text-surface outline-none focus:border-accent disabled:opacity-50"
+              :disabled="modeSwitchLocked"
+              type="text"
+              maxlength="32"
+              placeholder="Wi-Fi 名称"
+              aria-label="局域网 Wi-Fi 名称"
+            />
+            <input
+              v-model="wifiPassword"
+              class="h-control rounded-panel border border-border bg-panel-field px-2 text-xs text-surface outline-none focus:border-accent disabled:opacity-50"
+              :disabled="modeSwitchLocked"
+              type="password"
+              maxlength="64"
+              placeholder="Wi-Fi 密码"
+              aria-label="局域网 Wi-Fi 密码"
+            />
+          </div>
+        </div>
       </PanelSection>
 
-      <PanelSection label="传输方式">
+      <PanelSection class="order-[20]" label="传输">
         <SegmentedControl
           v-model="transportMode"
           class="w-full"
@@ -1119,7 +1255,12 @@ watch([wifiSsid, wifiPassword], () => {
         />
       </PanelSection>
 
-      <PanelSection v-if="burnMode === 'frame'" label="Frame 补边背景">
+      <PanelSection
+        v-if="burnMode === 'frame'"
+        class="order-[70]"
+        label="画面适配"
+        :default-open="false"
+      >
         <div
           class="flex items-center justify-between gap-3 rounded-panel border border-border bg-panel-field p-2"
         >
@@ -1138,106 +1279,18 @@ watch([wifiSsid, wifiPassword], () => {
         </div>
       </PanelSection>
 
-      <WifiLiveMirrorPanel
-        v-if="transportMode === 'wifi-live'"
-        :profile="selectedProfile"
-        :manifest-url="wifiLiveManifestUrl"
-        :bake-state="bakeState"
-        :bake-frame-by-id="bakeFrameById"
-        :background-color="frameBackgroundColor"
-        @busy-change="liveMirrorBusy = $event"
-      />
+      <div v-if="transportMode === 'wifi-live'" class="order-[50]">
+        <WifiLiveMirrorPanel
+          :key="wifiLiveFirmwareRevision"
+          :profile="selectedProfile"
+          :bake-state="bakeState"
+          :bake-frame-by-id="bakeFrameById"
+          :background-color="frameBackgroundColor"
+          @busy-change="liveMirrorBusy = $event"
+        />
+      </div>
 
-      <PanelSection
-        v-if="transportMode === 'usb'"
-        label="首次使用 / 设备维护"
-        :open="usbMaintenanceOpen"
-        @update:open="usbMaintenanceOpen = $event"
-      >
-        <p class="text-[10px] leading-relaxed text-muted">
-          高速基础固件已随 OP Embedded Studio
-          提供。只有首次使用、设备维护或固件升级时才需要重新初始化。
-        </p>
-        <button
-          type="button"
-          class="mt-1.5 h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-          :disabled="!usbManifestUrl || usbInitialization.status === 'uploading'"
-          @click="handleInitializeUsbFirmware"
-        >
-          {{
-            usbInitialization.status === 'uploading'
-              ? `正在初始化：${usbInitialization.progress}%`
-              : '通过 USB 初始化高速传输固件'
-          }}
-        </button>
-        <div
-          v-if="usbInitialization.status !== 'idle'"
-          class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-panel-field"
-        >
-          <div
-            class="h-full transition-[width]"
-            :class="usbInitialization.status === 'error' ? 'bg-error' : 'bg-accent'"
-            :style="{ width: usbInitialization.progress + '%' }"
-          />
-        </div>
-        <p
-          class="mt-1 text-[10px] leading-relaxed"
-          :class="usbInitialization.status === 'error' ? 'text-error' : 'text-muted'"
-        >
-          {{
-            usbInitialization.message ||
-            (usbManifestUrl
-              ? 'USB 高速基础固件已完备；初始化一次后，日常操作只上传内容。'
-              : '预置 USB 高速固件缺失，请检查固件资源。')
-          }}
-        </p>
-      </PanelSection>
-
-      <PanelSection
-        v-if="transportMode === 'ble'"
-        label="首次使用 / 设备维护"
-        :open="bleMaintenanceOpen"
-        @update:open="bleMaintenanceOpen = $event"
-      >
-        <p class="text-[10px] leading-relaxed text-muted">
-          基础固件已随 OP Embedded Studio 提供。只有首次使用、设备维护或固件升级时才需要重新初始化。
-        </p>
-        <button
-          type="button"
-          class="mt-1.5 h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-          :disabled="!bleManifestUrl || wirelessInitialization.ble.status === 'uploading'"
-          @click="handleInitializeWirelessFirmware('ble')"
-        >
-          {{
-            wirelessInitialization.ble.status === 'uploading'
-              ? `正在初始化：${wirelessInitialization.ble.progress}%`
-              : '通过 USB 初始化 BLE 设备'
-          }}
-        </button>
-        <div
-          v-if="wirelessInitialization.ble.status !== 'idle'"
-          class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-panel-field"
-        >
-          <div
-            class="h-full transition-[width]"
-            :class="wirelessInitialization.ble.status === 'error' ? 'bg-error' : 'bg-accent'"
-            :style="{ width: wirelessInitialization.ble.progress + '%' }"
-          />
-        </div>
-        <p
-          class="mt-1 text-[10px] leading-relaxed"
-          :class="wirelessInitialization.ble.status === 'error' ? 'text-error' : 'text-muted'"
-        >
-          {{
-            wirelessInitialization.ble.message ||
-            (bleManifestUrl
-              ? 'BLE 基础固件已完备；连接 USB 后可直接初始化。'
-              : '预置 BLE 固件缺失，请检查后端固件资源。')
-          }}
-        </p>
-      </PanelSection>
-
-      <PanelSection v-if="transportMode === 'ble'" label="BLE 设备">
+      <PanelSection v-if="transportMode === 'ble'" class="order-[40]" label="设备连接">
         <div
           class="flex items-center justify-between rounded-panel border border-border bg-panel-field px-2 py-2 text-[11px]"
         >
@@ -1250,24 +1303,13 @@ watch([wifiSsid, wifiPassword], () => {
               <p class="truncate text-surface">
                 {{ bleSession.deviceReady.value ? bleSession.deviceName.value : '尚未连接设备' }}
               </p>
-              <p class="truncate text-[10px] text-muted">
-                {{
-                  bleSession.deviceReady.value
-                    ? bleSession.firmwareMode.value === 'unified'
-                      ? 'BLE 通用固件已连接'
-                      : bleSession.firmwareMode.value === 'prototype'
-                        ? 'BLE 状态机旧版固件已连接'
-                        : bleSession.firmwareMode.value === 'frame'
-                          ? 'BLE 单 Frame 旧版固件已连接'
-                          : 'BLE 已连接，固件模式未知'
-                    : '连接后将检查设备固件模式'
-                }}
-              </p>
             </div>
           </div>
-          <span :class="bleSession.deviceReady.value ? 'text-success' : 'text-muted'">{{
-            bleSession.deviceReady.value ? '已连接' : '未连接'
-          }}</span>
+          <span
+            class="text-[10px]"
+            :class="bleSession.deviceReady.value ? 'text-success' : 'text-muted'"
+            >{{ bleSession.deviceReady.value ? '已连接' : '未连接' }}</span
+          >
         </div>
         <button
           type="button"
@@ -1285,10 +1327,7 @@ watch([wifiSsid, wifiPassword], () => {
                 : '连接 BLE 设备'
           }}
         </button>
-        <p
-          class="mt-1 text-[10px] leading-relaxed"
-          :class="bleSession.status.value === 'error' ? 'text-error' : 'text-muted'"
-        >
+        <p v-if="bleSession.status.value === 'error'" class="mt-1 text-[10px] text-error">
           {{ bleSession.message.value }}
         </p>
         <div
@@ -1302,81 +1341,7 @@ watch([wifiSsid, wifiPassword], () => {
         </div>
       </PanelSection>
 
-      <PanelSection
-        v-if="transportMode === 'wifi'"
-        label="首次使用 / 设备维护"
-        :open="wifiMaintenanceOpen"
-        @update:open="wifiMaintenanceOpen = $event"
-      >
-        <p class="text-[10px] leading-relaxed text-muted">
-          基础固件已随 OP Embedded Studio
-          提供。只有首次使用、修改网络配置或设备维护时才需要重新初始化。
-        </p>
-        <label class="mt-panel flex items-center gap-2 text-[11px] text-surface">
-          <input
-            v-model="wifiProvisionEnabled"
-            type="checkbox"
-            class="accent-accent"
-            :disabled="modeSwitchLocked"
-          />
-          <span>同时写入局域网 Wi-Fi（可选）</span>
-        </label>
-        <div v-if="wifiProvisionEnabled" class="mt-1.5 grid gap-1.5">
-          <input
-            v-model="wifiSsid"
-            class="h-control rounded-panel border border-border bg-panel-field px-2 text-xs text-surface outline-none focus:border-accent disabled:opacity-50"
-            :disabled="modeSwitchLocked"
-            type="text"
-            maxlength="32"
-            placeholder="局域网 Wi-Fi 名称（SSID）"
-            aria-label="局域网 Wi-Fi 名称"
-          />
-          <input
-            v-model="wifiPassword"
-            class="h-control rounded-panel border border-border bg-panel-field px-2 text-xs text-surface outline-none focus:border-accent disabled:opacity-50"
-            :disabled="modeSwitchLocked"
-            type="password"
-            maxlength="64"
-            placeholder="局域网 Wi-Fi 密码（可为空）"
-            aria-label="局域网 Wi-Fi 密码"
-          />
-        </div>
-        <button
-          type="button"
-          class="mt-1.5 h-control w-full rounded-panel bg-accent px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-          :disabled="!wifiManifestUrl || wirelessInitialization.wifi.status === 'uploading'"
-          @click="handleInitializeWirelessFirmware('wifi')"
-        >
-          {{
-            wirelessInitialization.wifi.status === 'uploading'
-              ? `正在初始化：${wirelessInitialization.wifi.progress}%`
-              : '通过 USB 初始化 Wi-Fi 设备'
-          }}
-        </button>
-        <div
-          v-if="wirelessInitialization.wifi.status !== 'idle'"
-          class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-panel-field"
-        >
-          <div
-            class="h-full transition-[width]"
-            :class="wirelessInitialization.wifi.status === 'error' ? 'bg-error' : 'bg-accent'"
-            :style="{ width: wirelessInitialization.wifi.progress + '%' }"
-          />
-        </div>
-        <p
-          class="mt-1 text-[10px] leading-relaxed"
-          :class="wirelessInitialization.wifi.status === 'error' ? 'text-error' : 'text-muted'"
-        >
-          {{
-            wirelessInitialization.wifi.message ||
-            (wifiManifestUrl
-              ? 'Wi-Fi 基础固件已完备；连接 USB 后可直接初始化。'
-              : '预置 Wi-Fi 固件缺失，请检查后端固件资源。')
-          }}
-        </p>
-      </PanelSection>
-
-      <PanelSection v-if="transportMode === 'wifi'" label="Wi-Fi 设备">
+      <PanelSection v-if="transportMode === 'wifi'" class="order-[40]" label="设备连接">
         <div
           class="flex items-center justify-between rounded-panel border border-border bg-panel-field px-2 py-2 text-[11px]"
         >
@@ -1389,21 +1354,19 @@ watch([wifiSsid, wifiPassword], () => {
               <p class="text-surface">
                 {{ wirelessDeviceReady ? '设备已连接' : '尚未连接设备' }}
               </p>
-              <p class="text-[10px] text-muted">
-                {{ wirelessDeviceReady ? 'Wi-Fi 已连接，可以传输内容' : '连接设备热点后检查连接' }}
-              </p>
             </div>
           </div>
-          <span :class="wirelessDeviceReady ? 'text-success' : 'text-muted'">{{
+          <span class="text-[10px]" :class="wirelessDeviceReady ? 'text-success' : 'text-muted'">{{
             wirelessDeviceReady ? '已连接' : '未连接'
           }}</span>
         </div>
         <div
-          class="mt-panel rounded-panel border border-border bg-panel-field px-2 py-2 text-[11px]"
+          class="mt-panel flex items-center justify-between gap-2 rounded-panel border border-border bg-panel-field px-2 py-2 text-[11px]"
         >
-          <p class="text-surface">设备热点</p>
-          <p class="mt-1 text-muted">名称：{{ DEFAULT_WIFI_AP_SSID }}</p>
-          <p class="text-muted">密码：{{ DEFAULT_WIFI_AP_PASSWORD }}</p>
+          <span class="text-muted">设备热点</span>
+          <span class="truncate text-surface"
+            >{{ DEFAULT_WIFI_AP_SSID }} · {{ DEFAULT_WIFI_AP_PASSWORD }}</span
+          >
         </div>
         <input
           v-model="wirelessBaseUrl"
@@ -1421,17 +1384,15 @@ watch([wifiSsid, wifiPassword], () => {
         >
           {{ wirelessStatus === 'checking' ? '正在检查设备…' : '检查 Wi-Fi 设备连接' }}
         </button>
-        <p
-          class="mt-1 text-[10px] leading-relaxed"
-          :class="wirelessStatus === 'error' ? 'text-error' : 'text-muted'"
-        >
+        <p v-if="wirelessStatus === 'error'" class="mt-1 text-[10px] text-error">
           {{ wirelessMessage }}
         </p>
       </PanelSection>
 
       <PanelSection
         v-if="transportMode === 'usb' || transportMode === 'wifi' || transportMode === 'ble'"
-        label="烧录模式"
+        class="order-[30]"
+        label="内容类型"
       >
         <SegmentedControl
           v-model="burnMode"
@@ -1441,18 +1402,20 @@ watch([wifiSsid, wifiPassword], () => {
         />
       </PanelSection>
 
-      <PanelSection v-if="transportMode === 'usb' && burnMode === 'frame'" label="内容来源">
+      <PanelSection
+        v-if="transportMode === 'usb' && burnMode === 'frame'"
+        class="order-[60]"
+        label="上传内容"
+      >
         <div class="grid gap-2">
           <div class="rounded-panel border border-border bg-panel-field p-2">
             <div class="flex min-w-0 items-start justify-between gap-2">
               <div class="min-w-0 flex-1">
                 <p class="truncate text-xs font-medium text-surface">当前 Frame</p>
-                <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
-                  {{ bakeState?.name || '未选中 Frame' }} ·
-                  {{ bakeSummary }}
+                <p v-if="bakeState?.name" class="mt-0.5 truncate text-[10px] text-muted">
+                  {{ bakeState.name }}
                 </p>
               </div>
-              <span class="shrink-0 text-[10px] text-muted">画布</span>
             </div>
             <button
               type="button"
@@ -1472,17 +1435,17 @@ watch([wifiSsid, wifiPassword], () => {
             <div class="flex min-w-0 items-start justify-between gap-2">
               <div class="min-w-0 flex-1">
                 <p class="truncate text-xs font-medium text-surface">上传文件</p>
-                <p class="mt-0.5 truncate text-[10px] leading-relaxed text-muted">
+                <p
+                  v-if="frameResourceSource === 'uploaded' && selectedImageName"
+                  class="mt-0.5 truncate text-[10px] text-muted"
+                >
                   {{
-                    usbSequencePayload && frameResourceSource === 'uploaded'
-                      ? `${selectedImageName} · ${usbSequencePayload.frameCount} 帧 · 压缩后 ${(usbSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB · 局部刷新 ${usbSequencePayload.patchFrames} 帧`
-                      : selectedImageName && frameResourceSource === 'uploaded'
-                        ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · 1 帧`
-                        : '单张图片，或多张 PNG 序列；20 FPS，使用稳定整帧播放'
+                    usbSequencePayload
+                      ? `${selectedImageName} · ${usbSequencePayload.frameCount} 帧`
+                      : selectedImageName
                   }}
                 </p>
               </div>
-              <span class="shrink-0 text-[10px] text-muted">文件</span>
             </div>
             <label
               class="mt-2 flex h-control w-full cursor-pointer items-center justify-center rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
@@ -1509,27 +1472,26 @@ watch([wifiSsid, wifiPassword], () => {
           </div>
         </div>
 
+        <div v-if="usbFlashing" class="mt-panel h-1.5 overflow-hidden rounded-full bg-panel-field">
+          <div
+            class="h-full bg-accent transition-[width]"
+            :style="{ width: `${contentUploadProgress}%` }"
+          />
+        </div>
+
         <p v-if="bakeError" class="mt-panel text-[11px] text-error">
           {{ bakeError }}
         </p>
-        <div class="mt-panel flex items-center justify-between text-[10px]">
-          <span class="text-muted">{{ buildMessage }}</span>
-          <span
-            class="shrink-0 pl-2"
-            :class="
-              buildStatus === 'error'
-                ? 'text-error'
-                : buildStatus === 'ready'
-                  ? 'text-success'
-                  : 'text-muted'
-            "
-          >
-            {{ buildStatusLabel }}
-          </span>
-        </div>
+        <p v-if="buildStatus === 'error'" class="mt-panel text-[10px] text-error">
+          {{ buildMessage }}
+        </p>
       </PanelSection>
 
-      <PanelSection v-if="transportMode === 'usb' && burnMode === 'prototype'" label="内容来源">
+      <PanelSection
+        v-if="transportMode === 'usb' && burnMode === 'prototype'"
+        class="order-[60]"
+        label="上传内容"
+      >
         <AppSelect
           v-model="selectedPrototypeSelectValue"
           :options="prototypeSelectOptions"
@@ -1562,6 +1524,12 @@ watch([wifiSsid, wifiPassword], () => {
             {{ usbFlashing ? '正在上传状态机…' : '一键烘焙并上传状态机' }}
           </button>
         </div>
+        <div v-if="usbFlashing" class="mt-panel h-1.5 overflow-hidden rounded-full bg-panel-field">
+          <div
+            class="h-full bg-accent transition-[width]"
+            :style="{ width: `${contentUploadProgress}%` }"
+          />
+        </div>
         <p
           v-if="prototypeReason || prototypeError"
           class="mt-panel text-[11px]"
@@ -1569,35 +1537,25 @@ watch([wifiSsid, wifiPassword], () => {
         >
           {{ prototypeError || prototypeReason }}
         </p>
-        <div class="mt-panel flex items-center justify-between text-[10px]">
-          <span class="text-muted">{{ buildMessage }}</span>
-          <span
-            class="shrink-0 pl-2"
-            :class="
-              buildStatus === 'error'
-                ? 'text-error'
-                : buildStatus === 'ready'
-                  ? 'text-success'
-                  : 'text-muted'
-            "
-          >
-            {{ buildStatusLabel }}
-          </span>
-        </div>
+        <p v-if="buildStatus === 'error'" class="mt-panel text-[10px] text-error">
+          {{ buildMessage }}
+        </p>
       </PanelSection>
 
-      <PanelSection v-if="transportMode === 'wifi' && burnMode === 'frame'" label="内容来源">
+      <PanelSection
+        v-if="transportMode === 'wifi' && burnMode === 'frame'"
+        class="order-[60]"
+        label="上传内容"
+      >
         <div class="grid gap-2">
           <div class="rounded-panel border border-border bg-panel-field p-2">
             <div class="flex min-w-0 items-start justify-between gap-2">
               <div class="min-w-0 flex-1">
                 <p class="truncate text-xs font-medium text-surface">当前 Frame</p>
-                <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
-                  {{ bakeState?.name || '未选中 Frame' }} ·
-                  {{ bakeSummary }}
+                <p v-if="bakeState?.name" class="mt-0.5 truncate text-[10px] text-muted">
+                  {{ bakeState.name }}
                 </p>
               </div>
-              <span class="shrink-0 text-[10px] text-muted">画布</span>
             </div>
             <button
               type="button"
@@ -1613,17 +1571,17 @@ watch([wifiSsid, wifiPassword], () => {
             <div class="flex min-w-0 items-start justify-between gap-2">
               <div class="min-w-0 flex-1">
                 <p class="truncate text-xs font-medium text-surface">上传文件</p>
-                <p class="mt-0.5 truncate text-[10px] leading-relaxed text-muted">
+                <p
+                  v-if="frameResourceSource === 'uploaded' && selectedImageName"
+                  class="mt-0.5 truncate text-[10px] text-muted"
+                >
                   {{
-                    wifiSequencePayload && frameResourceSource === 'uploaded'
-                      ? `${wifiSequencePayload.name} · ${wifiSequencePayload.frameCount} 帧 · 20 FPS · ${(wifiSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB`
-                      : selectedImageName && frameResourceSource === 'uploaded'
-                        ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · 1 帧`
-                        : '单张图片，或多张 PNG 序列；20 FPS，最大约 28.94 MiB'
+                    wifiSequencePayload
+                      ? `${wifiSequencePayload.name} · ${wifiSequencePayload.frameCount} 帧`
+                      : selectedImageName
                   }}
                 </p>
               </div>
-              <span class="shrink-0 text-[10px] text-muted">文件</span>
             </div>
             <label
               class="mt-2 flex h-control w-full cursor-pointer items-center justify-center rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
@@ -1640,18 +1598,28 @@ watch([wifiSsid, wifiPassword], () => {
             </label>
           </div>
         </div>
+        <div
+          v-if="wirelessStatus === 'uploading'"
+          class="mt-panel h-1.5 overflow-hidden rounded-full bg-panel-field"
+        >
+          <div
+            class="h-full bg-accent transition-[width]"
+            :style="{ width: `${contentUploadProgress}%` }"
+          />
+        </div>
         <p v-if="bakeError" class="mt-panel text-[11px] text-error">
           {{ bakeError }}
         </p>
-        <p
-          class="mt-panel text-[10px] leading-relaxed"
-          :class="wirelessStatus === 'error' ? 'text-error' : 'text-muted'"
-        >
+        <p v-if="wirelessStatus === 'error'" class="mt-panel text-[10px] text-error">
           {{ wirelessMessage }}
         </p>
       </PanelSection>
 
-      <PanelSection v-if="transportMode === 'wifi' && burnMode === 'prototype'" label="内容来源">
+      <PanelSection
+        v-if="transportMode === 'wifi' && burnMode === 'prototype'"
+        class="order-[60]"
+        label="上传内容"
+      >
         <AppSelect
           v-model="selectedPrototypeSelectValue"
           :options="prototypeSelectOptions"
@@ -1684,6 +1652,15 @@ watch([wifiSsid, wifiPassword], () => {
             {{ wirelessStatus === 'uploading' ? '正在传输状态机…' : '一键烘焙并上传状态机' }}
           </button>
         </div>
+        <div
+          v-if="wirelessStatus === 'uploading'"
+          class="mt-panel h-1.5 overflow-hidden rounded-full bg-panel-field"
+        >
+          <div
+            class="h-full bg-accent transition-[width]"
+            :style="{ width: `${contentUploadProgress}%` }"
+          />
+        </div>
         <p
           v-if="prototypeReason || prototypeError"
           class="mt-panel text-[11px]"
@@ -1691,26 +1668,25 @@ watch([wifiSsid, wifiPassword], () => {
         >
           {{ prototypeError || prototypeReason }}
         </p>
-        <p
-          class="mt-panel text-[10px] leading-relaxed"
-          :class="wirelessStatus === 'error' ? 'text-error' : 'text-muted'"
-        >
+        <p v-if="wirelessStatus === 'error'" class="mt-panel text-[10px] text-error">
           {{ wirelessMessage }}
         </p>
       </PanelSection>
 
-      <PanelSection v-if="transportMode === 'ble' && burnMode === 'frame'" label="内容来源">
+      <PanelSection
+        v-if="transportMode === 'ble' && burnMode === 'frame'"
+        class="order-[60]"
+        label="上传内容"
+      >
         <div class="grid gap-2">
           <div class="rounded-panel border border-border bg-panel-field p-2">
             <div class="flex min-w-0 items-start justify-between gap-2">
               <div class="min-w-0 flex-1">
                 <p class="truncate text-xs font-medium text-surface">当前 Frame</p>
-                <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
-                  {{ bakeState?.name || '未选中 Frame' }} ·
-                  {{ bakeSummary }}
+                <p v-if="bakeState?.name" class="mt-0.5 truncate text-[10px] text-muted">
+                  {{ bakeState.name }}
                 </p>
               </div>
-              <span class="shrink-0 text-[10px] text-muted">画布</span>
             </div>
             <button
               type="button"
@@ -1730,17 +1706,17 @@ watch([wifiSsid, wifiPassword], () => {
             <div class="flex min-w-0 items-start justify-between gap-2">
               <div class="min-w-0 flex-1">
                 <p class="truncate text-xs font-medium text-surface">上传文件</p>
-                <p class="mt-0.5 truncate text-[10px] leading-relaxed text-muted">
+                <p
+                  v-if="frameResourceSource === 'uploaded' && selectedImageName"
+                  class="mt-0.5 truncate text-[10px] text-muted"
+                >
                   {{
-                    bleSequencePayload && frameResourceSource === 'uploaded'
-                      ? `${bleSequencePayload.name} · ${bleSequencePayload.frameCount} 帧 · 20 FPS · ${(bleSequencePayload.storedBytes / 1024 / 1024).toFixed(2)} MiB`
-                      : selectedImageName && frameResourceSource === 'uploaded'
-                        ? `${selectedImageName} · ${imagePayload?.width ?? '—'} × ${imagePayload?.height ?? '—'} · 1 帧`
-                        : '单张图片，或多张 PNG 序列；20 FPS，最大约 28.94 MiB'
+                    bleSequencePayload
+                      ? `${bleSequencePayload.name} · ${bleSequencePayload.frameCount} 帧`
+                      : selectedImageName
                   }}
                 </p>
               </div>
-              <span class="shrink-0 text-[10px] text-muted">文件</span>
             </div>
             <label
               class="mt-2 flex h-control w-full cursor-pointer items-center justify-center rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
@@ -1759,12 +1735,28 @@ watch([wifiSsid, wifiPassword], () => {
             </label>
           </div>
         </div>
+        <div
+          v-if="
+            bleSession.status.value === 'uploading' ||
+            (bleSession.status.value === 'checking' && bleSession.progress.value > 0)
+          "
+          class="mt-panel h-1.5 overflow-hidden rounded-full bg-panel-field"
+        >
+          <div
+            class="h-full bg-accent transition-[width]"
+            :style="{ width: `${bleSession.progress.value}%` }"
+          />
+        </div>
         <p v-if="bakeError" class="mt-panel text-[11px] text-error">
           {{ bakeError }}
         </p>
       </PanelSection>
 
-      <PanelSection v-if="burnMode === 'prototype' && transportMode === 'ble'" label="状态机内容">
+      <PanelSection
+        v-if="burnMode === 'prototype' && transportMode === 'ble'"
+        class="order-[60]"
+        label="上传内容"
+      >
         <AppSelect
           v-model="selectedPrototypeSelectValue"
           :options="prototypeSelectOptions"
@@ -1822,10 +1814,23 @@ watch([wifiSsid, wifiPassword], () => {
               : '烘焙并上传状态机到 BLE 设备'
           }}
         </button>
+        <div
+          v-if="
+            bleSession.status.value === 'uploading' ||
+            (bleSession.status.value === 'checking' && bleSession.progress.value > 0)
+          "
+          class="mt-panel h-1.5 overflow-hidden rounded-full bg-panel-field"
+        >
+          <div
+            class="h-full bg-accent transition-[width]"
+            :style="{ width: `${bleSession.progress.value}%` }"
+          />
+        </div>
       </PanelSection>
 
       <PanelSection
         v-if="variables.length && transportMode === 'ble'"
+        class="order-[90]"
         :label="`变量 · ${variables.length}`"
         :default-open="false"
       >
@@ -1841,7 +1846,12 @@ watch([wifiSsid, wifiPassword], () => {
         </div>
       </PanelSection>
 
-      <PanelSection v-if="transportMode !== 'wifi-live'" label="状态日志" :default-open="false">
+      <PanelSection
+        v-if="transportMode !== 'wifi-live'"
+        class="order-[100]"
+        label="状态日志"
+        :default-open="false"
+      >
         <pre
           class="min-h-16 max-h-48 overflow-auto rounded-panel border border-border bg-canvas p-2 text-[10px] leading-relaxed text-muted"
           >{{ buildLog.length ? buildLog.join('\n') : buildMessage }}</pre
