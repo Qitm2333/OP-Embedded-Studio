@@ -44,7 +44,9 @@ static const uint8_t *diagnostic_glyph(char character)
     static const uint8_t m[5] = {127, 2, 12, 2, 127};
     static const uint8_t o[5] = {62, 65, 65, 65, 62};
     static const uint8_t r[5] = {127, 9, 25, 41, 70};
+    static const uint8_t s[5] = {70, 73, 73, 73, 49};
     static const uint8_t t[5] = {1, 1, 127, 1, 1};
+    static const uint8_t u[5] = {63, 64, 64, 64, 63};
     static const uint8_t w[5] = {63, 64, 56, 64, 63};
     if (character >= 'a' && character <= 'z') character -= ('a' - 'A');
     switch (character) {
@@ -58,7 +60,9 @@ static const uint8_t *diagnostic_glyph(char character)
         case 'M': return m;
         case 'O': return o;
         case 'R': return r;
+        case 'S': return s;
         case 'T': return t;
+        case 'U': return u;
         case 'W': return w;
         default: return space;
     }
