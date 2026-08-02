@@ -15,7 +15,8 @@ import { useAIChat } from '@/app/ai/chat/use'
 
 const { modelID, providerDef } = useAIChat()
 const selectCls = useSelectUI({
-  trigger: 'gap-1 rounded border-none bg-transparent px-1.5 py-0.5 text-[10px] text-muted',
+  trigger:
+    'min-w-0 flex-1 gap-1 overflow-hidden rounded border-none bg-transparent px-1 py-0.5 text-[11px] text-muted',
   content: 'max-h-60 overflow-y-auto',
   item: 'gap-2 rounded px-2 py-1.5 text-[11px]'
 })
@@ -24,9 +25,9 @@ const selectCls = useSelectUI({
 <template>
   <SelectRoot v-model="modelID">
     <SelectTrigger data-test-id="chat-model-selector" :class="selectCls.trigger">
-      <icon-lucide-bot class="size-3" />
-      <slot name="value" />
-      <icon-lucide-chevron-down class="size-2.5" />
+      <icon-lucide-bot class="size-3 shrink-0" />
+      <span class="truncate"><slot name="value" /></span>
+      <icon-lucide-chevron-down class="size-2.5 shrink-0" />
     </SelectTrigger>
     <SelectPortal>
       <SelectContent position="popper" side="top" :side-offset="4" :class="selectCls.content">

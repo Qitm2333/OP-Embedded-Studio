@@ -18,6 +18,28 @@ export type ModelConfig = {
   customAPIType: 'completions' | 'responses'
 }
 
+export function modelSupportsImageInput(
+  config: Pick<ModelConfig, 'providerID' | 'modelID' | 'customModelID'>
+): boolean {
+  if (config.providerID.startsWith('acp:')) return true
+
+  switch (config.providerID) {
+    case 'anthropic':
+    case 'openai':
+    case 'google':
+    case 'openrouter':
+    case 'openai-compatible':
+    case 'anthropic-compatible':
+      return true
+    case 'deepseek':
+    case 'zai':
+    case 'minimax':
+      return false
+    default:
+      return false
+  }
+}
+
 export function resolveLanguageModelID(
   config: Pick<ModelConfig, 'providerID' | 'modelID' | 'customModelID'>
 ) {

@@ -1,4 +1,4 @@
-import { node, type BaseProps, type TreeNode, type TextProps } from './tree'
+import { node, type BaseProps, type TreeNode, type TextProps, type VectorProps } from './tree'
 
 export function jsx(type: string | ((props: BaseProps) => TreeNode), props: BaseProps): TreeNode {
   if (typeof type === 'function') {
@@ -25,7 +25,7 @@ export namespace JSX {
     line: BaseProps
     star: BaseProps & { points?: number; innerRadius?: number }
     polygon: BaseProps & { pointCount?: number }
-    vector: BaseProps
+    vector: VectorProps
     group: BaseProps
     section: BaseProps
     component: BaseProps

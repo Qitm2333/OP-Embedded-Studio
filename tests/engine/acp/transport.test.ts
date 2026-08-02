@@ -3,7 +3,11 @@ import { describe, expect, test } from 'bun:test'
 import type { SessionUpdate } from '@agentclientprotocol/sdk'
 
 import { mapUpdate } from '@/app/ai/acp/map-update'
-import { formatConnectionError, buildCrashChunks } from '@/app/ai/acp/transport'
+import {
+  buildCrashChunks,
+  fileUIPartToACPImage,
+  formatConnectionError
+} from '@/app/ai/acp/transport'
 
 const TEXT_ID = 'text-1'
 
@@ -146,14 +150,16 @@ describe('mapUpdate', () => {
     ])
   })
 
-  test('agent_message_chunk with non-text content produces no chunks', () => {
+  test('agent_message_chunk with image content emits a file preview', () => {
     const update: SessionUpdate = {
       sessionUpdate: 'agent_message_chunk',
-      content: { type: 'image', url: 'https://example.com/img.png' }
+      content: { type: 'image', data: 'iVBORw==', mimeType: 'image/png' }
     }
     const result = mapUpdate(update, TEXT_ID, false)
     expect(result.textStarted).toBe(false)
-    expect(result.chunks).toEqual([])
+    expect(result.chunks).toEqual([
+      { type: 'file', url: 'data:image/png;base64,iVBORw==', mediaType: 'image/png' }
+    ])
   })
 
   test('unhandled update type produces no chunks', () => {
@@ -164,6 +170,29 @@ describe('mapUpdate', () => {
     const result = mapUpdate(update, TEXT_ID, false)
     expect(result.chunks).toEqual([])
     expect(result.textStarted).toBe(false)
+  })
+})
+
+describe('fileUIPartToACPImage', () => {
+  test('converts an AI SDK image part into an ACP image block', () => {
+    expect(
+      fileUIPartToACPImage({
+        type: 'file',
+        filename: 'reference.png',
+        mediaType: 'image/png',
+        url: 'data:image/png;base64,iVBORw=='
+      })
+    ).toEqual({ type: 'image', data: 'iVBORw==', mimeType: 'image/png' })
+  })
+
+  test('rejects hosted and malformed URLs', () => {
+    expect(() =>
+      fileUIPartToACPImage({
+        type: 'file',
+        mediaType: 'image/png',
+        url: 'https://example.com/reference.png'
+      })
+    ).toThrow('must use PNG, JPEG, or WebP data URLs')
   })
 })
 

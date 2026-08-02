@@ -28,11 +28,7 @@ export function getDevicePrototypeFrameCandidate(
   const frames = selectedIds.flatMap((selectedId) => {
     let node = store.graph.getNode(selectedId)
     while (node) {
-      if (
-        node.type === 'FRAME' &&
-        node.id !== store.graph.rootId &&
-        !pageIds.has(node.id)
-      ) {
+      if (node.type === 'FRAME' && node.id !== store.graph.rootId && !pageIds.has(node.id)) {
         return [node]
       }
       if (!node.parentId) break
@@ -49,10 +45,7 @@ export function getDevicePrototypeFrameCandidate(
       name: '',
       width: 0,
       height: 0,
-      reason:
-        uniqueFrames.length > 1
-          ? '选中的对象属于不同 Frame'
-          : '当前选中对象不在 Frame 内'
+      reason: uniqueFrames.length > 1 ? '选中的对象属于不同 Frame' : '当前选中对象不在 Frame 内'
     }
   }
 
@@ -65,12 +58,29 @@ export function getDevicePrototypeFrameCandidate(
     height: frame.height
   }
 }
+
+export function getDevicePrototypeFrameCandidates(
+  store: EditorStore
+): DevicePrototypeFrameCandidate[] {
+  void store.state.sceneVersion
+  return store.graph
+    .getChildren(store.state.currentPageId)
+    .filter((node) => node.type === 'FRAME' && node.id !== store.graph.rootId)
+    .map((frame) => ({
+      available: true,
+      id: frame.id,
+      name: frame.name,
+      width: frame.width,
+      height: frame.height
+    }))
+}
+
 export function createDevicePrototypeFrameRenderer(store: EditorStore): DevicePrototypeFrameRender {
   return async (frameId) => {
     const node = store.graph.getNode(frameId)
-    if (!node || node.type !== 'FRAME') throw new Error('交互引用的 Frame 已不存在')
+    if (node?.type !== 'FRAME') throw new Error('交互引用的 Frame 已不存在')
     const data = await renderEmbeddedFramePng(store, node.id)
-    return new Blob([data], { type: 'image/png' })
+    return new Blob([Uint8Array.from(data).buffer], { type: 'image/png' })
   }
 }
 
@@ -81,12 +91,14 @@ export async function bakeDevicePrototype(
   const states = []
   for (const state of interaction.states) {
     const node = store.graph.getNode(state.frameId)
-    if (!node || node.type !== 'FRAME') throw new Error(`交互引用的 Frame 已不存在：${state.name}`)
+    if (node?.type !== 'FRAME') throw new Error(`交互引用的 Frame 已不存在：${state.name}`)
     const data = await renderEmbeddedFramePng(store, node.id)
     states.push({
       id: state.id,
       name: state.name,
-      file: new File([data], `${state.name || 'state'}.png`, { type: 'image/png' })
+      file: new File([Uint8Array.from(data).buffer], `${state.name || 'state'}.png`, {
+        type: 'image/png'
+      })
     })
   }
 

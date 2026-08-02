@@ -2,6 +2,11 @@ import { describe, expect, test } from 'bun:test'
 
 import { SceneGraph } from '@open-pencil/scene-graph'
 
+import {
+  getDesignHandoffMemory,
+  recordDesignHandoff,
+  resolveDesignHandoffFrame
+} from '@/app/ai/device/memory'
 import { getEmbeddedFrameBakeState } from '@/app/editor/embedded-display-bake'
 import { createEditorStore, type EditorStore } from '@/app/editor/session'
 import { calculatePixelPerfectPlacement } from '@/features/embedded-display/adapters/image'
@@ -96,6 +101,60 @@ describe('embedded display Frame targeting', () => {
     expect(getEmbeddedFrameBakeState(editorStore(graph, [graph.rootId]))).toMatchObject({
       available: false
     })
+  })
+})
+
+describe('device AI design handoff', () => {
+  test('falls back to the only top-level Frame when selection is empty', () => {
+    const graph = new SceneGraph()
+    const frame = graph.createNode('FRAME', graph.getPages()[0].id, {
+      name: 'Device UI',
+      width: 466,
+      height: 466
+    })
+    const store = editorStore(graph, [])
+
+    expect(resolveDesignHandoffFrame(store)).toMatchObject({
+      available: true,
+      id: frame.id,
+      name: 'Device UI'
+    })
+    expect(getDesignHandoffMemory(store).frame?.source).toBe('user-design')
+  })
+
+  test('keeps the latest AI Frame as compact shared memory and detects later edits', () => {
+    const graph = new SceneGraph()
+    const pageId = graph.getPages()[0].id
+    const aiFrame = graph.createNode('FRAME', pageId, {
+      name: 'AI Dashboard',
+      width: 466,
+      height: 466
+    })
+    graph.createNode('FRAME', pageId, { name: 'Other Frame', width: 240, height: 240 })
+    const store = editorStore(graph, [])
+    recordDesignHandoff(store, {
+      frameId: aiFrame.id,
+      frameName: aiFrame.name,
+      observation: '完成主界面',
+      intent: '建立清晰的信息层级',
+      changes: ['放大主数据', '保留圆屏安全区']
+    })
+
+    expect(resolveDesignHandoffFrame(store).id).toBe(aiFrame.id)
+    expect(getDesignHandoffMemory(store)).toMatchObject({
+      frame: {
+        id: aiFrame.id,
+        source: 'ai-assisted',
+        changedAfterAISummary: false
+      },
+      recentAI: {
+        observation: '完成主界面',
+        intent: '建立清晰的信息层级'
+      }
+    })
+
+    graph.updateNode(aiFrame.id, { name: 'AI Dashboard Revised' })
+    expect(getDesignHandoffMemory(store).frame?.changedAfterAISummary).toBe(true)
   })
 })
 

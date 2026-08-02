@@ -1,4 +1,4 @@
-import type { SessionUpdate } from '@agentclientprotocol/sdk'
+import type { ContentBlock, SessionUpdate } from '@agentclientprotocol/sdk'
 import type { UIMessageChunk } from 'ai'
 
 import type { JsonObject } from '@open-pencil/scene-graph/primitives'
@@ -6,6 +6,16 @@ import type { JsonObject } from '@open-pencil/scene-graph/primitives'
 export interface MapResult {
   chunks: UIMessageChunk[]
   textStarted: boolean
+}
+
+function isRenderableImage(
+  content: ContentBlock
+): content is Extract<ContentBlock, { type: 'image' }> {
+  return (
+    content.type === 'image' &&
+    typeof content.mimeType === 'string' &&
+    typeof content.data === 'string'
+  )
 }
 
 export function mapUpdate(update: SessionUpdate, textId: string, textStarted: boolean): MapResult {
@@ -22,6 +32,12 @@ export function mapUpdate(update: SessionUpdate, textId: string, textStarted: bo
           type: 'text-delta',
           id: textId,
           delta: update.content.text
+        })
+      } else if (isRenderableImage(update.content)) {
+        chunks.push({
+          type: 'file',
+          url: `data:${update.content.mimeType};base64,${update.content.data}`,
+          mediaType: update.content.mimeType
         })
       } else if (update.content.type !== 'text') {
         console.warn('[ACP] Unhandled content type:', update.content.type)

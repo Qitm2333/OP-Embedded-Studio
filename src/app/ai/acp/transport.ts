@@ -2,15 +2,16 @@ import { ClientSideConnection, ndJsonStream, PROTOCOL_VERSION } from '@agentclie
 import type {
   Client,
   Agent,
+  ContentBlock,
   SessionNotification,
   RequestPermissionRequest,
   RequestPermissionResponse
 } from '@agentclientprotocol/sdk'
-import type { ChatTransport, UIMessage, UIMessageChunk } from 'ai'
+import type { ChatTransport, FileUIPart, UIMessage, UIMessageChunk } from 'ai'
 
 import type { ACPAgentDef } from '@open-pencil/core/constants'
 
-import SYSTEM_PROMPT from '@/app/ai/chat/system-prompt.md?raw'
+import { parseImageDataUrl } from '@/app/ai/chat/attachments'
 
 import { mapUpdate } from './map-update'
 import { spawnAcpProcess } from './process'
@@ -29,6 +30,7 @@ interface ACPSession {
   child: TauriChild
   onUpdate: ((params: SessionNotification) => void) | null
   dead: boolean
+  supportsImages: boolean
 }
 
 const MAX_LOG_AGE_MS = 5 * 60 * 1000
@@ -104,16 +106,28 @@ export function buildCrashChunks(
   return { chunks, shouldNullSession: true }
 }
 
+export function fileUIPartToACPImage(part: FileUIPart): ContentBlock {
+  const parsed = parseImageDataUrl(part.url)
+  if (!parsed) throw new Error('ACP image attachments must use PNG, JPEG, or WebP data URLs.')
+  return {
+    type: 'image',
+    data: parsed.data,
+    mimeType: parsed.mimeType
+  }
+}
+
 export class ACPChatTransport implements ChatTransport<UIMessage> {
   private session: ACPSession | null = null
   private agentDef: ACPAgentDef
   private cwd: string
   private sentContext = false
   private destroying = false
+  private getSystemPrompt: () => string
 
-  constructor(options: { agentDef: ACPAgentDef; cwd?: string }) {
+  constructor(options: { agentDef: ACPAgentDef; cwd?: string; getSystemPrompt?: () => string }) {
     this.agentDef = options.agentDef
     this.cwd = options.cwd ?? '.'
+    this.getSystemPrompt = options.getSystemPrompt ?? (() => '')
   }
 
   async sendMessages({
@@ -128,6 +142,8 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
         .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
         .map((p) => p.text)
         .join('\n') ?? ''
+    const files =
+      lastUserMessage?.parts.filter((part): part is FileUIPart => part.type === 'file') ?? []
 
     if (this.session?.dead) {
       this.session = null
@@ -137,7 +153,16 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
       this.session = await this.spawnAgent()
     }
 
-    const promptText = this.sentContext ? text : `${SYSTEM_PROMPT}\n\n${text}`
+    if (files.length > 0 && !this.session.supportsImages) {
+      throw new Error(
+        `${this.agentDef.name} does not advertise image input support. Remove the reference images or choose a vision-capable agent.`
+      )
+    }
+
+    const promptText = this.sentContext ? text : `${this.getSystemPrompt()}\n\n${text}`.trim()
+    const prompt: ContentBlock[] = []
+    if (promptText) prompt.push({ type: 'text', text: promptText })
+    prompt.push(...files.map(fileUIPartToACPImage))
     this.sentContext = true
 
     const { connection, sessionId } = this.session
@@ -187,7 +212,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
         connection
           .prompt({
             sessionId,
-            prompt: [{ type: 'text', text: promptText }]
+            prompt
           })
           .then((result) => {
             finish(result.stopReason === 'end_turn' ? 'stop' : 'other')
@@ -251,7 +276,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
     const { getAutomationAuthToken } = await import('@/app/automation/mcp/spawn')
     const automationAuthToken = await getAutomationAuthToken()
 
-    await connection.initialize({
+    const initializeResult = await connection.initialize({
       protocolVersion: PROTOCOL_VERSION,
       clientCapabilities: {}
     })
@@ -281,6 +306,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
       sessionId: sessionResult.sessionId,
       child,
       dead: false,
+      supportsImages: initializeResult.agentCapabilities?.promptCapabilities?.image === true,
       get onUpdate() {
         return onUpdate
       },

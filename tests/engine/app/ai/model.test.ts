@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test'
 
-import { providerRequiresCustomModelID, resolveLanguageModelID } from '@/app/ai/chat/model'
+import {
+  modelSupportsImageInput,
+  providerRequiresCustomModelID,
+  resolveLanguageModelID
+} from '@/app/ai/chat/model'
 import { normalizeOpenRouterModel } from '@/app/ai/chat/provider-models'
 
 describe('resolveLanguageModelID', () => {
@@ -63,5 +67,23 @@ describe('normalizeOpenRouterModel', () => {
         supported_parameters: []
       })
     ).toBeNull()
+  })
+})
+
+describe('modelSupportsImageInput', () => {
+  const config = { modelID: 'model', customModelID: '' }
+
+  test('enables image input for established multimodal providers and ACP negotiation', () => {
+    expect(modelSupportsImageInput({ ...config, providerID: 'openai' })).toBe(true)
+    expect(modelSupportsImageInput({ ...config, providerID: 'anthropic' })).toBe(true)
+    expect(modelSupportsImageInput({ ...config, providerID: 'google' })).toBe(true)
+    expect(modelSupportsImageInput({ ...config, providerID: 'openrouter' })).toBe(true)
+    expect(modelSupportsImageInput({ ...config, providerID: 'acp:claude-code' })).toBe(true)
+  })
+
+  test('does not claim image input for text-focused provider integrations', () => {
+    expect(modelSupportsImageInput({ ...config, providerID: 'deepseek' })).toBe(false)
+    expect(modelSupportsImageInput({ ...config, providerID: 'zai' })).toBe(false)
+    expect(modelSupportsImageInput({ ...config, providerID: 'minimax' })).toBe(false)
   })
 })

@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from 'bun:test'
 
 import { FigmaAPI, SceneGraph } from '@open-pencil/core'
-import { importSvg } from '@open-pencil/core/tools'
+import { allowsDesignOverlap, designRole, importSvg } from '@open-pencil/core/tools'
 
 import { expectDefined, getNodeOrThrow } from '#tests/helpers/assert'
 
@@ -129,7 +129,7 @@ describe('import_svg', () => {
       svg: '<svg viewBox="0 0 24 24"></svg>'
     })) as { error: string }
 
-    expect(result.error).toContain('No supported SVG elements')
+    expect(result.error).toContain('no supported vector elements')
   })
 
   test('returns error for missing svg param', async () => {
@@ -147,5 +147,56 @@ describe('import_svg', () => {
 
     const children = graph.getChildren(result.id)
     expect(children.length).toBe(2)
+  })
+
+  test('normalizes a non-zero viewBox into the output frame', async () => {
+    const result = (await importSvg.execute(figma, {
+      svg: '<svg viewBox="10 20 20 10"><path d="M10 20 L30 30"/></svg>'
+    })) as { id: string }
+
+    const vector = graph.getChildren(result.id)[0]
+    const vertices = expectDefined(vector.vectorNetwork, 'normalized vector network').vertices
+    expect(vertices[0]).toMatchObject({ x: 0, y: 0 })
+    expect(vertices[1]).toMatchObject({ x: 20, y: 10 })
+  })
+
+  test('resizes paths and preserves padding', async () => {
+    const result = (await importSvg.execute(figma, {
+      svg: '<svg viewBox="0 0 10 10"><path d="M0 0 L10 10"/></svg>',
+      width: 30,
+      height: 50,
+      padding: 5
+    })) as { id: string }
+
+    const frame = getNodeOrThrow(graph, result.id)
+    const vector = graph.getChildren(result.id)[0]
+    const vertices = expectDefined(vector.vectorNetwork, 'resized vector network').vertices
+    expect(frame.width).toBe(30)
+    expect(frame.height).toBe(50)
+    expect(vertices[0]).toMatchObject({ x: 5, y: 5 })
+    expect(vertices[1]).toMatchObject({ x: 25, y: 45 })
+  })
+
+  test('does not mutate the graph when path parsing fails', async () => {
+    const page = graph.getPages()[0]
+    const childCount = page.childIds.length
+    const result = (await importSvg.execute(figma, {
+      svg: '<svg viewBox="0 0 24 24"><path d="M nope"/></svg>'
+    })) as { error: string }
+
+    expect(result.error).toContain('parsing failed before import')
+    expect(graph.getPages()[0].childIds).toHaveLength(childCount)
+  })
+
+  test('stores design role and explicit overlap permission', async () => {
+    const result = (await importSvg.execute(figma, {
+      svg: '<svg viewBox="0 0 24 24"><path d="M0 0 L24 24"/></svg>',
+      design_role: 'decoration',
+      allow_overlap: false
+    })) as { id: string }
+
+    const frame = getNodeOrThrow(graph, result.id)
+    expect(designRole(frame)).toBe('decoration')
+    expect(allowsDesignOverlap(frame)).toBe(false)
   })
 })

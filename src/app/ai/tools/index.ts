@@ -58,6 +58,10 @@ function getRunState(store?: EditorStore): RunState {
   return created
 }
 
+function hasResultError(result: unknown): boolean {
+  return !!result && typeof result === 'object' && 'error' in result
+}
+
 export function getToolLogEntries(store?: EditorStore): ToolLogEntry[] {
   return getRunState(store).toolLog
 }
@@ -82,43 +86,64 @@ export function clearToolLogEntries(store?: EditorStore): void {
   getRunState(store).clear()
 }
 
-export function createAITools(store: EditorStore) {
-  let beforeSnapshot: Map<string, SceneNode> | null = null
+export function createAITools(
+  store: EditorStore,
+  options: { onRenderSuccess?: (result: { id: string; name: string }) => void } = {}
+) {
   const runState = getRunState(store)
 
   return toolsToAI(
     CORE_TOOLS,
     {
       getFigma: () => makeFigmaFromStore(store),
-      onBeforeExecute: (def) => {
-        if (def.mutates) {
-          beforeSnapshot = store.snapshotPage()
+      onBeforeExecute: (def) => (def.mutates ? store.snapshotPage() : undefined),
+      onAfterExecute: async (def, outcome, executionContext) => {
+        if (!def.mutates) return
+
+        const before = executionContext as Map<string, SceneNode> | undefined
+        if (outcome.error || hasResultError(outcome.result)) {
+          if (before) store.restorePageFromSnapshot(before)
+          store.requestRender()
+          return
         }
-      },
-      onAfterExecute: async (def) => {
-        if (def.mutates) {
-          const pageId = store.state.currentPageId
-          const pageNode = store.graph.getNode(pageId)
+
+        const pageId = store.state.currentPageId
+        const pageNode = store.graph.getNode(pageId)
+        try {
           if (pageNode) await ensureGraphFonts(store.graph, pageNode.childIds)
           computeAllLayouts(store.graph, pageId)
           store.requestRender()
-          if (beforeSnapshot) {
-            const before = beforeSnapshot
-            const after = store.snapshotPage()
-            store.pushUndoEntry({
-              label: `AI: ${def.name}`,
-              forward: () => store.restorePageFromSnapshot(after),
-              inverse: () => store.restorePageFromSnapshot(before)
-            })
-            beforeSnapshot = null
-          }
+        } catch (error) {
+          if (before) store.restorePageFromSnapshot(before)
+          store.requestRender()
+          throw error
         }
+
+        if (before) {
+          const after = store.snapshotPage()
+          store.pushUndoEntry({
+            label: `AI: ${def.name}`,
+            forward: () => store.restorePageFromSnapshot(after),
+            inverse: () => store.restorePageFromSnapshot(before)
+          })
+        }
+
+        if (def.name !== 'render') return
+        const id =
+          outcome.result &&
+          typeof outcome.result === 'object' &&
+          'id' in outcome.result &&
+          typeof outcome.result.id === 'string'
+            ? outcome.result.id
+            : undefined
+        const frame = id ? store.graph.getNode(id) : undefined
+        if (frame?.type !== 'FRAME') return
+        store.select([frame.id])
+        options.onRenderSuccess?.({ id: frame.id, name: frame.name })
       },
       onFlashNodes: (nodeIds) => {
         store.renderer?.aiClearActive()
-        if (nodeIds.length > 0) {
-          store.aiFlashDone(nodeIds)
-        }
+        if (nodeIds.length > 0) store.aiFlashDone(nodeIds)
       },
       onToolLog: (entry) => {
         runState.toolLog.push(entry)

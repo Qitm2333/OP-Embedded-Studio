@@ -10,6 +10,9 @@ import type { Color, JsonObject } from '@open-pencil/scene-graph/primitives'
 
 import { colorToFill, parseColor } from '#core/color'
 import { TRANSPARENT } from '#core/constants'
+import { designMetadata } from '#core/design-semantics'
+
+import { applyShadowOverride } from './shadow-overrides'
 
 const WEIGHT_MAP: Record<string, number> = {
   normal: 400,
@@ -547,23 +550,7 @@ function applyShapeAndEffectOverrides(props: Record<string, unknown>, o: Partial
   if (props.innerRadius !== undefined) o.starInnerRadius = props.innerRadius as number
   if (props.pointCount !== undefined) o.pointCount = props.pointCount as number
 
-  if (typeof props.shadow === 'string') {
-    const parts = props.shadow.split(/\s+/)
-    if (parts.length >= 4) {
-      const c = parseColor(parts.slice(3).join(' '))
-      o.effects = [
-        ...(o.effects ?? []),
-        {
-          type: 'DROP_SHADOW',
-          color: c,
-          offset: { x: Number.parseFloat(parts[0]), y: Number.parseFloat(parts[1]) },
-          radius: Number.parseFloat(parts[2]),
-          spread: 0,
-          visible: true
-        }
-      ]
-    }
-  }
+  applyShadowOverride(props.shadow, o)
 
   if (typeof props.blur === 'number') {
     o.effects = [
@@ -589,6 +576,8 @@ export function propsToOverrides(
   const o: Partial<SceneNode> = {}
 
   if (props.name) o.name = props.name as string
+  const metadata = designMetadata(props.designRole, props.allowOverlap)
+  if (metadata) o.pluginData = metadata
 
   const { w, h } = applySizeOverrides(props, o, parentLayout)
   applyVisualOverrides(props, o)

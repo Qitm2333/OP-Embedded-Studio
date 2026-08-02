@@ -4,6 +4,7 @@ import { IS_BROWSER } from '@open-pencil/core/constants'
 
 import {
   apiKey,
+  chatMode,
   customAPIType,
   customBaseURL,
   customModelID,
@@ -34,6 +35,7 @@ const chatSession = createChatSessionManager({
   customBaseURL,
   customAPIType,
   maxOutputTokens,
+  chatMode,
   getActiveEditorStore
 })
 
@@ -56,11 +58,14 @@ export function useAIChat() {
     customModelID,
     customAPIType,
     maxOutputTokens,
+    chatMode,
     pexelsApiKey,
     unsplashAccessKey,
     activeTab,
     isConfigured,
     ensureChat: chatSession.ensureChat,
+    submitLocalDeviceAction: chatSession.submitLocalDeviceAction,
+    appendLocalDeviceResult: chatSession.appendLocalDeviceResult,
     resetChat: chatSession.resetChat
   }
 }

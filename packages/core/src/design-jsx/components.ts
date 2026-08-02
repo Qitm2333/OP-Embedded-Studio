@@ -1,4 +1,4 @@
-import { node, type BaseProps, type TextProps, type TreeNode } from './tree'
+import { node, type BaseProps, type TextProps, type TreeNode, type VectorProps } from './tree'
 
 type Child = TreeNode | string
 
@@ -43,7 +43,7 @@ export function Polygon(
   return withChildren('polygon', props, children)
 }
 
-export function Vector(props: BaseProps, ...children: Child[]): TreeNode {
+export function Vector(props: VectorProps, ...children: Child[]): TreeNode {
   return withChildren('vector', props, children)
 }
 

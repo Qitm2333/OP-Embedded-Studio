@@ -4,6 +4,7 @@
 
 ### Changed
 
+- Simplify Design AI into a code-only pipeline: every turn starts from the selected or sole Frame's current JSX, exposes only the existing core `render` action, and drops superseded JSX and image payloads from later requests. The composer also adds pasted/dropped reference-image previews, larger message typography, compact render status, and folded process history with a prominent final summary.
 - Split USB device setup from daily content uploads: install the bundled base firmware once, then update Frames, PNG sequences, and state machines through the dedicated runtime USB protocol without rebuilding or reflashing the application.
 - Add Figma-style page management in the Pages panel, including rename/delete actions and drag-and-drop page reordering.
 - Add DOM/CSS import and authoring support so HTML, CSS, Tailwind, and JSX can be converted into editable OpenPencil documents from the app, CLI, and SDK.
@@ -27,6 +28,10 @@
 
 ### Fixes
 
+- Let the Design model distinguish conversation from canvas changes while treating concise contextual directions as continuous edits, without a local keyword gate that can disable rendering.
+- Restore the native Design chat stream lifecycle, allow one text-only summary step after the single JSX render, hide false thinking and zero-operation states once visible output exists, and accept common model-generated SVG path wrappers.
+- Restore the stable desktop AI request bridge, add bounded model timeouts and visible waiting/retry states, and prepare explicit USB write/deploy commands locally so device confirmation is not blocked by a transient model-provider failure.
+- Prevent complete JSX tool inputs and old reference-image Base64 payloads from accumulating across Design chat turns and freezing long conversations.
 - Web app can **on-demand download document fonts** (e.g. Google families via Fontsource) when opening a `.fig` or switching pages, instead of treating them as unavailable and toasting that online fonts require the desktop app. Catalog browsing of Google’s full list may still be limited in the browser; latin-subset TTF resolve only.
 - Keep downloaded faces registered for **live text edit** (CanvasKit paragraph) so editing no longer falls back to Inter after Figma derived glyphs are cleared.
 - Fix live CLI and MCP automation drifting to the wrong open document or page when multiple files are open.

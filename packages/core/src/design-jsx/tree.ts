@@ -138,7 +138,9 @@ export type StyleProps = {
   rotate?: number
   rotation?: number
   overflow?: 'hidden' | 'visible'
-  shadow?: string
+  shadow?:
+    | string
+    | { color: PaintProp; blur: number; x?: number; y?: number; spread?: number }
   blur?: number
   effects?: Effect[]
 
@@ -161,6 +163,8 @@ export type StyleProps = {
 
 export type BaseProps = StyleProps & {
   name?: string
+  designRole?: 'content' | 'interaction' | 'decoration' | 'background' | 'overlay'
+  allowOverlap?: boolean
   key?: string | number
   children?: unknown
   bind?: Record<string, unknown>
@@ -168,3 +172,8 @@ export type BaseProps = StyleProps & {
 }
 
 export type TextProps = BaseProps
+
+export type VectorProps = BaseProps & {
+  d: string
+  fillRule?: 'nonzero' | 'evenodd'
+}

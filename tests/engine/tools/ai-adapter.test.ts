@@ -8,7 +8,11 @@ import { ALL_TOOLS, FigmaAPI, SceneGraph, toolsToAI } from '@open-pencil/core'
 
 import { expectDefined } from '#tests/helpers/assert'
 
-type AdapterTool = { execute(args: Record<string, unknown>): Promise<unknown>; description: string }
+type AdapterTool = {
+  execute(args: Record<string, unknown>): Promise<unknown>
+  description: string
+  toModelOutput?: (options: { output: unknown }) => unknown
+}
 
 interface PageTreeToolResult {
   page: unknown
@@ -112,8 +116,12 @@ describe('AI adapter', () => {
       ALL_TOOLS,
       {
         getFigma: () => figma,
-        onBeforeExecute: () => calls.push('before'),
-        onAfterExecute: () => calls.push('after')
+        onBeforeExecute: () => {
+          calls.push('before')
+        },
+        onAfterExecute: () => {
+          calls.push('after')
+        }
       },
       { v, valibotSchema, tool }
     )
@@ -148,6 +156,46 @@ describe('AI adapter', () => {
     }
 
     expect(afterCalled).toBe(true)
+  })
+
+  test('execution guard blocks and logs a tool without running mutation hooks', async () => {
+    const graph = new SceneGraph()
+    const figma = new FigmaAPI(graph)
+    const calls: string[] = []
+    const loggedErrors: string[] = []
+
+    const tools = toolsToAI(
+      ALL_TOOLS,
+      {
+        getFigma: () => figma,
+        getExecutionBlockReason: (def) =>
+          def.name === 'create_shape' ? 'Blocked repeated ineffective tool call.' : undefined,
+        onBeforeExecute: () => {
+          calls.push('before')
+        },
+        onAfterExecute: () => {
+          calls.push('after')
+        },
+        onToolLog: (entry) => {
+          if (entry.error) loggedErrors.push(entry.error)
+        }
+      },
+      { v, valibotSchema, tool }
+    )
+
+    const createShape = adapterTool(tools, 'create_shape')
+    const result = (await createShape.execute({
+      type: 'RECTANGLE',
+      x: 0,
+      y: 0,
+      width: 20,
+      height: 20,
+      name: 'Blocked'
+    })) as { error: string }
+
+    expect(result.error).toContain('Blocked repeated ineffective')
+    expect(calls).toEqual([])
+    expect(loggedErrors).toEqual(['Blocked repeated ineffective tool call.'])
   })
 
   test('find_nodes works through adapter', async () => {
@@ -201,5 +249,17 @@ describe('AI adapter', () => {
     const getNode = adapterTool(tools, 'get_node')
     const result = (await getNode.execute({ id })) as { error: string }
     expect(result.error).toContain('not found')
+  })
+
+  test('export_image returns AI SDK image-data content to the model', async () => {
+    const { tools, figma } = setup()
+    figma.exportImage = async () => new Uint8Array([137, 80, 78, 71])
+    const exportImage = adapterTool(tools, 'export_image')
+    const output = await exportImage.execute({ format: 'PNG', scale: 1 })
+
+    expect(exportImage.toModelOutput?.({ output })).toEqual({
+      type: 'content',
+      value: [{ type: 'image-data', mediaType: 'image/png', data: 'iVBORw==' }]
+    })
   })
 })

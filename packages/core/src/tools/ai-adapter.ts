@@ -48,10 +48,20 @@ export interface StepBudget {
   max: number
 }
 
+export interface ToolExecutionOutcome {
+  result?: unknown
+  error?: string
+}
+
 export interface AIAdapterOptions {
   getFigma: () => FigmaAPI
-  onBeforeExecute?: (def: ToolDef) => void
-  onAfterExecute?: (def: ToolDef) => Promise<void> | void
+  getExecutionBlockReason?: (def: ToolDef, args: Record<string, unknown>) => string | undefined
+  onBeforeExecute?: (def: ToolDef, args: Record<string, unknown>) => unknown
+  onAfterExecute?: (
+    def: ToolDef,
+    outcome: ToolExecutionOutcome,
+    executionContext: unknown
+  ) => Promise<void> | void
   onFlashNodes?: (nodeIds: string[]) => void
   onToolLog?: (entry: ToolLogEntry) => void
   getStepBudget?: () => StepBudget
@@ -162,12 +172,19 @@ export function toolsToAI(
       execute: async (args: Record<string, unknown>) => {
         const startTime = Date.now()
         const figma = options.getFigma()
+        const blockedReason = options.getExecutionBlockReason?.(def, args)
+        if (blockedReason) {
+          emitToolLog(options, def, args, startTime, figma, undefined, null, blockedReason)
+          return { error: blockedReason }
+        }
         const nodeBefore =
           def.mutates && options.onToolLog ? captureNodeSnapshot(figma, args) : undefined
 
-        options.onBeforeExecute?.(def)
+        const executionContext = await options.onBeforeExecute?.(def, args)
+        let outcome: ToolExecutionOutcome = {}
         try {
           let execResult = await def.execute(options.getFigma(), args)
+          outcome = { result: execResult }
           if (def.mutates && options.onFlashNodes) {
             const ids = extractNodeIds(execResult)
             if (ids.length > 0) options.onFlashNodes(ids)
@@ -179,10 +196,11 @@ export function toolsToAI(
           return execResult
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : String(err)
+          outcome = { error: errorMsg }
           emitToolLog(options, def, args, startTime, figma, nodeBefore, null, errorMsg)
           return { error: errorMsg }
         } finally {
-          await options.onAfterExecute?.(def)
+          await options.onAfterExecute?.(def, outcome, executionContext)
         }
       }
     }
@@ -193,7 +211,7 @@ export function toolsToAI(
           const r = output as { base64: string; mimeType: string }
           return {
             type: 'content' as const,
-            value: [{ type: 'media' as const, mediaType: r.mimeType, data: r.base64 }]
+            value: [{ type: 'image-data' as const, mediaType: r.mimeType, data: r.base64 }]
           }
         }
         return { type: 'json' as const, value: output as JsonObject }

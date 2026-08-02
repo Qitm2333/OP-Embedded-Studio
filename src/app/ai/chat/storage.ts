@@ -14,6 +14,8 @@ import { setPexelsApiKey, setUnsplashAccessKey } from '@open-pencil/core/tools'
 const STORAGE_PREFIX = 'open-pencil:'
 const LEGACY_KEY_STORAGE = `${STORAGE_PREFIX}openrouter-api-key`
 
+export type AIChatMode = 'design' | 'device'
+
 export function keyStorageKey(id: string) {
   return `${STORAGE_PREFIX}ai-key:${id}`
 }
@@ -45,6 +47,7 @@ export const customAPIType = useLocalStorage<'completions' | 'responses'>(
   'completions'
 )
 export const maxOutputTokens = useLocalStorage(`${STORAGE_PREFIX}ai-max-output-tokens`, 16384)
+export const chatMode = useLocalStorage<AIChatMode>(`${STORAGE_PREFIX}ai-chat-mode`, 'design')
 export const pexelsApiKey = useLocalStorage(`${STORAGE_PREFIX}pexels-api-key`, '')
 export const unsplashAccessKey = useLocalStorage(`${STORAGE_PREFIX}unsplash-access-key`, '')
 

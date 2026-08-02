@@ -10,12 +10,17 @@ import {
   type DevicePrototypeState
 } from '../model/types'
 
+export interface CreateDevicePrototypeInteractionInput {
+  name: string
+  definition: DevicePrototypeDefinition
+}
+
 const interactions = ref<DevicePrototypeInteraction[]>([])
 const selectedInteractionId = ref('')
 const selectedStateId = ref('')
 
 function createId(prefix: string): string {
-  return `${prefix}-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`}`
+  return `${prefix}-${globalThis.crypto.randomUUID()}`
 }
 
 function createInteraction(name: string): DevicePrototypeInteraction {
@@ -25,6 +30,37 @@ function createInteraction(name: string): DevicePrototypeInteraction {
     initialStateId: '',
     states: [],
     transitions: []
+  }
+}
+
+function validateDefinition(definition: DevicePrototypeDefinition): void {
+  if (definition.states.length < 2) throw new Error('交互至少需要两个 Frame')
+  if (definition.states.length > 10) throw new Error('交互最多支持 10 个 Frame')
+
+  const stateIds = new Set(definition.states.map((state) => state.id))
+  if (stateIds.size !== definition.states.length) throw new Error('交互中包含重复的 Frame')
+  if (!stateIds.has(definition.initialStateId)) throw new Error('交互缺少有效的初始 Frame')
+
+  const firstState = definition.states.at(0)
+  if (
+    !firstState ||
+    definition.states.some(
+      (state) => state.width !== firstState.width || state.height !== firstState.height
+    )
+  ) {
+    throw new Error('交互中的 Frame 尺寸必须一致')
+  }
+
+  const supportedEvents = new Set<string>(DEVICE_PROTOTYPE_EVENTS.map((event) => event.id))
+  const transitionKeys = new Set<string>()
+  for (const transition of definition.transitions) {
+    if (!stateIds.has(transition.fromStateId) || !stateIds.has(transition.toStateId)) {
+      throw new Error('交互跳转引用了不存在的 Frame')
+    }
+    if (!supportedEvents.has(transition.event)) throw new Error('交互包含不支持的设备事件')
+    const key = `${transition.fromStateId}:${transition.event}`
+    if (transitionKeys.has(key)) throw new Error('同一 Frame 的同一事件只能设置一个目标')
+    transitionKeys.add(key)
   }
 }
 
@@ -48,13 +84,15 @@ export function useDevicePrototype() {
   )
   const interactionOptions = computed<DevicePrototypeInteractionOption[]>(() =>
     interactions.value.map((interaction) => {
-      const firstState = interaction.states[0]
+      const firstState = interaction.states.at(0)
       const initialState = interaction.states.find(
         (state) => state.id === interaction.initialStateId
       )
-      const dimensionsMatch = interaction.states.every(
-        (state) => state.width === firstState?.width && state.height === firstState?.height
-      )
+      const dimensionsMatch =
+        firstState !== undefined &&
+        interaction.states.every(
+          (state) => state.width === firstState.width && state.height === firstState.height
+        )
       const valid = interaction.states.length > 0 && Boolean(initialState) && dimensionsMatch
       let reason = ''
       if (interaction.states.length === 0) reason = '尚未添加界面状态'
@@ -87,6 +125,26 @@ export function useDevicePrototype() {
     interactions.value = [...interactions.value, interaction]
     selectedInteractionId.value = interaction.id
     selectedStateId.value = ''
+  }
+
+  function createInteractionFromDefinition(
+    input: CreateDevicePrototypeInteractionInput
+  ): DevicePrototypeInteraction {
+    const name = input.name.trim()
+    if (!name) throw new Error('交互名称不能为空')
+    validateDefinition(input.definition)
+
+    const interaction: DevicePrototypeInteraction = {
+      id: createId('interaction'),
+      name,
+      initialStateId: input.definition.initialStateId,
+      states: input.definition.states.map((state) => ({ ...state })),
+      transitions: input.definition.transitions.map((transition) => ({ ...transition }))
+    }
+    interactions.value = [...interactions.value, interaction]
+    selectedInteractionId.value = interaction.id
+    selectedStateId.value = interaction.initialStateId
+    return interaction
   }
 
   function removeInteraction(interactionId: string) {
@@ -207,6 +265,7 @@ export function useDevicePrototype() {
     selectedStateId,
     selectedState,
     addInteraction,
+    createInteractionFromDefinition,
     removeInteraction,
     selectInteraction,
     renameInteraction,

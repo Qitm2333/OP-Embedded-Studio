@@ -17,6 +17,10 @@ export const render = defineTool({
     },
     x: { type: 'number', description: 'X position of the root node' },
     y: { type: 'number', description: 'Y position of the root node' },
+    summary: {
+      type: 'string',
+      description: 'Short user-facing summary of the completed design change'
+    },
     jsx: { type: 'string', description: 'JSX string to render', required: true }
   },
   execute: async (figma, args) => {

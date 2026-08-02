@@ -34,6 +34,7 @@ An embedded UI design, interaction prototyping, firmware flashing, and wireless 
 - 将固定 Frame 通过 Wi-Fi 实时镜像到设备
 - 使用独立 Android BLE App 拍照、选图、裁切并上传
 - 保留 OpenPencil 的设计编辑、AI、MCP、CLI 和设计转代码基础能力
+- 使用面向嵌入式小屏的 AI 设计助手，可粘贴参考图并回看实际画布渲染结果
 
 ![OP Embedded Studio](packages/docs/public/screenshot.png)
 
@@ -47,15 +48,16 @@ An embedded UI design, interaction prototyping, firmware flashing, and wireless 
 - **Transfer over BLE** — initialize the BLE firmware, connect from a supported browser or the Android uploader, and send content without a serial cable.
 - **Mirror a Frame in real time** — watch a fixed Frame for changes and deliver ordered updates to the display over the dedicated Wi-Fi realtime channel.
 - **Keep device modes isolated** — USB, Wi-Fi, BLE, and realtime firmware resources are maintained as separate modes to reduce cross-mode regressions.
+- **Design with visual AI context** — paste reference images into the embedded-first AI composer and let vision-capable models inspect the rendered canvas before finalizing a screen.
 
 ## 传输模式
 
-| 模式 | 单 Frame | 状态机 | PNG 序列 | 说明 |
-|---|---:|---:|---:|---|
-| USB | ✅ | ✅ | ✅ | 首次初始化预编译基础固件，后续仅上传 Frame、状态机或序列内容 |
-| Wi-Fi | ✅ | ✅ | ✅ | 首次通过 USB 初始化专用固件，后续无线传输内容 |
-| BLE | ✅ | ✅ | ✅ | 支持浏览器 Web Bluetooth 与 Android BLE App |
-| Wi-Fi 实时镜像 | ✅ | — | 自动更新 | 固定一个 Frame，设计变化后按顺序同步到设备 |
+| 模式           | 单 Frame | 状态机 | PNG 序列 | 说明                                                         |
+| -------------- | -------: | -----: | -------: | ------------------------------------------------------------ |
+| USB            |       ✅ |     ✅ |       ✅ | 首次初始化预编译基础固件，后续仅上传 Frame、状态机或序列内容 |
+| Wi-Fi          |       ✅ |     ✅ |       ✅ | 首次通过 USB 初始化专用固件，后续无线传输内容                |
+| BLE            |       ✅ |     ✅ |       ✅ | 支持浏览器 Web Bluetooth 与 Android BLE App                  |
+| Wi-Fi 实时镜像 |       ✅ |      — | 自动更新 | 固定一个 Frame，设计变化后按顺序同步到设备                   |
 
 不同模式拥有独立的状态、固件入口和传输适配器。切换模式不会复用其他模式的临时内容或连接状态。
 

@@ -272,13 +272,17 @@ function aabbFromCorners(corners: Vector[]): VisualBounds {
  * fill/stroke geometry (transformed through the world matrix), and
  * text-decoration overflow (approximate: adds to canvas maxY).
  */
-function computeNodeVisualBounds(node: SceneNode, graph: SceneGraph): VisualBounds {
+function computeNodeVisualBounds(
+  node: SceneNode,
+  graph: SceneGraph,
+  boundsMode: 'layout' | 'geometry' | 'visual'
+): VisualBounds {
   const matrix = getWorldMatrix(node, graph)
   // Expand the local rectangle by the stroke overflow *before* transforming
   // through the world matrix. Expanding the already-rotated AABB by `stroke`
   // underestimates the stroked bounds for rotated nodes (the true stroked AABB
   // grows by `stroke * (|cos θ| + |sin θ|)`, not `stroke`).
-  const stroke = strokeOverflow(node.strokes)
+  const stroke = boundsMode === 'layout' ? 0 : strokeOverflow(node.strokes)
   const baseCorners = Matrix.mapPoints(matrix, [
     -stroke,
     -stroke,
@@ -298,19 +302,24 @@ function computeNodeVisualBounds(node: SceneNode, graph: SceneGraph): VisualBoun
 
   // Effects (drop shadow, blur) radiate in screen space, so expanding the
   // canvas-space AABB by the directional overflow is correct regardless of rotation.
-  const effects = effectOverflow(node.effects)
-  bounds.minX -= effects.left
-  bounds.minY -= effects.top
-  bounds.maxX += effects.right
-  bounds.maxY += effects.bottom
+  if (boundsMode === 'visual') {
+    const effects = effectOverflow(node.effects)
+    bounds.minX -= effects.left
+    bounds.minY -= effects.top
+    bounds.maxX += effects.right
+    bounds.maxY += effects.bottom
+  }
 
-  const hasNonInsideStroke = node.strokes.some(
-    (stroke) => stroke.visible && stroke.align !== 'INSIDE'
-  )
-  const localGeometry = geometryBlobBounds([
-    ...node.fillGeometry,
-    ...(hasNonInsideStroke ? node.strokeGeometry : [])
-  ])
+  const hasNonInsideStroke =
+    boundsMode !== 'layout' &&
+    node.strokes.some((stroke) => stroke.visible && stroke.align !== 'INSIDE')
+  const localGeometry =
+    boundsMode === 'layout'
+      ? null
+      : geometryBlobBounds([
+          ...node.fillGeometry,
+          ...(hasNonInsideStroke ? node.strokeGeometry : [])
+        ])
   if (localGeometry) {
     const geomCorners = Matrix.mapPoints(matrix, [
       localGeometry.x,
@@ -366,9 +375,10 @@ function collectClipChain(graph: SceneGraph, node: SceneNode): Vector[][] {
 
 export function computeNodeBounds(
   node: SceneNode,
-  graph: SceneGraph
+  graph: SceneGraph,
+  boundsMode: 'layout' | 'geometry' | 'visual' = 'visual'
 ): { bounds: VisualBounds; area: number } {
-  const visual = computeNodeVisualBounds(node, graph)
+  const visual = computeNodeVisualBounds(node, graph, boundsMode)
   const clips = collectClipChain(graph, node)
   if (clips.length === 0) {
     return { bounds: visual, area: visualBoundsArea(visual) }

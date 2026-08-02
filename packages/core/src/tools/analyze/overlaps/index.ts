@@ -83,6 +83,8 @@ export interface AnalyzeOverlapsArgs {
   /** Stable page ID; takes precedence over `page`. */
   page_id?: string
   type?: string
+  /** Which node bounds participate in collision checks. Defaults to visual. */
+  bounds_mode?: 'layout' | 'geometry' | 'visual'
 }
 
 export interface AnalyzeOverlapsSummary {
@@ -100,7 +102,8 @@ export interface AnalyzeOverlapsResult {
 
 function buildBoundsCache(
   candidates: SceneNode[],
-  graph: SceneGraph
+  graph: SceneGraph,
+  boundsMode: NonNullable<AnalyzeOverlapsArgs['bounds_mode']>
 ): { boundsCache: Map<string, BoundsEntry>; entries: BoundsEntry[] } {
   const boundsCache = new Map<string, BoundsEntry>()
   const entries: BoundsEntry[] = []
@@ -111,7 +114,7 @@ function buildBoundsCache(
       entries.push(cached)
       continue
     }
-    const computed = computeNodeBounds(node, graph)
+    const computed = computeNodeBounds(node, graph, boundsMode)
     if (computed.area <= 0) continue
     const entry: BoundsEntry = { node, ...computed }
     boundsCache.set(node.id, entry)
@@ -129,7 +132,8 @@ function collectParentOverflows(
   minArea: number,
   minRatio: number,
   categoryFilter: OverlapCategory[] | undefined,
-  severityFilter: OverlapSeverity | undefined
+  severityFilter: OverlapSeverity | undefined,
+  boundsMode: NonNullable<AnalyzeOverlapsArgs['bounds_mode']>
 ): OverlapItem[] {
   const overlaps: OverlapItem[] = []
 
@@ -141,7 +145,7 @@ function collectParentOverflows(
     if (!childEntry || childEntry.area <= 0) continue
     let parentEntry = boundsCache.get(parent.id)
     if (!parentEntry) {
-      const computed = computeNodeBounds(parent, graph)
+      const computed = computeNodeBounds(parent, graph, boundsMode)
       if (computed.area <= 0) continue
       parentEntry = { node: parent, ...computed }
       boundsCache.set(parent.id, parentEntry)
@@ -271,9 +275,10 @@ export function computeOverlaps(
   }
 
   const resolvedArgs: AnalyzeOverlapsArgs = { ...args, page_id: resolvedPageId }
+  const boundsMode = args.bounds_mode ?? 'visual'
 
   const { candidates, totalNodes, analyzedNodes } = filterNodes(graph, resolvedArgs)
-  const { boundsCache, entries } = buildBoundsCache(candidates, graph)
+  const { boundsCache, entries } = buildBoundsCache(candidates, graph, boundsMode)
 
   const overlaps = [
     ...collectParentOverflows(
@@ -284,7 +289,8 @@ export function computeOverlaps(
       minArea,
       minRatio,
       categoryFilter,
-      severityFilter
+      severityFilter,
+      boundsMode
     ),
     ...collectSiblingOverlaps(
       entries,
@@ -383,6 +389,13 @@ export const analyzeOverlaps = defineTool({
     type: {
       type: 'string',
       description: 'Comma-separated node types to analyze, e.g. FRAME,TEXT'
+    },
+    bounds_mode: {
+      type: 'string',
+      description:
+        'Bounds used for collisions: layout uses node boxes, geometry includes paths and strokes, visual also includes shadows and blur (default: visual)',
+      enum: ['layout', 'geometry', 'visual'],
+      default: 'visual'
     },
     limit: {
       type: 'number',

@@ -6,6 +6,41 @@ import { computeOverlaps } from '@open-pencil/core/tools/analyze/overlaps'
 import { frame, pageId, rect } from './helpers'
 
 describe('analyze overlaps visible bounds', () => {
+  test('geometry bounds ignore glow effects while visual bounds include them', () => {
+    const graph = new SceneGraph()
+    const page = pageId(graph)
+    graph.createNode('ELLIPSE', page, {
+      name: 'Glow',
+      x: 0,
+      y: 0,
+      width: 20,
+      height: 20,
+      effects: [
+        {
+          type: 'LAYER_BLUR',
+          radius: 20,
+          spread: 0,
+          offset: { x: 0, y: 0 },
+          color: { r: 0, g: 0, b: 0, a: 0 },
+          visible: true
+        }
+      ]
+    })
+    rect(graph, 'NearbyContent', page, 35, 0, 10, 10)
+
+    const geometry = computeOverlaps(graph, {
+      category: 'sibling-overlap',
+      bounds_mode: 'geometry'
+    })
+    const visual = computeOverlaps(graph, {
+      category: 'sibling-overlap',
+      bounds_mode: 'visual'
+    })
+
+    expect(geometry.summary.overlapCount).toBe(0)
+    expect(visual.summary.overlapCount).toBeGreaterThan(0)
+  })
+
   test('large background below a small badge is not reported as overlay', () => {
     const graph = new SceneGraph()
     const page = pageId(graph)

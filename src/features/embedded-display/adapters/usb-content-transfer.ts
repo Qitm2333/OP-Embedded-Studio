@@ -1,7 +1,4 @@
-import {
-  requestSerialPort,
-  type SerialFlashProgress
-} from './serial-flasher'
+import { requestSerialPort, type SerialFlashProgress } from './serial-flasher'
 
 const USB_PROTOCOL_PREFIX = 'OPUSB/1'
 const USB_CONTENT_HEADER_BYTES = 24
@@ -9,6 +6,22 @@ const USB_CONTENT_CHUNK_BYTES = 0x10000
 const USB_CONTENT_MAGIC = 0x4f504331
 const USB_HANDSHAKE_TIMEOUT_MS = 2500
 const USB_COMMAND_TIMEOUT_MS = 15000
+
+export type UsbContentFirmwareIssue = 'missing' | 'protocol' | 'resolution' | 'capacity'
+
+export class UsbContentFirmwareError extends Error {
+  constructor(
+    readonly issue: UsbContentFirmwareIssue,
+    message: string
+  ) {
+    super(message)
+    this.name = 'UsbContentFirmwareError'
+  }
+}
+
+export type UsbContentProbeResult =
+  | { compatible: true; capacity: number }
+  | { compatible: false; issue: UsbContentFirmwareIssue; message: string }
 
 export interface UsbContentSerialPort {
   readable: ReadableStream<Uint8Array> | null
@@ -53,7 +66,7 @@ async function readProtocolLine(
   timeoutMs: number
 ): Promise<string> {
   const deadline = Date.now() + timeoutMs
-  while (true) {
+  for (;;) {
     const newline = state.pending.indexOf('\n')
     if (newline !== -1) {
       const line = state.pending.slice(0, newline).replace(/\r$/, '')
@@ -81,7 +94,11 @@ function assertProtocolResponse(line: string, expected: string): void {
 
 async function deflateChunk(bytes: Uint8Array): Promise<EncodedUsbChunk> {
   if (typeof CompressionStream === 'undefined') return { codec: 0, bytes }
-  const compressedStream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate'))
+  const copy = new Uint8Array(bytes.byteLength)
+  copy.set(bytes)
+  const compressedStream = new Blob([copy.buffer])
+    .stream()
+    .pipeThrough(new CompressionStream('deflate'))
   const compressed = new Uint8Array(await new Response(compressedStream).arrayBuffer())
   return compressed.byteLength < bytes.byteLength
     ? { codec: 1, bytes: compressed }
@@ -116,18 +133,59 @@ async function handshakeUsbDevice(
   try {
     line = await readProtocolLine(reader, state, USB_HANDSHAKE_TIMEOUT_MS)
   } catch {
-    throw new Error('设备未运行 USB 高速基础固件，请先在“首次使用 / 设备维护”中初始化')
+    throw new UsbContentFirmwareError(
+      'missing',
+      '设备未运行 USB 高速基础固件，请先在“首次使用 / 设备维护”中初始化'
+    )
   }
   const ready = line.match(/^OPUSB\/1 READY (\d+) (\d+) (\d+) (\d+)$/)
-  if (!ready) throw new Error(`USB 高速固件握手失败：${line}`)
+  if (!ready) {
+    throw new UsbContentFirmwareError('protocol', `USB 高速固件握手失败：${line}`)
+  }
   const width = Number(ready[2])
   const height = Number(ready[3])
   const capacity = Number(ready[4])
   if (width !== profile.width || height !== profile.height) {
-    throw new Error(`设备分辨率为 ${width} × ${height}，与当前方案不匹配`)
+    throw new UsbContentFirmwareError(
+      'resolution',
+      `设备分辨率为 ${width} × ${height}，与当前方案不匹配`
+    )
   }
-  if (contentBytes > capacity) throw new Error('内容超过设备 USB 内容分区容量')
+  if (contentBytes > capacity) {
+    throw new UsbContentFirmwareError('capacity', '内容超过设备 USB 内容分区容量')
+  }
   return capacity
+}
+
+export async function probeUsbContentDevice(
+  port: UsbContentSerialPort,
+  profile: { width: number; height: number },
+  contentBytes: number
+): Promise<UsbContentProbeResult> {
+  let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
+  let writer: WritableStreamDefaultWriter<Uint8Array> | null = null
+  try {
+    await port.open({ baudRate: 115200, bufferSize: 0x40000 })
+    await port.setSignals?.({ dataTerminalReady: false, requestToSend: false })
+    if (!port.readable || !port.writable) throw new Error('USB 串口数据流不可用')
+    reader = port.readable.getReader()
+    writer = port.writable.getWriter()
+    const capacity = await handshakeUsbDevice(
+      reader,
+      writer,
+      { pending: '' },
+      profile,
+      contentBytes
+    )
+    return { compatible: true, capacity }
+  } catch (error) {
+    if (error instanceof UsbContentFirmwareError) {
+      return { compatible: false, issue: error.issue, message: error.message }
+    }
+    throw error
+  } finally {
+    await closeSerialPort(port, reader, writer)
+  }
 }
 
 async function transferUsbPayload(
@@ -192,7 +250,7 @@ export async function uploadUsbContent(
   options: UsbContentTransferOptions = {}
 ): Promise<void> {
   validateContent(content)
-  const port = options.port ?? (await requestSerialPort() as UsbContentSerialPort)
+  const port = options.port ?? ((await requestSerialPort()) as UsbContentSerialPort)
   let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
   let writer: WritableStreamDefaultWriter<Uint8Array> | null = null
   let transferStarted = false

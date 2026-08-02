@@ -21,7 +21,7 @@ import type {
   EmbeddedPrototypePayload,
   EmbeddedWifiCredentials
 } from '../model/types'
-import { DEFAULT_EMBEDDED_DISPLAY_PROFILE_ID } from '../runtime/catalog'
+import { bundledDisplayProfiles, DEFAULT_EMBEDDED_DISPLAY_PROFILE_ID } from '../runtime/catalog'
 
 const adapter = createEmbeddedDisplayHttpAdapter()
 const profiles = ref<EmbeddedDisplayProfile[]>([])
@@ -37,6 +37,15 @@ const buildLog = ref<string[]>([])
 const manifestUrls = ref<Partial<Record<EmbeddedBuildMode, string>>>({})
 const serviceAvailable = ref(false)
 let loaded = false
+
+export function getActiveEmbeddedDisplayProfile(): EmbeddedDisplayProfile {
+  const selectedId = selectedProfileId.value || DEFAULT_EMBEDDED_DISPLAY_PROFILE_ID
+  return (
+    profiles.value.find((profile) => profile.id === selectedId) ??
+    bundledDisplayProfiles().find((profile) => profile.id === selectedId) ??
+    bundledDisplayProfiles()[0]
+  )
+}
 
 function deviceLog(message: string, details?: unknown) {
   if (details === undefined) console.info('[embedded-display]', message)

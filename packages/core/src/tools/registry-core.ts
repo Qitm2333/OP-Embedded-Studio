@@ -1,6 +1,6 @@
 import { evalCode } from './analyze'
 import { calc } from './calc'
-import { render } from './create'
+import { createVector, importSvg, render } from './create'
 import { describe } from './describe'
 import {
   setFill,
@@ -30,6 +30,8 @@ export const CORE_TOOLS: ToolDef[] = [
   getJsx,
   // Create
   render,
+  createVector,
+  importSvg,
   // Modify
   updateNode,
   setLayout,
