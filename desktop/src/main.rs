@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    open_pencil_lib::run()
+    op_embedded_studio_lib::run()
 }

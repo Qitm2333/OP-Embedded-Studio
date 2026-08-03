@@ -33,3 +33,7 @@ dist/android/OP-Embedded-BLE-debug.apk
 4. 选择图片、裁切并上传，App 会自动连接 OP Embedded BLE。
 
 应用不访问网络，图片处理和传输均在手机本地完成。
+
+## 发布标签
+
+Android 上传器使用独立版本线。发布时同时递增 `versionCode`、更新 `versionName`，并使用 `android-vX.Y.Z` Git 标签。历史 `v0.3.5` 标签保留不变。

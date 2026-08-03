@@ -65,25 +65,32 @@ Property-panel anatomy in `packages/vue/src/primitives/PropertySection/`, `Segme
 
 ## Releases & CI
 
-### How to release
+### Desktop Studio releases
 
-1. Update version in the root `package.json`, publishable `packages/*/package.json`, `desktop/tauri.conf.json`, and `desktop/Cargo.toml`
-2. Update `CHANGELOG.md` — move "Unreleased" items under new version heading with date
-3. Commit: `Release v0.x.y`
-4. Tag: `git tag v0.x.y && git push --tags`
-5. Ensure GitHub release secrets include `TAURI_SIGNING_PRIVATE_KEY` (and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` if the updater key is password-protected); the public updater key is configured in `desktop/tauri.conf.json`.
-6. The `build.yml` workflow triggers on `v*` tags and:
-   - Builds Tauri binaries for macOS (arm64 + x64), Windows (x64 + arm64), Linux (x64)
-   - Creates a draft GitHub Release with all platform binaries
-   - Publishes public workspace packages to npm with provenance. Keep the exact package list in sync with `.github/workflows/build.yml`.
-7. The production web app/docs deploy workflows (`app.yml`, `docs.yml`) also trigger on `v*` tags. They do **not** deploy on ordinary `master` pushes.
-8. Go to GitHub Releases → edit the draft → paste changelog section → publish
+OP Embedded Studio and the Android BLE uploader have independent versions and tag namespaces. Never reuse an Android version as the desktop version.
+
+1. Update the desktop version in the root `package.json`, `desktop/tauri.conf.json`, and `desktop/Cargo.toml`. Do not bump publishable `@open-pencil/*` packages for a Studio-only release.
+2. Update `CHANGELOG.md` and move the relevant "Unreleased" items under the new version heading with the date.
+3. Commit: `Release OP Embedded Studio 0.x.y`.
+4. Tag the exact matching version: `git tag studio-v0.x.y && git push origin studio-v0.x.y`.
+5. The `build.yml` workflow validates the tag against `package.json`, builds desktop binaries, and creates a draft GitHub Release named for OP Embedded Studio. It does not publish inherited `@open-pencil/*` packages.
+6. Review the draft release and publish it manually.
+
+Desktop automatic updates are disabled until OP Embedded Studio owns its updater signing key and release manifest. Do not restore an OpenPencil updater endpoint or signing key.
+
+### Android uploader releases
+
+1. Update `versionCode` and `versionName` in `tools/android-ble-uploader/app/build.gradle`.
+2. Build and verify the APK with `bun run mobile:apk`.
+3. Commit: `Release Android BLE uploader 0.x.y`.
+4. Tag: `git tag android-v0.x.y && git push origin android-v0.x.y`.
+5. Create or update the matching GitHub Release and attach the APK.
+
+The historical `v0.3.5` tag is the final unscoped Android tag. Keep it intact; all later releases use `studio-v*` or `android-v*`.
 
 ### CI workflows
 
-Key workflows live in `.github/workflows/`. Use `build.yml` as the source of truth for release packaging and npm publishing, `ci.yml` / `heavy-tests.yml` for validation gates, and `app.yml` / `docs.yml` for Cloudflare Pages deploys.
-
-Production Cloudflare Pages deploys are intentionally release/manual only: `app.yml` and `docs.yml` run on `v*` tags and `workflow_dispatch`, not on `master` pushes. To deploy manually, run the relevant workflow from GitHub Actions (`Deploy app` or `Deploy docs`) on the desired ref; the workflow deploys to the configured production branch (`master`).
+Key workflows live in `.github/workflows/`. Use `build.yml` as the source of truth for desktop release packaging, `ci.yml` / `heavy-tests.yml` for validation gates, and `app.yml` for the GitHub Pages web deployment from `main`.
 
 ## Documentation
 
@@ -114,7 +121,7 @@ fix(editor): preserve text edit undo state
 - Restore both on undo instead of comparing against the live node
 ```
 
-Release commits are the exception: keep using `Release v0.x.y`.
+Release commits are the exception: use `Release OP Embedded Studio 0.x.y` or `Release Android BLE uploader 0.x.y`.
 
 ## CLI
 

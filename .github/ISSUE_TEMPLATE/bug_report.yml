@@ -67,7 +67,7 @@ body:
     attributes:
       label: Version or build
       description: App version, commit SHA, package version, or “latest web app”.
-      placeholder: v0.13.2, latest web app, commit abc123
+      placeholder: studio-v0.13.2, latest web app, commit abc123
 
   - type: input
     id: browser

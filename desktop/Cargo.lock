@@ -2775,7 +2775,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "open_pencil"
+name = "op_embedded_studio"
 version = "0.13.2"
 dependencies = [
  "fix-path-env",
@@ -2789,10 +2789,8 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-fs",
  "tauri-plugin-opener",
- "tauri-plugin-process",
  "tauri-plugin-shell",
  "tauri-plugin-single-instance",
- "tauri-plugin-updater",
  "zip 2.4.2",
  "zstd",
 ]

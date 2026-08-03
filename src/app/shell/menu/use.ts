@@ -1,6 +1,6 @@
 import { tryOnScopeDispose } from '@vueuse/core'
 
-import { useEditorCommands, useI18n } from '@open-pencil/vue'
+import { useEditorCommands } from '@open-pencil/vue'
 import type { EditorCommandId } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
@@ -9,7 +9,6 @@ import { executeClipboardCommand } from '@/app/editor/clipboard/system'
 import { createSharedEditorMenuActions } from '@/app/shell/menu/editor-actions'
 import { importFileDialog, openFileDialog } from '@/app/shell/menu/files'
 import { useAppTheme } from '@/app/shell/theme'
-import { checkForAppUpdate } from '@/app/shell/updater'
 import { createTab, closeTab, activeTab } from '@/app/tabs'
 import { isTauri } from '@/app/tauri/env'
 
@@ -48,7 +47,6 @@ export function useMenu() {
 
   let unlisten: (() => void) | undefined
   const { setTheme } = useAppTheme()
-  const { dialogs } = useI18n()
   const { runCommand } = useEditorCommands()
 
   const actions: Partial<Record<string, () => void>> = {
@@ -78,7 +76,6 @@ export function useMenu() {
     cut: () => void executeClipboardCommand(store, 'cut'),
     paste: () => void executeClipboardCommand(store, 'paste'),
     'paste-to-replace': () => void pasteClipboardToReplace(store),
-    'check-updates': () => void checkForAppUpdate({ messages: dialogs }),
     ...createSharedEditorMenuActions(setTheme)
   }
 

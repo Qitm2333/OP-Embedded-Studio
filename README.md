@@ -122,6 +122,19 @@ bun run mobile:apk
 
 Android 工程位于 `tools/android-ble-uploader/`。
 
+## 版本与发布
+
+OP Embedded Studio 桌面端与 Android BLE 上传器独立维护版本：
+
+| 产品 | 标签格式 | 版本文件 |
+| --- | --- | --- |
+| OP Embedded Studio 桌面端 | `studio-vX.Y.Z` | `package.json`、`desktop/tauri.conf.json`、`desktop/Cargo.toml` |
+| Android BLE 上传器 | `android-vX.Y.Z` | `tools/android-ble-uploader/app/build.gradle` |
+
+历史标签 `v0.3.5` 保留为 Android 上传器的旧版标签，后续不再使用无前缀的 `v*` 标签。桌面端自动更新已暂停，待项目建立自有签名密钥和更新清单后再恢复。
+
+The desktop Studio and Android uploader use independent versions. Desktop releases use `studio-vX.Y.Z`; Android releases use `android-vX.Y.Z`. The inherited desktop updater is disabled until OP Embedded Studio has its own signing key and update manifest.
+
 ## 嵌入式模块结构
 
 嵌入式能力尽量与上游编辑器保持解耦：
