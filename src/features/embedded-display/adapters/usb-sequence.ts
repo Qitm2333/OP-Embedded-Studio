@@ -1,5 +1,5 @@
 import type { EmbeddedDisplayProfile } from "../model/types";
-import { imageFileToRgb565 } from "./image";
+import { imageFileToRgb565, type EmbeddedImagePlacement } from "./image";
 
 const CONTENT_MAGIC = 0x4f504331;
 const CONTENT_VERSION = 1;
@@ -16,6 +16,10 @@ const USB_SEQUENCE_FPS = 20;
 
 export interface SequenceEncodingOptions {
   allowPatches?: boolean;
+  frameDelayMs?: number;
+  preserveOrder?: boolean;
+  placement?: EmbeddedImagePlacement;
+  backgroundColor?: string;
 }
 
 export interface UsbImageSequencePayload {
@@ -181,6 +185,7 @@ function buildUsbSequencePayload(
   profile: EmbeddedDisplayProfile,
   encodedFrames: EncodedFrame[],
   name: string,
+  frameDelayMs: number,
 ): UsbImageSequencePayload {
   if (encodedFrames.length < 2) throw new Error("PNG 序列至少需要两张图片");
   if (encodedFrames.length > 0xffff)
@@ -204,8 +209,9 @@ function buildUsbSequencePayload(
 
   const payload = new Uint8Array(payloadBytes);
   const payloadView = new DataView(payload.buffer);
+  const normalizedFrameDelayMs = Math.min(0xffff, Math.max(1, Math.round(frameDelayMs)));
   payloadView.setUint32(0, frameBytes, true);
-  payloadView.setUint16(4, Math.round(1000 / USB_SEQUENCE_FPS), true);
+  payloadView.setUint16(4, normalizedFrameDelayMs, true);
   payloadView.setUint16(6, encodedFrames.length, true);
   payloadView.setUint32(8, dataBytes, true);
 
@@ -242,7 +248,7 @@ function buildUsbSequencePayload(
     width: profile.resolution.width,
     height: profile.resolution.height,
     frameCount: encodedFrames.length,
-    frameDelayMs: Math.round(1000 / USB_SEQUENCE_FPS),
+    frameDelayMs: normalizedFrameDelayMs,
     rawBytes: frameBytes * encodedFrames.length,
     storedBytes: content.byteLength,
     compressedFrames: encodedFrames.filter(
@@ -265,6 +271,7 @@ export function encodeUsbSequenceFrames(
     profile,
     encodeSequenceFrames(profile, frames, options),
     name,
+    options.frameDelayMs ?? Math.round(1000 / USB_SEQUENCE_FPS),
   );
 }
 
@@ -283,20 +290,26 @@ export async function imageFilesToUsbSequence(
     throw new Error("PNG 序列只支持 PNG 文件");
   }
 
-  const sortedFiles = [...files].sort((left, right) =>
-    left.name.localeCompare(right.name, undefined, {
-      numeric: true,
-      sensitivity: "base",
-    }),
-  );
+  const orderedFiles = options.preserveOrder
+    ? [...files]
+    : [...files].sort((left, right) =>
+        left.name.localeCompare(right.name, undefined, {
+          numeric: true,
+          sensitivity: "base",
+        }),
+      );
   const frames: Uint8Array[] = [];
-  for (const file of sortedFiles) {
-    const payload = await imageFileToRgb565(file, profile);
+  for (const file of orderedFiles) {
+    const payload = await imageFileToRgb565(file, profile, {
+      placement: options.placement,
+      backgroundColor: options.backgroundColor,
+    });
     frames.push(bytesFromBase64(payload.pixelsRgb565Base64));
   }
   return buildUsbSequencePayload(
     profile,
     encodeSequenceFrames(profile, frames, options),
-    `${sortedFiles[0].name} 等 ${sortedFiles.length} 帧`,
+    `${orderedFiles[0].name} 等 ${orderedFiles.length} 帧`,
+    options.frameDelayMs ?? Math.round(1000 / USB_SEQUENCE_FPS),
   );
 }

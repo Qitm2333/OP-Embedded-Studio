@@ -300,6 +300,55 @@ describe('device interaction deployment lifecycle', () => {
       'Screen (2)'
     ])
   })
+
+  test('preserves an AI-selected slideshow mode without requiring event transitions', () => {
+    const graph = new SceneGraph()
+    const pageId = graph.getPages()[0].id
+    const first = graph.createNode('FRAME', pageId, { name: 'One', width: 466, height: 466 })
+    const second = graph.createNode('FRAME', pageId, { name: 'Two', width: 466, height: 466 })
+    const proposal = prepareDevicePrototypeProposal(editorStore(graph, []), {
+      intent: '每两秒自动播放',
+      name: '自动播放',
+      mode: 'slideshow',
+      frameIds: [first.id, second.id],
+      initialFrameId: first.id,
+      transitions: [],
+      slideshow: { intervalMs: 2000 }
+    })
+
+    expect(proposal.mode).toBe('slideshow')
+    expect(proposal.slideshow.intervalMs).toBe(2000)
+    expect(proposal.definition.transitions).toEqual([])
+  })
+
+  test('turns an AI-selected manual mode into ordered previous and next rules', () => {
+    const graph = new SceneGraph()
+    const pageId = graph.getPages()[0].id
+    const first = graph.createNode('FRAME', pageId, { name: 'One', width: 466, height: 466 })
+    const second = graph.createNode('FRAME', pageId, { name: 'Two', width: 466, height: 466 })
+    const third = graph.createNode('FRAME', pageId, { name: 'Three', width: 466, height: 466 })
+    const proposal = prepareDevicePrototypeProposal(editorStore(graph, []), {
+      intent: '点击下一张，长按上一张',
+      name: '手动浏览',
+      mode: 'manual',
+      frameIds: [first.id, second.id, third.id],
+      initialFrameId: first.id,
+      manual: { nextEvent: 'screen_click', previousEvent: 'screen_long_press', loop: true }
+    })
+
+    expect(proposal.mode).toBe('manual')
+    expect(proposal.definition.transitions).toContainEqual({
+      fromStateId: first.id,
+      event: 'screen_click',
+      toStateId: second.id
+    })
+    expect(proposal.definition.transitions).toContainEqual({
+      fromStateId: first.id,
+      event: 'screen_long_press',
+      toStateId: third.id
+    })
+    expect(proposal.definition.transitions).toHaveLength(6)
+  })
 })
 
 describe('embedded display pixel-perfect fallback', () => {

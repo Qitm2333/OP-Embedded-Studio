@@ -8,7 +8,8 @@ import { useEditorStore } from '@/app/editor/active-store'
 import {
   bakeDevicePrototype,
   createDevicePrototypeFrameRenderer,
-  getDevicePrototypeFrameCandidate
+  getDevicePrototypeFrameCandidate,
+  getSelectedDevicePrototypeFrameCandidates
 } from '@/app/editor/device-prototype'
 import {
   bakeEmbeddedFrame,
@@ -29,6 +30,9 @@ const { panels } = useI18n()
 const editorStore = useEditorStore()
 
 const devicePrototypeFrame = computed(() => getDevicePrototypeFrameCandidate(editorStore))
+const selectedDevicePrototypeFrames = computed(() =>
+  getSelectedDevicePrototypeFrameCandidates(editorStore)
+)
 const devicePrototypeFrameRenderer = createDevicePrototypeFrameRenderer(editorStore)
 const { interactionOptions, interactions } = useDevicePrototype()
 const embeddedBakeState = computed(() => getEmbeddedFrameBakeState(editorStore))
@@ -129,6 +133,7 @@ async function handleEmbeddedPrototypeBake(interactionId: string) {
       >
         <DevicePrototypePanel
           :selected-frame="devicePrototypeFrame"
+          :selected-frames="selectedDevicePrototypeFrames"
           :render-frame="devicePrototypeFrameRenderer"
         />
       </TabsContent>

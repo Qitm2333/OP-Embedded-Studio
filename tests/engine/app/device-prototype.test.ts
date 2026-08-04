@@ -73,4 +73,58 @@ describe('device prototype interactions', () => {
     ).toBe(true)
     prototype.removeInteraction(interaction.id)
   })
+
+  test('generates ordered next and previous rules for manual browsing', () => {
+    const prototype = useDevicePrototype()
+    const interaction = prototype.createInteractionFromDefinition({
+      name: 'Manual gallery',
+      mode: 'manual',
+      definition: {
+        initialStateId: 'a',
+        states: [
+          { id: 'a', frameId: 'a', name: 'A', width: 466, height: 466 },
+          { id: 'b', frameId: 'b', name: 'B', width: 466, height: 466 },
+          { id: 'c', frameId: 'c', name: 'C', width: 466, height: 466 }
+        ],
+        transitions: []
+      }
+    })
+
+    expect(prototype.definition(interaction.id)?.transitions).toEqual(
+      expect.arrayContaining([
+        { fromStateId: 'a', event: 'screen_click', toStateId: 'b' },
+        { fromStateId: 'a', event: 'screen_long_press', toStateId: 'c' },
+        { fromStateId: 'c', event: 'screen_click', toStateId: 'a' }
+      ])
+    )
+    expect(prototype.definition(interaction.id)?.transitions).toHaveLength(6)
+
+    prototype.setManualLoop(false)
+    expect(prototype.definition(interaction.id)?.transitions).toHaveLength(4)
+    prototype.removeInteraction(interaction.id)
+  })
+
+  test('stores slideshow timing without creating event transitions', () => {
+    const prototype = useDevicePrototype()
+    const interaction = prototype.createInteractionFromDefinition({
+      name: 'Slideshow',
+      mode: 'slideshow',
+      slideshow: { intervalMs: 2500 },
+      definition: {
+        initialStateId: 'a',
+        states: [
+          { id: 'a', frameId: 'a', name: 'A', width: 466, height: 466 },
+          { id: 'b', frameId: 'b', name: 'B', width: 466, height: 466 }
+        ],
+        transitions: []
+      }
+    })
+
+    expect(interaction.slideshow.intervalMs).toBe(2500)
+    expect(prototype.definition(interaction.id)?.transitions).toEqual([])
+    expect(
+      prototype.interactionOptions.value.find((option) => option.id === interaction.id)
+    ).toMatchObject({ mode: 'slideshow', intervalMs: 2500 })
+    prototype.removeInteraction(interaction.id)
+  })
 })

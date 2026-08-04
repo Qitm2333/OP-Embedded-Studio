@@ -34,6 +34,7 @@ const {
   ensureChat,
   submitLocalDeviceAction,
   submitLocalDevicePrototypeAction,
+  activeTab: activePropertiesTab,
   resetChat,
   chatMode
 } = useAIChat()
@@ -171,23 +172,31 @@ function handleFrameQuickAction(): void {
   void handleSubmit('帮我烧录选中的画面')
 }
 
-async function handlePrototypeQuickAction(): Promise<void> {
+async function handlePrototypeQuickAction(mode: 'manual' | 'slideshow'): Promise<void> {
   if (!canCreatePrototype.value || localActionPending.value) return
   const candidates = prototypeCandidates.value
-  const text = `创建 ${candidates.length} 个画面的点击切换交互并烧录`
+  const text =
+    mode === 'slideshow'
+      ? `创建 ${candidates.length} 个画面的幻灯片，每 3 秒自动播放并烧录`
+      : `创建 ${candidates.length} 个画面的手动浏览交互并烧录`
   localActionPending.value = true
   followsLatestMessage.value = true
   try {
     const localChat = await submitLocalDevicePrototypeAction(text, {
       intent: text,
-      name: `快速切换 · ${candidates.length} 个画面`,
+      name:
+        mode === 'slideshow'
+          ? `自动播放 · ${candidates.length} 个画面`
+          : `手动浏览 · ${candidates.length} 个画面`,
+      mode,
       frameIds: candidates.map((candidate) => candidate.id),
       initialFrameId: candidates[0]?.id ?? '',
-      transitions: candidates.map((candidate, index) => ({
-        fromFrameId: candidate.id,
-        event: 'screen_click',
-        toFrameId: candidates[(index + 1) % candidates.length]?.id ?? candidate.id
-      })),
+      transitions: [],
+      manual:
+        mode === 'manual'
+          ? { nextEvent: 'screen_click', previousEvent: 'screen_long_press', loop: true }
+          : undefined,
+      slideshow: mode === 'slideshow' ? { intervalMs: 3000 } : undefined,
       backgroundColor: '#000000'
     })
     if (localChat) {
@@ -406,10 +415,29 @@ function handleClearChat() {
           data-test-id="device-quick-deploy-prototype"
           type="button"
           class="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-panel-field px-2.5 text-[11px] text-surface shadow-sm hover:bg-panel-field-hover"
-          @click="handlePrototypeQuickAction"
+          @click="handlePrototypeQuickAction('manual')"
         >
           <icon-lucide-git-branch class="size-3.5 text-accent" />
-          创建 {{ prototypeCandidates.length }} 画面交互并烧录
+          手动浏览 {{ prototypeCandidates.length }} 个画面
+        </button>
+        <button
+          v-if="canCreatePrototype"
+          data-test-id="device-quick-deploy-slideshow"
+          type="button"
+          class="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-panel-field px-2.5 text-[11px] text-surface shadow-sm hover:bg-panel-field-hover"
+          @click="handlePrototypeQuickAction('slideshow')"
+        >
+          <icon-lucide-play class="size-3.5 text-accent" />
+          自动播放 {{ prototypeCandidates.length }} 个画面
+        </button>
+        <button
+          v-if="canCreatePrototype"
+          type="button"
+          class="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-panel-field px-2.5 text-[11px] text-surface shadow-sm hover:bg-panel-field-hover"
+          @click="activePropertiesTab = 'prototype'"
+        >
+          <icon-lucide-sliders-horizontal class="size-3.5 text-accent" />
+          自定义交互
         </button>
       </div>
 

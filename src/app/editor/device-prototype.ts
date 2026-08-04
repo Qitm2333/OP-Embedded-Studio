@@ -6,6 +6,7 @@ import type {
   DevicePrototypeFrameRender,
   DevicePrototypeInteraction
 } from '@/features/device-prototype'
+import { resolveDevicePrototypeTransitions } from '@/features/device-prototype'
 import type { EmbeddedPrototypeBakeResult } from '@/features/embedded-display'
 
 import {
@@ -99,8 +100,12 @@ export async function bakeDevicePrototype(
   return {
     id: interaction.id,
     name: interaction.name,
+    mode: interaction.mode,
+    intervalMs: interaction.slideshow.intervalMs,
     initialStateId: interaction.initialStateId,
     states,
-    transitions: interaction.transitions.map((transition) => ({ ...transition }))
+    transitions: resolveDevicePrototypeTransitions(interaction).map((transition) => ({
+      ...transition
+    }))
   }
 }

@@ -1,20 +1,29 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
+import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import { PanelHeader, PanelSection } from '@/components/ui/panel'
+import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 
 import DevicePrototypePreview from './DevicePrototypePreview.vue'
 import { useDevicePrototype } from '../composables/useDevicePrototype'
 import type {
   DevicePrototypeEventId,
   DevicePrototypeFrameCandidate,
-  DevicePrototypeFrameRender
+  DevicePrototypeFrameRender,
+  DevicePrototypeMode
 } from '../model/types'
+import { DEVICE_PROTOTYPE_MAX_STATES } from '../model/types'
 
-const { selectedFrame, renderFrame } = defineProps<{
+const {
+  selectedFrame,
+  selectedFrames = [],
+  renderFrame
+} = defineProps<{
   selectedFrame?: DevicePrototypeFrameCandidate
+  selectedFrames?: DevicePrototypeFrameCandidate[]
   renderFrame?: DevicePrototypeFrameRender
 }>()
 
@@ -33,8 +42,14 @@ const {
   selectInteraction,
   renameInteraction,
   addFrame,
+  addFrames,
   removeState,
+  moveState,
   setInitialState,
+  setMode,
+  setManualEvent,
+  setManualLoop,
+  setSlideshowInterval,
   selectState,
   transitionTarget,
   setTransition
@@ -43,7 +58,17 @@ const {
 const canAddFrame = computed(
   () =>
     Boolean(selectedFrame?.available) &&
+    states.value.length < DEVICE_PROTOTYPE_MAX_STATES &&
     !states.value.some((state) => state.frameId === selectedFrame?.id)
+)
+const addableSelectedFrames = computed(() =>
+  selectedFrames.filter(
+    (candidate) =>
+      candidate.available && !states.value.some((state) => state.frameId === candidate.id)
+  )
+)
+const canAddSelection = computed(
+  () => addableSelectedFrames.value.length > 0 && states.value.length < DEVICE_PROTOTYPE_MAX_STATES
 )
 const canPreview = computed(() =>
   Boolean(renderFrame && selectedInteraction.value?.initialStateId && states.value.length)
@@ -56,6 +81,43 @@ const transitionOptions = computed(() => [
   { value: NO_TRANSITION_VALUE, label: '不跳转' },
   ...states.value.map((state) => ({ value: state.id, label: state.name }))
 ])
+const eventOptions = computed(() =>
+  events.map((event) => ({ value: event.id, label: event.label }))
+)
+const modeOptions = [
+  { value: 'manual', label: '手动' },
+  { value: 'slideshow', label: '幻灯片' },
+  { value: 'custom', label: '自定义' }
+]
+const mode = computed({
+  get: () => selectedInteraction.value?.mode ?? 'manual',
+  set: (value: string) => setMode(value as DevicePrototypeMode)
+})
+const nextEvent = computed({
+  get: () => selectedInteraction.value?.manual.nextEvent ?? 'screen_click',
+  set: (value: DevicePrototypeEventId) => setManualEvent('next', value)
+})
+const previousEvent = computed({
+  get: () => selectedInteraction.value?.manual.previousEvent ?? 'screen_long_press',
+  set: (value: DevicePrototypeEventId) => setManualEvent('previous', value)
+})
+const slideshowSeconds = computed({
+  get: () => (selectedInteraction.value?.slideshow.intervalMs ?? 3000) / 1000,
+  set: (value: string | number) => setSlideshowInterval(Number(value) * 1000)
+})
+const selectedSourceLabel = computed(() => {
+  if (selectedFrames.length > 1) return `已选中 ${selectedFrames.length} 个画面`
+  return selectedFrame?.name || '未选中画面'
+})
+
+function addSelectedSources() {
+  if (addableSelectedFrames.value.length > 0) addFrames(addableSelectedFrames.value)
+  else if (selectedFrame) addFrame(selectedFrame)
+}
+
+function handleManualLoopChange(event: Event) {
+  setManualLoop((event.target as HTMLInputElement).checked)
+}
 
 function handleInteractionNameChange(event: Event) {
   renameInteraction((event.target as HTMLInputElement).value)
@@ -119,14 +181,58 @@ function updateTransition(eventId: DevicePrototypeEventId, targetId: string) {
         </div>
       </PanelSection>
 
+      <PanelSection label="模式">
+        <SegmentedControl v-model="mode" :options="modeOptions" label="交互模式" />
+
+        <div v-if="selectedInteraction?.mode === 'manual'" class="mt-panel grid gap-panel">
+          <div class="grid grid-cols-[64px_minmax(0,1fr)] items-center gap-panel">
+            <span class="text-[11px] text-muted">下一张</span>
+            <AppSelect v-model="nextEvent" :options="eventOptions" label="下一张触发事件" />
+            <span class="text-[11px] text-muted">上一张</span>
+            <AppSelect v-model="previousEvent" :options="eventOptions" label="上一张触发事件" />
+          </div>
+          <label class="flex h-control items-center gap-2 text-[11px] text-surface">
+            <input
+              type="checkbox"
+              class="size-3.5 accent-accent"
+              :checked="selectedInteraction.manual.loop"
+              @change="handleManualLoopChange"
+            />
+            首尾循环
+          </label>
+        </div>
+
+        <div v-else-if="selectedInteraction?.mode === 'slideshow'" class="mt-panel grid gap-1">
+          <label class="grid grid-cols-[64px_minmax(0,1fr)] items-center gap-panel">
+            <span class="text-[11px] text-muted">停留时间</span>
+            <div class="grid grid-cols-[minmax(0,1fr)_20px] items-center gap-1">
+              <AppInput
+                v-model="slideshowSeconds"
+                type="number"
+                :min="0.5"
+                :max="60"
+                :step="0.5"
+                tone="panel"
+                size="sm"
+              />
+              <span class="text-[11px] text-muted">秒</span>
+            </div>
+          </label>
+        </div>
+      </PanelSection>
+
       <PanelSection label="界面状态" :empty="states.length === 0">
         <template #actions>
           <IconButton
             :label="
-              canAddFrame ? '添加选中的画面' : selectedFrame?.reason || '请先选中一个 Frame 或图片'
+              canAddSelection || canAddFrame
+                ? `添加${selectedFrames.length > 1 ? '选中的画面' : '当前画面'}`
+                : states.length >= DEVICE_PROTOTYPE_MAX_STATES
+                  ? `最多支持 ${DEVICE_PROTOTYPE_MAX_STATES} 个画面`
+                  : selectedFrame?.reason || '请先选中一个 Frame 或图片'
             "
-            :disabled="!canAddFrame"
-            @click="selectedFrame && addFrame(selectedFrame)"
+            :disabled="!canAddSelection && !canAddFrame"
+            @click="addSelectedSources"
           >
             <icon-lucide-plus class="size-3.5" />
           </IconButton>
@@ -135,9 +241,11 @@ function updateTransition(eventId: DevicePrototypeEventId, targetId: string) {
         <div class="mb-panel flex min-w-0 items-center gap-2 text-[11px]">
           <span class="shrink-0 text-muted">画布选择</span>
           <span class="min-w-0 flex-1 truncate text-surface">
-            {{ selectedFrame?.name || '未选中画面' }}
+            {{ selectedSourceLabel }}
           </span>
-          <span class="shrink-0 text-muted">{{ states.length }} 个</span>
+          <span class="shrink-0 text-muted">
+            {{ states.length }} / {{ DEVICE_PROTOTYPE_MAX_STATES }}
+          </span>
         </div>
 
         <p v-if="states.length === 0" class="text-[11px] leading-relaxed text-muted">
@@ -171,6 +279,20 @@ function updateTransition(eventId: DevicePrototypeEventId, targetId: string) {
             >
               <icon-lucide-house class="size-3" />
             </IconButton>
+            <IconButton
+              label="上移画面"
+              :disabled="states[0]?.id === state.id"
+              @click="moveState(state.id, -1)"
+            >
+              <icon-lucide-chevron-up class="size-3" />
+            </IconButton>
+            <IconButton
+              label="下移画面"
+              :disabled="states.at(-1)?.id === state.id"
+              @click="moveState(state.id, 1)"
+            >
+              <icon-lucide-chevron-down class="size-3" />
+            </IconButton>
             <IconButton label="移除界面" @click="removeState(state.id)">
               <icon-lucide-x class="size-3" />
             </IconButton>
@@ -178,7 +300,11 @@ function updateTransition(eventId: DevicePrototypeEventId, targetId: string) {
         </div>
       </PanelSection>
 
-      <PanelSection label="事件跳转" :empty="!selectedState">
+      <PanelSection
+        v-if="selectedInteraction?.mode === 'custom'"
+        label="事件跳转"
+        :empty="!selectedState"
+      >
         <p v-if="!selectedState" class="text-[11px] leading-relaxed text-muted">
           选择一个界面状态后，为点击、长按和 BOOT 操作设置目标界面。
         </p>

@@ -40,8 +40,10 @@ export type EmbeddedFrameBakeById = (frameId: string) => Promise<File | null>
 export interface EmbeddedPrototypeOption {
   id: string
   name: string
+  mode: 'manual' | 'slideshow' | 'custom'
   stateCount: number
   initialStateName: string
+  intervalMs: number
   width: number
   height: number
   valid: boolean
@@ -59,6 +61,8 @@ export type EmbeddedPrototypeEventId =
 export interface EmbeddedPrototypeBakeResult {
   id: string
   name: string
+  mode: 'manual' | 'slideshow' | 'custom'
+  intervalMs: number
   initialStateId: string
   states: Array<{
     id: string

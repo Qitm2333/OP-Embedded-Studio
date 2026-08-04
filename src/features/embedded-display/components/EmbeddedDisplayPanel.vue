@@ -24,8 +24,11 @@ import {
   flashUsbFrameFirmware,
   flashUsbPrototypeFirmware,
   flashUsbSequenceFirmware,
-  supportsUsbFrameFastFlash
+  supportsUsbFrameFastFlash,
+  type UsbFlashOptions
 } from '../adapters/usb-content'
+import { imageFilesToUsbSequence } from '../adapters/usb-sequence'
+import type { SerialPortLike } from '../adapters/serial-flasher'
 import { useBleDeviceSession } from '../composables/useBleDeviceSession'
 import { useEmbeddedDisplay } from '../composables/useEmbeddedDisplay'
 import { useSerialDeviceSession } from '../composables/useSerialDeviceSession'
@@ -35,11 +38,13 @@ import type {
   EmbeddedFrameBake,
   EmbeddedFrameBakeById,
   EmbeddedFrameBakeState,
+  EmbeddedImagePayload,
   EmbeddedPrototypeBake,
-  EmbeddedPrototypeOption
+  EmbeddedPrototypeOption,
+  EmbeddedPrototypePayload
 } from '../model/types'
 
-const props = defineProps<{
+const { bakeState, bakeFrame, bakeFrameById, bakePrototype, prototypeOptions } = defineProps<{
   bakeState?: EmbeddedFrameBakeState
   bakeFrame?: EmbeddedFrameBake
   bakeFrameById?: EmbeddedFrameBakeById
@@ -58,6 +63,11 @@ interface FirmwareInitializationState {
   progress: number
   message: string
 }
+
+type WifiUploadContent =
+  | { kind: 'frame'; payload: EmbeddedImagePayload }
+  | { kind: 'prototype'; payload: EmbeddedPrototypePayload }
+  | { kind: 'slideshow'; payload: WirelessImageSequencePayload }
 
 const transportMode = ref<TransportMode>('usb')
 const burnModeByTransport = ref<Record<TransportMode, BurnMode>>({
@@ -162,8 +172,16 @@ const resolutionLabel = computed(() => {
   return resolution ? `${resolution.width} × ${resolution.height}` : '—'
 })
 const selectedPrototype = computed(
-  () => props.prototypeOptions?.find((option) => option.id === selectedPrototypeId.value) ?? null
+  () => prototypeOptions?.find((option) => option.id === selectedPrototypeId.value) ?? null
 )
+const selectedInteractionIsSlideshow = computed(
+  () => selectedPrototype.value?.mode === 'slideshow'
+)
+const selectedInteractionModeLabel = computed(() => {
+  if (selectedPrototype.value?.mode === 'slideshow') return '幻灯片'
+  if (selectedPrototype.value?.mode === 'manual') return '手动浏览'
+  return '自定义交互'
+})
 const selectedPrototypeSelectValue = computed({
   get: () => selectedPrototypeId.value || NO_PROTOTYPE_VALUE,
   set: (value: string) => {
@@ -188,7 +206,7 @@ const modeSwitchLocked = computed(
 const burnModeOptions = computed(() =>
   [
     { value: 'frame', label: '单 Frame' },
-    { value: 'prototype', label: '状态机' }
+    { value: 'prototype', label: '交互' }
   ].map((option) => ({
     ...option,
     disabled: modeSwitchLocked.value && option.value !== burnMode.value
@@ -219,7 +237,7 @@ const canBleBakeAndUpload = computed(
     transportMode.value === 'ble' &&
     (burnMode.value === 'frame'
       ? canBake.value
-      : Boolean(props.bakePrototype && selectedPrototype.value) &&
+      : Boolean(bakePrototype && selectedPrototype.value) &&
         prototypeReason.value === '' &&
         !prototypePending.value) &&
     (bleSession.deviceReady.value || bleSession.canReconnect.value) &&
@@ -236,7 +254,7 @@ const canWifiBakeAndUpload = computed(
     wifiTransferAvailable.value &&
     (burnMode.value === 'frame'
       ? canBake.value
-      : Boolean(props.bakePrototype && selectedPrototype.value) &&
+      : Boolean(bakePrototype && selectedPrototype.value) &&
         prototypeReason.value === '' &&
         !prototypePending.value)
 )
@@ -253,18 +271,24 @@ const canBleFileUpload = computed(
     !prototypePending.value
 )
 const NO_PROTOTYPE_VALUE = '__embedded-display-no-prototype__'
+function interactionModeLabel(mode: EmbeddedPrototypeOption['mode']): string {
+  if (mode === 'slideshow') return '幻灯片'
+  if (mode === 'manual') return '手动浏览'
+  return '自定义'
+}
+
 const prototypeSelectOptions = computed(() => [
   { value: NO_PROTOTYPE_VALUE, label: '请选择交互' },
-  ...(props.prototypeOptions ?? []).map((option) => ({
+  ...(prototypeOptions ?? []).map((option) => ({
     value: option.id,
-    label: `${option.name} · ${option.stateCount} 个状态`
+    label: `${option.name} · ${interactionModeLabel(option.mode)} · ${option.stateCount} 个画面`
   }))
 ])
 const bakeReason = computed(() => {
-  if (!props.bakeState) return '请在画布中选中一个 Frame 或 Frame 内的元素'
-  if (!props.bakeState.available) return props.bakeState.reason || '当前选择无法烘焙'
+  if (!bakeState) return '请在画布中选中一个 Frame 或 Frame 内的元素'
+  if (!bakeState.available) return bakeState.reason || '当前选择无法烘焙'
   if (!selectedProfile.value) return '请先选择屏幕方案'
-  return props.bakeState.reason || ''
+  return bakeState.reason || ''
 })
 const prototypeReason = computed(() => {
   if (!selectedPrototype.value) return '请先选择一个命名交互'
@@ -274,7 +298,7 @@ const prototypeReason = computed(() => {
 })
 const canBake = computed(
   () =>
-    Boolean(props.bakeFrame && props.bakeState?.available) &&
+    Boolean(bakeFrame && bakeState?.available) &&
     bakeReason.value === '' &&
     !bakePending.value &&
     !['uploading', 'building'].includes(buildStatus.value)
@@ -284,7 +308,7 @@ const canPreparePrototype = computed(
     (transportMode.value === 'usb' ||
       transportMode.value === 'wifi' ||
       transportMode.value === 'ble') &&
-    Boolean(props.bakePrototype && selectedPrototype.value) &&
+    Boolean(bakePrototype && selectedPrototype.value) &&
     prototypeReason.value === '' &&
     !prototypePending.value &&
     !['uploading', 'building'].includes(buildStatus.value)
@@ -310,7 +334,7 @@ const canUsbPrototypeFlash = computed(
     transportMode.value === 'usb' &&
     burnMode.value === 'prototype' &&
     usbFrameFastSupported.value &&
-    Boolean(props.bakePrototype && selectedPrototype.value) &&
+    Boolean(bakePrototype && selectedPrototype.value) &&
     prototypeReason.value === '' &&
     !prototypePending.value &&
     !usbFlashing.value
@@ -322,7 +346,7 @@ const wifiCredentials = computed(() =>
 )
 
 watch(
-  [transportMode, () => props.prototypeOptions],
+  [transportMode, () => prototypeOptions],
   ([, options]) => {
     if (!options?.some((option) => option.id === selectedPrototypeId.value)) {
       selectedPrototypeId.value = options?.[0]?.id ?? ''
@@ -346,11 +370,11 @@ watch(
 )
 
 async function handleBakeFrame(): Promise<boolean> {
-  if (!props.bakeFrame || !canBake.value) return false
+  if (!bakeFrame || !canBake.value) return false
   bakePending.value = true
   bakeError.value = ''
   try {
-    const file = await props.bakeFrame()
+    const file = await bakeFrame()
     if (!file) return false
     await selectImage(file, {
       upload: false,
@@ -367,23 +391,30 @@ async function handleBakeFrame(): Promise<boolean> {
   }
 }
 
-async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
-  const requestedProfileId = selectedProfile.value?.id
-  if (!requestedProfileId || usbFlashing.value) return
+async function prepareUsbFrameContent(source: 'frame' | 'file'): Promise<boolean> {
+  if (source === 'frame') return canUsbFrameFlash.value && (await handleBakeFrame())
+  return canUsbFileFlash.value
+}
 
-  let port
-  try {
-    port = await serialSession.requirePort()
-  } catch (error) {
-    bakeError.value = error instanceof Error ? error.message : String(error)
-    return
+function usbTransferOptions(port: SerialPortLike, contentLabel: string): UsbFlashOptions {
+  return {
+    port,
+    onLog: (message) => {
+      const normalized = message.trim()
+      if (normalized) buildLog.value.push(normalized)
+    },
+    onProgress: ({ percent, written, total }) => {
+      contentUploadProgress.value = percent
+      buildMessage.value = `正在通过 USB 高速传输${contentLabel}：${percent}%（${written} / ${total} 字节）`
+    }
   }
-  if (source === 'frame') {
-    if (!canUsbFrameFlash.value || !(await handleBakeFrame())) return
-  } else if (!canUsbFileFlash.value) {
-    return
-  }
+}
 
+async function flashPreparedUsbFrame(
+  port: SerialPortLike,
+  requestedProfileId: string,
+  source: 'frame' | 'file'
+): Promise<void> {
   const sequence = source === 'file' ? usbSequencePayload.value : null
   const image = imagePayload.value
   const contentProfileId = sequence?.profileId ?? image?.profileId
@@ -403,32 +434,13 @@ async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
   usbFlashing.value = true
   contentUploadProgress.value = 0
   buildStatus.value = 'uploading'
-  buildMessage.value = sequence
-    ? `正在准备 USB PNG 序列：${sequence.frameCount} 帧…`
-    : '正在准备 USB 单 Frame 内容…'
+  const contentLabel = sequence ? ` PNG 序列：${sequence.frameCount} 帧` : '单 Frame 内容'
+  buildMessage.value = `正在准备 USB ${contentLabel}…`
   buildLog.value = []
-  const flashOptions = {
-    port,
-    onLog: (message: string) => {
-      const normalized = message.trim()
-      if (normalized) buildLog.value.push(normalized)
-    },
-    onProgress: ({
-      percent,
-      written,
-      total
-    }: {
-      percent: number
-      written: number
-      total: number
-    }) => {
-      contentUploadProgress.value = percent
-      buildMessage.value = `正在通过 USB 高速传输：${percent}%（${written} / ${total} 字节）`
-    }
-  }
   try {
-    if (sequence) await flashUsbSequenceFirmware(sequence, flashOptions)
-    else if (image) await flashUsbFrameFirmware(image, flashOptions)
+    const options = usbTransferOptions(port, contentLabel)
+    if (sequence) await flashUsbSequenceFirmware(sequence, options)
+    else if (image) await flashUsbFrameFirmware(image, options)
     contentUploadProgress.value = 100
     buildStatus.value = 'ready'
     buildMessage.value = sequence
@@ -444,6 +456,21 @@ async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
   }
 }
 
+async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
+  const requestedProfileId = selectedProfile.value?.id
+  if (!requestedProfileId || usbFlashing.value) return
+
+  let port
+  try {
+    port = await serialSession.requirePort()
+  } catch (error) {
+    bakeError.value = error instanceof Error ? error.message : String(error)
+    return
+  }
+  if (!(await prepareUsbFrameContent(source))) return
+  await flashPreparedUsbFrame(port, requestedProfileId, source)
+}
+
 async function handleUsbPrototypeBakeAndFlash() {
   if (!canUsbPrototypeFlash.value) return
   const requestedProfileId = selectedProfile.value?.id
@@ -456,12 +483,16 @@ async function handleUsbPrototypeBakeAndFlash() {
     prototypeError.value = error instanceof Error ? error.message : String(error)
     return
   }
-  if (!(await preparePrototypeResources(false)) || !prototypePayload.value) return
+  if (!(await preparePrototypeResources(false))) return
+  const interactionPayload = selectedInteractionIsSlideshow.value
+    ? usbSequencePayload.value
+    : prototypePayload.value
+  if (!interactionPayload) return
   if (
     transportMode.value !== 'usb' ||
     burnMode.value !== 'prototype' ||
     selectedProfile.value?.id !== requestedProfileId ||
-    prototypePayload.value.profileId !== requestedProfileId
+    interactionPayload.profileId !== requestedProfileId
   ) {
     return
   }
@@ -469,27 +500,22 @@ async function handleUsbPrototypeBakeAndFlash() {
   usbFlashing.value = true
   contentUploadProgress.value = 0
   buildStatus.value = 'uploading'
-  buildMessage.value = '正在准备 USB 状态机内容…'
+  buildMessage.value = `正在准备 USB ${selectedInteractionModeLabel.value}内容…`
   buildLog.value = []
   try {
-    await flashUsbPrototypeFirmware(prototypePayload.value, {
-      port,
-      onLog: (message) => {
-        const normalized = message.trim()
-        if (normalized) buildLog.value.push(normalized)
-      },
-      onProgress: ({ percent, written, total }) => {
-        contentUploadProgress.value = percent
-        buildMessage.value = `正在通过 USB 高速传输状态机：${percent}%（${written} / ${total} 字节）`
-      }
-    })
+    const options = usbTransferOptions(port, selectedInteractionModeLabel.value)
+    if (selectedInteractionIsSlideshow.value && usbSequencePayload.value) {
+      await flashUsbSequenceFirmware(usbSequencePayload.value, options)
+    } else if (prototypePayload.value) {
+      await flashUsbPrototypeFirmware(prototypePayload.value, options)
+    }
     contentUploadProgress.value = 100
     buildStatus.value = 'ready'
-    buildMessage.value = '状态机和全部界面已写入，设备正在重启。'
+    buildMessage.value = `${selectedInteractionModeLabel.value}和全部画面已写入，设备正在重启。`
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     buildStatus.value = 'error'
-    buildMessage.value = `USB 状态机传输失败：${message}`
+    buildMessage.value = `USB 交互传输失败：${message}`
     buildLog.value.push(message)
   } finally {
     usbFlashing.value = false
@@ -504,7 +530,7 @@ async function handleBleBakeAndUpload() {
   if (!requestedProfileId) return
 
   if (requestedMode === 'prototype') {
-    if (!(await preparePrototypeResources(false)) || !prototypePayload.value) return
+    if (!(await preparePrototypeResources(false))) return
     if (
       transportMode.value !== 'ble' ||
       burnMode.value !== requestedMode ||
@@ -512,7 +538,11 @@ async function handleBleBakeAndUpload() {
     ) {
       return
     }
-    await bleSession.upload(prototypePayload.value)
+    const interactionPayload = selectedInteractionIsSlideshow.value
+      ? bleSequencePayload.value
+      : prototypePayload.value
+    if (!interactionPayload) return
+    await bleSession.upload(interactionPayload)
     return
   }
 
@@ -535,7 +565,7 @@ async function handleWifiBakeAndUpload() {
   if (!requestedProfileId) return
 
   if (requestedMode === 'prototype') {
-    if (!(await preparePrototypeResources(false)) || !prototypePayload.value) return
+    if (!(await preparePrototypeResources(false))) return
   } else if (!(await handleBakeFrame()) || !imagePayload.value) {
     return
   }
@@ -672,17 +702,48 @@ async function handleBleImageChange(event: Event) {
 }
 
 async function preparePrototypeResources(uploadToBuildService = false) {
-  if (!props.bakePrototype || !selectedPrototype.value || prototypeReason.value) return false
+  if (!bakePrototype || !selectedPrototype.value || prototypeReason.value) return false
   prototypePending.value = true
   prototypePrepared.value = false
   prototypeError.value = ''
   try {
-    const bake = await props.bakePrototype(selectedPrototypeId.value)
+    const bake = await bakePrototype(selectedPrototypeId.value)
     if (!bake) throw new Error('无法读取所选交互')
-    await selectPrototype(bake, {
-      upload: uploadToBuildService,
-      backgroundColor: frameBackgroundColor.value
-    })
+    usbSequencePayload.value = null
+    wifiSequencePayload.value = null
+    bleSequencePayload.value = null
+    prototypePayload.value = null
+    if (bake.mode === 'slideshow') {
+      const profile = selectedProfile.value
+      if (!profile) throw new Error('请先选择屏幕方案')
+      const files = bake.states.map((state) => state.file)
+      const options = {
+        frameDelayMs: bake.intervalMs,
+        preserveOrder: true,
+        placement: 'pixel-perfect' as const,
+        backgroundColor: frameBackgroundColor.value
+      }
+      if (transportMode.value === 'usb') {
+        usbSequencePayload.value = await imageFilesToUsbSequence(files, profile, options)
+      } else if (transportMode.value === 'wifi') {
+        wifiSequencePayload.value = await imageFilesToWifiSequence(files, profile, options)
+      } else if (transportMode.value === 'ble') {
+        bleSequencePayload.value = await imageFilesToBleSequence(files, profile, options)
+      }
+      buildStatus.value = 'idle'
+      buildMessage.value = `幻灯片已准备：${files.length} 个画面 · 每 ${(bake.intervalMs / 1000).toFixed(1)} 秒切换`
+      buildLog.value = [
+        `slideshow: ${bake.name}`,
+        `states: ${files.length}`,
+        `interval: ${bake.intervalMs} ms`,
+        'sequence-payload: ready'
+      ]
+    } else {
+      await selectPrototype(bake, {
+        upload: uploadToBuildService,
+        backgroundColor: frameBackgroundColor.value
+      })
+    }
     prototypePrepared.value = true
     return true
   } catch (error) {
@@ -768,16 +829,9 @@ async function handleInitializeUsbFirmware() {
 
 async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
   if (transportMode.value !== mode) return
-  const manifestUrl =
-    mode === 'ble'
-      ? bleManifestUrl.value
-      : mode === 'wifi-live'
-        ? wifiLiveManifestUrl.value
-        : wifiManifestUrl.value
+  const { manifestUrl, modeLabel, buildMode } = wirelessFirmwareConfiguration(mode)
   const profileId = selectedProfile.value?.id
   if (!manifestUrl || !profileId) return
-  const modeLabel = mode === 'ble' ? 'BLE' : mode === 'wifi-live' ? 'Wi-Fi 实时镜像' : 'Wi-Fi'
-  const buildMode = mode === 'ble' ? 'ble-frame' : mode === 'wifi-live' ? 'wifi-live' : 'wifi-frame'
 
   const state = wirelessInitialization.value[mode]
   let port
@@ -854,6 +908,24 @@ async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
   }
 }
 
+function wirelessFirmwareConfiguration(mode: WirelessTransportMode): {
+  manifestUrl: string
+  modeLabel: string
+  buildMode: Extract<EmbeddedBuildMode, 'wifi-frame' | 'wifi-live' | 'ble-frame'>
+} {
+  if (mode === 'ble') {
+    return { manifestUrl: bleManifestUrl.value, modeLabel: 'BLE', buildMode: 'ble-frame' }
+  }
+  if (mode === 'wifi-live') {
+    return {
+      manifestUrl: wifiLiveManifestUrl.value,
+      modeLabel: 'Wi-Fi 实时镜像',
+      buildMode: 'wifi-live'
+    }
+  }
+  return { manifestUrl: wifiManifestUrl.value, modeLabel: 'Wi-Fi', buildMode: 'wifi-frame' }
+}
+
 async function handleProbeBle() {
   const profile = selectedProfile.value
   if (!profile || transportMode.value !== 'ble') return
@@ -901,6 +973,34 @@ async function handleProbeWifi() {
   }
 }
 
+function preparedWifiContent(requestedMode: 'frame' | 'prototype'): WifiUploadContent | null {
+  if (requestedMode === 'frame') {
+    return imagePayload.value ? { kind: 'frame', payload: imagePayload.value } : null
+  }
+  if (selectedInteractionIsSlideshow.value) {
+    return wifiSequencePayload.value
+      ? { kind: 'slideshow', payload: wifiSequencePayload.value }
+      : null
+  }
+  return prototypePayload.value ? { kind: 'prototype', payload: prototypePayload.value } : null
+}
+
+async function sendWifiContent(
+  baseUrl: string,
+  content: WifiUploadContent,
+  onProgress: (progress: { percent: number }) => void
+): Promise<void> {
+  if (content.kind === 'frame') {
+    await uploadWirelessImage(baseUrl, content.payload, undefined, onProgress)
+    return
+  }
+  if (content.kind === 'slideshow') {
+    await uploadWirelessSequence(baseUrl, content.payload, undefined, onProgress)
+    return
+  }
+  await uploadWirelessPrototype(baseUrl, content.payload, undefined, onProgress)
+}
+
 async function uploadWifiContent(requestedMode: 'frame' | 'prototype', requestedProfileId: string) {
   if (
     transportMode.value !== 'wifi' ||
@@ -912,14 +1012,15 @@ async function uploadWifiContent(requestedMode: 'frame' | 'prototype', requested
   }
 
   const requestedBaseUrl = wirelessBaseUrl.value
-  const image = requestedMode === 'frame' ? imagePayload.value : null
-  const prototype = requestedMode === 'prototype' ? prototypePayload.value : null
-  if (requestedMode === 'frame' ? !image : !prototype) return
+  const content = preparedWifiContent(requestedMode)
+  if (!content) return
 
   wirelessStatus.value = 'uploading'
   contentUploadProgress.value = 0
   wirelessMessage.value =
-    requestedMode === 'prototype' ? '正在通过 Wi-Fi 传输状态机…' : '正在通过 Wi-Fi 传输图片…'
+    requestedMode === 'prototype'
+      ? `正在通过 Wi-Fi 传输${selectedInteractionModeLabel.value}…`
+      : '正在通过 Wi-Fi 传输图片…'
   buildLog.value = [
     `wifi-device: ${requestedBaseUrl}`,
     `content: ${requestedMode}`,
@@ -929,16 +1030,12 @@ async function uploadWifiContent(requestedMode: 'frame' | 'prototype', requested
     const onProgress = ({ percent }: { percent: number }) => {
       contentUploadProgress.value = percent
     }
-    if (requestedMode === 'prototype' && prototype) {
-      await uploadWirelessPrototype(requestedBaseUrl, prototype, undefined, onProgress)
-    } else if (requestedMode === 'frame' && image) {
-      await uploadWirelessImage(requestedBaseUrl, image, undefined, onProgress)
-    }
+    await sendWifiContent(requestedBaseUrl, content, onProgress)
     contentUploadProgress.value = 100
     wirelessStatus.value = 'success'
     wirelessMessage.value =
       requestedMode === 'prototype'
-        ? '状态机已传输，设备将重启并加载交互内容'
+        ? `${selectedInteractionModeLabel.value}已传输，设备将重启并加载交互内容`
         : '图片已传输，设备将重启并加载新内容'
     buildLog.value.push('upload: ok')
   } catch (error) {
@@ -957,60 +1054,64 @@ function buildMessageForTransport(mode: TransportMode): string {
 }
 
 let firmwareLoadSequence = 0
+
+function resetTransportFirmwareState(mode: TransportMode): void {
+  wirelessDeviceReady.value = false
+  wifiBaseFirmwareReady.value = false
+  bakeError.value = ''
+  frameResourceSource.value = null
+  prototypeError.value = ''
+  prototypePrepared.value = false
+  buildLog.value = []
+  if (buildStatus.value !== 'loading') buildStatus.value = 'idle'
+  buildMessage.value = buildMessageForTransport(mode)
+  if (mode === 'usb') resetUsbInitialization()
+  if (mode === 'wifi') {
+    resetWirelessInitialization('wifi')
+    wirelessStatus.value = 'idle'
+    wirelessMessage.value = '连接设备热点后检查连接，再传输当前模式的内容'
+  }
+  if (mode === 'ble') {
+    resetWirelessInitialization('ble')
+    bleSession.setProfile(selectedProfile.value)
+  }
+  if (mode === 'wifi-live') resetWirelessInitialization('wifi-live')
+}
+
+async function loadTransportFirmware(
+  mode: TransportMode,
+  profileId: string,
+  sequence: number
+): Promise<void> {
+  if (mode === 'usb') {
+    await loadCachedFirmware('usb-frame')
+    return
+  }
+  if (mode === 'ble') {
+    const available = await loadCachedFirmware(bleBuildMode)
+    if (
+      sequence === firmwareLoadSequence &&
+      transportMode.value === 'ble' &&
+      selectedProfile.value?.id === profileId
+    ) {
+      bleSession.setBaseFirmwareReady(available)
+    }
+    return
+  }
+  if (mode !== 'wifi' && mode !== 'wifi-live') return
+  const available = await loadCachedFirmware(mode === 'wifi-live' ? 'wifi-live' : 'wifi-frame')
+  if (sequence === firmwareLoadSequence && transportMode.value === mode) {
+    wifiBaseFirmwareReady.value = available
+  }
+}
+
 watch(
   [transportMode, () => selectedProfile.value?.id],
   async ([mode, profileId]) => {
     const sequence = ++firmwareLoadSequence
-    wirelessDeviceReady.value = false
-    wifiBaseFirmwareReady.value = false
-    bakeError.value = ''
-    frameResourceSource.value = null
-    prototypeError.value = ''
-    prototypePrepared.value = false
-    buildLog.value = []
-    if (buildStatus.value !== 'loading') buildStatus.value = 'idle'
-    buildMessage.value = buildMessageForTransport(mode)
-    if (mode === 'usb') resetUsbInitialization()
-    if (mode === 'wifi') {
-      resetWirelessInitialization('wifi')
-      wirelessStatus.value = 'idle'
-      wirelessMessage.value = '连接设备热点后检查连接，再传输当前模式的内容'
-    }
-    if (mode === 'ble') {
-      resetWirelessInitialization('ble')
-      bleSession.setProfile(selectedProfile.value)
-    }
-    if (mode === 'wifi-live') resetWirelessInitialization('wifi-live')
+    resetTransportFirmwareState(mode)
     if (!profileId) return
-
-    if (mode === 'usb') {
-      await loadCachedFirmware('usb-frame')
-      if (
-        sequence !== firmwareLoadSequence ||
-        transportMode.value !== 'usb' ||
-        selectedProfile.value?.id !== profileId
-      )
-        return
-      return
-    }
-
-    if (mode === 'ble') {
-      const available = await loadCachedFirmware(bleBuildMode)
-      if (
-        sequence !== firmwareLoadSequence ||
-        transportMode.value !== 'ble' ||
-        selectedProfile.value?.id !== profileId
-      )
-        return
-      bleSession.setBaseFirmwareReady(available)
-      return
-    }
-
-    if (mode === 'wifi' || mode === 'wifi-live') {
-      const available = await loadCachedFirmware(mode === 'wifi-live' ? 'wifi-live' : 'wifi-frame')
-      if (sequence !== firmwareLoadSequence || transportMode.value !== mode) return
-      wifiBaseFirmwareReady.value = available
-    }
+    await loadTransportFirmware(mode, profileId, sequence)
   },
   { immediate: true }
 )
@@ -1509,7 +1610,8 @@ watch([wifiSsid, wifiPassword], () => {
               </p>
               <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
                 {{ selectedPrototype.initialStateName || '未设置初始界面' }} ·
-                {{ selectedPrototype.stateCount }} 个状态 · {{ selectedPrototype.width }} ×
+                {{ selectedInteractionModeLabel }} · {{ selectedPrototype.stateCount }} 个画面 ·
+                {{ selectedPrototype.width }} ×
                 {{ selectedPrototype.height }}
               </p>
             </div>
@@ -1521,7 +1623,7 @@ watch([wifiSsid, wifiPassword], () => {
             :disabled="!canUsbPrototypeFlash"
             @click="handleUsbPrototypeBakeAndFlash"
           >
-            {{ usbFlashing ? '正在上传状态机…' : '一键烘焙并上传状态机' }}
+            {{ usbFlashing ? `正在上传${selectedInteractionModeLabel}…` : '一键烘焙并上传交互' }}
           </button>
         </div>
         <div v-if="usbFlashing" class="mt-panel h-1.5 overflow-hidden rounded-full bg-panel-field">
@@ -1637,7 +1739,8 @@ watch([wifiSsid, wifiPassword], () => {
               </p>
               <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
                 {{ selectedPrototype.initialStateName || '未设置初始界面' }} ·
-                {{ selectedPrototype.stateCount }} 个状态 · {{ selectedPrototype.width }} ×
+                {{ selectedInteractionModeLabel }} · {{ selectedPrototype.stateCount }} 个画面 ·
+                {{ selectedPrototype.width }} ×
                 {{ selectedPrototype.height }}
               </p>
             </div>
@@ -1649,7 +1752,7 @@ watch([wifiSsid, wifiPassword], () => {
             :disabled="!canWifiBakeAndUpload"
             @click="handleWifiBakeAndUpload"
           >
-            {{ wirelessStatus === 'uploading' ? '正在传输状态机…' : '一键烘焙并上传状态机' }}
+            {{ wirelessStatus === 'uploading' ? `正在传输${selectedInteractionModeLabel}…` : '一键烘焙并上传交互' }}
           </button>
         </div>
         <div
@@ -1769,6 +1872,7 @@ watch([wifiSsid, wifiPassword], () => {
         >
           <span class="text-muted">初始界面</span
           ><span>{{ selectedPrototype.initialStateName || '—' }}</span>
+          <span class="text-muted">交互模式</span><span>{{ selectedInteractionModeLabel }}</span>
           <span class="text-muted">界面数量</span><span>{{ selectedPrototype.stateCount }}</span>
           <span class="text-muted">分辨率</span
           ><span>{{ selectedPrototype.width }} × {{ selectedPrototype.height }}</span>
@@ -1791,14 +1895,14 @@ watch([wifiSsid, wifiPassword], () => {
               ? '正在检查资源…'
               : prototypePrepared
                 ? '资源检查通过'
-                : '检查状态机资源'
+                : '检查交互资源'
           }}
         </button>
         <p class="mt-1 text-[10px] leading-relaxed text-muted">
           {{
             transportMode === 'ble'
-              ? 'BLE 上传会重新烘焙全部状态，基础固件不会嵌入交互内容。'
-              : '此步骤可选；生成固件时会自动重新烘焙全部状态。'
+              ? 'BLE 上传会重新烘焙全部画面，基础固件不会嵌入交互内容。'
+              : '此步骤可选；生成固件时会自动重新烘焙全部画面。'
           }}
         </p>
         <button
@@ -1810,8 +1914,8 @@ watch([wifiSsid, wifiPassword], () => {
         >
           {{
             bleSession.status.value === 'uploading'
-              ? '正在传输状态机…'
-              : '烘焙并上传状态机到 BLE 设备'
+              ? `正在传输${selectedInteractionModeLabel}…`
+              : '烘焙并上传交互到 BLE 设备'
           }}
         </button>
         <div

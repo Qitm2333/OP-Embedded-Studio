@@ -103,6 +103,11 @@ const primaryLabel = computed(() => {
   }
   return deployment.value?.needsDeviceSelection ? '确认并选择设备' : '确认并烧录'
 })
+const modeLabel = computed(() => {
+  if (proposal.value?.mode === 'slideshow') return '幻灯片'
+  if (proposal.value?.mode === 'manual') return '手动浏览'
+  return '自定义交互'
+})
 
 function stateName(stateId: string): string {
   return proposal.value?.definition.states.find((state) => state.id === stateId)?.name ?? stateId
@@ -182,12 +187,14 @@ function cancel(): void {
           v-if="deployment?.status === 'success'"
           class="size-4 text-green-400"
         />
+        <icon-lucide-play v-else-if="proposal.mode === 'slideshow'" class="size-4" />
         <icon-lucide-git-branch v-else class="size-4" />
       </div>
       <div class="min-w-0 flex-1">
         <p class="truncate text-sm font-medium text-surface">{{ proposal.name }}</p>
         <p class="truncate text-[11px] text-muted">
-          {{ proposal.definition.states.length }} 个画面 · {{ proposal.profileName }}
+          {{ modeLabel }} · {{ proposal.definition.states.length }} 个画面 ·
+          {{ proposal.profileName }}
         </p>
       </div>
       <span class="shrink-0 rounded border px-1.5 py-0.5 text-[10px]" :class="statusClass">
@@ -209,6 +216,12 @@ function cancel(): void {
           <span class="truncate text-surface">
             {{ proposal.definition.states.map((state) => state.name).join('、') }}
           </span>
+          <template v-if="proposal.mode === 'slideshow'">
+            <span class="text-muted">播放间隔</span>
+            <span class="text-surface">
+              每 {{ (proposal.slideshow.intervalMs / 1000).toFixed(1) }} 秒
+            </span>
+          </template>
           <span class="text-muted">分辨率</span>
           <span class="text-surface">
             {{ proposal.resolution.width }} × {{ proposal.resolution.height }}

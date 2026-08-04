@@ -6,6 +6,7 @@ import { flashFirmwareManifest } from '../adapters/manifest-firmware'
 import {
   flashUsbFrameFirmware,
   flashUsbPrototypeFirmware,
+  flashUsbSequenceFirmware,
   requestUsbSerialPort,
   supportsUsbFrameFastFlash,
   type UsbFlashOptions,
@@ -16,6 +17,7 @@ import {
   type UsbContentProbeResult,
   type UsbContentSerialPort
 } from '../adapters/usb-content-transfer'
+import { imageFilesToUsbSequence, type UsbImageSequencePayload } from '../adapters/usb-sequence'
 import { encodeWirelessImage, encodeWirelessPrototype } from '../adapters/wireless-content'
 import type {
   EmbeddedDisplayProfile,
@@ -50,7 +52,7 @@ export interface UsbFrameDeploymentFrame {
 
 export interface UsbFrameDeploymentPlan {
   id: string
-  mode: 'frame' | 'prototype'
+  mode: 'frame' | 'prototype' | 'slideshow'
   status: UsbFrameDeploymentStatus
   profileId: string
   profileName: string
@@ -85,9 +87,15 @@ export interface UsbFrameDeploymentPlan {
 type DeploymentSerialPort = UsbContentSerialPort
 
 interface UsbFrameDeploymentRecord extends UsbFrameDeploymentPlan {
-  payload: EmbeddedImagePayload | EmbeddedPrototypePayload
+  payload: EmbeddedImagePayload | EmbeddedPrototypePayload | UsbImageSequencePayload
   port?: DeploymentSerialPort
   manifestUrl: string
+}
+
+function deploymentContentLabel(mode: UsbFrameDeploymentPlan['mode']): string {
+  if (mode === 'prototype') return '交互内容'
+  if (mode === 'slideshow') return '幻灯片'
+  return '当前 Frame'
 }
 
 export interface PrepareUsbFrameDeploymentInput {
@@ -296,16 +304,19 @@ async function transferContent(
   plan.status = 'transferring-content'
   plan.contentStage = 'running'
   plan.progress = 0
-  plan.message = plan.mode === 'prototype' ? '正在传输交互状态机' : '正在传输当前 Frame'
+  const contentLabel = deploymentContentLabel(plan.mode)
+  plan.message = `正在传输${contentLabel}`
   const flashOptions: UsbFlashOptions = {
     port: port as UsbSerialPort,
     onLog: (message) => appendLog(plan, message),
     onProgress: ({ percent }) => {
       plan.progress = percent
-      plan.message = `正在传输${plan.mode === 'prototype' ? '交互状态机' : '当前 Frame'} ${percent}%`
+      plan.message = `正在传输${contentLabel} ${percent}%`
     }
   }
-  if (plan.mode === 'prototype' && 'initialStateIndex' in plan.payload) {
+  if ('content' in plan.payload) {
+    await flashUsbSequenceFirmware(plan.payload, flashOptions)
+  } else if (plan.mode === 'prototype' && 'initialStateIndex' in plan.payload) {
     await flashUsbPrototypeFirmware(plan.payload, flashOptions)
   } else if (!('initialStateIndex' in plan.payload)) {
     await flashUsbFrameFirmware(plan.payload, flashOptions)
@@ -367,8 +378,21 @@ export async function prepareUsbPrototypeDeployment(
   if (!supportsUsbFrameFastFlash(input.profile.id)) {
     throw new Error('当前屏幕尚未提供 USB 交互快速部署固件')
   }
-  const payload = await prototypeBakeToRgb565(input.bake, input.profile, input.backgroundColor)
-  const contentBytes = encodeWirelessPrototype(payload).byteLength
+  const slideshow = input.bake.mode === 'slideshow'
+  const payload = slideshow
+    ? await imageFilesToUsbSequence(
+        input.bake.states.map((state) => state.file),
+        input.profile,
+        {
+          frameDelayMs: input.bake.intervalMs,
+          preserveOrder: true,
+          placement: 'pixel-perfect',
+          backgroundColor: input.backgroundColor
+        }
+      )
+    : await prototypeBakeToRgb565(input.bake, input.profile, input.backgroundColor)
+  const contentBytes =
+    'content' in payload ? payload.content.byteLength : encodeWirelessPrototype(payload).byteLength
   const previewFile = input.bake.states.find(
     (state) => state.id === input.bake.initialStateId
   )?.file
@@ -377,7 +401,7 @@ export async function prepareUsbPrototypeDeployment(
   supersedeInactiveUsbDeployments()
   const plan = reactive<UsbFrameDeploymentRecord>({
     id,
-    mode: 'prototype',
+    mode: slideshow ? 'slideshow' : 'prototype',
     status: 'ready',
     profileId: input.profile.id,
     profileName: input.profile.name,
@@ -399,7 +423,7 @@ export async function prepareUsbPrototypeDeployment(
     firmwareInitializationAuthorized: input.firstDeployment,
     firmwareVerified: false,
     progress: 0,
-    message: '交互内容已准备，等待确认',
+    message: slideshow ? '幻灯片内容已准备，等待确认' : '交互内容已准备，等待确认',
     firmwareStage: 'pending',
     contentStage: 'pending',
     logs: [],
@@ -449,10 +473,7 @@ export async function executeUsbFrameDeployment(
     await transferContent(plan, connectedPort)
     plan.progress = 100
     plan.status = 'success'
-    plan.message =
-      plan.mode === 'prototype'
-        ? '基础固件与交互状态机已部署完成'
-        : '基础固件与当前 Frame 已部署完成'
+    plan.message = `基础固件与${deploymentContentLabel(plan.mode)}已部署完成`
     plan.completedAt = Date.now()
     try {
       await options.onSuccess?.(plan)

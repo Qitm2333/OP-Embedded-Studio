@@ -29,6 +29,9 @@ describe('AI USB deployment planning', () => {
     expect(isDirectUsbFrameDeploymentRequest('如何写入 USB？')).toBe(false)
     expect(isDirectUsbFrameDeploymentRequest('你在吗')).toBe(false)
     expect(isDirectUsbFrameDeploymentRequest('创建交互并烧录')).toBe(false)
+    expect(isDirectUsbFrameDeploymentRequest('烧录成手动浏览')).toBe(false)
+    expect(isDirectUsbFrameDeploymentRequest('烧录成自动播放幻灯片')).toBe(false)
+    expect(isDirectUsbFrameDeploymentRequest('deploy as manual browsing')).toBe(false)
     expect(isDirectUsbFrameDeploymentRequest('deploy this multi-frame prototype')).toBe(false)
   })
 
@@ -184,6 +187,8 @@ describe('AI USB deployment planning', () => {
         bake: {
           id: 'interaction-1',
           name: 'Navigation',
+          mode: 'custom',
+          intervalMs: 3000,
           initialStateId: 'home',
           states: [
             { id: 'home', name: 'Home', file: first },

@@ -75,6 +75,19 @@ describe('USB PNG sequence content', () => {
     expect([0, 1]).toContain(view.getUint8(secondResourceOffset + 8))
   })
 
+  test('stores a custom slideshow interval in the existing sequence header', () => {
+    const sequence = encodeUsbSequenceFrames(
+      patchProfile,
+      [uniqueFrame(), uniqueFrame(12)],
+      'Slideshow',
+      { frameDelayMs: 2500 }
+    )
+    const view = new DataView(sequence.content)
+
+    expect(sequence.frameDelayMs).toBe(2500)
+    expect(view.getUint16(24 + 4, true)).toBe(2500)
+  })
+
   test('encodes a small changed rectangle as a patch', () => {
     const first = uniqueFrame()
     const second = first.slice()

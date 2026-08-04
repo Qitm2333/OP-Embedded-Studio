@@ -2,13 +2,14 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 
 import { DEVICE_PROTOTYPE_EVENTS } from '../model/types'
+import { resolveDevicePrototypeTransitions } from '../model/rules'
 import type {
   DevicePrototypeEventId,
   DevicePrototypeFrameRender,
   DevicePrototypeInteraction
 } from '../model/types'
 
-const props = defineProps<{
+const { open, interaction, renderFrame } = defineProps<{
   open: boolean
   interaction: DevicePrototypeInteraction | null
   renderFrame?: DevicePrototypeFrameRender
@@ -21,12 +22,17 @@ const previewError = ref('')
 const previewLoading = ref(false)
 const lastEventLabel = ref('等待操作')
 const clickCount = ref(0)
+const slideshowPaused = ref(false)
 let clickTimer: ReturnType<typeof setTimeout> | undefined
 let longPressTimer: ReturnType<typeof setTimeout> | undefined
+let slideshowTimer: ReturnType<typeof setTimeout> | undefined
 let longPressTriggered = false
 
 const currentState = computed(
-  () => props.interaction?.states.find((state) => state.id === currentStateId.value) ?? null
+  () => interaction?.states.find((state) => state.id === currentStateId.value) ?? null
+)
+const resolvedTransitions = computed(() =>
+  interaction ? resolveDevicePrototypeTransitions(interaction) : []
 )
 
 function clearPreviewUrl() {
@@ -38,10 +44,10 @@ function clearPreviewUrl() {
 async function renderCurrentState() {
   clearPreviewUrl()
   previewError.value = ''
-  if (!currentState.value || !props.renderFrame) return
+  if (!currentState.value || !renderFrame) return
   previewLoading.value = true
   try {
-    const blob = await props.renderFrame(currentState.value.frameId)
+    const blob = await renderFrame(currentState.value.frameId)
     if (!blob) throw new Error('无法渲染当前 Frame')
     previewUrl.value = URL.createObjectURL(blob)
   } catch (error) {
@@ -52,15 +58,49 @@ async function renderCurrentState() {
 }
 
 function resetPreview() {
-  currentStateId.value = props.interaction?.initialStateId ?? ''
+  currentStateId.value = interaction?.initialStateId ?? ''
+  slideshowPaused.value = false
   lastEventLabel.value = '已回到初始状态'
 }
 
+function clearSlideshowTimer() {
+  if (!slideshowTimer) return
+  clearTimeout(slideshowTimer)
+  slideshowTimer = undefined
+}
+
+function advanceSlideshow() {
+  if (!interaction || interaction.mode !== 'slideshow' || interaction.states.length < 2) return
+  const index = interaction.states.findIndex((state) => state.id === currentStateId.value)
+  const next = interaction.states[(index + 1) % interaction.states.length]
+  if (!next) return
+  currentStateId.value = next.id
+  lastEventLabel.value = '自动播放'
+}
+
+function scheduleSlideshow() {
+  clearSlideshowTimer()
+  if (
+    !open ||
+    slideshowPaused.value ||
+    !interaction ||
+    interaction.mode !== 'slideshow' ||
+    interaction.states.length < 2
+  ) {
+    return
+  }
+  slideshowTimer = setTimeout(advanceSlideshow, interaction.slideshow.intervalMs)
+}
+
+function toggleSlideshow() {
+  slideshowPaused.value = !slideshowPaused.value
+  lastEventLabel.value = slideshowPaused.value ? '已暂停' : '继续播放'
+}
+
 function dispatch(eventId: DevicePrototypeEventId) {
-  const interaction = props.interaction
   if (!interaction || !currentStateId.value) return
   const eventLabel = DEVICE_PROTOTYPE_EVENTS.find((item) => item.id === eventId)?.label ?? eventId
-  const transition = interaction.transitions.find(
+  const transition = resolvedTransitions.value.find(
     (item) => item.fromStateId === currentStateId.value && item.event === eventId
   )
   lastEventLabel.value = transition ? eventLabel : `${eventLabel} · 未配置跳转`
@@ -68,18 +108,16 @@ function dispatch(eventId: DevicePrototypeEventId) {
 }
 
 function flushScreenClicks() {
-  const eventId =
-    clickCount.value >= 3
-      ? 'screen_triple_click'
-      : clickCount.value === 2
-        ? 'screen_double_click'
-        : 'screen_click'
+  let eventId: DevicePrototypeEventId = 'screen_click'
+  if (clickCount.value >= 3) eventId = 'screen_triple_click'
+  else if (clickCount.value === 2) eventId = 'screen_double_click'
   clickCount.value = 0
   clickTimer = undefined
   dispatch(eventId)
 }
 
 function handleScreenPointerDown() {
+  if (interaction?.mode === 'slideshow') return
   longPressTriggered = false
   longPressTimer = setTimeout(() => {
     longPressTriggered = true
@@ -91,10 +129,11 @@ function handleScreenPointerDown() {
 }
 
 function handleScreenPointerUp() {
+  if (interaction?.mode === 'slideshow') return
   if (longPressTimer) clearTimeout(longPressTimer)
   longPressTimer = undefined
   if (longPressTriggered) return
-  const usesMultiClick = props.interaction?.transitions.some(
+  const usesMultiClick = resolvedTransitions.value.some(
     (transition) =>
       transition.fromStateId === currentStateId.value &&
       (transition.event === 'screen_double_click' || transition.event === 'screen_triple_click')
@@ -133,17 +172,28 @@ function handleBootPointerUp() {
 }
 
 watch(
-  () => [props.open, props.interaction?.id, props.interaction?.initialStateId],
+  () => [open, interaction?.id, interaction?.initialStateId],
   () => {
-    if (props.open) resetPreview()
+    if (open) resetPreview()
   },
   { immediate: true }
 )
 watch(currentStateId, () => void renderCurrentState(), { immediate: true })
+watch(
+  () => [
+    open,
+    interaction?.mode,
+    interaction?.slideshow.intervalMs,
+    currentStateId.value,
+    slideshowPaused.value
+  ],
+  scheduleSlideshow
+)
 
 onUnmounted(() => {
   if (clickTimer) clearTimeout(clickTimer)
   if (longPressTimer) clearTimeout(longPressTimer)
+  clearSlideshowTimer()
   clearPreviewUrl()
 })
 </script>
@@ -167,6 +217,13 @@ onUnmounted(() => {
               {{ currentState?.name || '没有可预览的状态' }} · {{ lastEventLabel }}
             </div>
           </div>
+          <button
+            v-if="interaction?.mode === 'slideshow'"
+            class="rounded px-2 py-1 text-xs text-muted hover:text-surface"
+            @click="toggleSlideshow"
+          >
+            {{ slideshowPaused ? '继续' : '暂停' }}
+          </button>
           <button
             class="rounded px-2 py-1 text-xs text-muted hover:text-surface"
             @click="resetPreview"
@@ -209,9 +266,18 @@ onUnmounted(() => {
                 {{ previewError || '请选择包含状态的交互' }}
               </span>
             </div>
-            <p class="text-center text-[11px] text-muted">屏幕支持单击、双击、三击和长按</p>
+            <p class="text-center text-[11px] text-muted">
+              {{
+                interaction?.mode === 'slideshow'
+                  ? `每 ${(interaction.slideshow.intervalMs / 1000).toFixed(1)} 秒自动切换`
+                  : '屏幕支持单击、双击、三击和长按'
+              }}
+            </p>
           </div>
-          <div class="flex shrink-0 flex-col items-center gap-2">
+          <div
+            v-if="interaction?.mode !== 'slideshow'"
+            class="flex shrink-0 flex-col items-center gap-2"
+          >
             <button
               type="button"
               class="flex size-16 select-none items-center justify-center rounded-full border-4 border-border bg-panel text-xs font-semibold text-surface shadow active:scale-95"

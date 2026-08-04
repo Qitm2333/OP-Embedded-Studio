@@ -1,18 +1,31 @@
 import { computed, ref } from 'vue'
 
 import {
+  DEFAULT_DEVICE_PROTOTYPE_MANUAL_SETTINGS,
+  DEFAULT_DEVICE_PROTOTYPE_SLIDESHOW_SETTINGS,
+  normalizeSlideshowInterval,
+  resolveDevicePrototypeTransitions
+} from '../model/rules'
+import {
   DEVICE_PROTOTYPE_EVENTS,
+  DEVICE_PROTOTYPE_MAX_STATES,
   type DevicePrototypeDefinition,
   type DevicePrototypeEventId,
   type DevicePrototypeFrameCandidate,
   type DevicePrototypeInteraction,
   type DevicePrototypeInteractionOption,
+  type DevicePrototypeManualSettings,
+  type DevicePrototypeMode,
+  type DevicePrototypeSlideshowSettings,
   type DevicePrototypeState
 } from '../model/types'
 
 export interface CreateDevicePrototypeInteractionInput {
   name: string
   definition: DevicePrototypeDefinition
+  mode?: DevicePrototypeMode
+  manual?: Partial<DevicePrototypeManualSettings>
+  slideshow?: Partial<DevicePrototypeSlideshowSettings>
 }
 
 const interactions = ref<DevicePrototypeInteraction[]>([])
@@ -27,6 +40,9 @@ function createInteraction(name: string): DevicePrototypeInteraction {
   return {
     id: createId('interaction'),
     name,
+    mode: 'manual',
+    manual: { ...DEFAULT_DEVICE_PROTOTYPE_MANUAL_SETTINGS },
+    slideshow: { ...DEFAULT_DEVICE_PROTOTYPE_SLIDESHOW_SETTINGS },
     initialStateId: '',
     states: [],
     transitions: []
@@ -35,7 +51,9 @@ function createInteraction(name: string): DevicePrototypeInteraction {
 
 function validateDefinition(definition: DevicePrototypeDefinition): void {
   if (definition.states.length < 2) throw new Error('交互至少需要两个 Frame')
-  if (definition.states.length > 10) throw new Error('交互最多支持 10 个 Frame')
+  if (definition.states.length > DEVICE_PROTOTYPE_MAX_STATES) {
+    throw new Error(`交互最多支持 ${DEVICE_PROTOTYPE_MAX_STATES} 个 Frame`)
+  }
 
   const stateIds = new Set(definition.states.map((state) => state.id))
   if (stateIds.size !== definition.states.length) throw new Error('交互中包含重复的 Frame')
@@ -78,16 +96,19 @@ export function useDevicePrototype() {
       const initialState = interaction.states.find(
         (state) => state.id === interaction.initialStateId
       )
-      const valid = interaction.states.length > 0 && Boolean(initialState)
+      const valid = interaction.states.length >= 2 && Boolean(initialState)
       let reason = ''
       if (interaction.states.length === 0) reason = '尚未添加界面状态'
+      else if (interaction.states.length < 2) reason = '交互至少需要两个画面'
       else if (!initialState) reason = '未设置有效的初始状态'
 
       return {
         id: interaction.id,
         name: interaction.name,
+        mode: interaction.mode,
         stateCount: interaction.states.length,
         initialStateName: initialState?.name ?? '',
+        intervalMs: interaction.slideshow.intervalMs,
         width: firstState?.width ?? 0,
         height: firstState?.height ?? 0,
         valid,
@@ -121,6 +142,16 @@ export function useDevicePrototype() {
     const interaction: DevicePrototypeInteraction = {
       id: createId('interaction'),
       name,
+      mode: input.mode ?? 'custom',
+      manual: {
+        ...DEFAULT_DEVICE_PROTOTYPE_MANUAL_SETTINGS,
+        ...input.manual
+      },
+      slideshow: {
+        intervalMs: normalizeSlideshowInterval(
+          input.slideshow?.intervalMs ?? DEFAULT_DEVICE_PROTOTYPE_SLIDESHOW_SETTINGS.intervalMs
+        )
+      },
       initialStateId: input.definition.initialStateId,
       states: input.definition.states.map((state) => ({ ...state })),
       transitions: input.definition.transitions.map((transition) => ({ ...transition }))
@@ -162,6 +193,7 @@ export function useDevicePrototype() {
       selectedStateId.value = existing.id
       return
     }
+    if (states.value.length >= DEVICE_PROTOTYPE_MAX_STATES) return
 
     const state: DevicePrototypeState = {
       id: candidate.id,
@@ -176,6 +208,69 @@ export function useDevicePrototype() {
       initialStateId: interaction.initialStateId || state.id
     }))
     selectedStateId.value = state.id
+  }
+
+  function addFrames(candidates: DevicePrototypeFrameCandidate[]) {
+    for (const candidate of candidates) {
+      if (states.value.length >= DEVICE_PROTOTYPE_MAX_STATES) break
+      addFrame(candidate)
+    }
+  }
+
+  function moveState(stateId: string, direction: -1 | 1) {
+    updateSelectedInteraction((interaction) => {
+      const index = interaction.states.findIndex((state) => state.id === stateId)
+      const target = index + direction
+      if (index === -1 || target < 0 || target >= interaction.states.length) return interaction
+      const nextStates = [...interaction.states]
+      const state = nextStates[index]
+      nextStates.splice(index, 1)
+      nextStates.splice(target, 0, state)
+      return { ...interaction, states: nextStates }
+    })
+  }
+
+  function setMode(mode: DevicePrototypeMode) {
+    updateSelectedInteraction((interaction) => ({ ...interaction, mode }))
+  }
+
+  function setManualEvent(action: 'next' | 'previous', event: DevicePrototypeEventId) {
+    updateSelectedInteraction((interaction) => {
+      const current = interaction.manual
+      if (action === 'next') {
+        return {
+          ...interaction,
+          manual: {
+            ...current,
+            nextEvent: event,
+            previousEvent:
+              event === current.previousEvent ? current.nextEvent : current.previousEvent
+          }
+        }
+      }
+      return {
+        ...interaction,
+        manual: {
+          ...current,
+          previousEvent: event,
+          nextEvent: event === current.nextEvent ? current.previousEvent : current.nextEvent
+        }
+      }
+    })
+  }
+
+  function setManualLoop(loop: boolean) {
+    updateSelectedInteraction((interaction) => ({
+      ...interaction,
+      manual: { ...interaction.manual, loop }
+    }))
+  }
+
+  function setSlideshowInterval(intervalMs: number) {
+    updateSelectedInteraction((interaction) => ({
+      ...interaction,
+      slideshow: { intervalMs: normalizeSlideshowInterval(intervalMs) }
+    }))
   }
 
   function removeState(stateId: string) {
@@ -233,7 +328,9 @@ export function useDevicePrototype() {
     return {
       initialStateId: interaction.initialStateId,
       states: interaction.states.map((state) => ({ ...state })),
-      transitions: interaction.transitions.map((transition) => ({ ...transition }))
+      transitions: resolveDevicePrototypeTransitions(interaction).map((transition) => ({
+        ...transition
+      }))
     }
   }
 
@@ -254,8 +351,14 @@ export function useDevicePrototype() {
     selectInteraction,
     renameInteraction,
     addFrame,
+    addFrames,
     removeState,
+    moveState,
     setInitialState,
+    setMode,
+    setManualEvent,
+    setManualLoop,
+    setSlideshowInterval,
     selectState,
     transitionTarget,
     setTransition,

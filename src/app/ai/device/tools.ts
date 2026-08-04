@@ -34,9 +34,10 @@ const QUESTION_MARKERS = [
 const PROTOTYPE_DEPLOYMENT_MARKERS = [
   /交互/u,
   /状态机/u,
+  /手动浏览|手动切换|幻灯片|自动播放|轮播|上一张|下一张/u,
   /多个\s*Frame/iu,
   /multi[ -]?frame/iu,
-  /prototype/iu
+  /prototype|slideshow|carousel|manual (?:browsing|navigation)/iu
 ]
 
 export function isDirectUsbFrameDeploymentRequest(text: string): boolean {
@@ -93,6 +94,9 @@ export function prepareUsbPrototypeDeploymentOutput(
     },
     interaction: {
       name: proposal.name,
+      mode: proposal.mode,
+      manual: proposal.manual,
+      slideshow: proposal.slideshow,
       initialStateId: proposal.definition.initialStateId,
       states: proposal.definition.states.map((state) => ({
         id: state.id,
@@ -142,7 +146,7 @@ export function createDeviceTools(store: EditorStore): ToolSet {
     }),
     prepare_usb_prototype_deployment: tool({
       description:
-        'Prepare a multi-screen interaction and USB prototype deployment proposal from Frame or image IDs in the active page context. Different source dimensions are supported and converted independently for the target device.',
+        'Prepare a manual browsing, slideshow, or custom multi-screen interaction and USB deployment proposal from Frame or image IDs in the active page context. Different source dimensions are supported and converted independently for the target device.',
       inputSchema: valibotSchema(
         v.object({
           intent: v.pipe(
@@ -151,6 +155,7 @@ export function createDeviceTools(store: EditorStore): ToolSet {
             v.description('A concise user-facing description in the latest user language')
           ),
           name: v.pipe(v.string(), v.minLength(1), v.description('Name of the new interaction')),
+          mode: v.picklist(['manual', 'slideshow', 'custom']),
           frameIds: v.pipe(
             v.array(v.string()),
             v.minLength(2),
@@ -158,7 +163,7 @@ export function createDeviceTools(store: EditorStore): ToolSet {
             v.description('Ordered Frame or image node IDs to include as interaction states')
           ),
           initialFrameId: v.pipe(v.string(), v.minLength(1)),
-          transitions: v.pipe(
+          transitions: v.optional(
             v.array(
               v.object({
                 fromFrameId: v.string(),
@@ -166,7 +171,25 @@ export function createDeviceTools(store: EditorStore): ToolSet {
                 toFrameId: v.string()
               })
             ),
-            v.minLength(1)
+            []
+          ),
+          manual: v.optional(
+            v.object({
+              nextEvent: v.optional(
+                v.picklist(DEVICE_PROTOTYPE_EVENTS.map((event) => event.id)),
+                'screen_click'
+              ),
+              previousEvent: v.optional(
+                v.picklist(DEVICE_PROTOTYPE_EVENTS.map((event) => event.id)),
+                'screen_long_press'
+              ),
+              loop: v.optional(v.boolean(), true)
+            })
+          ),
+          slideshow: v.optional(
+            v.object({
+              intervalMs: v.optional(v.pipe(v.number(), v.minValue(500), v.maxValue(60000)), 3000)
+            })
           ),
           backgroundColor: v.optional(v.pipe(v.string(), v.regex(HEX_COLOR)), '#000000')
         })

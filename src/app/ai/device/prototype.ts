@@ -6,9 +6,16 @@ import {
   getDevicePrototypeFrameCandidates
 } from '@/app/editor/device-prototype'
 import {
+  buildManualTransitions,
+  DEFAULT_DEVICE_PROTOTYPE_MANUAL_SETTINGS,
+  DEFAULT_DEVICE_PROTOTYPE_SLIDESHOW_SETTINGS,
   type DevicePrototypeDefinition,
   type DevicePrototypeEventId,
   type DevicePrototypeInteraction,
+  type DevicePrototypeManualSettings,
+  type DevicePrototypeMode,
+  type DevicePrototypeSlideshowSettings,
+  normalizeSlideshowInterval,
   useDevicePrototype
 } from '@/features/device-prototype'
 import {
@@ -33,9 +40,12 @@ export interface DevicePrototypeTransitionInput {
 export interface PrepareDevicePrototypeProposalInput {
   intent: string
   name: string
+  mode?: DevicePrototypeMode
   frameIds: string[]
   initialFrameId: string
-  transitions: DevicePrototypeTransitionInput[]
+  transitions?: DevicePrototypeTransitionInput[]
+  manual?: Partial<DevicePrototypeManualSettings>
+  slideshow?: Partial<DevicePrototypeSlideshowSettings>
   backgroundColor?: string
 }
 
@@ -53,6 +63,9 @@ export interface DevicePrototypeProposal {
   status: DevicePrototypeProposalStatus
   intent: string
   name: string
+  mode: DevicePrototypeMode
+  manual: DevicePrototypeManualSettings
+  slideshow: DevicePrototypeSlideshowSettings
   revision: number
   definition: DevicePrototypeDefinition
   profileId: string
@@ -76,6 +89,9 @@ const proposals = reactive(new Map<string, DevicePrototypeProposalRecord>())
 function interactionFingerprint(interaction: DevicePrototypeInteraction): string {
   return JSON.stringify({
     initialStateId: interaction.initialStateId,
+    mode: interaction.mode,
+    manual: interaction.manual,
+    slideshow: interaction.slideshow,
     states: interaction.states,
     transitions: interaction.transitions
   })
@@ -110,8 +126,13 @@ function supersedeInactiveProposals(): void {
 function validateProposalInput(
   store: EditorStore,
   input: PrepareDevicePrototypeProposalInput
-): DevicePrototypeDefinition {
-  if (input.transitions.length === 0) throw new Error('交互至少需要一条事件跳转')
+): {
+  definition: DevicePrototypeDefinition
+  mode: DevicePrototypeMode
+  manual: DevicePrototypeManualSettings
+  slideshow: DevicePrototypeSlideshowSettings
+} {
+  const mode = input.mode ?? 'custom'
   const candidates = new Map(
     getDevicePrototypeFrameCandidates(store).map((candidate) => [candidate.id, candidate])
   )
@@ -132,8 +153,24 @@ function validateProposalInput(
     }
   })
   const stateIds = new Set(frameIds)
+  const manual: DevicePrototypeManualSettings = {
+    ...DEFAULT_DEVICE_PROTOTYPE_MANUAL_SETTINGS,
+    ...input.manual
+  }
+  if (manual.nextEvent === manual.previousEvent) {
+    throw new Error('上一张和下一张不能使用同一个设备事件')
+  }
+  const slideshow: DevicePrototypeSlideshowSettings = {
+    intervalMs: normalizeSlideshowInterval(
+      input.slideshow?.intervalMs ?? DEFAULT_DEVICE_PROTOTYPE_SLIDESHOW_SETTINGS.intervalMs
+    )
+  }
   const transitionKeys = new Set<string>()
-  const transitions = input.transitions.map((transition) => {
+  const customTransitions = input.transitions ?? []
+  if (mode === 'custom' && customTransitions.length === 0) {
+    throw new Error('自定义交互至少需要一条事件跳转')
+  }
+  const transitions = customTransitions.map((transition) => {
     if (!stateIds.has(transition.fromFrameId) || !stateIds.has(transition.toFrameId)) {
       throw new Error('交互跳转引用了未选中的 Frame')
     }
@@ -147,7 +184,27 @@ function validateProposalInput(
     }
   })
 
-  return { initialStateId: input.initialFrameId, states, transitions }
+  return {
+    definition: {
+      initialStateId: input.initialFrameId,
+      states,
+      transitions: proposalTransitions(mode, states, manual, transitions)
+    },
+    mode,
+    manual,
+    slideshow
+  }
+}
+
+function proposalTransitions(
+  mode: DevicePrototypeMode,
+  states: DevicePrototypeDefinition['states'],
+  manual: DevicePrototypeManualSettings,
+  custom: DevicePrototypeDefinition['transitions']
+): DevicePrototypeDefinition['transitions'] {
+  if (mode === 'manual') return buildManualTransitions(states, manual)
+  if (mode === 'slideshow') return []
+  return custom
 }
 
 export function getDevicePrototypeProposal(id: string): DevicePrototypeProposal | undefined {
@@ -160,7 +217,7 @@ export function prepareDevicePrototypeProposal(
 ): DevicePrototypeProposal {
   const name = input.name.trim()
   if (!name) throw new Error('交互名称不能为空')
-  const definition = validateProposalInput(store, input)
+  const validated = validateProposalInput(store, input)
   supersedeInactiveProposals()
   const profile = getActiveEmbeddedDisplayProfile()
   const id = globalThis.crypto.randomUUID()
@@ -169,8 +226,11 @@ export function prepareDevicePrototypeProposal(
     status: 'ready',
     intent: input.intent,
     name,
+    mode: validated.mode,
+    manual: validated.manual,
+    slideshow: validated.slideshow,
     revision: store.state.sceneVersion,
-    definition,
+    definition: validated.definition,
     profileId: profile.id,
     profileName: profile.name,
     resolution: { ...profile.resolution },
@@ -218,9 +278,19 @@ export async function confirmDevicePrototypeProposalFromChat(id: string): Promis
     if (!interaction) {
       interaction = useDevicePrototype().createInteractionFromDefinition({
         name: proposal.name,
-        definition: proposal.definition
+        definition: proposal.definition,
+        mode: proposal.mode,
+        manual: proposal.manual,
+        slideshow: proposal.slideshow
       })
       proposal.interactionId = interaction.id
+    } else {
+      const currentDefinition = useDevicePrototype().definition(interaction.id)
+      if (!currentDefinition) throw new Error('交互定义已不存在')
+      proposal.mode = interaction.mode
+      proposal.manual = { ...interaction.manual }
+      proposal.slideshow = { ...interaction.slideshow }
+      proposal.definition = currentDefinition
     }
 
     const bake = await bakeDevicePrototype(proposal.store, interaction)

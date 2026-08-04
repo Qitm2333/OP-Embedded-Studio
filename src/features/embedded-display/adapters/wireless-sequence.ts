@@ -2,11 +2,14 @@ import type { EmbeddedDisplayProfile, EmbeddedImagePayload } from '../model/type
 import {
   encodeUsbSequenceFrames,
   imageFilesToUsbSequence,
+  type SequenceEncodingOptions,
   type UsbImageSequencePayload
 } from './usb-sequence'
 
 const WIRELESS_SEQUENCE_CONTENT_BYTES = 0x1cf0000
 const WIRELESS_SEQUENCE_ENCODING = { allowPatches: false } as const
+
+type WirelessSequenceOptions = Omit<SequenceEncodingOptions, 'allowPatches'>
 
 export type WirelessImageSequencePayload = UsbImageSequencePayload
 
@@ -32,10 +35,14 @@ function ensureWirelessSequenceFits(
 export function encodeWifiSequenceFrames(
   profile: EmbeddedDisplayProfile,
   frames: Uint8Array[],
-  name = 'PNG sequence'
+  name = 'PNG sequence',
+  options: WirelessSequenceOptions = {}
 ): WirelessImageSequencePayload {
   return ensureWirelessSequenceFits(
-    encodeUsbSequenceFrames(profile, frames, name, WIRELESS_SEQUENCE_ENCODING),
+    encodeUsbSequenceFrames(profile, frames, name, {
+      ...options,
+      ...WIRELESS_SEQUENCE_ENCODING
+    }),
     WIRELESS_SEQUENCE_CONTENT_BYTES
   )
 }
@@ -43,30 +50,42 @@ export function encodeWifiSequenceFrames(
 export function encodeBleSequenceFrames(
   profile: EmbeddedDisplayProfile,
   frames: Uint8Array[],
-  name = 'PNG sequence'
+  name = 'PNG sequence',
+  options: WirelessSequenceOptions = {}
 ): WirelessImageSequencePayload {
   return ensureWirelessSequenceFits(
-    encodeUsbSequenceFrames(profile, frames, name, WIRELESS_SEQUENCE_ENCODING),
+    encodeUsbSequenceFrames(profile, frames, name, {
+      ...options,
+      ...WIRELESS_SEQUENCE_ENCODING
+    }),
     WIRELESS_SEQUENCE_CONTENT_BYTES
   )
 }
 
 export async function imageFilesToWifiSequence(
   files: File[],
-  profile: EmbeddedDisplayProfile
+  profile: EmbeddedDisplayProfile,
+  options: WirelessSequenceOptions = {}
 ): Promise<WirelessImageSequencePayload> {
   return ensureWirelessSequenceFits(
-    await imageFilesToUsbSequence(files, profile, WIRELESS_SEQUENCE_ENCODING),
+    await imageFilesToUsbSequence(files, profile, {
+      ...options,
+      ...WIRELESS_SEQUENCE_ENCODING
+    }),
     WIRELESS_SEQUENCE_CONTENT_BYTES
   )
 }
 
 export async function imageFilesToBleSequence(
   files: File[],
-  profile: EmbeddedDisplayProfile
+  profile: EmbeddedDisplayProfile,
+  options: WirelessSequenceOptions = {}
 ): Promise<WirelessImageSequencePayload> {
   return ensureWirelessSequenceFits(
-    await imageFilesToUsbSequence(files, profile, WIRELESS_SEQUENCE_ENCODING),
+    await imageFilesToUsbSequence(files, profile, {
+      ...options,
+      ...WIRELESS_SEQUENCE_ENCODING
+    }),
     WIRELESS_SEQUENCE_CONTENT_BYTES
   )
 }
