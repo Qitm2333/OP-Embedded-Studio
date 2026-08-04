@@ -1,13 +1,17 @@
 import { describe, expect, test } from 'bun:test'
 
 import { describeDeviceDeploymentProblem } from '@/app/ai/device/errors'
-import { isDirectUsbFrameDeploymentRequest } from '@/app/ai/device/tools'
+import {
+  isDirectUsbFrameDeploymentRequest,
+  resolveEmbeddedImagePlacement
+} from '@/app/ai/device/tools'
 import type { EmbeddedDisplayProfile } from '@/features/embedded-display'
 import {
   cancelUsbFrameDeployment,
   normalizeUsbDeploymentError,
   prepareUsbFrameDeployment,
-  prepareUsbPrototypeDeployment
+  prepareUsbPrototypeDeployment,
+  updateUsbFrameDeploymentAdaptation
 } from '@/features/embedded-display'
 
 const profile: EmbeddedDisplayProfile = {
@@ -33,6 +37,10 @@ describe('AI USB deployment planning', () => {
     expect(isDirectUsbFrameDeploymentRequest('烧录成自动播放幻灯片')).toBe(false)
     expect(isDirectUsbFrameDeploymentRequest('deploy as manual browsing')).toBe(false)
     expect(isDirectUsbFrameDeploymentRequest('deploy this multi-frame prototype')).toBe(false)
+    expect(resolveEmbeddedImagePlacement('拉伸后烧录到设备')).toBe('stretch')
+    expect(resolveEmbeddedImagePlacement('等比缩放并部署')).toBe('contain')
+    expect(resolveEmbeddedImagePlacement('保持 1:1 不缩放')).toBe('pixel-perfect')
+    expect(resolveEmbeddedImagePlacement('直接烧录')).toBeUndefined()
   })
 
   test('renders a confirmation plan without accessing Web Serial', async () => {
@@ -91,6 +99,16 @@ describe('AI USB deployment planning', () => {
 
       expect(plan.status).toBe('ready')
       expect(plan.needsDeviceSelection).toBe(true)
+      expect(serialCalls).toBe(0)
+      expect(
+        await updateUsbFrameDeploymentAdaptation(plan.id, {
+          placement: 'stretch',
+          backgroundColor: '#123456'
+        })
+      ).toBe(true)
+      expect(plan.placement).toBe('stretch')
+      expect(plan.backgroundColor).toBe('#123456')
+      expect(plan.message).toBe('画面适配已更新，等待确认')
       expect(serialCalls).toBe(0)
 
       const replacement = await prepareUsbFrameDeployment({
@@ -207,6 +225,12 @@ describe('AI USB deployment planning', () => {
       expect(plan.prototype?.stateCount).toBe(2)
       expect(plan.status).toBe('ready')
       expect(plan.needsDeviceSelection).toBe(true)
+      expect(serialCalls).toBe(0)
+      expect(
+        await updateUsbFrameDeploymentAdaptation(plan.id, { placement: 'contain' })
+      ).toBe(true)
+      expect(plan.placement).toBe('contain')
+      expect(plan.message).toBe('画面适配已更新，等待确认')
       expect(serialCalls).toBe(0)
     } finally {
       for (const [key, descriptor] of Object.entries(descriptors)) {

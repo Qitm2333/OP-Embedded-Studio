@@ -4,21 +4,31 @@ import { computed, ref } from 'vue'
 
 import {
   cancelUsbFrameDeploymentFromChat,
-  executeUsbFrameDeploymentFromChat
+  executeUsbFrameDeploymentFromChat,
+  updateUsbFrameDeploymentAdaptationFromChat
 } from '@/app/ai/device/deployment'
 import { describeDeviceDeploymentProblem } from '@/app/ai/device/errors'
 import { useAIChat } from '@/app/ai/chat/use'
+import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import { useDeploymentCardDisclosure } from '@/components/chat/useDeploymentCardDisclosure'
 import {
   EmbeddedDisplayContentPreview,
   embeddedImagePlacementLabel,
-  getUsbFrameDeploymentPlan
+  getUsbFrameDeploymentPlan,
+  type EmbeddedImagePlacement
 } from '@/features/embedded-display'
 
 const { planId } = defineProps<{ planId: string }>()
 const { submitLocalDeviceAction } = useAIChat()
 const pendingAction = ref(false)
+const adaptationPending = ref(false)
+const adaptationError = ref('')
 const plan = computed(() => getUsbFrameDeploymentPlan(planId))
+const imagePlacementOptions: Array<{ value: EmbeddedImagePlacement; label: string }> = [
+  { value: 'stretch', label: '拉伸' },
+  { value: 'contain', label: '等比缩放' },
+  { value: 'pixel-perfect', label: '不缩放' }
+]
 
 const busy = computed(() => {
   const status = plan.value?.status
@@ -33,7 +43,25 @@ const busy = computed(() => {
 })
 
 const canCancel = computed(
-  () => !busy.value && plan.value?.status !== 'success' && plan.value?.status !== 'cancelled'
+  () =>
+    !busy.value &&
+    !adaptationPending.value &&
+    plan.value?.status !== 'success' &&
+    plan.value?.status !== 'cancelled'
+)
+const adaptationLocked = computed(() => {
+  const status = plan.value?.status
+  return (
+    busy.value ||
+    adaptationPending.value ||
+    status === 'success' ||
+    status === 'cancelled' ||
+    status === 'superseded' ||
+    status === 'stale'
+  )
+})
+const placementOptions = computed(() =>
+  imagePlacementOptions.map((option) => ({ ...option, disabled: adaptationLocked.value }))
 )
 
 const problem = computed(() => {
@@ -61,6 +89,7 @@ const statusLabel = computed(() => {
   if (status === 'superseded') return '已被替代'
   if (status === 'stale') return '内容已变化'
   if (status === 'error') return '需要处理'
+  if (adaptationPending.value) return '更新适配中'
   if (busy.value) return '烧录中'
   return '待确认'
 })
@@ -93,6 +122,37 @@ function stageLabel(status: string): string {
   if (status === 'skipped') return '已验证'
   if (status === 'error') return '失败'
   return '等待'
+}
+
+async function updateAdaptation(
+  placement: EmbeddedImagePlacement,
+  backgroundColor?: string
+): Promise<void> {
+  if (!plan.value || adaptationLocked.value) return
+  adaptationPending.value = true
+  adaptationError.value = ''
+  try {
+    const updated = await updateUsbFrameDeploymentAdaptationFromChat(
+      planId,
+      placement,
+      backgroundColor
+    )
+    if (!updated) adaptationError.value = '当前烧录状态无法修改画面适配'
+  } catch (error) {
+    adaptationError.value = error instanceof Error ? error.message : String(error)
+  } finally {
+    adaptationPending.value = false
+  }
+}
+
+async function updatePlacement(value: string): Promise<void> {
+  const placement = imagePlacementOptions.find((option) => option.value === value)?.value
+  if (placement) await updateAdaptation(placement)
+}
+
+async function updateBackgroundColor(event: Event): Promise<void> {
+  const backgroundColor = (event.target as HTMLInputElement).value
+  if (plan.value) await updateAdaptation(plan.value.placement, backgroundColor)
 }
 
 async function execute(): Promise<void> {
@@ -186,16 +246,6 @@ function cancel(): void {
             </span>
           </div>
           <div class="flex gap-2">
-            <span class="w-10 shrink-0 text-muted">适配</span>
-            <span class="flex min-w-0 items-center gap-1.5 text-surface">
-              <span
-                class="size-2.5 shrink-0 rounded-sm border border-border"
-                :style="{ backgroundColor: plan.backgroundColor }"
-              />
-              {{ embeddedImagePlacementLabel(plan.placement) }}
-            </span>
-          </div>
-          <div class="flex gap-2">
             <span class="w-10 shrink-0 text-muted">版本</span>
             <span class="text-surface">revision {{ plan.frame.revision }}</span>
           </div>
@@ -204,6 +254,45 @@ function cancel(): void {
             <span class="text-surface">{{ formatBytes(plan.contentBytes) }}</span>
           </div>
         </div>
+      </div>
+
+      <div class="border-t border-border px-3 py-2.5">
+        <div class="mb-2 flex items-center justify-between gap-2 text-[11px]">
+          <span class="font-medium text-surface">画面适配</span>
+          <label class="flex items-center gap-1.5 text-muted">
+            <span>{{ embeddedImagePlacementLabel(plan.placement) }}</span>
+            <input
+              :value="plan.backgroundColor"
+              type="color"
+              aria-label="烧录背景颜色"
+              class="h-6 w-8 cursor-pointer rounded border border-border bg-canvas p-0.5 disabled:cursor-default disabled:opacity-50"
+              :disabled="adaptationLocked"
+              @change="updateBackgroundColor"
+            />
+          </label>
+        </div>
+        <SegmentedControl
+          :model-value="plan.placement"
+          class="w-full"
+          :options="placementOptions"
+          label="选择烧录画面适配方式"
+          @change="updatePlacement"
+        >
+          <template #option="{ option }">
+            <span class="flex min-w-0 items-center justify-center gap-1">
+              <icon-lucide-expand v-if="option.value === 'stretch'" class="size-3 shrink-0" />
+              <icon-lucide-maximize-2
+                v-else-if="option.value === 'contain'"
+                class="size-3 shrink-0"
+              />
+              <icon-lucide-scan-line v-else class="size-3 shrink-0" />
+              <span class="truncate">{{ option.label }}</span>
+            </span>
+          </template>
+        </SegmentedControl>
+        <p v-if="adaptationError" class="mt-1.5 text-[10px] leading-4 text-red-300">
+          {{ adaptationError }}
+        </p>
       </div>
 
       <div class="border-t border-border px-3 py-2.5">
@@ -299,10 +388,13 @@ function cancel(): void {
         <button
           type="button"
           class="flex min-h-7 max-w-full items-center gap-1.5 rounded bg-accent px-3 py-1.5 text-xs leading-4 font-medium text-white hover:brightness-110 disabled:opacity-40"
-          :disabled="busy"
+          :disabled="busy || adaptationPending"
           @click="handlePrimaryAction"
         >
-          <icon-lucide-loader-circle v-if="busy" class="size-3 animate-spin" />
+          <icon-lucide-loader-circle
+            v-if="busy || adaptationPending"
+            class="size-3 animate-spin"
+          />
           <icon-lucide-refresh-cw v-else-if="needsReprepare" class="size-3 shrink-0" />
           <icon-lucide-usb v-else class="size-3 shrink-0" />
           <span class="min-w-0 text-center">{{ executeLabel }}</span>

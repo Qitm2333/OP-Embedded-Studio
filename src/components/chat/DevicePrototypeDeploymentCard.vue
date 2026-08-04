@@ -7,22 +7,31 @@ import {
   confirmDevicePrototypeProposalFromChat,
   executeDevicePrototypeDeploymentFromChat,
   getDevicePrototypeDeploymentPlan,
-  getDevicePrototypeProposal
+  getDevicePrototypeProposal,
+  updateDevicePrototypeAdaptationFromChat
 } from '@/app/ai/device/prototype'
 import { describeDeviceDeploymentProblem } from '@/app/ai/device/errors'
 import { useAIChat } from '@/app/ai/chat/use'
 import { useDeploymentCardDisclosure } from '@/components/chat/useDeploymentCardDisclosure'
+import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import { DEVICE_PROTOTYPE_EVENTS } from '@/features/device-prototype'
 import {
   EmbeddedDisplayContentPreview,
-  embeddedImagePlacementLabel
+  embeddedImagePlacementLabel,
+  type EmbeddedImagePlacement
 } from '@/features/embedded-display'
 
 const { proposalId } = defineProps<{ proposalId: string }>()
 const { activeTab } = useAIChat()
 const pending = ref(false)
+const adaptationError = ref('')
 const proposal = computed(() => getDevicePrototypeProposal(proposalId))
 const deployment = computed(() => getDevicePrototypeDeploymentPlan(proposalId))
+const imagePlacementOptions: Array<{ value: EmbeddedImagePlacement; label: string }> = [
+  { value: 'stretch', label: '拉伸' },
+  { value: 'contain', label: '等比缩放' },
+  { value: 'pixel-perfect', label: '不缩放' }
+]
 const problem = computed(() => {
   const message = deployment.value?.error || proposal.value?.error
   if (!message && deployment.value?.status !== 'stale') return null
@@ -43,6 +52,21 @@ const busy = computed(() => {
     status === 'transferring-content'
   )
 })
+const adaptationLocked = computed(() => {
+  const status = deployment.value?.status
+  return (
+    busy.value ||
+    status === 'success' ||
+    status === 'cancelled' ||
+    status === 'superseded' ||
+    status === 'stale' ||
+    proposal.value?.status === 'cancelled' ||
+    proposal.value?.status === 'superseded'
+  )
+})
+const placementOptions = computed(() =>
+  imagePlacementOptions.map((option) => ({ ...option, disabled: adaptationLocked.value }))
+)
 
 const cardStatus = computed(() => {
   if (
@@ -128,6 +152,37 @@ function stageLabel(status: string): string {
   if (status === 'skipped') return '已验证'
   if (status === 'error') return '失败'
   return '等待'
+}
+
+async function updateAdaptation(
+  placement: EmbeddedImagePlacement,
+  backgroundColor?: string
+): Promise<void> {
+  if (!proposal.value || adaptationLocked.value) return
+  pending.value = true
+  adaptationError.value = ''
+  try {
+    const updated = await updateDevicePrototypeAdaptationFromChat(
+      proposalId,
+      placement,
+      backgroundColor
+    )
+    if (!updated) adaptationError.value = '当前烧录状态无法修改画面适配'
+  } catch (error) {
+    adaptationError.value = error instanceof Error ? error.message : String(error)
+  } finally {
+    pending.value = false
+  }
+}
+
+async function updatePlacement(value: string): Promise<void> {
+  const placement = imagePlacementOptions.find((option) => option.value === value)?.value
+  if (placement) await updateAdaptation(placement)
+}
+
+async function updateBackgroundColor(event: Event): Promise<void> {
+  const backgroundColor = (event.target as HTMLInputElement).value
+  if (proposal.value) await updateAdaptation(proposal.value.placement, backgroundColor)
 }
 
 async function prepare(): Promise<void> {
@@ -238,19 +293,53 @@ function cancel(): void {
               {{ proposal.resolution.width }} × {{ proposal.resolution.height }}
               {{ proposal.roundScreen ? '· 圆形' : '' }}
             </span>
-            <span class="text-muted">适配</span>
-            <span class="flex min-w-0 items-center gap-1.5 text-surface">
-              <span
-                class="size-2.5 shrink-0 rounded-sm border border-border"
-                :style="{ backgroundColor: proposal.backgroundColor }"
-              />
-              {{ embeddedImagePlacementLabel(proposal.placement) }}
-            </span>
             <template v-if="deployment">
               <span class="text-muted">数据</span>
               <span class="text-surface">{{ formatBytes(deployment.contentBytes) }}</span>
             </template>
           </div>
+        </div>
+
+        <div class="border-t border-border pt-2">
+          <div class="mb-2 flex items-center justify-between gap-2">
+            <span class="font-medium text-surface">画面适配</span>
+            <label class="flex items-center gap-1.5 text-muted">
+              <span>{{ embeddedImagePlacementLabel(proposal.placement) }}</span>
+              <input
+                :value="proposal.backgroundColor"
+                type="color"
+                aria-label="交互烧录背景颜色"
+                class="h-6 w-8 cursor-pointer rounded border border-border bg-canvas p-0.5 disabled:cursor-default disabled:opacity-50"
+                :disabled="adaptationLocked"
+                @change="updateBackgroundColor"
+              />
+            </label>
+          </div>
+          <SegmentedControl
+            :model-value="proposal.placement"
+            class="w-full"
+            :options="placementOptions"
+            label="选择交互烧录画面适配方式"
+            @change="updatePlacement"
+          >
+            <template #option="{ option }">
+              <span class="flex min-w-0 items-center justify-center gap-1">
+                <icon-lucide-expand
+                  v-if="option.value === 'stretch'"
+                  class="size-3 shrink-0"
+                />
+                <icon-lucide-maximize-2
+                  v-else-if="option.value === 'contain'"
+                  class="size-3 shrink-0"
+                />
+                <icon-lucide-scan-line v-else class="size-3 shrink-0" />
+                <span class="truncate">{{ option.label }}</span>
+              </span>
+            </template>
+          </SegmentedControl>
+          <p v-if="adaptationError" class="mt-1.5 text-[10px] leading-4 text-red-300">
+            {{ adaptationError }}
+          </p>
         </div>
 
         <details v-if="proposal.definition.transitions.length" class="border-t border-border pt-2">

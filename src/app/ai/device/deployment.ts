@@ -7,6 +7,7 @@ import {
   getActiveEmbeddedImageSettings,
   getUsbFrameDeploymentPlan,
   prepareUsbFrameDeployment,
+  updateUsbFrameDeploymentAdaptation,
   type EmbeddedImagePlacement,
   type UsbFrameDeploymentPlan
 } from '@/features/embedded-display'
@@ -53,6 +54,14 @@ export async function prepareUsbFrameDeploymentFromStore(
 
 export function cancelUsbFrameDeploymentFromChat(planId: string): void {
   cancelUsbFrameDeployment(planId)
+}
+
+export async function updateUsbFrameDeploymentAdaptationFromChat(
+  planId: string,
+  placement: EmbeddedImagePlacement,
+  backgroundColor?: string
+): Promise<boolean> {
+  return updateUsbFrameDeploymentAdaptation(planId, { placement, backgroundColor })
 }
 
 export async function executeUsbFrameDeploymentFromChat(planId: string): Promise<boolean> {

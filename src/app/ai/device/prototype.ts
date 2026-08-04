@@ -27,6 +27,7 @@ import {
   isUsbFrameDeploymentBusy,
   prepareUsbPrototypeDeployment,
   supersedeUsbFrameDeployment,
+  updateUsbFrameDeploymentAdaptation,
   type EmbeddedImagePlacement,
   type UsbFrameDeploymentPlan
 } from '@/features/embedded-display'
@@ -327,6 +328,38 @@ export async function confirmDevicePrototypeProposalFromChat(id: string): Promis
     proposal.message = proposal.error
     return false
   }
+}
+
+export async function updateDevicePrototypeAdaptationFromChat(
+  id: string,
+  placement: EmbeddedImagePlacement,
+  backgroundColor?: string
+): Promise<boolean> {
+  const proposal = proposals.get(id)
+  if (
+    !proposal ||
+    proposal.status === 'preparing' ||
+    proposal.status === 'cancelled' ||
+    proposal.status === 'superseded'
+  ) {
+    return false
+  }
+  const nextBackgroundColor = backgroundColor ?? proposal.backgroundColor
+  if (proposal.deploymentPlanId) {
+    const updated = await updateUsbFrameDeploymentAdaptation(proposal.deploymentPlanId, {
+      placement,
+      backgroundColor: nextBackgroundColor
+    })
+    if (!updated) return false
+  }
+  proposal.placement = placement
+  proposal.backgroundColor = nextBackgroundColor
+  proposal.status = proposal.deploymentPlanId ? 'deployment-ready' : 'ready'
+  proposal.error = undefined
+  proposal.message = proposal.deploymentPlanId
+    ? '画面适配已更新，烧录内容已重新生成'
+    : '画面适配已更新，确认后将按此方式生成烧录内容'
+  return true
 }
 
 export async function executeDevicePrototypeDeploymentFromChat(

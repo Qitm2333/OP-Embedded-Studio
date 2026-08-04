@@ -53,6 +53,17 @@ export function isDirectUsbFrameDeploymentRequest(text: string): boolean {
   return DIRECT_DEPLOYMENT_TERMS.some((pattern) => pattern.test(command))
 }
 
+export function resolveEmbeddedImagePlacement(text: string): EmbeddedImagePlacement | undefined {
+  if (/(?:不缩放|原始尺寸|原图尺寸|1\s*:\s*1|pixel[- ]?perfect|no scaling|unscaled)/iu.test(text)) {
+    return 'pixel-perfect'
+  }
+  if (/(?:等比(?:缩放)?|完整显示|contain|fit(?:ted)?|preserve aspect)/iu.test(text)) {
+    return 'contain'
+  }
+  if (/(?:拉伸|铺满|填满|stretch|fill)/iu.test(text)) return 'stretch'
+  return undefined
+}
+
 export async function prepareUsbFrameDeploymentOutput(
   store: EditorStore,
   intent: string,

@@ -90,9 +90,22 @@ type DeploymentSerialPort = UsbContentSerialPort
 
 interface UsbFrameDeploymentRecord extends UsbFrameDeploymentPlan {
   payload: EmbeddedImagePayload | EmbeddedPrototypePayload | UsbImageSequencePayload
+  source: UsbFrameDeploymentSource
   port?: DeploymentSerialPort
   manifestUrl: string
 }
+
+type UsbFrameDeploymentSource =
+  | {
+      kind: 'frame'
+      profile: EmbeddedDisplayProfile
+      file: File
+    }
+  | {
+      kind: 'prototype'
+      profile: EmbeddedDisplayProfile
+      bake: EmbeddedPrototypeBakeResult
+    }
 
 function deploymentContentLabel(mode: UsbFrameDeploymentPlan['mode']): string {
   if (mode === 'prototype') return '交互内容'
@@ -122,6 +135,11 @@ export interface ExecuteUsbFrameDeploymentOptions {
   isSnapshotCurrent?: () => boolean
   onFirmwareVerified?: (plan: UsbFrameDeploymentPlan) => void | Promise<void>
   onSuccess?: (plan: UsbFrameDeploymentPlan) => void | Promise<void>
+}
+
+export interface UpdateUsbFrameDeploymentAdaptationInput {
+  placement: EmbeddedImagePlacement
+  backgroundColor?: string
 }
 
 const plans = reactive(new Map<string, UsbFrameDeploymentRecord>())
@@ -277,6 +295,81 @@ export function getUsbFrameDeploymentPlan(id: string): UsbFrameDeploymentPlan | 
   return plans.get(id)
 }
 
+async function buildDeploymentPayload(
+  source: UsbFrameDeploymentSource,
+  placement: EmbeddedImagePlacement,
+  backgroundColor: string
+): Promise<{
+  payload: EmbeddedImagePayload | EmbeddedPrototypePayload | UsbImageSequencePayload
+  contentBytes: number
+}> {
+  if (source.kind === 'frame') {
+    const payload = await imageFileToRgb565(source.file, source.profile, {
+      placement,
+      backgroundColor
+    })
+    return { payload, contentBytes: encodeWirelessImage(payload).byteLength }
+  }
+
+  const slideshow = source.bake.mode === 'slideshow'
+  const payload = slideshow
+    ? await imageFilesToUsbSequence(
+        source.bake.states.map((state) => state.file),
+        source.profile,
+        {
+          frameDelayMs: source.bake.intervalMs,
+          preserveOrder: true,
+          placement,
+          backgroundColor
+        }
+      )
+    : await prototypeBakeToRgb565(source.bake, source.profile, backgroundColor, placement)
+  return {
+    payload,
+    contentBytes:
+      'content' in payload
+        ? payload.content.byteLength
+        : encodeWirelessPrototype(payload).byteLength
+  }
+}
+
+export async function updateUsbFrameDeploymentAdaptation(
+  id: string,
+  input: UpdateUsbFrameDeploymentAdaptationInput
+): Promise<boolean> {
+  const plan = plans.get(id)
+  if (
+    !plan ||
+    isUsbFrameDeploymentBusy(plan.status) ||
+    isUsbFrameDeploymentTerminal(plan.status) ||
+    plan.status === 'stale'
+  ) {
+    return false
+  }
+  const backgroundColor = input.backgroundColor ?? plan.backgroundColor
+  if (plan.placement === input.placement && plan.backgroundColor === backgroundColor) return true
+
+  const result = await buildDeploymentPayload(plan.source, input.placement, backgroundColor)
+  if (
+    plans.get(id) !== plan ||
+    isUsbFrameDeploymentBusy(plan.status) ||
+    isUsbFrameDeploymentTerminal(plan.status)
+  ) {
+    return false
+  }
+  plan.placement = input.placement
+  plan.backgroundColor = backgroundColor
+  plan.payload = markRaw(result.payload)
+  plan.contentBytes = result.contentBytes
+  plan.status = 'ready'
+  plan.error = undefined
+  plan.progress = 0
+  plan.contentStage = 'pending'
+  plan.firmwareStage = plan.firmwareVerified ? 'skipped' : 'pending'
+  plan.message = '画面适配已更新，等待确认'
+  return true
+}
+
 export async function prepareUsbFrameDeployment(
   input: PrepareUsbFrameDeploymentInput
 ): Promise<UsbFrameDeploymentPlan> {
@@ -284,11 +377,16 @@ export async function prepareUsbFrameDeployment(
     throw new Error('当前屏幕尚未提供 USB 单 Frame 快速部署固件')
   }
   const placement = input.placement ?? 'pixel-perfect'
-  const payload = await imageFileToRgb565(input.file, input.profile, {
-    placement,
-    backgroundColor: input.backgroundColor
+  const source = markRaw<UsbFrameDeploymentSource>({
+    kind: 'frame',
+    profile: input.profile,
+    file: input.file
   })
-  const contentBytes = encodeWirelessImage(payload).byteLength
+  const { payload, contentBytes } = await buildDeploymentPayload(
+    source,
+    placement,
+    input.backgroundColor
+  )
   const id = globalThis.crypto.randomUUID()
   supersedeInactiveUsbDeployments()
   const plan = reactive<UsbFrameDeploymentRecord>({
@@ -314,6 +412,7 @@ export async function prepareUsbFrameDeployment(
     logs: [],
     createdAt: Date.now(),
     payload: markRaw(payload),
+    source,
     manifestUrl: embeddedManifestUrl(input.profile.id, 'usb-frame')
   })
   plans.set(id, plan)
@@ -328,25 +427,16 @@ export async function prepareUsbPrototypeDeployment(
   }
   const placement = input.placement ?? 'pixel-perfect'
   const slideshow = input.bake.mode === 'slideshow'
-  const payload = slideshow
-    ? await imageFilesToUsbSequence(
-        input.bake.states.map((state) => state.file),
-        input.profile,
-        {
-          frameDelayMs: input.bake.intervalMs,
-          preserveOrder: true,
-          placement,
-          backgroundColor: input.backgroundColor
-        }
-      )
-    : await prototypeBakeToRgb565(
-        input.bake,
-        input.profile,
-        input.backgroundColor,
-        placement
-      )
-  const contentBytes =
-    'content' in payload ? payload.content.byteLength : encodeWirelessPrototype(payload).byteLength
+  const source = markRaw<UsbFrameDeploymentSource>({
+    kind: 'prototype',
+    profile: input.profile,
+    bake: input.bake
+  })
+  const { payload, contentBytes } = await buildDeploymentPayload(
+    source,
+    placement,
+    input.backgroundColor
+  )
   const previewFile = input.bake.states.find(
     (state) => state.id === input.bake.initialStateId
   )?.file
@@ -383,6 +473,7 @@ export async function prepareUsbPrototypeDeployment(
     logs: [],
     createdAt: Date.now(),
     payload: markRaw(payload),
+    source,
     manifestUrl: embeddedManifestUrl(input.profile.id, 'usb-frame')
   })
   plans.set(id, plan)

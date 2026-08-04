@@ -17,6 +17,7 @@ import {
   createDeviceTools,
   isDirectUsbFrameDeploymentRequest,
   prepareUsbFrameDeploymentOutput,
+  resolveEmbeddedImagePlacement,
   prepareUsbPrototypeDeploymentOutput
 } from '@/app/ai/device/tools'
 import { createAITools, MAX_AGENT_STEPS, recordStepUsage, resetRunSteps } from '@/app/ai/tools'
@@ -389,13 +390,18 @@ export function createChatSessionManager({
 
   async function submitLocalDeviceAction(text: string): Promise<Chat<UIMessage> | null> {
     if (!isDirectUsbFrameDeploymentRequest(text)) return null
-    const input = { intent: text }
+    const input = { intent: text, placement: resolveEmbeddedImagePlacement(text) }
     return submitLocalDeviceToolAction(
       text,
       'prepare_usb_frame_deployment',
       input,
       () =>
-        prepareUsbFrameDeploymentOutput(getActiveEditorStore(), input.intent),
+        prepareUsbFrameDeploymentOutput(
+          getActiveEditorStore(),
+          input.intent,
+          undefined,
+          input.placement
+        ),
       '部署参数已准备好，请检查确认卡后执行。'
     )
   }

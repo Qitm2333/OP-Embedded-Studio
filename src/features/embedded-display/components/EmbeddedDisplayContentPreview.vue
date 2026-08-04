@@ -65,7 +65,7 @@ function handleLoad(event: Event): void {
 
 <template>
   <div
-    class="relative shrink-0 overflow-hidden border border-border bg-black"
+    class="relative self-start shrink-0 overflow-hidden border border-border bg-black"
     :style="previewStyle"
   >
     <img

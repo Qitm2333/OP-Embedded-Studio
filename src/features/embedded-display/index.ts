@@ -16,7 +16,8 @@ export {
   normalizeUsbDeploymentError,
   prepareUsbFrameDeployment,
   prepareUsbPrototypeDeployment,
-  supersedeUsbFrameDeployment
+  supersedeUsbFrameDeployment,
+  updateUsbFrameDeploymentAdaptation
 } from './deployment/usb-frame'
 
 export type {
@@ -34,6 +35,7 @@ export type {
   ExecuteUsbFrameDeploymentOptions,
   PrepareUsbFrameDeploymentInput,
   PrepareUsbPrototypeDeploymentInput,
+  UpdateUsbFrameDeploymentAdaptationInput,
   UsbFrameDeploymentFrame,
   UsbFrameDeploymentPlan,
   UsbFrameDeploymentStageStatus,
