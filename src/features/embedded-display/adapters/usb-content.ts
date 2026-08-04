@@ -10,7 +10,7 @@ import { encodeWirelessImage, encodeWirelessPrototype } from './wireless-content
 
 const USB_FAST_PROFILES = new Set(['co5300_waveshare_amoled_1_75c'])
 
-export interface UsbFlashOptions extends UsbContentTransferOptions {}
+export type UsbFlashOptions = UsbContentTransferOptions
 
 export { requestSerialPort as requestUsbSerialPort }
 export type {
@@ -28,18 +28,18 @@ async function uploadUsbFirmwareContent(
   height: number,
   content: Uint8Array,
   options: UsbFlashOptions
-): Promise<void> {
+): Promise<number> {
   if (!supportsUsbFrameFastFlash(profileId)) {
     throw new Error('当前屏幕尚未提供 USB 高速传输固件')
   }
-  await uploadUsbContent({ width, height }, content, options)
+  return uploadUsbContent({ width, height }, content, options)
 }
 
 export async function flashUsbFrameFirmware(
   payload: EmbeddedImagePayload,
   options: UsbFlashOptions = {}
-): Promise<void> {
-  await uploadUsbFirmwareContent(
+): Promise<number> {
+  return uploadUsbFirmwareContent(
     payload.profileId,
     payload.width,
     payload.height,
@@ -51,8 +51,8 @@ export async function flashUsbFrameFirmware(
 export async function flashUsbSequenceFirmware(
   payload: UsbImageSequencePayload,
   options: UsbFlashOptions = {}
-): Promise<void> {
-  await uploadUsbFirmwareContent(
+): Promise<number> {
+  return uploadUsbFirmwareContent(
     payload.profileId,
     payload.width,
     payload.height,
@@ -64,8 +64,8 @@ export async function flashUsbSequenceFirmware(
 export async function flashUsbPrototypeFirmware(
   payload: EmbeddedPrototypePayload,
   options: UsbFlashOptions = {}
-): Promise<void> {
-  await uploadUsbFirmwareContent(
+): Promise<number> {
+  return uploadUsbFirmwareContent(
     payload.profileId,
     payload.width,
     payload.height,

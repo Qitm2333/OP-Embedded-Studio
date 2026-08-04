@@ -19,6 +19,13 @@ export class UsbContentFirmwareError extends Error {
   }
 }
 
+export class UsbContentDeviceUnavailableError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'UsbContentDeviceUnavailableError'
+  }
+}
+
 export type UsbContentProbeResult =
   | { compatible: true; capacity: number }
   | { compatible: false; issue: UsbContentFirmwareIssue; message: string }
@@ -248,7 +255,7 @@ export async function uploadUsbContent(
   profile: { width: number; height: number },
   content: Uint8Array,
   options: UsbContentTransferOptions = {}
-): Promise<void> {
+): Promise<number> {
   validateContent(content)
   const port = options.port ?? ((await requestSerialPort()) as UsbContentSerialPort)
   let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
@@ -257,9 +264,18 @@ export async function uploadUsbContent(
 
   try {
     options.onLog?.('正在连接 USB 高速内容服务…')
-    await port.open({ baudRate: 115200, bufferSize: 0x40000 })
-    await port.setSignals?.({ dataTerminalReady: false, requestToSend: false })
-    if (!port.readable || !port.writable) throw new Error('USB 串口数据流不可用')
+    try {
+      await port.open({ baudRate: 115200, bufferSize: 0x40000 })
+      await port.setSignals?.({ dataTerminalReady: false, requestToSend: false })
+    } catch (error) {
+      const name = error instanceof Error ? error.name : ''
+      if (name === 'SecurityError' || name === 'NotAllowedError') throw error
+      const message = error instanceof Error ? error.message : String(error)
+      throw new UsbContentDeviceUnavailableError(`USB 设备尚未恢复连接：${message}`)
+    }
+    if (!port.readable || !port.writable) {
+      throw new UsbContentDeviceUnavailableError('USB 设备串口尚未准备完成')
+    }
     reader = port.readable.getReader()
     writer = port.writable.getWriter()
     const readerState: ProtocolReaderState = { pending: '' }
@@ -293,6 +309,7 @@ export async function uploadUsbContent(
     transferStarted = false
     options.onProgress?.({ written: content.byteLength, total: content.byteLength, percent: 100 })
     options.onLog?.('内容校验通过，设备正在重启。')
+    return capacity
   } catch (error) {
     if (transferStarted && writer) {
       try {

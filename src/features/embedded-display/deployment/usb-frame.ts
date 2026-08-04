@@ -12,8 +12,8 @@ import {
   type UsbSerialPort
 } from '../adapters/usb-content'
 import {
-  ensureUsbContentFirmware,
-  getSingleAuthorizedUsbContentPort
+  getSingleAuthorizedUsbContentPort,
+  transferUsbContentWithFirmwareFallback
 } from '../adapters/usb-content-firmware'
 import type { UsbContentSerialPort } from '../adapters/usb-content-transfer'
 import { imageFilesToUsbSequence, type UsbImageSequencePayload } from '../adapters/usb-sequence'
@@ -198,17 +198,49 @@ async function markFirmwareVerified(
   }
 }
 
-async function ensureFirmware(
+async function uploadContent(
+  plan: UsbFrameDeploymentRecord,
+  port: DeploymentSerialPort,
+  firmwareUpdated: boolean
+): Promise<number> {
+  plan.status = 'transferring-content'
+  plan.contentStage = 'running'
+  const progressStart = firmwareUpdated ? 70 : 10
+  plan.progress = progressStart
+  const contentLabel = deploymentContentLabel(plan.mode)
+  plan.message = `正在传输${contentLabel}`
+  const flashOptions: UsbFlashOptions = {
+    port: port as UsbSerialPort,
+    onLog: (message) => appendLog(plan, message),
+    onProgress: ({ percent }) => {
+      plan.progress = progressStart + Math.round((percent * (100 - progressStart)) / 100)
+      plan.message = `正在传输${contentLabel} ${percent}%`
+    }
+  }
+  let capacity: number
+  if ('content' in plan.payload) {
+    capacity = await flashUsbSequenceFirmware(plan.payload, flashOptions)
+  }
+  else if (plan.mode === 'prototype' && 'initialStateIndex' in plan.payload) {
+    capacity = await flashUsbPrototypeFirmware(plan.payload, flashOptions)
+  } else if (!('initialStateIndex' in plan.payload)) {
+    capacity = await flashUsbFrameFirmware(plan.payload, flashOptions)
+  } else throw new Error('USB 部署内容与计划类型不匹配')
+  plan.contentStage = 'done'
+  return capacity
+}
+
+async function deployContent(
   plan: UsbFrameDeploymentRecord,
   port: DeploymentSerialPort,
   options: ExecuteUsbFrameDeploymentOptions
-): Promise<DeploymentSerialPort> {
+): Promise<void> {
   plan.firmwareStage = 'running'
-  const result = await ensureUsbContentFirmware({
+  const result = await transferUsbContentWithFirmwareFallback({
     port,
     manifestUrl: plan.manifestUrl,
-    resolution: plan.resolution,
-    contentBytes: plan.contentBytes,
+    transfer: (activePort, firmwareUpdated) =>
+      uploadContent(plan, activePort, firmwareUpdated),
     onLog: (message) => appendLog(plan, message),
     onProgress: ({ percent }) => {
       plan.progress = 5 + Math.round(percent * 0.55)
@@ -216,8 +248,10 @@ async function ensureFirmware(
     },
     onStage: (stage, message) => {
       if (stage === 'checking') plan.status = 'checking-firmware'
-      else if (stage === 'flashing') plan.status = 'flashing-firmware'
-      else if (stage === 'reconnecting') plan.status = 'reconnecting'
+      else if (stage === 'flashing') {
+        plan.status = 'flashing-firmware'
+        plan.contentStage = 'pending'
+      } else if (stage === 'reconnecting') plan.status = 'reconnecting'
       plan.message = message
       if (stage === 'checking') plan.progress = 3
       if (stage === 'reconnecting') plan.progress = 65
@@ -230,38 +264,6 @@ async function ensureFirmware(
     result.firmwareUpdated ? 'done' : 'skipped',
     options
   )
-  plan.progress = result.firmwareUpdated ? 70 : 10
-  return result.port
-}
-
-async function transferContent(
-  plan: UsbFrameDeploymentRecord,
-  port: DeploymentSerialPort
-): Promise<void> {
-  plan.status = 'transferring-content'
-  plan.contentStage = 'running'
-  const progressStart = plan.firmwareStage === 'done' ? 70 : 10
-  plan.progress = progressStart
-  const contentLabel = deploymentContentLabel(plan.mode)
-  plan.message = `正在传输${contentLabel}`
-  const flashOptions: UsbFlashOptions = {
-    port: port as UsbSerialPort,
-    onLog: (message) => appendLog(plan, message),
-    onProgress: ({ percent }) => {
-      plan.progress = progressStart + Math.round((percent * (100 - progressStart)) / 100)
-      plan.message = `正在传输${contentLabel} ${percent}%`
-    }
-  }
-  if ('content' in plan.payload) {
-    await flashUsbSequenceFirmware(plan.payload, flashOptions)
-  } else if (plan.mode === 'prototype' && 'initialStateIndex' in plan.payload) {
-    await flashUsbPrototypeFirmware(plan.payload, flashOptions)
-  } else if (!('initialStateIndex' in plan.payload)) {
-    await flashUsbFrameFirmware(plan.payload, flashOptions)
-  } else {
-    throw new Error('USB 部署内容与计划类型不匹配')
-  }
-  plan.contentStage = 'done'
 }
 
 export function getUsbFrameDeploymentPlan(id: string): UsbFrameDeploymentPlan | undefined {
@@ -404,8 +406,7 @@ export async function executeUsbFrameDeployment(
     plan.port = markRaw(port)
     plan.needsDeviceSelection = false
 
-    const connectedPort = await ensureFirmware(plan, port, options)
-    await transferContent(plan, connectedPort)
+    await deployContent(plan, port, options)
     plan.progress = 100
     plan.status = 'success'
     plan.message = `基础固件与${deploymentContentLabel(plan.mode)}已部署完成`

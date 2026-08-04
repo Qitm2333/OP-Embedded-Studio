@@ -1,30 +1,34 @@
 import { flashFirmwareManifest } from './manifest-firmware'
 import type { SerialFlashProgress, SerialPortLike } from './serial-flasher'
 import {
-  probeUsbContentDevice,
+  UsbContentDeviceUnavailableError,
+  UsbContentFirmwareError,
   type UsbContentSerialPort
 } from './usb-content-transfer'
 
-export type UsbContentFirmwareStage = 'checking' | 'flashing' | 'reconnecting' | 'ready'
+export type UsbContentFirmwareStage =
+  | 'checking'
+  | 'flashing'
+  | 'reconnecting'
+  | 'transferring'
+  | 'ready'
 
-export interface EnsureUsbContentFirmwareOptions {
+export interface TransferUsbContentWithFirmwareFallbackOptions {
   port: UsbContentSerialPort
   manifestUrl: string
-  resolution: { width: number; height: number }
-  contentBytes: number
+  transfer: (port: UsbContentSerialPort, firmwareUpdated: boolean) => Promise<number>
   onLog?: (message: string) => void
   onProgress?: (progress: SerialFlashProgress) => void
   onStage?: (stage: UsbContentFirmwareStage, message: string) => void
 }
 
-export interface EnsureUsbContentFirmwareResult {
+export interface TransferUsbContentWithFirmwareFallbackResult {
   port: UsbContentSerialPort
   capacity: number
   firmwareUpdated: boolean
 }
 
 export interface UsbContentFirmwareDependencies {
-  probeDevice: typeof probeUsbContentDevice
   flashManifest: typeof flashFirmwareManifest
   getAuthorizedPort: () => Promise<UsbContentSerialPort | undefined>
   delay: (milliseconds: number) => Promise<void>
@@ -55,7 +59,6 @@ function delay(milliseconds: number): Promise<void> {
 }
 
 const defaultDependencies: UsbContentFirmwareDependencies = {
-  probeDevice: probeUsbContentDevice,
   flashManifest: flashFirmwareManifest,
   getAuthorizedPort: getSingleAuthorizedUsbContentPort,
   delay,
@@ -63,28 +66,37 @@ const defaultDependencies: UsbContentFirmwareDependencies = {
   reconnectDelayMs: 750
 }
 
-export async function ensureUsbContentFirmware(
-  options: EnsureUsbContentFirmwareOptions,
-  dependencies: UsbContentFirmwareDependencies = defaultDependencies
-): Promise<EnsureUsbContentFirmwareResult> {
-  options.onStage?.('checking', '正在检查设备固件与当前内容是否兼容')
-  const initialProbe = await dependencies.probeDevice(
-    options.port,
-    options.resolution,
-    options.contentBytes
+function recoverableFirmwareError(error: unknown): UsbContentFirmwareError | null {
+  if (!(error instanceof UsbContentFirmwareError)) return null
+  return error.issue === 'capacity' ? null : error
+}
+
+function retryableReconnectError(error: unknown): boolean {
+  return (
+    error instanceof UsbContentDeviceUnavailableError || Boolean(recoverableFirmwareError(error))
   )
-  if (initialProbe.compatible) {
-    options.onStage?.('ready', '设备固件兼容，直接上传内容')
+}
+
+export async function transferUsbContentWithFirmwareFallback(
+  options: TransferUsbContentWithFirmwareFallbackOptions,
+  dependencies: UsbContentFirmwareDependencies = defaultDependencies
+): Promise<TransferUsbContentWithFirmwareFallbackResult> {
+  options.onStage?.('checking', '正在连接设备并检查固件兼容性')
+  try {
+    options.onStage?.('transferring', '设备固件兼容，正在上传内容')
+    const capacity = await options.transfer(options.port, false)
+    options.onStage?.('ready', '内容上传完成')
     return {
       port: options.port,
-      capacity: initialProbe.capacity,
+      capacity,
       firmwareUpdated: false
     }
+  } catch (error) {
+    const firmwareError = recoverableFirmwareError(error)
+    if (!firmwareError) throw error
+    options.onLog?.(`设备固件需要自动更新：${firmwareError.message}`)
   }
 
-  if (initialProbe.issue === 'capacity') throw new Error(initialProbe.message)
-
-  options.onLog?.(`设备固件需要自动更新：${initialProbe.message}`)
   options.onStage?.('flashing', '正在自动更新 USB 基础固件')
   await dependencies.flashManifest(options.manifestUrl, 'usb-frame', {
     port: options.port as SerialPortLike,
@@ -96,16 +108,14 @@ export async function ensureUsbContentFirmware(
   let lastError: unknown
   for (let attempt = 0; attempt < dependencies.reconnectAttempts; attempt += 1) {
     if (attempt > 0) await dependencies.delay(dependencies.reconnectDelayMs)
+    const port = (await dependencies.getAuthorizedPort()) ?? options.port
     try {
-      const port = (await dependencies.getAuthorizedPort()) ?? options.port
-      const probe = await dependencies.probeDevice(port, options.resolution, options.contentBytes)
-      if (probe.compatible) {
-        options.onStage?.('ready', '设备已恢复连接，继续上传内容')
-        return { port, capacity: probe.capacity, firmwareUpdated: true }
-      }
-      lastError = new Error(probe.message)
-      if (probe.issue === 'capacity') break
+      options.onStage?.('transferring', '设备已恢复连接，正在上传内容')
+      const capacity = await options.transfer(port, true)
+      options.onStage?.('ready', '固件与内容已更新完成')
+      return { port, capacity, firmwareUpdated: true }
     } catch (error) {
+      if (!retryableReconnectError(error)) throw error
       lastError = error
     }
   }

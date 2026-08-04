@@ -9,7 +9,7 @@ import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import { prepareWifiFirmwareCredentials } from '../adapters/http'
 import { flashFirmwareManifest } from '../adapters/manifest-firmware'
 import {
-  ensureUsbContentFirmware,
+  transferUsbContentWithFirmwareFallback,
   type UsbContentFirmwareStage
 } from '../adapters/usb-content-firmware'
 import {
@@ -34,7 +34,6 @@ import {
 import type { UsbContentSerialPort } from '../adapters/usb-content-transfer'
 import { imageFilesToUsbSequence } from '../adapters/usb-sequence'
 import type { SerialPortLike } from '../adapters/serial-flasher'
-import { encodeWirelessImage, encodeWirelessPrototype } from '../adapters/wireless-content'
 import { useBleDeviceSession } from '../composables/useBleDeviceSession'
 import { useEmbeddedDisplay } from '../composables/useEmbeddedDisplay'
 import { useSerialDeviceSession } from '../composables/useSerialDeviceSession'
@@ -400,19 +399,24 @@ function updateUsbFirmwareStage(stage: UsbContentFirmwareStage, message: string)
   if (stage === 'reconnecting') contentUploadProgress.value = 65
 }
 
-async function ensurePreparedUsbFirmware(
+async function transferPreparedUsbContent(
   port: SerialPortLike,
-  contentBytes: number
-): Promise<{ port: SerialPortLike; contentProgressStart: number }> {
-  const profile = selectedProfile.value
+  contentLabel: string,
+  upload: (options: UsbFlashOptions) => Promise<number>
+): Promise<void> {
   const manifestUrl = usbManifestUrl.value
-  if (!profile || !manifestUrl) throw new Error('当前屏幕方案缺少 USB 基础固件')
+  if (!selectedProfile.value || !manifestUrl) {
+    throw new Error('当前屏幕方案缺少 USB 基础固件')
+  }
 
-  const result = await ensureUsbContentFirmware({
+  await transferUsbContentWithFirmwareFallback({
     port: port as UsbContentSerialPort,
     manifestUrl,
-    resolution: profile.resolution,
-    contentBytes,
+    transfer: (activePort, firmwareUpdated) => {
+      const progressStart = firmwareUpdated ? 70 : 10
+      contentUploadProgress.value = progressStart
+      return upload(usbTransferOptions(activePort as SerialPortLike, contentLabel, progressStart))
+    },
     onLog: (message) => {
       const normalized = message.trim()
       if (normalized) buildLog.value.push(normalized)
@@ -423,12 +427,6 @@ async function ensurePreparedUsbFirmware(
     },
     onStage: updateUsbFirmwareStage
   })
-  const contentProgressStart = result.firmwareUpdated ? 70 : 10
-  contentUploadProgress.value = contentProgressStart
-  return {
-    port: result.port as SerialPortLike,
-    contentProgressStart
-  }
 }
 
 function usbTransferOptions(
@@ -452,10 +450,9 @@ function usbTransferOptions(
 
 interface PreparedUsbFrameContent {
   profileId: string
-  contentBytes: number
   label: string
   successMessage: string
-  upload: (options: UsbFlashOptions) => Promise<void>
+  upload: (options: UsbFlashOptions) => Promise<number>
 }
 
 function preparedUsbFrameContent(source: 'frame' | 'file'): PreparedUsbFrameContent | null {
@@ -463,7 +460,6 @@ function preparedUsbFrameContent(source: 'frame' | 'file'): PreparedUsbFrameCont
   if (sequence) {
     return {
       profileId: sequence.profileId,
-      contentBytes: sequence.content.byteLength,
       label: ` PNG 序列：${sequence.frameCount} 帧`,
       successMessage: `PNG 序列已写入：${sequence.frameCount} 帧 · 20 FPS，设备正在重启。`,
       upload: (options) => flashUsbSequenceFirmware(sequence, options)
@@ -474,7 +470,6 @@ function preparedUsbFrameContent(source: 'frame' | 'file'): PreparedUsbFrameCont
   if (!image) return null
   return {
     profileId: image.profileId,
-    contentBytes: encodeWirelessImage(image).byteLength,
     label: '单 Frame 内容',
     successMessage: '最新 Frame 已写入，设备正在重启。',
     upload: (options) => flashUsbFrameFirmware(image, options)
@@ -506,9 +501,7 @@ async function flashPreparedUsbFrame(
   buildMessage.value = `正在准备 USB ${content.label}…`
   buildLog.value = []
   try {
-    const prepared = await ensurePreparedUsbFirmware(port, content.contentBytes)
-    const options = usbTransferOptions(prepared.port, content.label, prepared.contentProgressStart)
-    await content.upload(options)
+    await transferPreparedUsbContent(port, content.label, content.upload)
     contentUploadProgress.value = 100
     buildStatus.value = 'ready'
     buildMessage.value = content.successMessage
@@ -569,21 +562,15 @@ async function handleUsbPrototypeBakeAndFlash() {
   buildMessage.value = `正在准备 USB ${selectedInteractionModeLabel.value}内容…`
   buildLog.value = []
   try {
-    const contentBytes =
-      'content' in interactionPayload
-        ? interactionPayload.content.byteLength
-        : encodeWirelessPrototype(interactionPayload).byteLength
-    const prepared = await ensurePreparedUsbFirmware(port, contentBytes)
-    const options = usbTransferOptions(
-      prepared.port,
-      selectedInteractionModeLabel.value,
-      prepared.contentProgressStart
-    )
+    let upload: (options: UsbFlashOptions) => Promise<number>
     if (selectedInteractionIsSlideshow.value && usbSequencePayload.value) {
-      await flashUsbSequenceFirmware(usbSequencePayload.value, options)
+      const sequence = usbSequencePayload.value
+      upload = (options) => flashUsbSequenceFirmware(sequence, options)
     } else if (prototypePayload.value) {
-      await flashUsbPrototypeFirmware(prototypePayload.value, options)
-    }
+      const prototype = prototypePayload.value
+      upload = (options) => flashUsbPrototypeFirmware(prototype, options)
+    } else throw new Error('交互内容尚未准备完成')
+    await transferPreparedUsbContent(port, selectedInteractionModeLabel.value, upload)
     contentUploadProgress.value = 100
     buildStatus.value = 'ready'
     buildMessage.value = `${selectedInteractionModeLabel.value}和全部画面已写入，设备正在重启。`
