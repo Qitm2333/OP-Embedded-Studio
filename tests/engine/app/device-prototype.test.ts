@@ -47,4 +47,30 @@ describe('device prototype interactions', () => {
       })
     ).toThrow('同一 Frame 的同一事件只能设置一个目标')
   })
+
+  test('accepts interaction states with different source dimensions', () => {
+    const prototype = useDevicePrototype()
+    const interaction = prototype.createInteractionFromDefinition({
+      name: 'Mixed source sizes',
+      definition: {
+        initialStateId: 'small',
+        states: [
+          { id: 'small', frameId: 'small', name: 'Small', width: 240, height: 200 },
+          { id: 'large', frameId: 'large', name: 'Large', width: 500, height: 480 }
+        ],
+        transitions: [
+          { fromStateId: 'small', event: 'screen_click', toStateId: 'large' },
+          { fromStateId: 'large', event: 'screen_click', toStateId: 'small' }
+        ]
+      }
+    })
+
+    expect(prototype.definition(interaction.id)?.states.map((state) => state.width)).toEqual([
+      240, 500
+    ])
+    expect(
+      prototype.interactionOptions.value.find((option) => option.id === interaction.id)?.valid
+    ).toBe(true)
+    prototype.removeInteraction(interaction.id)
+  })
 })

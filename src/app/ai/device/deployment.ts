@@ -1,5 +1,5 @@
 import type { EditorStore } from '@/app/editor/active-store'
-import { bakeEmbeddedFrameById } from '@/app/editor/embedded-display-bake'
+import { bakeEmbeddedFrameById, isEmbeddedVisualSource } from '@/app/editor/embedded-display-bake'
 import {
   cancelUsbFrameDeployment,
   executeUsbFrameDeployment,
@@ -23,9 +23,11 @@ export async function prepareUsbFrameDeploymentFromStore(
   backgroundColor: string
 ): Promise<UsbFrameDeploymentPlan> {
   const frame = resolveDesignHandoffFrame(store)
-  if (!frame.available) throw new Error(frame.reason || '请先选择一个 Frame 或 Frame 内的元素')
+  if (!frame.available) {
+    throw new Error(frame.reason || '请先选择一个 Frame、图片或 Frame 内的元素')
+  }
   const file = await bakeEmbeddedFrameById(store, frame.id)
-  if (!file) throw new Error('无法渲染当前 Frame')
+  if (!file) throw new Error('无法渲染当前画面，请重新选择后再试')
   const profile = getActiveEmbeddedDisplayProfile()
   const plan = await prepareUsbFrameDeployment({
     profile,
@@ -59,7 +61,7 @@ export async function executeUsbFrameDeploymentFromChat(
     authorizeFirmwareInitialization,
     isSnapshotCurrent: () => {
       return (
-        store.graph.getNode(plan.frame.id)?.type === 'FRAME' &&
+        isEmbeddedVisualSource(store.graph.getNode(plan.frame.id)) &&
         store.state.sceneVersion === plan.frame.revision &&
         getActiveEmbeddedDisplayProfile().id === plan.profileId
       )

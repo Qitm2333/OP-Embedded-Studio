@@ -65,6 +65,7 @@ export function useAIChat() {
     isConfigured,
     ensureChat: chatSession.ensureChat,
     submitLocalDeviceAction: chatSession.submitLocalDeviceAction,
+    submitLocalDevicePrototypeAction: chatSession.submitLocalDevicePrototypeAction,
     appendLocalDeviceResult: chatSession.appendLocalDeviceResult,
     resetChat: chatSession.resetChat
   }

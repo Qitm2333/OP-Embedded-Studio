@@ -7,7 +7,15 @@ import {
   recordDesignHandoff,
   resolveDesignHandoffFrame
 } from '@/app/ai/device/memory'
-import { getEmbeddedFrameBakeState } from '@/app/editor/embedded-display-bake'
+import { prepareDevicePrototypeProposal } from '@/app/ai/device/prototype'
+import {
+  getDevicePrototypeFrameCandidates,
+  getSelectedDevicePrototypeFrameCandidates
+} from '@/app/editor/device-prototype'
+import {
+  bakeEmbeddedFrameById,
+  getEmbeddedFrameBakeState
+} from '@/app/editor/embedded-display-bake'
 import { createEditorStore, type EditorStore } from '@/app/editor/session'
 import { calculatePixelPerfectPlacement } from '@/features/embedded-display/adapters/image'
 
@@ -79,8 +87,102 @@ describe('embedded display Frame targeting', () => {
     })
     expect(getEmbeddedFrameBakeState(editorStore(graph, [first.id, other.id]))).toMatchObject({
       available: false,
-      reason: '选中的对象属于不同 Frame'
+      reason: '已选中 2 个画面，请使用下方的交互烧录'
     })
+  })
+
+  test('accepts a selected top-level image as a direct deployment source', () => {
+    const graph = new SceneGraph()
+    const pageId = graph.getPages()[0].id
+    const image = graph.createNode('RECTANGLE', pageId, {
+      name: 'Imported photo',
+      width: 320,
+      height: 180,
+      fills: [
+        {
+          type: 'IMAGE',
+          imageHash: 'image-hash',
+          imageScaleMode: 'FILL',
+          color: { r: 0, g: 0, b: 0, a: 0 },
+          opacity: 1,
+          visible: true
+        }
+      ]
+    })
+
+    expect(getEmbeddedFrameBakeState(editorStore(graph, [image.id]))).toMatchObject({
+      available: true,
+      id: image.id,
+      sourceKind: 'image',
+      name: 'Imported photo',
+      width: 320,
+      height: 180
+    })
+  })
+
+  test('bakes a top-level image node into a deployment PNG', async () => {
+    const graph = new SceneGraph()
+    const image = graph.createNode('RECTANGLE', graph.getPages()[0].id, {
+      name: 'Imported photo',
+      width: 320,
+      height: 180,
+      fills: [
+        {
+          type: 'IMAGE',
+          imageHash: 'image-hash',
+          imageScaleMode: 'FILL',
+          color: { r: 0, g: 0, b: 0, a: 0 },
+          opacity: 1,
+          visible: true
+        }
+      ]
+    })
+    const store = editorStore(graph, [image.id])
+    store.renderExportImage = async (nodeIds) => {
+      expect(nodeIds).toEqual([image.id])
+      return new Uint8Array([1, 2, 3])
+    }
+
+    const file = await bakeEmbeddedFrameById(store, image.id)
+    if (!file) throw new Error('Expected the selected image to bake')
+    expect(file.name).toBe('Imported_photo.png')
+    expect(file.type).toBe('image/png')
+    expect(new Uint8Array(await file.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]))
+  })
+
+  test('exposes multiple selected images as distinct interaction candidates', () => {
+    const graph = new SceneGraph()
+    const pageId = graph.getPages()[0].id
+    const imageFill = {
+      type: 'IMAGE' as const,
+      imageHash: 'image-hash',
+      imageScaleMode: 'FILL' as const,
+      color: { r: 0, g: 0, b: 0, a: 0 },
+      opacity: 1,
+      visible: true
+    }
+    const first = graph.createNode('RECTANGLE', pageId, {
+      name: 'Screen',
+      width: 240,
+      height: 240,
+      fills: [imageFill]
+    })
+    const second = graph.createNode('RECTANGLE', pageId, {
+      name: 'Screen',
+      width: 466,
+      height: 466,
+      fills: [{ ...imageFill, imageHash: 'other-image-hash' }]
+    })
+    const store = editorStore(graph, [first.id, second.id])
+
+    expect(getSelectedDevicePrototypeFrameCandidates(store)).toEqual([
+      expect.objectContaining({ id: first.id, sourceKind: 'image', name: 'Screen (1)' }),
+      expect.objectContaining({ id: second.id, sourceKind: 'image', name: 'Screen (2)' })
+    ])
+    expect(getDevicePrototypeFrameCandidates(store).map((candidate) => candidate.id)).toEqual([
+      first.id,
+      second.id
+    ])
   })
 
   test('never treats the page Canvas or document root as a device Frame', () => {
@@ -93,7 +195,7 @@ describe('embedded display Frame targeting', () => {
 
     expect(getEmbeddedFrameBakeState(editorStore(graph, [topLevel.id]))).toMatchObject({
       available: false,
-      reason: '当前选中对象不在 Frame 内'
+      reason: '当前选择不是可烧录的 Frame 或图片'
     })
     expect(getEmbeddedFrameBakeState(editorStore(graph, [page.id]))).toMatchObject({
       available: false
@@ -155,6 +257,48 @@ describe('device AI design handoff', () => {
 
     graph.updateNode(aiFrame.id, { name: 'AI Dashboard Revised' })
     expect(getDesignHandoffMemory(store).frame?.changedAfterAISummary).toBe(true)
+  })
+})
+
+describe('device interaction deployment lifecycle', () => {
+  test('supersedes an older unconfirmed interaction proposal', () => {
+    const graph = new SceneGraph()
+    const pageId = graph.getPages()[0].id
+    const first = graph.createNode('FRAME', pageId, {
+      name: 'Screen',
+      width: 240,
+      height: 240
+    })
+    const second = graph.createNode('FRAME', pageId, {
+      name: 'Screen',
+      width: 466,
+      height: 466
+    })
+    const store = editorStore(graph, [])
+    const proposalInput = {
+      intent: '创建点击切换交互',
+      name: '快速切换',
+      frameIds: [first.id, second.id],
+      initialFrameId: first.id,
+      transitions: [
+        { fromFrameId: first.id, event: 'screen_click' as const, toFrameId: second.id },
+        { fromFrameId: second.id, event: 'screen_click' as const, toFrameId: first.id }
+      ]
+    }
+
+    const previous = prepareDevicePrototypeProposal(store, proposalInput)
+    const latest = prepareDevicePrototypeProposal(store, {
+      ...proposalInput,
+      name: '快速切换 2'
+    })
+
+    expect(previous.status).toBe('superseded')
+    expect(previous.message).toBe('已由新的交互烧录计划替代')
+    expect(latest.status).toBe('ready')
+    expect(latest.definition.states.map((state) => state.name)).toEqual([
+      'Screen (1)',
+      'Screen (2)'
+    ])
   })
 })
 

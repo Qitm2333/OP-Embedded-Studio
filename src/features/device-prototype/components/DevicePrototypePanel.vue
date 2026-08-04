@@ -13,7 +13,7 @@ import type {
   DevicePrototypeFrameRender
 } from '../model/types'
 
-const props = defineProps<{
+const { selectedFrame, renderFrame } = defineProps<{
   selectedFrame?: DevicePrototypeFrameCandidate
   renderFrame?: DevicePrototypeFrameRender
 }>()
@@ -42,11 +42,11 @@ const {
 
 const canAddFrame = computed(
   () =>
-    Boolean(props.selectedFrame?.available) &&
-    !states.value.some((state) => state.frameId === props.selectedFrame?.id)
+    Boolean(selectedFrame?.available) &&
+    !states.value.some((state) => state.frameId === selectedFrame?.id)
 )
 const canPreview = computed(() =>
-  Boolean(props.renderFrame && selectedInteraction.value?.initialStateId && states.value.length)
+  Boolean(renderFrame && selectedInteraction.value?.initialStateId && states.value.length)
 )
 const interactionOptions = computed(() =>
   interactions.value.map((interaction) => ({ value: interaction.id, label: interaction.name }))
@@ -67,11 +67,7 @@ function transitionSelectValue(stateId: string, eventId: DevicePrototypeEventId)
 
 function updateTransition(eventId: DevicePrototypeEventId, targetId: string) {
   if (!selectedState.value) return
-  setTransition(
-    selectedState.value.id,
-    eventId,
-    targetId === NO_TRANSITION_VALUE ? '' : targetId
-  )
+  setTransition(selectedState.value.id, eventId, targetId === NO_TRANSITION_VALUE ? '' : targetId)
 }
 </script>
 
@@ -127,7 +123,7 @@ function updateTransition(eventId: DevicePrototypeEventId, targetId: string) {
         <template #actions>
           <IconButton
             :label="
-              canAddFrame ? '添加选中的 Frame' : selectedFrame?.reason || '请先选中一个 Frame'
+              canAddFrame ? '添加选中的画面' : selectedFrame?.reason || '请先选中一个 Frame 或图片'
             "
             :disabled="!canAddFrame"
             @click="selectedFrame && addFrame(selectedFrame)"
@@ -139,13 +135,13 @@ function updateTransition(eventId: DevicePrototypeEventId, targetId: string) {
         <div class="mb-panel flex min-w-0 items-center gap-2 text-[11px]">
           <span class="shrink-0 text-muted">画布选择</span>
           <span class="min-w-0 flex-1 truncate text-surface">
-            {{ selectedFrame?.name || '未选中 Frame' }}
+            {{ selectedFrame?.name || '未选中画面' }}
           </span>
           <span class="shrink-0 text-muted">{{ states.length }} 个</span>
         </div>
 
         <p v-if="states.length === 0" class="text-[11px] leading-relaxed text-muted">
-          选中一个尺寸一致的 Frame，然后点击右上角加号添加为第一个界面状态。
+          选中一个 Frame 或图片，然后点击右上角加号添加为第一个界面状态。
         </p>
 
         <div v-else class="grid gap-1">

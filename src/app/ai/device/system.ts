@@ -27,6 +27,7 @@ export function createDeviceSystemPrompt(store: EditorStore): string {
     return {
       id: candidate.id,
       name: candidate.name,
+      sourceKind: candidate.sourceKind,
       width: candidate.width,
       height: candidate.height,
       textSamples

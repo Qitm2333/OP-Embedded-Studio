@@ -36,6 +36,7 @@ export type UsbFrameDeploymentStatus =
   | 'error'
   | 'cancelled'
   | 'stale'
+  | 'superseded'
 
 export type UsbFrameDeploymentStageStatus = 'pending' | 'running' | 'done' | 'skipped' | 'error'
 
@@ -119,6 +120,41 @@ interface SerialNavigator {
 const plans = reactive(new Map<string, UsbFrameDeploymentRecord>())
 let activePlanId: string | null = null
 
+const BUSY_DEPLOYMENT_STATUSES = new Set<UsbFrameDeploymentStatus>([
+  'selecting-device',
+  'checking-firmware',
+  'flashing-firmware',
+  'reconnecting',
+  'transferring-content'
+])
+const TERMINAL_DEPLOYMENT_STATUSES = new Set<UsbFrameDeploymentStatus>([
+  'success',
+  'cancelled',
+  'superseded'
+])
+
+export function isUsbFrameDeploymentBusy(status: UsbFrameDeploymentStatus): boolean {
+  return BUSY_DEPLOYMENT_STATUSES.has(status)
+}
+
+function isUsbFrameDeploymentTerminal(status: UsbFrameDeploymentStatus): boolean {
+  return TERMINAL_DEPLOYMENT_STATUSES.has(status)
+}
+
+export function supersedeUsbFrameDeployment(id: string): void {
+  const plan = plans.get(id)
+  if (!plan || isUsbFrameDeploymentTerminal(plan.status) || isUsbFrameDeploymentBusy(plan.status)) {
+    return
+  }
+  plan.status = 'superseded'
+  plan.error = undefined
+  plan.message = '已由新的烧录计划替代'
+}
+
+function supersedeInactiveUsbDeployments(): void {
+  for (const plan of plans.values()) supersedeUsbFrameDeployment(plan.id)
+}
+
 function appendLog(plan: UsbFrameDeploymentRecord, message: string): void {
   const normalized = message.trim()
   if (!normalized) return
@@ -139,6 +175,18 @@ async function singleAuthorizedPort(): Promise<DeploymentSerialPort | undefined>
 function setStageError(plan: UsbFrameDeploymentRecord): void {
   if (plan.firmwareStage === 'running') plan.firmwareStage = 'error'
   if (plan.contentStage === 'running') plan.contentStage = 'error'
+}
+
+export function normalizeUsbDeploymentError(error: unknown): string {
+  const name = error instanceof Error ? error.name : ''
+  const message = error instanceof Error ? error.message : String(error)
+  if (name === 'NotFoundError' || name === 'AbortError' || /No port selected/iu.test(message)) {
+    return '未选择 USB 设备，系统设备窗口已关闭'
+  }
+  if (name === 'SecurityError' || name === 'NotAllowedError') {
+    return 'USB 串口权限未授予'
+  }
+  return message
 }
 
 function delay(milliseconds: number): Promise<void> {
@@ -277,21 +325,13 @@ export async function prepareUsbFrameDeployment(
   if (!supportsUsbFrameFastFlash(input.profile.id)) {
     throw new Error('当前屏幕尚未提供 USB 单 Frame 快速部署固件')
   }
-  if (
-    input.frame.width !== input.profile.resolution.width ||
-    input.frame.height !== input.profile.resolution.height
-  ) {
-    throw new Error(
-      `Frame 为 ${input.frame.width} × ${input.frame.height}，与目标屏幕 ${input.profile.resolution.width} × ${input.profile.resolution.height} 不一致`
-    )
-  }
-
   const payload = await imageFileToRgb565(input.file, input.profile, {
     placement: 'pixel-perfect',
     backgroundColor: input.backgroundColor
   })
   const contentBytes = encodeWirelessImage(payload).byteLength
   const id = globalThis.crypto.randomUUID()
+  supersedeInactiveUsbDeployments()
   const plan = reactive<UsbFrameDeploymentRecord>({
     id,
     mode: 'frame',
@@ -327,15 +367,6 @@ export async function prepareUsbPrototypeDeployment(
   if (!supportsUsbFrameFastFlash(input.profile.id)) {
     throw new Error('当前屏幕尚未提供 USB 交互快速部署固件')
   }
-  if (
-    input.frame.width !== input.profile.resolution.width ||
-    input.frame.height !== input.profile.resolution.height
-  ) {
-    throw new Error(
-      `交互 Frame 为 ${input.frame.width} × ${input.frame.height}，与目标屏幕 ${input.profile.resolution.width} × ${input.profile.resolution.height} 不一致`
-    )
-  }
-
   const payload = await prototypeBakeToRgb565(input.bake, input.profile, input.backgroundColor)
   const contentBytes = encodeWirelessPrototype(payload).byteLength
   const previewFile = input.bake.states.find(
@@ -343,6 +374,7 @@ export async function prepareUsbPrototypeDeployment(
   )?.file
   if (!previewFile) throw new Error('交互缺少可预览的初始 Frame')
   const id = globalThis.crypto.randomUUID()
+  supersedeInactiveUsbDeployments()
   const plan = reactive<UsbFrameDeploymentRecord>({
     id,
     mode: 'prototype',
@@ -384,7 +416,7 @@ export async function executeUsbFrameDeployment(
   options: ExecuteUsbFrameDeploymentOptions = {}
 ): Promise<boolean> {
   const plan = plans.get(id)
-  if (!plan || plan.status === 'cancelled' || plan.status === 'success') return false
+  if (!plan || isUsbFrameDeploymentTerminal(plan.status)) return false
   if (activePlanId && activePlanId !== id) {
     plan.status = 'error'
     plan.error = '另一个 USB 部署任务正在执行'
@@ -401,6 +433,8 @@ export async function executeUsbFrameDeployment(
   activePlanId = id
   plan.error = undefined
   plan.progress = 0
+  plan.contentStage = 'pending'
+  plan.firmwareStage = plan.firmwareVerified ? 'skipped' : 'pending'
   try {
     plan.status = 'selecting-device'
     plan.message = '正在查找已授权的 USB 设备'
@@ -430,11 +464,13 @@ export async function executeUsbFrameDeployment(
     }
     return true
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
+    const message = normalizeUsbDeploymentError(error)
     setStageError(plan)
     plan.status = 'error'
     plan.error = message
     plan.message = message
+    plan.port = undefined
+    plan.needsDeviceSelection = true
     appendLog(plan, message)
     return false
   } finally {
@@ -444,7 +480,9 @@ export async function executeUsbFrameDeployment(
 
 export function cancelUsbFrameDeployment(id: string): void {
   const plan = plans.get(id)
-  if (!plan || activePlanId === id || plan.status === 'success') return
+  if (!plan || activePlanId === id || isUsbFrameDeploymentTerminal(plan.status)) {
+    return
+  }
   plan.status = 'cancelled'
   plan.message = '部署已取消，未执行设备写入'
 }

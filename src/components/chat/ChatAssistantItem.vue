@@ -8,6 +8,7 @@ import 'vue-stream-markdown/index.css'
 
 import { describeAIError } from '@/app/ai/chat/errors'
 import { isLeakedToolProtocol } from '@/app/ai/chat/protocol'
+import { describeDeviceDeploymentProblem } from '@/app/ai/device/errors'
 import UsbFrameDeploymentCard from '@/components/chat/UsbFrameDeploymentCard.vue'
 import DevicePrototypeDeploymentCard from '@/components/chat/DevicePrototypeDeploymentCard.vue'
 
@@ -206,6 +207,10 @@ function formatToolError(part: ToolPart): string {
     error = part.errorText
   } else if (hasErrorOutput(part)) {
     error = String((part.output as { error: unknown }).error)
+  }
+  if (getToolName(part).startsWith('prepare_usb_')) {
+    const problem = describeDeviceDeploymentProblem(error)
+    return `${problem.title}：${problem.action}`
   }
   return describeAIError(error).message
 }

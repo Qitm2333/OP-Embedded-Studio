@@ -11,11 +11,13 @@ import { createLanguageModel, resolveLanguageModelID } from '@/app/ai/chat/model
 import type { AIChatMode } from '@/app/ai/chat/storage'
 import { createSystemPrompt } from '@/app/ai/chat/system'
 import { recordDesignHandoff } from '@/app/ai/device/memory'
+import type { PrepareDevicePrototypeProposalInput } from '@/app/ai/device/prototype'
 import { createDeviceSystemPrompt } from '@/app/ai/device/system'
 import {
   createDeviceTools,
   isDirectUsbFrameDeploymentRequest,
-  prepareUsbFrameDeploymentOutput
+  prepareUsbFrameDeploymentOutput,
+  prepareUsbPrototypeDeploymentOutput
 } from '@/app/ai/device/tools'
 import { createAITools, MAX_AGENT_STEPS, recordStepUsage, resetRunSteps } from '@/app/ai/tools'
 import type { getActiveEditorStore } from '@/app/editor/active-store'
@@ -321,9 +323,14 @@ export function createChatSessionManager({
     return chat
   }
 
-  async function submitLocalDeviceAction(text: string): Promise<Chat<UIMessage> | null> {
-    if (chatMode.value !== 'device' || !isDirectUsbFrameDeploymentRequest(text)) return null
-
+  async function submitLocalDeviceToolAction(
+    text: string,
+    toolName: 'prepare_usb_frame_deployment' | 'prepare_usb_prototype_deployment',
+    input: unknown,
+    prepare: () => Promise<unknown>,
+    successText: string
+  ): Promise<Chat<UIMessage> | null> {
+    if (chatMode.value !== 'device') return null
     const activeChat = await ensureChat()
     if (!activeChat) return null
     activeChat.clearError()
@@ -338,13 +345,8 @@ export function createChatSessionManager({
       }
     ]
 
-    const input = { intent: text, backgroundColor: '#000000' }
     try {
-      const output = await prepareUsbFrameDeploymentOutput(
-        getActiveEditorStore(),
-        input.intent,
-        input.backgroundColor
-      )
+      const output = await prepare()
       activeChat.messages = [
         ...activeChat.messages,
         {
@@ -353,13 +355,13 @@ export function createChatSessionManager({
           parts: [
             {
               type: 'dynamic-tool',
-              toolName: 'prepare_usb_frame_deployment',
+              toolName,
               toolCallId,
               state: 'output-available',
               input,
               output
             },
-            { type: 'text', text: '部署参数已准备好，请检查确认卡后执行。' }
+            { type: 'text', text: successText }
           ]
         }
       ]
@@ -372,7 +374,7 @@ export function createChatSessionManager({
           parts: [
             {
               type: 'dynamic-tool',
-              toolName: 'prepare_usb_frame_deployment',
+              toolName,
               toolCallId,
               state: 'output-error',
               input,
@@ -383,6 +385,36 @@ export function createChatSessionManager({
       ]
     }
     return activeChat
+  }
+
+  async function submitLocalDeviceAction(text: string): Promise<Chat<UIMessage> | null> {
+    if (!isDirectUsbFrameDeploymentRequest(text)) return null
+    const input = { intent: text, backgroundColor: '#000000' }
+    return submitLocalDeviceToolAction(
+      text,
+      'prepare_usb_frame_deployment',
+      input,
+      () =>
+        prepareUsbFrameDeploymentOutput(
+          getActiveEditorStore(),
+          input.intent,
+          input.backgroundColor
+        ),
+      '部署参数已准备好，请检查确认卡后执行。'
+    )
+  }
+
+  async function submitLocalDevicePrototypeAction(
+    text: string,
+    input: PrepareDevicePrototypeProposalInput
+  ): Promise<Chat<UIMessage> | null> {
+    return submitLocalDeviceToolAction(
+      text,
+      'prepare_usb_prototype_deployment',
+      input,
+      async () => prepareUsbPrototypeDeploymentOutput(getActiveEditorStore(), input),
+      '交互方案已准备好，请检查确认卡后创建并烧录。'
+    )
   }
 
   function appendLocalDeviceResult(text: string, resultKey: string): void {
@@ -436,6 +468,7 @@ export function createChatSessionManager({
   return {
     ensureChat,
     submitLocalDeviceAction,
+    submitLocalDevicePrototypeAction,
     appendLocalDeviceResult,
     resetChat,
     markTransportDirty,

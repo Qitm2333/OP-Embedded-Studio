@@ -8,8 +8,11 @@ export {
   cancelUsbFrameDeployment,
   executeUsbFrameDeployment,
   getUsbFrameDeploymentPlan,
+  isUsbFrameDeploymentBusy,
+  normalizeUsbDeploymentError,
   prepareUsbFrameDeployment,
-  prepareUsbPrototypeDeployment
+  prepareUsbPrototypeDeployment,
+  supersedeUsbFrameDeployment
 } from './deployment/usb-frame'
 
 export type {

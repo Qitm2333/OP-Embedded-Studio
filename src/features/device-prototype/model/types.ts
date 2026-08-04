@@ -12,6 +12,7 @@ export type DevicePrototypeEventId = (typeof DEVICE_PROTOTYPE_EVENTS)[number]['i
 export interface DevicePrototypeFrameCandidate {
   available: boolean
   id: string
+  sourceKind: 'frame' | 'image'
   name: string
   width: number
   height: number

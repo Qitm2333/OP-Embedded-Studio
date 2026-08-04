@@ -36,12 +36,15 @@ export function calculateEmbeddedFrameCrop(
 }
 function canvasToPng(canvas: HTMLCanvasElement): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob(async (blob) => {
+    canvas.toBlob((blob) => {
       if (!blob) {
         reject(new Error('无法编码裁切后的 Frame'))
         return
       }
-      resolve(new Uint8Array(await blob.arrayBuffer()))
+      void blob
+        .arrayBuffer()
+        .then((buffer) => resolve(new Uint8Array(buffer)))
+        .catch(reject)
     }, 'image/png')
   })
 }
@@ -51,7 +54,7 @@ export async function renderEmbeddedFramePng(
   frameId: string
 ): Promise<Uint8Array> {
   const frame = store.graph.getNode(frameId)
-  if (!frame || frame.type !== 'FRAME') throw new Error('嵌入式烘焙目标不是有效的 Frame')
+  if (frame?.type !== 'FRAME') throw new Error('嵌入式烘焙目标不是有效的 Frame')
 
   const exportBounds = computeContentBounds(store.graph, [frame.id])
   if (!exportBounds) throw new Error(`无法计算 Frame 可视边界：${frame.name}`)
@@ -59,7 +62,9 @@ export async function renderEmbeddedFramePng(
   const data = await store.renderExportImage([frame.id], 1, 'PNG')
   if (!data) throw new Error(`无法渲染 Frame：${frame.name}`)
 
-  const bitmap = await createImageBitmap(new Blob([data], { type: 'image/png' }))
+  const bitmap = await createImageBitmap(
+    new Blob([Uint8Array.from(data).buffer], { type: 'image/png' })
+  )
   try {
     const crop = calculateEmbeddedFrameCrop(
       exportBounds,
@@ -89,8 +94,21 @@ export async function renderEmbeddedFramePng(
       outputWidth,
       outputHeight
     )
-    return canvasToPng(canvas)
+    return await canvasToPng(canvas)
   } finally {
     bitmap.close()
   }
+}
+
+export async function renderEmbeddedVisualPng(
+  store: EditorStore,
+  nodeId: string
+): Promise<Uint8Array> {
+  const node = store.graph.getNode(nodeId)
+  if (!node) throw new Error('烧录来源已不存在，请重新选择画面')
+  if (node.type === 'FRAME') return renderEmbeddedFramePng(store, node.id)
+
+  const data = await store.renderExportImage([node.id], 1, 'PNG')
+  if (!data) throw new Error(`无法渲染画面：${node.name}`)
+  return data
 }

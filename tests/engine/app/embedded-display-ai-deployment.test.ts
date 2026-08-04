@@ -1,8 +1,11 @@
 import { describe, expect, test } from 'bun:test'
 
+import { describeDeviceDeploymentProblem } from '@/app/ai/device/errors'
 import { isDirectUsbFrameDeploymentRequest } from '@/app/ai/device/tools'
 import type { EmbeddedDisplayProfile } from '@/features/embedded-display'
 import {
+  cancelUsbFrameDeployment,
+  normalizeUsbDeploymentError,
   prepareUsbFrameDeployment,
   prepareUsbPrototypeDeployment
 } from '@/features/embedded-display'
@@ -75,8 +78,8 @@ describe('AI USB deployment planning', () => {
           id: 'frame-1',
           name: 'Device UI',
           revision: 7,
-          width: 1,
-          height: 1
+          width: 320,
+          height: 180
         },
         file: new File([new Uint8Array([0])], 'device.png', { type: 'image/png' }),
         backgroundColor: '#000000',
@@ -86,6 +89,39 @@ describe('AI USB deployment planning', () => {
       expect(plan.status).toBe('ready')
       expect(plan.needsDeviceSelection).toBe(true)
       expect(serialCalls).toBe(0)
+
+      const replacement = await prepareUsbFrameDeployment({
+        profile,
+        frame: {
+          id: 'frame-2',
+          name: 'Updated UI',
+          revision: 8,
+          width: 466,
+          height: 466
+        },
+        file: new File([new Uint8Array([0])], 'updated.png', { type: 'image/png' }),
+        backgroundColor: '#000000',
+        firstDeployment: false
+      })
+      expect(plan.status).toBe('superseded')
+      expect(plan.message).toBe('已由新的烧录计划替代')
+      expect(replacement.status).toBe('ready')
+
+      cancelUsbFrameDeployment(replacement.id)
+      await prepareUsbFrameDeployment({
+        profile,
+        frame: {
+          id: 'frame-3',
+          name: 'Latest UI',
+          revision: 9,
+          width: 466,
+          height: 466
+        },
+        file: new File([new Uint8Array([0])], 'latest.png', { type: 'image/png' }),
+        backgroundColor: '#000000',
+        firstDeployment: false
+      })
+      expect(replacement.status).toBe('cancelled')
     } finally {
       for (const [key, descriptor] of Object.entries(descriptors)) {
         if (descriptor) Object.defineProperty(globalThis, key, descriptor)
@@ -142,8 +178,8 @@ describe('AI USB deployment planning', () => {
           id: 'home',
           name: 'Home',
           revision: 8,
-          width: 1,
-          height: 1
+          width: 240,
+          height: 240
         },
         bake: {
           id: 'interaction-1',
@@ -173,5 +209,27 @@ describe('AI USB deployment planning', () => {
         else Reflect.deleteProperty(globalThis, key)
       }
     }
+  })
+
+  test('describes common deployment failures with a concrete recovery action', () => {
+    expect(describeDeviceDeploymentProblem('内容超过设备 USB 内容分区容量')).toMatchObject({
+      title: '内容超过设备容量',
+      retryLabel: '重新准备',
+      recovery: 'reprepare'
+    })
+    expect(
+      describeDeviceDeploymentProblem('NotFoundError: No port selected by the user')
+    ).toMatchObject({
+      title: '尚未选择 USB 设备',
+      retryLabel: '重新选择设备',
+      recovery: 'retry'
+    })
+    expect(describeDeviceDeploymentProblem('设计内容在确认前发生了变化')).toMatchObject({
+      title: '烧录内容已经变化',
+      recovery: 'reprepare'
+    })
+    expect(
+      normalizeUsbDeploymentError(new DOMException('No port selected by the user', 'NotFoundError'))
+    ).toBe('未选择 USB 设备，系统设备窗口已关闭')
   })
 })

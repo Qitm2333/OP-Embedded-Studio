@@ -1,3 +1,5 @@
+import type { SceneNode } from '@open-pencil/scene-graph'
+
 import type { EditorStore } from '@/app/editor/session'
 import type {
   DevicePrototypeFrameCandidate,
@@ -6,80 +8,72 @@ import type {
 } from '@/features/device-prototype'
 import type { EmbeddedPrototypeBakeResult } from '@/features/embedded-display'
 
-import { renderEmbeddedFramePng } from './embedded-frame-render'
+import {
+  getEmbeddedFrameBakeState,
+  getSelectedEmbeddedVisualSources,
+  isEmbeddedVisualSource
+} from './embedded-display-bake'
+import { renderEmbeddedVisualPng } from './embedded-frame-render'
+
+function candidatesFromNodes(nodes: SceneNode[]): DevicePrototypeFrameCandidate[] {
+  const nameCounts = new Map<string, number>()
+  for (const node of nodes) {
+    const name = node.name.trim() || '未命名画面'
+    nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1)
+  }
+  const nameIndexes = new Map<string, number>()
+  return nodes.map((node) => {
+    const baseName = node.name.trim() || '未命名画面'
+    const index = (nameIndexes.get(baseName) ?? 0) + 1
+    nameIndexes.set(baseName, index)
+    return {
+      available: true,
+      id: node.id,
+      sourceKind: node.type === 'FRAME' ? 'frame' : 'image',
+      name: (nameCounts.get(baseName) ?? 0) > 1 ? `${baseName} (${index})` : baseName,
+      width: node.width,
+      height: node.height
+    }
+  })
+}
 
 export function getDevicePrototypeFrameCandidate(
   store: EditorStore
 ): DevicePrototypeFrameCandidate {
-  void store.state.sceneVersion
-  const selectedIds = [...store.state.selectedIds]
-  if (selectedIds.length === 0) {
-    return {
-      available: false,
-      id: '',
-      name: '',
-      width: 0,
-      height: 0,
-      reason: '请选择一个 Frame 或 Frame 内的元素'
-    }
-  }
-
-  const pageIds = new Set(store.graph.getPages().map((page) => page.id))
-  const frames = selectedIds.flatMap((selectedId) => {
-    let node = store.graph.getNode(selectedId)
-    while (node) {
-      if (node.type === 'FRAME' && node.id !== store.graph.rootId && !pageIds.has(node.id)) {
-        return [node]
-      }
-      if (!node.parentId) break
-      node = store.graph.getNode(node.parentId)
-    }
-    return []
-  })
-  const uniqueFrames = [...new Map(frames.map((frame) => [frame.id, frame])).values()]
-
-  if (uniqueFrames.length !== 1 || frames.length !== selectedIds.length) {
-    return {
-      available: false,
-      id: '',
-      name: '',
-      width: 0,
-      height: 0,
-      reason: uniqueFrames.length > 1 ? '选中的对象属于不同 Frame' : '当前选中对象不在 Frame 内'
-    }
-  }
-
-  const frame = uniqueFrames[0]
+  const source = getEmbeddedFrameBakeState(store)
   return {
-    available: true,
-    id: frame.id,
-    name: frame.name,
-    width: frame.width,
-    height: frame.height
+    available: source.available,
+    id: source.id,
+    sourceKind: source.sourceKind,
+    name: source.name,
+    width: source.width,
+    height: source.height,
+    reason: source.reason
   }
+}
+
+export function getSelectedDevicePrototypeFrameCandidates(
+  store: EditorStore
+): DevicePrototypeFrameCandidate[] {
+  void store.state.sceneVersion
+  return candidatesFromNodes(getSelectedEmbeddedVisualSources(store))
 }
 
 export function getDevicePrototypeFrameCandidates(
   store: EditorStore
 ): DevicePrototypeFrameCandidate[] {
   void store.state.sceneVersion
-  return store.graph
+  const nodes = store.graph
     .getChildren(store.state.currentPageId)
-    .filter((node) => node.type === 'FRAME' && node.id !== store.graph.rootId)
-    .map((frame) => ({
-      available: true,
-      id: frame.id,
-      name: frame.name,
-      width: frame.width,
-      height: frame.height
-    }))
+    .filter((node) => isEmbeddedVisualSource(node) && node.id !== store.graph.rootId)
+  return candidatesFromNodes(nodes)
 }
 
 export function createDevicePrototypeFrameRenderer(store: EditorStore): DevicePrototypeFrameRender {
   return async (frameId) => {
     const node = store.graph.getNode(frameId)
-    if (node?.type !== 'FRAME') throw new Error('交互引用的 Frame 已不存在')
-    const data = await renderEmbeddedFramePng(store, node.id)
+    if (!isEmbeddedVisualSource(node)) throw new Error('交互引用的画面已不存在')
+    const data = await renderEmbeddedVisualPng(store, node.id)
     return new Blob([Uint8Array.from(data).buffer], { type: 'image/png' })
   }
 }
@@ -91,8 +85,8 @@ export async function bakeDevicePrototype(
   const states = []
   for (const state of interaction.states) {
     const node = store.graph.getNode(state.frameId)
-    if (node?.type !== 'FRAME') throw new Error(`交互引用的 Frame 已不存在：${state.name}`)
-    const data = await renderEmbeddedFramePng(store, node.id)
+    if (!isEmbeddedVisualSource(node)) throw new Error(`交互引用的画面已不存在：${state.name}`)
+    const data = await renderEmbeddedVisualPng(store, node.id)
     states.push({
       id: state.id,
       name: state.name,

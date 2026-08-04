@@ -1,6 +1,9 @@
 import { readCacheJson, writeCacheJson } from '@/app/cache'
 import type { EditorStore } from '@/app/editor/active-store'
-import { getEmbeddedFrameBakeState } from '@/app/editor/embedded-display-bake'
+import {
+  getEmbeddedFrameBakeState,
+  isEmbeddedVisualSource
+} from '@/app/editor/embedded-display-bake'
 import type { EmbeddedFrameBakeState, UsbFrameDeploymentPlan } from '@/features/embedded-display'
 
 interface RecentAIDesign {
@@ -70,6 +73,7 @@ export function resolveDesignHandoffFrame(store: EditorStore): EmbeddedFrameBake
       id: recentFrame.id,
       revision,
       available: true,
+      sourceKind: 'frame',
       name: recentFrame.name,
       width: recentFrame.width,
       height: recentFrame.height
@@ -78,13 +82,14 @@ export function resolveDesignHandoffFrame(store: EditorStore): EmbeddedFrameBake
 
   const topLevelFrames = store.graph
     .getChildren(store.state.currentPageId)
-    .filter((node) => node.type === 'FRAME' && node.id !== store.graph.rootId)
+    .filter((node) => isEmbeddedVisualSource(node) && node.id !== store.graph.rootId)
   if (topLevelFrames.length === 1) {
     const frame = topLevelFrames[0]
     return {
       id: frame.id,
       revision,
       available: true,
+      sourceKind: frame.type === 'FRAME' ? 'frame' : 'image',
       name: frame.name,
       width: frame.width,
       height: frame.height

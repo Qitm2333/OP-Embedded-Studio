@@ -27,6 +27,7 @@ export interface EmbeddedFrameBakeState {
   id: string
   revision: number
   available: boolean
+  sourceKind: 'frame' | 'image'
   name: string
   width: number
   height: number

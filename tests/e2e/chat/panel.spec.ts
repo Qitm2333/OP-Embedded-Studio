@@ -331,7 +331,7 @@ test('device mode exposes deployment quick actions in the empty chat state', asy
     page.getByText('Deploy the current Frame or check the connected device.')
   ).toBeVisible()
   await expect(page.getByTestId('device-quick-deploy-frame')).toBeVisible()
-  await expect(page.getByTestId('device-quick-deploy-frame')).toContainText('烧录选中的界面')
+  await expect(page.getByTestId('device-quick-deploy-frame')).toContainText('烧录选中的画面')
   const quickActionsBox = await page.getByTestId('device-quick-actions').boundingBox()
   const inputBox = await page.getByTestId('chat-input').boundingBox()
   expect(quickActionsBox).not.toBeNull()

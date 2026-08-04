@@ -41,16 +41,6 @@ function validateDefinition(definition: DevicePrototypeDefinition): void {
   if (stateIds.size !== definition.states.length) throw new Error('交互中包含重复的 Frame')
   if (!stateIds.has(definition.initialStateId)) throw new Error('交互缺少有效的初始 Frame')
 
-  const firstState = definition.states.at(0)
-  if (
-    !firstState ||
-    definition.states.some(
-      (state) => state.width !== firstState.width || state.height !== firstState.height
-    )
-  ) {
-    throw new Error('交互中的 Frame 尺寸必须一致')
-  }
-
   const supportedEvents = new Set<string>(DEVICE_PROTOTYPE_EVENTS.map((event) => event.id))
   const transitionKeys = new Set<string>()
   for (const transition of definition.transitions) {
@@ -88,16 +78,10 @@ export function useDevicePrototype() {
       const initialState = interaction.states.find(
         (state) => state.id === interaction.initialStateId
       )
-      const dimensionsMatch =
-        firstState !== undefined &&
-        interaction.states.every(
-          (state) => state.width === firstState.width && state.height === firstState.height
-        )
-      const valid = interaction.states.length > 0 && Boolean(initialState) && dimensionsMatch
+      const valid = interaction.states.length > 0 && Boolean(initialState)
       let reason = ''
       if (interaction.states.length === 0) reason = '尚未添加界面状态'
       else if (!initialState) reason = '未设置有效的初始状态'
-      else if (!dimensionsMatch) reason = '交互中的 Frame 尺寸不一致'
 
       return {
         id: interaction.id,

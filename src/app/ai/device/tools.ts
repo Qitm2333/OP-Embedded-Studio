@@ -7,7 +7,10 @@ import type { EditorStore } from '@/app/editor/active-store'
 import { DEVICE_PROTOTYPE_EVENTS } from '@/features/device-prototype'
 
 import { prepareUsbFrameDeploymentFromStore } from './deployment'
-import { prepareDevicePrototypeProposal } from './prototype'
+import {
+  prepareDevicePrototypeProposal,
+  type PrepareDevicePrototypeProposalInput
+} from './prototype'
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/
 
@@ -73,11 +76,40 @@ export async function prepareUsbFrameDeploymentOutput(
   }
 }
 
+export function prepareUsbPrototypeDeploymentOutput(
+  store: EditorStore,
+  input: PrepareDevicePrototypeProposalInput
+) {
+  const proposal = prepareDevicePrototypeProposal(store, input)
+  return {
+    kind: 'usb-prototype-deployment-proposal' as const,
+    proposalId: proposal.id,
+    intent: proposal.intent,
+    target: {
+      profileId: proposal.profileId,
+      profileName: proposal.profileName,
+      resolution: proposal.resolution,
+      roundScreen: proposal.roundScreen
+    },
+    interaction: {
+      name: proposal.name,
+      initialStateId: proposal.definition.initialStateId,
+      states: proposal.definition.states.map((state) => ({
+        id: state.id,
+        name: state.name
+      })),
+      transitions: proposal.definition.transitions
+    },
+    instruction:
+      'The interaction is proposed but not created. Ask the user to review and confirm the host card.'
+  }
+}
+
 export function createDeviceTools(store: EditorStore): ToolSet {
   return {
     prepare_usb_frame_deployment: tool({
       description:
-        'Prepare an immutable USB single-Frame deployment plan for the current selected Frame and active screen. This performs rendering and validation only; hardware execution requires the user to confirm the returned card.',
+        'Prepare an immutable USB single-screen deployment plan for the selected Frame or image and active device. Source pixels are centered, cropped, or padded without scaling when dimensions differ. Hardware execution requires confirmation.',
       inputSchema: valibotSchema(
         v.object({
           intent: v.pipe(
@@ -110,7 +142,7 @@ export function createDeviceTools(store: EditorStore): ToolSet {
     }),
     prepare_usb_prototype_deployment: tool({
       description:
-        'Prepare a new multi-Frame interaction and USB prototype deployment proposal. Use only Frame IDs from the active page context and supported device events. The proposal must be confirmed before it is added to the Interaction panel or prepared for hardware deployment.',
+        'Prepare a multi-screen interaction and USB prototype deployment proposal from Frame or image IDs in the active page context. Different source dimensions are supported and converted independently for the target device.',
       inputSchema: valibotSchema(
         v.object({
           intent: v.pipe(
@@ -123,7 +155,7 @@ export function createDeviceTools(store: EditorStore): ToolSet {
             v.array(v.string()),
             v.minLength(2),
             v.maxLength(10),
-            v.description('Ordered Frame IDs to include as interaction states')
+            v.description('Ordered Frame or image node IDs to include as interaction states')
           ),
           initialFrameId: v.pipe(v.string(), v.minLength(1)),
           transitions: v.pipe(
@@ -141,29 +173,7 @@ export function createDeviceTools(store: EditorStore): ToolSet {
       ),
       execute: async (input) => {
         try {
-          const proposal = prepareDevicePrototypeProposal(store, input)
-          return {
-            kind: 'usb-prototype-deployment-proposal' as const,
-            proposalId: proposal.id,
-            intent: proposal.intent,
-            target: {
-              profileId: proposal.profileId,
-              profileName: proposal.profileName,
-              resolution: proposal.resolution,
-              roundScreen: proposal.roundScreen
-            },
-            interaction: {
-              name: proposal.name,
-              initialStateId: proposal.definition.initialStateId,
-              states: proposal.definition.states.map((state) => ({
-                id: state.id,
-                name: state.name
-              })),
-              transitions: proposal.definition.transitions
-            },
-            instruction:
-              'The interaction is proposed but not created. Ask the user to review and confirm the host card.'
-          }
+          return prepareUsbPrototypeDeploymentOutput(store, input)
         } catch (error) {
           return {
             error: error instanceof Error ? error.message : String(error),

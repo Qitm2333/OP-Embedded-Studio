@@ -16,7 +16,9 @@ import {
   executeUsbFrameDeployment,
   getActiveEmbeddedDisplayProfile,
   getUsbFrameDeploymentPlan,
+  isUsbFrameDeploymentBusy,
   prepareUsbPrototypeDeployment,
+  supersedeUsbFrameDeployment,
   type UsbFrameDeploymentPlan
 } from '@/features/embedded-display'
 
@@ -44,6 +46,7 @@ export type DevicePrototypeProposalStatus =
   | 'error'
   | 'stale'
   | 'cancelled'
+  | 'superseded'
 
 export interface DevicePrototypeProposal {
   id: string
@@ -89,6 +92,21 @@ function proposalInteraction(
   )
 }
 
+function supersedeInactiveProposals(): void {
+  for (const proposal of proposals.values()) {
+    if (proposal.status === 'preparing') continue
+    const deployment = proposal.deploymentPlanId
+      ? getUsbFrameDeploymentPlan(proposal.deploymentPlanId)
+      : undefined
+    if (deployment?.status === 'success') continue
+    if (deployment && isUsbFrameDeploymentBusy(deployment.status)) continue
+    if (proposal.deploymentPlanId) supersedeUsbFrameDeployment(proposal.deploymentPlanId)
+    proposal.status = 'superseded'
+    proposal.error = undefined
+    proposal.message = '已由新的交互烧录计划替代'
+  }
+}
+
 function validateProposalInput(
   store: EditorStore,
   input: PrepareDevicePrototypeProposalInput
@@ -113,24 +131,6 @@ function validateProposalInput(
       height: frame.height
     }
   })
-  const firstState = states.at(0)
-  if (
-    !firstState ||
-    states.some((state) => state.width !== firstState.width || state.height !== firstState.height)
-  ) {
-    throw new Error('交互中的 Frame 尺寸必须一致')
-  }
-
-  const profile = getActiveEmbeddedDisplayProfile()
-  if (
-    firstState.width !== profile.resolution.width ||
-    firstState.height !== profile.resolution.height
-  ) {
-    throw new Error(
-      `Frame 尺寸 ${firstState.width} × ${firstState.height} 与当前屏幕 ${profile.resolution.width} × ${profile.resolution.height} 不一致`
-    )
-  }
-
   const stateIds = new Set(frameIds)
   const transitionKeys = new Set<string>()
   const transitions = input.transitions.map((transition) => {
@@ -161,6 +161,7 @@ export function prepareDevicePrototypeProposal(
   const name = input.name.trim()
   if (!name) throw new Error('交互名称不能为空')
   const definition = validateProposalInput(store, input)
+  supersedeInactiveProposals()
   const profile = getActiveEmbeddedDisplayProfile()
   const id = globalThis.crypto.randomUUID()
   const proposal = reactive<DevicePrototypeProposalRecord>({
@@ -185,19 +186,32 @@ export function prepareDevicePrototypeProposal(
 
 export async function confirmDevicePrototypeProposalFromChat(id: string): Promise<boolean> {
   const proposal = proposals.get(id)
-  if (!proposal || proposal.status === 'cancelled' || proposal.status === 'preparing') return false
+  if (
+    !proposal ||
+    proposal.status === 'cancelled' ||
+    proposal.status === 'superseded' ||
+    proposal.status === 'preparing'
+  ) {
+    return false
+  }
   proposal.status = 'preparing'
   proposal.error = undefined
   proposal.message = '正在创建交互并准备烧录内容'
 
   try {
+    const activeProfile = getActiveEmbeddedDisplayProfile()
     if (
       proposal.store.state.sceneVersion !== proposal.revision ||
-      getActiveEmbeddedDisplayProfile().id !== proposal.profileId
+      activeProfile.id !== proposal.profileId
     ) {
-      proposal.status = 'stale'
-      proposal.message = 'Frame 或目标屏幕已经变化，请重新生成交互方案'
-      return false
+      if (proposal.deploymentPlanId) cancelUsbFrameDeployment(proposal.deploymentPlanId)
+      proposal.deploymentPlanId = undefined
+      proposal.revision = proposal.store.state.sceneVersion
+      proposal.profileId = activeProfile.id
+      proposal.profileName = activeProfile.name
+      proposal.resolution = { ...activeProfile.resolution }
+      proposal.roundScreen = activeProfile.visibleArea?.shape === 'round'
+      proposal.message = '画布或目标屏幕已更新，正在重新准备当前交互'
     }
 
     let interaction = proposalInteraction(proposal)
@@ -271,7 +285,7 @@ export async function executeDevicePrototypeDeploymentFromChat(
 
 export function cancelDevicePrototypeProposalFromChat(id: string): void {
   const proposal = proposals.get(id)
-  if (!proposal || proposal.status === 'preparing') return
+  if (!proposal || proposal.status === 'preparing' || proposal.status === 'superseded') return
   if (proposal.deploymentPlanId) cancelUsbFrameDeployment(proposal.deploymentPlanId)
   if (proposal.interactionId) {
     proposal.status = 'error'

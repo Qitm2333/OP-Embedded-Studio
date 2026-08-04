@@ -18,16 +18,25 @@ import ProviderSetup from '@/components/chat/ProviderSetup.vue'
 import { useAIChat } from '@/app/ai/chat/use'
 import { toast } from '@/app/shell/ui'
 import { useI18n } from '@open-pencil/vue'
-import { getDevicePrototypeFrameCandidates } from '@/app/editor/device-prototype'
+import {
+  getDevicePrototypeFrameCandidates,
+  getSelectedDevicePrototypeFrameCandidates
+} from '@/app/editor/device-prototype'
 import { useEditorStore } from '@/app/editor/active-store'
-import { getActiveEmbeddedDisplayProfile } from '@/features/embedded-display'
 
 import type { Chat } from '@ai-sdk/vue'
 import type { FileUIPart, UIMessage } from 'ai'
 
 const IS_DEV = import.meta.env.DEV
 
-const { isConfigured, ensureChat, submitLocalDeviceAction, resetChat, chatMode } = useAIChat()
+const {
+  isConfigured,
+  ensureChat,
+  submitLocalDeviceAction,
+  submitLocalDevicePrototypeAction,
+  resetChat,
+  chatMode
+} = useAIChat()
 const { dialogs } = useI18n()
 const editorStore = useEditorStore()
 
@@ -48,16 +57,17 @@ const debugCopied = refAutoReset(false, 1500)
 const acpLogCopied = refAutoReset(false, 1500)
 
 const messages = computed(() => chat.value?.messages ?? [])
-const compatiblePrototypeFrames = computed(() => {
+const selectedPrototypeCandidates = computed(() => {
   void editorStore.state.sceneVersion
-  const profile = getActiveEmbeddedDisplayProfile()
-  return getDevicePrototypeFrameCandidates(editorStore).filter(
-    (frame) =>
-      frame.width === profile.resolution.width && frame.height === profile.resolution.height
-  )
+  return getSelectedDevicePrototypeFrameCandidates(editorStore)
+})
+const prototypeCandidates = computed(() => {
+  return selectedPrototypeCandidates.value.length >= 2
+    ? selectedPrototypeCandidates.value
+    : getDevicePrototypeFrameCandidates(editorStore)
 })
 const canCreatePrototype = computed(
-  () => compatiblePrototypeFrames.value.length >= 2 && compatiblePrototypeFrames.value.length <= 10
+  () => prototypeCandidates.value.length >= 2 && prototypeCandidates.value.length <= 10
 )
 const status = computed(() =>
   localActionPending.value ? 'submitted' : (chat.value?.status ?? 'ready')
@@ -158,14 +168,37 @@ async function handleSubmit(text: string, files: FileUIPart[] = []) {
 }
 
 function handleFrameQuickAction(): void {
-  void handleSubmit('帮我烧录选中的界面')
+  void handleSubmit('帮我烧录选中的画面')
 }
 
-function handlePrototypeQuickAction(): void {
-  const frameCount = compatiblePrototypeFrames.value.length
-  void handleSubmit(
-    `请用当前页面这 ${frameCount} 个同尺寸 Frame 创建一个新的交互，并准备通过 USB 烧录。请根据界面名称和内容设计清晰、精简的跳转关系。`
-  )
+async function handlePrototypeQuickAction(): Promise<void> {
+  if (!canCreatePrototype.value || localActionPending.value) return
+  const candidates = prototypeCandidates.value
+  const text = `创建 ${candidates.length} 个画面的点击切换交互并烧录`
+  localActionPending.value = true
+  followsLatestMessage.value = true
+  try {
+    const localChat = await submitLocalDevicePrototypeAction(text, {
+      intent: text,
+      name: `快速切换 · ${candidates.length} 个画面`,
+      frameIds: candidates.map((candidate) => candidate.id),
+      initialFrameId: candidates[0]?.id ?? '',
+      transitions: candidates.map((candidate, index) => ({
+        fromFrameId: candidate.id,
+        event: 'screen_click',
+        toFrameId: candidates[(index + 1) % candidates.length]?.id ?? candidate.id
+      })),
+      backgroundColor: '#000000'
+    })
+    if (localChat) {
+      chat.value = markRaw(localChat)
+      scrollToBottom(true)
+    }
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : String(error))
+  } finally {
+    localActionPending.value = false
+  }
 }
 
 async function handleRetry() {
@@ -359,13 +392,14 @@ function handleClearChat() {
         class="scrollbar-thin flex shrink-0 gap-1.5 overflow-x-auto px-3 pt-1.5 pb-1"
       >
         <button
+          v-if="selectedPrototypeCandidates.length < 2"
           data-test-id="device-quick-deploy-frame"
           type="button"
           class="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-panel-field px-2.5 text-[11px] text-surface shadow-sm hover:bg-panel-field-hover"
           @click="handleFrameQuickAction"
         >
           <icon-lucide-monitor-up class="size-3.5 text-accent" />
-          烧录选中的界面
+          烧录选中的画面
         </button>
         <button
           v-if="canCreatePrototype"
@@ -375,7 +409,7 @@ function handleClearChat() {
           @click="handlePrototypeQuickAction"
         >
           <icon-lucide-git-branch class="size-3.5 text-accent" />
-          创建 {{ compatiblePrototypeFrames.length }} Frame 交互并烧录
+          创建 {{ prototypeCandidates.length }} 画面交互并烧录
         </button>
       </div>
 
