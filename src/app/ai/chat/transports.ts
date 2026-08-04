@@ -389,17 +389,13 @@ export function createChatSessionManager({
 
   async function submitLocalDeviceAction(text: string): Promise<Chat<UIMessage> | null> {
     if (!isDirectUsbFrameDeploymentRequest(text)) return null
-    const input = { intent: text, backgroundColor: '#000000' }
+    const input = { intent: text }
     return submitLocalDeviceToolAction(
       text,
       'prepare_usb_frame_deployment',
       input,
       () =>
-        prepareUsbFrameDeploymentOutput(
-          getActiveEditorStore(),
-          input.intent,
-          input.backgroundColor
-        ),
+        prepareUsbFrameDeploymentOutput(getActiveEditorStore(), input.intent),
       '部署参数已准备好，请检查确认卡后执行。'
     )
   }

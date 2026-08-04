@@ -1,7 +1,11 @@
 import { markRaw, reactive } from 'vue'
 
 import { embeddedManifestUrl } from '../adapters/http'
-import { imageFileToRgb565, prototypeBakeToRgb565 } from '../adapters/image'
+import {
+  imageFileToRgb565,
+  prototypeBakeToRgb565,
+  type EmbeddedImagePlacement
+} from '../adapters/image'
 import {
   flashUsbFrameFirmware,
   flashUsbPrototypeFirmware,
@@ -65,6 +69,7 @@ export interface UsbFrameDeploymentPlan {
     stateNames: string[]
   }
   backgroundColor: string
+  placement: EmbeddedImagePlacement
   previewUrl: string
   contentBytes: number
   firstDeployment: boolean
@@ -100,6 +105,7 @@ export interface PrepareUsbFrameDeploymentInput {
   frame: UsbFrameDeploymentFrame
   file: File
   backgroundColor: string
+  placement?: EmbeddedImagePlacement
   firstDeployment: boolean
 }
 
@@ -108,6 +114,7 @@ export interface PrepareUsbPrototypeDeploymentInput {
   frame: UsbFrameDeploymentFrame
   bake: EmbeddedPrototypeBakeResult
   backgroundColor: string
+  placement?: EmbeddedImagePlacement
   firstDeployment: boolean
 }
 
@@ -276,8 +283,9 @@ export async function prepareUsbFrameDeployment(
   if (!supportsUsbFrameFastFlash(input.profile.id)) {
     throw new Error('当前屏幕尚未提供 USB 单 Frame 快速部署固件')
   }
+  const placement = input.placement ?? 'pixel-perfect'
   const payload = await imageFileToRgb565(input.file, input.profile, {
-    placement: 'pixel-perfect',
+    placement,
     backgroundColor: input.backgroundColor
   })
   const contentBytes = encodeWirelessImage(payload).byteLength
@@ -293,6 +301,7 @@ export async function prepareUsbFrameDeployment(
     roundScreen: input.profile.visibleArea?.shape === 'round',
     frame: { ...input.frame },
     backgroundColor: input.backgroundColor,
+    placement,
     previewUrl: URL.createObjectURL(input.file),
     contentBytes,
     firstDeployment: input.firstDeployment,
@@ -317,6 +326,7 @@ export async function prepareUsbPrototypeDeployment(
   if (!supportsUsbFrameFastFlash(input.profile.id)) {
     throw new Error('当前屏幕尚未提供 USB 交互快速部署固件')
   }
+  const placement = input.placement ?? 'pixel-perfect'
   const slideshow = input.bake.mode === 'slideshow'
   const payload = slideshow
     ? await imageFilesToUsbSequence(
@@ -325,11 +335,16 @@ export async function prepareUsbPrototypeDeployment(
         {
           frameDelayMs: input.bake.intervalMs,
           preserveOrder: true,
-          placement: 'pixel-perfect',
+          placement,
           backgroundColor: input.backgroundColor
         }
       )
-    : await prototypeBakeToRgb565(input.bake, input.profile, input.backgroundColor)
+    : await prototypeBakeToRgb565(
+        input.bake,
+        input.profile,
+        input.backgroundColor,
+        placement
+      )
   const contentBytes =
     'content' in payload ? payload.content.byteLength : encodeWirelessPrototype(payload).byteLength
   const previewFile = input.bake.states.find(
@@ -355,6 +370,7 @@ export async function prepareUsbPrototypeDeployment(
       stateNames: input.bake.states.map((state) => state.name)
     },
     backgroundColor: input.backgroundColor,
+    placement,
     previewUrl: URL.createObjectURL(previewFile),
     contentBytes,
     firstDeployment: input.firstDeployment,

@@ -13,6 +13,10 @@ import { describeDeviceDeploymentProblem } from '@/app/ai/device/errors'
 import { useAIChat } from '@/app/ai/chat/use'
 import { useDeploymentCardDisclosure } from '@/components/chat/useDeploymentCardDisclosure'
 import { DEVICE_PROTOTYPE_EVENTS } from '@/features/device-prototype'
+import {
+  EmbeddedDisplayContentPreview,
+  embeddedImagePlacementLabel
+} from '@/features/embedded-display'
 
 const { proposalId } = defineProps<{ proposalId: string }>()
 const { activeTab } = useAIChat()
@@ -200,30 +204,53 @@ function cancel(): void {
 
     <CollapsibleContent>
       <div class="space-y-2 p-3 text-[11px] leading-4">
-        <div class="grid grid-cols-[52px_minmax(0,1fr)] gap-y-1">
-          <span class="text-muted">初始界面</span>
-          <span class="truncate text-surface">{{
-            stateName(proposal.definition.initialStateId)
-          }}</span>
-          <span class="text-muted">界面</span>
-          <span class="truncate text-surface">
-            {{ proposal.definition.states.map((state) => state.name).join('、') }}
-          </span>
-          <template v-if="proposal.mode === 'slideshow'">
-            <span class="text-muted">播放间隔</span>
-            <span class="text-surface">
-              每 {{ (proposal.slideshow.intervalMs / 1000).toFixed(1) }} 秒
+        <div class="flex gap-3">
+          <EmbeddedDisplayContentPreview
+            v-if="deployment"
+            :src="deployment.previewUrl"
+            :alt="proposal.name"
+            :placement="proposal.placement"
+            :background-color="proposal.backgroundColor"
+            :target-width="proposal.resolution.width"
+            :target-height="proposal.resolution.height"
+            :source-width="deployment.frame.width"
+            :source-height="deployment.frame.height"
+            :round="proposal.roundScreen"
+            class="w-20"
+          />
+          <div class="grid min-w-0 flex-1 grid-cols-[52px_minmax(0,1fr)] gap-y-1">
+            <span class="text-muted">初始界面</span>
+            <span class="truncate text-surface">{{
+              stateName(proposal.definition.initialStateId)
+            }}</span>
+            <span class="text-muted">界面</span>
+            <span class="truncate text-surface">
+              {{ proposal.definition.states.map((state) => state.name).join('、') }}
             </span>
-          </template>
-          <span class="text-muted">分辨率</span>
-          <span class="text-surface">
-            {{ proposal.resolution.width }} × {{ proposal.resolution.height }}
-            {{ proposal.roundScreen ? '· 圆形' : '' }}
-          </span>
-          <template v-if="deployment">
-            <span class="text-muted">数据</span>
-            <span class="text-surface">{{ formatBytes(deployment.contentBytes) }}</span>
-          </template>
+            <template v-if="proposal.mode === 'slideshow'">
+              <span class="text-muted">播放间隔</span>
+              <span class="text-surface">
+                每 {{ (proposal.slideshow.intervalMs / 1000).toFixed(1) }} 秒
+              </span>
+            </template>
+            <span class="text-muted">分辨率</span>
+            <span class="text-surface">
+              {{ proposal.resolution.width }} × {{ proposal.resolution.height }}
+              {{ proposal.roundScreen ? '· 圆形' : '' }}
+            </span>
+            <span class="text-muted">适配</span>
+            <span class="flex min-w-0 items-center gap-1.5 text-surface">
+              <span
+                class="size-2.5 shrink-0 rounded-sm border border-border"
+                :style="{ backgroundColor: proposal.backgroundColor }"
+              />
+              {{ embeddedImagePlacementLabel(proposal.placement) }}
+            </span>
+            <template v-if="deployment">
+              <span class="text-muted">数据</span>
+              <span class="text-surface">{{ formatBytes(deployment.contentBytes) }}</span>
+            </template>
+          </div>
         </div>
 
         <details v-if="proposal.definition.transitions.length" class="border-t border-border pt-2">

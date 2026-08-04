@@ -9,7 +9,11 @@ import {
 import { describeDeviceDeploymentProblem } from '@/app/ai/device/errors'
 import { useAIChat } from '@/app/ai/chat/use'
 import { useDeploymentCardDisclosure } from '@/components/chat/useDeploymentCardDisclosure'
-import { getUsbFrameDeploymentPlan } from '@/features/embedded-display'
+import {
+  EmbeddedDisplayContentPreview,
+  embeddedImagePlacementLabel,
+  getUsbFrameDeploymentPlan
+} from '@/features/embedded-display'
 
 const { planId } = defineProps<{ planId: string }>()
 const { submitLocalDeviceAction } = useAIChat()
@@ -157,10 +161,17 @@ function cancel(): void {
 
     <CollapsibleContent>
       <div class="flex gap-3 p-3">
-        <img
+        <EmbeddedDisplayContentPreview
           :src="plan.previewUrl"
           :alt="plan.frame.name"
-          class="size-20 shrink-0 rounded border border-border bg-black object-contain"
+          :placement="plan.placement"
+          :background-color="plan.backgroundColor"
+          :target-width="plan.resolution.width"
+          :target-height="plan.resolution.height"
+          :source-width="plan.frame.width"
+          :source-height="plan.frame.height"
+          :round="plan.roundScreen"
+          class="w-20"
         />
         <div class="min-w-0 flex-1 space-y-1 text-[11px] leading-4">
           <div class="flex gap-2">
@@ -172,6 +183,16 @@ function cancel(): void {
             <span class="text-surface">
               {{ plan.resolution.width }} × {{ plan.resolution.height }}
               {{ plan.roundScreen ? '· 圆形' : '' }}
+            </span>
+          </div>
+          <div class="flex gap-2">
+            <span class="w-10 shrink-0 text-muted">适配</span>
+            <span class="flex min-w-0 items-center gap-1.5 text-surface">
+              <span
+                class="size-2.5 shrink-0 rounded-sm border border-border"
+                :style="{ backgroundColor: plan.backgroundColor }"
+              />
+              {{ embeddedImagePlacementLabel(plan.placement) }}
             </span>
           </div>
           <div class="flex gap-2">

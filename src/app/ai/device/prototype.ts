@@ -22,10 +22,12 @@ import {
   cancelUsbFrameDeployment,
   executeUsbFrameDeployment,
   getActiveEmbeddedDisplayProfile,
+  getActiveEmbeddedImageSettings,
   getUsbFrameDeploymentPlan,
   isUsbFrameDeploymentBusy,
   prepareUsbPrototypeDeployment,
   supersedeUsbFrameDeployment,
+  type EmbeddedImagePlacement,
   type UsbFrameDeploymentPlan
 } from '@/features/embedded-display'
 
@@ -47,6 +49,7 @@ export interface PrepareDevicePrototypeProposalInput {
   manual?: Partial<DevicePrototypeManualSettings>
   slideshow?: Partial<DevicePrototypeSlideshowSettings>
   backgroundColor?: string
+  placement?: EmbeddedImagePlacement
 }
 
 export type DevicePrototypeProposalStatus =
@@ -73,6 +76,7 @@ export interface DevicePrototypeProposal {
   resolution: { width: number; height: number }
   roundScreen: boolean
   backgroundColor: string
+  placement: EmbeddedImagePlacement
   interactionId?: string
   deploymentPlanId?: string
   message: string
@@ -220,6 +224,7 @@ export function prepareDevicePrototypeProposal(
   const validated = validateProposalInput(store, input)
   supersedeInactiveProposals()
   const profile = getActiveEmbeddedDisplayProfile()
+  const settings = getActiveEmbeddedImageSettings()
   const id = globalThis.crypto.randomUUID()
   const proposal = reactive<DevicePrototypeProposalRecord>({
     id,
@@ -235,7 +240,8 @@ export function prepareDevicePrototypeProposal(
     profileName: profile.name,
     resolution: { ...profile.resolution },
     roundScreen: profile.visibleArea?.shape === 'round',
-    backgroundColor: input.backgroundColor ?? '#000000',
+    backgroundColor: input.backgroundColor ?? settings.backgroundColor,
+    placement: input.placement ?? settings.placement,
     message: '交互方案已准备，确认后会添加到交互栏',
     createdAt: Date.now(),
     store: markRaw(store)
@@ -308,6 +314,7 @@ export async function confirmDevicePrototypeProposalFromChat(id: string): Promis
       },
       bake,
       backgroundColor: proposal.backgroundColor,
+      placement: proposal.placement,
       firstDeployment: !(await hasUsbFirmwareMemory(profile.id))
     })
     proposal.deploymentPlanId = plan.id

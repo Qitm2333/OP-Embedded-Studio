@@ -30,7 +30,13 @@ export interface PixelPerfectPlacement {
   destinationY: number
 }
 
-export type EmbeddedImagePlacement = 'contain' | 'pixel-perfect'
+export type EmbeddedImagePlacement = 'stretch' | 'contain' | 'pixel-perfect'
+
+export function embeddedImagePlacementLabel(placement: EmbeddedImagePlacement): string {
+  if (placement === 'stretch') return '拉伸'
+  if (placement === 'contain') return '等比缩放'
+  return '不缩放'
+}
 
 export function calculatePixelPerfectPlacement(
   source: { width: number; height: number },
@@ -65,10 +71,11 @@ export async function imageFileToRgb565(
   const context = canvas.getContext('2d')
   if (!context) throw new Error('无法创建图片预览画布')
 
-  context.fillStyle =
-    options.placement === 'pixel-perfect' ? (options.backgroundColor ?? '#000000') : '#000000'
+  context.fillStyle = options.backgroundColor ?? '#000000'
   context.fillRect(0, 0, width, height)
-  if (options.placement === 'pixel-perfect') {
+  if (options.placement === 'stretch') {
+    context.drawImage(bitmap, 0, 0, width, height)
+  } else if (options.placement === 'pixel-perfect') {
     const placement = calculatePixelPerfectPlacement(bitmap, { width, height })
     context.imageSmoothingEnabled = false
     context.drawImage(
@@ -133,7 +140,8 @@ export async function imageFileToRgb565(
 export async function prototypeBakeToRgb565(
   bake: EmbeddedPrototypeBakeResult,
   profile: EmbeddedDisplayProfile,
-  backgroundColor?: string
+  backgroundColor?: string,
+  placement: EmbeddedImagePlacement = 'pixel-perfect'
 ): Promise<EmbeddedPrototypePayload> {
   const stateIndex = new Map(bake.states.map((state, index) => [state.id, index]))
   const initialStateIndex = stateIndex.get(bake.initialStateId)
@@ -142,7 +150,7 @@ export async function prototypeBakeToRgb565(
   const frameBytes: Uint8Array[] = []
   for (const state of bake.states) {
     const payload = await imageFileToRgb565(state.file, profile, {
-      placement: 'pixel-perfect',
+      placement,
       backgroundColor
     })
     frameBytes.push(bytesFromBase64(payload.pixelsRgb565Base64))

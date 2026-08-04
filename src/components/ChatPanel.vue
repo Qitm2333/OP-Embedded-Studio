@@ -196,8 +196,7 @@ async function handlePrototypeQuickAction(mode: 'manual' | 'slideshow'): Promise
         mode === 'manual'
           ? { nextEvent: 'screen_click', previousEvent: 'screen_long_press', loop: true }
           : undefined,
-      slideshow: mode === 'slideshow' ? { intervalMs: 3000 } : undefined,
-      backgroundColor: '#000000'
+      slideshow: mode === 'slideshow' ? { intervalMs: 3000 } : undefined
     })
     if (localChat) {
       chat.value = markRaw(localChat)

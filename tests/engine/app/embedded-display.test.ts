@@ -17,7 +17,11 @@ import {
   getEmbeddedFrameBakeState
 } from '@/app/editor/embedded-display-bake'
 import { createEditorStore, type EditorStore } from '@/app/editor/session'
-import { calculatePixelPerfectPlacement } from '@/features/embedded-display/adapters/image'
+import {
+  calculatePixelPerfectPlacement,
+  imageFileToRgb565
+} from '@/features/embedded-display/adapters/image'
+import type { EmbeddedDisplayProfile } from '@/features/embedded-display/model/types'
 
 function editorStore(graph: SceneGraph, selectedIds: string[]): EditorStore {
   const store = createEditorStore(graph)
@@ -376,5 +380,66 @@ describe('embedded display pixel-perfect fallback', () => {
       destinationX: 0,
       destinationY: 0
     })
+  })
+})
+
+describe('embedded display image placement', () => {
+  const profile: EmbeddedDisplayProfile = {
+    id: 'placement-test',
+    name: 'Placement test',
+    controller: 'TEST',
+    resolution: { width: 4, height: 4 },
+    interface: 'TEST',
+    backgroundColor: '#000000',
+    description: 'Placement test profile',
+    verified: true
+  }
+
+  async function render(placement: 'stretch' | 'contain') {
+    const descriptors = {
+      createImageBitmap: Object.getOwnPropertyDescriptor(globalThis, 'createImageBitmap'),
+      document: Object.getOwnPropertyDescriptor(globalThis, 'document')
+    }
+    const drawCalls: unknown[][] = []
+    const context = {
+      fillStyle: '',
+      imageSmoothingEnabled: true,
+      fillRect: () => undefined,
+      drawImage: (...args: unknown[]) => drawCalls.push(args),
+      getImageData: () => ({ data: new Uint8ClampedArray(4 * 4 * 4) })
+    }
+    Object.defineProperty(globalThis, 'createImageBitmap', {
+      configurable: true,
+      value: async () => ({ width: 2, height: 1, close: () => undefined })
+    })
+    Object.defineProperty(globalThis, 'document', {
+      configurable: true,
+      value: { createElement: () => ({ width: 0, height: 0, getContext: () => context }) }
+    })
+
+    try {
+      await imageFileToRgb565(new File([new Uint8Array([0])], 'frame.png'), profile, {
+        placement,
+        backgroundColor: '#123456'
+      })
+      return { context, drawCalls }
+    } finally {
+      for (const [key, descriptor] of Object.entries(descriptors)) {
+        if (descriptor) Object.defineProperty(globalThis, key, descriptor)
+        else Reflect.deleteProperty(globalThis, key)
+      }
+    }
+  }
+
+  test('stretches a source image to the full device resolution', async () => {
+    const { context, drawCalls } = await render('stretch')
+    expect(context.fillStyle).toBe('#123456')
+    expect(drawCalls[0]?.slice(1)).toEqual([0, 0, 4, 4])
+  })
+
+  test('preserves aspect ratio and centers the scaled image', async () => {
+    const { context, drawCalls } = await render('contain')
+    expect(context.fillStyle).toBe('#123456')
+    expect(drawCalls[0]?.slice(1)).toEqual([0, 1, 4, 2])
   })
 })

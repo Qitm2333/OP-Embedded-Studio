@@ -4,7 +4,10 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import { PanelSection } from '@/components/ui/panel'
 
-import { imageFileToRgb565 } from '@/features/embedded-display/adapters/image'
+import {
+  imageFileToRgb565,
+  type EmbeddedImagePlacement
+} from '@/features/embedded-display/adapters/image'
 import type {
   EmbeddedDisplayProfile,
   EmbeddedFrameBakeById,
@@ -25,11 +28,12 @@ interface MirrorTarget {
   height: number
 }
 
-const { profile, bakeState, bakeFrameById, backgroundColor } = defineProps<{
+const { profile, bakeState, bakeFrameById, backgroundColor, placement } = defineProps<{
   profile?: EmbeddedDisplayProfile | null
   bakeState?: EmbeddedFrameBakeState
   bakeFrameById?: EmbeddedFrameBakeById
   backgroundColor?: string
+  placement?: EmbeddedImagePlacement
 }>()
 
 const emit = defineEmits<{
@@ -126,7 +130,7 @@ async function runPendingFrame() {
     const file = await renderFrameById(requestedTarget.id)
     if (!file) throw new Error(`无法烘焙 Frame：${requestedTarget.name}`)
     const payload = await imageFileToRgb565(file, requestedProfile, {
-      placement: 'pixel-perfect',
+      placement,
       backgroundColor
     })
     status.value = 'uploading'

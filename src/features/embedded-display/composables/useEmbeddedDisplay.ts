@@ -28,6 +28,8 @@ const profiles = ref<EmbeddedDisplayProfile[]>([])
 const selectedProfileId = ref('')
 const selectedImageName = ref('')
 const previewUrl = ref('')
+const imagePlacement = ref<EmbeddedImagePlacement>('pixel-perfect')
+const frameBackgroundColor = ref('#000000')
 const imagePayload = ref<EmbeddedImagePayload | null>(null)
 const usbSequencePayload = ref<UsbImageSequencePayload | null>(null)
 const prototypePayload = ref<EmbeddedPrototypePayload | null>(null)
@@ -45,6 +47,16 @@ export function getActiveEmbeddedDisplayProfile(): EmbeddedDisplayProfile {
     bundledDisplayProfiles().find((profile) => profile.id === selectedId) ??
     bundledDisplayProfiles()[0]
   )
+}
+
+export function getActiveEmbeddedImageSettings(): {
+  placement: EmbeddedImagePlacement
+  backgroundColor: string
+} {
+  return {
+    placement: imagePlacement.value,
+    backgroundColor: frameBackgroundColor.value
+  }
 }
 
 function deviceLog(message: string, details?: unknown) {
@@ -132,8 +144,8 @@ export function useEmbeddedDisplay() {
       if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
       previewUrl.value = URL.createObjectURL(file)
       const payload = await imageFileToRgb565(file, profile, {
-        placement: options.placement,
-        backgroundColor: options.backgroundColor
+        placement: options.placement ?? imagePlacement.value,
+        backgroundColor: options.backgroundColor ?? frameBackgroundColor.value
       })
       imagePayload.value = payload
       deviceLog('image payload ready', {
@@ -164,7 +176,10 @@ export function useEmbeddedDisplay() {
     }
   }
 
-  async function selectUsbImageSequence(files: File[]) {
+  async function selectUsbImageSequence(
+    files: File[],
+    options: { placement?: EmbeddedImagePlacement; backgroundColor?: string } = {}
+  ) {
     const profile = selectedProfile.value
     if (!profile) throw new Error('请先连接设备服务并选择屏幕方案')
     if (files.length < 2) throw new Error('PNG 序列至少需要两张图片')
@@ -176,7 +191,10 @@ export function useEmbeddedDisplay() {
     try {
       if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
       previewUrl.value = URL.createObjectURL(files[0])
-      const payload = await imageFilesToUsbSequence(files, profile)
+      const payload = await imageFilesToUsbSequence(files, profile, {
+        placement: options.placement ?? imagePlacement.value,
+        backgroundColor: options.backgroundColor ?? frameBackgroundColor.value
+      })
       imagePayload.value = null
       usbSequencePayload.value = payload
       buildStatus.value = 'idle'
@@ -200,7 +218,11 @@ export function useEmbeddedDisplay() {
 
   async function selectPrototype(
     bake: EmbeddedPrototypeBakeResult,
-    options: { upload?: boolean; backgroundColor?: string } = {}
+    options: {
+      upload?: boolean
+      backgroundColor?: string
+      placement?: EmbeddedImagePlacement
+    } = {}
   ) {
     const profile = selectedProfile.value
     if (!profile) throw new Error('请先连接设备服务并选择屏幕方案')
@@ -211,7 +233,12 @@ export function useEmbeddedDisplay() {
       ? `正在批量烘焙并上传交互：${bake.name}`
       : `正在批量烘焙交互：${bake.name}`
     try {
-      const payload = await prototypeBakeToRgb565(bake, profile, options.backgroundColor)
+      const payload = await prototypeBakeToRgb565(
+        bake,
+        profile,
+        options.backgroundColor ?? frameBackgroundColor.value,
+        options.placement ?? imagePlacement.value
+      )
       prototypePayload.value = payload
       deviceLog('prototype payload ready', {
         profileId: payload.profileId,
@@ -323,6 +350,8 @@ export function useEmbeddedDisplay() {
     profiles,
     variables: MOCK_DISPLAY_VARIABLES,
     selectedImageName,
+    imagePlacement,
+    frameBackgroundColor,
     buildStatus,
     buildMessage,
     buildLog,

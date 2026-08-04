@@ -4,8 +4,10 @@ import {
   cancelUsbFrameDeployment,
   executeUsbFrameDeployment,
   getActiveEmbeddedDisplayProfile,
+  getActiveEmbeddedImageSettings,
   getUsbFrameDeploymentPlan,
   prepareUsbFrameDeployment,
+  type EmbeddedImagePlacement,
   type UsbFrameDeploymentPlan
 } from '@/features/embedded-display'
 
@@ -20,7 +22,8 @@ const planStores = new Map<string, EditorStore>()
 
 export async function prepareUsbFrameDeploymentFromStore(
   store: EditorStore,
-  backgroundColor: string
+  backgroundColor?: string,
+  placement?: EmbeddedImagePlacement
 ): Promise<UsbFrameDeploymentPlan> {
   const frame = resolveDesignHandoffFrame(store)
   if (!frame.available) {
@@ -29,6 +32,7 @@ export async function prepareUsbFrameDeploymentFromStore(
   const file = await bakeEmbeddedFrameById(store, frame.id)
   if (!file) throw new Error('无法渲染当前画面，请重新选择后再试')
   const profile = getActiveEmbeddedDisplayProfile()
+  const settings = getActiveEmbeddedImageSettings()
   const plan = await prepareUsbFrameDeployment({
     profile,
     frame: {
@@ -39,7 +43,8 @@ export async function prepareUsbFrameDeploymentFromStore(
       height: frame.height
     },
     file,
-    backgroundColor,
+    backgroundColor: backgroundColor ?? settings.backgroundColor,
+    placement: placement ?? settings.placement,
     firstDeployment: !(await hasUsbFirmwareMemory(profile.id))
   })
   planStores.set(plan.id, store)

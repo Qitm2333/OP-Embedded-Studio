@@ -5,6 +5,7 @@ import * as v from 'valibot'
 
 import type { EditorStore } from '@/app/editor/active-store'
 import { DEVICE_PROTOTYPE_EVENTS } from '@/features/device-prototype'
+import type { EmbeddedImagePlacement } from '@/features/embedded-display'
 
 import { prepareUsbFrameDeploymentFromStore } from './deployment'
 import {
@@ -55,9 +56,10 @@ export function isDirectUsbFrameDeploymentRequest(text: string): boolean {
 export async function prepareUsbFrameDeploymentOutput(
   store: EditorStore,
   intent: string,
-  backgroundColor = '#000000'
+  backgroundColor?: string,
+  placement?: EmbeddedImagePlacement
 ) {
-  const plan = await prepareUsbFrameDeploymentFromStore(store, backgroundColor)
+  const plan = await prepareUsbFrameDeploymentFromStore(store, backgroundColor, placement)
   return {
     kind: 'usb-frame-deployment-plan' as const,
     planId: plan.id,
@@ -69,6 +71,7 @@ export async function prepareUsbFrameDeploymentOutput(
       roundScreen: plan.roundScreen
     },
     frame: plan.frame,
+    adaptation: { placement: plan.placement, backgroundColor: plan.backgroundColor },
     contentBytes: plan.contentBytes,
     firstDeployment: plan.firstDeployment,
     needsDeviceSelection: plan.needsDeviceSelection,
@@ -104,6 +107,10 @@ export function prepareUsbPrototypeDeploymentOutput(
       })),
       transitions: proposal.definition.transitions
     },
+    adaptation: {
+      placement: proposal.placement,
+      backgroundColor: proposal.backgroundColor
+    },
     instruction:
       'The interaction is proposed but not created. Ask the user to review and confirm the host card.'
   }
@@ -113,7 +120,7 @@ export function createDeviceTools(store: EditorStore): ToolSet {
   return {
     prepare_usb_frame_deployment: tool({
       description:
-        'Prepare an immutable USB single-screen deployment plan for the selected Frame or image and active device. Source pixels are centered, cropped, or padded without scaling when dimensions differ. Hardware execution requires confirmation.',
+        'Prepare an immutable USB single-screen deployment plan for the selected Frame or image and active device. The active display adaptation is used unless placement or backgroundColor is explicitly requested. Hardware execution requires confirmation.',
       inputSchema: valibotSchema(
         v.object({
           intent: v.pipe(
@@ -128,14 +135,14 @@ export function createDeviceTools(store: EditorStore): ToolSet {
               v.string(),
               v.regex(HEX_COLOR),
               v.description('Opaque fallback color for transparent pixels, as #RRGGBB')
-            ),
-            '#000000'
-          )
+            )
+          ),
+          placement: v.optional(v.picklist(['stretch', 'contain', 'pixel-perfect']))
         })
       ),
-      execute: async ({ intent, backgroundColor }) => {
+      execute: async ({ intent, backgroundColor, placement }) => {
         try {
-          return await prepareUsbFrameDeploymentOutput(store, intent, backgroundColor)
+          return await prepareUsbFrameDeploymentOutput(store, intent, backgroundColor, placement)
         } catch (error) {
           return {
             error: error instanceof Error ? error.message : String(error),
@@ -191,7 +198,8 @@ export function createDeviceTools(store: EditorStore): ToolSet {
               intervalMs: v.optional(v.pipe(v.number(), v.minValue(500), v.maxValue(60000)), 3000)
             })
           ),
-          backgroundColor: v.optional(v.pipe(v.string(), v.regex(HEX_COLOR)), '#000000')
+          backgroundColor: v.optional(v.pipe(v.string(), v.regex(HEX_COLOR))),
+          placement: v.optional(v.picklist(['stretch', 'contain', 'pixel-perfect']))
         })
       ),
       execute: async (input) => {

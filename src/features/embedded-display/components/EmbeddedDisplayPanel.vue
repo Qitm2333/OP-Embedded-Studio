@@ -7,6 +7,10 @@ import { PanelHeader, PanelSection } from '@/components/ui/panel'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 
 import { prepareWifiFirmwareCredentials } from '../adapters/http'
+import {
+  embeddedImagePlacementLabel,
+  type EmbeddedImagePlacement
+} from '../adapters/image'
 import { flashFirmwareManifest } from '../adapters/manifest-firmware'
 import {
   transferUsbContentWithFirmwareFallback,
@@ -37,6 +41,7 @@ import type { SerialPortLike } from '../adapters/serial-flasher'
 import { useBleDeviceSession } from '../composables/useBleDeviceSession'
 import { useEmbeddedDisplay } from '../composables/useEmbeddedDisplay'
 import { useSerialDeviceSession } from '../composables/useSerialDeviceSession'
+import EmbeddedDisplayContentPreview from './EmbeddedDisplayContentPreview.vue'
 import WifiLiveMirrorPanel from '../live-mirror/components/WifiLiveMirrorPanel.vue'
 import type {
   EmbeddedBuildMode,
@@ -126,8 +131,8 @@ const selectedPrototypeId = computed({
 })
 const wifiSequencePayload = ref<WirelessImageSequencePayload | null>(null)
 const bleSequencePayload = ref<WirelessImageSequencePayload | null>(null)
+const uploadedUsbFiles = ref<File[]>([])
 const bakePending = ref(false)
-const frameBackgroundColor = ref('#000000')
 const bakeError = ref('')
 const frameResourceSources = ref<Record<TransportMode, FrameResourceSource>>({
   usb: null,
@@ -149,6 +154,9 @@ const {
   profiles,
   variables,
   selectedImageName,
+  previewUrl,
+  imagePlacement,
+  frameBackgroundColor,
   imagePayload,
   usbSequencePayload,
   prototypePayload,
@@ -169,6 +177,12 @@ const resolutionLabel = computed(() => {
   const resolution = selectedProfile.value?.resolution
   return resolution ? `${resolution.width} × ${resolution.height}` : '—'
 })
+const imagePlacementOptions: Array<{ value: EmbeddedImagePlacement; label: string }> = [
+  { value: 'stretch', label: '拉伸' },
+  { value: 'contain', label: '等比缩放' },
+  { value: 'pixel-perfect', label: '不缩放' }
+]
+const imagePlacementSummary = computed(() => embeddedImagePlacementLabel(imagePlacement.value))
 const selectedPrototype = computed(
   () => prototypeOptions?.find((option) => option.id === selectedPrototypeId.value) ?? null
 )
@@ -358,6 +372,11 @@ watch(selectedPrototypeId, () => {
   prototypeError.value = ''
 })
 
+watch([imagePlacement, frameBackgroundColor], () => {
+  prototypePrepared.value = false
+  prototypeError.value = ''
+})
+
 watch(
   () => selectedProfile.value?.id,
   () => {
@@ -375,7 +394,7 @@ async function handleBakeFrame(): Promise<boolean> {
     if (!file) return false
     await selectImage(file, {
       upload: false,
-      placement: 'pixel-perfect',
+      placement: imagePlacement.value,
       backgroundColor: frameBackgroundColor.value
     })
     frameResourceSource.value = 'baked'
@@ -390,7 +409,22 @@ async function handleBakeFrame(): Promise<boolean> {
 
 async function prepareUsbFrameContent(source: 'frame' | 'file'): Promise<boolean> {
   if (source === 'frame') return canUsbFrameFlash.value && (await handleBakeFrame())
-  return canUsbFileFlash.value
+  if (!canUsbFileFlash.value || !uploadedUsbFiles.value.length) return false
+  const files = uploadedUsbFiles.value
+  await selectImage(undefined, { upload: false })
+  if (files.length === 1) {
+    await selectImage(files[0], {
+      upload: false,
+      placement: imagePlacement.value,
+      backgroundColor: frameBackgroundColor.value
+    })
+  } else {
+    await selectUsbImageSequence(files, {
+      placement: imagePlacement.value,
+      backgroundColor: frameBackgroundColor.value
+    })
+  }
+  return buildStatus.value !== 'error'
 }
 
 function updateUsbFirmwareStage(stage: UsbContentFirmwareStage, message: string): void {
@@ -642,13 +676,24 @@ async function handleUsbImageChange(event: Event) {
   if (!files.length || !requestedProfileId || !canUsbFileFlash.value) return
 
   frameResourceSource.value = 'uploaded'
+  uploadedUsbFiles.value = files
   bakeError.value = ''
   try {
     // File selection only prepares content. A separate button click requests Web Serial permission.
     // Clear both USB content variants first so failed conversion can never flash stale data.
     await selectImage(undefined, { upload: false })
-    if (files.length === 1) await selectImage(files[0], { upload: false })
-    else await selectUsbImageSequence(files)
+    if (files.length === 1) {
+      await selectImage(files[0], {
+        upload: false,
+        placement: imagePlacement.value,
+        backgroundColor: frameBackgroundColor.value
+      })
+    } else {
+      await selectUsbImageSequence(files, {
+        placement: imagePlacement.value,
+        backgroundColor: frameBackgroundColor.value
+      })
+    }
 
     const content = files.length === 1 ? imagePayload.value : usbSequencePayload.value
     if (
@@ -684,7 +729,11 @@ async function handleWifiImageChange(event: Event) {
   try {
     await selectImage(undefined, { upload: false })
     if (files.length === 1) {
-      await selectImage(files[0], { upload: false })
+      await selectImage(files[0], {
+        upload: false,
+        placement: imagePlacement.value,
+        backgroundColor: frameBackgroundColor.value
+      })
       if (
         !isWirelessSingleImagePayload(imagePayload.value, profile.id) ||
         buildStatus.value === 'error' ||
@@ -698,7 +747,10 @@ async function handleWifiImageChange(event: Event) {
       return
     }
 
-    const sequence = await imageFilesToWifiSequence(files, profile)
+    const sequence = await imageFilesToWifiSequence(files, profile, {
+      placement: imagePlacement.value,
+      backgroundColor: frameBackgroundColor.value
+    })
     if (
       transportMode.value !== 'wifi' ||
       burnMode.value !== 'frame' ||
@@ -734,7 +786,11 @@ async function handleBleImageChange(event: Event) {
   try {
     await selectImage(undefined, { upload: false })
     if (files.length === 1) {
-      await selectImage(files[0], { upload: false })
+      await selectImage(files[0], {
+        upload: false,
+        placement: imagePlacement.value,
+        backgroundColor: frameBackgroundColor.value
+      })
       if (
         !isWirelessSingleImagePayload(imagePayload.value, profile.id) ||
         buildStatus.value === 'error' ||
@@ -747,7 +803,10 @@ async function handleBleImageChange(event: Event) {
       return
     }
 
-    const sequence = await imageFilesToBleSequence(files, profile)
+    const sequence = await imageFilesToBleSequence(files, profile, {
+      placement: imagePlacement.value,
+      backgroundColor: frameBackgroundColor.value
+    })
     if (
       transportMode.value !== 'ble' ||
       burnMode.value !== 'frame' ||
@@ -782,7 +841,7 @@ async function preparePrototypeResources(uploadToBuildService = false) {
       const options = {
         frameDelayMs: bake.intervalMs,
         preserveOrder: true,
-        placement: 'pixel-perfect' as const,
+        placement: imagePlacement.value,
         backgroundColor: frameBackgroundColor.value
       }
       if (transportMode.value === 'usb') {
@@ -803,7 +862,8 @@ async function preparePrototypeResources(uploadToBuildService = false) {
     } else {
       await selectPrototype(bake, {
         upload: uploadToBuildService,
-        backgroundColor: frameBackgroundColor.value
+        backgroundColor: frameBackgroundColor.value,
+        placement: imagePlacement.value
       })
     }
     prototypePrepared.value = true
@@ -1341,27 +1401,59 @@ watch([wifiSsid, wifiPassword], () => {
         />
       </PanelSection>
 
-      <PanelSection
-        v-if="burnMode === 'frame'"
-        class="order-[70]"
-        label="画面适配"
-        :default-open="false"
-      >
-        <div
-          class="flex items-center justify-between gap-3 rounded-panel border border-border bg-panel-field p-2"
-        >
-          <div class="min-w-0 flex-1">
-            <p class="text-xs font-medium text-surface">背景颜色</p>
-            <p class="mt-0.5 text-[10px] leading-relaxed text-muted">
-              尺寸不匹配时用于 1:1 居中补边，默认黑色
-            </p>
+      <PanelSection class="order-[70]" label="画面适配">
+        <template #actions>
+          <span class="text-[10px] font-normal text-muted">{{ imagePlacementSummary }}</span>
+        </template>
+        <div class="grid gap-2">
+          <SegmentedControl
+            v-model="imagePlacement"
+            class="w-full"
+            :options="imagePlacementOptions"
+            label="选择画面适配方式"
+          >
+            <template #option="{ option }">
+              <span class="flex min-w-0 items-center justify-center gap-1">
+                <icon-lucide-expand v-if="option.value === 'stretch'" class="size-3 shrink-0" />
+                <icon-lucide-maximize-2
+                  v-else-if="option.value === 'contain'"
+                  class="size-3 shrink-0"
+                />
+                <icon-lucide-scan-line v-else class="size-3 shrink-0" />
+                <span class="truncate">{{ option.label }}</span>
+              </span>
+            </template>
+          </SegmentedControl>
+
+          <div v-if="previewUrl && selectedProfile" class="flex min-w-0 items-center gap-2">
+            <EmbeddedDisplayContentPreview
+              :src="previewUrl"
+              :alt="selectedImageName || '画面适配预览'"
+              :placement="imagePlacement"
+              :background-color="frameBackgroundColor"
+              :target-width="selectedProfile.resolution.width"
+              :target-height="selectedProfile.resolution.height"
+              :round="selectedProfile.visibleArea?.shape === 'round'"
+              class="w-20"
+            />
+            <div class="min-w-0 flex-1 text-[10px] leading-4">
+              <p class="truncate text-surface">{{ selectedImageName }}</p>
+              <p class="text-muted">输出 {{ resolutionLabel }}</p>
+            </div>
           </div>
-          <input
-            v-model="frameBackgroundColor"
-            type="color"
-            aria-label="Frame 补边背景颜色"
-            class="h-8 w-10 shrink-0 cursor-pointer rounded border border-border bg-canvas p-0.5"
-          />
+
+          <label class="flex h-control items-center justify-between gap-3 text-xs text-surface">
+            <span>补边颜色</span>
+            <span class="flex items-center gap-2 text-[10px] text-muted">
+              {{ frameBackgroundColor.toUpperCase() }}
+              <input
+                v-model="frameBackgroundColor"
+                type="color"
+                aria-label="画面补边颜色"
+                class="h-7 w-9 shrink-0 cursor-pointer rounded border border-border bg-canvas p-0.5"
+              />
+            </span>
+          </label>
         </div>
       </PanelSection>
 
@@ -1372,6 +1464,7 @@ watch([wifiSsid, wifiPassword], () => {
           :bake-state="bakeState"
           :bake-frame-by-id="bakeFrameById"
           :background-color="frameBackgroundColor"
+          :placement="imagePlacement"
           @busy-change="liveMirrorBusy = $event"
         />
       </div>
