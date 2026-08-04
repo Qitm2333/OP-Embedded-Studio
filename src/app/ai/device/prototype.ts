@@ -26,6 +26,7 @@ import {
   getUsbFrameDeploymentPlan,
   isUsbFrameDeploymentBusy,
   prepareUsbPrototypeDeployment,
+  setActiveEmbeddedImageSettings,
   supersedeUsbFrameDeployment,
   updateUsbFrameDeploymentAdaptation,
   type EmbeddedImagePlacement,
@@ -248,6 +249,10 @@ export function prepareDevicePrototypeProposal(
     store: markRaw(store)
   })
   proposals.set(id, proposal)
+  setActiveEmbeddedImageSettings({
+    placement: proposal.placement,
+    backgroundColor: proposal.backgroundColor
+  })
   return proposal
 }
 
@@ -359,6 +364,10 @@ export async function updateDevicePrototypeAdaptationFromChat(
   proposal.message = proposal.deploymentPlanId
     ? '画面适配已更新，烧录内容已重新生成'
     : '画面适配已更新，确认后将按此方式生成烧录内容'
+  setActiveEmbeddedImageSettings({
+    placement: proposal.placement,
+    backgroundColor: proposal.backgroundColor
+  })
   return true
 }
 

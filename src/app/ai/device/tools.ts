@@ -5,11 +5,19 @@ import * as v from 'valibot'
 
 import type { EditorStore } from '@/app/editor/active-store'
 import { DEVICE_PROTOTYPE_EVENTS } from '@/features/device-prototype'
-import type { EmbeddedImagePlacement } from '@/features/embedded-display'
-
-import { prepareUsbFrameDeploymentFromStore } from './deployment'
 import {
+  getUsbFrameDeploymentPlan,
+  type EmbeddedImagePlacement
+} from '@/features/embedded-display'
+
+import {
+  prepareUsbFrameDeploymentFromStore,
+  updateUsbFrameDeploymentAdaptationFromChat
+} from './deployment'
+import {
+  getDevicePrototypeProposal,
   prepareDevicePrototypeProposal,
+  updateDevicePrototypeAdaptationFromChat,
   type PrepareDevicePrototypeProposalInput
 } from './prototype'
 
@@ -41,12 +49,19 @@ const PROTOTYPE_DEPLOYMENT_MARKERS = [
   /prototype|slideshow|carousel|manual (?:browsing|navigation)/iu
 ]
 
+const EXISTING_DEPLOYMENT_UPDATE_MARKERS = [
+  /(?:改成|改为|改用|调整为|换成|切换为|切换到)/u,
+  /\b(?:change|switch|update|adjust)\b/iu,
+  /\buse\b.+\binstead\b/iu
+]
+
 export function isDirectUsbFrameDeploymentRequest(text: string): boolean {
   const command = text.trim()
   if (
     !command ||
     QUESTION_MARKERS.some((pattern) => pattern.test(command)) ||
-    PROTOTYPE_DEPLOYMENT_MARKERS.some((pattern) => pattern.test(command))
+    PROTOTYPE_DEPLOYMENT_MARKERS.some((pattern) => pattern.test(command)) ||
+    EXISTING_DEPLOYMENT_UPDATE_MARKERS.some((pattern) => pattern.test(command))
   ) {
     return false
   }
@@ -54,13 +69,23 @@ export function isDirectUsbFrameDeploymentRequest(text: string): boolean {
 }
 
 export function resolveEmbeddedImagePlacement(text: string): EmbeddedImagePlacement | undefined {
-  if (/(?:不缩放|原始尺寸|原图尺寸|1\s*:\s*1|pixel[- ]?perfect|no scaling|unscaled)/iu.test(text)) {
+  if (
+    /(?:不缩放|原始尺寸|原图尺寸|实际尺寸|1\s*:\s*1)/u.test(text) ||
+    /\b(?:pixel[- ]?perfect|unscaled|no[- ]scaling|original size|actual size|native size)\b/iu.test(
+      text
+    )
+  ) {
     return 'pixel-perfect'
   }
-  if (/(?:等比(?:缩放)?|完整显示|contain|fit(?:ted)?|preserve aspect)/iu.test(text)) {
+  if (
+    /(?:等比(?:缩放)?|完整显示|保持(?:原始)?比例|按比例|适应屏幕)/u.test(text) ||
+    /\b(?:contain|fit|fitted)\b|\b(?:keep|preserve)(?: the)? aspect ratio\b/iu.test(text)
+  ) {
     return 'contain'
   }
-  if (/(?:拉伸|铺满|填满|stretch|fill)/iu.test(text)) return 'stretch'
+  if (/(?:拉伸|铺满|填满|拉满)/u.test(text) || /\b(?:stretch|fill)\b/iu.test(text)) {
+    return 'stretch'
+  }
   return undefined
 }
 
@@ -88,6 +113,52 @@ export async function prepareUsbFrameDeploymentOutput(
     needsDeviceSelection: plan.needsDeviceSelection,
     instruction:
       'The deployment is prepared but not executed. Ask the user to review and confirm the host card.'
+  }
+}
+
+export async function updateUsbDeploymentAdaptationOutput(
+  targetId: string,
+  placement?: EmbeddedImagePlacement,
+  backgroundColor?: string
+) {
+  const plan = getUsbFrameDeploymentPlan(targetId)
+  if (plan) {
+    const updated = await updateUsbFrameDeploymentAdaptationFromChat(
+      targetId,
+      placement ?? plan.placement,
+      backgroundColor
+    )
+    if (!updated) throw new Error('当前烧录计划正在执行或已经结束，无法修改画面适配')
+    return {
+      kind: 'usb-deployment-adaptation-updated' as const,
+      targetKind: plan.mode === 'frame' ? ('frame' as const) : ('prototype' as const),
+      targetId,
+      adaptation: {
+        placement: plan.placement,
+        backgroundColor: plan.backgroundColor
+      },
+      contentBytes: plan.contentBytes,
+      instruction: 'The existing confirmation card has been updated. Do not prepare a new plan.'
+    }
+  }
+
+  const proposal = getDevicePrototypeProposal(targetId)
+  if (!proposal) throw new Error('找不到需要修改的烧录计划')
+  const updated = await updateDevicePrototypeAdaptationFromChat(
+    targetId,
+    placement ?? proposal.placement,
+    backgroundColor
+  )
+  if (!updated) throw new Error('当前交互烧录计划正在执行或已经结束，无法修改画面适配')
+  return {
+    kind: 'usb-deployment-adaptation-updated' as const,
+    targetKind: 'prototype' as const,
+    targetId,
+    adaptation: {
+      placement: proposal.placement,
+      backgroundColor: proposal.backgroundColor
+    },
+    instruction: 'The existing confirmation card has been updated. Do not prepare a new plan.'
   }
 }
 
@@ -131,7 +202,7 @@ export function createDeviceTools(store: EditorStore): ToolSet {
   return {
     prepare_usb_frame_deployment: tool({
       description:
-        'Prepare an immutable USB single-screen deployment plan for the selected Frame or image and active device. The active display adaptation is used unless placement or backgroundColor is explicitly requested. Hardware execution requires confirmation.',
+        'Prepare a USB single-screen deployment plan for the selected Frame or image and active device. The active display adaptation is used unless placement or backgroundColor is explicitly requested. Hardware execution requires confirmation.',
       inputSchema: valibotSchema(
         v.object({
           intent: v.pipe(
@@ -158,6 +229,34 @@ export function createDeviceTools(store: EditorStore): ToolSet {
           return {
             error: error instanceof Error ? error.message : String(error),
             instruction: 'Resolve the blocking condition before preparing another deployment plan.'
+          }
+        }
+      }
+    }),
+    update_usb_deployment_adaptation: tool({
+      description:
+        'Update the placement or background color of an existing unexecuted USB deployment confirmation card. Use the planId or proposalId from the prior preparation tool result. This rebuilds content but does not access hardware.',
+      inputSchema: valibotSchema(
+        v.object({
+          targetId: v.pipe(
+            v.string(),
+            v.minLength(1),
+            v.description('The existing planId or proposalId to update')
+          ),
+          backgroundColor: v.optional(v.pipe(v.string(), v.regex(HEX_COLOR))),
+          placement: v.optional(v.picklist(['stretch', 'contain', 'pixel-perfect']))
+        })
+      ),
+      execute: async ({ targetId, backgroundColor, placement }) => {
+        try {
+          if (!backgroundColor && !placement) {
+            throw new Error('请至少指定缩放方式或背景颜色')
+          }
+          return await updateUsbDeploymentAdaptationOutput(targetId, placement, backgroundColor)
+        } catch (error) {
+          return {
+            error: error instanceof Error ? error.message : String(error),
+            instruction: 'Keep the existing card unchanged and explain why it cannot be updated.'
           }
         }
       }

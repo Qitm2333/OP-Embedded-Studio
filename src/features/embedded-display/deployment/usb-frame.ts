@@ -89,8 +89,8 @@ export interface UsbFrameDeploymentPlan {
 type DeploymentSerialPort = UsbContentSerialPort
 
 interface UsbFrameDeploymentRecord extends UsbFrameDeploymentPlan {
-  payload: EmbeddedImagePayload | EmbeddedPrototypePayload | UsbImageSequencePayload
-  source: UsbFrameDeploymentSource
+  payload?: EmbeddedImagePayload | EmbeddedPrototypePayload | UsbImageSequencePayload
+  source?: UsbFrameDeploymentSource
   port?: DeploymentSerialPort
   manifestUrl: string
 }
@@ -174,6 +174,7 @@ export function supersedeUsbFrameDeployment(id: string): void {
   plan.status = 'superseded'
   plan.error = undefined
   plan.message = '已由新的烧录计划替代'
+  releaseDeploymentContent(plan)
 }
 
 function supersedeInactiveUsbDeployments(): void {
@@ -185,6 +186,12 @@ function appendLog(plan: UsbFrameDeploymentRecord, message: string): void {
   if (!normalized) return
   plan.logs.push(normalized)
   if (plan.logs.length > 80) plan.logs.splice(0, plan.logs.length - 80)
+}
+
+function releaseDeploymentContent(plan: UsbFrameDeploymentRecord): void {
+  plan.payload = undefined
+  plan.source = undefined
+  plan.port = undefined
 }
 
 function setStageError(plan: UsbFrameDeploymentRecord): void {
@@ -228,6 +235,8 @@ async function uploadContent(
   port: DeploymentSerialPort,
   firmwareUpdated: boolean
 ): Promise<number> {
+  const payload = plan.payload
+  if (!payload) throw new Error('烧录内容已释放，请重新准备部署计划')
   plan.status = 'transferring-content'
   plan.contentStage = 'running'
   const progressStart = firmwareUpdated ? 70 : 10
@@ -243,13 +252,13 @@ async function uploadContent(
     }
   }
   let capacity: number
-  if ('content' in plan.payload) {
-    capacity = await flashUsbSequenceFirmware(plan.payload, flashOptions)
+  if ('content' in payload) {
+    capacity = await flashUsbSequenceFirmware(payload, flashOptions)
   }
-  else if (plan.mode === 'prototype' && 'initialStateIndex' in plan.payload) {
-    capacity = await flashUsbPrototypeFirmware(plan.payload, flashOptions)
-  } else if (!('initialStateIndex' in plan.payload)) {
-    capacity = await flashUsbFrameFirmware(plan.payload, flashOptions)
+  else if (plan.mode === 'prototype' && 'initialStateIndex' in payload) {
+    capacity = await flashUsbPrototypeFirmware(payload, flashOptions)
+  } else if (!('initialStateIndex' in payload)) {
+    capacity = await flashUsbFrameFirmware(payload, flashOptions)
   } else throw new Error('USB 部署内容与计划类型不匹配')
   plan.contentStage = 'done'
   return capacity
@@ -349,7 +358,9 @@ export async function updateUsbFrameDeploymentAdaptation(
   const backgroundColor = input.backgroundColor ?? plan.backgroundColor
   if (plan.placement === input.placement && plan.backgroundColor === backgroundColor) return true
 
-  const result = await buildDeploymentPayload(plan.source, input.placement, backgroundColor)
+  const source = plan.source
+  if (!source) return false
+  const result = await buildDeploymentPayload(source, input.placement, backgroundColor)
   if (
     plans.get(id) !== plan ||
     isUsbFrameDeploymentBusy(plan.status) ||
@@ -496,6 +507,7 @@ export async function executeUsbFrameDeployment(
     plan.status = 'stale'
     plan.error = '设计内容在确认前发生了变化，请重新生成部署计划'
     plan.message = plan.error
+    releaseDeploymentContent(plan)
     return false
   }
 
@@ -526,6 +538,7 @@ export async function executeUsbFrameDeployment(
         `部署记录保存失败，不影响设备内容：${error instanceof Error ? error.message : String(error)}`
       )
     }
+    releaseDeploymentContent(plan)
     return true
   } catch (error) {
     const message = normalizeUsbDeploymentError(error)
@@ -549,4 +562,5 @@ export function cancelUsbFrameDeployment(id: string): void {
   }
   plan.status = 'cancelled'
   plan.message = '部署已取消，未执行设备写入'
+  releaseDeploymentContent(plan)
 }

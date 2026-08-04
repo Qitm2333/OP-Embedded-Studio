@@ -43,6 +43,7 @@ function isNarrationTool(part: ToolPart): boolean {
   if (name === 'render') return true
   if (name === 'prepare_usb_frame_deployment') return true
   if (name === 'prepare_usb_prototype_deployment') return true
+  if (name === 'update_usb_deployment_adaptation') return true
   return false
 }
 
@@ -62,7 +63,9 @@ function hasErrorOutput(part: ToolPart): boolean {
 
 function isHiddenInternalTool(part: ToolPart): boolean {
   return (
-    (getToolName(part) === 'record_visual_review' || getToolName(part) === 'validate_layout') &&
+    (getToolName(part) === 'record_visual_review' ||
+      getToolName(part) === 'validate_layout' ||
+      getToolName(part) === 'update_usb_deployment_adaptation') &&
     part.state === 'output-available' &&
     !hasErrorOutput(part)
   )
@@ -156,6 +159,8 @@ function deploymentSummaryItem(): DisplayItem | undefined {
       text = '部署内容已准备，请确认后执行。'
     } else if (name === 'prepare_usb_prototype_deployment') {
       text = '交互方案已准备，请确认后创建并烧录。'
+    } else if (name === 'update_usb_deployment_adaptation') {
+      text = '原烧录卡片的画面适配已更新。'
     }
     if (!text) continue
     return {

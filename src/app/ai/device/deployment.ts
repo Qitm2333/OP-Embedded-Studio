@@ -7,6 +7,7 @@ import {
   getActiveEmbeddedImageSettings,
   getUsbFrameDeploymentPlan,
   prepareUsbFrameDeployment,
+  setActiveEmbeddedImageSettings,
   updateUsbFrameDeploymentAdaptation,
   type EmbeddedImagePlacement,
   type UsbFrameDeploymentPlan
@@ -20,6 +21,15 @@ import {
 } from './memory'
 
 const planStores = new Map<string, EditorStore>()
+
+function prunePlanStores(): void {
+  for (const planId of planStores.keys()) {
+    const status = getUsbFrameDeploymentPlan(planId)?.status
+    if (!status || ['success', 'cancelled', 'superseded', 'stale'].includes(status)) {
+      planStores.delete(planId)
+    }
+  }
+}
 
 export async function prepareUsbFrameDeploymentFromStore(
   store: EditorStore,
@@ -48,12 +58,18 @@ export async function prepareUsbFrameDeploymentFromStore(
     placement: placement ?? settings.placement,
     firstDeployment: !(await hasUsbFirmwareMemory(profile.id))
   })
+  setActiveEmbeddedImageSettings({
+    placement: plan.placement,
+    backgroundColor: plan.backgroundColor
+  })
+  prunePlanStores()
   planStores.set(plan.id, store)
   return plan
 }
 
 export function cancelUsbFrameDeploymentFromChat(planId: string): void {
   cancelUsbFrameDeployment(planId)
+  prunePlanStores()
 }
 
 export async function updateUsbFrameDeploymentAdaptationFromChat(
@@ -61,14 +77,26 @@ export async function updateUsbFrameDeploymentAdaptationFromChat(
   placement: EmbeddedImagePlacement,
   backgroundColor?: string
 ): Promise<boolean> {
-  return updateUsbFrameDeploymentAdaptation(planId, { placement, backgroundColor })
+  const updated = await updateUsbFrameDeploymentAdaptation(planId, {
+    placement,
+    backgroundColor
+  })
+  if (!updated) return false
+  const plan = getUsbFrameDeploymentPlan(planId)
+  if (plan) {
+    setActiveEmbeddedImageSettings({
+      placement: plan.placement,
+      backgroundColor: plan.backgroundColor
+    })
+  }
+  return true
 }
 
 export async function executeUsbFrameDeploymentFromChat(planId: string): Promise<boolean> {
   const store = planStores.get(planId)
   const plan = getUsbFrameDeploymentPlan(planId)
   if (!store || !plan) return false
-  return executeUsbFrameDeployment(planId, {
+  const result = await executeUsbFrameDeployment(planId, {
     isSnapshotCurrent: () => {
       return (
         isEmbeddedVisualSource(store.graph.getNode(plan.frame.id)) &&
@@ -79,4 +107,6 @@ export async function executeUsbFrameDeploymentFromChat(planId: string): Promise
     onFirmwareVerified: rememberUsbFirmware,
     onSuccess: rememberUsbDeployment
   })
+  prunePlanStores()
+  return result
 }

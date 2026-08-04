@@ -3,6 +3,7 @@ export { default as EmbeddedDisplayContentPreview } from './components/EmbeddedD
 export {
   getActiveEmbeddedImageSettings,
   getActiveEmbeddedDisplayProfile,
+  setActiveEmbeddedImageSettings,
   useEmbeddedDisplay
 } from './composables/useEmbeddedDisplay'
 export type { EmbeddedImagePlacement } from './adapters/image'

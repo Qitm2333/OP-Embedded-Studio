@@ -59,6 +59,14 @@ export function getActiveEmbeddedImageSettings(): {
   }
 }
 
+export function setActiveEmbeddedImageSettings(settings: {
+  placement: EmbeddedImagePlacement
+  backgroundColor: string
+}): void {
+  imagePlacement.value = settings.placement
+  frameBackgroundColor.value = settings.backgroundColor
+}
+
 function deviceLog(message: string, details?: unknown) {
   if (details === undefined) console.info('[embedded-display]', message)
   else console.info('[embedded-display]', message, details)
