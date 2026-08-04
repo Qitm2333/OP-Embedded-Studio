@@ -62,7 +62,6 @@ const statusLabel = computed(() => {
   if (deployment.value?.status === 'superseded') return '已被替代'
   if (proposal.value?.status === 'cancelled') return '已取消'
   if (proposal.value?.status === 'superseded') return '已被替代'
-  if (deployment.value?.status === 'awaiting-firmware-confirmation') return '需要初始化固件'
   if (problem.value || proposal.value?.status === 'error') return '需要处理'
   if (busy.value) return '处理中'
   return deployment.value ? '待烧录' : '待创建'
@@ -77,9 +76,6 @@ const statusClass = computed(() => {
     proposal.value?.status === 'superseded'
   ) {
     return 'border-border text-muted'
-  }
-  if (deployment.value?.status === 'awaiting-firmware-confirmation') {
-    return 'border-amber-400/40 text-amber-300'
   }
   if (problem.value || proposal.value?.status === 'error') {
     return 'border-red-400/40 text-red-300'
@@ -148,10 +144,7 @@ async function execute(): Promise<void> {
   }
   pending.value = true
   try {
-    await executeDevicePrototypeDeploymentFromChat(
-      proposalId,
-      deployment.value.status === 'awaiting-firmware-confirmation'
-    )
+    await executeDevicePrototypeDeploymentFromChat(proposalId)
   } finally {
     pending.value = false
   }
@@ -298,14 +291,7 @@ function cancel(): void {
       </div>
 
       <div v-if="problem" class="border-t border-border px-3 py-2.5 text-[11px] leading-4">
-        <div
-          class="border-l-2 px-2.5 py-2"
-          :class="
-            deployment?.status === 'awaiting-firmware-confirmation'
-              ? 'border-amber-400 bg-amber-400/5'
-              : 'border-red-400 bg-red-400/5'
-          "
-        >
+        <div class="border-l-2 border-red-400 bg-red-400/5 px-2.5 py-2">
           <p class="font-medium text-surface">{{ problem.title }}</p>
           <p class="mt-0.5 text-muted">原因：{{ problem.cause }}</p>
           <p class="mt-0.5 text-surface">下一步：{{ problem.action }}</p>

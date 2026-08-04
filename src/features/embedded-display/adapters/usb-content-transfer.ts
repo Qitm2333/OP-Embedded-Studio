@@ -133,10 +133,7 @@ async function handshakeUsbDevice(
   try {
     line = await readProtocolLine(reader, state, USB_HANDSHAKE_TIMEOUT_MS)
   } catch {
-    throw new UsbContentFirmwareError(
-      'missing',
-      '设备未运行 USB 高速基础固件，请先在“首次使用 / 设备维护”中初始化'
-    )
+    throw new UsbContentFirmwareError('missing', '设备未运行兼容的 USB 高速基础固件')
   }
   const ready = line.match(/^OPUSB\/1 READY (\d+) (\d+) (\d+) (\d+)$/)
   if (!ready) {
@@ -152,7 +149,10 @@ async function handshakeUsbDevice(
     )
   }
   if (contentBytes > capacity) {
-    throw new UsbContentFirmwareError('capacity', '内容超过设备 USB 内容分区容量')
+    throw new UsbContentFirmwareError(
+      'capacity',
+      '内容超过设备 USB 内容分区容量，请减少图片或画面数量后重试'
+    )
   }
   return capacity
 }

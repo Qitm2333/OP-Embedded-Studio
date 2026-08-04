@@ -182,13 +182,26 @@ function updateTransition(eventId: DevicePrototypeEventId, targetId: string) {
       </PanelSection>
 
       <PanelSection label="模式">
-        <SegmentedControl v-model="mode" :options="modeOptions" label="交互模式" />
+        <SegmentedControl
+          v-model="mode"
+          :options="modeOptions"
+          label="交互模式"
+          size="md"
+          :ui="{
+            root: 'flex w-full',
+            item: 'min-w-[72px] px-2 font-medium text-surface/80'
+          }"
+        >
+          <template #option="{ option }">
+            <span class="whitespace-nowrap">{{ option.label }}</span>
+          </template>
+        </SegmentedControl>
 
         <div v-if="selectedInteraction?.mode === 'manual'" class="mt-panel grid gap-panel">
           <div class="grid grid-cols-[64px_minmax(0,1fr)] items-center gap-panel">
-            <span class="text-[11px] text-muted">下一张</span>
+            <span class="text-xs font-medium text-surface/80">下一张</span>
             <AppSelect v-model="nextEvent" :options="eventOptions" label="下一张触发事件" />
-            <span class="text-[11px] text-muted">上一张</span>
+            <span class="text-xs font-medium text-surface/80">上一张</span>
             <AppSelect v-model="previousEvent" :options="eventOptions" label="上一张触发事件" />
           </div>
           <label class="flex h-control items-center gap-2 text-[11px] text-surface">

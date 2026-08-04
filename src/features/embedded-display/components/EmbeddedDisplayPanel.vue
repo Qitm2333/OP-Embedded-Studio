@@ -9,6 +9,10 @@ import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import { prepareWifiFirmwareCredentials } from '../adapters/http'
 import { flashFirmwareManifest } from '../adapters/manifest-firmware'
 import {
+  ensureUsbContentFirmware,
+  type UsbContentFirmwareStage
+} from '../adapters/usb-content-firmware'
+import {
   probeWirelessDevice,
   uploadWirelessImage,
   uploadWirelessPrototype,
@@ -27,8 +31,10 @@ import {
   supportsUsbFrameFastFlash,
   type UsbFlashOptions
 } from '../adapters/usb-content'
+import type { UsbContentSerialPort } from '../adapters/usb-content-transfer'
 import { imageFilesToUsbSequence } from '../adapters/usb-sequence'
 import type { SerialPortLike } from '../adapters/serial-flasher'
+import { encodeWirelessImage, encodeWirelessPrototype } from '../adapters/wireless-content'
 import { useBleDeviceSession } from '../composables/useBleDeviceSession'
 import { useEmbeddedDisplay } from '../composables/useEmbeddedDisplay'
 import { useSerialDeviceSession } from '../composables/useSerialDeviceSession'
@@ -98,21 +104,14 @@ const deviceDetailsOpen = ref(false)
 const liveMirrorBusy = ref(false)
 const usbFlashing = ref(false)
 const contentUploadProgress = ref(0)
-const usbInitialization = ref<FirmwareInitializationState>({
-  status: 'idle',
-  progress: 0,
-  message: ''
-})
 const wirelessInitialization = ref<Record<WirelessTransportMode, FirmwareInitializationState>>({
   wifi: { status: 'idle', progress: 0, message: '' },
   ble: { status: 'idle', progress: 0, message: '' },
   'wifi-live': { status: 'idle', progress: 0, message: '' }
 })
 const wifiLiveFirmwareRevision = ref(0)
-const activeFirmwareInitialization = computed<FirmwareInitializationState>(() =>
-  transportMode.value === 'usb'
-    ? usbInitialization.value
-    : wirelessInitialization.value[transportMode.value]
+const activeWirelessInitialization = computed<FirmwareInitializationState | null>(() =>
+  transportMode.value === 'usb' ? null : wirelessInitialization.value[transportMode.value]
 )
 const selectedPrototypeIds = ref<Record<TransportMode, string>>({
   usb: '',
@@ -191,7 +190,6 @@ const selectedPrototypeSelectValue = computed({
 const modeSwitchLocked = computed(
   () =>
     usbFlashing.value ||
-    usbInitialization.value.status === 'uploading' ||
     serialSession.selecting.value ||
     liveMirrorBusy.value ||
     wirelessInitialization.value.wifi.status === 'uploading' ||
@@ -396,7 +394,48 @@ async function prepareUsbFrameContent(source: 'frame' | 'file'): Promise<boolean
   return canUsbFileFlash.value
 }
 
-function usbTransferOptions(port: SerialPortLike, contentLabel: string): UsbFlashOptions {
+function updateUsbFirmwareStage(stage: UsbContentFirmwareStage, message: string): void {
+  buildMessage.value = message
+  if (stage === 'checking') contentUploadProgress.value = 3
+  if (stage === 'reconnecting') contentUploadProgress.value = 65
+}
+
+async function ensurePreparedUsbFirmware(
+  port: SerialPortLike,
+  contentBytes: number
+): Promise<{ port: SerialPortLike; contentProgressStart: number }> {
+  const profile = selectedProfile.value
+  const manifestUrl = usbManifestUrl.value
+  if (!profile || !manifestUrl) throw new Error('当前屏幕方案缺少 USB 基础固件')
+
+  const result = await ensureUsbContentFirmware({
+    port: port as UsbContentSerialPort,
+    manifestUrl,
+    resolution: profile.resolution,
+    contentBytes,
+    onLog: (message) => {
+      const normalized = message.trim()
+      if (normalized) buildLog.value.push(normalized)
+    },
+    onProgress: ({ percent, written, total }) => {
+      contentUploadProgress.value = 5 + Math.round(percent * 0.55)
+      buildMessage.value = `检测到固件不兼容，正在自动更新：${percent}%（${written} / ${total} 字节）`
+    },
+    onStage: updateUsbFirmwareStage
+  })
+  const contentProgressStart = result.firmwareUpdated ? 70 : 10
+  contentUploadProgress.value = contentProgressStart
+  return {
+    port: result.port as SerialPortLike,
+    contentProgressStart
+  }
+}
+
+function usbTransferOptions(
+  port: SerialPortLike,
+  contentLabel: string,
+  progressStart: number
+): UsbFlashOptions {
   return {
     port,
     onLog: (message) => {
@@ -404,9 +443,41 @@ function usbTransferOptions(port: SerialPortLike, contentLabel: string): UsbFlas
       if (normalized) buildLog.value.push(normalized)
     },
     onProgress: ({ percent, written, total }) => {
-      contentUploadProgress.value = percent
+      contentUploadProgress.value =
+        progressStart + Math.round((percent * (100 - progressStart)) / 100)
       buildMessage.value = `正在通过 USB 高速传输${contentLabel}：${percent}%（${written} / ${total} 字节）`
     }
+  }
+}
+
+interface PreparedUsbFrameContent {
+  profileId: string
+  contentBytes: number
+  label: string
+  successMessage: string
+  upload: (options: UsbFlashOptions) => Promise<void>
+}
+
+function preparedUsbFrameContent(source: 'frame' | 'file'): PreparedUsbFrameContent | null {
+  const sequence = source === 'file' ? usbSequencePayload.value : null
+  if (sequence) {
+    return {
+      profileId: sequence.profileId,
+      contentBytes: sequence.content.byteLength,
+      label: ` PNG 序列：${sequence.frameCount} 帧`,
+      successMessage: `PNG 序列已写入：${sequence.frameCount} 帧 · 20 FPS，设备正在重启。`,
+      upload: (options) => flashUsbSequenceFirmware(sequence, options)
+    }
+  }
+
+  const image = imagePayload.value
+  if (!image) return null
+  return {
+    profileId: image.profileId,
+    contentBytes: encodeWirelessImage(image).byteLength,
+    label: '单 Frame 内容',
+    successMessage: '最新 Frame 已写入，设备正在重启。',
+    upload: (options) => flashUsbFrameFirmware(image, options)
   }
 }
 
@@ -415,10 +486,8 @@ async function flashPreparedUsbFrame(
   requestedProfileId: string,
   source: 'frame' | 'file'
 ): Promise<void> {
-  const sequence = source === 'file' ? usbSequencePayload.value : null
-  const image = imagePayload.value
-  const contentProfileId = sequence?.profileId ?? image?.profileId
-  if ((!sequence && !image) || !contentProfileId) {
+  const content = preparedUsbFrameContent(source)
+  if (!content) {
     bakeError.value = '请先烘焙、选择图片或选择 PNG 序列'
     return
   }
@@ -426,7 +495,7 @@ async function flashPreparedUsbFrame(
     transportMode.value !== 'usb' ||
     burnMode.value !== 'frame' ||
     selectedProfile.value?.id !== requestedProfileId ||
-    contentProfileId !== requestedProfileId
+    content.profileId !== requestedProfileId
   ) {
     return
   }
@@ -434,18 +503,15 @@ async function flashPreparedUsbFrame(
   usbFlashing.value = true
   contentUploadProgress.value = 0
   buildStatus.value = 'uploading'
-  const contentLabel = sequence ? ` PNG 序列：${sequence.frameCount} 帧` : '单 Frame 内容'
-  buildMessage.value = `正在准备 USB ${contentLabel}…`
+  buildMessage.value = `正在准备 USB ${content.label}…`
   buildLog.value = []
   try {
-    const options = usbTransferOptions(port, contentLabel)
-    if (sequence) await flashUsbSequenceFirmware(sequence, options)
-    else if (image) await flashUsbFrameFirmware(image, options)
+    const prepared = await ensurePreparedUsbFirmware(port, content.contentBytes)
+    const options = usbTransferOptions(prepared.port, content.label, prepared.contentProgressStart)
+    await content.upload(options)
     contentUploadProgress.value = 100
     buildStatus.value = 'ready'
-    buildMessage.value = sequence
-      ? `PNG 序列已写入：${sequence.frameCount} 帧 · 20 FPS，设备正在重启。`
-      : '最新 Frame 已写入，设备正在重启。'
+    buildMessage.value = content.successMessage
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     buildStatus.value = 'error'
@@ -503,7 +569,16 @@ async function handleUsbPrototypeBakeAndFlash() {
   buildMessage.value = `正在准备 USB ${selectedInteractionModeLabel.value}内容…`
   buildLog.value = []
   try {
-    const options = usbTransferOptions(port, selectedInteractionModeLabel.value)
+    const contentBytes =
+      'content' in interactionPayload
+        ? interactionPayload.content.byteLength
+        : encodeWirelessPrototype(interactionPayload).byteLength
+    const prepared = await ensurePreparedUsbFirmware(port, contentBytes)
+    const options = usbTransferOptions(
+      prepared.port,
+      selectedInteractionModeLabel.value,
+      prepared.contentProgressStart
+    )
     if (selectedInteractionIsSlideshow.value && usbSequencePayload.value) {
       await flashUsbSequenceFirmware(usbSequencePayload.value, options)
     } else if (prototypePayload.value) {
@@ -767,66 +842,6 @@ function resetWirelessInitialization(mode: WirelessTransportMode) {
   }
 }
 
-function resetUsbInitialization() {
-  usbInitialization.value = { status: 'idle', progress: 0, message: '' }
-}
-
-async function handleInitializeUsbFirmware() {
-  const manifestUrl = usbManifestUrl.value
-  if (transportMode.value !== 'usb' || !manifestUrl || !selectedProfile.value?.id) return
-
-  const state = usbInitialization.value
-  let port
-  try {
-    port = await serialSession.requirePort()
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    state.status = 'error'
-    state.message = message
-    buildStatus.value = 'error'
-    buildMessage.value = message
-    return
-  }
-
-  state.status = 'uploading'
-  state.progress = 0
-  state.message = '正在准备 USB 高速基础固件…'
-  buildStatus.value = 'uploading'
-  buildMessage.value = state.message
-  buildLog.value = []
-  try {
-    await flashFirmwareManifest(manifestUrl, 'usb-frame', {
-      port,
-      preparingMessage: state.message,
-      connectedMessage: '已连接，正在初始化 USB 高速内容服务。',
-      onLog: (message) => {
-        const normalized = message.trim()
-        if (!normalized) return
-        state.message = normalized
-        buildMessage.value = normalized
-        buildLog.value.push(normalized)
-      },
-      onProgress: ({ percent, written, total }) => {
-        state.progress = percent
-        state.message = `正在写入 USB 基础固件：${percent}%（${written} / ${total} 字节）`
-        buildMessage.value = state.message
-      }
-    })
-    state.status = 'success'
-    state.progress = 100
-    state.message = 'USB 高速设备初始化完成；后续只传输内容。'
-    buildStatus.value = 'ready'
-    buildMessage.value = state.message
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    state.status = 'error'
-    state.message = `初始化失败：${message}`
-    buildStatus.value = 'error'
-    buildMessage.value = state.message
-    buildLog.value.push(message)
-  }
-}
-
 async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
   if (transportMode.value !== mode) return
   const { manifestUrl, modeLabel, buildMode } = wirelessFirmwareConfiguration(mode)
@@ -1065,7 +1080,6 @@ function resetTransportFirmwareState(mode: TransportMode): void {
   buildLog.value = []
   if (buildStatus.value !== 'loading') buildStatus.value = 'idle'
   buildMessage.value = buildMessageForTransport(mode)
-  if (mode === 'usb') resetUsbInitialization()
   if (mode === 'wifi') {
     resetWirelessInitialization('wifi')
     wirelessStatus.value = 'idle'
@@ -1206,22 +1220,9 @@ watch([wifiSsid, wifiPassword], () => {
           </p>
         </div>
 
-        <div v-if="selectedProfile" class="mt-1.5">
+        <div v-if="selectedProfile && transportMode !== 'usb'" class="mt-1.5">
           <button
-            v-if="transportMode === 'usb'"
-            type="button"
-            class="h-control w-full rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="!usbManifestUrl || usbInitialization.status === 'uploading'"
-            @click="handleInitializeUsbFirmware"
-          >
-            {{
-              usbInitialization.status === 'uploading'
-                ? `正在刷新固件 ${usbInitialization.progress}%`
-                : '刷新设备固件'
-            }}
-          </button>
-          <button
-            v-else-if="transportMode === 'ble'"
+            v-if="transportMode === 'ble'"
             type="button"
             class="h-control w-full rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="!bleManifestUrl || wirelessInitialization.ble.status === 'uploading'"
@@ -1262,17 +1263,14 @@ watch([wifiSsid, wifiPassword], () => {
             }}
           </button>
           <div
-            v-if="activeFirmwareInitialization.status === 'uploading'"
+            v-if="activeWirelessInitialization?.status === 'uploading'"
             class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-panel-field"
           >
             <div
               class="h-full bg-accent transition-[width]"
-              :style="{ width: `${activeFirmwareInitialization.progress}%` }"
+              :style="{ width: `${activeWirelessInitialization.progress}%` }"
             />
           </div>
-          <p v-if="usbInitialization.status === 'error'" class="mt-1 text-[10px] text-error">
-            {{ usbInitialization.message }}
-          </p>
           <p
             v-if="transportMode === 'ble' && wirelessInitialization.ble.status === 'error'"
             class="mt-1 text-[10px] text-error"

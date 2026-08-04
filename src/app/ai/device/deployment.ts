@@ -50,15 +50,11 @@ export function cancelUsbFrameDeploymentFromChat(planId: string): void {
   cancelUsbFrameDeployment(planId)
 }
 
-export async function executeUsbFrameDeploymentFromChat(
-  planId: string,
-  authorizeFirmwareInitialization = false
-): Promise<boolean> {
+export async function executeUsbFrameDeploymentFromChat(planId: string): Promise<boolean> {
   const store = planStores.get(planId)
   const plan = getUsbFrameDeploymentPlan(planId)
   if (!store || !plan) return false
   return executeUsbFrameDeployment(planId, {
-    authorizeFirmwareInitialization,
     isSnapshotCurrent: () => {
       return (
         isEmbeddedVisualSource(store.graph.getNode(plan.frame.id)) &&

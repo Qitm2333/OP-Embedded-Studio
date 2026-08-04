@@ -2,7 +2,6 @@ import { markRaw, reactive } from 'vue'
 
 import { embeddedManifestUrl } from '../adapters/http'
 import { imageFileToRgb565, prototypeBakeToRgb565 } from '../adapters/image'
-import { flashFirmwareManifest } from '../adapters/manifest-firmware'
 import {
   flashUsbFrameFirmware,
   flashUsbPrototypeFirmware,
@@ -13,10 +12,10 @@ import {
   type UsbSerialPort
 } from '../adapters/usb-content'
 import {
-  probeUsbContentDevice,
-  type UsbContentProbeResult,
-  type UsbContentSerialPort
-} from '../adapters/usb-content-transfer'
+  ensureUsbContentFirmware,
+  getSingleAuthorizedUsbContentPort
+} from '../adapters/usb-content-firmware'
+import type { UsbContentSerialPort } from '../adapters/usb-content-transfer'
 import { imageFilesToUsbSequence, type UsbImageSequencePayload } from '../adapters/usb-sequence'
 import { encodeWirelessImage, encodeWirelessPrototype } from '../adapters/wireless-content'
 import type {
@@ -30,7 +29,6 @@ export type UsbFrameDeploymentStatus =
   | 'ready'
   | 'selecting-device'
   | 'checking-firmware'
-  | 'awaiting-firmware-confirmation'
   | 'flashing-firmware'
   | 'reconnecting'
   | 'transferring-content'
@@ -71,7 +69,6 @@ export interface UsbFrameDeploymentPlan {
   contentBytes: number
   firstDeployment: boolean
   needsDeviceSelection: boolean
-  firmwareInitializationAuthorized: boolean
   firmwareVerified: boolean
   firmwareCapacity?: number
   progress: number
@@ -115,14 +112,9 @@ export interface PrepareUsbPrototypeDeploymentInput {
 }
 
 export interface ExecuteUsbFrameDeploymentOptions {
-  authorizeFirmwareInitialization?: boolean
   isSnapshotCurrent?: () => boolean
   onFirmwareVerified?: (plan: UsbFrameDeploymentPlan) => void | Promise<void>
   onSuccess?: (plan: UsbFrameDeploymentPlan) => void | Promise<void>
-}
-
-interface SerialNavigator {
-  getPorts?: () => Promise<DeploymentSerialPort[]>
 }
 
 const plans = reactive(new Map<string, UsbFrameDeploymentRecord>())
@@ -170,16 +162,6 @@ function appendLog(plan: UsbFrameDeploymentRecord, message: string): void {
   if (plan.logs.length > 80) plan.logs.splice(0, plan.logs.length - 80)
 }
 
-function serialNavigator(): SerialNavigator | null {
-  if (typeof navigator === 'undefined') return null
-  return (navigator as Navigator & { serial?: SerialNavigator }).serial ?? null
-}
-
-async function singleAuthorizedPort(): Promise<DeploymentSerialPort | undefined> {
-  const authorized = await serialNavigator()?.getPorts?.()
-  return authorized?.length === 1 ? authorized[0] : undefined
-}
-
 function setStageError(plan: UsbFrameDeploymentRecord): void {
   if (plan.firmwareStage === 'running') plan.firmwareStage = 'error'
   if (plan.contentStage === 'running') plan.contentStage = 'error'
@@ -197,47 +179,15 @@ export function normalizeUsbDeploymentError(error: unknown): string {
   return message
 }
 
-function delay(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, milliseconds)
-  })
-}
-
-async function waitForFirmware(
-  plan: UsbFrameDeploymentRecord,
-  port: DeploymentSerialPort
-): Promise<{
-  probe: Extract<UsbContentProbeResult, { compatible: true }>
-  port: DeploymentSerialPort
-}> {
-  let lastError: unknown
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    if (attempt > 0) await delay(750)
-    try {
-      const reconnectedPort = (await singleAuthorizedPort()) ?? port
-      const result = await probeUsbContentDevice(
-        reconnectedPort,
-        plan.resolution,
-        plan.contentBytes
-      )
-      if (result.compatible) return { probe: result, port: reconnectedPort }
-      lastError = new Error(result.message)
-    } catch (error) {
-      lastError = error
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error('USB 基础固件写入后未能重新连接设备')
-}
-
 async function markFirmwareVerified(
   plan: UsbFrameDeploymentRecord,
-  probe: Extract<UsbContentProbeResult, { compatible: true }>,
+  capacity: number,
   stage: 'done' | 'skipped',
   options: ExecuteUsbFrameDeploymentOptions
 ): Promise<void> {
   plan.firmwareStage = stage
   plan.firmwareVerified = true
-  plan.firmwareCapacity = probe.capacity
+  plan.firmwareCapacity = capacity
   try {
     await options.onFirmwareVerified?.(plan)
   } catch (error) {
@@ -252,49 +202,36 @@ async function ensureFirmware(
   plan: UsbFrameDeploymentRecord,
   port: DeploymentSerialPort,
   options: ExecuteUsbFrameDeploymentOptions
-): Promise<DeploymentSerialPort | null> {
-  plan.status = 'checking-firmware'
+): Promise<DeploymentSerialPort> {
   plan.firmwareStage = 'running'
-  plan.message = '正在检查 USB 基础固件'
-  const probe = await probeUsbContentDevice(port, plan.resolution, plan.contentBytes)
-  if (probe.compatible) {
-    plan.message = '检测到兼容基础固件，已跳过初始化'
-    await markFirmwareVerified(plan, probe, 'skipped', options)
-    return port
-  }
-
-  if (probe.issue === 'capacity') throw new Error(probe.message)
-
-  const authorized =
-    plan.firmwareInitializationAuthorized || options.authorizeFirmwareInitialization === true
-  if (!authorized) {
-    plan.status = 'awaiting-firmware-confirmation'
-    plan.firmwareStage = 'pending'
-    plan.message = '设备固件不兼容，需要确认重新初始化后才能继续'
-    plan.error = probe.message
-    return null
-  }
-
-  plan.firmwareInitializationAuthorized = true
-  plan.status = 'flashing-firmware'
-  plan.firmwareStage = 'running'
-  plan.message = '正在写入 USB 基础固件'
-  await flashFirmwareManifest(plan.manifestUrl, 'usb-frame', {
-    port: port as UsbSerialPort,
+  const result = await ensureUsbContentFirmware({
+    port,
+    manifestUrl: plan.manifestUrl,
+    resolution: plan.resolution,
+    contentBytes: plan.contentBytes,
     onLog: (message) => appendLog(plan, message),
     onProgress: ({ percent }) => {
-      plan.progress = percent
-      plan.message = `正在写入 USB 基础固件 ${percent}%`
+      plan.progress = 5 + Math.round(percent * 0.55)
+      plan.message = `正在自动更新 USB 基础固件 ${percent}%`
+    },
+    onStage: (stage, message) => {
+      if (stage === 'checking') plan.status = 'checking-firmware'
+      else if (stage === 'flashing') plan.status = 'flashing-firmware'
+      else if (stage === 'reconnecting') plan.status = 'reconnecting'
+      plan.message = message
+      if (stage === 'checking') plan.progress = 3
+      if (stage === 'reconnecting') plan.progress = 65
     }
   })
-
-  plan.status = 'reconnecting'
-  plan.progress = 0
-  plan.message = '基础固件已写入，正在等待设备重启'
-  const verified = await waitForFirmware(plan, port)
-  plan.port = markRaw(verified.port)
-  await markFirmwareVerified(plan, verified.probe, 'done', options)
-  return verified.port
+  plan.port = markRaw(result.port)
+  await markFirmwareVerified(
+    plan,
+    result.capacity,
+    result.firmwareUpdated ? 'done' : 'skipped',
+    options
+  )
+  plan.progress = result.firmwareUpdated ? 70 : 10
+  return result.port
 }
 
 async function transferContent(
@@ -303,14 +240,15 @@ async function transferContent(
 ): Promise<void> {
   plan.status = 'transferring-content'
   plan.contentStage = 'running'
-  plan.progress = 0
+  const progressStart = plan.firmwareStage === 'done' ? 70 : 10
+  plan.progress = progressStart
   const contentLabel = deploymentContentLabel(plan.mode)
   plan.message = `正在传输${contentLabel}`
   const flashOptions: UsbFlashOptions = {
     port: port as UsbSerialPort,
     onLog: (message) => appendLog(plan, message),
     onProgress: ({ percent }) => {
-      plan.progress = percent
+      plan.progress = progressStart + Math.round((percent * (100 - progressStart)) / 100)
       plan.message = `正在传输${contentLabel} ${percent}%`
     }
   }
@@ -357,7 +295,6 @@ export async function prepareUsbFrameDeployment(
     contentBytes,
     firstDeployment: input.firstDeployment,
     needsDeviceSelection: true,
-    firmwareInitializationAuthorized: input.firstDeployment,
     firmwareVerified: false,
     progress: 0,
     message: '部署内容已准备，等待确认',
@@ -420,7 +357,6 @@ export async function prepareUsbPrototypeDeployment(
     contentBytes,
     firstDeployment: input.firstDeployment,
     needsDeviceSelection: true,
-    firmwareInitializationAuthorized: input.firstDeployment,
     firmwareVerified: false,
     progress: 0,
     message: slideshow ? '幻灯片内容已准备，等待确认' : '交互内容已准备，等待确认',
@@ -462,14 +398,13 @@ export async function executeUsbFrameDeployment(
   try {
     plan.status = 'selecting-device'
     plan.message = '正在查找已授权的 USB 设备'
-    const authorizedPort = plan.port ?? (await singleAuthorizedPort())
+    const authorizedPort = plan.port ?? (await getSingleAuthorizedUsbContentPort())
     plan.message = authorizedPort ? '正在连接已授权的 USB 设备' : '请在系统窗口中选择 USB 设备'
     const port = authorizedPort ?? ((await requestUsbSerialPort()) as DeploymentSerialPort)
     plan.port = markRaw(port)
     plan.needsDeviceSelection = false
 
     const connectedPort = await ensureFirmware(plan, port, options)
-    if (!connectedPort) return false
     await transferContent(plan, connectedPort)
     plan.progress = 100
     plan.status = 'success'

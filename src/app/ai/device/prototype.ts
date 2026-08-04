@@ -323,8 +323,7 @@ export async function confirmDevicePrototypeProposalFromChat(id: string): Promis
 }
 
 export async function executeDevicePrototypeDeploymentFromChat(
-  proposalId: string,
-  authorizeFirmwareInitialization = false
+  proposalId: string
 ): Promise<boolean> {
   const proposal = proposals.get(proposalId)
   const planId = proposal?.deploymentPlanId
@@ -335,7 +334,6 @@ export async function executeDevicePrototypeDeploymentFromChat(
     ? interactionFingerprint(expectedInteraction)
     : undefined
   return executeUsbFrameDeployment(planId, {
-    authorizeFirmwareInitialization,
     isSnapshotCurrent: () => {
       const interaction = proposalInteraction(proposal)
       return (

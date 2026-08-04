@@ -35,11 +35,7 @@ const canCancel = computed(
 const problem = computed(() => {
   const current = plan.value
   if (!current) return null
-  if (
-    current.status !== 'error' &&
-    current.status !== 'stale' &&
-    current.status !== 'awaiting-firmware-confirmation'
-  ) {
+  if (current.status !== 'error' && current.status !== 'stale') {
     return null
   }
   return describeDeviceDeploymentProblem(current.error || current.message)
@@ -61,7 +57,6 @@ const statusLabel = computed(() => {
   if (status === 'superseded') return '已被替代'
   if (status === 'stale') return '内容已变化'
   if (status === 'error') return '需要处理'
-  if (status === 'awaiting-firmware-confirmation') return '需要初始化固件'
   if (busy.value) return '烧录中'
   return '待确认'
 })
@@ -70,7 +65,6 @@ const statusClass = computed(() => {
   const status = plan.value?.status
   if (status === 'success') return 'border-green-400/40 text-green-300'
   if (status === 'cancelled' || status === 'superseded') return 'border-border text-muted'
-  if (status === 'awaiting-firmware-confirmation') return 'border-amber-400/40 text-amber-300'
   if (status === 'error' || status === 'stale') return 'border-red-400/40 text-red-300'
   return 'border-border text-muted'
 })
@@ -99,10 +93,9 @@ function stageLabel(status: string): string {
 
 async function execute(): Promise<void> {
   if (!plan.value || busy.value) return
-  const authorize = plan.value.status === 'awaiting-firmware-confirmation'
   pendingAction.value = true
   try {
-    await executeUsbFrameDeploymentFromChat(planId, authorize)
+    await executeUsbFrameDeploymentFromChat(planId)
   } finally {
     pendingAction.value = false
   }
@@ -238,12 +231,7 @@ function cancel(): void {
         </div>
         <div
           v-if="problem"
-          class="mt-2 border-l-2 px-2.5 py-2 text-[11px] leading-4"
-          :class="
-            plan.status === 'awaiting-firmware-confirmation'
-              ? 'border-amber-400 bg-amber-400/5'
-              : 'border-red-400 bg-red-400/5'
-          "
+          class="mt-2 border-l-2 border-red-400 bg-red-400/5 px-2.5 py-2 text-[11px] leading-4"
         >
           <p class="font-medium text-surface">{{ problem.title }}</p>
           <p class="mt-0.5 text-muted">原因：{{ problem.cause }}</p>
