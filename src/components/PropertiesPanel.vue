@@ -93,7 +93,7 @@ async function handleEmbeddedPrototypeBake(interactionId: string) {
           data-test-id="properties-tab-embedded"
           class="min-w-0 flex-1 whitespace-nowrap rounded px-1 py-1 text-[11px] text-muted hover:text-surface data-[state=active]:font-semibold data-[state=active]:text-surface"
         >
-          设备
+          烧录
         </TabsTrigger>
         <ZoomDropdown v-if="activeTab === 'design'" />
       </TabsList>

@@ -29,7 +29,7 @@ const options = computed(() => [
   >
     <template #option="{ option }">
       <icon-lucide-pen-tool v-if="option.value === 'design'" class="size-3 shrink-0" />
-      <icon-lucide-cpu v-else class="size-3 shrink-0" />
+      <icon-lucide-usb v-else class="size-3 shrink-0" />
       <span class="truncate">{{ option.label }}</span>
     </template>
   </SegmentedControl>

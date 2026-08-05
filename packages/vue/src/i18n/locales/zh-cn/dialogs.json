@@ -1,9 +1,9 @@
 {
   "chatMode": "聊天模式",
   "designMode": "设计",
-  "deviceMode": "设备",
-  "describeDeviceAction": "描述设备部署或检查…",
-  "describeDeviceDeployment": "部署当前 Frame，或检查已连接的设备。",
+  "deviceMode": "烧录",
+  "describeDeviceAction": "描述烧录内容或设备检查…",
+  "describeDeviceDeployment": "烧录当前 Frame，或检查已连接的设备。",
   "deviceModeNoReferenceImage": "参考图片请在设计模式中使用",
   "targetScreen": "目标屏幕",
   "roundScreen": "圆形屏幕",
