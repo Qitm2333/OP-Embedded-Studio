@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import AppInput from '@/components/ui/AppInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import { PanelHeader, PanelSection } from '@/components/ui/panel'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
+import {
+  getActiveEmbeddedDisplayProfile,
+  getActiveEmbeddedImageSettings
+} from '@/features/embedded-display'
 
 import DevicePrototypePreview from './DevicePrototypePreview.vue'
 import { useDevicePrototype } from '../composables/useDevicePrototype'
@@ -18,13 +22,17 @@ import type {
 import { DEVICE_PROTOTYPE_MAX_STATES } from '../model/types'
 
 const {
+  active = true,
   selectedFrame,
   selectedFrames = [],
-  renderFrame
+  renderFrame,
+  renderRevision
 } = defineProps<{
+  active?: boolean
   selectedFrame?: DevicePrototypeFrameCandidate
   selectedFrames?: DevicePrototypeFrameCandidate[]
   renderFrame?: DevicePrototypeFrameRender
+  renderRevision?: number
 }>()
 
 const previewOpen = ref(false)
@@ -72,6 +80,14 @@ const canAddSelection = computed(
 )
 const canPreview = computed(() =>
   Boolean(renderFrame && selectedInteraction.value?.initialStateId && states.value.length)
+)
+const displayProfile = computed(() => getActiveEmbeddedDisplayProfile())
+const imageSettings = computed(() => getActiveEmbeddedImageSettings())
+watch(
+  () => active,
+  (isActive) => {
+    if (!isActive) previewOpen.value = false
+  }
 )
 const interactionOptions = computed(() =>
   interactions.value.map((interaction) => ({ value: interaction.id, label: interaction.name }))
@@ -343,6 +359,10 @@ function updateTransition(eventId: DevicePrototypeEventId, targetId: string) {
       v-model:open="previewOpen"
       :interaction="selectedInteraction"
       :render-frame="renderFrame"
+      :render-revision="renderRevision"
+      :profile="displayProfile"
+      :placement="imageSettings.placement"
+      :background-color="imageSettings.backgroundColor"
     />
   </div>
 </template>

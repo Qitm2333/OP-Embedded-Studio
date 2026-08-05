@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
 
+import { useEventListener } from '@vueuse/core'
+
+import {
+  EmbeddedDisplayContentPreview,
+  embeddedImagePlacementLabel,
+  type EmbeddedDisplayProfile,
+  type EmbeddedImagePlacement
+} from '@/features/embedded-display'
 import { DEVICE_PROTOTYPE_EVENTS } from '../model/types'
 import { resolveDevicePrototypeTransitions } from '../model/rules'
 import type {
@@ -9,13 +17,18 @@ import type {
   DevicePrototypeInteraction
 } from '../model/types'
 
-const { open, interaction, renderFrame } = defineProps<{
-  open: boolean
-  interaction: DevicePrototypeInteraction | null
-  renderFrame?: DevicePrototypeFrameRender
-}>()
+const { open, interaction, renderFrame, renderRevision, profile, placement, backgroundColor } =
+  defineProps<{
+    open: boolean
+    interaction: DevicePrototypeInteraction | null
+    renderFrame?: DevicePrototypeFrameRender
+    renderRevision?: number
+    profile: EmbeddedDisplayProfile
+    placement: EmbeddedImagePlacement
+    backgroundColor: string
+  }>()
 
-const emit = defineEmits<{ close: [] }>()
+const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 const currentStateId = ref('')
 const previewUrl = ref('')
 const previewError = ref('')
@@ -23,10 +36,12 @@ const previewLoading = ref(false)
 const lastEventLabel = ref('等待操作')
 const clickCount = ref(0)
 const slideshowPaused = ref(false)
+const renderNonce = ref(0)
 let clickTimer: ReturnType<typeof setTimeout> | undefined
 let longPressTimer: ReturnType<typeof setTimeout> | undefined
 let slideshowTimer: ReturnType<typeof setTimeout> | undefined
 let longPressTriggered = false
+let renderRequest = 0
 
 const currentState = computed(
   () => interaction?.states.find((state) => state.id === currentStateId.value) ?? null
@@ -42,6 +57,7 @@ function clearPreviewUrl() {
 }
 
 async function renderCurrentState() {
+  const request = ++renderRequest
   clearPreviewUrl()
   previewError.value = ''
   if (!currentState.value || !renderFrame) return
@@ -49,18 +65,40 @@ async function renderCurrentState() {
   try {
     const blob = await renderFrame(currentState.value.frameId)
     if (!blob) throw new Error('无法渲染当前 Frame')
+    if (request !== renderRequest || !open) return
     previewUrl.value = URL.createObjectURL(blob)
   } catch (error) {
+    if (request !== renderRequest || !open) return
     previewError.value = error instanceof Error ? error.message : String(error)
   } finally {
-    previewLoading.value = false
+    if (request === renderRequest) previewLoading.value = false
   }
 }
 
 function resetPreview() {
+  clearSlideshowTimer()
+  clickCount.value = 0
+  if (clickTimer) clearTimeout(clickTimer)
+  clickTimer = undefined
+  if (longPressTimer) clearTimeout(longPressTimer)
+  longPressTimer = undefined
   currentStateId.value = interaction?.initialStateId ?? ''
   slideshowPaused.value = false
   lastEventLabel.value = '已回到初始状态'
+  renderNonce.value += 1
+  scheduleSlideshow()
+}
+
+function closePreview() {
+  clearSlideshowTimer()
+  if (clickTimer) clearTimeout(clickTimer)
+  if (longPressTimer) clearTimeout(longPressTimer)
+  clickTimer = undefined
+  longPressTimer = undefined
+  renderRequest += 1
+  previewLoading.value = false
+  clearPreviewUrl()
+  emit('update:open', false)
 }
 
 function clearSlideshowTimer() {
@@ -95,6 +133,10 @@ function scheduleSlideshow() {
 function toggleSlideshow() {
   slideshowPaused.value = !slideshowPaused.value
   lastEventLabel.value = slideshowPaused.value ? '已暂停' : '继续播放'
+}
+
+function handleKeydown(event: KeyboardEvent) {
+  if (open && event.key === 'Escape') closePreview()
 }
 
 function dispatch(eventId: DevicePrototypeEventId) {
@@ -178,7 +220,11 @@ watch(
   },
   { immediate: true }
 )
-watch(currentStateId, () => void renderCurrentState(), { immediate: true })
+watch(
+  () => [currentStateId.value, renderRevision, renderNonce.value],
+  () => void renderCurrentState(),
+  { immediate: true }
+)
 watch(
   () => [
     open,
@@ -189,6 +235,20 @@ watch(
   ],
   scheduleSlideshow
 )
+
+watch(
+  () => open,
+  (isOpen) => {
+    if (!isOpen) {
+      clearSlideshowTimer()
+      renderRequest += 1
+      previewLoading.value = false
+      clearPreviewUrl()
+    }
+  }
+)
+
+useEventListener(window, 'keydown', handleKeydown)
 
 onUnmounted(() => {
   if (clickTimer) clearTimeout(clickTimer)
@@ -203,7 +263,7 @@ onUnmounted(() => {
     <div
       v-if="open"
       class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-6"
-      @click.self="emit('close')"
+      @click.self="closePreview"
     >
       <div
         class="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-panel shadow-2xl"
@@ -218,6 +278,7 @@ onUnmounted(() => {
             </div>
           </div>
           <button
+            type="button"
             v-if="interaction?.mode === 'slideshow'"
             class="rounded px-2 py-1 text-xs text-muted hover:text-surface"
             @click="toggleSlideshow"
@@ -225,14 +286,16 @@ onUnmounted(() => {
             {{ slideshowPaused ? '继续' : '暂停' }}
           </button>
           <button
+            type="button"
             class="rounded px-2 py-1 text-xs text-muted hover:text-surface"
             @click="resetPreview"
           >
             重新开始
           </button>
           <button
+            type="button"
             class="rounded px-2 py-1 text-xs text-muted hover:text-surface"
-            @click="emit('close')"
+            @click="closePreview"
           >
             关闭
           </button>
@@ -242,10 +305,15 @@ onUnmounted(() => {
         >
           <div class="flex min-w-0 flex-col items-center gap-3">
             <div
-              class="relative flex max-h-[68vh] max-w-full select-none items-center justify-center overflow-hidden rounded-lg border border-border bg-black shadow-lg"
+              class="relative max-h-[68vh] max-w-full select-none overflow-hidden rounded-lg bg-black shadow-lg"
               :style="{
-                aspectRatio: currentState ? `${currentState.width} / ${currentState.height}` : '1',
-                width: currentState ? `min(${currentState.width}px, 68vh)` : '360px'
+                aspectRatio: `${profile.resolution.width} / ${profile.resolution.height}`,
+                width: 'min(68vh, 420px)',
+                backgroundColor:
+                  previewUrl && profile.visibleArea?.shape === 'round'
+                    ? 'transparent'
+                    : backgroundColor,
+                borderRadius: profile.visibleArea?.shape === 'round' ? '9999px' : undefined
               }"
               @contextmenu.prevent
               @pointerdown="handleScreenPointerDown"
@@ -253,19 +321,37 @@ onUnmounted(() => {
               @pointerleave="handlePointerCancel"
               @pointercancel="handlePointerCancel"
             >
-              <img
+              <EmbeddedDisplayContentPreview
                 v-if="previewUrl"
                 :src="previewUrl"
-                class="size-full object-contain"
-                draggable="false"
+                :alt="currentState?.name || 'device preview'"
+                :placement="placement"
+                :background-color="backgroundColor"
+                :target-width="profile.resolution.width"
+                :target-height="profile.resolution.height"
+                :source-width="currentState?.width"
+                :source-height="currentState?.height"
+                :round="profile.visibleArea?.shape === 'round'"
+                class="size-full border-0"
               />
-              <span v-else-if="previewLoading" class="text-xs text-white/60">
+              <span
+                v-else-if="previewLoading"
+                class="absolute inset-0 flex items-center justify-center text-xs text-white/60"
+              >
                 正在渲染 Frame…
               </span>
-              <span v-else class="px-6 text-center text-xs text-white/60">
+              <span
+                v-else
+                class="absolute inset-0 flex items-center justify-center px-6 text-center text-xs text-white/60"
+              >
                 {{ previewError || '请选择包含状态的交互' }}
               </span>
             </div>
+            <p class="text-center text-[11px] text-muted">
+              {{ profile.name }} · {{ profile.resolution.width }} ×
+              {{ profile.resolution.height }} ·
+              {{ embeddedImagePlacementLabel(placement) }}
+            </p>
             <p class="text-center text-[11px] text-muted">
               {{
                 interaction?.mode === 'slideshow'

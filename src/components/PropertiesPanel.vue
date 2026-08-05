@@ -132,9 +132,11 @@ async function handleEmbeddedPrototypeBake(interactionId: string) {
         :hidden="activeTab !== 'prototype'"
       >
         <DevicePrototypePanel
+          :active="activeTab === 'prototype'"
           :selected-frame="devicePrototypeFrame"
           :selected-frames="selectedDevicePrototypeFrames"
           :render-frame="devicePrototypeFrameRenderer"
+          :render-revision="editorStore.state.sceneVersion"
         />
       </TabsContent>
 
