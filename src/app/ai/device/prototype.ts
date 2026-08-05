@@ -3,6 +3,7 @@ import { markRaw, reactive } from 'vue'
 import type { EditorStore } from '@/app/editor/active-store'
 import {
   bakeDevicePrototype,
+  createDevicePrototypeFrameRenderer,
   getDevicePrototypeFrameCandidates
 } from '@/app/editor/device-prototype'
 import {
@@ -215,6 +216,15 @@ function proposalTransitions(
 
 export function getDevicePrototypeProposal(id: string): DevicePrototypeProposal | undefined {
   return proposals.get(id)
+}
+
+export function renderDevicePrototypeProposalFrame(
+  proposalId: string,
+  frameId: string
+): Promise<Blob | null> {
+  const proposal = proposals.get(proposalId)
+  if (!proposal) return Promise.resolve(null)
+  return createDevicePrototypeFrameRenderer(proposal.store)(frameId)
 }
 
 export function prepareDevicePrototypeProposal(

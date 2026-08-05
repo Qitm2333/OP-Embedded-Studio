@@ -60,6 +60,12 @@ export interface DevicePrototypeInteraction extends DevicePrototypeDefinition {
   slideshow: DevicePrototypeSlideshowSettings
 }
 
+export interface DevicePrototypePreviewProfile {
+  name: string
+  resolution: { width: number; height: number }
+  visibleArea?: { shape?: string }
+}
+
 export interface DevicePrototypeInteractionOption {
   id: string
   name: string

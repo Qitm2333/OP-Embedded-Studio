@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from 'reka-ui'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import {
   cancelDevicePrototypeProposalFromChat,
@@ -8,13 +8,20 @@ import {
   executeDevicePrototypeDeploymentFromChat,
   getDevicePrototypeDeploymentPlan,
   getDevicePrototypeProposal,
+  renderDevicePrototypeProposalFrame,
   updateDevicePrototypeAdaptationFromChat
 } from '@/app/ai/device/prototype'
 import { describeDeviceDeploymentProblem } from '@/app/ai/device/errors'
 import { useAIChat } from '@/app/ai/chat/use'
 import { useDeploymentCardDisclosure } from '@/components/chat/useDeploymentCardDisclosure'
+import IconButton from '@/components/ui/IconButton.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
-import { DEVICE_PROTOTYPE_EVENTS } from '@/features/device-prototype'
+import {
+  DEVICE_PROTOTYPE_EVENTS,
+  DevicePrototypePreview,
+  type DevicePrototypeInteraction,
+  type DevicePrototypePreviewProfile
+} from '@/features/device-prototype'
 import {
   EmbeddedDisplayContentPreview,
   embeddedImagePlacementLabel,
@@ -25,8 +32,31 @@ const { proposalId } = defineProps<{ proposalId: string }>()
 const { activeTab } = useAIChat()
 const pending = ref(false)
 const adaptationError = ref('')
+const previewOpen = ref(false)
 const proposal = computed(() => getDevicePrototypeProposal(proposalId))
 const deployment = computed(() => getDevicePrototypeDeploymentPlan(proposalId))
+const previewInteraction = computed<DevicePrototypeInteraction | null>(() => {
+  const current = proposal.value
+  if (!current) return null
+  return {
+    id: `proposal-preview-${current.id}`,
+    name: current.name,
+    mode: current.mode,
+    manual: { ...current.manual },
+    slideshow: { ...current.slideshow },
+    initialStateId: current.definition.initialStateId,
+    states: current.definition.states.map((state) => ({ ...state })),
+    transitions: current.definition.transitions.map((transition) => ({ ...transition }))
+  }
+})
+const previewProfile = computed<DevicePrototypePreviewProfile>(() => {
+  const current = proposal.value
+  return {
+    name: current?.profileName || '设备预览',
+    resolution: current?.resolution ?? { width: 1, height: 1 },
+    visibleArea: { shape: current?.roundScreen ? 'round' : 'square' }
+  }
+})
 const imagePlacementOptions: Array<{ value: EmbeddedImagePlacement; label: string }> = [
   { value: 'stretch', label: '拉伸' },
   { value: 'contain', label: '等比缩放' },
@@ -83,6 +113,10 @@ const cardStatus = computed(() => {
   return 'ready'
 })
 const { open } = useDeploymentCardDisclosure(cardStatus)
+
+watch(activeTab, (tab) => {
+  if (tab !== 'ai') previewOpen.value = false
+})
 
 const statusLabel = computed(() => {
   if (deployment.value?.status === 'success') return '烧录成功'
@@ -152,6 +186,10 @@ function stageLabel(status: string): string {
   if (status === 'skipped') return '已验证'
   if (status === 'error') return '失败'
   return '等待'
+}
+
+function renderPreviewFrame(frameId: string): Promise<Blob | null> {
+  return renderDevicePrototypeProposalFrame(proposalId, frameId)
 }
 
 async function updateAdaptation(
@@ -260,19 +298,28 @@ function cancel(): void {
     <CollapsibleContent>
       <div class="space-y-2 p-3 text-[11px] leading-4">
         <div class="flex gap-3">
-          <EmbeddedDisplayContentPreview
-            v-if="deployment"
-            :src="deployment.previewUrl"
-            :alt="proposal.name"
-            :placement="proposal.placement"
-            :background-color="proposal.backgroundColor"
-            :target-width="proposal.resolution.width"
-            :target-height="proposal.resolution.height"
-            :source-width="deployment.frame.width"
-            :source-height="deployment.frame.height"
-            :round="proposal.roundScreen"
-            class="w-20"
-          />
+          <div class="flex shrink-0 flex-col items-center gap-1">
+            <EmbeddedDisplayContentPreview
+              v-if="deployment"
+              :src="deployment.previewUrl"
+              :alt="proposal.name"
+              :placement="proposal.placement"
+              :background-color="proposal.backgroundColor"
+              :target-width="proposal.resolution.width"
+              :target-height="proposal.resolution.height"
+              :source-width="deployment.frame.width"
+              :source-height="deployment.frame.height"
+              :round="proposal.roundScreen"
+              class="w-20"
+            />
+            <IconButton
+              label="预览交互"
+              :disabled="!previewInteraction"
+              @click.stop="previewOpen = true"
+            >
+              <icon-lucide-play class="size-3.5" />
+            </IconButton>
+          </div>
           <div class="grid min-w-0 flex-1 grid-cols-[52px_minmax(0,1fr)] gap-y-1">
             <span class="text-muted">初始界面</span>
             <span class="truncate text-surface">{{
@@ -324,10 +371,7 @@ function cancel(): void {
           >
             <template #option="{ option }">
               <span class="flex min-w-0 items-center justify-center gap-1">
-                <icon-lucide-expand
-                  v-if="option.value === 'stretch'"
-                  class="size-3 shrink-0"
-                />
+                <icon-lucide-expand v-if="option.value === 'stretch'" class="size-3 shrink-0" />
                 <icon-lucide-maximize-2
                   v-else-if="option.value === 'contain'"
                   class="size-3 shrink-0"
@@ -467,5 +511,14 @@ function cancel(): void {
         </button>
       </div>
     </CollapsibleContent>
+    <DevicePrototypePreview
+      v-model:open="previewOpen"
+      :interaction="previewInteraction"
+      :render-frame="renderPreviewFrame"
+      :render-revision="proposal?.revision"
+      :profile="previewProfile"
+      :placement="proposal?.placement || 'pixel-perfect'"
+      :background-color="proposal?.backgroundColor || '#000000'"
+    />
   </CollapsibleRoot>
 </template>

@@ -1,4 +1,5 @@
 export { default as DevicePrototypePanel } from './components/DevicePrototypePanel.vue'
+export { default as DevicePrototypePreview } from './components/DevicePrototypePreview.vue'
 export { useDevicePrototype } from './composables/useDevicePrototype'
 export type { CreateDevicePrototypeInteractionInput } from './composables/useDevicePrototype'
 export { DEVICE_PROTOTYPE_EVENTS, DEVICE_PROTOTYPE_MAX_STATES } from './model/types'
@@ -17,6 +18,7 @@ export type {
   DevicePrototypeFrameRender,
   DevicePrototypeInteraction,
   DevicePrototypeInteractionOption,
+  DevicePrototypePreviewProfile,
   DevicePrototypeManualSettings,
   DevicePrototypeMode,
   DevicePrototypeSlideshowSettings,

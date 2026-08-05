@@ -6,7 +6,6 @@ import { useEventListener } from '@vueuse/core'
 import {
   EmbeddedDisplayContentPreview,
   embeddedImagePlacementLabel,
-  type EmbeddedDisplayProfile,
   type EmbeddedImagePlacement
 } from '@/features/embedded-display'
 import { DEVICE_PROTOTYPE_EVENTS } from '../model/types'
@@ -14,7 +13,8 @@ import { resolveDevicePrototypeTransitions } from '../model/rules'
 import type {
   DevicePrototypeEventId,
   DevicePrototypeFrameRender,
-  DevicePrototypeInteraction
+  DevicePrototypeInteraction,
+  DevicePrototypePreviewProfile
 } from '../model/types'
 
 const { open, interaction, renderFrame, renderRevision, profile, placement, backgroundColor } =
@@ -23,7 +23,7 @@ const { open, interaction, renderFrame, renderRevision, profile, placement, back
     interaction: DevicePrototypeInteraction | null
     renderFrame?: DevicePrototypeFrameRender
     renderRevision?: number
-    profile: EmbeddedDisplayProfile
+    profile: DevicePrototypePreviewProfile
     placement: EmbeddedImagePlacement
     backgroundColor: string
   }>()
