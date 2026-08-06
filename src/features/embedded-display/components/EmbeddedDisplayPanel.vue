@@ -7,10 +7,7 @@ import { PanelHeader, PanelSection } from '@/components/ui/panel'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 
 import { prepareWifiFirmwareCredentials } from '../adapters/http'
-import {
-  embeddedImagePlacementLabel,
-  type EmbeddedImagePlacement
-} from '../adapters/image'
+import { embeddedImagePlacementLabel, type EmbeddedImagePlacement } from '../adapters/image'
 import { flashFirmwareManifest } from '../adapters/manifest-firmware'
 import {
   transferUsbContentWithFirmwareFallback,
@@ -108,6 +105,11 @@ const deviceDetailsOpen = ref(false)
 const liveMirrorBusy = ref(false)
 const usbFlashing = ref(false)
 const contentUploadProgress = ref(0)
+const usbInitialization = ref<FirmwareInitializationState>({
+  status: 'idle',
+  progress: 0,
+  message: ''
+})
 const wirelessInitialization = ref<Record<WirelessTransportMode, FirmwareInitializationState>>({
   wifi: { status: 'idle', progress: 0, message: '' },
   ble: { status: 'idle', progress: 0, message: '' },
@@ -186,9 +188,7 @@ const imagePlacementSummary = computed(() => embeddedImagePlacementLabel(imagePl
 const selectedPrototype = computed(
   () => prototypeOptions?.find((option) => option.id === selectedPrototypeId.value) ?? null
 )
-const selectedInteractionIsSlideshow = computed(
-  () => selectedPrototype.value?.mode === 'slideshow'
-)
+const selectedInteractionIsSlideshow = computed(() => selectedPrototype.value?.mode === 'slideshow')
 const selectedInteractionModeLabel = computed(() => {
   if (selectedPrototype.value?.mode === 'slideshow') return '幻灯片'
   if (selectedPrototype.value?.mode === 'manual') return '手动浏览'
@@ -203,6 +203,7 @@ const selectedPrototypeSelectValue = computed({
 const modeSwitchLocked = computed(
   () =>
     usbFlashing.value ||
+    usbInitialization.value.status === 'uploading' ||
     serialSession.selecting.value ||
     liveMirrorBusy.value ||
     wirelessInitialization.value.wifi.status === 'uploading' ||
@@ -889,6 +890,67 @@ function resetWirelessInitialization(mode: WirelessTransportMode) {
   }
 }
 
+function resetUsbInitialization() {
+  usbInitialization.value = { status: 'idle', progress: 0, message: '' }
+}
+
+async function handleInitializeUsbFirmware() {
+  const manifestUrl = usbManifestUrl.value
+  if (transportMode.value !== 'usb' || !manifestUrl || !selectedProfile.value?.id) return
+
+  const state = usbInitialization.value
+  let port
+  try {
+    port = await serialSession.requirePort()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    state.status = 'error'
+    state.message = message
+    buildStatus.value = 'error'
+    buildMessage.value = message
+    return
+  }
+
+  state.status = 'uploading'
+  state.progress = 0
+  state.message = '正在准备 USB 高速基础固件…'
+  buildStatus.value = 'uploading'
+  buildMessage.value = state.message
+  buildLog.value = []
+
+  try {
+    await flashFirmwareManifest(manifestUrl, 'usb-frame', {
+      port,
+      preparingMessage: state.message,
+      connectedMessage: '已连接，正在初始化 USB 高速内容服务。',
+      onLog: (message) => {
+        const normalized = message.trim()
+        if (!normalized) return
+        state.message = normalized
+        buildMessage.value = normalized
+        buildLog.value.push(normalized)
+      },
+      onProgress: ({ percent, written, total }) => {
+        state.progress = percent
+        state.message = `正在写入 USB 基础固件：${percent}%（${written} / ${total} 字节）`
+        buildMessage.value = state.message
+      }
+    })
+    state.status = 'success'
+    state.progress = 100
+    state.message = 'USB 高速基础固件刷新完成；后续可直接传输内容。'
+    buildStatus.value = 'ready'
+    buildMessage.value = state.message
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    state.status = 'error'
+    state.message = `基础固件刷新失败：${message}`
+    buildStatus.value = 'error'
+    buildMessage.value = state.message
+    buildLog.value.push(message)
+  }
+}
+
 async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
   if (transportMode.value !== mode) return
   const { manifestUrl, modeLabel, buildMode } = wirelessFirmwareConfiguration(mode)
@@ -1127,6 +1189,7 @@ function resetTransportFirmwareState(mode: TransportMode): void {
   buildLog.value = []
   if (buildStatus.value !== 'loading') buildStatus.value = 'idle'
   buildMessage.value = buildMessageForTransport(mode)
+  if (mode === 'usb') resetUsbInitialization()
   if (mode === 'wifi') {
     resetWirelessInitialization('wifi')
     wirelessStatus.value = 'idle'
@@ -1245,23 +1308,55 @@ watch([wifiSsid, wifiPassword], () => {
                 {{ serialSession.ready.value ? serialSession.label.value : '串口设备' }}
               </p>
             </div>
-            <button
-              type="button"
-              class="h-7 shrink-0 rounded-panel border border-border bg-canvas px-2 text-[11px] font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
-              :disabled="
-                modeSwitchLocked || serialSession.selecting.value || !serialSession.supported.value
-              "
-              @click="serialSession.selectPort"
-            >
-              {{
-                serialSession.selecting.value
-                  ? '选择中…'
-                  : serialSession.ready.value
-                    ? '更换'
-                    : '选择'
-              }}
-            </button>
+            <div class="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                class="h-7 rounded-panel border border-border bg-canvas px-2 text-[11px] font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="
+                  modeSwitchLocked ||
+                  serialSession.selecting.value ||
+                  !serialSession.supported.value
+                "
+                @click="serialSession.selectPort"
+              >
+                {{
+                  serialSession.selecting.value
+                    ? '选择中…'
+                    : serialSession.ready.value
+                      ? '更换串口'
+                      : '选择串口'
+                }}
+              </button>
+              <button
+                v-if="transportMode === 'usb'"
+                type="button"
+                class="h-7 rounded-panel border border-border bg-canvas px-2 text-[11px] font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="modeSwitchLocked || !usbManifestUrl"
+                @click="handleInitializeUsbFirmware"
+              >
+                {{
+                  usbInitialization.status === 'uploading'
+                    ? `刷新中 ${usbInitialization.progress}%`
+                    : '刷新基础固件'
+                }}
+              </button>
+            </div>
           </div>
+          <div
+            v-if="transportMode === 'usb' && usbInitialization.status === 'uploading'"
+            class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-canvas"
+          >
+            <div
+              class="h-full bg-accent transition-[width]"
+              :style="{ width: `${usbInitialization.progress}%` }"
+            />
+          </div>
+          <p
+            v-if="transportMode === 'usb' && usbInitialization.status === 'error'"
+            class="mt-1 text-[10px] text-error"
+          >
+            {{ usbInitialization.message }}
+          </p>
           <p v-if="!serialSession.supported.value" class="mt-1 text-[10px] text-error">
             当前浏览器不支持串口
           </p>
@@ -1830,7 +1925,11 @@ watch([wifiSsid, wifiPassword], () => {
             :disabled="!canWifiBakeAndUpload"
             @click="handleWifiBakeAndUpload"
           >
-            {{ wirelessStatus === 'uploading' ? `正在传输${selectedInteractionModeLabel}…` : '一键烘焙并上传交互' }}
+            {{
+              wirelessStatus === 'uploading'
+                ? `正在传输${selectedInteractionModeLabel}…`
+                : '一键烘焙并上传交互'
+            }}
           </button>
         </div>
         <div
@@ -1969,11 +2068,7 @@ watch([wifiSsid, wifiPassword], () => {
           @click="handlePreparePrototype"
         >
           {{
-            prototypePending
-              ? '正在检查资源…'
-              : prototypePrepared
-                ? '资源检查通过'
-                : '检查交互资源'
+            prototypePending ? '正在检查资源…' : prototypePrepared ? '资源检查通过' : '检查交互资源'
           }}
         </button>
         <p class="mt-1 text-[10px] leading-relaxed text-muted">
