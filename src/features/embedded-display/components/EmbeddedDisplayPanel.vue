@@ -116,9 +116,6 @@ const wirelessInitialization = ref<Record<WirelessTransportMode, FirmwareInitial
   'wifi-live': { status: 'idle', progress: 0, message: '' }
 })
 const wifiLiveFirmwareRevision = ref(0)
-const activeWirelessInitialization = computed<FirmwareInitializationState | null>(() =>
-  transportMode.value === 'usb' ? null : wirelessInitialization.value[transportMode.value]
-)
 const selectedPrototypeIds = ref<Record<TransportMode, string>>({
   usb: '',
   wifi: '',
@@ -243,6 +240,17 @@ const usbManifestUrl = computed(() => manifestUrlFor('usb-frame'))
 const bleManifestUrl = computed(() => manifestUrlFor(bleBuildMode))
 const wifiManifestUrl = computed(() => manifestUrlFor('wifi-frame'))
 const wifiLiveManifestUrl = computed(() => manifestUrlFor('wifi-live'))
+const activeFirmwareInitialization = computed<FirmwareInitializationState>(() =>
+  transportMode.value === 'usb'
+    ? usbInitialization.value
+    : wirelessInitialization.value[transportMode.value]
+)
+const activeFirmwareManifestUrl = computed(() => {
+  if (transportMode.value === 'usb') return usbManifestUrl.value
+  if (transportMode.value === 'ble') return bleManifestUrl.value
+  if (transportMode.value === 'wifi-live') return wifiLiveManifestUrl.value
+  return wifiManifestUrl.value
+})
 const usbFrameFastSupported = computed(() => supportsUsbFrameFastFlash(selectedProfile.value?.id))
 const canBleBakeAndUpload = computed(
   () =>
@@ -951,6 +959,15 @@ async function handleInitializeUsbFirmware() {
   }
 }
 
+async function handleInitializeFirmware() {
+  const mode = transportMode.value
+  if (mode === 'usb') {
+    await handleInitializeUsbFirmware()
+    return
+  }
+  await handleInitializeWirelessFirmware(mode)
+}
+
 async function handleInitializeWirelessFirmware(mode: WirelessTransportMode) {
   if (transportMode.value !== mode) return
   const { manifestUrl, modeLabel, buildMode } = wirelessFirmwareConfiguration(mode)
@@ -1308,131 +1325,55 @@ watch([wifiSsid, wifiPassword], () => {
                 {{ serialSession.ready.value ? serialSession.label.value : '串口设备' }}
               </p>
             </div>
-            <div class="flex shrink-0 items-center gap-1">
-              <button
-                type="button"
-                class="h-7 rounded-panel border border-border bg-canvas px-2 text-[11px] font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
-                :disabled="
-                  modeSwitchLocked ||
-                  serialSession.selecting.value ||
-                  !serialSession.supported.value
-                "
-                @click="serialSession.selectPort"
-              >
-                {{
-                  serialSession.selecting.value
-                    ? '选择中…'
-                    : serialSession.ready.value
-                      ? '更换串口'
-                      : '选择串口'
-                }}
-              </button>
-              <button
-                v-if="transportMode === 'usb'"
-                type="button"
-                class="h-7 rounded-panel border border-border bg-canvas px-2 text-[11px] font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
-                :disabled="modeSwitchLocked || !usbManifestUrl"
-                @click="handleInitializeUsbFirmware"
-              >
-                {{
-                  usbInitialization.status === 'uploading'
-                    ? `刷新中 ${usbInitialization.progress}%`
-                    : '刷新基础固件'
-                }}
-              </button>
-            </div>
+            <button
+              type="button"
+              class="h-7 shrink-0 rounded-panel border border-border bg-canvas px-2 text-[11px] font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="
+                modeSwitchLocked || serialSession.selecting.value || !serialSession.supported.value
+              "
+              @click="serialSession.selectPort"
+            >
+              {{
+                serialSession.selecting.value
+                  ? '选择中…'
+                  : serialSession.ready.value
+                    ? '更换串口'
+                    : '选择串口'
+              }}
+            </button>
           </div>
-          <div
-            v-if="transportMode === 'usb' && usbInitialization.status === 'uploading'"
-            class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-canvas"
-          >
-            <div
-              class="h-full bg-accent transition-[width]"
-              :style="{ width: `${usbInitialization.progress}%` }"
-            />
-          </div>
-          <p
-            v-if="transportMode === 'usb' && usbInitialization.status === 'error'"
-            class="mt-1 text-[10px] text-error"
-          >
-            {{ usbInitialization.message }}
-          </p>
           <p v-if="!serialSession.supported.value" class="mt-1 text-[10px] text-error">
             当前浏览器不支持串口
           </p>
         </div>
 
-        <div v-if="selectedProfile && transportMode !== 'usb'" class="mt-1.5">
+        <div v-if="selectedProfile" class="mt-1.5">
           <button
-            v-if="transportMode === 'ble'"
             type="button"
             class="h-control w-full rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="!bleManifestUrl || wirelessInitialization.ble.status === 'uploading'"
-            @click="handleInitializeWirelessFirmware('ble')"
+            :disabled="modeSwitchLocked || !activeFirmwareManifestUrl"
+            @click="handleInitializeFirmware"
           >
             {{
-              wirelessInitialization.ble.status === 'uploading'
-                ? `正在刷新固件 ${wirelessInitialization.ble.progress}%`
-                : '刷新设备固件'
-            }}
-          </button>
-          <button
-            v-else-if="transportMode === 'wifi'"
-            type="button"
-            class="h-control w-full rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="!wifiManifestUrl || wirelessInitialization.wifi.status === 'uploading'"
-            @click="handleInitializeWirelessFirmware('wifi')"
-          >
-            {{
-              wirelessInitialization.wifi.status === 'uploading'
-                ? `正在刷新固件 ${wirelessInitialization.wifi.progress}%`
-                : '刷新设备固件'
-            }}
-          </button>
-          <button
-            v-else-if="transportMode === 'wifi-live'"
-            type="button"
-            class="h-control w-full rounded-panel border border-border bg-canvas px-3 text-xs font-medium text-surface hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="
-              !wifiLiveManifestUrl || wirelessInitialization['wifi-live'].status === 'uploading'
-            "
-            @click="handleInitializeWirelessFirmware('wifi-live')"
-          >
-            {{
-              wirelessInitialization['wifi-live'].status === 'uploading'
-                ? `正在刷新固件 ${wirelessInitialization['wifi-live'].progress}%`
-                : '刷新设备固件'
+              activeFirmwareInitialization.status === 'uploading'
+                ? `正在刷新基础固件 ${activeFirmwareInitialization.progress}%`
+                : '刷新基础固件'
             }}
           </button>
           <div
-            v-if="activeWirelessInitialization?.status === 'uploading'"
+            v-if="activeFirmwareInitialization.status === 'uploading'"
             class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-panel-field"
           >
             <div
               class="h-full bg-accent transition-[width]"
-              :style="{ width: `${activeWirelessInitialization.progress}%` }"
+              :style="{ width: `${activeFirmwareInitialization.progress}%` }"
             />
           </div>
           <p
-            v-if="transportMode === 'ble' && wirelessInitialization.ble.status === 'error'"
+            v-if="activeFirmwareInitialization.status === 'error'"
             class="mt-1 text-[10px] text-error"
           >
-            {{ wirelessInitialization.ble.message }}
-          </p>
-          <p
-            v-if="transportMode === 'wifi' && wirelessInitialization.wifi.status === 'error'"
-            class="mt-1 text-[10px] text-error"
-          >
-            {{ wirelessInitialization.wifi.message }}
-          </p>
-          <p
-            v-if="
-              transportMode === 'wifi-live' &&
-              wirelessInitialization['wifi-live'].status === 'error'
-            "
-            class="mt-1 text-[10px] text-error"
-          >
-            {{ wirelessInitialization['wifi-live'].message }}
+            {{ activeFirmwareInitialization.message }}
           </p>
         </div>
 
