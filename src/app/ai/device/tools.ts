@@ -5,10 +5,7 @@ import * as v from 'valibot'
 
 import type { EditorStore } from '@/app/editor/active-store'
 import { DEVICE_PROTOTYPE_EVENTS } from '@/features/device-prototype'
-import {
-  getUsbFrameDeploymentPlan,
-  type EmbeddedImagePlacement
-} from '@/features/embedded-display'
+import { getUsbFrameDeploymentPlan, type EmbeddedImagePlacement } from '@/features/embedded-display'
 
 import {
   prepareUsbFrameDeploymentFromStore,
@@ -22,51 +19,6 @@ import {
 } from './prototype'
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/
-
-const DIRECT_DEPLOYMENT_TERMS = [
-  /写入/u,
-  /烧录/u,
-  /部署/u,
-  /发送到设备/u,
-  /传到设备/u,
-  /写入\s*usb/iu,
-  /\b(?:flash|deploy)\b/iu,
-  /\b(?:write|send)\s+(?:it\s+)?to\s+(?:the\s+)?(?:usb|device)\b/iu
-]
-
-const QUESTION_MARKERS = [
-  /[?？]/u,
-  /(?:怎么|如何|为什么|是否|能否|可不可以|可以吗)/u,
-  /^\s*(?:how|what|why|when|where|can|could|should|is|does)\b/iu
-]
-
-const PROTOTYPE_DEPLOYMENT_MARKERS = [
-  /交互/u,
-  /状态机/u,
-  /手动浏览|手动切换|幻灯片|自动播放|轮播|上一张|下一张/u,
-  /多个\s*Frame/iu,
-  /multi[ -]?frame/iu,
-  /prototype|slideshow|carousel|manual (?:browsing|navigation)/iu
-]
-
-const EXISTING_DEPLOYMENT_UPDATE_MARKERS = [
-  /(?:改成|改为|改用|调整为|换成|切换为|切换到)/u,
-  /\b(?:change|switch|update|adjust)\b/iu,
-  /\buse\b.+\binstead\b/iu
-]
-
-export function isDirectUsbFrameDeploymentRequest(text: string): boolean {
-  const command = text.trim()
-  if (
-    !command ||
-    QUESTION_MARKERS.some((pattern) => pattern.test(command)) ||
-    PROTOTYPE_DEPLOYMENT_MARKERS.some((pattern) => pattern.test(command)) ||
-    EXISTING_DEPLOYMENT_UPDATE_MARKERS.some((pattern) => pattern.test(command))
-  ) {
-    return false
-  }
-  return DIRECT_DEPLOYMENT_TERMS.some((pattern) => pattern.test(command))
-}
 
 export function resolveEmbeddedImagePlacement(text: string): EmbeddedImagePlacement | undefined {
   if (

@@ -8,6 +8,7 @@ import {
 import {
   UsbContentDeviceUnavailableError,
   UsbContentFirmwareError,
+  UsbContentProtocolError,
   type UsbContentSerialPort
 } from '@/features/embedded-display/adapters/usb-content-transfer'
 
@@ -20,7 +21,9 @@ function dependencies(onFlash: () => void): UsbContentFirmwareDependencies {
     getAuthorizedPort: async () => reconnectedPort,
     delay: async () => undefined,
     reconnectAttempts: 3,
-    reconnectDelayMs: 0
+    reconnectDelayMs: 0,
+    transferAttempts: 3,
+    transferRetryDelayMs: 0
   }
 }
 
@@ -126,6 +129,81 @@ describe('USB automatic firmware flow', () => {
         })
       )
     ).rejects.toThrow('等待 USB 设备响应超时')
+    expect(flashCount).toBe(0)
+  })
+
+  test('reconnects after a transient initial transfer failure without refreshing firmware', async () => {
+    let flashCount = 0
+    let transferCount = 0
+    const result = await transferUsbContentWithFirmwareFallback(
+      {
+        port,
+        manifestUrl: '/firmware.json',
+        transfer: async (activePort, firmwareUpdated) => {
+          transferCount += 1
+          if (transferCount === 1) {
+            expect(activePort).toBe(port)
+            throw new UsbContentDeviceUnavailableError('USB 设备已断开')
+          }
+          expect(activePort).toBe(reconnectedPort)
+          expect(firmwareUpdated).toBe(false)
+          return 4096
+        }
+      },
+      dependencies(() => {
+        flashCount += 1
+      })
+    )
+
+    expect(result).toEqual({ port: reconnectedPort, capacity: 4096, firmwareUpdated: false })
+    expect(transferCount).toBe(2)
+    expect(flashCount).toBe(0)
+  })
+
+  test('retries a transient protocol rejection without refreshing firmware', async () => {
+    let flashCount = 0
+    let transferCount = 0
+    const result = await transferUsbContentWithFirmwareFallback(
+      {
+        port,
+        manifestUrl: '/firmware.json',
+        transfer: async () => {
+          transferCount += 1
+          if (transferCount === 1) {
+            throw new UsbContentProtocolError('chunk_data', '-3', 'USB 设备拒绝内容：chunk_data')
+          }
+          return 4096
+        }
+      },
+      dependencies(() => {
+        flashCount += 1
+      })
+    )
+
+    expect(result.firmwareUpdated).toBe(false)
+    expect(transferCount).toBe(2)
+    expect(flashCount).toBe(0)
+  })
+
+  test('does not refresh firmware after a persistent protocol rejection', async () => {
+    let flashCount = 0
+    let transferCount = 0
+    await expect(
+      transferUsbContentWithFirmwareFallback(
+        {
+          port,
+          manifestUrl: '/firmware.json',
+          transfer: async () => {
+            transferCount += 1
+            throw new UsbContentProtocolError('chunk_data', '-3', 'USB 设备拒绝内容：chunk_data')
+          }
+        },
+        dependencies(() => {
+          flashCount += 1
+        })
+      )
+    ).rejects.toThrow('USB 设备拒绝内容')
+    expect(transferCount).toBe(3)
     expect(flashCount).toBe(0)
   })
 

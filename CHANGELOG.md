@@ -4,6 +4,7 @@
 
 ### Changed
 
+- Merge AI design and device deployment into one document-scoped conversation with shared history, reference-image support, canvas tools, interaction tools, and explicit deployment confirmation cards.
 - Separate the OP Embedded Studio desktop identity and release track from OpenPencil and the Android BLE uploader, disable the inherited OpenPencil updater, and reserve `studio-v*` tags for desktop releases.
 - Simplify Design AI into a code-only pipeline: every turn starts from the selected or sole Frame's current JSX, exposes only the existing core `render` action, and drops superseded JSX and image payloads from later requests. The composer also adds pasted/dropped reference-image previews, larger message typography, compact render status, and folded process history with a prominent final summary.
 - Split USB device setup from daily content uploads: install the bundled base firmware once, then update Frames, PNG sequences, and state machines through the dedicated runtime USB protocol without rebuilding or reflashing the application.

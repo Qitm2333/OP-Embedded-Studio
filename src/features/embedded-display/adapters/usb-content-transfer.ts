@@ -4,6 +4,7 @@ const USB_PROTOCOL_PREFIX = 'OPUSB/1'
 const USB_CONTENT_HEADER_BYTES = 24
 const USB_CONTENT_CHUNK_BYTES = 0x10000
 const USB_CONTENT_MAGIC = 0x4f504331
+const USB_CONTENT_SERVICE_VERSION = 2
 const USB_HANDSHAKE_TIMEOUT_MS = 2500
 const USB_COMMAND_TIMEOUT_MS = 15000
 
@@ -154,9 +155,19 @@ async function handshakeUsbDevice(
   options: { timeoutIsMissing?: boolean } = {}
 ): Promise<number> {
   await writeProtocolLine(writer, 'HELLO')
-  let line: string
+  const deadline = Date.now() + USB_HANDSHAKE_TIMEOUT_MS
+  let line = ''
   try {
-    line = await readProtocolLine(reader, state, USB_HANDSHAKE_TIMEOUT_MS)
+    for (;;) {
+      const remaining = deadline - Date.now()
+      if (remaining <= 0) throw new Error('等待 USB 设备响应超时')
+      line = await readProtocolLine(reader, state, remaining)
+      if (/^OPUSB\/1 (?:ERR -?\d+ \S+|ABORTED)$/u.test(line)) {
+        await writeProtocolLine(writer, 'HELLO')
+        continue
+      }
+      break
+    }
   } catch (error) {
     if (options.timeoutIsMissing) {
       throw new UsbContentFirmwareError('missing', '设备未运行兼容的 USB 高速基础固件')
@@ -169,9 +180,16 @@ async function handshakeUsbDevice(
   if (!ready) {
     throw new UsbContentFirmwareError('protocol', `USB 高速固件握手失败：${line}`)
   }
+  const version = Number(ready[1])
   const width = Number(ready[2])
   const height = Number(ready[3])
   const capacity = Number(ready[4])
+  if (version !== USB_CONTENT_SERVICE_VERSION) {
+    throw new UsbContentFirmwareError(
+      'protocol',
+      `设备内容服务版本为 ${version}，Studio 需要版本 ${USB_CONTENT_SERVICE_VERSION}`
+    )
+  }
   if (width !== profile.width || height !== profile.height) {
     throw new UsbContentFirmwareError(
       'resolution',

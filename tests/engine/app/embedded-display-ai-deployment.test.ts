@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test'
 
 import { describeDeviceDeploymentProblem } from '@/app/ai/device/errors'
 import {
-  isDirectUsbFrameDeploymentRequest,
   resolveEmbeddedImagePlacement,
   updateUsbDeploymentAdaptationOutput
 } from '@/app/ai/device/tools'
@@ -28,21 +27,7 @@ const profile: EmbeddedDisplayProfile = {
 }
 
 describe('AI USB deployment planning', () => {
-  test('handles explicit deployment commands locally but leaves questions to the model', () => {
-    expect(isDirectUsbFrameDeploymentRequest('写入')).toBe(true)
-    expect(isDirectUsbFrameDeploymentRequest('帮我部署到设备')).toBe(true)
-    expect(isDirectUsbFrameDeploymentRequest('flash this to the device')).toBe(true)
-    expect(isDirectUsbFrameDeploymentRequest('如何写入 USB？')).toBe(false)
-    expect(isDirectUsbFrameDeploymentRequest('你在吗')).toBe(false)
-    expect(isDirectUsbFrameDeploymentRequest('创建交互并烧录')).toBe(false)
-    expect(isDirectUsbFrameDeploymentRequest('烧录成手动浏览')).toBe(false)
-    expect(isDirectUsbFrameDeploymentRequest('烧录成自动播放幻灯片')).toBe(false)
-    expect(isDirectUsbFrameDeploymentRequest('deploy as manual browsing')).toBe(false)
-    expect(isDirectUsbFrameDeploymentRequest('deploy this multi-frame prototype')).toBe(false)
-    expect(isDirectUsbFrameDeploymentRequest('把刚才的卡片改成等比缩放再烧录')).toBe(false)
-    expect(
-      isDirectUsbFrameDeploymentRequest('change the existing card to stretch and deploy')
-    ).toBe(false)
+  test('resolves explicit placement requests for local deployment actions', () => {
     expect(resolveEmbeddedImagePlacement('拉伸后烧录到设备')).toBe('stretch')
     expect(resolveEmbeddedImagePlacement('等比缩放并部署')).toBe('contain')
     expect(resolveEmbeddedImagePlacement('保持 1:1 不缩放')).toBe('pixel-perfect')

@@ -284,7 +284,7 @@ function designTab() {
 }
 
 function chatInput() {
-  return page.locator('textarea[placeholder="Describe a change…"]')
+  return page.locator('textarea[placeholder="Describe what you want to create or change."]')
 }
 
 function apiKeyInput() {
@@ -318,18 +318,14 @@ test('saving API key shows chat interface', async () => {
   await expect(page.getByText('Describe what you want to create or change.')).toBeVisible()
 })
 
-test('device mode exposes deployment quick actions in the empty chat state', async () => {
+test('unified chat exposes deployment quick actions in the empty state', async () => {
   await chatTab().click()
   if (await apiKeyInput().isVisible()) {
     await apiKeyInput().fill('sk-or-device-quick-action-test')
     await page.getByTestId('api-key-save').click()
   }
-  const modeSelector = page.getByTestId('chat-mode-selector')
-  await modeSelector.getByText('Device', { exact: true }).click()
-
-  await expect(
-    page.getByText('Deploy the current Frame or check the connected device.')
-  ).toBeVisible()
+  await expect(page.getByTestId('chat-mode-selector')).toBeHidden()
+  await expect(page.getByText('Describe what you want to create or change.')).toBeVisible()
   await expect(page.getByTestId('device-quick-deploy-frame')).toBeVisible()
   await expect(page.getByTestId('device-quick-deploy-frame')).toContainText('烧录选中的画面')
   const quickActionsBox = await page.getByTestId('device-quick-actions').boundingBox()
@@ -339,8 +335,6 @@ test('device mode exposes deployment quick actions in the empty chat state', asy
   expect((quickActionsBox?.y ?? 0) + (quickActionsBox?.height ?? 0)).toBeLessThanOrEqual(
     inputBox?.y ?? 0
   )
-  await modeSelector.getByText('Design', { exact: true }).click()
-  await expect(page.getByTestId('device-quick-deploy-frame')).toBeHidden()
 })
 
 test('empty input has disabled send button', async () => {

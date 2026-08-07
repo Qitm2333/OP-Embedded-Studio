@@ -8,14 +8,11 @@ import type { ACPAgentID, AIProviderID } from '@open-pencil/core/constants'
 
 import { compactDesignContext } from '@/app/ai/chat/design-context'
 import { createLanguageModel, resolveLanguageModelID } from '@/app/ai/chat/model'
-import type { AIChatMode } from '@/app/ai/chat/storage'
-import { createSystemPrompt } from '@/app/ai/chat/system'
+import { createUnifiedSystemPrompt } from '@/app/ai/chat/system'
 import { recordDesignHandoff } from '@/app/ai/device/memory'
 import type { PrepareDevicePrototypeProposalInput } from '@/app/ai/device/prototype'
-import { createDeviceSystemPrompt } from '@/app/ai/device/system'
 import {
   createDeviceTools,
-  isDirectUsbFrameDeploymentRequest,
   prepareUsbFrameDeploymentOutput,
   resolveEmbeddedImagePlacement,
   prepareUsbPrototypeDeploymentOutput
@@ -40,7 +37,6 @@ type ChatSessionOptions = {
   customBaseURL: Ref<string>
   customAPIType: Ref<'completions' | 'responses'>
   maxOutputTokens: Ref<number>
-  chatMode: Ref<AIChatMode>
   getActiveEditorStore: () => EditorStore
 }
 
@@ -53,7 +49,6 @@ type ToolLoopTransportOptions = {
   customBaseURL: string
   customAPIType: 'completions' | 'responses'
   maxOutputTokens: number
-  mode?: AIChatMode
 }
 
 const ANTHROPIC_CACHE_CONTROL = {
@@ -83,11 +78,7 @@ export function chatProviderOptions(providerID: AIProviderID, modelID: string) {
   return supportsAnthropicCaching(providerID, modelID) ? ANTHROPIC_CACHE_CONTROL : undefined
 }
 
-export async function createACPTransport(
-  providerID: AIProviderID,
-  store?: EditorStore,
-  mode: AIChatMode = 'design'
-) {
+export async function createACPTransport(providerID: AIProviderID, store?: EditorStore) {
   const agentId = providerID.replace('acp:', '') as ACPAgentID
   const agentDef = ACP_AGENTS.find((a) => a.id === agentId)
   if (!agentDef) throw new Error(`Unknown ACP agent: ${agentId}`)
@@ -97,9 +88,7 @@ export async function createACPTransport(
   return new ACPChatTransport({
     agentDef,
     cwd: await homeDir(),
-    ...(mode === 'device' && store
-      ? { getSystemPrompt: () => createDeviceSystemPrompt(store) }
-      : {})
+    ...(store ? { getSystemPrompt: () => createUnifiedSystemPrompt(store) } : {})
   })
 }
 
@@ -127,75 +116,8 @@ export function prepareDesignStep(messages: ModelMessage[]) {
   return { messages: compactDesignContext(messages) }
 }
 
-function createDeviceToolLoopTransport({
-  store,
-  providerID,
-  apiKey,
-  modelID,
-  customModelID,
-  customBaseURL,
-  customAPIType,
-  maxOutputTokens
-}: ToolLoopTransportOptions) {
-  const effectiveModelID = resolveLanguageModelID({ providerID, modelID, customModelID })
-  const providerOptions = chatProviderOptions(providerID, effectiveModelID)
-  const agent = new ToolLoopAgent({
-    model: createLanguageModel(
-      {
-        providerID,
-        apiKey,
-        modelID,
-        customModelID,
-        customBaseURL,
-        customAPIType
-      },
-      { requestTimeoutMs: AI_CHAT_STEP_TIMEOUT_MS }
-    ),
-    instructions: createDeviceSystemPrompt(store),
-    tools: createDeviceTools(store),
-    stopWhen: stepCountIs(4),
-    maxOutputTokens,
-    timeout: CHAT_TIMEOUT,
-    providerOptions,
-    prepareCall: (options) => {
-      resetRunSteps(store)
-      return {
-        ...options,
-        instructions: createDeviceSystemPrompt(store),
-        maxOutputTokens,
-        providerOptions
-      }
-    },
-    onStepFinish: ({ usage }) => recordAgentUsage(usage, store)
-  })
-  return new DirectChatTransport({ agent }) as ChatTransport<UIMessage>
-}
-
-export function createToolLoopTransport({
-  store,
-  providerID,
-  apiKey,
-  modelID,
-  customModelID,
-  customBaseURL,
-  customAPIType,
-  maxOutputTokens,
-  mode = 'design'
-}: ToolLoopTransportOptions) {
-  if (mode === 'device') {
-    return createDeviceToolLoopTransport({
-      store,
-      providerID,
-      apiKey,
-      modelID,
-      customModelID,
-      customBaseURL,
-      customAPIType,
-      maxOutputTokens,
-      mode
-    })
-  }
-  const tools = createAITools(store, {
+export function createUnifiedAITools(store: EditorStore) {
+  const designTools = createAITools(store, {
     onRenderSuccess: ({ id, name }) => {
       recordDesignHandoff(store, {
         frameId: id,
@@ -206,6 +128,20 @@ export function createToolLoopTransport({
       })
     }
   })
+  return { ...designTools, ...createDeviceTools(store) }
+}
+
+export function createToolLoopTransport({
+  store,
+  providerID,
+  apiKey,
+  modelID,
+  customModelID,
+  customBaseURL,
+  customAPIType,
+  maxOutputTokens
+}: ToolLoopTransportOptions) {
+  const tools = createUnifiedAITools(store)
   const effectiveModelID = resolveLanguageModelID({ providerID, modelID, customModelID })
   const providerOptions = chatProviderOptions(providerID, effectiveModelID)
   const agent = new ToolLoopAgent({
@@ -217,17 +153,18 @@ export function createToolLoopTransport({
       customBaseURL,
       customAPIType
     }),
-    instructions: createSystemPrompt(store),
+    instructions: createUnifiedSystemPrompt(store),
     tools,
     stopWhen: stepCountIs(MAX_AGENT_STEPS),
     maxOutputTokens,
+    timeout: CHAT_TIMEOUT,
     providerOptions,
     prepareStep: ({ messages }) => prepareDesignStep(messages),
     prepareCall: (options) => {
       resetRunSteps(store)
       return {
         ...options,
-        instructions: createSystemPrompt(store),
+        instructions: createUnifiedSystemPrompt(store),
         maxOutputTokens,
         providerOptions
       }
@@ -250,29 +187,27 @@ export function createChatSessionManager({
   customBaseURL,
   customAPIType,
   maxOutputTokens,
-  chatMode,
   getActiveEditorStore
 }: ChatSessionOptions) {
   let transportDirty = false
   let currentChatStore: EditorStore | null = null
-  let currentChatMode: AIChatMode | null = null
-  let currentChatMessages = new WeakMap<EditorStore, Partial<Record<AIChatMode, UIMessage[]>>>()
-  let localDeviceResultKeys = new WeakMap<EditorStore, Set<string>>()
+  const currentChatMessages = new WeakMap<EditorStore, UIMessage[]>()
+  const localDeviceResultKeys = new WeakMap<EditorStore, Set<string>>()
   let chat: Chat<UIMessage> | null = null
   let acpTransportInstance: { destroy(): Promise<void> } | null = null
   let overrideTransport: (() => ChatTransport<UIMessage>) | null = null
 
   function markTransportDirty() {
+    if (currentChatStore && chat) {
+      currentChatMessages.set(currentChatStore, chat.messages)
+    }
     transportDirty = true
     currentChatStore = null
-    currentChatMode = null
-    currentChatMessages = new WeakMap()
-    localDeviceResultKeys = new WeakMap()
   }
 
   async function createActiveACPTransport(store: EditorStore) {
     await acpTransportInstance?.destroy()
-    const transport = await createACPTransport(providerID.value, store, chatMode.value)
+    const transport = await createACPTransport(providerID.value, store)
     acpTransportInstance = transport
     return transport as ChatTransport<UIMessage>
   }
@@ -291,8 +226,7 @@ export function createChatSessionManager({
       customModelID: customModelID.value,
       customBaseURL: customBaseURL.value,
       customAPIType: customAPIType.value,
-      maxOutputTokens: maxOutputTokens.value,
-      mode: chatMode.value
+      maxOutputTokens: maxOutputTokens.value
     })
   }
 
@@ -306,29 +240,22 @@ export function createChatSessionManager({
   }
 
   async function ensureChat(allowUnconfiguredLocal = false): Promise<Chat<UIMessage> | null> {
-    if (!isConfigured.value && !allowUnconfiguredLocal) return null
-
     const store = getActiveEditorStore()
-    if (currentChatStore && currentChatMode && chat) {
-      const histories = currentChatMessages.get(currentChatStore) ?? {}
-      histories[currentChatMode] = chat.messages
-      currentChatMessages.set(currentChatStore, histories)
+    const hasCurrentLocalChat = !isConfigured.value && currentChatStore === store && !!chat
+    if (!isConfigured.value && !allowUnconfiguredLocal && !hasCurrentLocalChat) return null
+
+    if (currentChatStore && chat) {
+      currentChatMessages.set(currentChatStore, chat.messages)
     }
 
-    if (
-      !chat ||
-      transportDirty ||
-      currentChatStore !== store ||
-      currentChatMode !== chatMode.value
-    ) {
-      const messages = currentChatMessages.get(store)?.[chatMode.value]
+    if (!chat || transportDirty || currentChatStore !== store) {
+      const messages = currentChatMessages.get(store)
       let transport: ChatTransport<UIMessage>
       if (!isConfigured.value) transport = localDeviceTransport
       else if (isACPProvider.value) transport = await createActiveACPTransport(store)
       else transport = createTransport(store)
       chat = new Chat<UIMessage>({ transport, messages })
       currentChatStore = store
-      currentChatMode = chatMode.value
       transportDirty = false
     }
     return chat
@@ -341,7 +268,6 @@ export function createChatSessionManager({
     prepare: () => Promise<unknown>,
     successText: string
   ): Promise<Chat<UIMessage> | null> {
-    if (chatMode.value !== 'device') return null
     const activeChat = await ensureChat(true)
     if (!activeChat) return null
     activeChat.clearError()
@@ -399,7 +325,6 @@ export function createChatSessionManager({
   }
 
   async function submitLocalDeviceAction(text: string): Promise<Chat<UIMessage> | null> {
-    if (!isDirectUsbFrameDeploymentRequest(text)) return null
     const input = { intent: text, placement: resolveEmbeddedImagePlacement(text) }
     return submitLocalDeviceToolAction(
       text,
@@ -439,36 +364,25 @@ export function createChatSessionManager({
     localDeviceResultKeys.set(store, reportedKeys)
 
     const message: UIMessage = {
-      id:
-        currentChatStore === store && currentChatMode === 'device' && chat
-          ? chat.generateId()
-          : globalThis.crypto.randomUUID(),
+      id: currentChatStore === store && chat ? chat.generateId() : globalThis.crypto.randomUUID(),
       role: 'assistant',
       parts: [{ type: 'text', text: normalizedText }]
     }
-    if (currentChatStore === store && currentChatMode === 'device' && chat) {
+    if (currentChatStore === store && chat) {
       chat.messages = [...chat.messages, message]
       return
     }
 
-    const histories = currentChatMessages.get(store) ?? {}
-    histories.device = [...(histories.device ?? []), message]
-    currentChatMessages.set(store, histories)
+    currentChatMessages.set(store, [...(currentChatMessages.get(store) ?? []), message])
   }
 
   function resetChat() {
     if (currentChatStore) {
-      const histories = currentChatMessages.get(currentChatStore)
-      if (histories) {
-        currentChatMessages.set(currentChatStore, {
-          ...histories,
-          [chatMode.value]: undefined
-        })
-      }
+      currentChatMessages.delete(currentChatStore)
+      localDeviceResultKeys.delete(currentChatStore)
     }
     chat = null
     currentChatStore = null
-    currentChatMode = null
     transportDirty = false
   }
 

@@ -20,7 +20,11 @@ import {
   transferUsbContentWithFirmwareFallback
 } from '../adapters/usb-content-firmware'
 import type { UsbContentSerialPort } from '../adapters/usb-content-transfer'
-import { getActiveUsbPort, setActiveUsbPort } from '../adapters/usb-deployment-lock'
+import {
+  clearActiveUsbPort,
+  getActiveUsbPort,
+  setActiveUsbPort
+} from '../adapters/usb-deployment-lock'
 import { imageFilesToUsbSequence, type UsbImageSequencePayload } from '../adapters/usb-sequence'
 import { encodeWirelessImage, encodeWirelessPrototype } from '../adapters/wireless-content'
 import type {
@@ -303,6 +307,7 @@ async function deployContent(
     result.firmwareUpdated ? 'done' : 'skipped',
     options
   )
+  clearActiveUsbPort(result.port)
 }
 
 export function getUsbFrameDeploymentPlan(id: string): UsbFrameDeploymentPlan | undefined {
@@ -523,6 +528,7 @@ export async function executeUsbFrameDeployment(
   plan.progress = 0
   plan.contentStage = 'pending'
   plan.firmwareStage = plan.firmwareVerified ? 'skipped' : 'pending'
+  let selectedPort: DeploymentSerialPort | undefined
   try {
     plan.status = 'selecting-device'
     plan.message = '正在查找已授权的 USB 设备'
@@ -530,6 +536,7 @@ export async function executeUsbFrameDeployment(
       getActiveUsbPort() ?? plan.port ?? (await getSingleAuthorizedUsbContentPort())
     plan.message = authorizedPort ? '正在连接已授权的 USB 设备' : '请在系统窗口中选择 USB 设备'
     const port = authorizedPort ?? ((await requestUsbSerialPort()) as DeploymentSerialPort)
+    selectedPort = port
     setActiveUsbPort(port)
     plan.port = markRaw(port)
     plan.needsDeviceSelection = false
@@ -555,6 +562,7 @@ export async function executeUsbFrameDeployment(
     plan.status = 'error'
     plan.error = message
     plan.message = message
+    clearActiveUsbPort(selectedPort ?? plan.port)
     plan.port = undefined
     plan.needsDeviceSelection = true
     appendLog(plan, message)

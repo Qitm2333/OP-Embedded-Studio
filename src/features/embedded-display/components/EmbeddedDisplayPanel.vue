@@ -473,7 +473,7 @@ async function transferPreparedUsbContent(
 ): Promise<void> {
   const manifestUrl = await resolveUsbFirmwareManifestUrl()
 
-  await transferUsbContentWithFirmwareFallback({
+  const result = await transferUsbContentWithFirmwareFallback({
     port: port as UsbContentSerialPort,
     manifestUrl,
     transfer: (activePort, firmwareUpdated) => {
@@ -491,6 +491,7 @@ async function transferPreparedUsbContent(
     },
     onStage: updateUsbFirmwareStage
   })
+  clearActiveUsbPort(result.port)
 }
 
 function usbTransferOptions(

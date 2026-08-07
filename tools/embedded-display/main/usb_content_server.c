@@ -17,9 +17,11 @@
 #include "wireless_content.h"
 
 #define USB_PROTOCOL_PREFIX "OPUSB/1"
+#define USB_CONTENT_SERVICE_VERSION 2u
 #define USB_CONTENT_CHUNK_BYTES 0x10000u
 #define USB_CONTENT_LINE_BYTES 128u
 #define USB_CONTENT_TASK_STACK_BYTES 6144u
+#define USB_CONTENT_READ_TIMEOUT_MS 2000u
 
 static const char *TAG = "usb_content";
 static bool server_started;
@@ -54,15 +56,17 @@ static void usb_reply_error(esp_err_t error, const char *operation)
     usb_write_line(response);
 }
 
-static esp_err_t usb_read_exact(void *destination, size_t length)
+static esp_err_t usb_read_exact_with_timeout(void *destination,
+                                             size_t length,
+                                             TickType_t timeout_ticks)
 {
     uint8_t *bytes = destination;
     size_t received = 0;
     while (received < length) {
         const int result = usb_serial_jtag_read_bytes(bytes + received,
                                                       length - received,
-                                                      portMAX_DELAY);
-        if (result <= 0) continue;
+                                                      timeout_ticks);
+        if (result <= 0) return ESP_ERR_TIMEOUT;
         received += (size_t)result;
     }
     return ESP_OK;
@@ -73,7 +77,8 @@ static esp_err_t usb_read_line(char *line, size_t capacity)
     size_t length = 0;
     while (length + 1 < capacity) {
         uint8_t byte = 0;
-        ESP_RETURN_ON_ERROR(usb_read_exact(&byte, 1), TAG, "read USB command byte failed");
+        ESP_RETURN_ON_ERROR(usb_read_exact_with_timeout(&byte, 1, portMAX_DELAY), TAG,
+                            "read USB command byte failed");
         if (byte == '\n') {
             line[length] = '\0';
             return ESP_OK;
@@ -93,7 +98,9 @@ static esp_err_t handle_begin(const char *line, uint8_t *encoded_buffer)
     }
 
     openpencil_content_header_t header;
-    ESP_RETURN_ON_ERROR(usb_read_exact(encoded_buffer, sizeof(header)), TAG,
+    ESP_RETURN_ON_ERROR(usb_read_exact_with_timeout(encoded_buffer,
+                                                    sizeof(header),
+                                                    pdMS_TO_TICKS(USB_CONTENT_READ_TIMEOUT_MS)), TAG,
                         "read USB content header failed");
     memcpy(&header, encoded_buffer, sizeof(header));
     ESP_RETURN_ON_ERROR(openpencil_content_write_begin(&header, total_bytes), TAG,
@@ -121,7 +128,9 @@ static esp_err_t handle_chunk(const char *line,
         return ESP_ERR_INVALID_ARG;
     }
 
-    ESP_RETURN_ON_ERROR(usb_read_exact(encoded_buffer, encoded_bytes), TAG,
+    ESP_RETURN_ON_ERROR(usb_read_exact_with_timeout(encoded_buffer,
+                                                    encoded_bytes,
+                                                    pdMS_TO_TICKS(USB_CONTENT_READ_TIMEOUT_MS)), TAG,
                         "read USB content chunk failed");
     const uint8_t *content = encoded_buffer;
     if (codec == 1) {
@@ -210,7 +219,7 @@ static void usb_content_server_task(void *argument)
             snprintf(response,
                      sizeof(response),
                      USB_PROTOCOL_PREFIX " READY %u %u %u %u\n",
-                     OPENPENCIL_CONTENT_VERSION,
+                     USB_CONTENT_SERVICE_VERSION,
                      CONFIG_EXAMPLE_LCD_H_RES,
                      CONFIG_EXAMPLE_LCD_V_RES,
                      (unsigned)openpencil_content_capacity());

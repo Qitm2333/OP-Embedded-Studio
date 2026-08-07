@@ -1,6 +1,7 @@
 import type { SceneNode } from '@open-pencil/scene-graph'
 
 import BASE_SYSTEM_PROMPT from '@/app/ai/chat/system-prompt.md?raw'
+import { createDeviceSystemPrompt } from '@/app/ai/device/system'
 import type { EditorStore } from '@/app/editor/active-store'
 import { getActiveEmbeddedDisplayProfile } from '@/features/embedded-display'
 
@@ -60,4 +61,8 @@ export function createDesignContextPrompt(store: EditorStore): string {
 
 export function createSystemPrompt(store: EditorStore): string {
   return `${DESIGN_SYSTEM_PROMPT}\n\n${createDesignContextPrompt(store)}`
+}
+
+export function createUnifiedSystemPrompt(store: EditorStore): string {
+  return `${createSystemPrompt(store)}\n\n${createDeviceSystemPrompt(store)}\n\n# Unified assistant workflow\n\nYou are one assistant for the canvas and the connected embedded device. Keep design edits, interaction preparation, previews, and USB deployment in the same conversation. Use design tools when the user asks to create or change the canvas, and use deployment tools when the user asks to prepare or deploy content. Preparation tools only create a confirmation card; hardware is touched only after the user explicitly confirms that card. Do not route requests by keywords or ask the user to switch modes.`
 }

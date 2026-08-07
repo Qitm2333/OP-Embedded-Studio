@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useFileDialog } from '@vueuse/core'
 import { TooltipProvider } from 'reka-ui'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 
 import type { FileUIPart } from 'ai'
 import { ACP_AGENTS } from '@open-pencil/core/constants'
@@ -13,17 +13,15 @@ import {
   prepareChatImage
 } from '@/app/ai/chat/attachments'
 import { modelSupportsImageInput } from '@/app/ai/chat/model'
-import type { AIChatMode } from '@/app/ai/chat/storage'
 import { useAIChat } from '@/app/ai/chat/use'
 import { toast } from '@/app/shell/ui'
 import ProviderModelSelect from '@/components/chat/ProviderModelSelect.vue'
 import ProviderSettings from '@/components/chat/ProviderSettings/ProviderSettings.vue'
 import ChatScreenSelect from '@/components/chat/ChatScreenSelect.vue'
-import ChatModeSelect from '@/components/chat/ChatModeSelect.vue'
 import Tip from '@/components/ui/Tip.vue'
 import { useButtonUI } from '@/components/ui/button'
 
-const { providerID, providerDef, modelID, customModelID, chatMode } = useAIChat()
+const { providerID, providerDef, modelID, customModelID } = useAIChat()
 const { dialogs } = useI18n()
 
 const { status } = defineProps<{
@@ -40,10 +38,6 @@ const textarea = ref<HTMLTextAreaElement>()
 const attachments = ref<FileUIPart[]>([])
 const isPreparing = ref(false)
 const isDragging = ref(false)
-const drafts: Record<AIChatMode, { input: string; attachments: FileUIPart[] }> = {
-  design: { input: '', attachments: [] },
-  device: { input: '', attachments: [] }
-}
 
 const {
   open: openFiles,
@@ -57,23 +51,18 @@ const {
 
 const isStreaming = computed(() => status === 'streaming' || status === 'submitted')
 const supportsImages = computed(() =>
-  chatMode.value === 'design'
-    ? modelSupportsImageInput({
-        providerID: providerID.value,
-        modelID: modelID.value,
-        customModelID: customModelID.value
-      })
-    : false
+  modelSupportsImageInput({
+    providerID: providerID.value,
+    modelID: modelID.value,
+    customModelID: customModelID.value
+  })
 )
-const inputPlaceholder = computed(() =>
-  chatMode.value === 'device' ? dialogs.value.describeDeviceAction : dialogs.value.describeChange
-)
-const attachmentLabel = computed(() => {
-  if (chatMode.value === 'device') return dialogs.value.deviceModeNoReferenceImage
-  return supportsImages.value
+const inputPlaceholder = computed(() => dialogs.value.describeCreateOrChange)
+const attachmentLabel = computed(() =>
+  supportsImages.value
     ? dialogs.value.attachReferenceImage
     : dialogs.value.selectedModelNoImageSupport
-})
+)
 const canSubmit = computed(
   () =>
     !isStreaming.value &&
@@ -105,17 +94,6 @@ function resizeTextarea() {
     textarea.value.style.height = `${Math.min(textarea.value.scrollHeight, 144)}px`
   })
 }
-
-watch(chatMode, (nextMode, previousMode) => {
-  drafts[previousMode] = {
-    input: input.value,
-    attachments: previousMode === 'design' ? [...attachments.value] : []
-  }
-  input.value = drafts[nextMode].input
-  attachments.value = nextMode === 'design' ? [...drafts.design.attachments] : []
-  isDragging.value = false
-  resizeTextarea()
-})
 
 async function addFiles(files: File[]) {
   if (!supportsImages.value) {
@@ -226,7 +204,7 @@ function handleKeydown(event: KeyboardEvent) {
           v-model="input"
           data-test-id="chat-input"
           :placeholder="inputPlaceholder"
-          :disabled="chatMode === 'device' && isStreaming"
+          :disabled="isStreaming"
           rows="1"
           class="block max-h-36 min-h-12 w-full resize-none bg-transparent px-3 py-3 text-sm leading-5 text-surface outline-none placeholder:text-muted disabled:opacity-50"
           @input="resizeTextarea"
@@ -250,7 +228,6 @@ function handleKeydown(event: KeyboardEvent) {
             </button>
           </Tip>
 
-          <ChatModeSelect :disabled="isStreaming || isPreparing" />
           <ChatScreenSelect :disabled="isStreaming" />
 
           <template v-if="isACPProvider">

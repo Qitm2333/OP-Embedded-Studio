@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport } from 'reka-ui'
-import { refAutoReset } from '@vueuse/core'
+import { refAutoReset, useResizeObserver } from '@vueuse/core'
 import { isReasoningUIPart, isTextUIPart, isToolUIPart } from 'ai'
 import { computed, markRaw, nextTick, ref, watch } from 'vue'
 
 import { getAcpDebugText, clearAcpDebugLog, hasAcpDebugEntries } from '@/app/ai/acp/transport'
 import { describeAIError } from '@/app/ai/chat/errors'
-import { isDirectUsbFrameDeploymentRequest } from '@/app/ai/device/tools'
 import { copyChatLog } from '@/app/ai/debug'
 import { clearToolLogEntries, didHitStepLimit } from '@/app/ai/tools'
 import { activeTab } from '@/app/tabs'
@@ -35,8 +34,7 @@ const {
   submitLocalDeviceAction,
   submitLocalDevicePrototypeAction,
   activeTab: activePropertiesTab,
-  resetChat,
-  chatMode
+  resetChat
 } = useAIChat()
 const { dialogs } = useI18n()
 const editorStore = useEditorStore()
@@ -52,6 +50,7 @@ void ensureChat()
     toast.error(error instanceof Error ? error.message : 'Failed to initialize chat')
   })
 const messagesEnd = ref<HTMLDivElement>()
+const messagesContainer = ref<HTMLDivElement>()
 const followsLatestMessage = ref(true)
 const localActionPending = ref(false)
 const debugCopied = refAutoReset(false, 1500)
@@ -116,39 +115,26 @@ function handleViewportScroll(event: Event) {
 }
 
 watch(messages, () => scrollToBottom(), { deep: true })
+useResizeObserver(messagesContainer, () => scrollToBottom())
 watch(status, (nextStatus, previousStatus) => {
   if (previousStatus !== nextStatus && (nextStatus === 'ready' || nextStatus === 'error')) {
     scrollToBottom()
   }
 })
-watch([() => activeTab.value?.id, chatMode], async () => {
-  const nextChat = await ensureChat()
-  chat.value = nextChat ? markRaw(nextChat) : null
-  followsLatestMessage.value = true
-  scrollToBottom(true)
-})
+watch(
+  () => activeTab.value?.id,
+  async () => {
+    const nextChat = await ensureChat()
+    chat.value = nextChat ? markRaw(nextChat) : null
+    followsLatestMessage.value = true
+    scrollToBottom(true)
+  }
+)
 
 async function handleSubmit(text: string, files: FileUIPart[] = []) {
   if (status.value === 'streaming' || status.value === 'submitted') return
   followsLatestMessage.value = true
   try {
-    if (
-      files.length === 0 &&
-      chatMode.value === 'device' &&
-      isDirectUsbFrameDeploymentRequest(text)
-    ) {
-      localActionPending.value = true
-      try {
-        const localChat = await submitLocalDeviceAction(text)
-        if (localChat) {
-          chat.value = markRaw(localChat)
-          scrollToBottom(true)
-          return
-        }
-      } finally {
-        localActionPending.value = false
-      }
-    }
     if (!isConfigured.value) {
       toast.error('AI 服务尚未配置；设备烧录快捷操作仍可直接使用。')
       return
@@ -172,8 +158,21 @@ async function handleSubmit(text: string, files: FileUIPart[] = []) {
   })
 }
 
-function handleFrameQuickAction(): void {
-  void handleSubmit('帮我烧录选中的画面')
+async function handleFrameQuickAction(): Promise<void> {
+  if (localActionPending.value) return
+  localActionPending.value = true
+  followsLatestMessage.value = true
+  try {
+    const localChat = await submitLocalDeviceAction('帮我烧录选中的画面')
+    if (localChat) {
+      chat.value = markRaw(localChat)
+      scrollToBottom(true)
+    }
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : String(error))
+  } finally {
+    localActionPending.value = false
+  }
 }
 
 async function handlePrototypeQuickAction(mode: 'manual' | 'slideshow'): Promise<void> {
@@ -252,201 +251,199 @@ function handleClearChat() {
 
 <template>
   <div data-test-id="chat-panel" class="flex min-w-0 flex-1 flex-col overflow-hidden select-text">
-    <ProviderSetup v-if="!isConfigured && chatMode !== 'device'" />
+    <ProviderSetup v-if="!isConfigured && messages.length === 0" />
 
-    <template v-else>
-      <ScrollAreaRoot class="min-h-0 flex-1">
-        <ScrollAreaViewport
-          data-test-id="chat-scroll-viewport"
-          class="h-full px-3 py-3 [&>div]:h-full"
-          @scroll.passive="handleViewportScroll"
+    <ScrollAreaRoot v-if="isConfigured || messages.length > 0" class="min-h-0 flex-1">
+      <ScrollAreaViewport
+        data-test-id="chat-scroll-viewport"
+        class="h-full px-3 py-3 [&>div]:h-full"
+        @scroll.passive="handleViewportScroll"
+      >
+        <!-- Empty state -->
+        <div
+          v-if="messages.length === 0"
+          data-test-id="chat-empty-state"
+          class="flex h-full flex-col items-center justify-center gap-3 text-muted"
         >
-          <!-- Empty state -->
-          <div
-            v-if="messages.length === 0"
-            data-test-id="chat-empty-state"
-            class="flex h-full flex-col items-center justify-center gap-3 text-muted"
-          >
-            <icon-lucide-cpu v-if="chatMode === 'device'" class="size-8 opacity-50" />
-            <icon-lucide-message-circle v-else class="size-8 opacity-50" />
-            <p class="text-center text-xs">
-              {{
-                chatMode === 'device'
-                  ? dialogs.describeDeviceDeployment
-                  : dialogs.describeCreateOrChange
-              }}
-            </p>
+          <icon-lucide-message-circle class="size-8 opacity-50" />
+          <p class="text-center text-xs">
+            {{ dialogs.describeCreateOrChange }}
+          </p>
+        </div>
+
+        <!-- Messages -->
+        <div
+          v-else
+          ref="messagesContainer"
+          data-test-id="chat-messages"
+          class="flex flex-col gap-3"
+        >
+          <ChatMessage
+            v-for="msg in messages"
+            :key="msg.id"
+            :message="msg"
+            :active="msg.id === activeAssistantId"
+          />
+
+          <!-- Thinking indicator: shown when AI is working but no visible activity -->
+          <div v-if="isThinking" data-test-id="chat-typing-indicator" class="flex gap-2">
+            <div
+              class="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted/20 text-[10px] font-bold text-muted"
+            >
+              AI
+            </div>
+            <div class="flex items-center gap-1 py-2">
+              <span
+                class="size-1.5 animate-bounce rounded-full bg-muted"
+                style="animation-delay: 0ms"
+              />
+              <span
+                class="size-1.5 animate-bounce rounded-full bg-muted"
+                style="animation-delay: 150ms"
+              />
+              <span
+                class="size-1.5 animate-bounce rounded-full bg-muted"
+                style="animation-delay: 300ms"
+              />
+            </div>
           </div>
 
-          <!-- Messages -->
-          <div v-else data-test-id="chat-messages" class="flex flex-col gap-3">
-            <ChatMessage
-              v-for="msg in messages"
-              :key="msg.id"
-              :message="msg"
-              :active="msg.id === activeAssistantId"
-            />
+          <!-- Continue button when step limit reached -->
+          <div v-if="showContinue" class="flex justify-center py-2">
+            <button
+              class="flex items-center gap-1.5 rounded-full bg-accent/10 px-4 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/20"
+              @click="handleSubmit('Continue where you left off')"
+            >
+              <icon-lucide-play class="size-3" />
+              Continue
+            </button>
+          </div>
 
-            <!-- Thinking indicator: shown when AI is working but no visible activity -->
-            <div v-if="isThinking" data-test-id="chat-typing-indicator" class="flex gap-2">
-              <div
-                class="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted/20 text-[10px] font-bold text-muted"
-              >
-                AI
+          <div
+            v-if="chatError"
+            data-test-id="chat-error"
+            class="border-l-2 border-red-500 bg-red-500/5 px-3 py-2.5"
+          >
+            <div class="flex min-w-0 items-start gap-2">
+              <icon-lucide-circle-alert class="mt-0.5 size-4 shrink-0 text-red-400" />
+              <div class="min-w-0 flex-1">
+                <p class="text-sm leading-5 font-medium text-surface">{{ chatError.title }}</p>
+                <p class="mt-0.5 text-xs leading-4 text-muted">{{ chatError.message }}</p>
               </div>
-              <div class="flex items-center gap-1 py-2">
-                <span
-                  class="size-1.5 animate-bounce rounded-full bg-muted"
-                  style="animation-delay: 0ms"
-                />
-                <span
-                  class="size-1.5 animate-bounce rounded-full bg-muted"
-                  style="animation-delay: 150ms"
-                />
-                <span
-                  class="size-1.5 animate-bounce rounded-full bg-muted"
-                  style="animation-delay: 300ms"
-                />
-              </div>
-            </div>
-
-            <!-- Continue button when step limit reached -->
-            <div v-if="showContinue" class="flex justify-center py-2">
               <button
-                class="flex items-center gap-1.5 rounded-full bg-accent/10 px-4 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/20"
-                @click="handleSubmit('Continue where you left off')"
+                v-if="chatError.retryable"
+                data-test-id="chat-error-retry"
+                type="button"
+                class="flex h-7 shrink-0 items-center gap-1 border border-border px-2 text-xs text-surface transition-colors hover:bg-hover"
+                title="Retry the last response"
+                @click="handleRetry"
               >
-                <icon-lucide-play class="size-3" />
-                Continue
+                <icon-lucide-rotate-cw class="size-3.5" />
+                Retry
               </button>
             </div>
-
-            <div
-              v-if="chatError"
-              data-test-id="chat-error"
-              class="border-l-2 border-red-500 bg-red-500/5 px-3 py-2.5"
-            >
-              <div class="flex min-w-0 items-start gap-2">
-                <icon-lucide-circle-alert class="mt-0.5 size-4 shrink-0 text-red-400" />
-                <div class="min-w-0 flex-1">
-                  <p class="text-sm leading-5 font-medium text-surface">{{ chatError.title }}</p>
-                  <p class="mt-0.5 text-xs leading-4 text-muted">{{ chatError.message }}</p>
-                </div>
-                <button
-                  v-if="chatError.retryable"
-                  data-test-id="chat-error-retry"
-                  type="button"
-                  class="flex h-7 shrink-0 items-center gap-1 border border-border px-2 text-xs text-surface transition-colors hover:bg-hover"
-                  title="Retry the last response"
-                  @click="handleRetry"
-                >
-                  <icon-lucide-rotate-cw class="size-3.5" />
-                  Retry
-                </button>
-              </div>
-              <details v-if="chatError.detail !== chatError.message" class="mt-2 pl-6">
-                <summary class="cursor-pointer text-[11px] text-muted">Technical details</summary>
-                <p class="mt-1 break-words text-[11px] leading-4 text-red-300/80">
-                  {{ chatError.detail }}
-                </p>
-              </details>
-            </div>
-
-            <div ref="messagesEnd" />
+            <details v-if="chatError.detail !== chatError.message" class="mt-2 pl-6">
+              <summary class="cursor-pointer text-[11px] text-muted">Technical details</summary>
+              <p class="mt-1 break-words text-[11px] leading-4 text-red-300/80">
+                {{ chatError.detail }}
+              </p>
+            </details>
           </div>
-        </ScrollAreaViewport>
-        <ScrollAreaScrollbar orientation="vertical" class="flex w-1.5 touch-none p-px select-none">
-          <ScrollAreaThumb class="relative flex-1 rounded-full bg-muted/30" />
-        </ScrollAreaScrollbar>
-      </ScrollAreaRoot>
 
-      <!-- Chat toolbar -->
-      <div
-        v-if="messages.length > 0"
-        class="flex shrink-0 items-center gap-1 border-t border-border px-3 py-1"
+          <div ref="messagesEnd" />
+        </div>
+      </ScrollAreaViewport>
+      <ScrollAreaScrollbar orientation="vertical" class="flex w-1.5 touch-none p-px select-none">
+        <ScrollAreaThumb class="relative flex-1 rounded-full bg-muted/30" />
+      </ScrollAreaScrollbar>
+    </ScrollAreaRoot>
+
+    <!-- Chat toolbar -->
+    <div
+      v-if="messages.length > 0"
+      class="flex shrink-0 items-center gap-1 border-t border-border px-3 py-1"
+    >
+      <AppTextButton
+        v-if="IS_DEV"
+        :aria-label="debugCopied ? 'Chat log copied' : 'Copy chat log'"
+        :title="debugCopied ? 'Chat log copied' : 'Copy chat log'"
+        :ui="{ base: 'flex size-6 items-center justify-center rounded hover:bg-hover' }"
+        @click="handleCopyDebug"
       >
-        <AppTextButton
-          v-if="IS_DEV"
-          :aria-label="debugCopied ? 'Chat log copied' : 'Copy chat log'"
-          :title="debugCopied ? 'Chat log copied' : 'Copy chat log'"
-          :ui="{ base: 'flex size-6 items-center justify-center rounded hover:bg-hover' }"
-          @click="handleCopyDebug"
-        >
-          <icon-lucide-clipboard-copy v-if="!debugCopied" class="size-3" />
-          <icon-lucide-check v-else class="size-3 text-green-400" />
-          <span class="sr-only">{{ debugCopied ? 'Copied' : 'Copy chat log' }}</span>
-        </AppTextButton>
-        <AppTextButton
-          v-if="IS_DEV && hasAcpDebugEntries()"
-          :aria-label="acpLogCopied ? 'ACP log copied' : 'Copy ACP log'"
-          :title="acpLogCopied ? 'ACP log copied' : 'Copy ACP log'"
-          :ui="{ base: 'flex size-6 items-center justify-center rounded hover:bg-hover' }"
-          @click="handleCopyAcpLog"
-        >
-          <icon-lucide-bug v-if="!acpLogCopied" class="size-3" />
-          <icon-lucide-check v-else class="size-3 text-green-400" />
-          <span class="sr-only">{{ acpLogCopied ? 'Copied' : 'Copy ACP log' }}</span>
-        </AppTextButton>
-        <AppTextButton
-          aria-label="Clear chat"
-          title="Clear chat"
-          :ui="{ base: 'flex size-6 items-center justify-center rounded hover:bg-hover' }"
-          @click="handleClearChat"
-        >
-          <icon-lucide-trash-2 class="size-3" />
-          <span class="sr-only">Clear chat</span>
-        </AppTextButton>
-      </div>
-
-      <div
-        v-if="chatMode === 'device' && status !== 'streaming' && status !== 'submitted'"
-        data-test-id="device-quick-actions"
-        class="scrollbar-thin flex shrink-0 gap-1.5 overflow-x-auto px-3 pt-1.5 pb-1"
+        <icon-lucide-clipboard-copy v-if="!debugCopied" class="size-3" />
+        <icon-lucide-check v-else class="size-3 text-green-400" />
+        <span class="sr-only">{{ debugCopied ? 'Copied' : 'Copy chat log' }}</span>
+      </AppTextButton>
+      <AppTextButton
+        v-if="IS_DEV && hasAcpDebugEntries()"
+        :aria-label="acpLogCopied ? 'ACP log copied' : 'Copy ACP log'"
+        :title="acpLogCopied ? 'ACP log copied' : 'Copy ACP log'"
+        :ui="{ base: 'flex size-6 items-center justify-center rounded hover:bg-hover' }"
+        @click="handleCopyAcpLog"
       >
-        <button
-          v-if="selectedPrototypeCandidates.length < 2"
-          data-test-id="device-quick-deploy-frame"
-          type="button"
-          class="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-panel-field px-2.5 text-[11px] text-surface shadow-sm hover:bg-panel-field-hover"
-          @click="handleFrameQuickAction"
-        >
-          <icon-lucide-monitor-up class="size-3.5 text-accent" />
-          烧录选中的画面
-        </button>
-        <button
-          v-if="canCreatePrototype"
-          data-test-id="device-quick-deploy-prototype"
-          type="button"
-          class="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-panel-field px-2.5 text-[11px] text-surface shadow-sm hover:bg-panel-field-hover"
-          @click="handlePrototypeQuickAction('manual')"
-        >
-          <icon-lucide-git-branch class="size-3.5 text-accent" />
-          手动浏览 {{ prototypeCandidates.length }} 个画面
-        </button>
-        <button
-          v-if="canCreatePrototype"
-          data-test-id="device-quick-deploy-slideshow"
-          type="button"
-          class="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-panel-field px-2.5 text-[11px] text-surface shadow-sm hover:bg-panel-field-hover"
-          @click="handlePrototypeQuickAction('slideshow')"
-        >
-          <icon-lucide-play class="size-3.5 text-accent" />
-          自动播放 {{ prototypeCandidates.length }} 个画面
-        </button>
-        <button
-          v-if="canCreatePrototype"
-          type="button"
-          class="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-panel-field px-2.5 text-[11px] text-surface shadow-sm hover:bg-panel-field-hover"
-          @click="activePropertiesTab = 'prototype'"
-        >
-          <icon-lucide-sliders-horizontal class="size-3.5 text-accent" />
-          自定义交互
-        </button>
-      </div>
+        <icon-lucide-bug v-if="!acpLogCopied" class="size-3" />
+        <icon-lucide-check v-else class="size-3 text-green-400" />
+        <span class="sr-only">{{ acpLogCopied ? 'Copied' : 'Copy ACP log' }}</span>
+      </AppTextButton>
+      <AppTextButton
+        aria-label="Clear chat"
+        title="Clear chat"
+        :ui="{ base: 'flex size-6 items-center justify-center rounded hover:bg-hover' }"
+        @click="handleClearChat"
+      >
+        <icon-lucide-trash-2 class="size-3" />
+        <span class="sr-only">Clear chat</span>
+      </AppTextButton>
+    </div>
 
-      <ChatInput :status="status" @submit="handleSubmit" @stop="handleStop" />
+    <div
+      v-if="status !== 'streaming' && status !== 'submitted'"
+      data-test-id="device-quick-actions"
+      class="scrollbar-thin flex shrink-0 gap-1.5 overflow-x-auto px-3 pt-1.5 pb-1"
+    >
+      <button
+        v-if="selectedPrototypeCandidates.length < 2"
+        data-test-id="device-quick-deploy-frame"
+        type="button"
+        class="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-panel-field px-2.5 text-[11px] text-surface shadow-sm hover:bg-panel-field-hover"
+        @click="handleFrameQuickAction"
+      >
+        <icon-lucide-monitor-up class="size-3.5 text-accent" />
+        烧录选中的画面
+      </button>
+      <button
+        v-if="canCreatePrototype"
+        data-test-id="device-quick-deploy-prototype"
+        type="button"
+        class="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-panel-field px-2.5 text-[11px] text-surface shadow-sm hover:bg-panel-field-hover"
+        @click="handlePrototypeQuickAction('manual')"
+      >
+        <icon-lucide-git-branch class="size-3.5 text-accent" />
+        手动浏览 {{ prototypeCandidates.length }} 个画面
+      </button>
+      <button
+        v-if="canCreatePrototype"
+        data-test-id="device-quick-deploy-slideshow"
+        type="button"
+        class="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-panel-field px-2.5 text-[11px] text-surface shadow-sm hover:bg-panel-field-hover"
+        @click="handlePrototypeQuickAction('slideshow')"
+      >
+        <icon-lucide-play class="size-3.5 text-accent" />
+        自动播放 {{ prototypeCandidates.length }} 个画面
+      </button>
+      <button
+        v-if="canCreatePrototype"
+        type="button"
+        class="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-panel-field px-2.5 text-[11px] text-surface shadow-sm hover:bg-panel-field-hover"
+        @click="activePropertiesTab = 'prototype'"
+      >
+        <icon-lucide-sliders-horizontal class="size-3.5 text-accent" />
+        自定义交互
+      </button>
+    </div>
 
-      <AcpPermissionDialog />
-    </template>
+    <ChatInput :status="status" @submit="handleSubmit" @stop="handleStop" />
+
+    <AcpPermissionDialog />
   </div>
 </template>

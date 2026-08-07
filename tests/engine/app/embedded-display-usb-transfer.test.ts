@@ -16,8 +16,11 @@ class FakeUsbContentPort {
   private response: ReadableStreamDefaultController<Uint8Array> | null = null
   private pending: 'header' | 'chunk' | null = null
   private nextOffset = 0
+  private helloResponseIndex = 0
 
-  constructor(private readonly helloResponse: string | null = 'OPUSB/1 READY 1 466 466 30343168') {}
+  constructor(
+    private readonly helloResponses: string | null | string[] = 'OPUSB/1 READY 2 466 466 30343168'
+  ) {}
 
   async open() {
     this.readable = new ReadableStream<Uint8Array>({
@@ -55,7 +58,10 @@ class FakeUsbContentPort {
     const command = decoder.decode(bytes).trim()
     this.commands.push(command)
     if (command === 'OPUSB/1 HELLO') {
-      if (this.helloResponse) this.reply(this.helloResponse)
+      const response = Array.isArray(this.helloResponses)
+        ? this.helloResponses[Math.min(this.helloResponseIndex++, this.helloResponses.length - 1)]
+        : this.helloResponses
+      if (response) this.reply(response)
       else this.response?.close()
       return
     }
@@ -101,8 +107,8 @@ describe('USB runtime content transfer', () => {
 
   test('classifies missing, resolution, and capacity firmware problems', async () => {
     const missing = new FakeUsbContentPort(null)
-    const resolution = new FakeUsbContentPort('OPUSB/1 READY 1 240 240 30343168')
-    const capacity = new FakeUsbContentPort('OPUSB/1 READY 1 466 466 100')
+    const resolution = new FakeUsbContentPort('OPUSB/1 READY 2 240 240 30343168')
+    const capacity = new FakeUsbContentPort('OPUSB/1 READY 2 466 466 100')
 
     await expect(
       probeUsbContentDevice(missing, { width: 466, height: 466 }, 90)
@@ -122,6 +128,28 @@ describe('USB runtime content transfer', () => {
     expect(missing.commands).toEqual(['OPUSB/1 HELLO'])
     expect(resolution.commands).toEqual(['OPUSB/1 HELLO'])
     expect(capacity.commands).toEqual(['OPUSB/1 HELLO'])
+  })
+
+  test('recovers from stale transaction responses before READY', async () => {
+    const port = new FakeUsbContentPort([
+      'OPUSB/1 ERR -3 chunk_data',
+      'OPUSB/1 ABORTED',
+      'OPUSB/1 READY 2 466 466 30343168'
+    ])
+
+    await expect(probeUsbContentDevice(port, { width: 466, height: 466 }, 1024)).resolves.toEqual({
+      compatible: true,
+      capacity: 30343168
+    })
+    expect(port.commands).toEqual(['OPUSB/1 HELLO', 'OPUSB/1 HELLO', 'OPUSB/1 HELLO'])
+  })
+
+  test('rejects an outdated content service version', async () => {
+    const port = new FakeUsbContentPort('OPUSB/1 READY 1 466 466 30343168')
+
+    await expect(
+      probeUsbContentDevice(port, { width: 466, height: 466 }, 1024)
+    ).resolves.toMatchObject({ compatible: false, issue: 'protocol' })
   })
 
   test('handshakes, compresses chunks, and finishes without reflashing firmware', async () => {
