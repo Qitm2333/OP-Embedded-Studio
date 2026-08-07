@@ -13,6 +13,7 @@ import {
   transferUsbContentWithFirmwareFallback,
   type UsbContentFirmwareStage
 } from '../adapters/usb-content-firmware'
+import { clearActiveUsbPort, withUsbDeploymentLock } from '../adapters/usb-deployment-lock'
 import {
   probeWirelessDevice,
   uploadWirelessImage,
@@ -104,6 +105,7 @@ const DEFAULT_WIFI_AP_PASSWORD = 'opembedded'
 const deviceDetailsOpen = ref(false)
 const liveMirrorBusy = ref(false)
 const usbFlashing = ref(false)
+const usbPreparing = ref(false)
 const contentUploadProgress = ref(0)
 const usbInitialization = ref<FirmwareInitializationState>({
   status: 'idle',
@@ -200,6 +202,7 @@ const selectedPrototypeSelectValue = computed({
 const modeSwitchLocked = computed(
   () =>
     usbFlashing.value ||
+    usbPreparing.value ||
     usbInitialization.value.status === 'uploading' ||
     serialSession.selecting.value ||
     liveMirrorBusy.value ||
@@ -339,7 +342,9 @@ const canUsbFrameFlash = computed(
     burnMode.value === 'frame' &&
     usbFrameFastSupported.value &&
     canBake.value &&
-    !usbFlashing.value
+    !usbFlashing.value &&
+    !usbPreparing.value &&
+    usbInitialization.value.status !== 'uploading'
 )
 const canUsbFileFlash = computed(
   () =>
@@ -347,7 +352,9 @@ const canUsbFileFlash = computed(
     burnMode.value === 'frame' &&
     usbFrameFastSupported.value &&
     !usbFlashing.value &&
-    !bakePending.value
+    !usbPreparing.value &&
+    !bakePending.value &&
+    usbInitialization.value.status !== 'uploading'
 )
 const canUsbPrototypeFlash = computed(
   () =>
@@ -357,7 +364,9 @@ const canUsbPrototypeFlash = computed(
     Boolean(bakePrototype && selectedPrototype.value) &&
     prototypeReason.value === '' &&
     !prototypePending.value &&
-    !usbFlashing.value
+    !usbFlashing.value &&
+    !usbPreparing.value &&
+    usbInitialization.value.status !== 'uploading'
 )
 const wifiCredentials = computed(() =>
   wifiProvisionEnabled.value && wifiSsid.value.trim()
@@ -417,8 +426,8 @@ async function handleBakeFrame(): Promise<boolean> {
 }
 
 async function prepareUsbFrameContent(source: 'frame' | 'file'): Promise<boolean> {
-  if (source === 'frame') return canUsbFrameFlash.value && (await handleBakeFrame())
-  if (!canUsbFileFlash.value || !uploadedUsbFiles.value.length) return false
+  if (source === 'frame') return handleBakeFrame()
+  if (!uploadedUsbFiles.value.length) return false
   const files = uploadedUsbFiles.value
   await selectImage(undefined, { upload: false })
   if (files.length === 1) {
@@ -442,15 +451,27 @@ function updateUsbFirmwareStage(stage: UsbContentFirmwareStage, message: string)
   if (stage === 'reconnecting') contentUploadProgress.value = 65
 }
 
+async function resolveUsbFirmwareManifestUrl(): Promise<string> {
+  const profileId = selectedProfile.value?.id
+  if (!profileId) throw new Error('请先选择屏幕方案')
+
+  let manifestUrl = usbManifestUrl.value
+  if (!manifestUrl) {
+    await loadCachedFirmware('usb-frame')
+    manifestUrl = usbManifestUrl.value
+  }
+  if (selectedProfile.value?.id !== profileId || !manifestUrl) {
+    throw new Error('USB 基础固件未就绪，请稍后重试或刷新基础固件')
+  }
+  return manifestUrl
+}
+
 async function transferPreparedUsbContent(
   port: SerialPortLike,
   contentLabel: string,
   upload: (options: UsbFlashOptions) => Promise<number>
 ): Promise<void> {
-  const manifestUrl = usbManifestUrl.value
-  if (!selectedProfile.value || !manifestUrl) {
-    throw new Error('当前屏幕方案缺少 USB 基础固件')
-  }
+  const manifestUrl = await resolveUsbFirmwareManifestUrl()
 
   await transferUsbContentWithFirmwareFallback({
     port: port as UsbContentSerialPort,
@@ -560,51 +581,48 @@ async function flashPreparedUsbFrame(
 
 async function handleUsbFrameBakeAndFlash(source: 'frame' | 'file' = 'frame') {
   const requestedProfileId = selectedProfile.value?.id
-  if (!requestedProfileId || usbFlashing.value) return
+  const canStart = source === 'frame' ? canUsbFrameFlash.value : canUsbFileFlash.value
+  if (!requestedProfileId || !canStart) return
 
-  let port
+  usbPreparing.value = true
   try {
-    port = await serialSession.requirePort()
+    const port = await serialSession.requirePort()
+    if (!(await prepareUsbFrameContent(source))) return
+    await flashPreparedUsbFrame(port, requestedProfileId, source)
   } catch (error) {
     bakeError.value = error instanceof Error ? error.message : String(error)
-    return
+  } finally {
+    usbPreparing.value = false
   }
-  if (!(await prepareUsbFrameContent(source))) return
-  await flashPreparedUsbFrame(port, requestedProfileId, source)
 }
 
 async function handleUsbPrototypeBakeAndFlash() {
-  if (!canUsbPrototypeFlash.value) return
+  if (!canUsbPrototypeFlash.value || usbPreparing.value) return
   const requestedProfileId = selectedProfile.value?.id
   if (!requestedProfileId) return
 
-  let port
+  usbPreparing.value = true
   try {
-    port = await serialSession.requirePort()
-  } catch (error) {
-    prototypeError.value = error instanceof Error ? error.message : String(error)
-    return
-  }
-  if (!(await preparePrototypeResources(false))) return
-  const interactionPayload = selectedInteractionIsSlideshow.value
-    ? usbSequencePayload.value
-    : prototypePayload.value
-  if (!interactionPayload) return
-  if (
-    transportMode.value !== 'usb' ||
-    burnMode.value !== 'prototype' ||
-    selectedProfile.value?.id !== requestedProfileId ||
-    interactionPayload.profileId !== requestedProfileId
-  ) {
-    return
-  }
+    const port = await serialSession.requirePort()
+    if (!(await preparePrototypeResources(false))) return
+    const interactionPayload = selectedInteractionIsSlideshow.value
+      ? usbSequencePayload.value
+      : prototypePayload.value
+    if (!interactionPayload) return
+    if (
+      transportMode.value !== 'usb' ||
+      burnMode.value !== 'prototype' ||
+      selectedProfile.value?.id !== requestedProfileId ||
+      interactionPayload.profileId !== requestedProfileId
+    ) {
+      return
+    }
 
-  usbFlashing.value = true
-  contentUploadProgress.value = 0
-  buildStatus.value = 'uploading'
-  buildMessage.value = `正在准备 USB ${selectedInteractionModeLabel.value}内容…`
-  buildLog.value = []
-  try {
+    usbFlashing.value = true
+    contentUploadProgress.value = 0
+    buildStatus.value = 'uploading'
+    buildMessage.value = `正在准备 USB ${selectedInteractionModeLabel.value}内容…`
+    buildLog.value = []
     let upload: (options: UsbFlashOptions) => Promise<number>
     if (selectedInteractionIsSlideshow.value && usbSequencePayload.value) {
       const sequence = usbSequencePayload.value
@@ -619,11 +637,13 @@ async function handleUsbPrototypeBakeAndFlash() {
     buildMessage.value = `${selectedInteractionModeLabel.value}和全部画面已写入，设备正在重启。`
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
+    prototypeError.value = message
     buildStatus.value = 'error'
     buildMessage.value = `USB 交互传输失败：${message}`
     buildLog.value.push(message)
   } finally {
-    usbFlashing.value = false
+    if (usbFlashing.value) usbFlashing.value = false
+    usbPreparing.value = false
   }
 }
 
@@ -904,7 +924,17 @@ function resetUsbInitialization() {
 
 async function handleInitializeUsbFirmware() {
   const manifestUrl = usbManifestUrl.value
-  if (transportMode.value !== 'usb' || !manifestUrl || !selectedProfile.value?.id) return
+  const profileId = selectedProfile.value?.id
+  if (
+    transportMode.value !== 'usb' ||
+    !manifestUrl ||
+    !profileId ||
+    usbFlashing.value ||
+    usbPreparing.value ||
+    usbInitialization.value.status === 'uploading'
+  ) {
+    return
+  }
 
   const state = usbInitialization.value
   let port
@@ -927,23 +957,26 @@ async function handleInitializeUsbFirmware() {
   buildLog.value = []
 
   try {
-    await flashFirmwareManifest(manifestUrl, 'usb-frame', {
-      port,
-      preparingMessage: state.message,
-      connectedMessage: '已连接，正在初始化 USB 高速内容服务。',
-      onLog: (message) => {
-        const normalized = message.trim()
-        if (!normalized) return
-        state.message = normalized
-        buildMessage.value = normalized
-        buildLog.value.push(normalized)
-      },
-      onProgress: ({ percent, written, total }) => {
-        state.progress = percent
-        state.message = `正在写入 USB 基础固件：${percent}%（${written} / ${total} 字节）`
-        buildMessage.value = state.message
-      }
-    })
+    await withUsbDeploymentLock(() =>
+      flashFirmwareManifest(manifestUrl, 'usb-frame', {
+        port,
+        preparingMessage: state.message,
+        connectedMessage: '已连接，正在初始化 USB 高速内容服务。',
+        onLog: (message) => {
+          const normalized = message.trim()
+          if (!normalized) return
+          state.message = normalized
+          buildMessage.value = normalized
+          buildLog.value.push(normalized)
+        },
+        onProgress: ({ percent, written, total }) => {
+          state.progress = percent
+          state.message = `正在写入 USB 基础固件：${percent}%（${written} / ${total} 字节）`
+          buildMessage.value = state.message
+        }
+      })
+    )
+    clearActiveUsbPort(port as UsbContentSerialPort)
     state.status = 'success'
     state.progress = 100
     state.message = 'USB 高速基础固件刷新完成；后续可直接传输内容。'

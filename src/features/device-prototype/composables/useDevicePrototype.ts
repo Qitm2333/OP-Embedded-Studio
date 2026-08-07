@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 
 import {
   DEFAULT_DEVICE_PROTOTYPE_MANUAL_SETTINGS,
@@ -28,9 +28,30 @@ export interface CreateDevicePrototypeInteractionInput {
   slideshow?: Partial<DevicePrototypeSlideshowSettings>
 }
 
-const interactions = ref<DevicePrototypeInteraction[]>([])
-const selectedInteractionId = ref('')
-const selectedStateId = ref('')
+interface DevicePrototypeScopeState {
+  interactions: Ref<DevicePrototypeInteraction[]>
+  selectedInteractionId: Ref<string>
+  selectedStateId: Ref<string>
+}
+
+const defaultScope = {}
+const scopeStates = new WeakMap<object, DevicePrototypeScopeState>()
+
+function createScopeState(): DevicePrototypeScopeState {
+  return {
+    interactions: ref<DevicePrototypeInteraction[]>([]),
+    selectedInteractionId: ref(''),
+    selectedStateId: ref('')
+  }
+}
+
+function getScopeState(scopeKey: object): DevicePrototypeScopeState {
+  const existing = scopeStates.get(scopeKey)
+  if (existing) return existing
+  const state = createScopeState()
+  scopeStates.set(scopeKey, state)
+  return state
+}
 
 function createId(prefix: string): string {
   return `${prefix}-${globalThis.crypto.randomUUID()}`
@@ -72,7 +93,11 @@ function validateDefinition(definition: DevicePrototypeDefinition): void {
   }
 }
 
-export function useDevicePrototype() {
+export function useDevicePrototype(scopeKey: object = defaultScope) {
+  const scope = getScopeState(scopeKey)
+  const interactions = scope.interactions
+  const selectedInteractionId = scope.selectedInteractionId
+  const selectedStateId = scope.selectedStateId
   if (interactions.value.length === 0) {
     const interaction = createInteraction('默认交互')
     interactions.value = [interaction]

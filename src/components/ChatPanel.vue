@@ -149,6 +149,10 @@ async function handleSubmit(text: string, files: FileUIPart[] = []) {
         localActionPending.value = false
       }
     }
+    if (!isConfigured.value) {
+      toast.error('AI 服务尚未配置；设备烧录快捷操作仍可直接使用。')
+      return
+    }
     const c = await ensureChat()
     if (c) chat.value = markRaw(c)
   } catch (e) {
@@ -248,7 +252,7 @@ function handleClearChat() {
 
 <template>
   <div data-test-id="chat-panel" class="flex min-w-0 flex-1 flex-col overflow-hidden select-text">
-    <ProviderSetup v-if="!isConfigured" />
+    <ProviderSetup v-if="!isConfigured && chatMode !== 'device'" />
 
     <template v-else>
       <ScrollAreaRoot class="min-h-0 flex-1">

@@ -167,7 +167,7 @@ function handleScreenPointerDown() {
     if (clickTimer) clearTimeout(clickTimer)
     clickTimer = undefined
     dispatch('screen_long_press')
-  }, 550)
+  }, 600)
 }
 
 function handleScreenPointerUp() {
@@ -204,7 +204,7 @@ function handleBootPointerDown() {
   longPressTimer = setTimeout(() => {
     longPressTriggered = true
     dispatch('boot_long_press')
-  }, 550)
+  }, 600)
 }
 
 function handleBootPointerUp() {

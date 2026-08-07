@@ -3,6 +3,27 @@ import { describe, expect, test } from 'bun:test'
 import { useDevicePrototype } from '@/features/device-prototype'
 
 describe('device prototype interactions', () => {
+  test('keeps interaction state isolated between editor scopes', () => {
+    const firstScope = {}
+    const secondScope = {}
+    const first = useDevicePrototype(firstScope)
+    const second = useDevicePrototype(secondScope)
+    const interaction = first.createInteractionFromDefinition({
+      name: 'First document interaction',
+      definition: {
+        initialStateId: 'a',
+        states: [
+          { id: 'a', frameId: 'a', name: 'A', width: 240, height: 240 },
+          { id: 'b', frameId: 'b', name: 'B', width: 240, height: 240 }
+        ],
+        transitions: [{ fromStateId: 'a', event: 'screen_click', toStateId: 'b' }]
+      }
+    })
+
+    expect(first.interactions.value.some((item) => item.id === interaction.id)).toBe(true)
+    expect(second.interactions.value.some((item) => item.id === interaction.id)).toBe(false)
+  })
+
   test('creates and selects an AI-proposed interaction in the shared Interaction panel state', () => {
     const prototype = useDevicePrototype()
     const interaction = prototype.createInteractionFromDefinition({

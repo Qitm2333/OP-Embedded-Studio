@@ -8,6 +8,8 @@ import {
   executeDevicePrototypeDeploymentFromChat,
   getDevicePrototypeDeploymentPlan,
   getDevicePrototypeProposal,
+  getDevicePrototypeProposalInteraction,
+  isDevicePrototypeProposalSnapshotCurrent,
   renderDevicePrototypeProposalFrame,
   updateDevicePrototypeAdaptationFromChat
 } from '@/app/ai/device/prototype'
@@ -29,15 +31,20 @@ import {
 } from '@/features/embedded-display'
 
 const { proposalId } = defineProps<{ proposalId: string }>()
-const { activeTab } = useAIChat()
+const { activeTab, appendLocalDeviceResult } = useAIChat()
 const pending = ref(false)
 const adaptationError = ref('')
 const previewOpen = ref(false)
 const proposal = computed(() => getDevicePrototypeProposal(proposalId))
 const deployment = computed(() => getDevicePrototypeDeploymentPlan(proposalId))
+const currentInteraction = computed(() => getDevicePrototypeProposalInteraction(proposalId))
+const snapshotChanged = computed(
+  () => Boolean(deployment.value) && !isDevicePrototypeProposalSnapshotCurrent(proposalId)
+)
 const previewInteraction = computed<DevicePrototypeInteraction | null>(() => {
   const current = proposal.value
   if (!current) return null
+  if (currentInteraction.value) return currentInteraction.value
   return {
     id: `proposal-preview-${current.id}`,
     name: current.name,
@@ -64,9 +71,12 @@ const imagePlacementOptions: Array<{ value: EmbeddedImagePlacement; label: strin
 ]
 const problem = computed(() => {
   const message = deployment.value?.error || proposal.value?.error
-  if (!message && deployment.value?.status !== 'stale') return null
+  if (!message && deployment.value?.status !== 'stale' && !snapshotChanged.value) return null
   return describeDeviceDeploymentProblem(
-    message || deployment.value?.message || '交互烧录计划已过期'
+    message ||
+      (snapshotChanged.value ? '交互内容发生变化，请重新准备烧录内容' : '') ||
+      deployment.value?.message ||
+      '交互烧录计划已过期'
   )
 })
 
@@ -151,6 +161,7 @@ const shouldPrepare = computed(
     deployment.value.status === 'stale' ||
     deployment.value.status === 'cancelled' ||
     deployment.value.status === 'superseded' ||
+    snapshotChanged.value ||
     problem.value?.recovery === 'reprepare'
 )
 
@@ -241,7 +252,19 @@ async function execute(): Promise<void> {
   }
   pending.value = true
   try {
-    await executeDevicePrototypeDeploymentFromChat(proposalId)
+    const succeeded = await executeDevicePrototypeDeploymentFromChat(proposalId)
+    const currentDeployment = deployment.value
+    if (succeeded) {
+      appendLocalDeviceResult(
+        `交互“${proposal.value?.name ?? '未命名'}”已烧录完成，设备正在重启。`,
+        `${proposalId}:success`
+      )
+    } else {
+      const detail = problem.value
+        ? `${problem.value.title}：${problem.value.action}`
+        : currentDeployment?.error || 'USB 交互烧录失败，请检查设备后重试。'
+      appendLocalDeviceResult(detail, `${proposalId}:error:${currentDeployment?.error || detail}`)
+    }
   } finally {
     pending.value = false
   }

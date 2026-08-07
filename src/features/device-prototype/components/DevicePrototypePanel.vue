@@ -23,12 +23,14 @@ import { DEVICE_PROTOTYPE_MAX_STATES } from '../model/types'
 
 const {
   active = true,
+  scopeKey,
   selectedFrame,
   selectedFrames = [],
   renderFrame,
   renderRevision
 } = defineProps<{
   active?: boolean
+  scopeKey?: object
   selectedFrame?: DevicePrototypeFrameCandidate
   selectedFrames?: DevicePrototypeFrameCandidate[]
   renderFrame?: DevicePrototypeFrameRender
@@ -61,7 +63,7 @@ const {
   selectState,
   transitionTarget,
   setTransition
-} = useDevicePrototype()
+} = useDevicePrototype(scopeKey)
 
 const canAddFrame = computed(
   () =>

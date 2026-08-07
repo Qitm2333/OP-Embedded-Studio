@@ -7,7 +7,37 @@ export interface DeviceDeploymentProblem {
   detail?: string
 }
 
+function describeProtocolProblem(detail: string): DeviceDeploymentProblem | null {
+  const operation = detail
+    .match(/OPUSB\/1 ERR -?\d+ (BEGIN|CHUNK|END|FINISH)/iu)?.[1]
+    ?.toUpperCase()
+  if (!operation) return null
+
+  let operationLabel = '完成校验'
+  let action = '重新执行烧录，让设备重新校验并保存完整内容。'
+  if (operation === 'BEGIN') {
+    operationLabel = '开始写入'
+    action = '确认设备已刷新为匹配当前分辨率的基础固件，然后重新烧录。'
+  } else if (operation === 'CHUNK') {
+    operationLabel = '传输数据块'
+    action = '重新插拔 USB 并重试；若仍失败，请减少画面数量或检查设备容量。'
+  }
+  return {
+    title: `设备拒绝${operationLabel}`,
+    cause: `设备返回了 OPUSB 协议错误，拒绝执行“${operationLabel}”步骤。`,
+    action,
+    retryLabel: '重新烧录',
+    recovery: 'retry',
+    detail
+  }
+}
+
 export function describeDeviceDeploymentProblem(message: string): DeviceDeploymentProblem {
+  const detail = message.trim() || '设备部署未完成'
+  return describeProtocolProblem(detail) ?? describeGeneralDeploymentProblem(detail)
+}
+
+function describeGeneralDeploymentProblem(message: string): DeviceDeploymentProblem {
   const detail = message.trim() || '设备部署未完成'
 
   if (/容量|capacity|too large|exceed/iu.test(detail)) {

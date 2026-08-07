@@ -34,7 +34,7 @@ const selectedDevicePrototypeFrames = computed(() =>
   getSelectedDevicePrototypeFrameCandidates(editorStore)
 )
 const devicePrototypeFrameRenderer = createDevicePrototypeFrameRenderer(editorStore)
-const { interactionOptions, interactions } = useDevicePrototype()
+const { interactionOptions, interactions } = useDevicePrototype(editorStore)
 const embeddedBakeState = computed(() => getEmbeddedFrameBakeState(editorStore))
 
 async function handleEmbeddedFrameBake() {
@@ -133,6 +133,7 @@ async function handleEmbeddedPrototypeBake(interactionId: string) {
       >
         <DevicePrototypePanel
           :active="activeTab === 'prototype'"
+          :scope-key="editorStore"
           :selected-frame="devicePrototypeFrame"
           :selected-frames="selectedDevicePrototypeFrames"
           :render-frame="devicePrototypeFrameRenderer"

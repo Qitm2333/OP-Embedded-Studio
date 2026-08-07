@@ -296,8 +296,17 @@ export function createChatSessionManager({
     })
   }
 
-  async function ensureChat(): Promise<Chat<UIMessage> | null> {
-    if (!isConfigured.value) return null
+  const localDeviceTransport: ChatTransport<UIMessage> = {
+    async sendMessages() {
+      return new ReadableStream()
+    },
+    async reconnectToStream() {
+      return null
+    }
+  }
+
+  async function ensureChat(allowUnconfiguredLocal = false): Promise<Chat<UIMessage> | null> {
+    if (!isConfigured.value && !allowUnconfiguredLocal) return null
 
     const store = getActiveEditorStore()
     if (currentChatStore && currentChatMode && chat) {
@@ -313,9 +322,10 @@ export function createChatSessionManager({
       currentChatMode !== chatMode.value
     ) {
       const messages = currentChatMessages.get(store)?.[chatMode.value]
-      const transport: ChatTransport<UIMessage> = isACPProvider.value
-        ? await createActiveACPTransport(store)
-        : createTransport(store)
+      let transport: ChatTransport<UIMessage>
+      if (!isConfigured.value) transport = localDeviceTransport
+      else if (isACPProvider.value) transport = await createActiveACPTransport(store)
+      else transport = createTransport(store)
       chat = new Chat<UIMessage>({ transport, messages })
       currentChatStore = store
       currentChatMode = chatMode.value
@@ -332,7 +342,7 @@ export function createChatSessionManager({
     successText: string
   ): Promise<Chat<UIMessage> | null> {
     if (chatMode.value !== 'device') return null
-    const activeChat = await ensureChat()
+    const activeChat = await ensureChat(true)
     if (!activeChat) return null
     activeChat.clearError()
 

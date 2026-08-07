@@ -131,7 +131,6 @@ export function useEmbeddedDisplay() {
       size: file?.size,
       type: file?.type
     })
-    manifestUrls.value['usb-frame'] = ''
     if (!file) {
       imagePayload.value = null
       buildStatus.value = 'idle'
@@ -193,7 +192,6 @@ export function useEmbeddedDisplay() {
     if (files.length < 2) throw new Error('PNG 序列至少需要两张图片')
 
     selectedImageName.value = `${files.length} 张 PNG 序列`
-    manifestUrls.value['usb-frame'] = ''
     buildStatus.value = 'uploading'
     buildMessage.value = `正在转换 PNG 序列：0 / ${files.length}`
     try {

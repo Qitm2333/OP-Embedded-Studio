@@ -20,6 +20,7 @@ import {
   transferUsbContentWithFirmwareFallback
 } from '../adapters/usb-content-firmware'
 import type { UsbContentSerialPort } from '../adapters/usb-content-transfer'
+import { getActiveUsbPort, setActiveUsbPort } from '../adapters/usb-deployment-lock'
 import { imageFilesToUsbSequence, type UsbImageSequencePayload } from '../adapters/usb-sequence'
 import { encodeWirelessImage, encodeWirelessPrototype } from '../adapters/wireless-content'
 import type {
@@ -93,6 +94,7 @@ interface UsbFrameDeploymentRecord extends UsbFrameDeploymentPlan {
   source?: UsbFrameDeploymentSource
   port?: DeploymentSerialPort
   manifestUrl: string
+  scopeKey?: object
 }
 
 type UsbFrameDeploymentSource =
@@ -120,6 +122,7 @@ export interface PrepareUsbFrameDeploymentInput {
   backgroundColor: string
   placement?: EmbeddedImagePlacement
   firstDeployment: boolean
+  scopeKey?: object
 }
 
 export interface PrepareUsbPrototypeDeploymentInput {
@@ -129,6 +132,7 @@ export interface PrepareUsbPrototypeDeploymentInput {
   backgroundColor: string
   placement?: EmbeddedImagePlacement
   firstDeployment: boolean
+  scopeKey?: object
 }
 
 export interface ExecuteUsbFrameDeploymentOptions {
@@ -177,8 +181,11 @@ export function supersedeUsbFrameDeployment(id: string): void {
   releaseDeploymentContent(plan)
 }
 
-function supersedeInactiveUsbDeployments(): void {
-  for (const plan of plans.values()) supersedeUsbFrameDeployment(plan.id)
+function supersedeInactiveUsbDeployments(scopeKey?: object): void {
+  for (const plan of plans.values()) {
+    if (scopeKey ? plan.scopeKey !== scopeKey : plan.scopeKey) continue
+    supersedeUsbFrameDeployment(plan.id)
+  }
 }
 
 function appendLog(plan: UsbFrameDeploymentRecord, message: string): void {
@@ -254,8 +261,7 @@ async function uploadContent(
   let capacity: number
   if ('content' in payload) {
     capacity = await flashUsbSequenceFirmware(payload, flashOptions)
-  }
-  else if (plan.mode === 'prototype' && 'initialStateIndex' in payload) {
+  } else if (plan.mode === 'prototype' && 'initialStateIndex' in payload) {
     capacity = await flashUsbPrototypeFirmware(payload, flashOptions)
   } else if (!('initialStateIndex' in payload)) {
     capacity = await flashUsbFrameFirmware(payload, flashOptions)
@@ -273,8 +279,7 @@ async function deployContent(
   const result = await transferUsbContentWithFirmwareFallback({
     port,
     manifestUrl: plan.manifestUrl,
-    transfer: (activePort, firmwareUpdated) =>
-      uploadContent(plan, activePort, firmwareUpdated),
+    transfer: (activePort, firmwareUpdated) => uploadContent(plan, activePort, firmwareUpdated),
     onLog: (message) => appendLog(plan, message),
     onProgress: ({ percent }) => {
       plan.progress = 5 + Math.round(percent * 0.55)
@@ -399,7 +404,7 @@ export async function prepareUsbFrameDeployment(
     input.backgroundColor
   )
   const id = globalThis.crypto.randomUUID()
-  supersedeInactiveUsbDeployments()
+  supersedeInactiveUsbDeployments(input.scopeKey)
   const plan = reactive<UsbFrameDeploymentRecord>({
     id,
     mode: 'frame',
@@ -424,7 +429,8 @@ export async function prepareUsbFrameDeployment(
     createdAt: Date.now(),
     payload: markRaw(payload),
     source,
-    manifestUrl: embeddedManifestUrl(input.profile.id, 'usb-frame')
+    manifestUrl: embeddedManifestUrl(input.profile.id, 'usb-frame'),
+    scopeKey: input.scopeKey ? markRaw(input.scopeKey) : undefined
   })
   plans.set(id, plan)
   return plan
@@ -453,7 +459,7 @@ export async function prepareUsbPrototypeDeployment(
   )?.file
   if (!previewFile) throw new Error('交互缺少可预览的初始 Frame')
   const id = globalThis.crypto.randomUUID()
-  supersedeInactiveUsbDeployments()
+  supersedeInactiveUsbDeployments(input.scopeKey)
   const plan = reactive<UsbFrameDeploymentRecord>({
     id,
     mode: slideshow ? 'slideshow' : 'prototype',
@@ -485,7 +491,8 @@ export async function prepareUsbPrototypeDeployment(
     createdAt: Date.now(),
     payload: markRaw(payload),
     source,
-    manifestUrl: embeddedManifestUrl(input.profile.id, 'usb-frame')
+    manifestUrl: embeddedManifestUrl(input.profile.id, 'usb-frame'),
+    scopeKey: input.scopeKey ? markRaw(input.scopeKey) : undefined
   })
   plans.set(id, plan)
   return plan
@@ -519,9 +526,11 @@ export async function executeUsbFrameDeployment(
   try {
     plan.status = 'selecting-device'
     plan.message = '正在查找已授权的 USB 设备'
-    const authorizedPort = plan.port ?? (await getSingleAuthorizedUsbContentPort())
+    const authorizedPort =
+      getActiveUsbPort() ?? plan.port ?? (await getSingleAuthorizedUsbContentPort())
     plan.message = authorizedPort ? '正在连接已授权的 USB 设备' : '请在系统窗口中选择 USB 设备'
     const port = authorizedPort ?? ((await requestUsbSerialPort()) as DeploymentSerialPort)
+    setActiveUsbPort(port)
     plan.port = markRaw(port)
     plan.needsDeviceSelection = false
 

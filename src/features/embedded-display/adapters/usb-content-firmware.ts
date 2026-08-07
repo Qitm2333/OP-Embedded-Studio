@@ -5,6 +5,12 @@ import {
   UsbContentFirmwareError,
   type UsbContentSerialPort
 } from './usb-content-transfer'
+import {
+  clearActiveUsbPort,
+  getActiveUsbPort,
+  setActiveUsbPort,
+  withUsbDeploymentLock
+} from './usb-deployment-lock'
 
 export type UsbContentFirmwareStage =
   | 'checking'
@@ -52,6 +58,10 @@ export async function getSingleAuthorizedUsbContentPort(): Promise<
   return authorized?.length === 1 ? authorized[0] : undefined
 }
 
+async function getPreferredAuthorizedUsbContentPort(): Promise<UsbContentSerialPort | undefined> {
+  return getActiveUsbPort() ?? (await getSingleAuthorizedUsbContentPort())
+}
+
 function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, milliseconds)
@@ -81,6 +91,16 @@ export async function transferUsbContentWithFirmwareFallback(
   options: TransferUsbContentWithFirmwareFallbackOptions,
   dependencies: UsbContentFirmwareDependencies = defaultDependencies
 ): Promise<TransferUsbContentWithFirmwareFallbackResult> {
+  return withUsbDeploymentLock(() =>
+    transferUsbContentWithFirmwareFallbackUnlocked(options, dependencies)
+  )
+}
+
+async function transferUsbContentWithFirmwareFallbackUnlocked(
+  options: TransferUsbContentWithFirmwareFallbackOptions,
+  dependencies: UsbContentFirmwareDependencies
+): Promise<TransferUsbContentWithFirmwareFallbackResult> {
+  const sessionPort = getActiveUsbPort()
   options.onStage?.('checking', '正在连接设备并检查固件兼容性')
   try {
     options.onStage?.('transferring', '设备固件兼容，正在上传内容')
@@ -103,16 +123,21 @@ export async function transferUsbContentWithFirmwareFallback(
     onLog: options.onLog,
     onProgress: options.onProgress
   })
+  clearActiveUsbPort(options.port)
 
   options.onStage?.('reconnecting', '基础固件已更新，正在等待设备重启并恢复连接')
   let lastError: unknown
   for (let attempt = 0; attempt < dependencies.reconnectAttempts; attempt += 1) {
     if (attempt > 0) await dependencies.delay(dependencies.reconnectDelayMs)
-    const port = (await dependencies.getAuthorizedPort()) ?? options.port
+    const port =
+      (await getPreferredAuthorizedUsbContentPort()) ??
+      (await dependencies.getAuthorizedPort()) ??
+      options.port
     try {
       options.onStage?.('transferring', '设备已恢复连接，正在上传内容')
       const capacity = await options.transfer(port, true)
       options.onStage?.('ready', '固件与内容已更新完成')
+      if (sessionPort) setActiveUsbPort(port)
       return { port, capacity, firmwareUpdated: true }
     } catch (error) {
       if (!retryableReconnectError(error)) throw error

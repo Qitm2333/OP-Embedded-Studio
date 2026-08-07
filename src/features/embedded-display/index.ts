@@ -10,6 +10,11 @@ export type { EmbeddedImagePlacement } from './adapters/image'
 export { createEmbeddedDisplayHttpAdapter } from './adapters/http'
 export { embeddedImagePlacementLabel } from './adapters/image'
 export {
+  hasRememberedUsbFirmware,
+  rememberUsbFirmwareForPort,
+  withUsbDeploymentLock
+} from './adapters/usb-deployment-lock'
+export {
   cancelUsbFrameDeployment,
   executeUsbFrameDeployment,
   getUsbFrameDeploymentPlan,

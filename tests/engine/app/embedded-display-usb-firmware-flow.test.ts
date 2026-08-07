@@ -110,6 +110,64 @@ describe('USB automatic firmware flow', () => {
     expect(flashCount).toBe(0)
   })
 
+  test('does not refresh firmware when the selected device is temporarily unavailable', async () => {
+    let flashCount = 0
+    await expect(
+      transferUsbContentWithFirmwareFallback(
+        {
+          port,
+          manifestUrl: '/firmware.json',
+          transfer: async () => {
+            throw new UsbContentDeviceUnavailableError('等待 USB 设备响应超时')
+          }
+        },
+        dependencies(() => {
+          flashCount += 1
+        })
+      )
+    ).rejects.toThrow('等待 USB 设备响应超时')
+    expect(flashCount).toBe(0)
+  })
+
+  test('serializes complete USB deployment transactions', async () => {
+    const events: string[] = []
+    let releaseFirst: (() => void) | undefined
+    const firstGate = new Promise<void>((resolve) => {
+      releaseFirst = resolve
+    })
+    const first = transferUsbContentWithFirmwareFallback(
+      {
+        port,
+        manifestUrl: '/firmware.json',
+        transfer: async () => {
+          events.push('first:start')
+          await firstGate
+          events.push('first:end')
+          return 4096
+        }
+      },
+      dependencies(() => undefined)
+    )
+    const second = transferUsbContentWithFirmwareFallback(
+      {
+        port: reconnectedPort,
+        manifestUrl: '/firmware.json',
+        transfer: async () => {
+          events.push('second:start')
+          return 4096
+        }
+      },
+      dependencies(() => undefined)
+    )
+
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(events).toEqual(['first:start'])
+    releaseFirst?.()
+    await Promise.all([first, second])
+    expect(events).toEqual(['first:start', 'first:end', 'second:start'])
+  })
+
   test('waits through a transient serial reconnect after flashing', async () => {
     let transferCount = 0
     const result = await transferUsbContentWithFirmwareFallback(

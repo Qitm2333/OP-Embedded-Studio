@@ -19,6 +19,26 @@ const transport: ChatTransport<UIMessage> = {
 }
 
 describe('device execution result replies', () => {
+  test('can create a local Device chat without an AI provider', async () => {
+    const store = {} as EditorStore
+    const manager = createChatSessionManager({
+      isConfigured: computed(() => false),
+      isACPProvider: computed(() => false),
+      providerID: ref<AIProviderID>('openrouter'),
+      apiKey: ref(''),
+      modelID: ref(''),
+      customModelID: ref(''),
+      customBaseURL: ref(''),
+      customAPIType: ref<'completions' | 'responses'>('completions'),
+      maxOutputTokens: ref(1024),
+      chatMode: ref<AIChatMode>('device'),
+      getActiveEditorStore: () => store
+    })
+
+    expect(await manager.ensureChat()).toBeNull()
+    expect(await manager.ensureChat(true)).not.toBeNull()
+  })
+
   test('appends one deterministic result to Device chat and preserves it across mode switches', async () => {
     const store = {} as EditorStore
     const chatMode = ref<AIChatMode>('device')

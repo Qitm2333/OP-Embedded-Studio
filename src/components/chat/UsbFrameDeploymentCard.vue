@@ -19,7 +19,7 @@ import {
 } from '@/features/embedded-display'
 
 const { planId } = defineProps<{ planId: string }>()
-const { submitLocalDeviceAction } = useAIChat()
+const { appendLocalDeviceResult, submitLocalDeviceAction } = useAIChat()
 const pendingAction = ref(false)
 const adaptationPending = ref(false)
 const adaptationError = ref('')
@@ -159,7 +159,16 @@ async function execute(): Promise<void> {
   if (!plan.value || busy.value) return
   pendingAction.value = true
   try {
-    await executeUsbFrameDeploymentFromChat(planId)
+    const succeeded = await executeUsbFrameDeploymentFromChat(planId)
+    const current = plan.value
+    if (succeeded) {
+      appendLocalDeviceResult('USB 画面已烧录完成，设备正在重启。', `${planId}:success`)
+    } else {
+      const detail = problem.value
+        ? `${problem.value.title}：${problem.value.action}`
+        : current?.error || 'USB 画面烧录失败，请检查设备后重试。'
+      appendLocalDeviceResult(detail, `${planId}:error:${current?.error || detail}`)
+    }
   } finally {
     pendingAction.value = false
   }
@@ -391,10 +400,7 @@ function cancel(): void {
           :disabled="busy || adaptationPending"
           @click="handlePrimaryAction"
         >
-          <icon-lucide-loader-circle
-            v-if="busy || adaptationPending"
-            class="size-3 animate-spin"
-          />
+          <icon-lucide-loader-circle v-if="busy || adaptationPending" class="size-3 animate-spin" />
           <icon-lucide-refresh-cw v-else-if="needsReprepare" class="size-3 shrink-0" />
           <icon-lucide-usb v-else class="size-3 shrink-0" />
           <span class="min-w-0 text-center">{{ executeLabel }}</span>

@@ -6,6 +6,7 @@ import {
   getActiveEmbeddedDisplayProfile,
   getActiveEmbeddedImageSettings,
   getUsbFrameDeploymentPlan,
+  hasRememberedUsbFirmware,
   prepareUsbFrameDeployment,
   setActiveEmbeddedImageSettings,
   updateUsbFrameDeploymentAdaptation,
@@ -13,12 +14,7 @@ import {
   type UsbFrameDeploymentPlan
 } from '@/features/embedded-display'
 
-import {
-  hasUsbFirmwareMemory,
-  rememberUsbDeployment,
-  rememberUsbFirmware,
-  resolveDesignHandoffFrame
-} from './memory'
+import { rememberUsbDeployment, rememberUsbFirmware, resolveDesignHandoffFrame } from './memory'
 
 const planStores = new Map<string, EditorStore>()
 
@@ -56,7 +52,8 @@ export async function prepareUsbFrameDeploymentFromStore(
     file,
     backgroundColor: backgroundColor ?? settings.backgroundColor,
     placement: placement ?? settings.placement,
-    firstDeployment: !(await hasUsbFirmwareMemory(profile.id))
+    firstDeployment: !hasRememberedUsbFirmware(profile.id),
+    scopeKey: store
   })
   setActiveEmbeddedImageSettings({
     placement: plan.placement,

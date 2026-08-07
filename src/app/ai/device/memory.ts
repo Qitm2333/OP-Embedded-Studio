@@ -4,7 +4,11 @@ import {
   getEmbeddedFrameBakeState,
   isEmbeddedVisualSource
 } from '@/app/editor/embedded-display-bake'
-import type { EmbeddedFrameBakeState, UsbFrameDeploymentPlan } from '@/features/embedded-display'
+import {
+  rememberUsbFirmwareForPort,
+  type EmbeddedFrameBakeState,
+  type UsbFrameDeploymentPlan
+} from '@/features/embedded-display'
 
 interface RecentAIDesign {
   frameId: string
@@ -143,12 +147,8 @@ async function readUsbDeploymentMemory(): Promise<UsbDeploymentMemory> {
   return (await readCacheJson<UsbDeploymentMemory>(USB_DEPLOYMENT_MEMORY_KEY)) ?? {}
 }
 
-export async function hasUsbFirmwareMemory(profileId: string): Promise<boolean> {
-  const memory = await readUsbDeploymentMemory()
-  return Boolean(memory[profileId])
-}
-
 export async function rememberUsbFirmware(plan: UsbFrameDeploymentPlan): Promise<void> {
+  rememberUsbFirmwareForPort(plan.profileId)
   const memory = await readUsbDeploymentMemory()
   const previous = memory[plan.profileId]
   memory[plan.profileId] = {

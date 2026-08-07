@@ -26,6 +26,17 @@ export class UsbContentDeviceUnavailableError extends Error {
   }
 }
 
+export class UsbContentProtocolError extends Error {
+  constructor(
+    readonly operation: string,
+    readonly code: string,
+    message: string
+  ) {
+    super(message)
+    this.name = 'UsbContentProtocolError'
+  }
+}
+
 export type UsbContentProbeResult =
   | { compatible: true; capacity: number }
   | { compatible: false; issue: UsbContentFirmwareIssue; message: string }
@@ -91,8 +102,14 @@ async function readProtocolLine(
 }
 
 function assertProtocolResponse(line: string, expected: string): void {
-  if (line.startsWith(`${USB_PROTOCOL_PREFIX} ERR `)) {
-    throw new Error(`USB 设备拒绝内容：${line.slice(USB_PROTOCOL_PREFIX.length + 5)}`)
+  const error = line.match(/^OPUSB\/1 ERR (-?\d+) (\S+)$/)
+  if (error) {
+    const [, code, operation] = error
+    throw new UsbContentProtocolError(
+      operation,
+      code,
+      `USB 设备拒绝内容：${operation}（错误码 ${code}；${USB_PROTOCOL_PREFIX} ERR ${code} ${operation}）`
+    )
   }
   if (line !== `${USB_PROTOCOL_PREFIX} ${expected}`) {
     throw new Error(`USB 设备响应异常：${line}`)
@@ -133,14 +150,20 @@ async function handshakeUsbDevice(
   writer: WritableStreamDefaultWriter<Uint8Array>,
   state: ProtocolReaderState,
   profile: { width: number; height: number },
-  contentBytes: number
+  contentBytes: number,
+  options: { timeoutIsMissing?: boolean } = {}
 ): Promise<number> {
   await writeProtocolLine(writer, 'HELLO')
   let line: string
   try {
     line = await readProtocolLine(reader, state, USB_HANDSHAKE_TIMEOUT_MS)
-  } catch {
-    throw new UsbContentFirmwareError('missing', '设备未运行兼容的 USB 高速基础固件')
+  } catch (error) {
+    if (options.timeoutIsMissing) {
+      throw new UsbContentFirmwareError('missing', '设备未运行兼容的 USB 高速基础固件')
+    }
+    throw new UsbContentDeviceUnavailableError(
+      error instanceof Error ? error.message : 'USB 设备尚未准备好'
+    )
   }
   const ready = line.match(/^OPUSB\/1 READY (\d+) (\d+) (\d+) (\d+)$/)
   if (!ready) {
@@ -182,7 +205,8 @@ export async function probeUsbContentDevice(
       writer,
       { pending: '' },
       profile,
-      contentBytes
+      contentBytes,
+      { timeoutIsMissing: true }
     )
     return { compatible: true, capacity }
   } catch (error) {

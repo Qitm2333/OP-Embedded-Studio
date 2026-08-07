@@ -40,9 +40,9 @@ describe('AI USB deployment planning', () => {
     expect(isDirectUsbFrameDeploymentRequest('deploy as manual browsing')).toBe(false)
     expect(isDirectUsbFrameDeploymentRequest('deploy this multi-frame prototype')).toBe(false)
     expect(isDirectUsbFrameDeploymentRequest('把刚才的卡片改成等比缩放再烧录')).toBe(false)
-    expect(isDirectUsbFrameDeploymentRequest('change the existing card to stretch and deploy')).toBe(
-      false
-    )
+    expect(
+      isDirectUsbFrameDeploymentRequest('change the existing card to stretch and deploy')
+    ).toBe(false)
     expect(resolveEmbeddedImagePlacement('拉伸后烧录到设备')).toBe('stretch')
     expect(resolveEmbeddedImagePlacement('等比缩放并部署')).toBe('contain')
     expect(resolveEmbeddedImagePlacement('保持 1:1 不缩放')).toBe('pixel-perfect')
@@ -111,11 +111,7 @@ describe('AI USB deployment planning', () => {
       expect(plan.status).toBe('ready')
       expect(plan.needsDeviceSelection).toBe(true)
       expect(serialCalls).toBe(0)
-      const adaptation = await updateUsbDeploymentAdaptationOutput(
-        plan.id,
-        'stretch',
-        '#123456'
-      )
+      const adaptation = await updateUsbDeploymentAdaptationOutput(plan.id, 'stretch', '#123456')
       expect(adaptation).toMatchObject({
         kind: 'usb-deployment-adaptation-updated',
         targetId: plan.id,
@@ -245,9 +241,7 @@ describe('AI USB deployment planning', () => {
       expect(plan.status).toBe('ready')
       expect(plan.needsDeviceSelection).toBe(true)
       expect(serialCalls).toBe(0)
-      expect(
-        await updateUsbFrameDeploymentAdaptation(plan.id, { placement: 'contain' })
-      ).toBe(true)
+      expect(await updateUsbFrameDeploymentAdaptation(plan.id, { placement: 'contain' })).toBe(true)
       expect(plan.placement).toBe('contain')
       expect(plan.message).toBe('画面适配已更新，等待确认')
       expect(serialCalls).toBe(0)
@@ -270,6 +264,15 @@ describe('AI USB deployment planning', () => {
     ).toMatchObject({
       title: '尚未选择 USB 设备',
       retryLabel: '重新选择设备',
+      recovery: 'retry'
+    })
+    expect(
+      describeDeviceDeploymentProblem(
+        'USB 设备拒绝内容：CHUNK（错误码 -22；OPUSB/1 ERR -22 CHUNK）'
+      )
+    ).toMatchObject({
+      title: '设备拒绝传输数据块',
+      retryLabel: '重新烧录',
       recovery: 'retry'
     })
     expect(describeDeviceDeploymentProblem('设计内容在确认前发生了变化')).toMatchObject({

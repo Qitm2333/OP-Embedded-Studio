@@ -7,7 +7,14 @@ import {
   recordDesignHandoff,
   resolveDesignHandoffFrame
 } from '@/app/ai/device/memory'
-import { prepareDevicePrototypeProposal } from '@/app/ai/device/prototype'
+import {
+  confirmDevicePrototypeProposalFromChat,
+  executeDevicePrototypeDeploymentFromChat,
+  getDevicePrototypeDeploymentPlan,
+  getDevicePrototypeProposalInteraction,
+  isDevicePrototypeProposalSnapshotCurrent,
+  prepareDevicePrototypeProposal
+} from '@/app/ai/device/prototype'
 import {
   getDevicePrototypeFrameCandidates,
   getSelectedDevicePrototypeFrameCandidates
@@ -17,6 +24,7 @@ import {
   getEmbeddedFrameBakeState
 } from '@/app/editor/embedded-display-bake'
 import { createEditorStore, type EditorStore } from '@/app/editor/session'
+import { useDevicePrototype } from '@/features/device-prototype'
 import {
   calculatePixelPerfectPlacement,
   imageFileToRgb565
@@ -265,6 +273,25 @@ describe('device AI design handoff', () => {
 })
 
 describe('device interaction deployment lifecycle', () => {
+  test('does not supersede proposals from another editor document', () => {
+    const graph = new SceneGraph()
+    const pageId = graph.getPages()[0].id
+    const first = graph.createNode('FRAME', pageId, { name: 'One', width: 240, height: 240 })
+    const second = graph.createNode('FRAME', pageId, { name: 'Two', width: 240, height: 240 })
+    const input = {
+      intent: '点击切换',
+      name: 'Scoped interaction',
+      frameIds: [first.id, second.id],
+      initialFrameId: first.id,
+      transitions: [{ fromFrameId: first.id, event: 'screen_click' as const, toFrameId: second.id }]
+    }
+    const firstProposal = prepareDevicePrototypeProposal(editorStore(graph, []), input)
+    const secondProposal = prepareDevicePrototypeProposal(editorStore(graph, []), input)
+
+    expect(firstProposal.status).toBe('ready')
+    expect(secondProposal.status).toBe('ready')
+  })
+
   test('supersedes an older unconfirmed interaction proposal', () => {
     const graph = new SceneGraph()
     const pageId = graph.getPages()[0].id
@@ -352,6 +379,77 @@ describe('device interaction deployment lifecycle', () => {
       toStateId: third.id
     })
     expect(proposal.definition.transitions).toHaveLength(6)
+  })
+
+  test('rejects a prepared AI interaction after its transitions change', async () => {
+    const descriptors = {
+      createImageBitmap: Object.getOwnPropertyDescriptor(globalThis, 'createImageBitmap'),
+      document: Object.getOwnPropertyDescriptor(globalThis, 'document')
+    }
+    Object.defineProperty(globalThis, 'createImageBitmap', {
+      configurable: true,
+      value: async () => ({ width: 4, height: 4, close: () => undefined })
+    })
+    Object.defineProperty(globalThis, 'document', {
+      configurable: true,
+      value: {
+        createElement: () => {
+          const canvas = {
+            width: 0,
+            height: 0,
+            getContext: () => ({
+              fillStyle: '',
+              imageSmoothingEnabled: true,
+              clearRect: () => undefined,
+              fillRect: () => undefined,
+              drawImage: () => undefined,
+              getImageData: () => ({
+                data: new Uint8ClampedArray(canvas.width * canvas.height * 4)
+              })
+            }),
+            toBlob: (callback: (blob: Blob | null) => void) =>
+              callback(new Blob([new Uint8Array(4)]))
+          }
+          return canvas
+        }
+      }
+    })
+
+    try {
+      const graph = new SceneGraph()
+      const pageId = graph.getPages()[0].id
+      const first = graph.createNode('FRAME', pageId, { name: 'One', width: 4, height: 4 })
+      const second = graph.createNode('FRAME', pageId, { name: 'Two', width: 4, height: 4 })
+      const store = editorStore(graph, [])
+      store.renderExportImage = async () => new Uint8Array([1, 2, 3, 4])
+      const proposal = prepareDevicePrototypeProposal(store, {
+        intent: '点击切换画面',
+        name: 'Snapshot test',
+        frameIds: [first.id, second.id],
+        initialFrameId: first.id,
+        transitions: [
+          { fromFrameId: first.id, event: 'screen_click', toFrameId: second.id },
+          { fromFrameId: second.id, event: 'screen_click', toFrameId: first.id }
+        ]
+      })
+
+      expect(await confirmDevicePrototypeProposalFromChat(proposal.id)).toBe(true)
+      expect(isDevicePrototypeProposalSnapshotCurrent(proposal.id)).toBe(true)
+      const interaction = getDevicePrototypeProposalInteraction(proposal.id)
+      if (!interaction) throw new Error('Expected the confirmed interaction to exist')
+      const prototype = useDevicePrototype(store)
+      prototype.selectInteraction(interaction.id)
+      prototype.setTransition(first.id, 'screen_click', first.id)
+
+      expect(isDevicePrototypeProposalSnapshotCurrent(proposal.id)).toBe(false)
+      expect(await executeDevicePrototypeDeploymentFromChat(proposal.id)).toBe(false)
+      expect(getDevicePrototypeDeploymentPlan(proposal.id)?.status).toBe('stale')
+    } finally {
+      for (const [key, descriptor] of Object.entries(descriptors)) {
+        if (descriptor) Object.defineProperty(globalThis, key, descriptor)
+        else Reflect.deleteProperty(globalThis, key)
+      }
+    }
   })
 })
 

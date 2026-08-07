@@ -3,14 +3,13 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { readCacheText, writeCacheText } from '@/app/cache'
 
 import { requestSerialPort, type SerialPortLike } from '../adapters/serial-flasher'
+import {
+  clearActiveUsbPort,
+  getActiveUsbPort,
+  setActiveUsbPort
+} from '../adapters/usb-deployment-lock'
 
-type SerialSessionStatus =
-  | 'idle'
-  | 'restoring'
-  | 'selecting'
-  | 'ready'
-  | 'disconnected'
-  | 'error'
+type SerialSessionStatus = 'idle' | 'restoring' | 'selecting' | 'ready' | 'disconnected' | 'error'
 
 interface SerialPortInfo {
   usbVendorId?: number
@@ -29,10 +28,12 @@ const STORAGE_KEY = 'embedded-display/serial-device'
 
 function serialApi(): WebSerialApi | null {
   return (
-    navigator as Navigator & {
-      serial?: WebSerialApi
-    }
-  ).serial ?? null
+    (
+      navigator as Navigator & {
+        serial?: WebSerialApi
+      }
+    ).serial ?? null
+  )
 }
 
 function portInfo(port: SerialPortLike): SerialPortInfo {
@@ -69,6 +70,7 @@ export function useSerialDeviceSession() {
 
   function usePort(selectedPort: SerialPortLike, restored: boolean) {
     port.value = selectedPort
+    setActiveUsbPort(selectedPort)
     label.value = deviceLabel(selectedPort)
     status.value = 'ready'
     message.value = restored
@@ -90,9 +92,12 @@ export function useSerialDeviceSession() {
     try {
       const authorizedPorts = await api.getPorts()
       const rememberedIdentity = await readCacheText(STORAGE_KEY)
+      const matchingPorts = rememberedIdentity
+        ? authorizedPorts.filter((candidate) => deviceIdentity(candidate) === rememberedIdentity)
+        : []
       const restoredPort =
-        authorizedPorts.find((candidate) => deviceIdentity(candidate) === rememberedIdentity) ??
-        (authorizedPorts.length === 1 ? authorizedPorts[0] : null)
+        (matchingPorts.length === 1 ? matchingPorts[0] : null) ??
+        (!rememberedIdentity && authorizedPorts.length === 1 ? authorizedPorts[0] : null)
       if (restoredPort) {
         usePort(restoredPort, true)
         return restoredPort
@@ -133,7 +138,26 @@ export function useSerialDeviceSession() {
   }
 
   async function requirePort(): Promise<SerialPortLike> {
-    if (port.value) return port.value
+    if (port.value) {
+      const api = serialApi()
+      if (!api?.getPorts) return port.value
+      try {
+        const authorizedPorts = await api.getPorts()
+        if (authorizedPorts.includes(port.value)) return port.value
+        const activePort = getActiveUsbPort() as SerialPortLike | null
+        if (activePort && authorizedPorts.includes(activePort)) {
+          usePort(activePort, true)
+          return activePort
+        }
+        if (authorizedPorts.length === 1) {
+          usePort(authorizedPorts[0], true)
+          return authorizedPorts[0]
+        }
+      } catch {
+        return port.value
+      }
+      port.value = null
+    }
     const selectedPort = await selectPort()
     if (!selectedPort) throw new Error('尚未选择可用的串口设备')
     return selectedPort
@@ -146,6 +170,7 @@ export function useSerialDeviceSession() {
       (event.target !== api ? (event.target as SerialPortLike) : null)
     if (disconnectedPort && disconnectedPort !== port.value) return
     port.value = null
+    clearActiveUsbPort(disconnectedPort ?? undefined)
     status.value = 'disconnected'
     message.value = '串口设备已断开；重新插入后会尝试自动恢复'
   }
