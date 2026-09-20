@@ -12,7 +12,8 @@ automation script can select a verified LCD module without interactive
 | `profiles.json` | Structured profile registry for Web UI, wiring hints, and server-side build selection. |
 | `base.defaults` | Common ESP32-S3 board settings and shared GPIO assignment. |
 | `esp32c3_4mb.defaults` | Common 4MB ESP32-C3 settings for the USB Serial/JTAG OLED profile. |
-| `ssd1315_042_72x40_esp32c3.defaults` | Verified 72x40 SSD1315 OLED settings using GPIO5/GPIO6 I2C. |
+| `ssd1315_042_72x40_esp32c3.defaults` | Verified 72x40 SSD1315 OLED settings using GPIO5/GPIO6 I2C and grayscale dithering. |
+| `ssd1315_042_72x40_esp32c3_binary.defaults` | The same verified OLED hardware with crisp black-and-white rendering. |
 | `st7789_qs130tab1005a.defaults` | Verified settings for the QS130TAB1005A 240x240 ST7789 screen. |
 | `st7735s_lb090r_if03.defaults` | Verified settings for the LB090R-IF03 128x128 ST7735S round screen. |
 | `gc9d01n_gvh099wq010b_a0.defaults` | Settings for the GVH099WQ010B-A0 160x160 GC9D01N 0.99-inch round screen, pending final hardware verification. |

@@ -9,8 +9,14 @@ const USB_FAST_PROFILES = new Set([
   'co5300_waveshare_amoled_1_75c',
   'co5300_m5stack_stopwatch',
   'ili9342_m5stack_cores3',
-  'ssd1315_042_72x40_esp32c3'
+  'ssd1315_042_72x40_esp32c3',
+  'ssd1315_042_72x40_esp32c3_binary'
 ])
+
+const USB_FIRMWARE_VARIANTS: Readonly<Record<string, number>> = {
+  ssd1315_042_72x40_esp32c3: 1,
+  ssd1315_042_72x40_esp32c3_binary: 2
+}
 
 export type UsbFlashOptions = UsbContentTransferOptions
 
@@ -31,7 +37,11 @@ async function uploadUsbFirmwareContent(
   if (!supportsUsbFrameFastFlash(profileId)) {
     throw new Error('当前屏幕尚未提供 USB 高速传输固件')
   }
-  return uploadUsbContent({ width, height }, content, options)
+  return uploadUsbContent(
+    { width, height, firmwareVariant: USB_FIRMWARE_VARIANTS[profileId] },
+    content,
+    options
+  )
 }
 
 export async function flashUsbFrameFirmware(

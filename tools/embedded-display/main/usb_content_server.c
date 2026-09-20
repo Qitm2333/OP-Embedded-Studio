@@ -27,6 +27,14 @@
 #define USB_CONTENT_TASK_STACK_BYTES 6144u
 #define USB_CONTENT_READ_TIMEOUT_MS 2000u
 
+#if CONFIG_OPENPENCIL_SSD1315_RENDER_DITHERED
+#define USB_CONTENT_DISPLAY_VARIANT 1u
+#elif CONFIG_OPENPENCIL_SSD1315_RENDER_BINARY
+#define USB_CONTENT_DISPLAY_VARIANT 2u
+#else
+#define USB_CONTENT_DISPLAY_VARIANT 0u
+#endif
+
 static const char *TAG = "usb_content";
 static bool server_started;
 
@@ -281,12 +289,13 @@ static void usb_content_server_task(void *argument)
             char response[USB_CONTENT_LINE_BYTES];
             snprintf(response,
                      sizeof(response),
-                     USB_PROTOCOL_PREFIX " READY %u %u %u %u %u\n",
+                     USB_PROTOCOL_PREFIX " READY %u %u %u %u %u %u\n",
                      USB_CONTENT_SERVICE_VERSION,
                      CONFIG_EXAMPLE_LCD_H_RES,
                      CONFIG_EXAMPLE_LCD_V_RES,
                      (unsigned)openpencil_content_capacity(),
-                     (unsigned)openpencil_content_firmware_mode());
+                     (unsigned)openpencil_content_firmware_mode(),
+                     USB_CONTENT_DISPLAY_VARIANT);
             result = usb_write_line(response);
             operation = "hello";
         } else if (strncmp(line, USB_PROTOCOL_PREFIX " BEGIN ", 14) == 0) {

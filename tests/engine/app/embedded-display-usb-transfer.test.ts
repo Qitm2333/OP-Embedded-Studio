@@ -152,6 +152,18 @@ describe('USB runtime content transfer', () => {
     ).resolves.toMatchObject({ compatible: false, issue: 'protocol' })
   })
 
+  test('distinguishes OLED rendering firmware with the READY variant', async () => {
+    const binary = new FakeUsbContentPort('OPUSB/1 READY 6 72 40 983040 2 2')
+    const dithered = new FakeUsbContentPort('OPUSB/1 READY 6 72 40 983040 2 1')
+
+    await expect(
+      probeUsbContentDevice(binary, { width: 72, height: 40, firmwareVariant: 2 }, 1024)
+    ).resolves.toMatchObject({ compatible: true })
+    await expect(
+      probeUsbContentDevice(dithered, { width: 72, height: 40, firmwareVariant: 2 }, 1024)
+    ).resolves.toMatchObject({ compatible: false, issue: 'variant' })
+  })
+
   test('handshakes, compresses chunks, and finishes without reflashing firmware', async () => {
     const port = new FakeUsbContentPort()
     const progress: number[] = []
@@ -173,9 +185,9 @@ describe('USB runtime content transfer', () => {
       'OPUSB/1 READY 6 466 466 30343168 2\nOPUSB/1 READY 6 466 466 30343168 2'
     )
 
-    await expect(uploadUsbContent({ width: 466, height: 466 }, createContent(1024), { port })).resolves.toBe(
-      30343168
-    )
+    await expect(
+      uploadUsbContent({ width: 466, height: 466 }, createContent(1024), { port })
+    ).resolves.toBe(30343168)
     expect(port.commands).toEqual([
       'OPUSB/1 HELLO',
       'OPUSB/1 BEGIN 1048',

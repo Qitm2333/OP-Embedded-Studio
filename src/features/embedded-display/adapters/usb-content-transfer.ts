@@ -9,7 +9,7 @@ const USB_HANDSHAKE_TIMEOUT_MS = 10000
 const USB_HANDSHAKE_RETRY_MS = 750
 const USB_COMMAND_TIMEOUT_MS = 15000
 
-export type UsbContentFirmwareIssue = 'missing' | 'protocol' | 'resolution' | 'capacity'
+export type UsbContentFirmwareIssue = 'missing' | 'protocol' | 'resolution' | 'capacity' | 'variant'
 
 export class UsbContentFirmwareError extends Error {
   constructor(
@@ -58,6 +58,18 @@ interface ProtocolReaderState {
 interface EncodedUsbChunk {
   codec: 0 | 1
   bytes: Uint8Array
+}
+
+interface UsbContentDeviceProfile {
+  width: number
+  height: number
+  firmwareVariant?: number
+}
+
+interface UsbHandshakeOptions {
+  timeoutIsMissing?: boolean
+  expectedFirmwareMode?: number
+  expectedServiceVersion?: number
 }
 
 export interface UsbContentTransferOptions {
@@ -130,7 +142,7 @@ async function readExpectedProtocolResponse(
     const line = await readProtocolLine(reader, state, remaining)
     // HELLO may have been retried while the device was starting. Ignore any
     // delayed READY frames left in the stream once a transfer has begun.
-    if (/^OPUSB\/1 READY \d+ \d+ \d+ \d+(?: \d+)?$/u.test(line)) continue
+    if (/^OPUSB\/1 READY \d+ \d+ \d+ \d+(?: \d+)?(?: \d+)?$/u.test(line)) continue
     assertProtocolResponse(line, expected)
     return
   }
@@ -165,17 +177,70 @@ function writeProtocolLine(
   return writer.write(new TextEncoder().encode(`${USB_PROTOCOL_PREFIX} ${line}\n`))
 }
 
+function validateReadyResponse(
+  line: string,
+  profile: UsbContentDeviceProfile,
+  contentBytes: number,
+  options: UsbHandshakeOptions
+): number {
+  const ready = line.match(/^OPUSB\/1 READY (\d+) (\d+) (\d+) (\d+)(?: (\d+))?(?: (\d+))?$/)
+  if (!ready) {
+    throw new UsbContentFirmwareError('protocol', `USB 高速固件握手失败：${line}`)
+  }
+  const version = Number(ready[1])
+  const width = Number(ready[2])
+  const height = Number(ready[3])
+  const capacity = Number(ready[4])
+  const firmwareModeText = ready.at(5)
+  const firmwareVariantText = ready.at(6)
+  const firmwareMode = firmwareModeText === undefined ? undefined : Number(firmwareModeText)
+  const firmwareVariant =
+    firmwareVariantText === undefined ? undefined : Number(firmwareVariantText)
+  const expectedServiceVersion = options.expectedServiceVersion ?? USB_CONTENT_SERVICE_VERSION
+  if (version !== expectedServiceVersion) {
+    throw new UsbContentFirmwareError(
+      'protocol',
+      `设备内容服务版本为 ${version}，Studio 需要版本 ${expectedServiceVersion}`
+    )
+  }
+  if (width !== profile.width || height !== profile.height) {
+    throw new UsbContentFirmwareError(
+      'resolution',
+      `设备分辨率为 ${width} × ${height}，与当前方案不匹配`
+    )
+  }
+  if (
+    options.expectedFirmwareMode !== undefined &&
+    firmwareMode !== undefined &&
+    firmwareMode !== options.expectedFirmwareMode
+  ) {
+    throw new UsbContentFirmwareError(
+      'protocol',
+      '设备正在运行旧版 USB 内容固件，请让 Studio 自动更新 USB 模式固件后重试'
+    )
+  }
+  if (profile.firmwareVariant !== undefined && firmwareVariant !== profile.firmwareVariant) {
+    throw new UsbContentFirmwareError(
+      'variant',
+      '设备正在运行另一种 OLED 显示风格固件，请让 Studio 自动更新固件后重试'
+    )
+  }
+  if (contentBytes > capacity) {
+    throw new UsbContentFirmwareError(
+      'capacity',
+      '内容超过设备 USB 内容分区容量，请减少图片或画面数量后重试'
+    )
+  }
+  return capacity
+}
+
 async function handshakeUsbDevice(
   reader: ReadableStreamDefaultReader<Uint8Array>,
   writer: WritableStreamDefaultWriter<Uint8Array>,
   state: ProtocolReaderState,
-  profile: { width: number; height: number },
+  profile: UsbContentDeviceProfile,
   contentBytes: number,
-  options: {
-    timeoutIsMissing?: boolean
-    expectedFirmwareMode?: number
-    expectedServiceVersion?: number
-  } = {}
+  options: UsbHandshakeOptions = {}
 ): Promise<number> {
   await writeProtocolLine(writer, 'HELLO')
   const deadline = Date.now() + USB_HANDSHAKE_TIMEOUT_MS
@@ -207,50 +272,12 @@ async function handshakeUsbDevice(
       error instanceof Error ? error.message : 'USB 设备尚未准备好'
     )
   }
-  const ready = line.match(/^OPUSB\/1 READY (\d+) (\d+) (\d+) (\d+)(?: (\d+))?$/)
-  if (!ready) {
-    throw new UsbContentFirmwareError('protocol', `USB 高速固件握手失败：${line}`)
-  }
-  const version = Number(ready[1])
-  const width = Number(ready[2])
-  const height = Number(ready[3])
-  const capacity = Number(ready[4])
-  const firmwareMode = ready[5] === undefined ? undefined : Number(ready[5])
-  const expectedServiceVersion = options.expectedServiceVersion ?? USB_CONTENT_SERVICE_VERSION
-  if (version !== expectedServiceVersion) {
-    throw new UsbContentFirmwareError(
-      'protocol',
-      `设备内容服务版本为 ${version}，Studio 需要版本 ${expectedServiceVersion}`
-    )
-  }
-  if (width !== profile.width || height !== profile.height) {
-    throw new UsbContentFirmwareError(
-      'resolution',
-      `设备分辨率为 ${width} × ${height}，与当前方案不匹配`
-    )
-  }
-  if (
-    options.expectedFirmwareMode !== undefined &&
-    firmwareMode !== undefined &&
-    firmwareMode !== options.expectedFirmwareMode
-  ) {
-    throw new UsbContentFirmwareError(
-      'protocol',
-      '设备正在运行旧版 USB 内容固件，请让 Studio 自动更新 USB 模式固件后重试'
-    )
-  }
-  if (contentBytes > capacity) {
-    throw new UsbContentFirmwareError(
-      'capacity',
-      '内容超过设备 USB 内容分区容量，请减少图片或画面数量后重试'
-    )
-  }
-  return capacity
+  return validateReadyResponse(line, profile, contentBytes, options)
 }
 
 export async function probeUsbContentDevice(
   port: UsbContentSerialPort,
-  profile: { width: number; height: number },
+  profile: UsbContentDeviceProfile,
   contentBytes: number
 ): Promise<UsbContentProbeResult> {
   let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
@@ -334,7 +361,7 @@ async function closeSerialPort(
 }
 
 export async function uploadUsbContent(
-  profile: { width: number; height: number },
+  profile: UsbContentDeviceProfile,
   content: Uint8Array,
   options: UsbContentTransferOptions = {}
 ): Promise<number> {

@@ -78,6 +78,18 @@ menu "Example Configuration"
             bool "SSD1315/SSD1306 72x40 I2C OLED"
     endchoice
 
+    choice OPENPENCIL_SSD1315_RENDER_MODE
+        prompt "SSD1315 monochrome rendering mode"
+        depends on EXAMPLE_LCD_CONTROLLER_SSD1315
+        default OPENPENCIL_SSD1315_RENDER_DITHERED
+
+        config OPENPENCIL_SSD1315_RENDER_DITHERED
+            bool "Grayscale ordered dithering"
+
+        config OPENPENCIL_SSD1315_RENDER_BINARY
+            bool "Crisp black and white"
+    endchoice
+
     config EXAMPLE_LCD_PIXEL_CLOCK_HZ
         int "LCD pixel clock in Hz"
         default 30000000 if EXAMPLE_LCD_CONTROLLER_CO5300

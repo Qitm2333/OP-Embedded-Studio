@@ -13,13 +13,26 @@ interface EmbeddedProfileRegistry {
 export const DEFAULT_EMBEDDED_DISPLAY_PROFILE_ID = 'co5300_waveshare_amoled_1_75c'
 
 const BUNDLED_FIRMWARE_PROFILES: Partial<Record<EmbeddedBuildMode, ReadonlySet<string>>> = {
-  'usb-frame': new Set(['co5300_waveshare_amoled_1_75c', 'co5300_m5stack_stopwatch', 'ili9342_m5stack_cores3', 'ssd1315_042_72x40_esp32c3']),
+  'usb-frame': new Set([
+    'co5300_waveshare_amoled_1_75c',
+    'co5300_m5stack_stopwatch',
+    'ili9342_m5stack_cores3',
+    'ssd1315_042_72x40_esp32c3',
+    'ssd1315_042_72x40_esp32c3_binary'
+  ]),
   'wifi-frame': new Set(['co5300_waveshare_amoled_1_75c', 'co5300_m5stack_stopwatch']),
   'wifi-live': new Set(['co5300_waveshare_amoled_1_75c', 'co5300_m5stack_stopwatch']),
-  'ble-frame': new Set(['co5300_waveshare_amoled_1_75c', 'co5300_m5stack_stopwatch', 'ili9342_m5stack_cores3'])
+  'ble-frame': new Set([
+    'co5300_waveshare_amoled_1_75c',
+    'co5300_m5stack_stopwatch',
+    'ili9342_m5stack_cores3'
+  ])
 }
 
-function profileFromRegistry(profile: Record<string, unknown>, boardFlash?: string): EmbeddedDisplayProfile {
+function profileFromRegistry(
+  profile: Record<string, unknown>,
+  boardFlash?: string
+): EmbeddedDisplayProfile {
   const resolution = profile.logicalResolution as { width?: number; height?: number } | undefined
   const visibleArea = profile.visibleArea as EmbeddedDisplayProfile['visibleArea']
   return {
@@ -42,22 +55,21 @@ function profileFromRegistry(profile: Record<string, unknown>, boardFlash?: stri
     imageOnly: Boolean(profile.imageOnly),
     image: profile.image as EmbeddedDisplayProfile['image'],
     gpio: Array.isArray(profile.wiring)
-      ? (profile.wiring as Array<Record<string, unknown>>).map((entry) => ({
-          signal: String(entry.signal || ''),
-          gpio:
-            typeof entry.connectTo === 'string'
-              ? entry.connectTo
-              : entry.gpio === null || entry.gpio === undefined
-                ? ''
-                : `GPIO${String(entry.gpio)}`,
-          pin: entry.fpcPin === undefined ? undefined : `FPC ${String(entry.fpcPin)}`,
-          note: typeof entry.note === 'string' ? entry.note : undefined
-        })).filter((entry) => entry.signal && entry.gpio)
+      ? (profile.wiring as Array<Record<string, unknown>>)
+          .map((entry) => ({
+            signal: String(entry.signal || ''),
+            gpio:
+              typeof entry.connectTo === 'string'
+                ? entry.connectTo
+                : entry.gpio === null || entry.gpio === undefined
+                  ? ''
+                  : `GPIO${String(entry.gpio)}`,
+            pin: entry.fpcPin === undefined ? undefined : `FPC ${String(entry.fpcPin)}`,
+            note: typeof entry.note === 'string' ? entry.note : undefined
+          }))
+          .filter((entry) => entry.signal && entry.gpio)
       : [],
-    flashSize:
-      typeof profile.flash === 'string'
-        ? profile.flash
-        : boardFlash,
+    flashSize: typeof profile.flash === 'string' ? profile.flash : boardFlash,
     source: 'bundled',
     firmwareAvailable: true
   }

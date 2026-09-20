@@ -158,7 +158,7 @@ The Interaction page now separates the state graph from the live device preview.
 
 Waveshare 与 StopWatch 是当前主要的圆形 AMOLED 验证设备；CoreS3 的 USB/BLE
 链路已接入并持续进行硬件验证。ESP32-C3 + 0.42 英寸 72 × 40 SSD1315 OLED
-已完成 USB 固件安装、图片直传和序列帧播放验证。设备下拉框默认展示这些已接入前端的方案。
+提供灰阶抖色与清晰黑白两版 USB 固件，并已完成图片直传和序列帧播放验证。设备下拉框默认展示这些已接入前端的方案。
 
 ## 屏幕方案与预编译固件
 

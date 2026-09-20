@@ -57,6 +57,9 @@ PROFILE_PARTITION_TABLES = {
     "ssd1315_042_72x40_esp32c3": {
         "usb-frame": "partitions_4mb_usb_frame.csv",
     },
+    "ssd1315_042_72x40_esp32c3_binary": {
+        "usb-frame": "partitions_4mb_usb_frame.csv",
+    },
     "co5300_m5stack_stopwatch": {
         "usb-frame": "partitions_16mb_usb_frame.csv",
         "wifi-frame": "partitions_16mb_wireless.csv",

@@ -66,18 +66,24 @@ static esp_err_t ssd1315_flush(ssd1315_panel_t *ssd1315)
 
 static bool rgb565_pixel_on(uint16_t color, int x, int y)
 {
+    const uint32_t red = ((color >> 11) & 0x1F) * 255 / 31;
+    const uint32_t green = ((color >> 5) & 0x3F) * 255 / 63;
+    const uint32_t blue = (color & 0x1F) * 255 / 31;
+    const uint32_t luminance = (red * 77 + green * 150 + blue * 29) >> 8;
+#if CONFIG_OPENPENCIL_SSD1315_RENDER_DITHERED
     static const uint8_t bayer4x4[16] = {
         0, 8, 2, 10,
         12, 4, 14, 6,
         3, 11, 1, 9,
         15, 7, 13, 5,
     };
-    const uint32_t red = ((color >> 11) & 0x1F) * 255 / 31;
-    const uint32_t green = ((color >> 5) & 0x3F) * 255 / 63;
-    const uint32_t blue = (color & 0x1F) * 255 / 31;
-    const uint32_t luminance = (red * 77 + green * 150 + blue * 29) >> 8;
     const uint32_t threshold = (uint32_t)bayer4x4[(y & 3) * 4 + (x & 3)] * 16 + 8;
     return luminance >= threshold;
+#else
+    (void)x;
+    (void)y;
+    return luminance >= 128;
+#endif
 }
 
 static esp_err_t panel_ssd1315_del(esp_lcd_panel_t *panel)
