@@ -107,6 +107,8 @@ static esp_err_t handle_begin(const char *line, uint8_t *encoded_buffer)
                                                     pdMS_TO_TICKS(USB_CONTENT_READ_TIMEOUT_MS)), TAG,
                         "read USB content header failed");
     memcpy(&header, encoded_buffer, sizeof(header));
+    ESP_RETURN_ON_ERROR(openpencil_sequence_player_stop_and_wait(), TAG,
+                        "stop active sequence before USB content write failed");
     ESP_RETURN_ON_ERROR(openpencil_content_write_begin(&header, total_bytes), TAG,
                         "begin USB content write failed");
     return usb_write_line(USB_PROTOCOL_PREFIX " ACK 0\n");

@@ -15,6 +15,12 @@
 
 #define SEQUENCE_STATS_FRAMES 120
 
+#if CONFIG_FREERTOS_UNICORE
+#define SEQUENCE_TASK_CORE 0
+#else
+#define SEQUENCE_TASK_CORE 1
+#endif
+
 #if CONFIG_OPENPENCIL_SEQUENCE_PLAYBACK
 static const char *TAG = "sequence_player";
 static portMUX_TYPE s_metrics_lock = portMUX_INITIALIZER_UNLOCKED;
@@ -53,6 +59,7 @@ typedef struct {
     QueueHandle_t requests;
     QueueHandle_t results;
     size_t frame_pixels;
+    atomic_bool stopped;
 } sequence_decoder_t;
 
 static bool sequence_stop_requested(void)
@@ -128,7 +135,10 @@ static void sequence_decoder_task(void *argument)
 {
     sequence_decoder_t *decoder = argument;
     sequence_decode_request_t request;
-    while (xQueueReceive(decoder->requests, &request, portMAX_DELAY) == pdTRUE) {
+    while (!sequence_abort_requested()) {
+        if (xQueueReceive(decoder->requests, &request, pdMS_TO_TICKS(10)) != pdTRUE) {
+            continue;
+        }
         const int64_t started_us = esp_timer_get_time();
         openpencil_sequence_region_t region = {0};
         esp_err_t result = ESP_OK;
@@ -168,10 +178,34 @@ static void sequence_decoder_task(void *argument)
             .load_us = esp_timer_get_time() - started_us,
             .result = result,
         };
-        xQueueSend(decoder->results, &decoded, portMAX_DELAY);
+        while (xQueueSend(decoder->results, &decoded, pdMS_TO_TICKS(10)) != pdTRUE) {
+            if (sequence_abort_requested()) break;
+        }
         if (sequence_abort_requested()) break;
     }
-    vTaskDelete(NULL);
+    // The player owns the decoder task handle and is the only task allowed to
+    // delete it. Suspending here prevents a stale handle from being deleted
+    // twice while still giving cleanup a definite hand-off point.
+    atomic_store_explicit(&decoder->stopped, true, memory_order_release);
+    vTaskSuspend(NULL);
+}
+
+static esp_err_t sequence_send_decode_request(sequence_decoder_t *decoder,
+                                               const sequence_decode_request_t *request)
+{
+    while (xQueueSend(decoder->requests, request, pdMS_TO_TICKS(10)) != pdTRUE) {
+        if (sequence_abort_requested()) return ESP_ERR_INVALID_STATE;
+    }
+    return ESP_OK;
+}
+
+static esp_err_t sequence_receive_decode_result(sequence_decoder_t *decoder,
+                                                 sequence_decode_result_t *result)
+{
+    while (xQueueReceive(decoder->results, result, pdMS_TO_TICKS(10)) != pdTRUE) {
+        if (sequence_abort_requested()) return ESP_ERR_INVALID_STATE;
+    }
+    return ESP_OK;
 }
 
 #endif
@@ -263,7 +297,7 @@ esp_err_t openpencil_sequence_player_start(esp_lcd_panel_handle_t panel,
                                                        &s_player_context,
                                                        6,
                                                        &task,
-                                                       1);
+                                                       SEQUENCE_TASK_CORE);
     if (created != pdPASS) {
         portENTER_CRITICAL(&s_player_lock);
         s_player_starting = false;
@@ -350,6 +384,7 @@ esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
         .requests = xQueueCreate(1, sizeof(sequence_decode_request_t)),
         .results = xQueueCreate(1, sizeof(sequence_decode_result_t)),
         .frame_pixels = frame_pixels,
+        .stopped = ATOMIC_VAR_INIT(false),
     };
     ESP_RETURN_ON_FALSE(decoder.requests && decoder.results,
                         ESP_ERR_NO_MEM,
@@ -364,7 +399,7 @@ esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
                                                 &decoder,
                                                 6,
                                                 &decoder_task,
-                                                1) == pdPASS,
+                                                SEQUENCE_TASK_CORE) == pdPASS,
                         ESP_ERR_NO_MEM,
                                                 TAG,
                                                 "create sequence decoder task failed");
@@ -380,12 +415,12 @@ esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
 
     int64_t initial_load_started_us = esp_timer_get_time();
     openpencil_sequence_region_t initial_region = {0};
-    ESP_RETURN_ON_ERROR(sequence_load_frame_with_region(0,
-                                                        &initial_region,
-                                                        primary_frame_buffer,
-                                                        frame_pixels),
-                        TAG,
-                        "load initial sequence frame failed");
+    const esp_err_t initial_load_result = sequence_load_frame_with_region(0,
+                                                                          &initial_region,
+                                                                          primary_frame_buffer,
+                                                                          frame_pixels);
+    if (initial_load_result != ESP_OK && sequence_abort_requested()) goto stop_cleanup;
+    ESP_RETURN_ON_ERROR(initial_load_result, TAG, "load initial sequence frame failed");
     ESP_RETURN_ON_FALSE(sequence_region_is_full_frame(&initial_region, width, height),
                         ESP_ERR_INVALID_STATE,
                         TAG,
@@ -402,7 +437,9 @@ esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
         .frame_index = next_frame,
         .destination = next_buffer,
     };
-    xQueueSend(decoder.requests, &request, portMAX_DELAY);
+    const esp_err_t initial_send_result = sequence_send_decode_request(&decoder, &request);
+    if (initial_send_result != ESP_OK && sequence_abort_requested()) goto stop_cleanup;
+    ESP_RETURN_ON_ERROR(initial_send_result, TAG, "queue initial sequence frame failed");
 
     const uint16_t frame_delay_ms = openpencil_content_frame_delay_ms();
     const esp_timer_create_args_t frame_timer_config = {
@@ -467,10 +504,9 @@ esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
 
         const int64_t decoder_wait_started_us = esp_timer_get_time();
         sequence_decode_result_t decoded;
-        ESP_RETURN_ON_FALSE(xQueueReceive(decoder.results, &decoded, portMAX_DELAY) == pdTRUE,
-                            ESP_ERR_TIMEOUT,
-                            TAG,
-                            "wait for decoded sequence frame failed");
+        const esp_err_t receive_result = sequence_receive_decode_result(&decoder, &decoded);
+        if (receive_result != ESP_OK && sequence_abort_requested()) goto stop_cleanup;
+        ESP_RETURN_ON_ERROR(receive_result, TAG, "wait for decoded sequence frame failed");
         const int64_t decoder_wait_us = esp_timer_get_time() - decoder_wait_started_us;
         if (decoded.result != ESP_OK && sequence_abort_requested()) goto stop_cleanup;
         ESP_RETURN_ON_ERROR(decoded.result, TAG, "decode sequence frame failed");
@@ -544,7 +580,9 @@ esp_err_t openpencil_sequence_player_run(esp_lcd_panel_handle_t panel,
             (uint16_t)((next_frame + 1) % content->frame_count);
         request.frame_index = following_frame;
         request.destination = following_decode_buffer;
-        xQueueSend(decoder.requests, &request, portMAX_DELAY);
+        const esp_err_t send_result = sequence_send_decode_request(&decoder, &request);
+        if (send_result != ESP_OK && sequence_abort_requested()) goto stop_cleanup;
+        ESP_RETURN_ON_ERROR(send_result, TAG, "queue sequence frame failed");
 
         load_total_us += current_load_us;
         decoder_wait_total_us += decoder_wait_us;
@@ -616,7 +654,12 @@ stop_cleanup:
         esp_timer_stop(frame_timer);
         esp_timer_delete(frame_timer);
     }
-    if (decoder_task) vTaskDelete(decoder_task);
+    if (decoder_task) {
+        while (!atomic_load_explicit(&decoder.stopped, memory_order_acquire)) {
+            vTaskDelay(pdMS_TO_TICKS(1));
+        }
+        vTaskDelete(decoder_task);
+    }
     if (decoder.requests) vQueueDelete(decoder.requests);
     if (decoder.results) vQueueDelete(decoder.results);
     free(secondary_frame_buffer);

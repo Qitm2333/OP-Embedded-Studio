@@ -26,6 +26,12 @@ const patchProfile = {
   resolution: { width: 8, height: 8 }
 } as EmbeddedDisplayProfile
 
+const oledProfile = {
+  id: 'ssd1315_042_72x40_esp32c3',
+  resolution: { width: 72, height: 40 },
+  wirelessContentBytes: 0xf0000
+} as EmbeddedDisplayProfile
+
 function singleImagePayload(): EmbeddedImagePayload {
   return {
     profileId: profile.id,
@@ -87,6 +93,32 @@ describe('USB PNG sequence content', () => {
 
     expect(sequence.frameDelayMs).toBe(2500)
     expect(view.getUint16(24 + 4, true)).toBe(2500)
+  })
+
+  test('encodes ESP32-C3 OLED sequences within the 4MB firmware content partition', () => {
+    const frameBytes = oledProfile.resolution.width * oledProfile.resolution.height * 2
+    const first = new Uint8Array(frameBytes)
+    for (let pixel = 0; pixel < frameBytes / 2; pixel += 1) {
+      first[pixel * 2] = pixel & 0xff
+      first[pixel * 2 + 1] = (pixel >> 8) & 0xff
+    }
+    const second = first.slice()
+    second[(12 * oledProfile.resolution.width + 20) * 2] = 0xff
+    const third = second.slice()
+    third[(24 * oledProfile.resolution.width + 48) * 2 + 1] = 0xff
+
+    const sequence = encodeUsbSequenceFrames(oledProfile, [first, second, third], 'OLED test', {
+      frameDelayMs: 100
+    })
+    const view = new DataView(sequence.content)
+
+    expect(sequence.frameCount).toBe(3)
+    expect(sequence.patchFrames).toBe(2)
+    expect(sequence.frameDelayMs).toBe(100)
+    expect(sequence.storedBytes).toBeLessThanOrEqual(oledProfile.wirelessContentBytes ?? 0)
+    expect(view.getUint16(8, true)).toBe(72)
+    expect(view.getUint16(10, true)).toBe(40)
+    expect(view.getUint8(6)).toBe(2)
   })
 
   test('encodes a small changed rectangle as a patch', () => {
