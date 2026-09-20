@@ -240,6 +240,10 @@ static void usb_content_server_task(void *argument)
     (void)argument;
     uint8_t *encoded_buffer = heap_caps_malloc(USB_CONTENT_CHUNK_BYTES,
                                                MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!encoded_buffer) {
+        encoded_buffer = heap_caps_malloc(USB_CONTENT_CHUNK_BYTES,
+                                          MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    }
     uint8_t *decoded_buffer = heap_caps_malloc(USB_CONTENT_CHUNK_BYTES,
                                                MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     if (!decoded_buffer) {

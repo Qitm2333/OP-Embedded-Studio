@@ -44,6 +44,7 @@
 #include "co5300_panel.h"
 #include "m5ioe1.h"
 #include "m5cores3.h"
+#include "ssd1315_panel.h"
 
 static const char *TAG = "lcd_simple";
 
@@ -250,6 +251,10 @@ void app_main(void)
         &io_handle,
         &panel_handle));
 #else
+#if CONFIG_EXAMPLE_LCD_CONTROLLER_SSD1315
+    ESP_LOGI(TAG, "Initialize SSD1315 I2C OLED panel");
+    ESP_ERROR_CHECK(openpencil_new_panel_ssd1315(&panel_handle));
+#else
     ESP_LOGI(TAG, "Initialize SPI bus");
     spi_bus_config_t buscfg = {
         .sclk_io_num = CONFIG_EXAMPLE_PIN_NUM_SCLK,
@@ -282,6 +287,7 @@ void app_main(void)
         .bits_per_pixel = 16,
     };
     ESP_ERROR_CHECK(example_lcd_new_panel(io_handle, &panel_config, &panel_handle));
+#endif
 
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));

@@ -15,7 +15,12 @@ const FIRMWARE_PARTS = [
 
 const FIRMWARE_FLASH_SIZES: Record<string, string> = {
   co5300_m5stack_stopwatch: '16MB',
-  ili9342_m5stack_cores3: '16MB'
+  ili9342_m5stack_cores3: '16MB',
+  ssd1315_042_72x40_esp32c3: '4MB'
+}
+
+const FIRMWARE_CHIP_FAMILIES: Record<string, string> = {
+  ssd1315_042_72x40_esp32c3: 'ESP32-C3'
 }
 
 function firmwareManifest(mode: string, profileId: string) {
@@ -25,7 +30,7 @@ function firmwareManifest(mode: string, profileId: string) {
     buildMode: mode,
     flashSize: FIRMWARE_FLASH_SIZES[profileId] ?? '32MB',
     new_install_prompt_erase: true,
-    builds: [{ chipFamily: 'ESP32-S3', parts: FIRMWARE_PARTS }]
+    builds: [{ chipFamily: FIRMWARE_CHIP_FAMILIES[profileId] ?? 'ESP32-S3', parts: FIRMWARE_PARTS }]
   }
 }
 

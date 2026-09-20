@@ -157,7 +157,8 @@ The Interaction page now separates the state graph from the live device preview.
 - AXP2101 电源管理和 AW9523B 显示复位初始化已纳入固件
 
 Waveshare 与 StopWatch 是当前主要的圆形 AMOLED 验证设备；CoreS3 的 USB/BLE
-链路已接入并持续进行硬件验证。设备下拉框默认只展示这三套已接入前端的方案。
+链路已接入并持续进行硬件验证。ESP32-C3 + 0.42 英寸 72 × 40 SSD1315 OLED
+已完成 USB 固件安装和图片直传验证。设备下拉框默认展示这些已接入前端的方案。
 
 ## 屏幕方案与预编译固件
 
@@ -168,7 +169,7 @@ Waveshare 与 StopWatch 是当前主要的圆形 AMOLED 验证设备；CoreS3 �
 - RGB/BGR、大小端、Flash 容量和内容分区大小
 - GPIO 信号、开发板 GPIO、FPC 引脚和接线备注
 
-自定义方案保存后可以编辑或删除，并会出现在设备选单中。自定义参数可以用于预览和 RGB565 内容编码，但不会自动生成固件，也不能直接套用其他设备的固件。当前只有仓库内置且带有匹配 manifest 的三套设备可以烧录。
+自定义方案保存后可以编辑或删除，并会出现在设备选单中。自定义参数可以用于预览和 RGB565 内容编码，但不会自动生成固件，也不能直接套用其他设备的固件。当前只有仓库内置且带有匹配 manifest 的设备可以烧录。
 
 如果要让新的 GPIO、驱动或分区配置真正可烧录，需要在 `tools/embedded-display/` 中增加对应的 ESP-IDF 默认配置、构建产物和 manifest。仅修改浏览器中的方案 JSON 不会改变设备端驱动。
 
@@ -209,7 +210,7 @@ bun run dev
 http://localhost:1420
 ```
 
-三套内置设备 profile 及其 USB/BLE 预编译固件清单会作为静态资源随项目提供。只有新增屏幕、修改底层驱动、调整分区或重新生成基础固件时，才需要使用嵌入式构建服务：
+内置设备 profile 及其 USB/BLE 预编译固件清单会作为静态资源随项目提供。只有新增屏幕、修改底层驱动、调整分区或重新生成基础固件时，才需要使用嵌入式构建服务：
 
 ```sh
 python tools/embedded-display/server/build_server.py --host 127.0.0.1 --port 8765

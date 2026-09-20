@@ -54,6 +54,9 @@ BUILD_MODES = {
 }
 
 PROFILE_PARTITION_TABLES = {
+    "ssd1315_042_72x40_esp32c3": {
+        "usb-frame": "partitions_4mb_usb_frame.csv",
+    },
     "co5300_m5stack_stopwatch": {
         "usb-frame": "partitions_16mb_usb_frame.csv",
         "wifi-frame": "partitions_16mb_wireless.csv",
@@ -123,6 +126,8 @@ def load_profile_registry():
             raise ApiError(HTTPStatus.INTERNAL_SERVER_ERROR, f"duplicate profile id: {profile_id}")
         profile_ids.add(profile_id)
         resolve_project_file(defaults_file)
+        if profile.get("baseDefaultsFile"):
+            resolve_project_file(profile["baseDefaultsFile"])
 
     base_defaults = registry.get("defaults", {}).get("base")
     if not base_defaults:
@@ -364,6 +369,7 @@ def mode_defaults_path(profile, build_mode):
     setup_access_point = mode.startswith("wifi-")
     ble_enabled = mode.startswith("ble-")
     usb_content_server = mode == "usb-frame"
+    target = profile.get("target", "esp32s3")
     settings = [
         f'CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="{partition_table}"',
         f'CONFIG_PARTITION_TABLE_FILENAME="{partition_table}"',
@@ -393,7 +399,13 @@ def mode_defaults_path(profile, build_mode):
             "CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y",
             'CONFIG_ESPTOOLPY_FLASHSIZE="16MB"',
         ])
-    if mode == "usb-frame":
+    elif partition_table.startswith("partitions_4mb"):
+        settings.extend([
+            "# CONFIG_ESPTOOLPY_FLASHSIZE_8MB is not set",
+            "CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y",
+            'CONFIG_ESPTOOLPY_FLASHSIZE="4MB"',
+        ])
+    if mode == "usb-frame" and target == "esp32s3":
         settings.extend([
             "# CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_160 is not set",
             "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y",
@@ -441,7 +453,7 @@ def mode_defaults_path(profile, build_mode):
 
 
 def build_command(registry, profile, build_mode):
-    base_defaults = registry["defaults"]["base"]
+    base_defaults = profile.get("baseDefaultsFile", registry["defaults"]["base"])
     profile_defaults = profile["defaultsFile"]
     build_dir = build_dir_for_profile(profile["id"], build_mode)
     sdkconfig = build_dir / "sdkconfig"
@@ -450,6 +462,7 @@ def build_command(registry, profile, build_mode):
     return idf_build_command([
         "-B",
         build_dir.as_posix(),
+        f"-DIDF_TARGET={profile.get('target', 'esp32s3')}",
         f"-DOPENPENCIL_BUILD_MODE={normalize_build_mode(build_mode)}",
         f"-DSDKCONFIG={sdkconfig.as_posix()}",
         f"-DSDKCONFIG_DEFAULTS={defaults}",
@@ -473,8 +486,10 @@ def firmware_artifacts(build_dir):
 def build_inputs_signature(registry, profile, build_mode):
     digest = hashlib.sha256()
     mode = normalize_build_mode(build_mode)
+    digest.update(profile.get("target", "esp32s3").encode("utf-8"))
+    digest.update(b"\0")
     paths = [
-        registry["defaults"]["base"],
+        profile.get("baseDefaultsFile", registry["defaults"]["base"]),
         profile["defaultsFile"],
         partition_table_for(profile, mode),
         mode_defaults_path(profile, mode),
@@ -879,7 +894,7 @@ def artifact_manifest(profile_id, build_mode=DEFAULT_BUILD_MODE):
         "new_install_prompt_erase": True,
         "builds": [
             {
-                "chipFamily": "ESP32-S3",
+                "chipFamily": profile.get("chipFamily", "ESP32-S3"),
                 "parts": parts,
             }
         ],

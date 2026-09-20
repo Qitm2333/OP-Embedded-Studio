@@ -27,8 +27,11 @@ async function loadFirmwareManifest(manifestUrl: string, onLog?: (message: strin
   })
   if (!response.ok) throw new Error(`无法读取固件清单：${response.status}`)
   const manifest = (await response.json()) as EmbeddedFlashManifest
-  const build = manifest.builds.find((candidate) => candidate.chipFamily === 'ESP32-S3')
-  if (!build?.parts.length) throw new Error('固件清单中缺少 ESP32-S3 分区')
+  const build =
+    manifest.builds.length === 1
+      ? manifest.builds[0]
+      : manifest.builds.find((candidate) => candidate.chipFamily === 'ESP32-S3')
+  if (!build?.parts.length) throw new Error('固件清单中缺少可烧录分区')
 
   onLog?.(`正在下载 ${build.parts.length} 个固件分区…`)
   return {

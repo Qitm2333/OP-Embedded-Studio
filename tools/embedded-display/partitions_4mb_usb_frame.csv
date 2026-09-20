@@ -1,0 +1,6 @@
+# Name,   Type, SubType, Offset,  Size,      Flags
+# 4MB USB Frame layout. Keep the shared content offset at 0x310000.
+nvs,      data, nvs,     ,        0x6000,
+phy_init, data, phy,     ,        0x1000,
+factory,  app,  factory, ,        0x300000,
+content,  data, 0x40,    ,        0xF0000,

@@ -73,6 +73,9 @@ menu "Example Configuration"
 
         config EXAMPLE_LCD_CONTROLLER_ILI9342
             bool "ILI9342C (M5Stack CoreS3)"
+
+        config EXAMPLE_LCD_CONTROLLER_SSD1315
+            bool "SSD1315/SSD1306 72x40 I2C OLED"
     endchoice
 
     config EXAMPLE_LCD_PIXEL_CLOCK_HZ
@@ -119,6 +122,28 @@ menu "Example Configuration"
             with the panel refresh cycle. The Waveshare CO5300 board routes
             LCD_TE to GPIO13.
 
+    config EXAMPLE_PIN_NUM_I2C_SDA
+        int "OLED I2C SDA GPIO"
+        default 5
+
+    config EXAMPLE_PIN_NUM_I2C_SCL
+        int "OLED I2C SCL GPIO"
+        default 6
+
+    config EXAMPLE_LCD_I2C_ADDRESS
+        int "OLED 7-bit I2C address"
+        range 1 126
+        default 60
+
+    config EXAMPLE_LCD_I2C_FREQ_HZ
+        int "OLED I2C clock in Hz"
+        default 400000
+
+    config EXAMPLE_LCD_COLUMN_OFFSET
+        int "OLED controller RAM column offset"
+        range 0 127
+        default 28
+
     config EXAMPLE_PIN_NUM_QSPI_PCLK
         int "LCD QSPI clock GPIO"
         default 38
@@ -155,6 +180,7 @@ menu "Example Configuration"
         default 160 if EXAMPLE_LCD_CONTROLLER_GC9D01N
         default 466 if EXAMPLE_LCD_CONTROLLER_CO5300
         default 320 if EXAMPLE_LCD_CONTROLLER_ILI9342
+        default 72 if EXAMPLE_LCD_CONTROLLER_SSD1315
 
     config EXAMPLE_LCD_V_RES
         int "LCD vertical resolution"
@@ -163,6 +189,7 @@ menu "Example Configuration"
         default 160 if EXAMPLE_LCD_CONTROLLER_GC9D01N
         default 466 if EXAMPLE_LCD_CONTROLLER_CO5300
         default 240 if EXAMPLE_LCD_CONTROLLER_ILI9342
+        default 40 if EXAMPLE_LCD_CONTROLLER_SSD1315
 
     config EXAMPLE_LCD_X_GAP
         int "LCD X gap/offset"

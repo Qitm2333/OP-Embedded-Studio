@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
+import { embeddedManifestUrl } from '../../../src/features/embedded-display/adapters/http'
 import {
   DEFAULT_EMBEDDED_DISPLAY_PROFILE_ID,
   bundledDisplayProfiles,
@@ -12,7 +13,8 @@ describe('embedded display runtime catalog', () => {
     expect(profiles.map((profile) => profile.id)).toEqual([
       'co5300_waveshare_amoled_1_75c',
       'co5300_m5stack_stopwatch',
-      'ili9342_m5stack_cores3'
+      'ili9342_m5stack_cores3',
+      'ssd1315_042_72x40_esp32c3'
     ])
     expect(profiles.some((profile) => profile.id === DEFAULT_EMBEDDED_DISPLAY_PROFILE_ID)).toBe(
       true
@@ -34,5 +36,23 @@ describe('embedded display runtime catalog', () => {
       '/embedded-display/firmware/ble-frame/'
     )
     expect(bundledFirmwareManifestUrl(profileId, 'usb-prototype')).toBeNull()
+
+    const oledProfileId = 'ssd1315_042_72x40_esp32c3'
+    expect(bundledFirmwareManifestUrl(oledProfileId, 'usb-frame')).toContain(
+      '/embedded-display/firmware/usb-frame/'
+    )
+    expect(bundledFirmwareManifestUrl(oledProfileId, 'ble-frame')).toBeNull()
+  })
+
+  test('uses packaged firmware URLs in development without the local build service', () => {
+    expect(embeddedManifestUrl('co5300_waveshare_amoled_1_75c', 'usb-frame')).toContain(
+      '/embedded-display/firmware/usb-frame/'
+    )
+    expect(embeddedManifestUrl('ssd1315_042_72x40_esp32c3', 'usb-frame')).toContain(
+      '/embedded-display/firmware/usb-frame/'
+    )
+    expect(embeddedManifestUrl('custom_profile', 'usb-frame')).toBe(
+      'http://127.0.0.1:8765/api/artifacts/custom_profile/manifest.json'
+    )
   })
 })

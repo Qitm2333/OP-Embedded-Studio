@@ -9,6 +9,9 @@ elseif(OPENPENCIL_BUILD_MODE MATCHES "^usb-")
 endif()
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+if(IDF_TARGET STREQUAL "esp32c3")
+    idf_build_set_property(DEPENDENCIES_LOCK "${CMAKE_BINARY_DIR}/dependencies.lock")
+endif()
 idf_build_set_property(MINIMAL_BUILD ON)
 project(st7789_simple)
 

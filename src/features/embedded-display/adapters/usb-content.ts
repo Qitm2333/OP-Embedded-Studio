@@ -8,7 +8,8 @@ import { encodeWirelessImage, encodeWirelessPrototype } from './wireless-content
 const USB_FAST_PROFILES = new Set([
   'co5300_waveshare_amoled_1_75c',
   'co5300_m5stack_stopwatch',
-  'ili9342_m5stack_cores3'
+  'ili9342_m5stack_cores3',
+  'ssd1315_042_72x40_esp32c3'
 ])
 
 export type UsbFlashOptions = UsbContentTransferOptions

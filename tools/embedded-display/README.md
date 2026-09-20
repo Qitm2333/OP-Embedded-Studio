@@ -10,6 +10,7 @@ Embedded Studio:
 | M5Stack StopWatch | 466 x 466 | CO5300 / QSPI | USB, BLE, interaction, PNG sequence |
 | Waveshare ESP32-S3-Touch-AMOLED-1.75C | 466 x 466 | CO5300 / QSPI | USB, BLE; Wi-Fi/live mirror experimental |
 | M5Stack CoreS3 | 320 x 240 | ILI9342C / SPI | USB, BLE, interaction, PNG sequence |
+| ESP32-C3 + 0.42-inch OLED | 72 x 40 | SSD1315 / I2C | USB frame |
 
 The matching defaults, firmware manifests, and prebuilt images are maintained in
 `screen_profiles/` and `prebuilt-firmware/`. See
@@ -90,6 +91,11 @@ Pin 10 GND    GND
 MISO is not required for these SPI display modules and defaults to `-1`.
 If the backlight is wired always on, set `LCD backlight GPIO` to `-1`. If you want GPIO backlight control, drive LEDA/LEDK through a suitable resistor and transistor/MOSFET circuit instead of powering the LED directly from a GPIO. The LB090R-IF03 ST7735S backlight is specified at 2.9-3.1 V and 60 mA typical. The GVH099WQ010B-A0 GC9D01N backlight is specified as 2 white LEDs, 2.8-3.2 V and 40 mA typical. A constant-current backlight driver is preferred for both round screens.
 For ESP32-S3 boards that use native USB, avoid GPIO19/GPIO20 because they are commonly connected to USB D-/D+.
+
+The verified ESP32-C3 SSD1315 profile uses I2C address `0x3C`, GPIO5 for SDA,
+GPIO6 for SCL, a 400 kHz bus, and a 28-column controller RAM offset. Its USB
+frame firmware uses the ESP32-C3 USB Serial/JTAG interface and a 4MB flash
+layout.
 
 ## Configure
 

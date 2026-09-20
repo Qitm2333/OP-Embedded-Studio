@@ -11,6 +11,7 @@
 #include "co5300_panel.h"
 #include "st7735_panel.h"
 #include "ili9342_panel.h"
+#include "ssd1315_panel.h"
 
 static const char *TAG __attribute__((unused)) = "lcd_panel_factory";
 
@@ -24,6 +25,8 @@ const char *example_lcd_controller_name(void)
     return "ST7735";
 #elif CONFIG_EXAMPLE_LCD_CONTROLLER_ILI9342
     return "ILI9342";
+#elif CONFIG_EXAMPLE_LCD_CONTROLLER_SSD1315
+    return "SSD1315";
 #else
     return "ST7789";
 #endif
@@ -60,6 +63,10 @@ esp_err_t example_lcd_new_panel(const esp_lcd_panel_io_handle_t io,
     return esp_lcd_new_panel_st7789(io, panel_dev_config, ret_panel);
 #elif CONFIG_EXAMPLE_LCD_CONTROLLER_ILI9342
     return esp_lcd_new_panel_ili9342(io, panel_dev_config, ret_panel);
+#elif CONFIG_EXAMPLE_LCD_CONTROLLER_SSD1315
+    (void)io;
+    (void)panel_dev_config;
+    return openpencil_new_panel_ssd1315(ret_panel);
 #else
     ESP_RETURN_ON_FALSE(false, ESP_ERR_NOT_SUPPORTED, TAG, "unsupported LCD controller");
 #endif

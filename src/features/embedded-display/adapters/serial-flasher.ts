@@ -95,7 +95,7 @@ export async function flashSerialFirmware(
   })
 
   try {
-    options.onLog?.('正在连接 ESP32-S3…')
+    options.onLog?.('正在连接 ESP32…')
     await loader.main()
     options.onLog?.(options.connectedMessage ?? '已连接，正在写入固件。')
     await loader.writeFlash({

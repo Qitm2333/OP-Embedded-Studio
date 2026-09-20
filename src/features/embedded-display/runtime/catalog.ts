@@ -13,7 +13,7 @@ interface EmbeddedProfileRegistry {
 export const DEFAULT_EMBEDDED_DISPLAY_PROFILE_ID = 'co5300_waveshare_amoled_1_75c'
 
 const BUNDLED_FIRMWARE_PROFILES: Partial<Record<EmbeddedBuildMode, ReadonlySet<string>>> = {
-  'usb-frame': new Set(['co5300_waveshare_amoled_1_75c', 'co5300_m5stack_stopwatch', 'ili9342_m5stack_cores3']),
+  'usb-frame': new Set(['co5300_waveshare_amoled_1_75c', 'co5300_m5stack_stopwatch', 'ili9342_m5stack_cores3', 'ssd1315_042_72x40_esp32c3']),
   'wifi-frame': new Set(['co5300_waveshare_amoled_1_75c', 'co5300_m5stack_stopwatch']),
   'wifi-live': new Set(['co5300_waveshare_amoled_1_75c', 'co5300_m5stack_stopwatch']),
   'ble-frame': new Set(['co5300_waveshare_amoled_1_75c', 'co5300_m5stack_stopwatch', 'ili9342_m5stack_cores3'])

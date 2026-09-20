@@ -522,6 +522,71 @@
         "displayReset": "AW9523B P1_1",
         "backlight": "AXP2101 DLDO1"
       }
+    },
+    {
+      "id": "ssd1315_042_72x40_esp32c3",
+      "displayName": "0.42-inch 72x40 SSD1315 OLED",
+      "displayNameZh": "0.42 英寸 72x40 SSD1315 OLED",
+      "screenType": "monochrome_oled",
+      "module": "0.42-inch 16-pin OLED",
+      "driverIc": "SSD1315 / SSD1306 compatible",
+      "controller": "SSD1315",
+      "interface": "I2C",
+      "target": "esp32c3",
+      "chipFamily": "ESP32-C3",
+      "flash": "4MB",
+      "wirelessContentBytes": 983040,
+      "baseDefaultsFile": "screen_profiles/esp32c3_4mb.defaults",
+      "logicalResolution": {
+        "width": 72,
+        "height": 40
+      },
+      "visibleArea": {
+        "shape": "rectangle",
+        "description": "72 x 40 monochrome OLED active area.",
+        "descriptionZh": "72 x 40 单色 OLED 可视区域。"
+      },
+      "physicalSize": {
+        "diagonalInch": 0.42
+      },
+      "verified": true,
+      "imageOnly": true,
+      "defaultsFile": "screen_profiles/ssd1315_042_72x40_esp32c3.defaults",
+      "image": {
+        "pixelFormat": "RGB565",
+        "colorOrder": "RGB",
+        "byteOrder": "little",
+        "rotation": 0,
+        "xGap": 0,
+        "yGap": 0,
+        "transport": "I2C"
+      },
+      "wiring": [
+        {
+          "signal": "SDA",
+          "connectTo": "ESP32-C3 GPIO5",
+          "gpio": 5,
+          "note": "I2C data"
+        },
+        {
+          "signal": "SCL",
+          "connectTo": "ESP32-C3 GPIO6",
+          "gpio": 6,
+          "note": "I2C clock at 400 kHz"
+        },
+        {
+          "signal": "VCC",
+          "connectTo": "3V3",
+          "gpio": null,
+          "note": "Display power"
+        },
+        {
+          "signal": "GND",
+          "connectTo": "GND",
+          "gpio": null,
+          "note": "Common ground"
+        }
+      ]
     }
   ]
 }

@@ -83,6 +83,9 @@ static esp_err_t submit_region(esp_lcd_panel_handle_t panel,
                                int y_end,
                                const uint16_t *pixels)
 {
+#if CONFIG_EXAMPLE_LCD_CONTROLLER_SSD1315
+    return esp_lcd_panel_draw_bitmap(panel, x_start, y_start, x_end, y_end, pixels);
+#else
     (void)xSemaphoreTake(s_transfer_done, 0);
     ESP_RETURN_ON_ERROR(esp_lcd_panel_draw_bitmap(panel,
                                                   x_start,
@@ -98,6 +101,7 @@ static esp_err_t submit_region(esp_lcd_panel_handle_t panel,
                         TAG,
                         "frame transfer completion timed out");
     return ESP_OK;
+#endif
 }
 
 #if CONFIG_OPENPENCIL_BOARD_M5STACK_STOPWATCH

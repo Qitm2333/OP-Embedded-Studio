@@ -89,12 +89,8 @@ export async function prepareWifiFirmwareCredentials(
 }
 
 export function embeddedManifestUrl(profileId: string, buildMode: EmbeddedBuildMode): string {
-  // Vite's dev server does not serve the packaged firmware directory. Keep
-  // development and runtime manifest URLs aligned with the service fallback.
-  if (!import.meta.env.DEV) {
-    const bundledUrl = bundledFirmwareManifestUrl(profileId, buildMode)
-    if (bundledUrl) return bundledUrl
-  }
+  const bundledUrl = bundledFirmwareManifestUrl(profileId, buildMode)
+  if (bundledUrl) return bundledUrl
   return embeddedArtifactUrl(profileId, 'manifest.json', buildMode)
 }
 

@@ -8,6 +8,8 @@
 | --- | --- |
 | `profiles.json` | 结构化的屏幕配置注册表，给 Web 端展示型号、接线提示、背光注意事项，也给服务器选择 defaults 使用。 |
 | `base.defaults` | ESP32-S3 开发板公共配置，以及各屏幕共用的 GPIO 分配。 |
+| `esp32c3_4mb.defaults` | 使用 USB Serial/JTAG 的 4MB ESP32-C3 OLED profile 公共配置。 |
+| `ssd1315_042_72x40_esp32c3.defaults` | 已验证的 72x40 SSD1315 OLED 配置，I2C 使用 GPIO5/GPIO6。 |
 | `st7789_qs130tab1005a.defaults` | QS130TAB1005A 240x240 ST7789 方屏的已验证配置。 |
 | `st7735s_lb090r_if03.defaults` | LB090R-IF03 128x128 ST7735S 圆屏的已验证配置，颜色顺序为 BGR。 |
 | `gc9d01n_gvh099wq010b_a0.defaults` | GVH099WQ010B-A0 160x160 GC9D01N 0.99 英寸圆屏配置，待实物最终验证。 |
