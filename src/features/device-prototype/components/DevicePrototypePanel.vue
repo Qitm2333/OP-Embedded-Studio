@@ -15,7 +15,7 @@ import DevicePrototypeGraph from './DevicePrototypeGraph.vue'
 import DevicePrototypePreview from './DevicePrototypePreview.vue'
 import DevicePrototypeTransitionBar from './DevicePrototypeTransitionBar.vue'
 import { useDevicePrototype } from '../composables/useDevicePrototype'
-import { resolveDevicePrototypeTransitions } from '../model/rules'
+import { defaultManualSettingsForProfile, resolveDevicePrototypeTransitions } from '../model/rules'
 import type {
   DevicePrototypeEventId,
   DevicePrototypeFrameCandidate,
@@ -85,6 +85,9 @@ const mode = computed({
 const displayEvents = computed(() => devicePrototypeEventsForProfile(displayProfile.value.id))
 const eventOptions = computed(() =>
   displayEvents.value.map((event) => ({ value: event.id, label: event.label }))
+)
+const bootPresetAvailable = computed(
+  () => defaultManualSettingsForProfile(displayProfile.value.id).nextEvent === 'boot_click'
 )
 const resolvedTransitions = computed(() =>
   selectedInteraction.value ? resolveDevicePrototypeTransitions(selectedInteraction.value) : []
@@ -394,6 +397,7 @@ function updateAnimationLoop(loop: boolean) {
             :next-event="nextEvent"
             :previous-event="previousEvent"
             :slideshow-seconds="slideshowSeconds"
+            :boot-preset-available="bootPresetAvailable"
             @update-transition-event="updateTransitionEvent"
             @update-transition-target="updateTransitionTarget"
             @remove-transition="removeSelectedTransition"

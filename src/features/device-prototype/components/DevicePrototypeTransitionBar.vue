@@ -20,7 +20,8 @@ const {
   eventOptions,
   nextEvent,
   previousEvent,
-  slideshowSeconds
+  slideshowSeconds,
+  bootPresetAvailable
 } = defineProps<{
   interaction: DevicePrototypeInteraction | null
   states: DevicePrototypeState[]
@@ -31,6 +32,7 @@ const {
   nextEvent: DevicePrototypeEventId
   previousEvent: DevicePrototypeEventId
   slideshowSeconds: number
+  bootPresetAvailable: boolean
 }>()
 
 const emit = defineEmits<{
@@ -64,7 +66,10 @@ function updateAnimationLoop(event: Event) {
 </script>
 
 <template>
-  <div data-test-id="device-prototype-transition-bar" class="shrink-0 border-t border-border bg-panel px-panel py-2">
+  <div
+    data-test-id="device-prototype-transition-bar"
+    class="shrink-0 border-t border-border bg-panel px-panel py-2"
+  >
     <div class="flex min-w-0 items-center gap-2">
       <icon-lucide-git-branch class="size-3.5 shrink-0 text-muted" />
 
@@ -143,6 +148,18 @@ function updateAnimationLoop(event: Event) {
         <span class="shrink-0 text-[10px] text-muted">秒</span>
       </template>
     </div>
+    <button
+      v-if="
+        interaction?.mode === 'manual' &&
+        bootPresetAvailable &&
+        (nextEvent !== 'boot_click' || previousEvent !== 'boot_long_press')
+      "
+      type="button"
+      class="mt-1.5 text-[10px] text-accent hover:underline"
+      @click="emit('update-manual', { nextEvent: 'boot_click', previousEvent: 'boot_long_press' })"
+    >
+      使用 BOOT
+    </button>
     <div
       v-if="selectedState?.animation"
       class="mt-1.5 flex min-w-0 items-center gap-2 border-t border-border pt-1.5"

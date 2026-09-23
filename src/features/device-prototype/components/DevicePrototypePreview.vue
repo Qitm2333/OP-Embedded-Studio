@@ -410,10 +410,12 @@ onUnmounted(() => {
               "
               :style="{
                 aspectRatio: `${Math.max(1, profile.resolution.width)} / ${Math.max(1, profile.resolution.height)}`,
-                width: inline ? (fitHeight ? 'auto' : 'min(76%, 192px)') : 'min(68vh, 420px)',
-                height: inline && fitHeight ? 'min(100%, 176px)' : undefined,
-                maxWidth: inline && fitHeight ? 'min(100%, 176px)' : undefined,
-                maxHeight: inline ? (fitHeight ? 'calc(100% - 8px)' : '192px') : undefined,
+                width: inline
+                  ? fitHeight
+                    ? 'min(100%, 176px)'
+                    : 'min(76%, 192px)'
+                  : 'min(68vh, 420px)',
+                maxHeight: inline && !fitHeight ? '192px' : undefined,
                 backgroundColor:
                   previewUrl && profile.visibleArea?.shape === 'round'
                     ? 'transparent'

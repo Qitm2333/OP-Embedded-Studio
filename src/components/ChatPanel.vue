@@ -27,6 +27,8 @@ import {
   getDevicePrototypeFrameCandidates,
   getSelectedDevicePrototypeFrameCandidates
 } from '@/app/editor/device-prototype'
+import { getActiveEmbeddedDisplayProfile } from '@/features/embedded-display'
+import { defaultManualSettingsForProfile } from '@/features/device-prototype/model/rules'
 import ACPPermissionDialog from '@/components/chat/ACPPermissionDialog.vue'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
@@ -294,7 +296,7 @@ async function handlePrototypeQuickAction(mode: 'manual' | 'slideshow'): Promise
       transitions: [],
       manual:
         mode === 'manual'
-          ? { nextEvent: 'screen_click', previousEvent: 'screen_long_press', loop: true }
+          ? defaultManualSettingsForProfile(getActiveEmbeddedDisplayProfile().id)
           : undefined,
       slideshow: mode === 'slideshow' ? { intervalMs: 3000 } : undefined
     })

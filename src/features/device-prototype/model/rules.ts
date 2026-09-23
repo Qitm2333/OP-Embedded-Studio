@@ -12,6 +12,16 @@ export const DEFAULT_DEVICE_PROTOTYPE_MANUAL_SETTINGS: DevicePrototypeManualSett
   loop: true
 }
 
+export function defaultManualSettingsForProfile(profileId: string): DevicePrototypeManualSettings {
+  if (
+    profileId === 'ssd1315_042_72x40_esp32c3' ||
+    profileId === 'ssd1315_042_72x40_esp32c3_binary'
+  ) {
+    return { nextEvent: 'boot_click', previousEvent: 'boot_long_press', loop: true }
+  }
+  return { ...DEFAULT_DEVICE_PROTOTYPE_MANUAL_SETTINGS }
+}
+
 export const DEFAULT_DEVICE_PROTOTYPE_SLIDESHOW_SETTINGS: DevicePrototypeSlideshowSettings = {
   intervalMs: 3000
 }

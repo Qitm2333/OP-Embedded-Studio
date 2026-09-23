@@ -12,7 +12,11 @@
 #include "m5cores3.h"
 #include "sdkconfig.h"
 
+#if CONFIG_IDF_TARGET_ESP32C3
+#define BOOT_BUTTON_GPIO GPIO_NUM_9
+#else
 #define BOOT_BUTTON_GPIO GPIO_NUM_0
+#endif
 #define STOPWATCH_BUTTON_A_GPIO GPIO_NUM_2
 #define STOPWATCH_BUTTON_B_GPIO GPIO_NUM_1
 #define TOUCH_I2C_SCL GPIO_NUM_14

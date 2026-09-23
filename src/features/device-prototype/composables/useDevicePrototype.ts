@@ -1,8 +1,10 @@
 import { computed, ref, type Ref } from 'vue'
 
+import { getActiveEmbeddedDisplayProfile } from '@/features/embedded-display/composables/useEmbeddedDisplay'
+
 import {
-  DEFAULT_DEVICE_PROTOTYPE_MANUAL_SETTINGS,
   DEFAULT_DEVICE_PROTOTYPE_SLIDESHOW_SETTINGS,
+  defaultManualSettingsForProfile,
   normalizeSlideshowInterval,
   resolveDevicePrototypeTransitions
 } from '../model/rules'
@@ -72,7 +74,7 @@ function createInteraction(name: string): DevicePrototypeInteraction {
     id: createId('interaction'),
     name,
     mode: 'manual',
-    manual: { ...DEFAULT_DEVICE_PROTOTYPE_MANUAL_SETTINGS },
+    manual: defaultManualSettingsForProfile(getActiveEmbeddedDisplayProfile().id),
     slideshow: { ...DEFAULT_DEVICE_PROTOTYPE_SLIDESHOW_SETTINGS },
     initialStateId: '',
     states: [],
@@ -186,7 +188,7 @@ export function useDevicePrototype(scopeKey: object = defaultScope) {
       name,
       mode: input.mode ?? 'custom',
       manual: {
-        ...DEFAULT_DEVICE_PROTOTYPE_MANUAL_SETTINGS,
+        ...defaultManualSettingsForProfile(getActiveEmbeddedDisplayProfile().id),
         ...input.manual
       },
       slideshow: {

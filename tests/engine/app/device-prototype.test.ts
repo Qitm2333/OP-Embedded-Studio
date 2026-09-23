@@ -1,8 +1,24 @@
 import { describe, expect, test } from 'bun:test'
 
 import { useDevicePrototype } from '@/features/device-prototype'
+import { defaultManualSettingsForProfile } from '@/features/device-prototype/model/rules'
 
 describe('device prototype interactions', () => {
+  test('uses BOOT gestures by default only for the two C3 OLED profiles', () => {
+    for (const profileId of ['ssd1315_042_72x40_esp32c3', 'ssd1315_042_72x40_esp32c3_binary']) {
+      expect(defaultManualSettingsForProfile(profileId)).toEqual({
+        nextEvent: 'boot_click',
+        previousEvent: 'boot_long_press',
+        loop: true
+      })
+    }
+    expect(defaultManualSettingsForProfile('other')).toEqual({
+      nextEvent: 'screen_click',
+      previousEvent: 'screen_long_press',
+      loop: true
+    })
+  })
+
   test('keeps interaction state isolated between editor scopes', () => {
     const firstScope = {}
     const secondScope = {}
