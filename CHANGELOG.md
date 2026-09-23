@@ -62,6 +62,7 @@
 
 ### Fixed
 
+- Play PNG-sequence interactions on single-core ESP32-C3 displays without a startup crash.
 - Make the ESP32-C3 OLED BOOT button available to manual interactions and keep the live preview at the target display aspect ratio.
 - Preserve app-created component properties and instance-swap targets across `.fig` save and reload cycles. (#548)
 - Reconnect desktop automation to an already-running MCP server by allowing access to its discovery file. (#546)

@@ -13,6 +13,11 @@
 #include "freertos/task.h"
 
 #define FRAME_PIXELS (CONFIG_EXAMPLE_LCD_H_RES * CONFIG_EXAMPLE_LCD_V_RES)
+#if CONFIG_FREERTOS_UNICORE
+#define ANIMATED_TASK_CORE 0
+#else
+#define ANIMATED_TASK_CORE 1
+#endif
 static const char *TAG = "animated_prototype";
 
 #if CONFIG_OPENPENCIL_ANIMATED_PROTOTYPE
@@ -121,7 +126,7 @@ esp_err_t openpencil_wireless_animated_prototype_run(esp_lcd_panel_handle_t pane
                                                 &decoder,
                                                 6,
                                                 &decoder_task,
-                                                1) == pdPASS,
+                                                ANIMATED_TASK_CORE) == pdPASS,
                         ESP_ERR_NO_MEM, TAG, "create animation decoder task");
 
     uint16_t state = openpencil_content_initial_state();
