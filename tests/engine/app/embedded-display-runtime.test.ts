@@ -15,11 +15,19 @@ describe('embedded display runtime catalog', () => {
       'co5300_m5stack_stopwatch',
       'ili9342_m5stack_cores3',
       'ssd1315_042_72x40_esp32c3',
-      'ssd1315_042_72x40_esp32c3_binary'
+      'ssd1315_042_72x40_esp32c3_binary',
+      'st7735p3_042_96x54_esp32c3'
     ])
     expect(profiles.some((profile) => profile.id === DEFAULT_EMBEDDED_DISPLAY_PROFILE_ID)).toBe(
       true
     )
+    expect(profiles.find((profile) => profile.id === 'st7735p3_042_96x54_esp32c3')).toMatchObject({
+      resolution: { width: 96, height: 54 },
+      flashSize: '4MB',
+      wirelessContentBytes: 983040,
+      imageOnly: false,
+      image: { colorOrder: 'RGB', rotation: 180 }
+    })
   })
 
   test('exposes bundled wireless firmware independently by mode', () => {
@@ -49,6 +57,10 @@ describe('embedded display runtime catalog', () => {
       '/embedded-display/firmware/usb-frame/'
     )
     expect(bundledFirmwareManifestUrl(binaryOledProfileId, 'ble-frame')).toBeNull()
+
+    expect(bundledFirmwareManifestUrl('st7735p3_042_96x54_esp32c3', 'usb-frame')).toContain(
+      '/embedded-display/firmware/usb-frame/'
+    )
   })
 
   test('uses packaged firmware URLs in development without the local build service', () => {

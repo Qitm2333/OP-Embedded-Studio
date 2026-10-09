@@ -60,6 +60,9 @@ PROFILE_PARTITION_TABLES = {
     "ssd1315_042_72x40_esp32c3_binary": {
         "usb-frame": "partitions_4mb_usb_frame.csv",
     },
+    "st7735p3_042_96x54_esp32c3": {
+        "usb-frame": "partitions_4mb_usb_frame.csv",
+    },
     "co5300_m5stack_stopwatch": {
         "usb-frame": "partitions_16mb_usb_frame.csv",
         "wifi-frame": "partitions_16mb_wireless.csv",
@@ -757,7 +760,7 @@ def clear_generated_image():
 
 def write_generated_prototype_header(profile, body):
     """Generate frame data plus a compact table for the generic device runtime."""
-    if profile.get("controller") not in {"CO5300", "ILI9342"}:
+    if profile.get("controller") not in {"CO5300", "ILI9342", "ST7735"}:
         raise ApiError(HTTPStatus.BAD_REQUEST, "prototype input runtime is currently unavailable for this display profile")
     states = body.get("states")
     transitions = body.get("transitions")

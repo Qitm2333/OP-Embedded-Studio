@@ -10,12 +10,14 @@ const USB_FAST_PROFILES = new Set([
   'co5300_m5stack_stopwatch',
   'ili9342_m5stack_cores3',
   'ssd1315_042_72x40_esp32c3',
-  'ssd1315_042_72x40_esp32c3_binary'
+  'ssd1315_042_72x40_esp32c3_binary',
+  'st7735p3_042_96x54_esp32c3'
 ])
 
 const USB_FIRMWARE_VARIANTS: Readonly<Record<string, number>> = {
   ssd1315_042_72x40_esp32c3: 1,
-  ssd1315_042_72x40_esp32c3_binary: 2
+  ssd1315_042_72x40_esp32c3_binary: 2,
+  st7735p3_042_96x54_esp32c3: 0
 }
 
 export type UsbFlashOptions = UsbContentTransferOptions

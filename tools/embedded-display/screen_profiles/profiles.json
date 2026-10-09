@@ -652,6 +652,101 @@
           "note": "Common ground"
         }
       ]
+    },
+    {
+      "id": "st7735p3_042_96x54_esp32c3",
+      "displayName": "0.42-inch 96x54 ST7735P3 TFT",
+      "displayNameZh": "0.42 英寸 96x54 ST7735P3 彩色屏",
+      "screenType": "small_tft",
+      "module": "T042BH-C08-02",
+      "driverIc": "ST7735P3",
+      "controller": "ST7735",
+      "interface": "4-wire SPI",
+      "target": "esp32c3",
+      "chipFamily": "ESP32-C3",
+      "flash": "4MB",
+      "wirelessContentBytes": 983040,
+      "baseDefaultsFile": "screen_profiles/esp32c3_4mb.defaults",
+      "logicalResolution": {
+        "width": 96,
+        "height": 54
+      },
+      "visibleArea": {
+        "shape": "rectangle",
+        "description": "96 x 54 RGB565 TFT active area.",
+        "descriptionZh": "96 x 54 RGB565 彩色 TFT 可视区域。"
+      },
+      "physicalSize": {
+        "diagonalInch": 0.42
+      },
+      "verified": false,
+      "imageOnly": false,
+      "defaultsFile": "screen_profiles/st7735p3_042_96x54_esp32c3.defaults",
+      "image": {
+        "pixelFormat": "RGB565",
+        "colorOrder": "RGB",
+        "byteOrder": "little",
+        "rotation": 180,
+        "xGap": 16,
+        "yGap": 0,
+        "transport": "SPI"
+      },
+      "wiring": [
+        {
+          "signal": "SDA/MOSI",
+          "connectTo": "ESP32-C3 GPIO5",
+          "gpio": 5,
+          "note": "SPI data"
+        },
+        {
+          "signal": "SCL/SCLK",
+          "connectTo": "ESP32-C3 GPIO6",
+          "gpio": 6,
+          "note": "SPI clock"
+        },
+        {
+          "signal": "D/C",
+          "connectTo": "ESP32-C3 GPIO3",
+          "gpio": 3,
+          "note": "Command/data select"
+        },
+        {
+          "signal": "RESET",
+          "connectTo": "ESP32-C3 GPIO4",
+          "gpio": 4,
+          "note": "Active-low panel reset"
+        },
+        {
+          "signal": "CS",
+          "connectTo": "ESP32-C3 GPIO7",
+          "gpio": 7,
+          "note": "SPI chip select"
+        },
+        {
+          "signal": "VDD",
+          "connectTo": "ESP32-C3 GPIO1",
+          "gpio": 1,
+          "note": "Panel logic power, firmware-controlled"
+        },
+        {
+          "signal": "BOOT",
+          "connectTo": "ESP32-C3 GPIO9",
+          "gpio": 9,
+          "note": "Board BOOT button; active low"
+        },
+        {
+          "signal": "GND",
+          "connectTo": "GND",
+          "gpio": null,
+          "note": "Common ground"
+        }
+      ],
+      "backlight": {
+        "recommended": "Use the module's existing backlight connection; no separate firmware GPIO is assigned.",
+        "recommendedZh": "使用模块现有背光连接，固件不额外占用背光 GPIO。",
+        "controlledByFirmware": false,
+        "menuconfigBacklightGpio": -1
+      }
     }
   ]
 }

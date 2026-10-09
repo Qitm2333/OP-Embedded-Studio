@@ -111,9 +111,10 @@ export async function encodeUsbAnimatedPrototype(
     frames.length * RESOURCE_BYTES +
     dataBytes
   const contentBytes = CONTENT_HEADER_BYTES + payloadBytes
-  if (contentBytes > CONTENT_CAPACITY_BYTES) {
+  const contentCapacity = profile.wirelessContentBytes ?? CONTENT_CAPACITY_BYTES
+  if (contentBytes > contentCapacity) {
     throw new Error(
-      `动画交互压缩后为 ${(contentBytes / 1024 / 1024).toFixed(2)} MiB，超过 28.94 MiB 内容分区`
+      `动画交互压缩后为 ${(contentBytes / 1024 / 1024).toFixed(2)} MiB，超过 ${(contentCapacity / 1024 / 1024).toFixed(2)} MiB 内容分区`
     )
   }
   const payload = new Uint8Array(payloadBytes)

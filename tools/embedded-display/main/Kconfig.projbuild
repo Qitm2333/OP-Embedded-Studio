@@ -44,6 +44,11 @@ menu "Example Configuration"
         bool "Enable the OP Embedded Studio USB content server"
         default n
 
+    config OPENPENCIL_ST7735P3_INIT
+        bool "Use the T042BH ST7735P3 initialization sequence"
+        depends on EXAMPLE_LCD_CONTROLLER_ST7735
+        default n
+
     config OPENPENCIL_BOARD_M5STACK_STOPWATCH
         bool "Use M5Stack StopWatch board power and reset wiring"
         default n
@@ -119,6 +124,10 @@ menu "Example Configuration"
         int "LCD reset GPIO (-1 if unused)"
         default 1 if EXAMPLE_LCD_CONTROLLER_CO5300
         default 14
+
+    config EXAMPLE_PIN_NUM_LCD_PWR
+        int "LCD power GPIO (-1 if always powered)"
+        default -1
 
     config EXAMPLE_PIN_NUM_LCD_CS
         int "LCD CS GPIO"

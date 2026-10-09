@@ -11,6 +11,7 @@ Embedded Studio:
 | Waveshare ESP32-S3-Touch-AMOLED-1.75C | 466 x 466 | CO5300 / QSPI | USB, BLE; Wi-Fi/live mirror experimental |
 | M5Stack CoreS3 | 320 x 240 | ILI9342C / SPI | USB, BLE, interaction, PNG sequence |
 | ESP32-C3 + 0.42-inch OLED | 72 x 40 | SSD1315 / I2C | USB frame |
+| ESP32-C3 + T042BH-C08-02 | 96 x 54 | ST7735P3 / SPI | USB, BOOT interaction, PNG sequence |
 
 The matching defaults, firmware manifests, and prebuilt images are maintained in
 `screen_profiles/` and `prebuilt-firmware/`. See

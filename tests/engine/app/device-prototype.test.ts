@@ -4,8 +4,12 @@ import { useDevicePrototype } from '@/features/device-prototype'
 import { defaultManualSettingsForProfile } from '@/features/device-prototype/model/rules'
 
 describe('device prototype interactions', () => {
-  test('uses BOOT gestures by default only for the two C3 OLED profiles', () => {
-    for (const profileId of ['ssd1315_042_72x40_esp32c3', 'ssd1315_042_72x40_esp32c3_binary']) {
+  test('uses BOOT gestures by default for C3 profiles with a physical BOOT button', () => {
+    for (const profileId of [
+      'ssd1315_042_72x40_esp32c3',
+      'ssd1315_042_72x40_esp32c3_binary',
+      'st7735p3_042_96x54_esp32c3'
+    ]) {
       expect(defaultManualSettingsForProfile(profileId)).toEqual({
         nextEvent: 'boot_click',
         previousEvent: 'boot_long_press',

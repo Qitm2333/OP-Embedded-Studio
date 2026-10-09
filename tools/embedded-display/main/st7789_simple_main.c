@@ -138,6 +138,20 @@ static esp_err_t draw_wireless_image(esp_lcd_panel_handle_t panel,
                         "draw wireless image failed");
     return ESP_OK;
 }
+
+static esp_err_t display_power_init(void)
+{
+#if CONFIG_EXAMPLE_PIN_NUM_LCD_PWR >= 0
+    const gpio_config_t power_config = {
+        .mode = GPIO_MODE_OUTPUT,
+        .pin_bit_mask = 1ULL << CONFIG_EXAMPLE_PIN_NUM_LCD_PWR,
+    };
+    ESP_RETURN_ON_ERROR(gpio_config(&power_config), TAG, "configure LCD power GPIO failed");
+    gpio_set_level(CONFIG_EXAMPLE_PIN_NUM_LCD_PWR, 1);
+    vTaskDelay(pdMS_TO_TICKS(150));
+#endif
+    return ESP_OK;
+}
 #endif
 
 #if CONFIG_OPENPENCIL_BLE_SERVER && CONFIG_OPENPENCIL_BOARD_M5STACK_STOPWATCH
@@ -223,6 +237,7 @@ static esp_err_t draw_generated_image(esp_lcd_panel_handle_t panel, uint16_t *fr
 void app_main(void)
 {
     ESP_ERROR_CHECK(backlight_init());
+    ESP_ERROR_CHECK(display_power_init());
 
 #if CONFIG_OPENPENCIL_BOARD_M5STACK_STOPWATCH
     ESP_LOGI(TAG, "Initialize M5IOE1 display power and reset");

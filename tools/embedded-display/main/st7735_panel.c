@@ -143,8 +143,46 @@ static esp_err_t panel_st7735_init(esp_lcd_panel_t *panel)
     st7735_panel_t *st7735 = __containerof(panel, st7735_panel_t, base);
     esp_lcd_panel_io_handle_t io = st7735->io;
 
+#if CONFIG_OPENPENCIL_ST7735P3_INIT
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, LCD_CMD_SWRESET, NULL, 0), TAG, "software reset failed");
+    vTaskDelay(pdMS_TO_TICKS(150));
+#endif
     ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, LCD_CMD_SLPOUT, NULL, 0), TAG, "exit sleep failed");
     vTaskDelay(pdMS_TO_TICKS(120));
+#if CONFIG_OPENPENCIL_ST7735P3_INIT
+    const uint8_t frame_rate_normal[] = {0x05, 0x3C, 0x3C};
+    const uint8_t frame_rate_idle[] = {0x05, 0x3C, 0x3C};
+    const uint8_t frame_rate_partial[] = {0x05, 0x3C, 0x3C, 0x05, 0x3C, 0x3C};
+    const uint8_t power_1[] = {0xAB, 0x0B, 0x04};
+    const uint8_t power_2[] = {0xC5};
+    const uint8_t power_3[] = {0x0D, 0x00};
+    const uint8_t power_4[] = {0x8D, 0x6A};
+    const uint8_t power_5[] = {0x8D, 0xEE};
+    const uint8_t vcom[] = {0x0F};
+    const uint8_t gamma_positive[] = {
+        0x07, 0x0E, 0x08, 0x07, 0x10, 0x07, 0x02, 0x07,
+        0x09, 0x0F, 0x25, 0x36, 0x00, 0x08, 0x04, 0x10,
+    };
+    const uint8_t gamma_negative[] = {
+        0x0A, 0x0D, 0x08, 0x07, 0x0F, 0x07, 0x02, 0x07,
+        0x09, 0x0F, 0x25, 0x35, 0x00, 0x09, 0x04, 0x10,
+    };
+    const uint8_t fc[] = {0x80};
+    const uint8_t inversion[] = {0x03};
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xB1, frame_rate_normal, sizeof(frame_rate_normal)), TAG, "set normal frame rate failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xB2, frame_rate_idle, sizeof(frame_rate_idle)), TAG, "set idle frame rate failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xB3, frame_rate_partial, sizeof(frame_rate_partial)), TAG, "set partial frame rate failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xB4, inversion, sizeof(inversion)), TAG, "set inversion mode failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xC0, power_1, sizeof(power_1)), TAG, "set power 1 failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xC1, power_2, sizeof(power_2)), TAG, "set power 2 failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xC2, power_3, sizeof(power_3)), TAG, "set power 3 failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xC3, power_4, sizeof(power_4)), TAG, "set power 4 failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xC4, power_5, sizeof(power_5)), TAG, "set power 5 failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xC5, vcom, sizeof(vcom)), TAG, "set VCOM failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xE0, gamma_positive, sizeof(gamma_positive)), TAG, "set positive gamma failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xE1, gamma_negative, sizeof(gamma_negative)), TAG, "set negative gamma failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0xFC, fc, sizeof(fc)), TAG, "set power saving failed");
+#endif
     ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, LCD_CMD_COLMOD, &st7735->colmod_val, 1), TAG, "set color mode failed");
     ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, LCD_CMD_MADCTL, &st7735->madctl_val, 1), TAG, "set MADCTL failed");
     ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, LCD_CMD_NORON, NULL, 0), TAG, "normal display mode failed");

@@ -18,7 +18,8 @@ const BUNDLED_FIRMWARE_PROFILES: Partial<Record<EmbeddedBuildMode, ReadonlySet<s
     'co5300_m5stack_stopwatch',
     'ili9342_m5stack_cores3',
     'ssd1315_042_72x40_esp32c3',
-    'ssd1315_042_72x40_esp32c3_binary'
+    'ssd1315_042_72x40_esp32c3_binary',
+    'st7735p3_042_96x54_esp32c3'
   ]),
   'wifi-frame': new Set(['co5300_waveshare_amoled_1_75c', 'co5300_m5stack_stopwatch']),
   'wifi-live': new Set(['co5300_waveshare_amoled_1_75c', 'co5300_m5stack_stopwatch']),

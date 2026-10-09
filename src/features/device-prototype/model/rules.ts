@@ -15,7 +15,8 @@ export const DEFAULT_DEVICE_PROTOTYPE_MANUAL_SETTINGS: DevicePrototypeManualSett
 export function defaultManualSettingsForProfile(profileId: string): DevicePrototypeManualSettings {
   if (
     profileId === 'ssd1315_042_72x40_esp32c3' ||
-    profileId === 'ssd1315_042_72x40_esp32c3_binary'
+    profileId === 'ssd1315_042_72x40_esp32c3_binary' ||
+    profileId === 'st7735p3_042_96x54_esp32c3'
   ) {
     return { nextEvent: 'boot_click', previousEvent: 'boot_long_press', loop: true }
   }

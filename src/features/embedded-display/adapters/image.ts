@@ -29,9 +29,11 @@ export function imageDataToRgb565(
   const rgb565 = new Uint8Array(pixelCount * 2)
   const isBgr = profile.image?.colorOrder === 'BGR'
   const isBigEndian = profile.image?.byteOrder === 'big'
+  const rotate180 = profile.image?.rotation === 180
 
   for (let pixel = 0; pixel < pixelCount; pixel += 1) {
-    const offset = pixel * 4
+    const sourcePixel = rotate180 ? pixelCount - pixel - 1 : pixel
+    const offset = sourcePixel * 4
     const red = pixels[offset]
     const green = pixels[offset + 1]
     const blue = pixels[offset + 2]

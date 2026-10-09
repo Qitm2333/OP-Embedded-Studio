@@ -28,6 +28,7 @@ import { createEditorStore, type EditorStore } from '@/app/editor/session'
 import { useDevicePrototype } from '@/features/device-prototype'
 import {
   calculatePixelPerfectPlacement,
+  imageDataToRgb565,
   imageFileToRgb565
 } from '@/features/embedded-display/adapters/image'
 import type { EmbeddedDisplayProfile } from '@/features/embedded-display/model/types'
@@ -569,6 +570,33 @@ describe('embedded display pixel-perfect fallback', () => {
       destinationX: 0,
       destinationY: 0
     })
+  })
+})
+
+describe('embedded display panel rotation', () => {
+  test('rotates 180-degree profiles inside the uploaded frame buffer', () => {
+    const pixels = new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255])
+    const profile: EmbeddedDisplayProfile = {
+      id: 'rotation-test',
+      name: 'Rotation test',
+      controller: 'ST7735',
+      resolution: { width: 2, height: 1 },
+      interface: 'SPI',
+      backgroundColor: '#000000',
+      description: 'Rotation test profile',
+      verified: true,
+      image: {
+        pixelFormat: 'RGB565',
+        colorOrder: 'RGB',
+        byteOrder: 'little',
+        rotation: 180,
+        xGap: 0,
+        yGap: 0,
+        transport: 'SPI'
+      }
+    }
+
+    expect([...imageDataToRgb565(pixels, profile)]).toEqual([0xe0, 0x07, 0x00, 0xf8])
   })
 })
 
